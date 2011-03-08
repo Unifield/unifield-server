@@ -91,11 +91,22 @@
             a list of suppliers and create automatically a Request for Quotation for each supplier.</field>
         </record>
 
-        <menuitem
-            action="action_procurement_list_tree"
-            menu="menu_procurement_list"
-            sequence="0"
-            parent="purchase.menu_procurement_management" />
+    
+        <!-- Links to purchase orders -->
+        <!--        <record id="procurement_list_to_rfq" model="ir.actions.act_window">
+            <field name="name">Requests for Quotations</field>
+            <field name="res_model">purchase.order</field>
+            <field name="src_model">procurement.list</field>
+            <field name="domain">[('id', 'in', active_id.order_ids)]</field>
+            <field name="
+            </record>-->
+        <act_window
+            domain="[('state', '=', 'draft'),('request_id', 'in', active_ids)]"
+            id="act_list_rfq"
+            name="Request for Quotations"
+            view_mode="tree,form"
+            res_model="purchase.order"
+            src_model="procurement.list" />
 
 	</data>
 </openerp>

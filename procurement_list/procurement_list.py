@@ -98,7 +98,7 @@ class procurement_list(osv.osv):
                                                   'name': line.product_id.name,})
                     self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
 
-        self.write(cr, uid, ids, {'state': 'done'})
+        self.write(cr, uid, ids, {'state': 'done', 'order_ids': [(6, 0, order_ids)]})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',

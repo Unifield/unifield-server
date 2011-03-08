@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -18,33 +19,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    'name' : 'Purchase list',
-    'version' : '1.0',
-    'author' : 'TeMPO Consulting, MSF',
-    'category': 'Generic Modules/Sales & Purchases',
-    'description': '''
-        This module allows you to create a list of items to procure. You can create automatically RfQ for these lists after choosing a list \
-        of suppliers. You can also compare these RfQ, choose the best supplier for each product and create automatically the associated \
-        purchase orders.
-    ''',
-    'website': 'http://unifield.msf.org',
-    'init_xml': [
-    ],
-    'depends' : [
-        'purchase',
-    ],
-    'update_xml': [
-        'procurement_list_sequence.xml',
-        'procurement_list_view.xml',
-        'procurement_list_wizard.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/procurement_list.yml',
-    ],
-    'installable': True,
-    'active': False,
-}
+
+import wizard_to_rfq
+import wizard_to_po
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
