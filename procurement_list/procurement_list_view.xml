@@ -97,7 +97,6 @@
             sequence="0"
             parent="purchase.menu_procurement_management" />
 
-
 	</data>
 </openerp>
 

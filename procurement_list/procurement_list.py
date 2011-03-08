@@ -85,14 +85,18 @@ class procurement_list(osv.osv):
                                                       'location_id': location_id})
                 order_ids.append(po_id)
 
-                # ... with all lines
+                # ... with all lines...
                 for line in list.line_ids:
-                    line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
-                                              'order_id': po_id,
-                                              'price_unit': 0.00,
-                                              'date_planned': list.order_date,
-                                              'product_qty': line.product_qty,
-                                              'name': line.product_id.name,})
+                    # ... which aren't from stock
+                    if not line.from_stock:
+                        line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
+                                                  'product_id': line.product_id.id,
+                                                  'order_id': po_id,
+                                                  'price_unit': 0.00,
+                                                  'date_planned': list.order_date,
+                                                  'product_qty': line.product_qty,
+                                                  'name': line.product_id.name,})
+                    self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
 
         self.write(cr, uid, ids, {'state': 'done'})
 

@@ -51,18 +51,27 @@
     requestor: Administration
     warehouse_id: stock.stock_warehouse_shop0
     origin: R 20043
-    line_ids:
-      - product_id: product_product_p1
-        product_uom_id: product.product_uom_unit
-        product_qty: 100.00
-        comment: special comment
-        from_stock: False
-      - product_id: product_product_p2
-        product_uom_id: product.product_uom_unit
-        product_qty: 50.0
-        from_stock: True
     supplier_ids:
       - base.res_partner_desertic_hispafuentes
+-
+    I add two lines in this procurement list
+-
+  !record {model: procurement.list.line, id: procurement_line1}:
+    product_id: product_product_p1
+    product_uom_id: product.product_uom_unit
+    product_qty: 100.00
+    comment: special comment
+    from_stock: False
+    list_id: procurement_list_1
+-
+    The second line
+-
+  !record {model: procurement.list.line, id: procurement_line2}:
+    product_id: product_product_p2
+    product_uom_id: product.product_uom_unit
+    product_qty: 50.0
+    from_stock: True
+    list_id: procurement_list_1
 -
     I check that the list which was initially in the draft state
 -
@@ -78,6 +87,11 @@
     pl_id1 = pl_obj.browse(cr, uid, ref('procurement_list_1'))
     pl_id1.create_rfq()
 -
+    I check if the latest message in procurement line is 'RfQ In Progress'
+-
+  !assert {model: procurement.list.line, id: procurement_line1}:
+    - latest == 'RfQ In Progress'
+-
     I check if only one RfQ will be created for the 
 -
   !python {model: procurement.list}: |
@@ -87,4 +101,14 @@
     pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
+        print pl.name, pol.order_id.origin
         assert pol.order_id.origin == pl.name
+-
+    I check that no purchase order line with P2
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pol_obj = self.pool.get('purchase.order.line')
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p2'))])
+    print len(pol_ids)
+    assert len(pol_ids) == 0
