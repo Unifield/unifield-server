@@ -29,9 +29,8 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" states="draft,confirm"/>
-                                <button name="confirm" string="Confirm" icon="gtk-ok" type="object" states="draft" />
-                                <button name="create_rfq" string="Create RfQ" icon="gtk-execute" type="object" states="confirm" />
+                                <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" states="draft"/>
+                                <button name="create_rfq" string="Create RfQ" icon="gtk-execute" type="object" states="draft" />
                                 <button name="reset" string="Reset to Draft" icon="gtk-ok" type="object" states="cancel" />
                             </group>
                         </page>
@@ -67,7 +66,6 @@
                 <search string="Search Procurement List">
                     <group col="10" colspan="4">
                         <filter icon="terp-document-new" string="Draft" domain="[('state', '=', 'draft')]" help="Draft Procurement list" />
-                        <filter icon="terp-mail-forward" string="Confirmed" domain="[('state', '=', 'confirm')]" help="Confirmed Procurement list" />
                         <filter icon="terp-dialog-close" string="Done" domain="[('state', '=', 'done')]" help="Done Procurement list" />
                         <separator orientation="vertical" />
                         <field name="name" />

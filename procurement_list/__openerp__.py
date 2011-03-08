@@ -41,7 +41,8 @@
     'demo_xml': [
     ],
     'test': [
-            ],
+        'test/procurement_list.yml',
+    ],
     'installable': True,
     'active': False,
 }

@@ -1,0 +1,90 @@
+-
+    In order to test the procurement list, I start by creating a new product 'P1'
+-
+  !record {model: product.product, id: product_product_p1}:
+    categ_id: 'product.product_category_3'
+    cost_method: standard
+    mes_type: fixed
+    name: P1
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+    I create a second product, P2
+-
+  !record {model: product.product, id: product_product_p2}:
+    categ_id: 'product.product_category_3'
+    cost_method: standard
+    mes_type: fixed
+    name: P2
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+   I create a procurement list for these two products 
+-
+  !record {model: procurement.list, id: procurement_list_1}:
+    requestor: Administration
+    warehouse_id: stock.stock_warehouse_shop0
+    origin: R 20043
+    line_ids:
+      - product_id: product_product_p1
+        product_uom_id: product.product_uom_unit
+        product_qty: 100.00
+        comment: special comment
+        from_stock: False
+      - product_id: product_product_p2
+        product_uom_id: product.product_uom_unit
+        product_qty: 50.0
+        from_stock: True
+    supplier_ids:
+      - base.res_partner_desertic_hispafuentes
+-
+    I check that the list which was initially in the draft state
+-
+  !assert {model: procurement.list, id: procurement_list_1}:
+    - state == 'draft'
+    - requestor == 'Administration'
+    - origin == 'R 20043'
+-
+    I create RfQ from this list
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pl_id1 = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+    pl_id1.create_rfq()
+-
+    I check if only one RfQ will be created for the 
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pol_obj = self.pool.get('purchase.order.line')
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p1'))])
+    pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+
+    for pol in pol_obj.browse(cr, uid, pol_ids):
+        assert pol.order_id.origin == pl.name

@@ -38,8 +38,7 @@ class procurement_list(osv.osv):
         'order_date': fields.date(string='Order date', required=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
-        'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), 
-                                   ('done', 'Done'), ('cancel', 'Cancel')], 
+        'state': fields.selection([('draft', 'Draft'),('done', 'Done'), ('cancel', 'Cancel')], 
                                    string='State', readonly=True),
         'line_ids': fields.one2many('procurement.list.line', 'list_id', string='Lines', readonly=True,
                                     states={'draft': [('readonly', False)]}),
@@ -66,14 +65,6 @@ class procurement_list(osv.osv):
 
         return True
 
-    def confirm(self, cr, uid, ids, context={}):
-        '''
-        Sets the procurement list to the 'confirm' state
-        '''
-        self.write(cr, uid, ids, {'state': 'confirm'})
-
-        return True
-
     def create_rfq(self, cr, uid, ids, context={}):
         '''
         Create a RfQ per supplier with all products
@@ -83,9 +74,9 @@ class procurement_list(osv.osv):
 
         order_ids = []
 
-        location_id = self._get_location(cr, uid)
-
         for list in self.browse(cr, uid, ids, context=context):
+            location_id = self._get_location(cr, uid, list.warehouse_id)
+            # Creates a RfQ for each supplier...
             for supplier in list.supplier_ids:
                 po_id = purchase_obj.create(cr, uid, {'partner_id': supplier.id,
                                                       'partner_address_id': supplier.address_get().get('default'),
@@ -94,11 +85,12 @@ class procurement_list(osv.osv):
                                                       'location_id': location_id})
                 order_ids.append(po_id)
 
+                # ... with all lines
                 for line in list.line_ids:
                     line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
                                               'order_id': po_id,
                                               'price_unit': 0.00,
-                                              'date_planned': list.deadline_date,
+                                              'date_planned': list.order_date,
                                               'product_qty': line.product_qty,
                                               'name': line.product_id.name,})
 
@@ -119,10 +111,12 @@ class procurement_list(osv.osv):
 
         return True
 
-    def _get_location(self, cr, uid):
+    def _get_location(self, cr, uid, warehouse=None):
         '''
         Returns the default input location for product
         '''
+        if warehouse:
+            return warehouse.lot_input_id.id
         warehouse_obj = self.pool.get('stock.warehouse')
         warehouse_id = warehouse_obj.search(cr, uid, [])[0]
         return warehouse_obj.browse(cr, uid, warehouse_id).lot_input_id.id
