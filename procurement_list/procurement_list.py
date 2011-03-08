@@ -1,0 +1,167 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+import time
+import netsvc
+
+from osv import osv
+from osv import fields
+from tools.translate import _
+
+class procurement_list(osv.osv):
+    _name = 'procurement.list'
+    _description = 'Procurement list'
+
+    _columns = {
+        'name': fields.char(size=64, string='Ref.', required=True, readonly=True, 
+                            states={'draft': [('readonly', False)]}),
+        'requestor': fields.char(size=20, string='Requestor',),
+        'order_date': fields.date(string='Order date', required=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
+        'origin': fields.char(size=64, string='Origin'),
+        'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), 
+                                   ('done', 'Done'), ('cancel', 'Cancel')], 
+                                   string='State', readonly=True),
+        'line_ids': fields.one2many('procurement.list.line', 'list_id', string='Lines', readonly=True,
+                                    states={'draft': [('readonly', False)]}),
+        'notes': fields.text(string='Notes'),
+        'supplier_ids': fields.many2many('res.partner', 'procurement_list_supplier_rel',
+                                         'list_id', 'supplier_id', string='Suppliers',
+                                         domain="[('supplier', '=', True)]",
+                                         states={'done': [('readonly', True)]}),
+        'order_ids': fields.many2many('purchase.order', 'procurement_list_order_rel',
+                                      'list_id', 'order_id', string='Orders', readonly=True),
+    }
+
+    _defaults = {
+        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'procurement.list'),
+        'state': lambda *a: 'draft',
+        'order_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+
+    def cancel(self, cr, uid, ids, context={}):
+        '''
+        Sets the procurement list to the 'Cancel' state
+        '''
+        self.write(cr, uid, ids, {'state': 'cancel'})
+
+        return True
+
+    def confirm(self, cr, uid, ids, context={}):
+        '''
+        Sets the procurement list to the 'confirm' state
+        '''
+        self.write(cr, uid, ids, {'state': 'confirm'})
+
+        return True
+
+    def create_rfq(self, cr, uid, ids, context={}):
+        '''
+        Create a RfQ per supplier with all products
+        '''
+        purchase_obj = self.pool.get('purchase.order')
+        line_obj = self.pool.get('purchase.order.line')
+
+        order_ids = []
+
+        location_id = self._get_location(cr, uid)
+
+        for list in self.browse(cr, uid, ids, context=context):
+            for supplier in list.supplier_ids:
+                po_id = purchase_obj.create(cr, uid, {'partner_id': supplier.id,
+                                                      'partner_address_id': supplier.address_get().get('default'),
+                                                      'pricelist_id': supplier.property_product_pricelist.id,
+                                                      'origin': list.name,
+                                                      'location_id': location_id})
+                order_ids.append(po_id)
+
+                for line in list.line_ids:
+                    line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
+                                              'order_id': po_id,
+                                              'price_unit': 0.00,
+                                              'date_planned': list.deadline_date,
+                                              'product_qty': line.product_qty,
+                                              'name': line.product_id.name,})
+
+        self.write(cr, uid, ids, {'state': 'done'})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'target': 'new',
+                'domain': [('id', 'in', order_ids)]}
+
+    def reset(self, cr, uid, ids, context={}):
+        '''
+        Sets the procurement list to the 'Draft' state
+        '''
+        self.write(cr, uid, ids, {'state': 'draft'})
+
+        return True
+
+    def _get_location(self, cr, uid):
+        '''
+        Returns the default input location for product
+        '''
+        warehouse_obj = self.pool.get('stock.warehouse')
+        warehouse_id = warehouse_obj.search(cr, uid, [])[0]
+        return warehouse_obj.browse(cr, uid, warehouse_id).lot_input_id.id
+
+procurement_list()
+
+
+class procurement_list_line(osv.osv):
+    _name = 'procurement.list.line'
+    _description = 'Procurement line'
+    _rec_name = 'product_id'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_uom_id': fields.many2one('product.uom', string='UoM', required=True),
+        'product_qty': fields.float(digits=(16,4), string='Quantity', required=True),
+        'comment': fields.char(size=128, string='Comment'),
+        'from_stock': fields.boolean(string='From stock ?'),
+        'latest': fields.char(size=64, string='Latest document', readonly=True),
+        'list_id': fields.many2one('procurement.list', string='List', required=True, ondelete='cascade'),
+    }
+
+    def product_id_change(self, cr, uid, ids, product_id, context={}):
+        '''
+        Fills automatically the product_uom_id field on the line when the 
+        product was changed.
+        '''
+        product_obj = self.pool.get('product.product')
+
+        v = {}
+        if not product_id:
+            v.update({'product_uom_id': False})
+        else:
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            v.update({'product_uom_id': product.uom_id.id})
+
+        return {'value': v}
+
+procurement_list_line()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
