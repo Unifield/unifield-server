@@ -66,18 +66,24 @@ class wizard_import_list(osv.osv_memory):
         Check if the Procurement List is saved and 
         set the error message
         '''
-        if not context.get('active_id', False) and context.get('active_model', '') == 'procurement.list':
-            raise osv.except_osv(_('Warning'), _('Please save the Procurement List before importing lines'))
-        elif context.get('active_model', '') == 'procurement.list':
+        res = super(wizard_import_list, self).default_get(cr, uid, fields, context=context)
+
+        # If we are after the importation
+        if context.get('step', False) and context.get('step', False) == 'import':
+            res['message'] = context.get('message', '')
+
+            return res
+        else:
+            if not context.get('active_id', False):
+                raise osv.except_osv(_('Warning'), _('Please save the Procurement List before importing lines'))
+
             # We check if the Procurement List is in 'Draft' state
             list_id = self.pool.get('procurement.list').browse(cr, uid, context.get('active_id', []))
             if not list_id or list_id.state != 'draft':
                 raise osv.except_osv(_('Warning'), _('You cannot import lines in a confirmed Procurement List'))
 
-        res = super(wizard_import_list, self).default_get(cr, uid, fields, context=context)
-        res['message'] = context.get('message', '')
-
         return res
+
 
     def import_file(self, cr, uid, ids, context={}):
         '''
@@ -159,7 +165,7 @@ class wizard_import_list(osv.osv_memory):
         else:
             context['message'] = 'All lines have been succesfully imported !'
 
-        context['active_model'] = 'procurement.list.import'
+        context['step'] = 'import'
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.list.import',

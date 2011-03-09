@@ -27,7 +27,7 @@
                 <form string="Result of importation">
                     <separator colspan="4" string="Result of importation" />
                     <field name="message" colspan="4" nolabel="1" />
-                    <button name="window_close" string="Close" icon="gtk-close" type="object" />
+                    <button name="close_window" string="Close" icon="gtk-close" type="object" />
                 </form>
             </field>
         </record>
