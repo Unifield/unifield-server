@@ -1,0 +1,218 @@
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution    
+#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
+#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Developer: Olivier DOSSMANN
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv
+from osv import fields
+from tools.translate import _
+
+class account_bank_statement_line(osv.osv):
+    _name = "account.bank.statement.line"
+    _inherit = "account.bank.statement.line"
+
+    def _get_state(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Return account_bank_statement_line state in order to know if the bank statement line is in :
+        - draft
+        - temp posting
+        - hard posting
+        - unknown if an error occured or anything else (for an example the move have a new state)
+        """
+        # Preparation of some variables
+        res = {}
+        for absl in self.browse(cr, uid, ids, context=context):
+            # Verifying move existence
+            if not absl.move_ids:
+                res[absl.id] = 'draft'
+                continue
+            # If exists, check move state
+            state = absl.move_ids[0].state
+            if state == 'draft':
+                res[absl.id] = 'temp'
+            elif state == 'posted':
+                res[absl.id] = 'hard'
+            else:
+                res[absl.id] = 'unknown'
+        return res
+
+    def _get_amount(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        # Variable initialisation
+        default_amount = 0.0
+        res = {}
+        # Browsing account bank statement lines
+        for absl in self.browse(cr, uid, ids, context=context):
+            # amount is positive so he should be in amount_in
+            if absl.amount > 0 and field_name == "amount_in":
+                res[absl.id] = abs(absl.amount)
+            # amount is negative, it should be in amount_out
+            elif absl.amount < 0 and field_name == "amount_out":
+                res[absl.id] = abs(absl.amount)
+            # if no resultat, we display 0.0 (default amount)
+            else:
+                res[absl.id] = default_amount
+        return res
+
+    _columns = {
+        'register_id': fields.many2one("account.account", "Register"),
+        'employee_id': fields.many2one("account.account", "Employee"),
+        'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
+        'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
+        'state': fields.function(_get_state, method=True, string="State", type='selection', selection=[('draft', 'Empty'), \
+            ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
+        'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
+            ('account.bank.statement', 'Register')], 128),
+    }
+
+    def _updating_amount(self, values):
+        """
+        Update amount in 'values' with the difference between amount_in and amount_out.
+        """
+        res = values.copy()
+        amount = None
+        if 'amount_in' not in values and 'amount_out' not in values:
+            return res
+        if values:
+            amount_in = values.get('amount_in', 0.0)
+            amount_out = values.get('amount_out', 0.0)
+            if amount_in > 0 and amount_out == 0:
+                amount = amount_in
+            elif amount_in == 0 and amount_out > 0:
+                amount = - amount_out
+            else:
+                raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
+        if amount:
+            res.update({'amount': amount})
+        return res
+
+    def create(self, cr, uid, values, context={}):
+        """
+        Create a new account bank statement line with values
+        """
+        # First update amount
+        values = self._updating_amount(values=values)
+        # Then creating a new bank statement line
+        return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+
+    def write(self, cr, uid, ids, values, context={}):
+        """
+        Write some existing account bank statement lines with 'values'.
+        
+        """
+        # Preparing some values
+        state = self._get_state(cr, uid, ids, context=context).values()[0]
+        # Verifying that the statement line isn't in hard state
+        if state  == 'hard':
+            return False
+        # First update amount
+        values = self._updating_amount(values=values)
+        # Case where _updating_amount return False ! => this imply there is a problem with amount columns
+        if not values:
+            return False
+        # In case of Temp Posting, we also update attached account move lines
+        if state == 'temp':
+            move_line_values = values.copy()
+            acc_move_line_obj = self.pool.get('account.move.line')
+            for st_line in self.browse(cr, uid, ids, context=context):
+                for move_line_id in acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id)]):
+                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], context=context)[0]
+                    # Updating values
+                    # Let's have a look to the amount
+                    # first retrieving some values
+                    # Because of sequence problems and multiple writing on lines, we have to see if variables are given
+                    default_st_account = None
+                    if 'amount' in values and 'credit' in move_line and 'debit' in move_line:
+                        amount = values.get('amount', False)
+                        credit = move_line.get('credit', False)
+                        debit = move_line.get('debit', False)
+                        # then choosing where to place amount
+                        new_debit = debit
+                        new_credit = credit
+                        if amount and credit or debit:
+                            # then choosing where take it
+                            if debit > credit:
+                                new_debit = abs(amount)
+                                new_credit = 0.0
+                                default_st_account = st_line.statement_id.journal_id.default_debit_account_id.id
+                            elif debit < credit:
+                                new_debit = 0.0
+                                new_credit = abs(amount)
+                                default_st_account = st_line.statement_id.journal_id.default_credit_account_id.id
+                            move_line_values.update({'debit': new_debit, 'credit': new_credit})
+                    # Then we try to search account_id in order to produce 'account_id' value for the account move line.
+                    #+ But for that, searching if we are in a debit line or a credit line
+                    if default_st_account:
+                        st_line_account = st_line.account_id.id
+                        move_line_account = move_line.get('account_id')[0]
+                        if st_line_account == move_line_account:
+                            new_account = values.get('account_id')
+                        else:
+                            new_account = default_st_account
+                        move_line_values.update({'account_id': new_account})
+                    # writing of new values
+                    acc_move_line_obj.write(cr, uid, [move_line_id], move_line_values, context=context)
+        # Updating the bank statement lines with 'values'
+        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+
+    def button_hard_posting(self, cr, uid, ids, context={}):
+        """
+        Write some statement line into some account move lines in posted state.
+        Warning! : this function is used by 'button_temp_posting'. Please take care of returning all account_move_ids !
+        """
+        # Variable initialisation
+        res = []
+        if context:
+            statement_id = context.get('active_id', False)
+        if not statement_id:
+            raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
+        cash_statement = self.browse(cr, uid, statement_id)
+        cash_st_obj = self.pool.get("account.bank.statement")
+        acc_move_obj = self.pool.get("account.move")
+        currency_id = cash_statement.statement_id.journal_id.company_id.currency_id.id
+        # browsing all statement lines for creating move lines
+        for absl in self.browse(cr, uid, ids, context=context):
+            # creating move lines
+            if absl.state == "draft":
+                #FIXME: which code could we return for the move line ?
+                st_name = cash_statement.name + '/' + str(absl.sequence)
+                # creating move from statement line
+                res_id = cash_st_obj.create_move_from_st_line(cr, uid, absl.id, currency_id, st_name, context=context)
+                res.append(res_id)
+            elif absl.state == "temp":
+                # Change state of thess moves
+                for move in absl.move_ids:
+                    res.append(acc_move_obj.write(cr, uid, [move.id], {'state': 'posted'}, context=context))
+        return res
+
+    def button_temp_posting(self, cr, uid, ids, context={}):
+        """
+        Write some statement lines into some account move lines in draft state.
+        Warning! : this function take advantage of 'button_hard_posting' for temp posting entries.
+        Indeed you have to use account moves returned by 'button_hard_posting' to unpost them.
+        """
+        # Variable initialisation
+        acc_move_obj = self.pool.get("account.move")
+        hard_posting_ids = self.button_hard_posting(cr, uid, ids, context=context)
+        res_ids = acc_move_obj.write(cr, uid, hard_posting_ids, {'state': 'draft'}, context=context)
+        return res_ids
+
+account_bank_statement_line()
