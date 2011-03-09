@@ -30,6 +30,7 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [
+        "test/adjustment_type.yml",
     ],
     "depends" : [
         "stock",
@@ -42,7 +43,8 @@
     "demo_xml": [
     ],
     "test": [
-            ],
+        "test/adjustment_type.yml",
+    ],
     "installable": True,
     "active": False,
 }
