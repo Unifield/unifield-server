@@ -3,18 +3,18 @@
 	<data>
 
         <wizard
-            string="Requests for Quotation"
+            id="wizard_list_to_order"
             model="procurement.list"
-            name="procurement.list.to.rfq"
-            id="wizard_list_to_rfq"
-            keyword="client_action_relate" />
+            name="wizard_list_to_order"
+            keyword="client_action_relate"
+            string="Purchase Orders" />
 
         <wizard
-            string="Purchase Orders"
+            id="wizard_list_to_rfq"
             model="procurement.list"
-            name="procurement.list.to.po"
-            id="wizard_list_to_po"
-            keyword="client_action_relate" />
+            name="wizard_list_to_rfq"
+            keyword="client_action_relate"
+            string="Requests for Quotation" />
 
 	</data>
 </openerp>
