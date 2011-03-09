@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="inherit_view_bank_statement_form2" model="ir.ui.view">
+            <field name='name'>inherit.view.bank.statement.form2</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_bank_statement_form2' />
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="replace">
+                    <form string="Statement">
+                        <group col="6" colspan="4">
+                            <field name="name" select="1" readonly="1"/>
+                            <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash')]" select="1" 
+                                widget="selection"/>
+                            <field name="user_id" select="1" readonly="1"/>
+                            <field name="period_id" select="1"/>
+                            <field name="currency" invisible="1"/>
+                        </group>
+                        <group col="6" colspan="4">
+                            <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
+                                context="context"/>
+                            <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
+                                context="context"/>
+                            <button name="button_wiz_create_invoice" states="open" string="Create Invoice" type="object" icon="terp-document-new" 
+                                context="context" />
+                        </group>
+                        <notebook colspan="4">
+                            <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
+                                <field colspan="4" name="line_ids" nolabel="1">
+                                    <tree editable="bottom" string="Statement lines">
+                                        <field name="date" groups="base.group_extended"/>
+                                        <field name="name" string="Description"/>
+                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                        <field name="partner_type"/>
+                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                        <field name="employee_id"/>
+                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                        <field name="analytic_account_id" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
+                                            groups="analytic.group_analytic_accounting" />
+                                        <field name="amount" invisible="1"/>
+                                        <field name="amount_in" readonly="0"/>
+                                        <field name="amount_out" readonly="0"/>
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
+                                            context="context"/>
+                                        <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
+                                            context="context"/>
+                                        <field name="state" readonly="True"/>
+                                    </tree>
+                                    <form string="Statement lines">
+                                        <field name="date"/>
+                                        <field name="name" string="Description"/>
+                                        <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                                        <field name="type" on_change="onchange_type(partner_id, type)"/>
+                                        <field name="ref"/>
+                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                        <field name="employee_id"/>
+                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                        <field name="analytic_account_id" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
+                                            groups="analytic.group_analytic_accounting" />
+                                        <field name="amount"/>
+                                        <field name="amount_in" readonly="0"/>
+                                        <field name="amount_out" readonly="0"/>
+                                        <separator colspan="4" string="Notes"/>
+                                        <field colspan="4" name="note" nolabel="1"/>
+                                        <field name="state"/>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="CashBox">
+                                <group col="2" colspan="2" expand="1">
+                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'readonly':[('state','!=','draft')]}">
+                                        <tree string = "Opening Balance" editable="bottom">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal" sum="Total"/>
+                                        </tree>
+                                        <form string = "Opening Balance">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal"/>
+                                        </form>
+                                    </field>
+                                </group>
+                                <group col="2" colspan="2" expand="1">
+                                    <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':[('state','!=','open')]}">
+                                        <tree string = "Closing Balance" editable="bottom">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal" sum="Total"/>
+                                        </tree>
+                                        <form string = "Closing Balance">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal"/>
+                                        </form>
+                                    </field>
+                                </group>
+                            </page>
+                            <page string="Journal Entries" attrs="{'readonly':[('state','=','confirm')]}" invisible="1">
+                                <field colspan="4" name="move_line_ids" nolabel="1" string="Journal Entries" />
+                            </page>
+                        </notebook>
+                        <group col="6" colspan="4">
+                            <group col="2" colspan="2">
+                                <separator string="Dates" colspan="4"/>
+                                <field name="date" select="1" readonly="True" on_change="onchange_date(date)" string="Opening Date"/>
+                                <field name="closing_date" select="1" readonly="1"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <separator string="Opening Balance" colspan="4"/>
+                                <field name="balance_start" string="Opening Balance"/>
+                                <field name="total_entry_encoding"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <separator string="Closing Balance" colspan="4"/>
+                                <field name="balance_end" string="Calculated Balance" readonly="1"/>
+                                <field name="balance_end_cash" readonly="0" string="CashBox Balance"/>
+                            </group>
+                        </group>
+                        <separator string="State" />
+                        <group name="state" colspan="4">
+                            <field name="state" colspan="4" readonly="True"/>
+                        </group>
+                        <button name="button_open" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <group name="open_state" colspan="4">
+                            <button name="button_cancel" states="open" string="Cancel" icon="terp-gtk-stop" type="object" groups="base.group_extended" 
+                                colspan="2"/>
+                            <button name="button_confirm_cash" states="open" string="Close CashBox" icon="gtk-ok" type="object" colspan="2" />
+                        </group>
+                    </form>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="wkf_account_cash_statement" model="workflow">
+            <field name="name">account.cash.statement.workflow</field>
+            <field name="osv">account.bank.statement</field>
+            <field name="on_create">True</field>
+        </record>
+        
+        <!-- Activity -->
+        <record id="act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_account_cash_statement" />
+            <field name="flow_start">True</field>
+            <field name="name">draft</field>
+        </record>
+        
+        <record id="act_open" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_account_cash_statement" />
+            <field name="name">open</field>
+            <field name="kind">function</field>
+            <field name="action">state_to_open()</field>
+        </record>
+        
+        <record id="act_partial_close" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_account_cash_statement" />
+            <field name="name">partial.close</field>
+            <field name="kind">function</field>
+            <field name="action">state_to_partial_close()</field>
+        </record>
+        
+        <record id="act_closed" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_account_cash_statement" />
+            <field name="name">closed</field>
+            <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">state_to_closed()</field>
+        </record>
+        
+        <!-- Transitions -->
+        <record id="trans_state_open" model="workflow.transition">
+            <field name="act_from" ref="act_draft" />
+            <field name="act_to" ref="act_open" />
+            <field name="signal">button_open</field>
+        </record>
+        
+        <record id="trans_state_closed" model="workflow.transition">
+            <field name="act_from" ref="act_open" />
+            <field name="act_to" ref="act_closed" />
+            <field name="signal">button_confirm_cash</field>
+        </record>
+        
+        <record id="trans_state_partial_close" model="workflow.transition">
+            <field name="act_from" ref="act_open" />
+            <field name="act_to" ref="act_partial_close" />
+        </record>
+        <record id="trans_state_partial_close_to_open" model="workflow.transition">
+            <field name="act_from" ref="act_partial_close" />
+            <field name="act_to" ref="act_open"/>
+            <field name="signal">button_reopen</field>
+        </record>
+        <record id="trans_state_partial_close_to_closed" model="workflow.transition">
+            <field name="act_from" ref="act_partial_close"/>
+            <field name="act_to" ref="act_closed"/>
+            <field name="signal">button_write_off</field>
+        </record>
+    </data>
+</openerp>
