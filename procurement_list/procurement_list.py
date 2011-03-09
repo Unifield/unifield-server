@@ -75,6 +75,12 @@ class procurement_list(osv.osv):
         order_ids = []
 
         for list in self.browse(cr, uid, ids, context=context):
+            # Returns an error message if no suppliers or no products
+            if not list.supplier_ids or len(list.supplier_ids) == 0:
+                raise osv.except_osv(_('Error'), _('No supplier defined for this list !'))
+            if not list.line_ids or len(list.line_ids) == 0:
+                raise osv.except_osv(_('Error'), _('No line defined for this list !'))
+
             location_id = self._get_location(cr, uid, list.warehouse_id)
             # Creates a RfQ for each supplier...
             for supplier in list.supplier_ids:
