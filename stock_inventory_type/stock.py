@@ -56,6 +56,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'type_id': fields.many2one('stock.adjustment.type', string='Adjustment type', readonly=True),
+        'comment': fields.char(size=128, string='Comment'),
     }
 
 stock_move()
@@ -94,7 +95,7 @@ class stock_inventory(osv.osv):
                         'prodlot_id': lot_id,
                         'date': inv.date,
                         # Add by developer for Unifield
-                        'note': line.comment,
+                        'comment': line.comment,
                         # End of adding for Unifield
                     }
                     if change > 0:

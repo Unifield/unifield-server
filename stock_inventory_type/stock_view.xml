@@ -102,6 +102,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='prodlot_id']" position="after">
                     <field name="type_id" widget="selection" />
+                    <field name="comment" />
                 </xpath>
             </field>
         </record>
@@ -114,6 +115,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='prodlot_id']" position="after">
                     <field name="type_id" widget="selection" />
+                    <field name="comment" />
                 </xpath>
             </field>
         </record>
@@ -126,6 +128,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='create_date']" position="after">
                     <field name="type_id" widget="selection" />
+                    <field name="comment" />
                 </xpath>
             </field>
         </record>
@@ -138,6 +141,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/form/group/button[@string='Scrap']" position="after">
                     <field name="type_id" widget="selection" />
+                    <field name="comment" />
                 </xpath>
             </field>
         </record>
@@ -150,6 +154,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/search/group/field[@name='product_id']" position="before">
                     <field name="type_id" widget="selection" />
+                    <field name="comment" />
                 </xpath>
             </field>
         </record>
