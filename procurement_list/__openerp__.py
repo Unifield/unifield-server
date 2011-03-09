@@ -38,6 +38,7 @@
         'procurement_list_sequence.xml',
         'procurement_list_view.xml',
         'procurement_list_wizard.xml',
+        'wizard/wizard_import_list_view.xml',
     ],
     'demo_xml': [
     ],

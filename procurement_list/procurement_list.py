@@ -110,7 +110,6 @@ class procurement_list(osv.osv):
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
-                'target': 'new',
                 'domain': [('id', 'in', order_ids)]}
 
     def reset(self, cr, uid, ids, context={}):

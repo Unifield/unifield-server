@@ -22,6 +22,7 @@
 
 import wizard_list_to_order
 import wizard_list_to_rfq
+import wizard_import_list
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
