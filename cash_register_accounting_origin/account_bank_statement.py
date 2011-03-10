@@ -56,6 +56,9 @@ class account_bank_statement_line(osv.osv):
         return res
 
     def _get_amount(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Get the amount from amount_in and amount_on
+        """
         # Variable initialisation
         default_amount = 0.0
         res = {}
@@ -148,16 +151,43 @@ class account_bank_statement_line(osv.osv):
                         new_debit = debit
                         new_credit = credit
                         if amount and credit or debit:
+                            line_is_debit = False
+                            line_is_credit = False
                             # then choosing where take it
                             if debit > credit:
                                 new_debit = abs(amount)
                                 new_credit = 0.0
                                 default_st_account = st_line.statement_id.journal_id.default_debit_account_id.id
+                                line_is_debit = True
                             elif debit < credit:
                                 new_debit = 0.0
                                 new_credit = abs(amount)
                                 default_st_account = st_line.statement_id.journal_id.default_credit_account_id.id
+                                line_is_credit = True
+                            #+ - if no different currency that OC currency, then update debit and credit
+                            #+ - else update amount_currency
+                            currency_id =  st_line.statement_id.journal_id.currency.id or None
+                            # If a currency exist, we do some computation before sending amount
+                            if currency_id:
+                                res_currency_obj = self.pool.get('res.currency')
+                                #TODO : change this when we have debate on "instance" definition
+                                # Note: the first currency_id must be those of the journal of the cash statement
+                                line_accounting_value = res_currency_obj.compute(cr, uid, st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
+                                if line_is_debit:
+                                    new_debit = abs(line_accounting_value)
+                                    new_credit = 0.0
+                                    new_amount = amount
+                                else:
+                                    new_debit = 0.0
+                                    new_credit = abs(line_accounting_value)
+                                    new_amount = -amount
+                                if currency_id == st_line.company_id.currency_id.id:
+                                    new_amount = 0.0
+                                # updating amount_currency for the move line
+                                move_line_values.update({'amount_currency': new_amount})
+                            # Nonetheless the result, we have to update debit and credit
                             move_line_values.update({'debit': new_debit, 'credit': new_credit})
+
                     # Then we try to search account_id in order to produce 'account_id' value for the account move line.
                     #+ But for that, searching if we are in a debit line or a credit line
                     if default_st_account:
