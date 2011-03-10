@@ -37,6 +37,7 @@
         "account_view.xml",
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
+        'account_cash_statement_sequence.xml',
     ],
     "demo_xml" : [],
     "test": [],

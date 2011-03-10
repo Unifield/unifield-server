@@ -31,12 +31,29 @@ class account_cash_statement(osv.osv):
     _inherit = "account.bank.statement"
 
     _defaults = {
+        'name': 'The name would be generated automatically',
         'state': lambda *a: 'draft',
     }
     
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', _('The CashBox name must be unique!')),
     ]
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Create a Cash Register with a preformed name
+        """
+        # Give a Cash Register Name with the following  composition : 
+        #+ Cash Journal Code + A Sequence Number (like /02)
+        if 'journal_id' in vals:
+            journal_id = vals.get('journal_id')
+            journal_code = self.pool.get('account.journal').read(cr, uid, journal_id, [('code')], context=context).get('code')
+            seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
+            name = journal_code + seq
+            vals.update({'name': name})
+        else:
+            raise osv.except_osv(_('Warning'), _('Name field is not filled in!'))
+        return super(account_cash_statement, self).create(cr, uid, vals, context=context)
 
     def button_open(self, cr, uid, ids, context={}):
         """
@@ -85,7 +102,10 @@ class account_cash_statement(osv.osv):
 
     _columns = {
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), \
-            readonly="True", string='State'),
+                readonly="True", string='State'),
+            'name': fields.char('Name', size=64, required=True, readonly=True, \
+                help='if you give the Name other than     /, its created Accounting Entries Move will be with same name as \
+                statement name. This allows the statement entries to have the same references than the     statement itself'),
     }
 
 account_cash_statement()
