@@ -43,7 +43,7 @@ class account_cash_statement(osv.osv):
         """
         Create a Cash Register with a preformed name
         """
-        # Give a Cash Register Name with the following  composition : 
+        # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
         if 'journal_id' in vals:
             journal_id = vals.get('journal_id')
@@ -51,9 +51,28 @@ class account_cash_statement(osv.osv):
             seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
             name = journal_code + seq
             vals.update({'name': name})
+        ##### pick up from openerp source #####
+        if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'cash':
+            open_close = self._get_cash_open_close_box_lines(cr, uid, context)
+            if vals.get('starting_details_ids', False):
+                for start in vals.get('starting_details_ids'):
+                    dict_val = start[2]
+                    for end in open_close['end']:
+                       if end[2]['pieces'] == dict_val['pieces']:
+                           end[2]['number'] += dict_val['number']
+            vals.update({
+                 'ending_details_ids': open_close['start'],
+                'starting_details_ids': open_close['end']
+            })
         else:
-            raise osv.except_osv(_('Warning'), _('Name field is not filled in!'))
-        return super(account_cash_statement, self).create(cr, uid, vals, context=context)
+            vals.update({
+                'ending_details_ids': False,
+                'starting_details_ids': False
+            })
+        ##### end of pickup #####
+        res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        self.write(cr, uid, [res_id], {})
+        return res_id
 
     def button_open(self, cr, uid, ids, context={}):
         """
