@@ -22,28 +22,8 @@
 #
 ##############################################################################
 
-{
-    "name" : "Cash Register",
-    "version" : "1.0",
-    "description" : """
-        This module aims to add Cash Register Attributes for Sprint 1 in Unifield project for MSF.
-    """,
-    "author" : "Tempo Consulting",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", "hr"], # TODO: add msf_work_mandate_6 dependency
-    "init_xml" : [],
-    "update_xml" : [
-        "account_view.xml",
-        'account_bank_statement_workflow.xml',
-        'wizard/wizard_closing_cashbox.xml',
-        'wizard/wizard_cashbox_write_off.xml',
-        'account_cash_statement_sequence.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+import cashbox_closing
+import cashbox_write_off
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

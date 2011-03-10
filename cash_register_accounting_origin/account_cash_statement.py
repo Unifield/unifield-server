@@ -86,20 +86,6 @@ class account_cash_statement(osv.osv):
             }
         }
 
-    def button_reopen(self, cr, uid, ids, context={}):
-        """
-        When an administrator push the 'Re-open CashBox' button
-        """
-        self.write(cr, uid, ids, {'state' : 'open'})
-        return True
-
-    def button_write_off(self, cr, uid, ids, context={}):
-        """
-        When an administrator push the 'Write-off' button
-        """
-        self.write(cr, uid, ids, {'state' : 'confirm'})
-        return True
-
     _columns = {
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), \
                 readonly="True", string='State'),
