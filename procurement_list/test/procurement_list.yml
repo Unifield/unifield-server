@@ -1,13 +1,62 @@
 -
-    In order to test the procurement list module, I start by creating a new product category
+    In order to test the procurement list module, I will create 6 suppliers,
+    5 products and 3 procurement request.
+    After, I try all possibility to test the supplier default selection
 -
-  !record {model: product.category, id: product_cat1}:
-    name: Categ1
+    I create the 6 partners
 -
-    I create new product 'P1'
+    I create supplier S1
 -
-  !record {model: product.product, id: product_product_p1}:
-    categ_id: product_cat1
+  !record {model: res.partner, id: supplier1}:
+    name: S1
+    supplier: True
+    address:
+      - name: S1
+-
+    I create the supplier S2
+-
+  !record {model: res.partner, id: supplier2}:
+    name: S2
+    supplier: True
+    address:
+      - name: S2
+-
+    I create the supplier S3
+-
+  !record {model: res.partner, id: supplier3}:
+    name: S3
+    supplier: True
+    address:
+      - name: S3
+-
+    I create the supplier S4
+-
+  !record {model: res.partner, id: supplier4}:
+    name: S4
+    supplier: True
+    address:
+      - name: S4
+-
+    I create the supplier S5
+-
+  !record {model: res.partner, id: supplier5}:
+    name: S5
+    supplier: True
+    address:
+      - name: S5
+-
+    I create the supplier S6
+-
+  !record {model: res.partner, id: supplier6}:
+    name: S6
+    supplier: True
+    address:
+      - name: S6
+-
+    I create the product P1
+-
+  !record {model: product.product, id: product1}:
+    categ_id: product.cat0
     cost_method: standard
     mes_type: fixed
     name: P1
@@ -20,17 +69,27 @@
     standard_price: 100.0
     supply_method: buy
     type: product
-    uom_id: product.product_uom_unit
+    uom_id: product.product_uom_unit    
     uom_po_id: product.product_uom_unit
-    volume: 0.0
+    volume : 0.0
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier1
+      - sequence: 20
+        min_qty: 0.00
+        name: supplier2
+      - sequence: 30
+        min_qty: 0.00
+        name: supplier3
 -
-    I create a second product, P2
+    I create the product P2
 -
-  !record {model: product.product, id: product_product_p2}:
-    categ_id: product_cat1
+  !record {model: product.product, id: product2}:
+    categ_id: product.cat0
     cost_method: standard
     mes_type: fixed
     name: P2
@@ -43,98 +102,298 @@
     standard_price: 100.0
     supply_method: buy
     type: product
-    uom_id: product.product_uom_unit
+    uom_id: product.product_uom_unit    
     uom_po_id: product.product_uom_unit
-    volume: 0.0
+    volume : 0.0
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier2
+      - sequence: 20
+        min_qty: 0.00
+        name: supplier1
 -
-    I create a partner
+    I create the product P3
 -
-  !record {model: res.partner, id: partner1}:
-    name: Supplier 1
+  !record {model: product.product, id: product3}:
+    categ_id: product.cat0
+    cost_method: standard
+    mes_type: fixed
+    name: P3
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit    
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier3
 -
-    I create an address for this partner
+    I create the product P4
 -
-  !record {model: res.partner.address, id: addr1}:
-    partner_id: partner1
-    name: Supplier1
+  !record {model: product.product, id: product4}:
+    categ_id: product.cat0
+    cost_method: standard
+    mes_type: fixed
+    name: P4
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit    
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier3
+      - sequence: 20
+        min_qty: 0.00
+        name: supplier4
 -
-    I create a second partner
+    I create the product P5
 -
-  !record {model: res.partner, id: partner2}:
-    name: Supplier 2
+  !record {model: product.product, id: product5}:
+    categ_id: product.cat0
+    cost_method: standard
+    mes_type: fixed
+    name: P5
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit    
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier4
+      - sequence: 20
+        min_qty: 0.00
+        name: supplier5
 -
-    I create an address for this second partner
+    I create a Procurement Request
 -
-  !record {model: res.partner.address, id: addr2}:
-    partner_id: partner2
-    name: Supplier2
--
-    I create a procurement list for these two products 
--
-  !record {model: procurement.list, id: procurement_list_1}:
+  !record {model: procurement.list, id: list1}:
+    name: PR1
     requestor: Administration
     warehouse_id: stock.warehouse0
     origin: R 20043
-    supplier_ids:
-      - partner1
-      - partner2
+    line_ids:
+      - product_id: product1
+        product_uom_id: product.product_uom_unit
+        product_qty: 12.0
+        comment: special comment
+      - product_id: product2
+        product_uom_id: product.product_uom_unit
+        product_qty: 10.0
 -
-    I add two lines in this procurement list
+    I create a Procurement Request
 -
-  !record {model: procurement.list.line, id: procurement_line1}:
-    product_id: product_product_p1
-    product_uom_id: product.product_uom_unit
-    product_qty: 100.00
-    comment: special comment
-    from_stock: False
-    list_id: procurement_list_1
+  !record {model: procurement.list, id: list2}:
+    name: PR2
+    line_ids:
+      - product_id: product3
+        product_uom_id: product.product_uom_unit
+        product_qty: 20.0
+      - product_id: product4
+        product_uom_id: product.product_uom_unit
+        product_qty: 30.0
 -
-    The second line
+    I create a Procurement Request
 -
-  !record {model: procurement.list.line, id: procurement_line2}:
-    product_id: product_product_p2
-    product_uom_id: product.product_uom_unit
-    product_qty: 50.0
-    from_stock: True
-    list_id: procurement_list_1
+  !record {model: procurement.list, id: list3}:
+    name: PR3
+    line_ids:
+      - product_id: product5
+        product_uom_id: product.product_uom_unit
+        product_qty: 30.0
 -
     I check that the list which was initially in the draft state
 -
-  !assert {model: procurement.list, id: procurement_list_1}:
-    - state == 'draft'
-    - requestor == 'Administration'
-    - origin == 'R 20043'
+  !assert {model: procurement.list, id: list1}:
+    - state == 'draft', "Bad default value for state"
+    - requestor == 'Administration', "Bad value for requestor"
+    - origin == 'R 20043', "Bad value for origin"
 -
-    I create RfQ from this list
+    I confirm the list1
 -
   !python {model: procurement.list}: |
-    pl_obj = self.pool.get('procurement.list')
-    pl_id1 = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+    pl_id1 = self.pool.get('procurement.list').browse(cr, uid, ref('list1'))
     pl_id1.create_rfq()
 -
-    I check if the latest message in procurement line is 'RfQ In Progress'
+    I check if the supplier choose wizard has been created well
 -
-  !assert {model: procurement.list.line, id: procurement_line1}:
-    - latest == 'RfQ In Progress'
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcsl_obj = self.pool.get('procurement.choose.supplier.line')
+    pcs_ids = pcs_obj.search(cr, uid, []) 
+    assert len(pcs_ids) == 1, "Bad number of Procurement Choose Supplier Wizard"
+    if pcs_ids:
+        pcsl1 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product1'))])
+        pcsl2 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product2'))])
+        assert pcsl1, "No choose supplier line found for P1"
+        assert pcsl2, "No choose supplier line found for P2"
+        if pcsl1:
+            assert pcsl_obj.browse(cr, uid, pcsl1[0]).supplier_id.id == supplier1, "Bad default supplier for P1 in the first Request"
+            assert pcsl_obj.browse(cr, uid, pcsl1[0]).product_qty == 12.0, "Bad quantity for P1 in the first Request"
+        if pcsl2:
+            assert pcsl_obj.browse(cr, uid, pcsl2[0]).supplier_id.id == supplier2, "Bad default supplier for P2 in the first Request"
+            assert pcsl_obj.browse(cr, uid, pcsl2[0]).product_qty == 10.0, "Bad quantity for P2 in the first Request"
+            pcsl_obj.write(cr, uid, pcls2, {'supplier_id': False})
 -
-    I check if only one RfQ will be created for the 
+    I try to create Purchase Order
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcs_ids = pcs_obj.search(cr, uid, [])
+    if pcs_ids:
+        assert not pcs_obj.browse(cr, uid, pcs_ids[0]).create_po(), "The system does not raise an error when trying to create PO without supplier on all lines "
+-
+    I fill the supplier for line 2
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcs_ids = pcs_obj.search(cr, uid, [])
+    if pcs_ids:
+        pcsl2 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product2'))])
+        pcsl_obj.write(cr, uid, pcls2, {'supplier_id': supplier1})
+    pcs_obj.browse(cr, uid, pcs_ids[0]).create_po()
+-
+    I check if the created PO has the name of the Request for origin
+-
+  !python {model: purchase.order}: |
+    po_obj = self.pool.get('purchase.order')
+    po_ids = po_obj.search(cr, uid, [('origin', '=', 'PR1')])
+    assert po_ids, "The created Purchase Order hasn't the name of the Request as origin"
+-
+    I confirm the list2
 -
   !python {model: procurement.list}: |
-    pl_obj = self.pool.get('procurement.list')
-    pol_obj = self.pool.get('purchase.order.line')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p1'))])
-    pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
-
-    for pol in pol_obj.browse(cr, uid, pol_ids):
-        assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
+    pl_id1 = self.pool.get('procurement.list').browse(cr, uid, ref('list2'))
+    pl_id1.create_rfq()
 -
-    I check that no purchase order line with P2
+    I check if the supplier choose wizard has been created well
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcsl_obj = self.pool.get('procurement.choose.supplier.line')
+    pcs_ids = pcs_obj.search(cr, uid, [('wizard_id', '=', ref('list2'))]) 
+    assert len(pcs_ids) == 1, "Bad number of Procurement Choose Supplier Wizard"
+    if pcs_ids:
+        pcsl1 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product3'))])
+        pcsl2 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product4'))])
+        assert pcsl1, "No choose supplier line found for P3"
+        assert pcsl2, "No choose supplier line found for P4"
+        if pcsl1:
+            assert pcsl_obj.browse(cr, uid, pcsl1[0]).supplier_id.id == supplier3, "Bad default supplier for P3 in the first Request"
+            assert pcsl_obj.browse(cr, uid, pcsl1[0]).product_qty == 20.0, "Bad quantity for P3 in the first Request"
+        if pcsl2:
+            assert pcsl_obj.browse(cr, uid, pcsl2[0]).supplier_id.id == supplier4, "Bad default supplier for P4 in the first Request"
+            assert pcsl_obj.browse(cr, uid, pcsl2[0]).product_qty == 30.0, "Bad quantity for P4 in the first Request"
+-
+    I trying to create RfQs
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcrfq_obj = self.pool.get('procurement.choose.supplier.rfq')
+    pcs_ids = pcs_obj.search(cr, uid, [])
+    if pcs_ids:
+        pcs_obj.browse(cr, uid, pcs_ids[0]).create_rfq()
+        # <!-- I select S3 and S4 as suppliers for RfQ -->
+        pcrfq_ids = pcrfq_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0])])
+        pcrfq_obj.write(cr, uid, pcrfq_ids, {'supplier_ids': [(6, 0, [ref('supplier3'), ref('supplier4')])]})
+        # <!-- I confirm the creation of RfQ -->
+        for wiz in pcrfq_obj.browse(cr, uid, pcrfq_ids):
+            wiz.create_rfq()
+-
+    I chack that two RfQ have been created
+-
+  !python {model: purchase.order}: |
+    po_obj = self.pool.get('purchase.order')
+    po_ids = po_obj.search(cr, uid, [('origin', '=', 'PR2'), ('state', '=', 'draft')])
+    assert len(po_ids) == 2, "The created Purchase Order haven't the name of the Request as origin"
+    for po in po_obj.browse(cr, uid, po_ids):
+        if po.partner_id.id == supplier3:
+            assert len(po.order_lines) == 2, "RfQ for S3 hasn't two lines"
+        elif po.partner_id.id = supplier4:
+            assert len(po.order_lines) == 2, "RfQ for S4 hasn't two lines"
+-
+    I confirm the list3
 -
   !python {model: procurement.list}: |
-    pl_obj = self.pool.get('procurement.list')
-    pol_obj = self.pool.get('purchase.order.line')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p2'))])
-    assert len(pol_ids) == 0, "No purchase order line found !"
+    pl_id1 = self.pool.get('procurement.list').browse(cr, uid, ref('list3'))
+    pl_id1.create_rfq()
+-
+    I check if the supplier choose wizard has been created well
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcsl_obj = self.pool.get('procurement.choose.supplier.line')
+    pcs_ids = pcs_obj.search(cr, uid, []) 
+    assert len(pcs_ids) == 1, "Bad number of Procurement Choose Supplier Wizard"
+    if pcs_ids:
+        pcsl1_id = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product5'))])
+        assert pcsl1_id, "No choose supplier line found for P5"
+        if pcsl1_id:
+            pcsl1 = pcsl_obj.browse(cr, uid, pcsl1_id[0])
+            assert pcsl1.supplier_id.id == supplier4, "Bad default supplier for P5 in the first Request"
+            assert pcsl1.product_qty == 30.0, "Bad quantity for P5 in the first Request"
+            # <!-- Try to split the line -->
+            pcsl1.split_line()
+-
+    I try to create Purchase Order
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcs_ids = pcs_obj.search(cr, uid, [])
+    if pcs_ids:
+        pcs_obj.browse(cr, uid, pcs_ids[0]).create_po()
+-
+    I fill the supplier for line 2
+-
+  !python {model: procurement.choose.supplier}: |
+    pcs_obj = self.pool.get('procurement.choose.supplier')
+    pcs_ids = pcs_obj.search(cr, uid, [])
+    if pcs_ids:
+        pcsl2 = pcsl_obj.search(cr, uid, [('wizard_id', '=', pcs_ids[0]), ('product_id', '=', ref('product2'))])
+        pcsl_obj.write(cr, uid, pcls2, {'supplier_id': supplier1})
+    pcs_obj.browse(cr, uid, pcs_ids[0]).create_po()
+-
+    I check if the created PO has the name of the Request for origin
+-
+  !python {model: purchase.order}: |
+    po_obj = self.pool.get('purchase.order')
+    po_ids = po_obj.search(cr, uid, [('origin', '=', 'PR1')])
+    assert po_ids, "The created Purchase Order hasn't the name of the Request as origin"

@@ -39,6 +39,7 @@
         'procurement_list_view.xml',
         'procurement_list_wizard.xml',
         'wizard/wizard_import_list_view.xml',
+        'wizard/choose_supplier_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

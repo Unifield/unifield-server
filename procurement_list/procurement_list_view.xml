@@ -34,9 +34,6 @@
                                 <button name="reset" string="Reset to Draft" icon="gtk-ok" type="object" states="cancel" />
                             </group>
                         </page>
-                        <page string="Suppliers">
-                            <field name="supplier_ids" nolabel="1" />
-                        </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
                         </page>

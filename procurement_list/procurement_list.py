@@ -43,10 +43,6 @@ class procurement_list(osv.osv):
         'line_ids': fields.one2many('procurement.list.line', 'list_id', string='Lines', readonly=True,
                                     states={'draft': [('readonly', False)]}),
         'notes': fields.text(string='Notes'),
-        'supplier_ids': fields.many2many('res.partner', 'procurement_list_supplier_rel',
-                                         'list_id', 'supplier_id', string='Suppliers',
-                                         domain="[('supplier', '=', True)]",
-                                         states={'done': [('readonly', True)]}),
         'order_ids': fields.many2many('purchase.order', 'procurement_list_order_rel',
                                       'list_id', 'order_id', string='Orders', readonly=True),
     }
@@ -75,42 +71,22 @@ class procurement_list(osv.osv):
         order_ids = []
 
         for list in self.browse(cr, uid, ids, context=context):
-            # Returns an error message if no suppliers or no products
-            if not list.supplier_ids or len(list.supplier_ids) == 0:
-                raise osv.except_osv(_('Error'), _('No supplier defined for this list !'))
+            # Returns an error message if no products defined
             if not list.line_ids or len(list.line_ids) == 0:
                 raise osv.except_osv(_('Error'), _('No line defined for this list !'))
 
             location_id = self._get_location(cr, uid, list.warehouse_id)
-            # Creates a RfQ for each supplier...
-            for supplier in list.supplier_ids:
-                po_id = purchase_obj.create(cr, uid, {'partner_id': supplier.id,
-                                                      'partner_address_id': supplier.address_get().get('default'),
-                                                      'pricelist_id': supplier.property_product_pricelist.id,
-                                                      'origin': list.name,
-                                                      'location_id': location_id})
-                order_ids.append(po_id)
 
-                # ... with all lines...
-                for line in list.line_ids:
-                    # ... which aren't from stock
-                    if not line.from_stock:
-                        line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
-                                                  'product_id': line.product_id.id,
-                                                  'order_id': po_id,
-                                                  'price_unit': 0.00,
-                                                  'date_planned': list.order_date,
-                                                  'product_qty': line.product_qty,
-                                                  'name': line.product_id.name,})
-                    self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
-
-        self.write(cr, uid, ids, {'state': 'done', 'order_ids': [(6, 0, order_ids)]})
+        context['active_ids'] = ids
+        context['active_id'] = ids[0]
 
         return {'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
+                'res_model': 'procurement.choose.supplier',
                 'view_type': 'form',
-                'view_mode': 'tree,form',
-                'domain': [('id', 'in', order_ids)]}
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+               }
 
     def reset(self, cr, uid, ids, context={}):
         '''
