@@ -1,8 +1,13 @@
 -
-    In order to test the procurement list, I start by creating a new product 'P1'
+    In order to test the procurement list module, I start by creating a new product category
+-
+  !record {model: product.category, id: product_cat1}:
+    name: Categ1
+-
+    I create new product 'P1'
 -
   !record {model: product.product, id: product_product_p1}:
-    categ_id: 'product.product_category_3'
+    categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
     name: P1
@@ -25,7 +30,7 @@
     I create a second product, P2
 -
   !record {model: product.product, id: product_product_p2}:
-    categ_id: 'product.product_category_3'
+    categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
     name: P2
@@ -45,14 +50,37 @@
     weight: 0.0
     weight_net: 0.0
 -
-   I create a procurement list for these two products 
+    I create a partner
+-
+  !record {model: res.partner, id: partner1}:
+    name: Supplier 1
+-
+    I create an address for this partner
+-
+  !record {model: res.partner.address, id: addr1}:
+    partner_id: partner1
+    name: Supplier1
+-
+    I create a second partner
+-
+  !record {model: res.partner, id: partner2}:
+    name: Supplier 2
+-
+    I create an address for this second partner
+-
+  !record {model: res.partner.address, id: addr2}:
+    partner_id: partner2
+    name: Supplier2
+-
+    I create a procurement list for these two products 
 -
   !record {model: procurement.list, id: procurement_list_1}:
     requestor: Administration
-    warehouse_id: stock.stock_warehouse_shop0
+    warehouse_id: stock.warehouse0
     origin: R 20043
     supplier_ids:
-      - base.res_partner_desertic_hispafuentes
+      - partner1
+      - partner2
 -
     I add two lines in this procurement list
 -
@@ -101,8 +129,7 @@
     pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
-        print pl.name, pol.order_id.origin
-        assert pol.order_id.origin == pl.name
+        assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
 -
     I check that no purchase order line with P2
 -
@@ -110,5 +137,4 @@
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
     pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p2'))])
-    print len(pol_ids)
-    assert len(pol_ids) == 0
+    assert len(pol_ids) == 0, "No purchase order line found !"
