@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <record id="msf_view_partner_tree" model="ir.ui.view">
+            <field name="name">msf.view.partner.tree</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='ref']" position="after">
+                    <field name="partner_type" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="msf_view_partner_form" model="ir.ui.view">
+            <field name="name">msf.view.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group/group/field[@name='lang']" position="after">
+                        <field name="partner_type" />
+                    </xpath>
+                    <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
+                        <field name="manufacturer" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="msf_view_res_partner_filter" model="ir.ui.view">
+            <field name="name">msf.view.res.partner.filter</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group/filter[@name='supplier']" position="after">
+                        <filter string="Manufacturers" name="manufacturer" icon="terp-personal" domain="[('manufacturer','=',1)]" help="Manufacturer Partners"/>
+                    </xpath>
+                    <xpath expr="/search/group/field[@name='name']" position="before">
+                        <filter string="Internal" name="internal" icon="gtk-leave-fullscreen" domain="[('partner_type','=','internal')]" help="Internal Partners"/>
+                        <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
+                        <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
+                        <separator orientation="vertical" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+	</data>
+</openerp>
+
