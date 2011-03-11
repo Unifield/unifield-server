@@ -31,26 +31,14 @@ class account_cash_statement(osv.osv):
     _inherit = "account.bank.statement"
 
     _defaults = {
-        'name': 'The name would be generated automatically',
+        'name': '/',
         'state': lambda *a: 'draft',
     }
-    
-    _sql_constraints = [
-        ('name_uniq', 'UNIQUE(name)', _('The CashBox name must be unique!')),
-    ]
 
     def create(self, cr, uid, vals, context={}):
         """
-        Create a Cash Register with a preformed name
+        Create a Cash Register without an error overdue to having open two cash registers on the same journal
         """
-        # Give a Cash Register Name with the following composition : 
-        #+ Cash Journal Code + A Sequence Number (like /02)
-        if 'journal_id' in vals:
-            journal_id = vals.get('journal_id')
-            journal_code = self.pool.get('account.journal').read(cr, uid, journal_id, [('code')], context=context).get('code')
-            seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
-            name = journal_code + seq
-            vals.update({'name': name})
         ##### pick up from openerp source #####
         if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'cash':
             open_close = self._get_cash_open_close_box_lines(cr, uid, context)
@@ -78,8 +66,16 @@ class account_cash_statement(osv.osv):
         """
         when pressing 'Open CashBox' button
         """
-        self.write(cr, uid, ids, {'state' : 'open'})
-        return True
+        # Give a Cash Register Name with the following composition : 
+        #+ Cash Journal Code + A Sequence Number (like /02)
+        st = self.browse(cr, uid, ids)[0]
+        if st.journal_id and st.journal_id.code:
+            seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
+            name = st.journal_id.code + seq
+            res_id = self.write(cr, uid, ids, {'state' : 'open', 'name': name})
+            return res_id
+        else:
+            return False
 
     def button_confirm_cash(self, cr, uid, ids, context={}):
         """
