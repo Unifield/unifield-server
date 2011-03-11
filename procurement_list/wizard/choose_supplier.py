@@ -145,6 +145,7 @@ class procurement_choose_supplier(osv.osv_memory):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'target': 'new',
+                'opened': False,
                 'context': context,
                }
         
