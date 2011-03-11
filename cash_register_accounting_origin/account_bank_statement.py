@@ -273,4 +273,19 @@ class account_bank_statement_line(osv.osv):
         res_ids = acc_move_obj.write(cr, uid, hard_posting_ids, {'state': 'draft'}, context=context)
         return res_ids
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.
+        """
+        # We browse all ids
+        for st_line in self.browse(cr, uid, ids):
+            # if the line have a link to a move we have to make some treatments
+            if st_line.move_ids:
+                # in case of hard posting line : do nothing (because not allowed to change an entry which was posted!
+                if st_line.state == "hard":
+                    raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
+                else:
+                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
+        return super(account_bank_statement_line, self).unlink(cr, uid, ids)
+
 account_bank_statement_line()
