@@ -75,12 +75,40 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = default_amount
         return res
 
+    def _search_state(self, cr, uid, obj, name, args, context={}):
+        """
+        Search elements by state :
+        - draft
+        - temp
+        """
+        res = []
+        if not len(args):
+            return res
+        if args[0][1] != "=":
+            raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
+        if args[0][2] == 'draft':
+            sql = """
+            SELECT st.id FROM account_bank_statement_line st 
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
+            WHERE rel.move_id is null
+            """
+        elif args[0][2] == 'temp':
+            sql = """SELECT st.id FROM account_bank_statement_line st 
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
+            LEFT JOIN account_move m ON m.id = rel.statement_id 
+            WHERE m.state = 'draft'
+            """
+        else:
+            raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
+        cr.execute(sql)
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
+
     _columns = {
         'register_id': fields.many2one("account.account", "Register"),
         'employee_id': fields.many2one("account.account", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
-        'state': fields.function(_get_state, method=True, string="State", type='selection', selection=[('draft', 'Empty'), \
+        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), \
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
             ('account.bank.statement', 'Register')], 128),

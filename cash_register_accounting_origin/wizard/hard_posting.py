@@ -22,30 +22,30 @@
 #
 ##############################################################################
 
-{
-    "name" : "Cash Register",
-    "version" : "1.0",
-    "description" : """
-        This module aims to add Cash Register Attributes for Sprint 1 in Unifield project for MSF.
-    """,
-    "author" : "Tempo Consulting",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", "hr"], # TODO: add msf_work_mandate_6 dependency
-    "init_xml" : [],
-    "update_xml" : [
-        "account_view.xml",
-        'account_bank_statement_workflow.xml',
-        'wizard/wizard_closing_cashbox.xml',
-        'wizard/wizard_cashbox_write_off.xml',
-        'wizard/wizard_temp_posting.xml',
-        'wizard/wizard_hard_posting.xml',
-        'account_cash_statement_sequence.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
+
+class wizard_hard_posting(osv.osv_memory):
+    _name = "wizard.hard.posting"
+
+    def action_confirm_hard_posting(self, cr, uid, ids, context={}):
+        """
+        Hard post some statement lines
+        """
+        if 'active_ids' in context:
+            # Retrieve statement line ids
+            st_line_ids = context.get('active_ids')
+            # Browse statement lines
+            for st_line_id in st_line_ids:
+                # Verify that the line isn't in hard state
+                state = self.pool.get('account.bank.statement.line').browse(cr, uid, [st_line_id])[0].state
+                if state != 'hard':
+                    # If in the good state : temp posting !
+                    self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, [st_line_id], context=context)
+            return { 'type': 'ir.actions.act_window_close',}
+        else:
+            raise osv.except_osv('Warning', 'You have to select some lines before using this wizard.')
+
+wizard_hard_posting()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
