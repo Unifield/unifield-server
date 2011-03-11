@@ -50,15 +50,15 @@ class wizard_temp_posting(osv.osv_memory):
             result = act_obj.read(cr, uid, [id], context=context)[0]
             result['res_id'] = st_line.statement_id.id
             result['view_mode'] = 'form,tree,graph'
+            views_id = {}
+            for (num, typeview) in result['views']:
+                views_id[typeview] = num
+            result['views'] = []
+            for typeview in ['form','tree','graph']:
+                if views_id.get(typeview):
+                    result['views'].append((views_id[typeview], typeview))
+            result['target'] = 'crush'
             return result
-#            return { 
-#                'type': 'ir.actions.act_window',
-#                'res_model': 'account.bank.statement',
-#                'view_type': 'form',
-#                'view_mode': 'form,tree',
-#                'domain': "[('type', '=', 'cash')]",
-#                'res_id': st_line.statement_id.id,
-#                'target': 'crush',}
         else:
             raise osv.except_osv('Warning', 'You have to select some lines before using this wizard.')
 
