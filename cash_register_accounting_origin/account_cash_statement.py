@@ -113,6 +113,38 @@ class account_cash_statement(osv.osv):
                 statement name. This allows the statement entries to have the same references than the     statement itself'),
     }
 
+    def button_wiz_temp_posting(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
+        """
+        domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
+        return {
+            'name': 'Temp Posting',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': domain,
+            'context': context,
+            'target': 'crush', # use any word to crush the actual tab
+        }
+
+    def button_wiz_hard_posting(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
+        """
+        domain = [('statement_id', '=', ids[0]), ('state', '=', 'temp')]
+        return {
+            'name': 'Hard Posting',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': domain,
+            'context': context,
+            'target': 'crush', # use any word to crush the actual tab
+        }
+
 account_cash_statement()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

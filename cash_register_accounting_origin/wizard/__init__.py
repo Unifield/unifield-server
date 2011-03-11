@@ -24,6 +24,8 @@
 
 import cashbox_closing
 import cashbox_write_off
+import temp_posting
+import hard_posting
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

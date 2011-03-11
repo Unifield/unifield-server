@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+
+    <!-- Cash Register Form => Inheritance -->
         <record id="inherit_view_bank_statement_form2" model="ir.ui.view">
             <field name='name'>inherit.view.bank.statement.form2</field>
             <field name='model'>account.bank.statement</field>
@@ -133,5 +135,25 @@
                 </xpath>
             </field>
         </record>
+
+    <!-- Bank Statement Line Tree View -->
+        <record model="ir.ui.view" id="view_account_bank_statement_line_tree">
+            <field name="name">view.account.bank.statement.line.tree</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="Register Line List">
+                    <field name="date" />
+                    <field name="name" string="Description"/>
+                    <field name="account_id" />
+                    <field name="partner_id" />
+                    <field name="amount_in" />
+                    <field name="amount_out" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
     </data>
 </openerp>
