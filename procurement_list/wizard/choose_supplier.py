@@ -38,7 +38,10 @@ class procurement_choose_supplier(osv.osv_memory):
         'date': fields.date(string='Date', readonly=True),
         'line_ids': fields.one2many('procurement.choose.supplier.line', 'wizard_id', string='Procurement Lines'),
     }
-
+    
+    _defaults = {
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
 
     def default_get(self, cr, uid, fields, context={}):
         '''
@@ -79,7 +82,7 @@ class procurement_choose_supplier(osv.osv_memory):
 
     def create_po(self, cr, uid, ids, context={}):
         '''
-        Creates all purchase orders according to choice on wizard
+        Creates all purchase orders according to choices on wizard
         '''
         order_obj = self.pool.get('purchase.order')
         order_line_obj = self.pool.get('purchase.order.line')
@@ -109,7 +112,6 @@ class procurement_choose_supplier(osv.osv_memory):
                 supplier = l.supplier_id.id
             # We create all lines for this supplier
             price_unit = prod_sup_obj.price_get(cr, uid, [l.supplier_id.id], l.product_id.id, l.product_qty)
-            print price_unit, l.supplier_id.id, l.product_id.id
             order_line_obj.create(cr, uid, {'product_uom': l.product_uom.id,
                                             'product_id': l.product_id.id,
                                             'order_id': po_id,
@@ -133,6 +135,19 @@ class procurement_choose_supplier(osv.osv_memory):
                 'domain': [('id', 'in', po_ids)],
                }
         
+    def create_rfq(self, cr, uid, ids, context={}):
+        '''
+        Returns the wizard to choose a list of supplier  
+        '''
+        context.update({'wizard_id': ids[0]})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.supplier.rfq',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                'context': context,
+               }
+        
 procurement_choose_supplier()
 
 
@@ -148,8 +163,82 @@ class procurement_choose_supplier_line(osv.osv_memory):
         'product_qty': fields.float(digits=(16,2), string='Qty', required=True),
         'supplier_id': fields.many2one('res.partner', string='Supplier', domain=[('supplier', '=', 1)]),
     }
+    
+    def split_line(self, cr, uid, ids, context={}):
+        '''
+        Split a line into two lines
+        '''
+        context.update({'line_id': ids[0]})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.line.split',
+                'target': 'new',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'context': context,
+                }
 
 procurement_choose_supplier_line()
+
+
+class procurement_choose_supplier_line_split(osv.osv_memory):
+    _name = 'procurement.choose.line.split'
+    _description = 'Wizard to split a line into two lines'
+    
+    _columns = {
+        'line_id': fields.many2one('procurement.choose.supplier.line', string='Line to split'),
+        'qty': fields.float(digits=(16,2), string='Quantity for the new line', required=True),
+    }
+    
+    def default_get(self, cr, uid, fields, context={}):
+        '''
+        Fills information for the wizard
+        '''
+        line_obj = self.pool.get('procurement.choose.supplier.line')
+        
+        res = super(procurement_choose_supplier_line_split, self).default_get(cr, uid, fields, context)
+        line_id = context.get('line_id', False)
+        
+        if not line_id:
+            return res
+        
+        res['line_id'] = line_id
+        
+        # Default quantity = Old quantity divided by 2
+        res['qty'] = line_obj.browse(cr, uid, line_id, context=context).product_qty/2
+        
+        return res
+    
+    def split(self, cr, uid, ids, context={}):
+        '''
+        Changes the quantity of the old line and creates a new line with the
+        new quantity
+        '''
+        line_obj = self.pool.get('procurement.choose.supplier.line')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # Returns an error if the quantity is negative
+            if obj.qty < 0.00:
+                raise osv.except_osv(_('Error'), _('The new quantity should be positive'))
+            # Changes the quantity on the old line
+            line_obj.write(cr, uid, [obj.line_id.id], {'product_qty': obj.line_id.product_qty-obj.qty})
+            # Creates the new line with new quantity
+            line_obj.create(cr, uid, {'wizard_id': obj.line_id.wizard_id.id,
+                                      'line_id': obj.line_id.line_id.id,
+                                      'product_id': obj.line_id.product_id.id,
+                                      'product_uom': obj.line_id.product_uom.id,
+                                      'product_qty': obj.qty,
+                                      'supplier_id': obj.line_id.supplier_id.id,})
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.supplier',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': obj.line_id.wizard_id.id,
+               }
+    
+procurement_choose_supplier_line_split()
 
 
 class procurement_choose_supplier_rfq(osv.osv_memory):
@@ -159,8 +248,72 @@ class procurement_choose_supplier_rfq(osv.osv_memory):
     _columns = {
         'choose_id': fields.many2one('procurement.choose.supplier', string='Wizard'),
         'supplier_ids': fields.many2many('res.partner', 'supplier_rfq_rel', 'rfq_id', 'supplier_id',
-                                         string='Suppliers'),
+                                         string='Suppliers', domain=[('supplier', '=', 1)]),
     }
+    
+    def default_get(self, cr, uid, fields, context={}):
+        '''
+        Fills information in the wizard 
+        '''
+        res = super(procurement_choose_supplier_rfq, self).default_get(cr, uid, fields, context=context)
+        wizard_id = context.get('wizard_id', False)
+        
+        if not wizard_id:
+            return res
+        
+        res['choose_id'] = wizard_id
+        
+        return res
+    
+    def create_rfq(self, cr, uid, ids, context={}):
+        '''
+        Creates Requests for Quotation for each supplier with all lines
+        '''
+        order_obj = self.pool.get('purchase.order')
+        order_line_obj = self.pool.get('purchase.order.line')
+        proc_list_obj = self.pool.get('procurement.list')
+        proc_line_obj = self.pool.get('procurement.list.line')
+        
+        po_ids = []  # List of all created RfQ
+        
+        for obj in self.browse(cr, uid, ids):
+            origin = obj.choose_id.list_id.name
+            location_id = proc_list_obj._get_location(cr, uid, obj.choose_id.list_id.warehouse_id)
+            
+            lines = []
+            for l in obj.choose_id.line_ids: 
+                lines.append({'line_id': l.line_id,
+                              'product_id': l.product_id.id,
+                              'product_uom': l.product_uom.id,
+                              'product_name': l.product_id.name,
+                              'product_qty': l.product_qty,})
+             
+            # Creates one RfQ for each supplier
+            for s in obj.supplier_ids:
+                po_id = order_obj.create(cr, uid, {'partner_id': s.id,
+                                                   'partner_address_id': s.address_get().get('default'),
+                                                   'pricelist_id': s.property_product_pricelist.id,
+                                                   'origin': origin,
+                                                   'location_id': location_id})
+                po_ids.append(po_id)
+                # Creates lines
+                for l in lines:
+                    order_line_obj.create(cr, uid, {'product_uom': l.get('product_uom'),
+                                                    'product_id': l.get('product_id'),
+                                                    'order_id': po_id,
+                                                    'price_unit': 0.00,
+                                                    'date_planned': obj.choose_id.date,
+                                                    'product_qty': l.get('product_qty'),
+                                                    'name': l.get('product_name'),
+                                                    })
+        proc_id = self.browse(cr, uid, ids[0]).choose_id.list_id.id
+        proc_list_obj.write(cr, uid, proc_id, {'state': 'done'})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', po_ids)]}
 
 procurement_choose_supplier_rfq()
 
