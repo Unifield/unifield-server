@@ -39,7 +39,7 @@ class account_cash_statement(osv.osv):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
         """
-        ##### pick up from openerp source #####
+        # @@@override@account.account_cash_statement.create()
         if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'cash':
             open_close = self._get_cash_open_close_box_lines(cr, uid, context)
             if vals.get('starting_details_ids', False):
@@ -57,7 +57,7 @@ class account_cash_statement(osv.osv):
                 'ending_details_ids': False,
                 'starting_details_ids': False
             })
-        ##### end of pickup #####
+        # @@@end
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         self.write(cr, uid, [res_id], {})
         return res_id
@@ -81,7 +81,7 @@ class account_cash_statement(osv.osv):
         """
         when you're attempting to close a CashBox via 'Close CashBox'
         """
-        # First verifying that all lines are in hard state
+        # First verify that all lines are in hard state
         for st in self.browse(cr, uid, ids, context=context):
             for line in st.line_ids:
                 if line.state != 'hard':

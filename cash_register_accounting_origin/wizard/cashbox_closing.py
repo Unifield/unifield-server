@@ -34,27 +34,27 @@ class wizard_closing_cashbox(osv.osv_memory):
     }
     
     def button_close_cashbox(self, cr, uid, ids, context={}):
-        # retrieving context active id (verification)
+        # retrieve context active id (verification)
         id = context.get('active_id', False)
         if not id:
             raise osv.except_osv('Warning', _("You don't select any item!"))
         else:
-            # retrieving user's choice
+            # retrieve user's choice
             res = self.browse(cr,uid,ids)[0].be_sure
             if res:
                 st_obj = self.pool.get('account.bank.statement')
-                # retrieving Calculated balance
+                # retrieve Calculated balance
                 balcal = st_obj.read(cr, uid, id, ['balance_end']).get('balance_end')
-                # retrieving CashBox Balance
+                # retrieve CashBox Balance
                 bal = st_obj.read(cr, uid, id, ['balance_end_cash']).get('balance_end_cash')
                 
-                # comparing the selected balances
+                # compare the selected balances
                 equivalent = balcal == bal
                 if not equivalent:
                     res_id = st_obj.write(cr, uid, [id], {'state' : 'partial_close'})
                     return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
                 else:
-                    ##### pick up from openerp source #####
+                    # @@@override@account.account_bank_statement.button_confirm_bank()
                     obj_seq = self.pool.get('ir.sequence')
                     if context is None:
                         context = {}
@@ -89,7 +89,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                                 if not st.journal_id.analytic_journal_id:
                                     raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") \
                                         % (st.journal_id.name,))
-                    ##### end of pickup #####
+                    # @@@end
                             if not st_line.amount:
                                  continue
                         res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm'}, context=context)
