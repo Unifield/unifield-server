@@ -133,6 +133,7 @@
             <rng:optional><rng:attribute name="limit"/></rng:optional>
             <rng:optional><rng:attribute name="min_rows"/></rng:optional>
             <rng:optional><rng:attribute name="on_write"/></rng:optional>
+            <rng:optional><rng:attribute name="expand_button"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="field"/>
