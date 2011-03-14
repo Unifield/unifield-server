@@ -46,7 +46,7 @@ class cashbox_write_off(osv.osv_memory):
         if 'active_id' in context:
             # search values
             cashbox_id = context.get('active_id')
-            cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)
+            cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)[0]
             amount = cashbox.balance_end - cashbox.balance_end_cash
             res.update({'amount': amount})
         return res
@@ -62,7 +62,7 @@ class cashbox_write_off(osv.osv_memory):
             raise osv.except_osv('Warning', 'You cannot decide about Cash Discrepancy without selecting any CashBox!')
         else:
             # search cashbox object
-            cashbox = self.pool.get('account.bank.statement').browse(cr, uid, id)
+            cashbox = self.pool.get('account.bank.statement').browse(cr, uid, id)[0]
             cstate = cashbox.state
             # What about cashbox state ?
             if cstate not in ['partial_close', 'confirm']:
@@ -125,7 +125,7 @@ class cashbox_write_off(osv.osv_memory):
                             'account_id': bank_account_id,
                             'credit': bank_credit,
                             'debit': bank_debit,
-                            'statement_id': id,
+                            'statement_id': cashbox.id,
                             'journal_id': journal_id,
                             'period_id': period_id,
                             'currency_id': currency_id,
@@ -140,7 +140,7 @@ class cashbox_write_off(osv.osv_memory):
                             'account_id': account_id,
                             'credit': writeoff_credit,
                             'debit': writeoff_debit,
-                            'statement_id': id,
+                            'statement_id': cashbox.id,
                             'journal_id': journal_id,
                             'period_id': period_id,
                             'currency_id': currency_id,
