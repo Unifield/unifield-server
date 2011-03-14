@@ -83,14 +83,22 @@
  !python {model: account.bank.statement}: |
       self.button_confirm_cash(cr, uid, [ref("account_bank_statement_1")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
         "active_ids": [ref("account_bank_statement_1")], "active_id": ref("account_bank_statement_1"), })
-
+-
+  I click on "Are you sure ?" in the wizard to confirm cashbox closing
+-
+  !record {model: wizard.closing.cashbox, id: wizard_closing_cashbox_1}:
+    be_sure: 1
+-
+  I click on the 'Confirm' button to close the cashbox
+-
+  !python {model: wizard.closing.cashbox}: |
+      self.button_close_cashbox(cr, uid, [ref("wizard_closing_cashbox_1")], { "active_ids": [ref("account_bank_statement_1")], \
+        "active_id": ref("account_bank_statement_1"), })
 -
   I check that bank statement state is now "Partial Close"
 -
   !assert {model: account.bank.statement, id: account_bank_statement_1}:
-    - state == 'partial close'
--
-# Do the wizard with partial close
+    - state == 'partial_close'
 -
   I check that move lines created for bank statement and move state is Posted
 -
@@ -101,6 +109,19 @@
     for line in bank_data.move_line_ids:
       assert line.move_id.state == 'posted', "Move state is not posted"
 -
-  I check that the write-off is written
+  I launch the "Cash Discrepancy Case" wizard and do a write-off
 -
-#FIXME
+  !record {model: cashbox.write.off, id: cashbox_write_off_1}: 
+    choice: writeoff
+    account_id: account.a_recv
+-
+  I check that the amount is 50.0
+-
+  !python {model: cashbox.write.off}: |
+    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": [ref('account_bank_statement_1')]})
+    result['amount'] == 50.0
+-
+  I click on the 'Ok' button to do the write-off
+-
+  !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
+    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": [ref("account_bank_statement_1")]})
