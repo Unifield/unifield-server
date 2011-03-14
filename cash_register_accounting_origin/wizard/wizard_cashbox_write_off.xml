@@ -8,7 +8,11 @@
             <field name='arch' type='xml'>
                 <form string="Write-off - Wizard">
                     <separator string="Your decision about the action to do on this CashBox" />
-                    <field name='choice' />
+                    <field name='choice'/>
+                    <newline />
+                    <field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')]}"/>
+                    <newline />
+                    <field name='amount' attrs="{'invisible':[('choice','!=','writeoff')]}"/>
                     <newline />
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />

@@ -41,7 +41,7 @@ class account_bank_statement_line(osv.osv):
         # Preparation of some variables
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
-            # Verifying move existence
+            # Verify move existence
             if not absl.move_ids:
                 res[absl.id] = 'draft'
                 continue
@@ -62,7 +62,7 @@ class account_bank_statement_line(osv.osv):
         # Variable initialisation
         default_amount = 0.0
         res = {}
-        # Browsing account bank statement lines
+        # Browse account bank statement lines
         for absl in self.browse(cr, uid, ids, context=context):
             # amount is positive so he should be in amount_in
             if absl.amount > 0 and field_name == "amount_in":
@@ -82,22 +82,27 @@ class account_bank_statement_line(osv.osv):
         - temp
         """
         res = []
+        # Test how many arguments we have
         if not len(args):
             return res
+        # We just support "=" case
         if args[0][1] != "=":
             raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
+        # Case where we search draft lines
         if args[0][2] == 'draft':
             sql = """
             SELECT st.id FROM account_bank_statement_line st 
             LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
             WHERE rel.move_id is null
             """
+        # Case where we search temp lines
         elif args[0][2] == 'temp':
             sql = """SELECT st.id FROM account_bank_statement_line st 
             LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
             LEFT JOIN account_move m ON m.id = rel.statement_id 
             WHERE m.state = 'draft'
             """
+        # Non excpected case
         else:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
         cr.execute(sql)
@@ -238,10 +243,9 @@ class account_bank_statement_line(osv.osv):
         """
         # Variable initialisation
         res = []
-        if context:
-            statement_id = context.get('active_id', False)
-        if not statement_id:
+        if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
+        statement_id = ids[0]
         cash_statement = self.browse(cr, uid, statement_id)
         cash_st_obj = self.pool.get("account.bank.statement")
         acc_move_obj = self.pool.get("account.move")
@@ -256,7 +260,7 @@ class account_bank_statement_line(osv.osv):
                 res_id = cash_st_obj.create_move_from_st_line(cr, uid, absl.id, currency_id, st_name, context=context)
                 res.append(res_id)
             elif absl.state == "temp":
-                # Change state of thess moves
+                # Change state of these moves
                 for move in absl.move_ids:
                     res.append(acc_move_obj.write(cr, uid, [move.id], {'state': 'posted'}, context=context))
         return res
