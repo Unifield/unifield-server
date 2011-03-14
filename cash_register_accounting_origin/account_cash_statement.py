@@ -129,9 +129,9 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
-        domain = [('statement_id', '=', ids[0]), ('state', '=', 'temp')]
+        domain = [('statement_id', '=', ids[0]), ('state', 'in', 'draft,temp')]
         return {
-            'name': 'Hard Posting',
+            'name': 'Select elements for Hard Posting',
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',

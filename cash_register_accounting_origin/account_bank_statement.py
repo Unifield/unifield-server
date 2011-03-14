@@ -38,7 +38,7 @@ class account_bank_statement_line(osv.osv):
         - hard posting
         - unknown if an error occured or anything else (for an example the move have a new state)
         """
-        # Preparation of some variables
+        # Prepare some variables
         res = {}
         for absl in self.browse(cr, uid, ids, context=context):
             # Verify move existence
@@ -86,27 +86,44 @@ class account_bank_statement_line(osv.osv):
         if not len(args):
             return res
         # We just support "=" case
-        if args[0][1] != "=":
-            raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
+        if args[0][1] not in ['=', 'in']:
+            raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Case where we search draft lines
-        if args[0][2] == 'draft':
-            sql = """
+        sql_draft = """
             SELECT st.id FROM account_bank_statement_line st 
             LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
             WHERE rel.move_id is null
             """
-        # Case where we search temp lines
-        elif args[0][2] == 'temp':
-            sql = """SELECT st.id FROM account_bank_statement_line st 
+        sql_temp = """SELECT st.id FROM account_bank_statement_line st 
             LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
             LEFT JOIN account_move m ON m.id = rel.statement_id 
             WHERE m.state = 'draft'
             """
+        if args[0][2] == 'draft':
+            sql = sql_draft
+            cr.execute(sql)
+            result = cr.fetchall()
+            print result
+        # Case where we search temp lines
+        elif args[0][2] == 'temp':
+            sql = sql_temp
+            cr.execute(sql)
+            result = cr.fetchall()
+        # Case where we search with 'in'
+        elif args[0][1] == 'in':
+            # if we search draft and temp posting lines
+            if args[0][2] == 'draft,temp':
+                cr.execute(sql_draft)
+                result_draft = cr.fetchall()
+                cr.execute(sql_temp)
+                result_temp = cr.fetchall()
+                result = result_draft + result_temp
+            else:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Non excpected case
         else:
-            raise osv.except_osv(_('Warning'), _('This filter is not implemented!'))
-        cr.execute(sql)
-        return [('id', 'in', [x[0] for x in cr.fetchall()])]
+            raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
+        return [('id', 'in', [x[0] for x in result])]
 
     _columns = {
         'register_id': fields.many2one("account.account", "Register"),
@@ -146,7 +163,7 @@ class account_bank_statement_line(osv.osv):
         """
         # First update amount
         values = self._updating_amount(values=values)
-        # Then creating a new bank statement line
+        # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
     def write(self, cr, uid, ids, values, context={}):
@@ -154,9 +171,9 @@ class account_bank_statement_line(osv.osv):
         Write some existing account bank statement lines with 'values'.
         
         """
-        # Preparing some values
+        # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
-        # Verifying that the statement line isn't in hard state
+        # Verify that the statement line isn't in hard state
         if state  == 'hard':
             return False
         # First update amount
@@ -171,22 +188,22 @@ class account_bank_statement_line(osv.osv):
             for st_line in self.browse(cr, uid, ids, context=context):
                 for move_line_id in acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id)]):
                     move_line = acc_move_line_obj.read(cr, uid, [move_line_id], context=context)[0]
-                    # Updating values
+                    # Update values
                     # Let's have a look to the amount
-                    # first retrieving some values
+                    # first retrieve some values
                     # Because of sequence problems and multiple writing on lines, we have to see if variables are given
                     default_st_account = None
                     if 'amount' in values and 'credit' in move_line and 'debit' in move_line:
                         amount = values.get('amount', False)
                         credit = move_line.get('credit', False)
                         debit = move_line.get('debit', False)
-                        # then choosing where to place amount
+                        # then choose where to place amount
                         new_debit = debit
                         new_credit = credit
                         if amount and credit or debit:
                             line_is_debit = False
                             line_is_credit = False
-                            # then choosing where take it
+                            # then choose where take it
                             if debit > credit:
                                 new_debit = abs(amount)
                                 new_credit = 0.0
@@ -216,13 +233,13 @@ class account_bank_statement_line(osv.osv):
                                     new_amount = -amount
                                 if currency_id == st_line.company_id.currency_id.id:
                                     new_amount = 0.0
-                                # updating amount_currency for the move line
+                                # update amount_currency for the move line
                                 move_line_values.update({'amount_currency': new_amount})
                             # Nonetheless the result, we have to update debit and credit
                             move_line_values.update({'debit': new_debit, 'credit': new_credit})
 
                     # Then we try to search account_id in order to produce 'account_id' value for the account move line.
-                    #+ But for that, searching if we are in a debit line or a credit line
+                    #+ But for that, search if we are in a debit line or a credit line
                     if default_st_account:
                         st_line_account = st_line.account_id.id
                         move_line_account = move_line.get('account_id')[0]
@@ -231,9 +248,9 @@ class account_bank_statement_line(osv.osv):
                         else:
                             new_account = default_st_account
                         move_line_values.update({'account_id': new_account})
-                    # writing of new values
+                    # write of new values
                     acc_move_line_obj.write(cr, uid, [move_line_id], move_line_values, context=context)
-        # Updating the bank statement lines with 'values'
+        # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
     def button_hard_posting(self, cr, uid, ids, context={}):
@@ -250,13 +267,13 @@ class account_bank_statement_line(osv.osv):
         cash_st_obj = self.pool.get("account.bank.statement")
         acc_move_obj = self.pool.get("account.move")
         currency_id = cash_statement.statement_id.journal_id.company_id.currency_id.id
-        # browsing all statement lines for creating move lines
+        # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
-            # creating move lines
+            # create move lines
             if absl.state == "draft":
                 #FIXME: which code could we return for the move line ?
                 st_name = cash_statement.name + '/' + str(absl.sequence)
-                # creating move from statement line
+                # create move from statement line
                 res_id = cash_st_obj.create_move_from_st_line(cr, uid, absl.id, currency_id, st_name, context=context)
                 res.append(res_id)
             elif absl.state == "temp":
