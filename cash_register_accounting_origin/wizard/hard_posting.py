@@ -38,11 +38,27 @@ class wizard_hard_posting(osv.osv_memory):
             # Browse statement lines
             for st_line_id in st_line_ids:
                 # Verify that the line isn't in hard state
-                state = self.pool.get('account.bank.statement.line').browse(cr, uid, [st_line_id])[0].state
+                st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, [st_line_id])[0]
+                state = st_line.state
                 if state != 'hard':
                     # If in the good state : temp posting !
                     self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, [st_line_id], context=context)
-            return { 'type': 'ir.actions.act_window_close',}
+            mod_obj = self.pool.get('ir.model.data')
+            act_obj = self.pool.get('ir.actions.act_window')
+            result = mod_obj._get_id(cr, uid, 'account', 'action_view_bank_statement_tree')
+            id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
+            result = act_obj.read(cr, uid, [id], context=context)[0]
+            result['res_id'] = st_line.statement_id.id
+            result['view_mode'] = 'form,tree,graph'
+            views_id = {}
+            for (num, typeview) in result['views']:
+                views_id[typeview] = num
+            result['views'] = []
+            for typeview in ['form','tree','graph']:
+                if views_id.get(typeview):
+                    result['views'].append((views_id[typeview], typeview))
+            result['target'] = 'crush'
+            return result
         else:
             raise osv.except_osv('Warning', 'You have to select some lines before using this wizard.')
 
