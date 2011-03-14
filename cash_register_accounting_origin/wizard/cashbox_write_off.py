@@ -117,7 +117,7 @@ class cashbox_write_off(osv.osv_memory):
                         # move lines are the opposite of bank for the writeoff
                         writeoff_debit = bank_credit
                         writeoff_credit = bank_debit
-                        # creating the bank account move line
+                        # create the bank account move line
                         bank_move_line_vals = {
                             'name': description,
                             'date': curr_date,
