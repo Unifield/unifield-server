@@ -43,7 +43,9 @@
         'account_cash_statement_sequence.xml',
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        'test/account_cash_statement.yml',
+    ],
     "installable": True,
     "active": False
 }
