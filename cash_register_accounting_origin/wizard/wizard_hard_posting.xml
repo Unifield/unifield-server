@@ -11,7 +11,7 @@
                             <label string="Are you sure to hard post these lines ?"/>
                             <group colspan="4">
                                 <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
-                                <button name="action_confirm_hard_posting" string="Temp Post" type="object" icon="gtk-apply" colspan="2" />
+                                <button name="action_confirm_hard_posting" string="Hard Post" type="object" icon="gtk-apply" colspan="2" />
                             </group>
                         </form>
                   </field>
