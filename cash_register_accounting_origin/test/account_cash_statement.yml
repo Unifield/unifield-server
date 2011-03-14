@@ -1,0 +1,106 @@
+-
+  In order to test Cash Register I create a Cash Register with a journal in EURO, then I confirm it and check it's move created
+-
+  I create a Cash Register with Opening and Closing balance 1500.
+-
+ !record {model: account.bank.statement, id: account_bank_statement_1}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account.cash_journal
+    name: /
+    period_id: account.period_10
+    user_id: base.user_root
+    starting_details_ids:
+      -  pieces: 100.0
+         number: 10
+         subtotal: 1000.0
+      -  pieces: 100.0
+         number: 5
+         subtotal: 500.0
+    balance_start: 1500.0
+    balance_end: 1500.0
+-
+  I check that Initially Cash Register is in the "Draft" state
+-
+  !assert {model: account.bank.statement, id: account_bank_statement_1}:
+    - state == 'draft'
+-
+  I clicked on Open CashBox button to open the cashbox
+-
+ !python {model: account.bank.statement}: |
+    self.button_open(cr, uid, [ref("account_bank_statement_1")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_1")], "active_id": ref("account_bank_statement_1"), })
+-
+  I check that now Cash register is in the "Open" state
+-
+  !assert {model: account.bank.statement, id: account_bank_statement_1}:
+    - state == 'open'
+-
+  I enter values in Closing balance before close the cashbox
+-
+  !record {model: account.bank.statement, id: account_bank_statement_1}:
+    line_ids:
+      - account_id: account.a_recv
+        amount: 500.0
+        date: !eval time.strftime('%Y-%m-%d')
+        name: test1
+        partner_id: base.res_partner_4
+        sequence: 0.0
+        type: general
+      - account_id: account.a_recv
+        amount: 380.0
+        date: !eval time.strftime('%Y-%m-%d')
+        name: test2
+        partner_id: base.res_partner_3
+        sequence: 1.0
+        type: general
+      - account_id: account.a_recv
+        amount: 320.0
+        date: !eval time.strftime('%Y-%m-%d')
+        name: test3
+        partner_id: base.res_partner_4
+        sequence: 2.0
+        type: general
+    balance_end: 300.0
+    ending_details_ids:
+      -  pieces: 50.0
+         number: 1
+         subtotal: 50.0
+      -  pieces: 100.0
+         number: 2
+         subtotal: 200.0
+    balance_end_cash: 250.0
+-
+  I clicked on each line to hard post them
+-
+    !python {model: account.bank.statement.line}: |
+        absl_obj = self.pool.get('account.bank.statement.line')
+        absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_1"))])
+        for id in absl_ids:
+            absl_obj.button_hard_posting(cr, uid, [id])
+-
+  I clicked on Close CashBox button to close the cashbox
+-
+ !python {model: account.bank.statement}: |
+      self.button_confirm_cash(cr, uid, [ref("account_bank_statement_1")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_1")], "active_id": ref("account_bank_statement_1"), })
+
+-
+  I check that bank statement state is now "Partial Close"
+-
+  !assert {model: account.bank.statement, id: account_bank_statement_1}:
+    - state == 'partial close'
+-
+# Do the wizard with partial close
+-
+  I check that move lines created for bank statement and move state is Posted
+-
+  !python {model: account.bank.statement}: |
+    move_line_obj = self.pool.get('account.move.line')
+    bank_data = self.browse(cr, uid, ref("account_bank_statement_1"))
+    assert bank_data.move_line_ids, "Move lines not created for bank statement"
+    for line in bank_data.move_line_ids:
+      assert line.move_id.state == 'posted', "Move state is not posted"
+-
+  I check that the write-off is written
+-
+#FIXME
