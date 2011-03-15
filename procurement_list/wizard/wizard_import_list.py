@@ -59,10 +59,11 @@ class wizard_import_list(osv.osv_memory):
         '''
         Simply close the wizard
         '''
+#        return {'type': 'ir.actions.act_window_close', 'active_id' : context.get('list_id', False),}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.list',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': context.get('list_id'),
                 'target': 'crush'}
 
