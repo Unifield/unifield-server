@@ -103,7 +103,6 @@ class account_bank_statement_line(osv.osv):
             sql = sql_draft
             cr.execute(sql)
             result = cr.fetchall()
-            print result
         # Case where we search temp lines
         elif args[0][2] == 'temp':
             sql = sql_temp
