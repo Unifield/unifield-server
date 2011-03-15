@@ -68,7 +68,7 @@
                                         <field name="amount_out" readonly="0"/>
                                         <separator colspan="4" string="Notes"/>
                                         <field colspan="4" name="note" nolabel="1"/>
-                                        <field name="state"/>
+                                        <field name="state" readonly="True"/>
                                     </form>
                                 </field>
                             </page>
@@ -157,6 +157,60 @@
             </field>
         </record>
 
+<!-- Bank Register Filter -->
+
+        <record id="view_account_bank_statement_filter" model="ir.ui.view">
+            <field name="name">account.cash.statement.select</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Bank Registers">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
+                        <filter string="Confirmed" domain="[('state','=','confirm')]" icon="terp-camera_test"/>
+                        <separator orientation="vertical"/>
+                        <field name="date"/>
+                        <field name="name"/>
+                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <!-- Bank Register Search Form -->
+        <record id="view_bank_statement_search" model="ir.ui.view">
+            <field name="name">account.bank.statement.search</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Bank Registers">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
+                        <filter string="Confirmed" domain="[('state','=','confirm')]" icon="terp-camera_test"/>
+                        <separator orientation="vertical"/>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="period_id"/>
+                        <field name="journal_id" widget="selection" domain="[('type', '=', 'bank')]" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
     <!-- Bank Register Form => Inheritance -->
         <record id="inherit_view_bank_statement_form" model="ir.ui.view">
             <field name='name'>inherit.view.bank.statement.form</field>
@@ -199,9 +253,10 @@
                                         <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                        <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
-                                        <field name="amount" invisible="1"/>
+                                        <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
@@ -222,6 +277,7 @@
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
+                                        <field name="reconciled"/>
                                         <field name="sequence" readonly="0" invisible="1"/>
                                         <separator colspan="4" string="Notes"/>
                                         <field colspan="4" name="note" nolabel="1"/>
@@ -244,6 +300,42 @@
                 </xpath>
             </field>
         </record>
+
+    <!--Bank Register modification to change "Bank Statement" into "Bank Register" -->
+
+        <record id="action_bank_statement_tree" model="ir.actions.act_window">
+            <field name="name">Bank Registers</field>
+            <field name="res_model">account.bank.statement</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,graph</field>
+            <field name="domain">[('journal_id.type', '=', 'bank')]</field>
+            <field name="context">{'journal_type':'bank'}</field>
+            <field name="search_view_id" ref="view_bank_statement_search"/>
+            <field name="help">A bank register is a summary of all financial transactions occurring over a given period of time on a deposit account, 
+                a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is 
+                to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form.
+            </field>
+        </record>
+
+    <record id="action_bank_statement_periodic_tree" model="ir.actions.act_window">
+            <field name="name">Bank Registers</field>
+            <field name="res_model">account.bank.statement</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,graph</field>
+            <field name="domain">[('journal_id.type', '=', 'bank')]</field>
+            <field name="search_view_id" ref="view_bank_statement_search"/>
+            <field name="context">{'journal_type':'bank'}</field>
+        </record>
+
+        <menuitem string="Bank Registers" action="action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" 
+            sequence="7"/>
+
+        <act_window
+           id="act_account_journal_2_account_bank_statement"
+           name="Bank registers"
+           context="{'search_default_journal_id':active_id,}"
+           res_model="account.bank.statement"
+           src_model="account.journal"/>
 
     </data>
 </openerp>
