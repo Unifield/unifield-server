@@ -3,7 +3,7 @@
 	<data>
         
 	<record id="action_compare_rfq" model="ir.actions.server">
-            <field name="name">Compare RfQ 2</field>
+            <field name="name">Compare RfQ</field>
             <field name="model_id" ref="model_wizard_compare_rfq"/>
             <field name="state">code</field>
             <field name="code">action = obj.start_compare_rfq(context=context)</field>
@@ -12,7 +12,7 @@
         <record id="ir_open_compare_rfq" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">purchase.order</field>
-            <field name="name">Compare RfQ 2</field>
+            <field name="name">Compare RfQ</field>
             <field eval="'ir.actions.server,%d'%action_compare_rfq" name="value"/>
             <field eval="True" name="object"/>
         </record>
@@ -39,7 +39,6 @@
     		<field name="type">tree</field>
     		<field name="arch" type="xml">
     			<tree string="Compared products" editable="top">
-    				<field name="compare_id" />
     				<field name="product_id" />
     				<field name="supplier_id" />
     				<field name="po_line_ids" />
@@ -48,14 +47,14 @@
     		</field>
     	</record>
     	
-    	<act_window id="compare_rfq"
+    	<!-- <act_window id="compare_rfq"
     		key2="client_action_multi"
     		name="Compare RfQ"
     		res_model="wizard.compare.rfq"
     		src_model="purchase.order"
     		view_mode="form"
     		view_type="form"
-    		target="new" />
+    		target="new" />-->
     		
     	<record id="wizard_choose_supplier_form_view" model="ir.ui.view">
     		<field name="name">wizard.choose.supplier.form.view</field>
