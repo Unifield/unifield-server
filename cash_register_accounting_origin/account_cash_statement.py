@@ -107,6 +107,10 @@ class account_cash_statement(osv.osv):
             'name': fields.char('Name', size=64, required=False, readonly=True, \
                 help='if you give the Name other than     /, its created Accounting Entries Move will be with same name as \
                 statement name. This allows the statement entries to have the same references than the     statement itself'),
+            'period_id': fields.many2one('account.period', 'Period', required=True, states={'partial_close':[('readonly', True)], \
+                'confirm':[('readonly', True)]}),
+            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', \
+                states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)]}),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context={}):
