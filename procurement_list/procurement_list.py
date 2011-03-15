@@ -101,6 +101,7 @@ class procurement_list(osv.osv):
                                                   'price_unit': 0.00,
                                                   'date_planned': list.order_date,
                                                   'product_qty': line.product_qty,
+                                                  'procurement_line_id': line.id,
                                                   'name': line.product_id.name,})
                     self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
 
@@ -147,6 +148,10 @@ class procurement_list_line(osv.osv):
         'latest': fields.char(size=64, string='Latest document', readonly=True),
         'list_id': fields.many2one('procurement.list', string='List', required=True, ondelete='cascade'),
     }
+    
+    _defaults = {
+        'latest': lambda *a: '',
+    }
 
     def product_id_change(self, cr, uid, ids, product_id, context={}):
         '''
@@ -165,6 +170,27 @@ class procurement_list_line(osv.osv):
         return {'value': v}
 
 procurement_list_line()
+
+
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+    
+    _columns = {
+        'procurement_line_id': fields.many2one('procurement.list.line', string='Procurement Line', readonly=True, ondelete='set null'),
+    }
+    
+    def action_confirm(self, cr, uid, ids, context={}):
+        '''
+        Changes the status of the procurement line
+        '''
+        proc_line_obj = self.pool.get('procurement.list.line')
+        for line in self.browse(cr, uid, ids):
+            proc_line_obj.write(cr, uid, [line.procurement_line_id.id], {'latest': line.order_id.name})
+        
+        return super(purchase_order_line, self).action_confirm(cr, uid, ids, context=context)
+    
+purchase_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

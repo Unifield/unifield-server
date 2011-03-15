@@ -37,6 +37,15 @@
                         <page string="Suppliers">
                             <field name="supplier_ids" nolabel="1" />
                         </page>
+                        <page string="Sourcing Documents">
+                        	<field name="order_ids" nolabel="1" colspan="4">
+                        		<tree string="Sourcing Documents" colors="blue:state=='draft'">
+                        			<field name="name" />
+                        			<field name="partner_id" />
+                        			<field name="state" />
+                        		</tree>
+                        	</field>
+                        </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
                         </page>
