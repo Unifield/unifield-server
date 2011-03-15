@@ -59,7 +59,12 @@ class wizard_import_list(osv.osv_memory):
         '''
         Simply close the wizard
         '''
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.list',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': context.get('list_id'),
+                'target': 'crush'}
 
     def default_get(self, cr, uid, fields, context={}):
         '''
@@ -166,6 +171,7 @@ class wizard_import_list(osv.osv_memory):
             context['message'] = 'All lines have been succesfully imported !'
 
         context['step'] = 'import'
+        context['list_id'] = list_id
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.list.import',
