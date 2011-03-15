@@ -118,10 +118,10 @@
   I check that the amount is 50.0
 -
   !python {model: cashbox.write.off}: |
-    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": [ref('account_bank_statement_1')]})
+    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref('account_bank_statement_1')})
     result['amount'] == 50.0
 -
   I click on the 'Ok' button to do the write-off
 -
   !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
-    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": [ref("account_bank_statement_1")]})
+    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref("account_bank_statement_1")})
