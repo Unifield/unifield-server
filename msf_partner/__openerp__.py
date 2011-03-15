@@ -39,6 +39,7 @@
         "product_view.xml",
     ],
     "demo_xml": [
+        "partner_demo.xml",
     ],
     "test": [
         "test/msf_partner.yml",
