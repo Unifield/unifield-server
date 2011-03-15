@@ -39,7 +39,8 @@
                                         <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
                                         <field name="employee_id"/>
                                         <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
-                                        <field name="analytic_account_id" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
+                                        <field name="analytic_account_id" 
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
                                             groups="analytic.group_analytic_accounting" />
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
@@ -59,9 +60,10 @@
                                         <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
                                         <field name="employee_id"/>
                                         <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
-                                        <field name="analytic_account_id" domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
+                                        <field name="analytic_account_id" 
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
                                             groups="analytic.group_analytic_accounting" />
-                                        <field name="amount"/>
+                                        <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
                                         <separator colspan="4" string="Notes"/>
@@ -125,10 +127,10 @@
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>
                         </group>
-                        <button name="button_open" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <button name="button_open_cash" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
-                            <button name="button_cancel" states="open" string="Cancel" icon="terp-gtk-stop" type="object" groups="base.group_extended" 
-                                colspan="2"/>
+                            <button name="button_cancel" states="open" string="Cancel" icon="terp-gtk-stop" type="object" 
+                                groups="base.group_extended" colspan="2"/>
                             <button name="button_confirm_cash" states="open" string="Close CashBox" icon="gtk-ok" type="object" colspan="2" />
                         </group>
                     </form>
