@@ -77,12 +77,6 @@ class account_cash_statement(osv.osv):
         else:
             return False
 
-    def button_open_bank(self, cr, uid, ids, context={}):
-        """
-        when pressing 'Open Bank' button
-        """
-        return self.write(cr, uid, ids, {'state': 'open'})
-
     def button_confirm_cash(self, cr, uid, ids, context={}):
         """
         when you're attempting to close a CashBox via 'Close CashBox'

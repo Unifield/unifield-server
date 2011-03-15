@@ -3,8 +3,8 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,30 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+
+class account_bank_statement(osv.osv):
+    _name = "account.bank.statement"
+    _inherit = "account.bank.statement"
+
+    def button_open_bank(self, cr, uid, ids, context={}):
+        """
+        when pressing 'Open Bank' button
+        """
+        return self.write(cr, uid, ids, {'state': 'open'})
+
+    def button_confirm_bank(self, cr, uid, ids, context={}):
+        """
+        When using 'Confirm' button in a bank register
+        """
+        st_line_obj = self.pool.get('account.bank.statement.line')
+        for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
+            reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
+            if not reconciled_state:
+                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm Bank.'))
+        return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
+
+account_bank_statement()
+
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
@@ -124,6 +148,27 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         return [('id', 'in', [x[0] for x in result])]
 
+    def _get_reconciled_state(self, cr, uid, ids, field_name=None, args=None, context={}):
+        """
+        Give the state of reconciliation for the account bank statement line
+        """
+        # Prepare some values
+        res = {}
+        # browse account bank statement lines
+        for absl in self.browse(cr, uid, ids):
+            # browse each move and move lines
+            if absl.move_ids:
+                res[absl.id] = True
+                for move in absl.move_ids:
+                    for move_line in move.line_id:
+                        # Result is false if the account is reconciliable but no reconcile id exists
+                        if move_line.account_id.reconcile and not move_line.reconcile_id:
+                            res[absl.id] = False
+                            break
+            else:
+                res[absl.id] = False
+        return res
+
     _columns = {
         'register_id': fields.many2one("account.account", "Register"),
         'employee_id': fields.many2one("account.account", "Employee"),
@@ -133,6 +178,7 @@ class account_bank_statement_line(osv.osv):
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
             ('account.bank.statement', 'Register')], 128),
+        'reconciled': fields.function(_get_reconciled_state, method=True, string="Amount Reconciled", type='boolean'),
     }
 
     def _updating_amount(self, values):
