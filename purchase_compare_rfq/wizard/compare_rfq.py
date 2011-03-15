@@ -32,25 +32,23 @@ class wizard_compare_rfq(osv.osv_memory):
         'rfq_number': fields.integer(string='# of Quotations', readonly=True),
         'line_ids': fields.one2many('wizard.compare.rfq.line', 'compare_id', string='Lines'),
     }
-    
-    def default_get(self, cr, uid, fields, context={}):
-        '''
-        Initializes data for comparison
-        '''
+
+    def start_compare_rfq(self, cr, uid, ids, context={}):
         order_obj = self.pool.get('purchase.order')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
-
-        if not context.get('end_wizard', False):
-            if not context.get('result', False):
-                if not context.get('active_ids', False):
-                    raise osv.except_osv(_('Error'), _('No quotation found !'))
-                if len(context.get('active_ids', [])) < 2:
-                    raise osv.except_osv(_('Error'), _('You should select at least two quotations to compare !'))
+        
+        # openERP BUG ?
+        ids = context.get('active_ids',[])
+        
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No quotation found !'))
+        if len(ids) < 2:
+            raise osv.except_osv(_('Error'), _('You should select at least two quotations to compare !'))
             
         products = {}
-        res = {'rfq_number': 0, 'line_ids': []}
+        line_ids = []
         
-        for o in order_obj.browse(cr, uid, context.get('active_ids', []), context=context):
+        for o in order_obj.browse(cr, uid, ids, context=context):
             if o.state != 'draft':
                 raise osv.except_osv(_('Error'), _('You cannot compare confirmed Quotations !'))
             for l in o.order_line:
@@ -65,17 +63,23 @@ class wizard_compare_rfq(osv.osv_memory):
                 po_line_ids.append(po_line)
             cmp_line_ids = compare_line_obj.search(cr, uid, [('product_id', '=', p.get('product_id'))])
             if not cmp_line_ids or not context.get('end_wizard', False):
-                #res['line_ids'].append({'product_id': p.get('product_id'), 'po_line_ids': [(6,0,po_line_ids)]})
-                res['line_ids'].append(compare_line_obj.create(cr, uid, {'product_id': p.get('product_id'), 
-                                                                         'po_line_ids': [(6,0,po_line_ids)]}))
+                line_ids.append((0, 0, {'product_id': p.get('product_id'), 'po_line_ids': [(6,0,po_line_ids)]}))
 
             else:
-                res['line_ids'].append(cmp_line_ids[0])
-            
-        res['rfq_number'] = len(context.get('active_ids', [])) 
-         
-        return res
-    
+                line_ids.append((0, 0, cmp_line_ids[0]))
+             
+        rfq_compare_obj = self.pool.get('wizard.compare.rfq')
+        newid = rfq_compare_obj.create(cr, uid, {'rfq_number': len(ids), 'line_ids': line_ids})
+        
+        return {'type': 'ir.actions.act_window',
+            'res_model': 'wizard.compare.rfq',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': newid,
+            'context': context,
+           }
+
 wizard_compare_rfq()
 
 
