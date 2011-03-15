@@ -31,7 +31,7 @@ class account_cash_statement(osv.osv):
     _inherit = "account.bank.statement"
 
     _defaults = {
-        'name': '/',
+        'name': False,
         'state': lambda *a: 'draft',
     }
 
@@ -62,7 +62,7 @@ class account_cash_statement(osv.osv):
         self.write(cr, uid, [res_id], {})
         return res_id
 
-    def button_open(self, cr, uid, ids, context={}):
+    def button_open_cash(self, cr, uid, ids, context={}):
         """
         when pressing 'Open CashBox' button
         """
@@ -110,7 +110,7 @@ class account_cash_statement(osv.osv):
     _columns = {
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), \
                 readonly="True", string='State'),
-            'name': fields.char('Name', size=64, required=True, readonly=True, \
+            'name': fields.char('Name', size=64, required=False, readonly=True, \
                 help='if you give the Name other than     /, its created Accounting Entries Move will be with same name as \
                 statement name. This allows the statement entries to have the same references than the     statement itself'),
     }
