@@ -31,7 +31,7 @@
     "author" : "Tempo Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "hr"], # TODO: add msf_work_mandate_6 dependency
+    "depends" : ["base", "account", "hr", "account_payment"],
     "init_xml" : [],
     "update_xml" : [
         "account_view.xml",
