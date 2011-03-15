@@ -30,7 +30,6 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [
-        "test/adjustment_type.yml",
     ],
     "depends" : [
         "stock",
@@ -41,6 +40,7 @@
         "security/ir.model.access.csv",
     ],
     "demo_xml": [
+        "test/adjustment_type.yml",
     ],
     "test": [
         "test/adjustment_type.yml",

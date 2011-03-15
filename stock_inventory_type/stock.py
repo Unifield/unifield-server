@@ -66,7 +66,6 @@ class stock_inventory(osv.osv):
     _name = 'stock.inventory'
     _inherit = 'stock.inventory'
 
-    # @@@override@ stock.stock_inventory.action_confirm()
     def action_confirm(self, cr, uid, ids, context={}):
         """ Confirm the inventory and writes its finished date
         @return True
@@ -94,9 +93,9 @@ class stock_inventory(osv.osv):
                         'product_uom': line.product_uom.id,
                         'prodlot_id': lot_id,
                         'date': inv.date,
-                        # Add by developer for Unifield
+                        # @@@override@ stock.stock_inventory.action_confirm()
                         'comment': line.comment,
-                        # End of adding for Unifield
+                        # @@@end
                     }
                     if change > 0:
                         value.update( {
@@ -115,16 +114,17 @@ class stock_inventory(osv.osv):
                             'prodlot_id': lot_id,
                             'product_qty': line.product_qty
                         })
-                    # Add by developer for Unifield
+                    # @@@override@ stock.stock_inventory.action_confirm()
                     if type_id:
                         value.update({
                             'type_id': type_id,
                         })
-                    # End of adding for Unifield
+                    # @@@end
                     move_ids.append(self._inventory_line_hook(cr, uid, line, value))
             message = _('Inventory') + " '" + inv.name + "' "+ _("is done.")
             self.log(cr, uid, inv.id, message)
             self.write(cr, uid, [inv.id], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
+            
         return True
 
 stock_inventory()
