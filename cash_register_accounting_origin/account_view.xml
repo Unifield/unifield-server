@@ -155,5 +155,93 @@
             </field>
         </record>
 
+    <!-- Bank Register Form => Inheritance -->
+        <record id="inherit_view_bank_statement_form" model="ir.ui.view">
+            <field name='name'>inherit.view.bank.statement.form</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_bank_statement_form' />
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="replace">
+                    <form string="Bank Register">
+                        <group col="7" colspan="4">
+                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '=', 'open')]}"/>
+                            <field name="date" select="1" on_change="onchange_date(date)"/>
+                            <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1" 
+                                widget="selection"/>
+                            <newline/>
+                            <field name="period_id" readonly="1"/>
+                            <field name="balance_start"/>
+                            <field name="balance_end_real"/>
+                            <field name="currency" invisible="1"/>
+                            <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                        </group>
+                        <group col="2" colspan="4">
+                            <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
+                                context="context"/>
+                            <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
+                                context="context"/>
+                        </group>
+                        <notebook colspan="4">
+                            <page string="Transaction" name="statement_line_ids">
+                                <field colspan="4" name="line_ids" nolabel="1">
+                                    <tree editable="bottom" string="Statement lines">
+                                        <field name="sequence" readonly="1" invisible="1"/>
+                                        <field name="date" groups="base.group_extended" string="Posting Date"/>
+                                        <field name="name" string="Description"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                        <field name="partner_type"/>
+                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                        <field name="employee_id"/>
+                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                        <field name="amount_in" readonly="0"/>
+                                        <field name="amount_out" readonly="0"/>
+                                        <field name="amount" invisible="1"/>
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
+                                            context="context"/>
+                                        <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
+                                            context="context"/>
+                                        <field name="state" readonly="True"/>
+                                    </tree>
+                                    <form string="Statement lines">
+                                        <field name="date" string="Posting Date"/>
+                                        <field name="name" string="Description"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                                        <field name="partner_type"/>
+                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                        <field name="employee_id"/>
+                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                        <field name="amount" invisible="1"/>
+                                        <field name="amount_in" readonly="0"/>
+                                        <field name="amount_out" readonly="0"/>
+                                        <field name="sequence" readonly="0" invisible="1"/>
+                                        <separator colspan="4" string="Notes"/>
+                                        <field colspan="4" name="note" nolabel="1"/>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="Journal Entries" name="move_live_ids">
+                                <field colspan="4" name="move_line_ids" nolabel="1"/>
+                            </page>
+                        </notebook>
+                        <group col="8" colspan="4">
+                            <field name="state" readonly="1"/>
+                            <field name="balance_end" readonly="1"/>
+                            <button name="button_cancel" states="confirm" string="Cancel" type="object" icon="gtk-cancel"/>
+                            <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
+                            <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_confirm_bank" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
+                        </group>
+                    </form>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
