@@ -6,7 +6,7 @@
 -
     I create new product 'P1'
 -
-  !record {model: product.product, id: product_product_p1}:
+  !record {model: product.product, id: product1}:
     categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
@@ -29,7 +29,7 @@
 -
     I create a second product, P2
 -
-  !record {model: product.product, id: product_product_p2}:
+  !record {model: product.product, id: product2}:
     categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
@@ -74,7 +74,7 @@
 -
     I create a procurement list for these two products 
 -
-  !record {model: procurement.list, id: procurement_list_1}:
+  !record {model: procurement.list, id: list1}:
     requestor: Administration
     warehouse_id: stock.warehouse0
     origin: R 20043
@@ -84,26 +84,26 @@
 -
     I add two lines in this procurement list
 -
-  !record {model: procurement.list.line, id: procurement_line1}:
-    product_id: product_product_p1
+  !record {model: procurement.list.line, id: list1_line1}:
+    product_id: product1
     product_uom_id: product.product_uom_unit
     product_qty: 100.00
     comment: special comment
     from_stock: False
-    list_id: procurement_list_1
+    list_id: list1
 -
     The second line
 -
-  !record {model: procurement.list.line, id: procurement_line2}:
-    product_id: product_product_p2
+  !record {model: procurement.list.line, id: list1_line2}:
+    product_id: product2
     product_uom_id: product.product_uom_unit
     product_qty: 50.0
     from_stock: True
-    list_id: procurement_list_1
+    list_id: list1
 -
     I check that the list which was initially in the draft state
 -
-  !assert {model: procurement.list, id: procurement_list_1}:
+  !assert {model: procurement.list, id: list1}:
     - state == 'draft'
     - requestor == 'Administration'
     - origin == 'R 20043'
@@ -112,12 +112,12 @@
 -
   !python {model: procurement.list}: |
     pl_obj = self.pool.get('procurement.list')
-    pl_id1 = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+    pl_id1 = pl_obj.browse(cr, uid, ref('list1'))
     pl_id1.create_rfq()
 -
     I check if the latest message in procurement line is 'RfQ In Progress'
 -
-  !assert {model: procurement.list.line, id: procurement_line1}:
+  !assert {model: procurement.list.line, id: list1_line1}:
     - latest == 'RfQ In Progress'
 -
     I check if only one RfQ will be created for the 
@@ -126,8 +126,8 @@
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
     order_obj = self.pool.get('purchase.order')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p1'))])
-    pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product1'))])
+    pl = pl_obj.browse(cr, uid, ref('list1'))
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
         assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
@@ -139,5 +139,5 @@
   !python {model: procurement.list}: |
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p2'))])
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product2'))])
     assert len(pol_ids) == 0, "No purchase order line found !"
