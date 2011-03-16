@@ -179,6 +179,7 @@ class account_bank_statement_line(osv.osv):
         'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
             ('account.bank.statement', 'Register')], 128),
         'reconciled': fields.function(_get_reconciled_state, method=True, string="Amount Reconciled", type='boolean'),
+        'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
     }
 
     def _updating_amount(self, values):
@@ -315,6 +316,11 @@ class account_bank_statement_line(osv.osv):
         # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
             # create move lines
+            # Give a sequence number. But pay attention that button_temp_posting use this function.
+            #+ That's why we make a condition not to do the sequence number if we come from "button_temp_posting"
+            if 'from' not in context:
+                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
+                self.pool.get('account.bank.statement.line').write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
             if absl.state == "draft":
                 #FIXME: which code could we return for the move line ?
                 st_name = cash_statement.name + '/' + str(absl.sequence)
@@ -335,6 +341,9 @@ class account_bank_statement_line(osv.osv):
         """
         # Variable initialisation
         acc_move_obj = self.pool.get("account.move")
+        # update context to pass it the origin of the call
+        #+ this is necessary to hedge problem with sequence creation on button_hard_posting
+        context.update({'from': 'button_temp_posting'})
         hard_posting_ids = self.button_hard_posting(cr, uid, ids, context=context)
         res_ids = acc_move_obj.write(cr, uid, hard_posting_ids, {'state': 'draft'}, context=context)
         return res_ids
