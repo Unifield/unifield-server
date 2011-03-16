@@ -59,7 +59,12 @@ class wizard_import_list(osv.osv_memory):
         '''
         Simply close the wizard
         '''
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.list',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_id': context.get('list_id'),
+                'target': 'crush'}
 
     def default_get(self, cr, uid, fields, context={}):
         '''
@@ -113,7 +118,14 @@ class wizard_import_list(osv.osv_memory):
 
         error = ''
 
+        line_num = 0
+
         for line in reader:
+            line_num += 1
+            if len(line) < 6:
+                error += 'Line %s is not valid !' % (line_num)
+                error += '\n'
+                continue
             # Get the product
             product_ids = product_obj.search(cr, uid, [('default_code', '=', line[0])], context=context)
             if not product_ids:
@@ -166,6 +178,7 @@ class wizard_import_list(osv.osv_memory):
             context['message'] = 'All lines have been succesfully imported !'
 
         context['step'] = 'import'
+        context['list_id'] = list_id
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.list.import',
