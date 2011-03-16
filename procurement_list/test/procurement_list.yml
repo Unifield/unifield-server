@@ -125,11 +125,14 @@
   !python {model: procurement.list}: |
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
+    order_obj = self.pool.get('purchase.order')
     pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p1'))])
     pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
         assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
+    order_obj.wkf_confirm_order(cr, uid, [pol.order_id.id])
+    assert pol.procurement_line_id.latest == pol.order_id.name, "Procurement line not updated"
 -
     I check that no purchase order line with P2
 -
