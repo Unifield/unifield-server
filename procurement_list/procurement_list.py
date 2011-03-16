@@ -188,7 +188,8 @@ class purchase_order_line(osv.osv):
         '''
         proc_line_obj = self.pool.get('procurement.list.line')
         for line in self.browse(cr, uid, ids):
-            proc_line_obj.write(cr, uid, [line.procurement_line_id.id], {'latest': line.order_id.name})
+            if line.procurement_line_id and line.procurement_line_id.id:
+                proc_line_obj.write(cr, uid, [line.procurement_line_id.id], {'latest': line.order_id.name})
         
         return super(purchase_order_line, self).action_confirm(cr, uid, ids, context=context)
     
