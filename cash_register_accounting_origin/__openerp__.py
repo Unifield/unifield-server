@@ -45,6 +45,7 @@
     "demo_xml" : [],
     "test": [
         'test/account_cash_statement.yml',
+        'test/account_bank_statement.yml',
     ],
     "installable": True,
     "active": False
