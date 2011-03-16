@@ -62,6 +62,7 @@ class procurement_list(osv.osv):
         Increments the sequence for the new list
         '''        
         default['name'] = self.pool.get('ir.sequence').get(cr, uid, 'procurement.list')
+        default['order_ids'] = []
         
         res = super(procurement_list, self).copy(cr, uid, ids, default, context=context)
         
