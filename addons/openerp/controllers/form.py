@@ -1098,8 +1098,10 @@ class Form(SecuredController):
         for k, v in values2.items():
             kind = v.get('type')
             relation = v.get('relation')
-
-            if relation and kind in ('many2one', 'reference') and values.get(k):
+            if kind == 'reference' and not relation and ',' in values.get(k,''):
+                relation,v = values[k].split(',',2)
+                values[k] = "%s,%s,%s"%(relation, v, rpc.name_get(relation, v, context))
+            elif relation and kind in ('many2one', 'reference') and values.get(k):
                 values[k] = [values[k], rpc.name_get(relation, values[k], context)]
 
         result['value'] = values
@@ -1108,7 +1110,7 @@ class Form(SecuredController):
         if 'domain' in result:
             for k in result['domain']:
                 result['domain'][k] = ustr(result['domain'][k])
-
+        print result
         return result
 
     @expose('json')

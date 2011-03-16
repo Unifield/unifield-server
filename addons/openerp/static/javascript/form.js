@@ -332,6 +332,9 @@ function getFormData(extended, include_readonly) {
             return;
         }
 
+	if (/_reference$/.test(this.id)) {
+	    return;
+	}
         // work around to skip o2m values (list mode)
         var value;
         if (name.indexOf('/__id') > 0) {
@@ -416,16 +419,14 @@ function getFormData(extended, include_readonly) {
                     attrs['value'] = "[" + value + ",'" + $this.attr('relation') + "']";
                     break;
             }
-
             // stringify the attr object
             frm[name] = serializeJSON(attrs);
-
+	    
         }
         else {
             frm[name] = this.value;
         }
     });
-
     return frm;
 }
 
@@ -610,7 +611,6 @@ function onChange(caller){
                         new ListView(prefix + k).reload();
                     }
                 }
-                
                 switch (kind) {
                     case 'picture':
                         fld.src = value;
@@ -669,6 +669,19 @@ function onChange(caller){
                             'width': progress
                         }));
                         break;
+		    case 'reference':
+		    	if (value) {
+				ref = openobject.dom.get(prefix + k + '_reference');
+				v = value.split(',');
+				ref.value = v[0];
+				fld._m2o.on_reference_changed();
+                        	fld.value = v[1] || '';
+	                        try {
+        	                    openobject.dom.get(prefix + k + '_text').value = v[2] || '';
+                	        }
+                        	catch (e) {
+                        	}
+			}
                     default:
                     // do nothing on default
                 }

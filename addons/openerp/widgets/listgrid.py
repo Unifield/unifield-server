@@ -459,6 +459,24 @@ class Char(TinyWidget):
     def __str__(self):
         return ustr(self.text)
 
+class Reference(Char):
+
+    def get_text(self):
+        self.refrel = False
+        self.refid = False
+        if self.value and ',' in self.value:
+            self.refrel, self.refid = self.value.split(',', 2)
+            self.value = rpc.name_get(self.refrel, self.refid, rpc.session.context)
+            return self.value
+        return ''
+
+    def get_link(self):
+        m2o_link = int(self.attrs.get('link', 1))
+
+        if m2o_link == 1 and self.refrel and self.refid:
+            return tools.url('/openerp/form/view', model=self.refrel, id=self.refid)
+        return None
+
 class M2O(Char):
 
     def get_text(self):
@@ -666,6 +684,7 @@ class Hidden(TinyInputWidget):
 CELLTYPES = {
         'char':Char,
         'many2one':M2O,
+        'reference': Reference,
         'datetime':DateTime,
         'date':DateTime,
         'one2many':O2M,
