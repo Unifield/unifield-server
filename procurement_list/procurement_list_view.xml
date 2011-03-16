@@ -34,11 +34,6 @@
                                 <button name="reset" string="Reset to Draft" icon="gtk-ok" type="object" states="cancel" />
                             </group>
                         </page>
-<<<<<<< TREE
-=======
-                        <page string="Suppliers">
-                            <field name="supplier_ids" nolabel="1" />
-                        </page>
                         <page string="Sourcing Documents">
                         	<field name="order_ids" nolabel="1" colspan="4">
                         		<tree string="Sourcing Documents" colors="blue:state=='draft'">
@@ -48,7 +43,6 @@
                         		</tree>
                         	</field>
                         </page>
->>>>>>> MERGE-SOURCE
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
                         </page>

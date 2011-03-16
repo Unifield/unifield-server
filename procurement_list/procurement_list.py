@@ -76,36 +76,9 @@ class procurement_list(osv.osv):
                 raise osv.except_osv(_('Error'), _('No line defined for this list !'))
 
             location_id = self._get_location(cr, uid, list.warehouse_id)
-<<<<<<< TREE
 
         context['active_ids'] = ids
         context['active_id'] = ids[0]
-=======
-            # Creates a RfQ for each supplier...
-            for supplier in list.supplier_ids:
-                po_id = purchase_obj.create(cr, uid, {'partner_id': supplier.id,
-                                                      'partner_address_id': supplier.address_get().get('default'),
-                                                      'pricelist_id': supplier.property_product_pricelist.id,
-                                                      'origin': list.name,
-                                                      'location_id': location_id})
-                order_ids.append(po_id)
-
-                # ... with all lines...
-                for line in list.line_ids:
-                    # ... which aren't from stock
-                    if not line.from_stock:
-                        line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
-                                                  'product_id': line.product_id.id,
-                                                  'order_id': po_id,
-                                                  'price_unit': 0.00,
-                                                  'date_planned': list.order_date,
-                                                  'product_qty': line.product_qty,
-                                                  'procurement_line_id': line.id,
-                                                  'name': line.product_id.name,})
-                    self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
-
-        self.write(cr, uid, ids, {'state': 'done', 'order_ids': [(6, 0, order_ids)]})
->>>>>>> MERGE-SOURCE
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.choose.supplier',

@@ -277,7 +277,6 @@
     pl_id1 = self.pool.get('procurement.list').browse(cr, uid, ref('list1'))
     pl_id1.create_rfq()
 -
-<<<<<<< TREE
     I create a Wizard to create PO
 -
   !record {model: procurement.choose.supplier, id: choose1}:
@@ -302,42 +301,42 @@
 -
     I check if the creation of RfQ is ok
 -
-#  !record {model: procurement.choose.supplier.rfq, id: supplier_choose1}:
-#    choose_id: choose1
-#    supplier_ids:
-#      - ref('supplier1')
-#      - supplier_id: ref('supplier2')
-#      - supplier_id: ref('supplier3')
-#-
-#    I confirm the creation of RfQ
-#-
-#  !python {model: procurement.choose.supplier.rfq}: |
-#    sup_obj = self.pool.get('procurement.choose.supplier.rfq')
-#    sup_obj.create_rfq(cr, uid, ref('supplier_choose1'))   =======
+  !record {model: procurement.choose.supplier.rfq, id: supplier_choose1}:
+    choose_id: choose1
+    supplier_ids:
+      - supplier1
+      - supplier2
+      - supplier3
+-
+    I confirm the creation of RfQ
+-
+  !python {model: procurement.choose.supplier.rfq}: |
+    sup_obj = self.pool.get('procurement.choose.supplier.rfq')
+    sup_obj.create_rfq(cr, uid, [ref('supplier_choose1')])
+-
     I check if the latest message in procurement line is 'RfQ In Progress'
 -
-  !assert {model: procurement.list.line, id: procurement_line1}:
-    - latest == 'RfQ In Progress'
+  !assert {model: procurement.list.line, id: list1_line1}:
+    - latest == 'RfQ In Progress', 'Latest on procurement line is not updated'
 -
-    I check if only one RfQ will be created for the 
+    I check if only one RfQ will be created for the line
 -
   !python {model: procurement.list}: |
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
     order_obj = self.pool.get('purchase.order')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p1'))])
-    pl = pl_obj.browse(cr, uid, ref('procurement_list_1'))
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product1')), ('procurement_line_id', '=', ref('list1_line1'))])
+    pl = pl_obj.browse(cr, uid, ref('list1'))
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
         assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
-    order_obj.wkf_confirm_order(cr, uid, [pol.order_id.id])
-    assert pol.procurement_line_id.latest == pol.order_id.name, "Procurement line not updated"
+        order_obj.wkf_confirm_order(cr, uid, [pol.order_id.id])
+        assert pol.procurement_line_id.latest == pol.order_id.name, "Procurement line not updated"
 -
     I check that no purchase order line with P2
 -
   !python {model: procurement.list}: |
     pl_obj = self.pool.get('procurement.list')
     pol_obj = self.pool.get('purchase.order.line')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product_product_p2'))])
-    assert len(pol_ids) == 0, "No purchase order line found !"
->>>>>>> MERGE-SOURCE
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product2')), ('procurement_line_id', '=', ref('list1_line2'))])
+    assert len(pol_ids) == 0, "Purchase order line found !"

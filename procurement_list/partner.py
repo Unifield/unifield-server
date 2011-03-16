@@ -83,8 +83,6 @@ class res_partner(osv.osv):
                 
         result = seller_ids + not_seller_ids
         
-        print 'list %s' %result
-        
         return result
     
 res_partner()
