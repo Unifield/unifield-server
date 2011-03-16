@@ -33,6 +33,7 @@
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines">
                                         <field name="date" groups="base.group_extended"/>
+                                        <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
                                         <field name="partner_type"/>
@@ -53,6 +54,7 @@
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="date"/>
+                                        <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                                         <field name="type" on_change="onchange_type(partner_id, type)"/>
@@ -286,6 +288,7 @@ irm'" string="Statement">
                                     <tree editable="bottom" string="Statement lines">
                                         <field name="sequence" readonly="1" invisible="1"/>
                                         <field name="date" groups="base.group_extended" string="Posting Date"/>
+                                        <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field name="ref"/>
                                         <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
@@ -307,6 +310,7 @@ irm'" string="Statement">
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="date" string="Posting Date"/>
+                                        <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field name="ref"/>
                                         <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
@@ -368,9 +372,6 @@ irm'" string="Statement">
             <field name="context">{'journal_type':'bank'}</field>
         </record>
 
-        <menuitem string="Bank Registers" action="action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" 
-            sequence="7"/>
-
         <act_window
            id="act_account_journal_2_account_bank_statement"
            name="Bank registers"
@@ -380,38 +381,28 @@ irm'" string="Statement">
 
     <!-- Modification to display bank_statement_tree -->
 
-        <record id="action_view_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Cash Registers</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.bank.statement</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,graph</field>
-            <field name="view_id" ref="view_cash_statement_tree"/>
-            <field name="search_view_id" ref="view_account_bank_statement_filter"/>
-            <field name="domain">[('journal_id.type', '=', 'cash')]</field>
-            <field name="context">{'journal_type':'cash'}</field>
-            <field name="help">A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. You can enter the coins that are in your cash box, and then post entries when money comes in or goes out of the cash box.</field>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="act_cash_statement1_all">
-            <field name="sequence" eval="1"/>
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement1_all">
+            <field name="sequence" eval="10"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_cash_statement_tree"/>
-            <field name="act_window_id" ref="action_view_bank_statement_tree"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
 
-        <record model="ir.actions.act_window.view" id="act_cash_statement2_all">
-            <field name="sequence" eval="1"/>
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement2_all">
+            <field name="sequence" eval="20"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="account.view_bank_statement_form2"/>
-            <field name="act_window_id" ref="action_view_bank_statement_tree"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
-        <record model="ir.actions.act_window.view" id="act_cash_statement3_all">
-            <field name="sequence" eval="1"/>
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement3_all">
+            <field name="sequence" eval="30"/>
             <field name="view_mode">graph</field>
             <field name="view_id" ref="account.account_cash_statement_graph"/>
-            <field name="act_window_id" ref="action_view_bank_statement_tree"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
+
+        <menuitem string="Bank Registers" action="action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" 
+            sequence="7"/>
 
     </data>
 </openerp>
