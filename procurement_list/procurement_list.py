@@ -56,6 +56,16 @@ class procurement_list(osv.osv):
         'state': lambda *a: 'draft',
         'order_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+    
+    def copy(self, cr, uid, ids, default={}, context={}):
+        '''
+        Increments the sequence for the new list
+        '''        
+        default['name'] = self.pool.get('ir.sequence').get(cr, uid, 'procurement.list')
+        
+        res = super(procurement_list, self).copy(cr, uid, ids, default, context=context)
+        
+        return res
 
     def cancel(self, cr, uid, ids, context={}):
         '''
@@ -66,7 +76,7 @@ class procurement_list(osv.osv):
         return True
 
     def create_rfq(self, cr, uid, ids, context={}):
-        '''
+        ''' 
         Create a RfQ per supplier with all products
         '''
         purchase_obj = self.pool.get('purchase.order')
@@ -152,6 +162,16 @@ class procurement_list_line(osv.osv):
     _defaults = {
         'latest': lambda *a: '',
     }
+    
+    def copy_data(self, cr, uid, id, default={}, context={}):
+        '''
+        Initializes the 'latest' fields to an empty field
+        '''
+        default['latest'] = ''
+        
+        res = super(procurement_list_line, self).copy_data(cr, uid, id, default, context=context)
+        
+        return res
 
     def product_id_change(self, cr, uid, ids, product_id, context={}):
         '''
