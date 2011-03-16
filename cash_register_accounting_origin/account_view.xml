@@ -278,14 +278,13 @@
         </record>
 
     <!-- Bank Register Tree -->
-
         <record id="view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' and (balance_end_real==balance_end);black:state=='conf
-irm'" string="Statement">
+irm'" string="Register">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -306,7 +305,8 @@ irm'" string="Statement">
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="red:balance_end_real!=balance_end;blue:state=='draft' and (balance_end_real==balance_end);black:state in ('open')" string="Statement">
+                <tree colors="red:balance_end_real!=balance_end;blue:state=='draft' and (balance_end_real==balance_end);black:state in ('open')" 
+                string="Register">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
@@ -403,8 +403,181 @@ irm'" string="Statement">
             <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
 
-        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" 
-            sequence="7"/>
+        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" 
+        parent="account.menu_finance_bank_and_cash" sequence="7"/>
+
+    <!-- Cheque Register View -->
+        <record id="view_cheque_register_form" model="ir.ui.view">
+            <field name='name'>view.cheque.register.form</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cheque Register">
+                    <group col="7" colspan="4">
+                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '=', 'open')]}"/>
+                        <field name="date" select="1" on_change="onchange_date(date)"/>
+                        <field name="journal_id" domain="[('type', '=', 'cheque')]" on_change="onchange_journal_id(journal_id)" select="1" 
+                            widget="selection"/>
+                        <newline/>
+                        <field name="period_id" readonly="1"/>
+                        <field name="balance_start"/>
+                        <field name="balance_end_real"/>
+                        <field name="currency" invisible="1"/>
+                        <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                    </group>
+                    <group col="2" colspan="4">
+                        <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
+                            context="context"/>
+                        <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
+                            context="context"/>
+                    </group>
+                    <group col="3" colspan="2">
+                        <field name="display_type"/>
+                        <button name="button_display_type" states="open,confirm" string="Display" type="object" icon="terp-stock_zoom" 
+                            context="context"/>
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Transaction" name="statement_line_ids">
+                            <field colspan="4" name="line_ids" nolabel="1">
+                                <tree editable="bottom" string="Statement lines">
+                                    <field name="sequence" readonly="1" invisible="1"/>
+                                    <field name="date" groups="base.group_extended" string="Posting Date"/>
+                                    <field name="document_date"/>
+                                    <field name="mandatory"/>
+                                    <field name="sequence_for_reference"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="ref"/>
+                                    <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                    <field name="partner_type"/>
+                                    <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                    <field name="employee_id"/>
+                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                    <field name="amount" invisible="1"/>
+                                    <field name="amount_in" readonly="0"/>
+                                    <field name="amount_out" readonly="0"/>
+                                    <field name="reconciled"/>
+                                    <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
+                                        context="context"/>
+                                    <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
+                                        context="context"/>
+                                    <field name="state" readonly="True"/>
+                                </tree>
+                                <form string="Statement lines">
+                                    <field name="date" string="Posting Date"/>
+                                    <field name="document_date"/>
+                                    <field name="mandatory"/>
+                                    <field name="sequence_for_reference"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="ref"/>
+                                    <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                                    <field name="partner_type"/>
+                                    <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
+                                    <field name="employee_id"/>
+                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                    <field name="amount" invisible="1"/>
+                                    <field name="amount_in" readonly="0"/>
+                                    <field name="amount_out" readonly="0"/>
+                                    <field name="reconciled"/>
+                                    <field name="sequence" readonly="0" invisible="1"/>
+                                    <separator colspan="4" string="Notes"/>
+                                    <field colspan="4" name="note" nolabel="1"/>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group col="8" colspan="4">
+                        <field name="state" readonly="1"/>
+                        <field name="balance_end" readonly="1"/>
+                        <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_confirm_cheque" states="open" string="Confirm" type="object" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Cheque Register Tree -->
+        <record id="view_cheque_register_tree" model="ir.ui.view">
+            <field name="name">account.cheque.register.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' and (balance_end_real==balance_end);black:state=='conf
+irm'" string="Register">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end_real"/>
+                    <field name="balance_end" invisible="1"/>
+                    <field name="state"/>
+                    <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                    <button name="button_confirm_cheque" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Cheque Register Search Form -->
+        <record id="view_cheque_register_search" model="ir.ui.view">
+            <field name="name">account.cheque.register.search</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Cheque Registers">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
+                        <filter string="Confirmed" domain="[('state','=','confirm')]" icon="terp-camera_test"/>
+                        <separator orientation="vertical"/>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="period_id"/>
+                        <field name="journal_id" widget="selection" domain="[('type', '=', 'cheque')]" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <!-- Cheque Register Actions -->
+        <record id="action_cheque_register_tree" model="ir.actions.act_window">
+            <field name="name">Cheque Registers</field>
+            <field name="res_model">account.bank.statement</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('journal_id.type', '=', 'cheque')]</field>
+            <field name="context">{'journal_type':'cheque'}</field>
+            <field name="search_view_id" ref="view_cheque_register_search"/>
+            <field name="help">A cheque register is a summary of all financial transactions occurring over a given period of time on a cheque account.
+                 The starting balance will be proposed automatically and the closing balance is to be found on your statement.</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_cheque_register_tree_cheque">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_cheque_register_tree"/>
+            <field name="act_window_id" ref="action_cheque_register_tree"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_cheque_register_form_cheque">
+            <field name="sequence" eval="20"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_cheque_register_form"/>
+            <field name="act_window_id" ref="action_cheque_register_tree"/>
+        </record>
+
+    <!-- Cheque Register Menu -->
+        <menuitem string="Cheque Registers" action="action_cheque_register_tree" id="menu_cash_register" 
+            parent="account.menu_finance_bank_and_cash" sequence="7"/>
 
     </data>
 </openerp>

@@ -44,7 +44,7 @@ class account_bank_statement(osv.osv):
         for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
             reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
             if not reconciled_state:
-                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm Bank.'))
+                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm this Register.'))
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
 account_bank_statement()
@@ -181,6 +181,7 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
+        'mandatory': fields.char(string="Mandatory", size=120),
     }
 
     def _updating_amount(self, values):
