@@ -45,7 +45,6 @@
     ],
     'test': [
         'test/procurement_list.yml',
-        'test/procurement_copy.yml',
     ],
     'installable': True,
     'active': False,
