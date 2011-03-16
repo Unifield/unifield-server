@@ -180,6 +180,7 @@ class account_bank_statement_line(osv.osv):
             ('account.bank.statement', 'Register')], 128),
         'reconciled': fields.function(_get_reconciled_state, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
+        'document_date': fields.date(string="Document Date"),
     }
 
     def _updating_amount(self, values):
