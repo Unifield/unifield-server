@@ -47,6 +47,9 @@ class procurement_choose_supplier(osv.osv_memory):
         '''
         Fills fields of the wizard
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
+            
         proc_list_obj = self.pool.get('procurement.list')
 
         procurement_ids = context.get('active_ids', [])
@@ -92,6 +95,9 @@ class procurement_choose_supplier(osv.osv_memory):
         '''
         Creates all purchase orders according to choices on wizard
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
+            
         order_obj = self.pool.get('purchase.order')
         order_line_obj = self.pool.get('purchase.order.line')
         proc_obj = self.pool.get('procurement.list')
@@ -165,6 +171,8 @@ class procurement_choose_supplier(osv.osv_memory):
         '''
         Returns the wizard to choose a list of supplier  
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'wizard_id': ids[0]})
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.choose.supplier.rfq',
@@ -195,8 +203,9 @@ class procurement_choose_supplier_line(osv.osv_memory):
         '''
         Split a line into two lines
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'line_id': ids[0]})
-        
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.choose.line.split',
                 'target': 'new',
@@ -209,6 +218,8 @@ class procurement_choose_supplier_line(osv.osv_memory):
         '''
         Merges two lines
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'line_id': ids[0]})
         
         return {'type': 'ir.actions.act_window',
@@ -255,12 +266,16 @@ class procurement_choose_supplier_line_split(osv.osv_memory):
         Changes the quantity of the old line and creates a new line with the
         new quantity
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         line_obj = self.pool.get('procurement.choose.supplier.line')
         
         for obj in self.browse(cr, uid, ids, context=context):
             # Returns an error if the quantity is negative
             if obj.qty < 0.00:
                 raise osv.except_osv(_('Error'), _('The new quantity should be positive'))
+            if obj.qty > obj.line_id.product_qty:
+                raise osv.except_osv(_('Error'), _('The new quantity can\'t be superior to the quantity of initial line'))
             # Changes the quantity on the old line
             line_obj.write(cr, uid, [obj.line_id.id], {'product_qty': obj.line_id.product_qty-obj.qty})
             # Creates the new line with new quantity
@@ -277,6 +292,8 @@ class procurement_choose_supplier_line_split(osv.osv_memory):
         '''
         Return the main view
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         res_id = False
         
         for obj in self.browse(cr, uid, ids, context=context):
@@ -335,6 +352,8 @@ class procurement_choose_supplier_line_merge(osv.osv_memory):
         '''
         Merged lines
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         line_obj = self.pool.get('procurement.choose.supplier.line')
         
         for obj in self.browse(cr, uid, ids, context=context):
@@ -355,6 +374,8 @@ class procurement_choose_supplier_line_merge(osv.osv_memory):
         '''
         Return the main view
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         res_id = False
         
         for obj in self.browse(cr, uid, ids, context=context):
@@ -400,6 +421,8 @@ class procurement_choose_supplier_rfq(osv.osv_memory):
         '''
         Creates Requests for Quotation for each supplier with all lines
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         order_obj = self.pool.get('purchase.order')
         order_line_obj = self.pool.get('purchase.order.line')
         proc_list_obj = self.pool.get('procurement.list')
@@ -451,6 +474,8 @@ class procurement_choose_supplier_rfq(osv.osv_memory):
         '''
         Return the main view
         '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         res_id = False        
         for obj in self.browse(cr, uid, ids, context=context):
             res_id = obj
