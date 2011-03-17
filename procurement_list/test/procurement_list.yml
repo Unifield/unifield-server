@@ -54,9 +54,15 @@
       - name: S6
 -
     I create the product P1
+    In order to test the procurement list module, I start by creating a new product category
+-
+  !record {model: product.category, id: product_cat1}:
+    name: Categ1
+-
+    I create new product 'P1'
 -
   !record {model: product.product, id: product1}:
-    categ_id: product.cat0
+    categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
     name: P1
@@ -86,10 +92,10 @@
         min_qty: 0.00
         name: supplier3
 -
-    I create the product P2
+    I create a second product, P2
 -
   !record {model: product.product, id: product2}:
-    categ_id: product.cat0
+    categ_id: product_cat1
     cost_method: standard
     mes_type: fixed
     name: P2
@@ -203,10 +209,9 @@
         min_qty: 0.00
         name: supplier5
 -
-    I create a Procurement Request
+    I create a procurement list for these two products 
 -
   !record {model: procurement.list, id: list1}:
-    name: PR1
     requestor: Administration
     warehouse_id: stock.warehouse0
     origin: R 20043
@@ -218,6 +223,7 @@
     product_uom_id: product.product_uom_unit
     product_qty: 12.0
     comment: special comment
+    from_stock: False
     list_id: list1
 -
     I create a Procurement Request Line 2 for list1 
@@ -225,13 +231,15 @@
   !record {model: procurement.list.line, id: list1_line2}:
     product_id: product2
     product_uom_id: product.product_uom_unit
-    product_qty: 10.0
+    product_qty: 50.0
+    from_stock: True
     list_id: list1
 -
-    I create a Procurement Request
+    I create a second Procurement Request
 -
   !record {model: procurement.list, id: list2}:
-    name: PR2
+    requestor: Administration
+    warehouse_id: stock.warehouse0
 -
   I create Procurement Request line 1 for list2 
 -
@@ -249,10 +257,12 @@
     product_qty: 30.0
     list_id: list2
 -
-    I create a Procurement Request
+    I create a third Procurement Request
 -
   !record {model: procurement.list, id: list3}:
-    name: PR3
+    requestor: Administration
+    warehouse_id: stock.warehouse0
+    origin: R 20045
 -
     I create a Procurement Request Line 1 for list3
 -
@@ -265,17 +275,9 @@
     I check that the list which was initially in the draft state
 -
   !assert {model: procurement.list, id: list1}:
-    - state == 'draft', "Bad default value for state"
-    - requestor == 'Administration', "Bad value for requestor"
-    - origin == 'R 20043', "Bad value for origin"
--
-    I test the confirmation of these three Procurement Request
--
-    I confirm the list1
--
-  !python {model: procurement.list}: |
-    pl_id1 = self.pool.get('procurement.list').browse(cr, uid, ref('list1'))
-    pl_id1.create_rfq()
+    - state == 'draft'
+    - requestor == 'Administration'
+    - origin == 'R 20043'
 -
     I create a Wizard to create PO
 -
@@ -317,26 +319,35 @@
     I check if the latest message in procurement line is 'RfQ In Progress'
 -
   !assert {model: procurement.list.line, id: list1_line1}:
-    - latest == 'RfQ In Progress', 'Latest on procurement line is not updated'
+    - latest == 'RfQ In Progress', "Rfq In Progress not applied in latest field of line"
 -
     I check if only one RfQ will be created for the line
 -
   !python {model: procurement.list}: |
-    pl_obj = self.pool.get('procurement.list')
+    list1 = self.browse(cr, uid, ref('list1'))
     pol_obj = self.pool.get('purchase.order.line')
     order_obj = self.pool.get('purchase.order')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product1')), ('procurement_line_id', '=', ref('list1_line1'))])
-    pl = pl_obj.browse(cr, uid, ref('list1'))
+
+    list_line_ids = []
+    for line in list1.line_ids:
+        list_line_ids.append(line.id)
+
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product1')), ('procurement_line_id', 'in', list_line_ids)])
 
     for pol in pol_obj.browse(cr, uid, pol_ids):
         assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
+        print pol.procurement_line_id.latest, pol.order_id.name
         order_obj.wkf_confirm_order(cr, uid, [pol.order_id.id])
+        print pol.procurement_line_id.latest, pol.order_id.name
         assert pol.procurement_line_id.latest == pol.order_id.name, "Procurement line not updated"
 -
     I check that no purchase order line with P2
 -
   !python {model: procurement.list}: |
-    pl_obj = self.pool.get('procurement.list')
+    list1 = self.browse(cr, uid, ref('list1'))
     pol_obj = self.pool.get('purchase.order.line')
-    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product2')), ('procurement_line_id', '=', ref('list1_line2'))])
+    list_line_ids = []
+    for line in list1.line_ids:
+        list_line_ids.append(line.id)
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product2')), ('procurement_line_id', 'in', list_line_ids)])
     assert len(pol_ids) == 0, "Purchase order line found !"
