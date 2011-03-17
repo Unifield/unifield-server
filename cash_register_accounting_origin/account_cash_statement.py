@@ -59,7 +59,6 @@ class account_cash_statement(osv.osv):
             })
         # @@@end
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
-        self.write(cr, uid, [res_id], {})
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
