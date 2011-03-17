@@ -79,9 +79,6 @@
                                     </form>
                                 </field>
                             </page>
-                            <page string="Journal Entries" name="move_live_ids">
-                                <field colspan="4" name="move_line_ids" nolabel="1"/>
-                            </page>
                         </notebook>
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
@@ -196,9 +193,6 @@
                                         </form>
                                     </field>
                                 </group>
-                            </page>
-                            <page string="Journal Entries" attrs="{'readonly':[('state','=','confirm')]}" invisible="1">
-                                <field colspan="4" name="move_line_ids" nolabel="1" string="Journal Entries" />
                             </page>
                         </notebook>
                         <group col="6" colspan="4">
@@ -431,10 +425,10 @@ irm'" string="Register">
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                             context="context"/>
                     </group>
-                    <group col="3" colspan="2">
+                    <group col="4" colspan="2">
                         <field name="display_type"/>
                         <button name="button_display_type" states="open,confirm" string="Display" type="object" icon="terp-stock_zoom" 
-                            context="context"/>
+                            context="context" colspan="2"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Transaction" name="statement_line_ids">

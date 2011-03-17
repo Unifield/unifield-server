@@ -34,7 +34,8 @@
     "depends" : ["base", "account", "hr", "account_payment"],
     "init_xml" : [],
     "update_xml" : [
-        "account_view.xml",
+        'security/ir.model.access.csv',
+        'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
         'wizard/wizard_cashbox_write_off.xml',
