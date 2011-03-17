@@ -42,14 +42,12 @@ class procurement_choose_supplier(osv.osv_memory):
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
-
-    def default_get(self, cr, uid, fields, context={}):
+    
+    def start_choose_supplier(self, cr, uid, ids, context={}):
         '''
         Fills fields of the wizard
         '''
         proc_list_obj = self.pool.get('procurement.list')
-
-        res = super(procurement_choose_supplier, self).default_get(cr, uid, fields, context=context)
 
         procurement_ids = context.get('active_ids', [])
         if not procurement_ids:
@@ -57,14 +55,24 @@ class procurement_choose_supplier(osv.osv_memory):
 
         result = []
         for procurement in proc_list_obj.browse(cr, uid, procurement_ids, context=context):
+            # Check if the list is in 'draft' state
+            if procurement.state != 'draft':
+                raise osv.except_osv(_('Error'), _('You can only choose suppliers for procurement list in \'Draft\' state'))
             for l in procurement.line_ids:
-                result.append(self._create_memory_line(l))
-
-        res.update({'date': time.strftime('%Y-%m-%d')})
-        if 'line_ids' in fields:
-            res.update({'line_ids': result})
-
-        return res
+                result.append((0, 0, self._create_memory_line(l)))
+            
+        new_id = self.create(cr, uid, {'date': time.strftime('%Y-%m-%d'),
+                                       'list_id': procurement_ids[0],
+                                       'line_ids': result})
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.supplier',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': new_id,
+                'context': context,
+               }
 
     def _create_memory_line(self, line):
         '''
@@ -96,20 +104,35 @@ class procurement_choose_supplier(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('You cannot create purchase orders while all lines haven\'t a defined supplier'))
 
         # We search lines group by supplier_id
-        supplier = False
+        po_exists = {}
         po_id = False
         po_ids = []
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], order='supplier_id')
         for l in line_obj.browse(cr, uid, line_ids):
-            # When starting or when the supplier changed, we create a Purchase Order
-            if not supplier or l.supplier_id.id != supplier:
-                po_id = order_obj.create(cr, uid, {'partner_id': l.supplier_id.id,
-                                                   'partner_address_id': l.supplier_id.address_get().get('default'),
-                                                   'pricelist_id': l.supplier_id.property_product_pricelist.id,
-                                                   'origin': l.line_id.list_id.name,
-                                                   'location_id': proc_obj._get_location(cr, uid, l.line_id.list_id.warehouse_id)})
-                po_ids.append(po_id)
-                supplier = l.supplier_id.id
+            # Search if a PO already exists in the system
+            if not po_exists.get(l.supplier_id.id, False):
+                # If no PO in local memory, search in DB
+                po_exist = order_obj.search(cr, uid, [('origin', '=', l.line_id.list_id.name), ('partner_id', '=', l.supplier_id.id)])
+                if po_exist:
+                    # A PO exists in DB, set the id in local memory
+                    po_exists[l.supplier_id.id] = po_exist[0]
+                else: 
+                    # try to create a new PO, and set its id in local memory
+                    address = l.supplier_id.address_get().get('default')
+                    # Returns an error when the supplier has not defined address
+                    if not address:
+                        raise osv.except_osv(_('Error'), _('The supplier %s has no address defined on its form' %l.supplier_id.name))
+                    # When starting or when the supplier changed, we create a Purchase Order
+                    po_id = order_obj.create(cr, uid, {'partner_id': l.supplier_id.id,
+                                                       'partner_address_id': address,
+                                                       'pricelist_id': l.supplier_id.property_product_pricelist.id,
+                                                       'origin': l.line_id.list_id.name,
+                                                       'location_id': proc_obj._get_location(cr, uid, l.line_id.list_id.warehouse_id)})
+                    po_exists[l.supplier_id.id] = po_id
+
+            # Get the PO id in local memory
+            po_id = po_exists.get(l.supplier_id.id)
+                
             # We create all lines for this supplier
             price_unit = prod_sup_obj.price_get(cr, uid, [l.supplier_id.id], l.product_id.id, l.product_qty)
             order_line_obj.create(cr, uid, {'product_uom': l.product_uom.id,
@@ -120,13 +143,16 @@ class procurement_choose_supplier(osv.osv_memory):
                                             'product_qty': l.product_qty,
                                             'name': l.product_id.name,})
 
+        for supplier in po_exists:
+            po_ids.append(po_exists.get(supplier))
+
         # We confirm all created orders
         wf_service = netsvc.LocalService("workflow")
         for po in po_ids:
             wf_service.trg_validate(uid, 'purchase.order', po, 'purchase_confirm', cr)
 
         proc_id = self.browse(cr, uid, ids[0]).list_id.id
-        proc_obj.write(cr, uid, proc_id, {'state': 'done'}) 
+        proc_obj.write(cr, uid, proc_id, {'state': 'done', 'order_ids': [(6, 0, po_ids)]}) 
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
@@ -157,7 +183,7 @@ class procurement_choose_supplier_line(osv.osv_memory):
     _description = 'Choose supplier line'
 
     _columns = {
-        'wizard_id': fields.many2one('procurement.choose.supplier', string='Wizard'),
+        'wizard_id': fields.many2one('procurement.choose.supplier', string='Wizard', required=True),
         'line_id': fields.many2one('procurement.list.line', string='Procurement Line'),
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom': fields.many2one('product.uom', string='UoM', required=True),
@@ -173,6 +199,20 @@ class procurement_choose_supplier_line(osv.osv_memory):
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.choose.line.split',
+                'target': 'new',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'context': context,
+                }
+        
+    def merge_line(self, cr, uid, ids, context={}):
+        '''
+        Merges two lines
+        '''
+        context.update({'line_id': ids[0]})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.line.merge',
                 'target': 'new',
                 'view_type': 'form',
                 'view_mode': 'form',
@@ -229,8 +269,19 @@ class procurement_choose_supplier_line_split(osv.osv_memory):
                                       'product_id': obj.line_id.product_id.id,
                                       'product_uom': obj.line_id.product_uom.id,
                                       'product_qty': obj.qty,
-                                      'supplier_id': obj.line_id.supplier_id.id,})
+                                      'supplier_id': False,})
             
+        return self.return_view(cr, uid, ids, context=context)
+        
+    def return_view(self, cr, uid, ids, context={}):
+        '''
+        Return the main view
+        '''
+        res_id = False
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            res_id = obj
+        
         return {'type': 'ir.actions.act_window',
                 'res_model': 'procurement.choose.supplier',
                 'view_type': 'form',
@@ -240,6 +291,85 @@ class procurement_choose_supplier_line_split(osv.osv_memory):
                }
     
 procurement_choose_supplier_line_split()
+
+
+class procurement_choose_supplier_line_merge(osv.osv_memory):
+    _name = 'procurement.choose.line.merge'
+    _description = 'Merge Lines'
+    
+    _columns = {
+        'line_id': fields.many2one('procurement.choose.supplier.line', string='Line to merged', readonly=True),
+        'line_ids': fields.many2many('procurement.choose.supplier.line', 'merge_line_rel', 'merge_id', 'line_id',
+                                     string='Lines to merged'),
+    }
+    
+    def default_get(self, cr, uid, fields, context={}):
+        '''
+        Initializes data with only lines with the same product and the same
+        procurement list
+        
+        '''
+        line_obj = self.pool.get('procurement.choose.supplier.line')
+        res = {}
+        
+        line_id = context.get('line_id', False)
+        if not line_id:
+            raise osv.except_osv(_('Error'), _('No lines to merged'))
+        
+        line = line_obj.browse(cr, uid, line_id, context=context)
+        product_id = line.product_id.id
+        product_uom = line.product_uom.id
+        wizard_id = line.wizard_id.id
+        
+        res['line_id'] = line_id
+        res['line_ids']= line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), 
+                                                   ('product_id', '=', product_id),
+                                                   ('product_uom', '=', product_uom)])
+        
+        if line_id in res['line_ids']:
+            res['line_ids'].remove(line_id)
+        
+        return res
+    
+    def merge_confirm(self, cr, uid, ids, context={}):
+        '''
+        Merged lines
+        '''
+        line_obj = self.pool.get('procurement.choose.supplier.line')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # Get the supplier of the main line because if merge no lines, 
+            # the supplier shouldn't removed
+            supplier_id = obj.line_id.supplier_id.id
+            qty = obj.line_id.product_qty
+            for line in obj.line_ids:
+                qty += line.product_qty
+                supplier_id = False
+                line_obj.unlink(cr, uid, [line.id])
+                
+            line_obj.write(cr, uid, [obj.line_id.id], {'product_qty': qty, 'supplier_id': supplier_id})
+            
+        return self.return_view(cr, uid, ids, context=context)
+        
+    def return_view(self, cr, uid, ids, context={}):
+        '''
+        Return the main view
+        '''
+        res_id = False
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            res_id = obj
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.supplier',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': obj.line_id.wizard_id.id,
+               }
+        
+    
+procurement_choose_supplier_line_merge()
 
 
 class procurement_choose_supplier_rfq(osv.osv_memory):
@@ -307,14 +437,31 @@ class procurement_choose_supplier_rfq(osv.osv_memory):
                                                     'product_qty': l.get('product_qty'),
                                                     'name': l.get('product_name'),
                                                     })
+                    
         proc_id = self.browse(cr, uid, ids[0]).choose_id.list_id.id
-        proc_list_obj.write(cr, uid, proc_id, {'state': 'done'})
+        proc_list_obj.write(cr, uid, proc_id, {'state': 'done', 'order_ids': [(6, 0, po_ids)]})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
                 'domain': [('id', 'in', po_ids)]}
+        
+    def return_view(self, cr, uid, ids, context={}):
+        '''
+        Return the main view
+        '''
+        res_id = False        
+        for obj in self.browse(cr, uid, ids, context=context):
+            res_id = obj
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.choose.supplier',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': obj.choose_id.id,
+               }
 
 procurement_choose_supplier_rfq()
 

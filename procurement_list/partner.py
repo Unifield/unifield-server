@@ -64,24 +64,25 @@ class res_partner(osv.osv):
         '''
         Sort the supplier according to the context
         '''
+        res = super(res_partner, self).read(cr, uid, ids, fields, context=context, load=load)
         # If we are in the context of choose supplier on procurement list
         if context.get('product_id', False) and 'choose_supplier' in context:
             # Add in_product field in read
             if not 'in_product' in fields:
                 fields.append('in_product')
             
-        res = super(res_partner, self).read(cr, uid, ids, fields, context=context, load=load)
-        
-        seller_ids =[]
-        not_seller_ids = []
-        
-        for r in res:
-            if r.get('in_product'):
-                seller_ids.append(r)
-            else:
-                not_seller_ids.append(r)
-                
-        result = seller_ids + not_seller_ids
+            seller_ids =[]
+            not_seller_ids = []
+            
+            for r in res:
+                if r.get('in_product', False):
+                    seller_ids.append(r)
+                else:
+                    not_seller_ids.append(r)
+                    
+            result = seller_ids + not_seller_ids
+        else:
+            result = res
         
         return result
     

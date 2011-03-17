@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
 	<data>
+	
+	    <record id="action_choose_supplier" model="ir.actions.server">
+            <field name="name">Choose Supplier</field>
+            <field name="model_id" ref="model_procurement_choose_supplier"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_choose_supplier(context=context)</field>
+        </record>
 
         <record id="procurement_list_form_view" model="ir.ui.view">
             <field name="name">procurement.list.form.view</field>
@@ -30,7 +37,7 @@
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" states="draft"/>
-                                <button name="create_rfq" string="Create RfQ" icon="gtk-execute" type="object" states="draft" />
+                                <button name="%(action_choose_supplier)d" string="Choose Supplier" icon="gtk-execute" states="draft" type='action' />
                                 <button name="reset" string="Reset to Draft" icon="gtk-ok" type="object" states="cancel" />
                             </group>
                         </page>
