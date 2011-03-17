@@ -3,8 +3,8 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,21 @@
 #
 ##############################################################################
 
-import wizard
-import account_move_line
-import account_bank_statement
-import account_cash_statement
-import account
-import account_cheque_register
+from osv import osv
+from osv import fields
+
+class account_move_line(osv.osv):
+    _name = "account.move.line"
+    _inherit = "account.move.line"
+
+    _columns = {
+        'register_id': fields.many2one("account.account", "Register"),
+        'employee_id': fields.many2one("hr.employee", "Employee"),
+    }
+
+def write(self, cr, uid, ids, vals, context={}):
+    return super(account_move_line, self).write(cr, uid, ids, vals, context=context)
+
+account_move_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
