@@ -26,38 +26,33 @@ from osv import osv
 from osv import fields
 
 class one2many_register(fields.one2many):
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):
         if context is None:
             context = {}
 
         if 'journal_type' not in context or context.get('journal_type') != 'cheque':
-            return super(one2many_register, self).get(cr, obj, ids, name, user=None, offset=0, context=None, values=None)
+            return super(one2many_register, self).get(cr, obj, ids, name, uid, offset, context, values)
 
         if values is None:
             values = {}
 
-        res5 = obj.read(cr, user, ids, ['display_type'], context=context)
-        res6 = {}
-        for r in res5:
-            res6[r['id']] = r['display_type']
-
-        ids2 = []
-        for id in ids:
-            dom = []
-            if id in res6:
-                if res6[id] == 'reconciled':
-                    dom = [('reconciled', '=', True)]
-                else:
-                    dom = [('reconciled', '=', False)]
-            ids2.extend(obj.pool.get(self._obj).search(cr, user,
-                dom, limit=self._limit))
         res = {}
-        for i in ids:
-            res[i] = []
-        for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2,
-                [self._fields_id], context=context, load='_classic_write'):
-            if r[self._fields_id]:
-                res[r[self._fields_id]].append(r['id'])
+
+        display_type = {}
+        for st in obj.read(cr, uid, ids, ['display_type']):
+            res[st['id']] = []
+            display_type[st['id']] = st['display_type']
+
+        st_obj = obj.pool.get('account.bank.statement.line')
+        st_ids = st_obj.search(cr, uid, [('statement_id', 'in', ids)])
+        if st_ids:
+            for st in  st_obj.read(cr, uid, st_ids, ['statement_id', 'reconciled'], context=context):
+                if display_type[st['statement_id'][0]] == 'reconciled' and st['reconciled']:
+                    res[st['statement_id'][0]].append(st['id'])
+                elif display_type[st['statement_id'][0]] == 'not_reconciled' and st['reconciled'] is False:
+                    res[st['statement_id'][0]].append(st['id'])
+                elif display_type[st['statement_id'][0]] == 'all':
+                    res[st['statement_id'][0]].append(st['id'])
         return res
 
 class account_cheque_register(osv.osv):
@@ -65,9 +60,14 @@ class account_cheque_register(osv.osv):
     _inherit = "account.bank.statement"
 
     _columns = {
-        'display_type': fields.selection([('reconciled', 'Reconciled'), ('not_reconciled', 'Not Reconciled')], string="Display type"),
+        'display_type': fields.selection([('reconciled', 'Display Reconciled'), ('not_reconciled', 'Display Not Reconciled'), ('all', 'All')], \
+            string="Display type", states={'draft': [('readonly', True)]}),
         'line_ids': one2many_register('account.bank.statement.line', 'statement_id', 'Statement lines', \
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)]}),
+    }
+
+    _defaults = {
+        'display_type': 'not_reconciled',
     }
 
     def button_open_cheque(self, cr, uid, ids, context={}):

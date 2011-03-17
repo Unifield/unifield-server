@@ -280,8 +280,6 @@ class account_bank_statement_line(osv.osv):
         Write some existing account bank statement lines with 'values'.
         
         """
-        print "C: %s" % context
-        print "V: %s" % values
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
