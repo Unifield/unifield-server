@@ -237,12 +237,29 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'price_total': fields.float(digits=(16,2), string='Total Price'),
     }
     
+    def write(self, cr, uid, ids, data, context={}):
+        '''
+        Change the quantity on the purchase order line if 
+        it's modified on the supplier choose line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        if 'qty' in data:
+            for line in self.browse(cr, uid, ids):
+                self.pool.get('purchase.order.line').write(cr, uid, [line.po_line_id.id], {'product_qty': data.get('qty', line.qty)})
+                
+        return super(wizard_choose_supplier_line, self).write(cr, uid, ids, data, context=context)
+    
     def choose_supplier(self, cr, uid, ids, context={}):
         '''
         Define the supplier for the line
         '''
         compare_obj = self.pool.get('wizard.compare.rfq')
         compare_line_obj = self.pool.get('wizard.compare.rfq.line')
+        
+        if isinstance(ids, (int, long)):
+                      ids = [ids]
         
         line_id = self.browse(cr, uid, ids[0])
         
