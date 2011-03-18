@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 
+import netsvc
+
 from tools.translate import _
 
 class wizard_compare_rfq(osv.osv_memory):
@@ -52,9 +54,10 @@ class wizard_compare_rfq(osv.osv_memory):
             if o.state != 'draft':
                 raise osv.except_osv(_('Error'), _('You cannot compare confirmed Quotations !'))
             for l in o.order_line:
-                if not products.get(l.product_id.id, False):
-                    products[l.product_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
-                products[l.product_id.id]['po_line_ids'].append(l.id)
+                if l.price_unit > 0.00:
+                    if not products.get(l.product_id.id, False):
+                        products[l.product_id.id] = {'product_id': l.product_id.id, 'po_line_ids': []}
+                    products[l.product_id.id]['po_line_ids'].append(l.id)
                 
         for p_id in products:
             p = products.get(p_id)
@@ -79,7 +82,56 @@ class wizard_compare_rfq(osv.osv_memory):
             'res_id': newid,
             'context': context,
            }
-
+        
+    def create_po(self, cr, uid, ids, context={}):
+        '''
+        Creates PO according to the selection
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        po_line_obj = self.pool.get('purchase.order.line')
+        po_obj = self.pool.get('purchase.order')
+        
+        po_ids= []
+        
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # For each line, delete non selected lines
+            unlink_lines = []
+            for product_line in wiz.line_ids:
+                for po_line in product_line.po_line_ids:
+                    if po_line.order_id.partner_id.id != product_line.supplier_id.id:
+                        unlink_lines.append(po_line.id)
+                        # Save the order list
+                        if po_line.order_id.id not in po_ids:
+                            po_ids.append(po_line.order_id.id)
+                        
+            
+            # Unlink lines
+            po_line_obj.unlink(cr, uid, unlink_lines, context=context)
+            # Unlink order with no lines
+            for po in po_obj.browse(cr, uid, po_ids):
+                # Unlink lines with unit price equal to 0.00
+                for line in po.order_line:
+                    if line.price_unit == 0.00:
+                        po_line_obj.unlink(cr, uid, [line.id], context=context)
+                if len(po.order_line) == 0:
+                    po_ids.remove(po.id)
+                    po_obj.unlink(cr, uid, [po.id], context=context)
+                    
+            # Confirm all other PO
+            wf_service = netsvc.LocalService("workflow")
+            for po in po_ids:
+                wf_service.trg_validate(uid, 'purchase.order', po, 'purchase_confirm', cr)
+                
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', po_ids)],
+                'context': context
+                }
+            
 wizard_compare_rfq()
 
 
@@ -99,15 +151,38 @@ class wizard_compare_rfq_line(osv.osv_memory):
         '''
         Opens a wizard to compare and choose a supplier for this line
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]        
         
-        context['compare_id'] = self.browse(cr, uid, ids[0]).compare_id.id
-        context['compare_line_id'] = ids[0]
+        choose_sup_obj = self.pool.get('wizard.choose.supplier')
+        choose_line_obj = self.pool.get('wizard.choose.supplier.line')
+        line_id = self.browse(cr, uid, ids[0], context=context)
+        
+        line_data = {'product_id': line_id.product_id.id,
+                     'compare_id': line_id.id}
+        
+        if line_id.supplier_id and line_id.supplier_id.id:
+            line_data.update({'supplier_id': line_id.supplier_id.id})
+        
+        new_id = choose_sup_obj.create(cr, uid, line_data, context=context)
+        
+        line_ids = []
+        for l in line_id.po_line_ids:
+            line_ids.append(choose_line_obj.create(cr, uid, {'supplier_id': l.order_id.partner_id.id,
+                                                             'po_line_id': l.id,
+                                                             'price_unit': l.price_unit,
+                                                             'qty': l.product_qty,
+                                                             'compare_line_id': line_id.id,
+                                                             'compare_id': line_id.compare_id.id,
+                                                             'price_total': l.product_qty*l.price_unit}))
+        choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)]})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.choose.supplier',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
+                'res_id': new_id,
                 'context': context,
                 }
     
@@ -123,40 +198,25 @@ class wizard_choose_supplier(osv.osv_memory):
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
         'line_ids': fields.many2many('wizard.choose.supplier.line', 'choose_supplier_line', 'init_id', 'line_id',
                                      string='Lines'),
-        'compare_id': fields.many2many('wizard.compare.rfq.line', 'compare_line_rel', 'choose_id', 'compare_id',
-                                       string='Wizard'),
+        'compare_id': fields.many2one('wizard.compare.rfq.line', string='Wizard'),
     }
     
-    def default_get(self, cr, uid, fields, context={}):
+    def return_view(self, cr, uid, ids, context={}):
         '''
-        Initialize data
+        Return to the main wizard
         '''
-        if not context.get('compare_line_id', False):
-            raise osv.except_osv(_('Error'), _('Data not found !'))
-        
-        compare_line_obj = self.pool.get('wizard.compare.rfq.line')
-        choose_line_obj = self.pool.get('wizard.choose.supplier.line')
-
-        res = {}
-        
-        compare_id = compare_line_obj.browse(cr, uid, context.get('compare_line_id'), context=context)
-        
-        res['product_id'] = compare_id.product_id.id
-        res['compare_line_id'] = compare_id.id
-        res['compare_id'] = compare_id.compare_id.id
-        res['supplier_id'] = compare_id.supplier_id.id
-        res['line_ids'] = []
-        
-        for l in compare_id.po_line_ids:
-            res['line_ids'].append(choose_line_obj.create(cr, uid, {'supplier_id': l.order_id.partner_id.id,
-                                                                    'po_line_id': l.id,
-                                                                    'price_unit': l.price_unit,
-                                                                    'qty': l.product_qty,
-                                                                    'compare_line_id': compare_id.id,
-                                                                    'compare_id': compare_id.compare_id.id,
-                                                                    'price_total': l.product_qty*l.price_unit}))
-        
-        return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        obj = self.browse(cr, uid, ids[0])
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.compare.rfq',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                'res_id': obj.compare_id.compare_id.id,
+                'context': context}
     
 wizard_choose_supplier()
 
@@ -165,7 +225,7 @@ class wizard_choose_supplier_line(osv.osv_memory):
     _name = 'wizard.choose.supplier.line'
     _description = 'Line Choose supplier wizard'
     
-    _order = 'supplier_id'
+    _order = 'price_unit'
     
     _columns = {
         'compare_id': fields.many2one('wizard.compare.rfq', string='Compare'),
