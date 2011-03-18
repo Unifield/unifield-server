@@ -9,12 +9,14 @@
     name: Cheque Journal
     type: cheque
     view_id: account.account_journal_view
+    default_debit_account_id: account.cash
+    default_credit_account_id: account.cash
 -
   I create a Cheque Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_3}:
     date: !eval time.strftime('%Y-%m-%d')
-    journal_id: account.bank_journal
+    journal_id: account_journal_cheque_0
     name: some name
     period_id: account.period_10
     user_id: base.user_root
