@@ -3,8 +3,8 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    Copyright (C) 
+#    Author: 2011 TeMPO Consulting, MSF.
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify

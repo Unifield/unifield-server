@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    Copyright (C) 2011 TeMPO Consulting, MSF.
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
