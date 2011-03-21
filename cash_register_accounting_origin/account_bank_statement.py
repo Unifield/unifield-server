@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    Copyright (C) TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -48,7 +48,6 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
 account_bank_statement()
-
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
@@ -535,5 +534,46 @@ class account_bank_statement_line(osv.osv):
                 else:
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
+
+    def button_advance(self, cr, uid, ids, context={}):
+        """
+        Launch a wizard when you press "Advance return" button on a bank statement line in a Cash Register
+        """
+        # Some verifications
+        if len(ids) > 1:
+            raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
+        # others verifications
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # verify that the journal id is a cash journal
+            if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
+                or st_line.statement_id.journal_id.type != 'cash':
+                raise osv.except_osv(_('Error'), _("The attached journal is not a Cash Journal"))
+            # verify that there is a third party, particularly an employee_id in order to do something
+            if not st_line.employee_id:
+                raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
+        # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
+        statement_id = self.read(cr, uid, ids[0], ['statement_id']).get('statement_id', False)[0]
+        amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
+        if amount <= 0:
+            raise osv.except_osv(_('Warning'), _('The amount should be positive!'))
+        if statement_id:
+            return {
+                'name' : "Advance Return",
+                'type' : 'ir.actions.act_window',
+                'res_model' :"wizard.cash.return",
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': 
+                {
+                    'active_id': ids[0],
+                    'active_ids': ids,
+                    'statement_id': statement_id,
+                    'amount': amount
+                }
+            }
+        else:
+            return False
+        # NB: in the wizard we have to verify that we have a bank statement_line in the context, else do an osv error
 
 account_bank_statement_line()

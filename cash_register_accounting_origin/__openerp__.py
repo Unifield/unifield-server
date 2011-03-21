@@ -42,6 +42,7 @@
         'wizard/wizard_temp_posting.xml',
         'wizard/wizard_hard_posting.xml',
         'account_cash_statement_sequence.xml',
+        'wizard/wizard_cash_return.xml',
     ],
     "demo_xml" : [],
     "test": [
