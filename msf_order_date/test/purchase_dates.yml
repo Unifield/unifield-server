@@ -1,0 +1,71 @@
+-
+  In order to test dates in Purchase Order, I create a purchase order
+  and run actions to pass into each step of the workflow and test consistency
+  of dates
+-
+  I create a Purchase Order
+-
+  !record {model: purchase.order, id: rfq1}:
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+#    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    location_id: stock.stock_location_stock
+    partner_address_id: address1
+    partner_id: supplier1
+    pricelist_id: purchase.list0
+-
+    I create a line for P1 in RfQ 1
+-
+  !record {model: purchase.order.line, id: rfq1_line1}:
+    product_uom: product.product_uom_unit
+    product_id: product1
+    order_id: rfq1
+    price_unit: 1.30
+    product_qty: 10
+    name: P1
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+    I create a line for P2 in RfQ 2
+-
+  !record {model: purchase.order.line, id: rfq1_line2}:
+    product_uom: product.product_uom_unit
+    product_id: product2
+    order_id: rfq1
+    price_unit: 1.75
+    product_qty: 20
+    name: P2
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+    I create a line for P3 in RfQ 3
+-
+  !record {model: purchase.order.line, id: rfq1_line3}:
+    product_uom: product.product_uom_unit
+    product_id: product3
+    order_id: rfq1
+    price_unit: 2.17
+    product_qty: 30
+    name: P3
+    date_planned: !eval time.strftime('%Y-%m-%d')
+#-
+#  I check if the default values are good
+#-
+#  !assert {model: purchase.order, id: rfq1}:
+#    - creation_date == time.strftime('%y-%m-%d'), "Wrong default creation date"
+#-
+#  I try to change the creation_date of the purchase order
+#-
+#  !python {model: purchase.order}: |
+#    assert not self.check_creation_date(cr, uid, '2007-03-02'), "Error on creation date writing for PO"
+#    assert self.check_creation_date(cr, uid, '2011-05-07'), "Error on creation date with a valid date"
+#-
+#  I check values for delivery requested date  (Date < today)
+#-
+#  !python {model: purchase.order}: |
+#    from datetime import datetime
+#    from dateutil.relativedelta import relativedelta
+#    two_years = datetime.now() + relativedelta(years=2, days=10)
+#    two_days = datetime.now() + relativedelta(days=2)
+#    assert not self.check_delivery_requested('2007-03-02'), "Error on delivery requested date with a date inferior today"
+#    assert not self.check_delivery_requested(two_years), "Error on delivery requested date with a date superior today + 2 years"
+#    assert self.check_delivery_requested(two_days), "Error on delivery requested date with a date = today + 2 days"
