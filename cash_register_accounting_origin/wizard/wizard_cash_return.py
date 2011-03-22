@@ -26,6 +26,24 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+class wizard_invoice_line(osv.osv_memory):
+    """
+    A simulated bank statement line containing some invoices.
+    """
+    _name = "wizard.invoice.line"
+    _columns = {
+        'date': fields.date(string='Date'),
+        'reference': fields.char(string='Reference', size=64, required=False), # invoice.internal_number
+        'communication': fields.char(string='Communication', size=64, required=False), # name of invoice.line
+        'partner_id': fields.many2one('res.partner', string="Partner", required=False), # partner of invoice
+        'account_id': fields.many2one('account.account', string="Account", required=True), # account of invoice
+        'amount': fields.float(string="Amount", size=(16,2), required=True), # amount of invoice.line
+        'wizard_id': fields.many2one('wizard.cash.return', string="wizard", required=True),
+        'invoice_id': fields.many2one('account.invoice', string='Invoice', required=True),
+    }
+
+wizard_invoice_line()
+
 class wizard_advance_line(osv.osv_memory):
     """
     A simulated bank statement line.
@@ -40,6 +58,11 @@ class wizard_advance_line(osv.osv_memory):
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
     }
 
+    def create(self, cr, uid, vals, context={}):
+        # TODO: Change here the global variable in order to display (or not) the advance line
+        res = super(wizard_advance_line, self).create(cr, uid, vals, context=context)
+        return res
+
 wizard_advance_line()
 
 class wizard_cash_return(osv.osv_memory):
@@ -53,8 +76,8 @@ class wizard_cash_return(osv.osv_memory):
     _columns = {
         'initial_amount': fields.float(string="Initial Advance amount", digits=(16,2), readonly=True),
         'returned_amount': fields.float(string="Advance return amount", digits=(16,2), required=True),
-        'invoice_line_ids': fields.many2many('account.move.line', 'account_move_line_cash_return_rel', 'line_id', 'invoice_id', string="Invoice Lines", \
-            help="Just add the invoices you want to link to the Cash Advance Return", required=False, readonly=True),
+        'invoice_line_ids': fields.one2many('wizard.invoice.line', 'wizard_id', string="Invoice Lines", \
+            help="Add the invoices you want to link to the Cash Advance Return", required=False, readonly=True),
         'advance_line_ids': fields.one2many('wizard.advance.line', 'wizard_id', string="Advance Lines"),
         'total_amount': fields.float(string="Justified Amount", digits=(16,2), readonly=True),
         'invoice_id': fields.many2one('account.invoice', string='Invoice', required=False),
@@ -78,27 +101,73 @@ class wizard_cash_return(osv.osv_memory):
                 res.update({'initial_amount': amount})
         return res
 
-    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, context={}):
+    def read(self, cr, uid, ids, fields=None, context={}, load='_classic_read'):
+        """
+        Update the total_amount field when the wizard is reloaded
+        """
+        res = super(wizard_cash_return, self).read(cr, uid, ids, fields, context=context, load=load)
+        if 'initial_amount' in res[0] and 'returned_amount' in res[0]:
+            initial_amount = res[0].get('initial_amount')
+            returned_amount = res[0].get('returned_amount')
+            invoice_line_ids = res[0].get('invoice_line_ids', False)
+            advance_line_ids = res[0].get('advance_line_ids', False)
+            total_amount = returned_amount + 0.0
+            if invoice_line_ids:
+                for invoice_id in invoice_line_ids:
+                    inv_amount = self.pool.get('wizard.invoice.line').read(cr, uid, invoice_id, ['amount']).get('amount', 0.0)
+                    total_amount += inv_amount
+            if advance_line_ids:
+                for advance_id in advance_line_ids:
+                    adv_amount = self.pool.get('wizard.advance.line').read(cr, uid, advance_id, ['amount']).get('amount', 0.0)
+                    total_amount += adv_amount
+            res[0].update({'total_amount': total_amount})
+        return res
+
+    def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, context={}):
         """
         When the returned amount change, it update the "Justified amount" (total_amount)
         """
         res = {}
         if amount:
-            # FIXME: Make an addition with the total off all lines given in the "advance_line_ids"
-            total_amount = amount + 0.0 # FIXME: Add here the total off all advance line_ids
+            total_amount = amount + 0.0
+            for invoice in invoices:
+                total_amount += invoice[2].get('amount', 0.0)
+            for advance in advances:
+                total_amount += advance[2].get('amount', 0.0)
             res.update({'total_amount': total_amount})
         return {'value': res}
 
     def action_add_invoice(self, cr, uid, ids, context={}):
         """
-        Add an invoice in the invoice_line_ids field
+        Add some invoice elements in the invoice_line_ids field
         """
+        # TODO: Change a global variable in order to display (or not) the invoice_line_ids
         wizard = self.browse(cr, uid, ids[0], context=context)
+        new_lines = []
         if wizard.invoice_id:
-            if wizard.invoice_id.id not in wizard.invoice_line_ids:
-                move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', wizard.invoice_id.move_id.id)], context=context)
-                return self.write(cr, uid, ids, {'invoice_line_ids': [(6, 0, move_line_ids)]}, context=context)
-        return False
+            # Make a list of invoices that have already been added in this wizard
+            added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
+            # Do operations only if our invoice is not in our list
+            if wizard.invoice_id.id not in added_invoices:
+                # Retrive some variables
+                move_line_obj = self.pool.get('account.move.line')
+                account_id = wizard.invoice_id.account_id.id
+                # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
+                line_ids = move_line_obj.search(cr, uid, [('move_id', '=', wizard.invoice_id.move_id.id), \
+                    ('account_id', '=', account_id)], context=context)
+                for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
+                    date = move_line.date or False
+                    reference = move_line.invoice.internal_number or False
+                    communication = move_line.invoice.name or False
+                    partner_id = move_line.partner_id.id or False
+                    account_id = move_line.account_id.id or False
+                    # abs() should be deleted if we take care of "Credit Note".
+                    #+ Otherwise abs() give an absolute amount.
+                    amount = abs(move_line.balance) or False 
+                    # Add this line to 
+                    new_lines.append((0, 0, {'date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
+                        'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': wizard.invoice_id.id}))
+        return self.write(cr, uid, ids, {'invoice_line_ids': new_lines}, context=context)
 
     def action_compute(self, cr, uid, ids, context={}):
         """
@@ -108,8 +177,9 @@ class wizard_cash_return(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         total = 0.0
         total += wizard.returned_amount
+        # Do computation for invoice lines, then for advance lines
         for move_line in wizard.invoice_line_ids:
-            print move_line.balance
+            total += move_line.amount
         for st_line in wizard.advance_line_ids:
             total+= st_line.amount
         res.update({'total_amount': total})
@@ -119,6 +189,7 @@ class wizard_cash_return(osv.osv_memory):
         """
         Make a cash return with the given invoices or by registering some given statement lines.
         """
+        # TODO: verify the global variable and take invoices or advance lines
         initial_mnt = self.read(cr, uid, ids, ['initial_amount'])[0].get('initial_amount', False)
         total_mnt = self.read(cr, uid, ids, ['total_amount'])[0].get('total_amount', False)
         print initial_mnt, total_mnt

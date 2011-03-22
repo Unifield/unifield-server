@@ -12,7 +12,7 @@
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <newline />
-                    <field name='returned_amount' on_change="onchange_returned_amount(returned_amount)"/>
+                    <field name='returned_amount' on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids)"/>
                     <newline />
                     <group colspan="2">
                         <field name='invoice_id' nolabel="1"/>
@@ -33,6 +33,38 @@
                 </form>
             </field>
           </record>
+
+        <record model="ir.ui.view" id="wizard_invoice_line_tree">
+            <field name='name'>wizard.invoice.line.tree</field>
+            <field name='model'>wizard.invoice.line</field>
+            <field name='type'>tree</field>
+            <field name='arch' type='xml'>
+                <tree string="Invoice Lines">
+                    <field name="date" />
+                    <field name="reference" />
+                    <field name="communication" />
+                    <field name="account_id" />
+                    <field name="partner_id" />
+                    <field name="amount" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="wizard_invoice_line_form">
+            <field name='name'>wizard.invoice.line.form</field>
+            <field name='model'>wizard.invoice.line</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Invoice Lines">
+                    <field name="date" />
+                    <field name="reference" />
+                    <field name="communication" />
+                    <field name="account_id" />
+                    <field name="partner_id" />
+                    <field name="amount" />
+                </form>
+            </field>
+        </record>
 
         <record model="ir.ui.view" id="wizard_advance_line_tree">
             <field name='name'>wizard.advance.line.tree</field>
