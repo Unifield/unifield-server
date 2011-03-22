@@ -12,22 +12,24 @@
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <newline />
-                    <field name='returned_amount' on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids)"/>
+                    <field name='returned_amount' on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, 
+                        display_invoice)"/>
                     <newline />
-                    <group colspan="2">
+                    <group colspan="4">
                         <field name='invoice_id' nolabel="1"/>
                         <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
-                    <field name='invoice_line_ids' />
+                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4"/>
                     <newline />
-                    <field name='advance_line_ids' context="context"/>
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" context="context" nolabel="1" colspan="4"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
+                    <field name='display_invoice' invisible="1"/>
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />
-                        <button string="Compute" name="action_compute" type="object" icon='gtk-execute'/>
+                        <button string="Compute" name="compute_total_amount" type="object" icon='gtk-execute'/>
                         <button string='Ok' name='action_confirm_cash_return' type='object' icon='gtk-apply' />
                     </group>
                 </form>
