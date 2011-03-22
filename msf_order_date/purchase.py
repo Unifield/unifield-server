@@ -102,7 +102,7 @@ class purchase_order(osv.osv):
         Runs all tests on dates
         '''
         date_order = data.get('date_order', False)
-        requested_date = data.get('minimum_planned_date', False)
+        requested_date = data.get('delivery_requested_date', False)
         confirmed_date = data.get('delivery_confirmed_date', False)
         ready_to_ship = data.get('ready_to_ship_date', False)
         # Check if the creation date is in an opened period
@@ -130,6 +130,7 @@ class purchase_order(osv.osv):
         Checks if dates are good before creation
         '''
         self.check_dates(cr, uid, data, context=context)
+        
         return super(purchase_order, self).create(cr, uid, data, context=context)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
@@ -168,23 +169,12 @@ class purchase_order(osv.osv):
                 res[order.id] = pick_obj.browse(cr, uid, pick_ids[0]).date_done
             
         return res
-    
-    def _get_shipment_date(self, cr, uid, ids, field_name, arg, context={}):
-        '''
-        Returns the date of the first shipment for the PO
-        '''
-        res = {}
-        pick_obj = self.pool.get('stock.picking')
-        
-        for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = False
-        
-        return res
+
     
     _columns = {
         'date_order': fields.date('Creation Date', select=True, readonly=True, 
                                   required=True, help="Date on which order is created."),
-        'minimum_planned_date': fields.date(string='Delivery Requested Date', readonly=True, required=True, 
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True, 
                                             states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', required=True, 
                                                help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
@@ -309,7 +299,7 @@ class purchase_order(osv.osv):
             requested_date = requested_date.strftime('%Y-%m-%d')
         
         if self.check_delivery_requested(requested_date):
-            res['value'].update({'minimum_planned_date': requested_date,
+            res['value'].update({'delivery_requested_date': requested_date,
                                  'ready_to_ship_date': requested_date,
                                  'delivery_confirmed_date': requested_date})
         else:
@@ -341,7 +331,7 @@ class purchase_order_line(osv.osv):
         
         po = order_obj.browse(cr, uid, context.get('active_id', []))
         if po:
-            res = po.minimum_planned_date
+            res = po.delivery_requested_date
         
         return res
 
@@ -362,6 +352,31 @@ class purchase_order_line(osv.osv):
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': _get_confirmed_date,
     }
+    
+    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
+        '''
+        Checks if dates are later than header dates 
+        '''
+        min_confirmed = context.get('confirmed_date', False)
+        min_requested = context.get('requested_date', False)
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            min_confirmed = line.order_id.delivery_confirmed_date
+            min_requested = line.order_id.delivery_requested_date
+            
+        if min_confirmed and confirmed_date:
+            if min_confirmed > confirmed_date:
+                return {'warning': {'title': _('Warning'),
+                                    'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
+        
+        if min_requested and requested_date:
+            if min_requested > requested_date:
+                return {'warning': {'title': _('Warning'),
+                                    'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
+        
+        return {'value': {'date_planned': requested_date,
+                          'confirmed_delivery_date': confirmed_date}}
+            
     
 purchase_order_line()
 

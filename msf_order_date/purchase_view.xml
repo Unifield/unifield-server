@@ -19,7 +19,7 @@
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group" position="before">
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
-                            <field name="minimum_planned_date" on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order)" />
+                            <field name="delivery_requested_date" on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order)" />
                             <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
                                    on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
                             <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(minimum_planned_date, est_transport_lead_time)" />
@@ -32,7 +32,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'requested_date': minimum_planned_date, 'confirmed_date': delivery_confirmed_date}">
+                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'requested_date': delivery_requested_date 'confirmed_date': delivery_confirmed_date}">
                                 <tree string="Purchase Order Lines">
                                     <field name="date_planned"/>
                                     <field name="name"/>
@@ -47,13 +47,6 @@
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />
-                    
-                    <!-- Add dates history -->
-                    <xpath expr="/form/notebook/page[@string='Notes']" position="before">
-                        <page string="History">
-                            <field name="history_date_ids" colspan="4" nolabel="1" readonly="1"/>
-                        </page>
-                    </xpath>
 	            </data>
             </field>
         </record>
@@ -64,22 +57,10 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="after">
-                    <field name="confirmed_delivery_date" />
+                <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace">
+                    <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
+                    <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                 </xpath>
-            </field>
-        </record>
-        
-        <record id="purchase_order_history_date_tree" model="ir.ui.view">
-            <field name="name">purchase.order.history.date.tree</field>
-            <field name="model">purchase.order.date.history</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="History of dates">
-                    <field name="name" />
-                    <field name="modif_time" />
-                    <field name="user_id" />
-                </tree>
             </field>
         </record>
     

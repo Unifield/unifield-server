@@ -7,6 +7,7 @@
 -
   !record {model: res.partner, id: supplier1}:
     name: S1
+    lead_time: 10
     supplier: True
 -
     I create the address for S1
@@ -19,6 +20,7 @@
 -
   !record {model: res.partner, id: supplier2}:
     name: S2
+    lead_time: 20
     supplier: True
 -
     I create the address for S2
@@ -31,6 +33,7 @@
 -
   !record {model: res.partner, id: supplier3}:
     name: S3
+    lead_time: 30
     supplier: True
 -
     I create the address for S3
