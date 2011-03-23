@@ -554,8 +554,8 @@ class account_bank_statement_line(osv.osv):
         # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
         statement_id = self.read(cr, uid, ids[0], ['statement_id']).get('statement_id', False)[0]
         amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
-        if amount <= 0:
-            raise osv.except_osv(_('Warning'), _('The amount should be positive!'))
+        if amount >= 0:
+            raise osv.except_osv(_('Warning'), _('Please select a line with a filled out "amount out"!'))
         if statement_id:
             return {
                 'name' : "Advance Return",
