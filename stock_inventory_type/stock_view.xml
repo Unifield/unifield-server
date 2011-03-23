@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <!-- Stock Adjustment Types -->
+
+        <record id="stock_adjustment_type_form_view" model="ir.ui.view">
+            <field name="name">stock.adjustment.type.form.view</field>
+            <field name="model">stock.adjustment.type</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Adjustment Type">
+                    <field name="name" colspan="4" select="1" />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_adjustment_type_tree_view" model="ir.ui.view">
+            <field name="name">stock.adjustment.type.tree.view</field>
+            <field name="model">stock.adjustment.type</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Adjustment Types">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_stock_adjustment_type" model="ir.actions.act_window">
+            <field name="name">Stock Adjustment Types</field>
+            <field name="res_model">stock.adjustment.type</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            name="Inventory"
+            id="menu_configuration_inventory"
+            parent="stock.menu_stock_configuration" />
+
+        <menuitem
+            action="action_stock_adjustment_type"
+            id="menu_stock_adjustment_type"
+            parent="menu_configuration_inventory" />
+
+
+        <!-- Overrirde Stock Inventory Lines -->
+        <record id="stock_inventory_line_tree_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.line.tree.type.id</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='prodlot_id']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_inventory_line_form_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.line.form.type.id</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/field[@name='prodlot_id']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_inventory_form_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.form.type.id</field>
+            <field name="model">stock.inventory</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_inventory_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='product_id']" position="after">
+                        <field name="type_id" widget="selection" />
+                        <field name="comment" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/form/field[@name='product_id']" position="after">
+                        <field name="type_id" widget="selection" />
+                        <field name="comment" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Posted Inventory']/field[@name='move_ids']/tree/field[@name='prodlot_id']" position="after">
+                        <field name="type_id" widget="selection" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <!-- Override Stock Moves -->
+        <record id="stock_move_tree_type_id" model="ir.ui.view">
+            <field name="name">stock.move.tree.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='prodlot_id']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_move_tree2_type_id" model="ir.ui.view">
+            <field name="name">stock.move.tree2.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_tree2" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='prodlot_id']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_move_tree_type_id" model="ir.ui.view">
+            <field name="name">view.move.tree.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='create_date']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_move_form_type_id" model="ir.ui.view">
+            <field name="name">view.move.form.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/group/button[@string='Scrap']" position="after">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_move_search_type_id" model="ir.ui.view">
+            <field name="name">view.move.search.type.id</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search" />
+            <field name="arch" type="xml">
+                <xpath expr="/search/group/field[@name='product_id']" position="before">
+                    <field name="type_id" widget="selection" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+        
+        <record id="view_stock_tree_type_id" model="ir.ui.view">
+        	<field name="name">view.stock.tree.type.id</field>
+        	<field name="model">report.stock.move</field>
+        	<field name="type">tree</field>
+        	<field name="inherit_id" ref="stock.view_stock_tree" />
+        	<field name="arch" type="xml">
+        		<xpath expr="/tree/field[@name='type']" position="after">
+        			<field name="type_id" />
+        		</xpath>
+        	</field>
+        </record>
+        
+        <record id="view_stock_search_type_id" model="ir.ui.view">
+        	<field name="name">view.stock.search.type.id</field>
+        	<field name="model">report.stock.move</field>
+        	<field name="type">search</field>
+        	<field name="inherit_id" ref="stock.view_stock_search" />
+        	<field name="arch" type="xml">
+        		<data>
+	        		<xpath expr="/search/group/separator[3]" position="after">
+	        			<field name="type_id" widget="selection" />
+	        		</xpath>
+	        		<xpath expr="/search/group[@string='Group By...']/filter[@name='group_type']" position="after">
+	        			<filter string="Adjustment Type" name="group_type_id" icon="terp-stock_symbol-selection" context="{'group_by':'type_id'}" />
+	        		</xpath>
+                    <xpath expr="/search/group[@string='Group By...']/separator[5]" position="replace">
+                        <newline />
+                    </xpath>
+        		</data>
+        	</field>
+        </record>
+
+	</data>
+</openerp>
+

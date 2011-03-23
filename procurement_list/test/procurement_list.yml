@@ -1,0 +1,143 @@
+-
+    In order to test the procurement list module, I start by creating a new product category
+-
+  !record {model: product.category, id: product_cat1}:
+    name: Categ1
+-
+    I create new product 'P1'
+-
+  !record {model: product.product, id: product1}:
+    categ_id: product_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P1
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+    I create a second product, P2
+-
+  !record {model: product.product, id: product2}:
+    categ_id: product_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P2
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+    I create a partner
+-
+  !record {model: res.partner, id: partner1}:
+    name: Supplier 1
+-
+    I create an address for this partner
+-
+  !record {model: res.partner.address, id: addr1}:
+    partner_id: partner1
+    name: Supplier1
+-
+    I create a second partner
+-
+  !record {model: res.partner, id: partner2}:
+    name: Supplier 2
+-
+    I create an address for this second partner
+-
+  !record {model: res.partner.address, id: addr2}:
+    partner_id: partner2
+    name: Supplier2
+-
+    I create a procurement list for these two products 
+-
+  !record {model: procurement.list, id: list1}:
+    requestor: Administration
+    warehouse_id: stock.warehouse0
+    origin: R 20043
+    supplier_ids:
+      - partner1
+      - partner2
+-
+    I add two lines in this procurement list
+-
+  !record {model: procurement.list.line, id: list1_line1}:
+    product_id: product1
+    product_uom_id: product.product_uom_unit
+    product_qty: 100.00
+    comment: special comment
+    from_stock: False
+    list_id: list1
+-
+    The second line
+-
+  !record {model: procurement.list.line, id: list1_line2}:
+    product_id: product2
+    product_uom_id: product.product_uom_unit
+    product_qty: 50.0
+    from_stock: True
+    list_id: list1
+-
+    I check that the list which was initially in the draft state
+-
+  !assert {model: procurement.list, id: list1}:
+    - state == 'draft'
+    - requestor == 'Administration'
+    - origin == 'R 20043'
+-
+    I create RfQ from this list
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pl_id1 = pl_obj.browse(cr, uid, ref('list1'))
+    pl_id1.create_rfq()
+-
+    I check if the latest message in procurement line is 'RfQ In Progress'
+-
+  !assert {model: procurement.list.line, id: list1_line1}:
+    - latest == 'RfQ In Progress'
+-
+    I check if only one RfQ will be created for the 
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pol_obj = self.pool.get('purchase.order.line')
+    order_obj = self.pool.get('purchase.order')
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product1'))])
+    pl = pl_obj.browse(cr, uid, ref('list1'))
+
+    for pol in pol_obj.browse(cr, uid, pol_ids):
+        assert pol.order_id.origin == pl.name, "Bad name for the name of the generated Purchase Order"
+    order_obj.wkf_confirm_order(cr, uid, [pol.order_id.id])
+    assert pol.procurement_line_id.latest == pol.order_id.name, "Procurement line not updated"
+-
+    I check that no purchase order line with P2
+-
+  !python {model: procurement.list}: |
+    pl_obj = self.pool.get('procurement.list')
+    pol_obj = self.pool.get('purchase.order.line')
+    pol_ids = pol_obj.search(cr, uid, [('product_id', '=', ref('product2'))])
+    assert len(pol_ids) == 0, "No purchase order line found !"
