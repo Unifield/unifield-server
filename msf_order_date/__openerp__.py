@@ -23,6 +23,7 @@
     "name": "MSF Order dates",
     "version": "1.0",
     "depends": [
+                "base",
                 "sale",
                 "purchase",
                 "account",
@@ -37,7 +38,7 @@
     ],
     'update_xml': [
         'security/msf_order_date_groups.xml',
-        'purchase_view.xml',
+        'order_dates_view.xml',
     ],
     'demo_xml': [
     ],
