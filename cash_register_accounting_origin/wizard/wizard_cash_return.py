@@ -211,6 +211,8 @@ class wizard_cash_return(osv.osv_memory):
         to_write['invoice_line_ids'] = new_lines
         # Add total_amount to elements to be written
         to_write['total_amount'] = total
+        # Delete content of invoice_id field
+        to_write['invoice_id'] = False
         # write changes in the wizard
         return self.write(cr, uid, ids, to_write, context=context)
 
