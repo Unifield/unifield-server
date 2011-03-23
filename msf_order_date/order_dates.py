@@ -471,6 +471,10 @@ class sale_order(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        if not 'date_order' in data:
+            data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
+            
         check_dates(self, cr, uid, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
@@ -692,11 +696,11 @@ class sale_order_line(osv.osv):
                  if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
                 
-        res = super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
+        res = super(sale_order_line, self).write(cr, uid, ids, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
         
-        for order in self.read(cr, uid, ids, fields_date, context=context):
+        for order in self.read(cr, uid, ids, fields_date_line, context=context):
             for field in fields_date_line:
                 if data.get(field, False) and data.get(field, False) != order[field]:
                     history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
