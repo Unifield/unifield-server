@@ -27,7 +27,11 @@
                 % if field == 'button':
                     <td class="grid-cell"></td>
                 % else:
-                    <td class="grid-cell ${field_attrs.get('type', 'char')}">
+                    <td class="grid-cell ${field_attrs.get('type', 'char')}"
+                        % if field_attrs.get('attrs'):
+                            ${py.attrs(id=field_attrs.get('prefix'),attrs=field_attrs.get('attrs'),widget=field_attrs.get('prefix')+'/'+field_attrs.get('name',''))}
+                        % endif
+                    >
                         ${editors[field].display()}
                     </td>
                 % endif
