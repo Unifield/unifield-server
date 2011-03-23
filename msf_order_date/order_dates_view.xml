@@ -19,10 +19,10 @@
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group" position="before">
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
-                            <field name="delivery_requested_date" on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order)" />
+                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
                             <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
-                                   on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
-                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(minimum_planned_date, est_transport_lead_time)" />
+                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
                             <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
                             <field name="shipment_date" />
                             <field name="receipt_date" readonly="1" />
@@ -61,7 +61,7 @@
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='delivery_requested_date']" position="replace" />
 	            </data>
             </field>
         </record>
@@ -113,10 +113,10 @@
                     <xpath expr="/form/notebook/page[@string='Other Information']/group" position="before">
                         <group colspan="4" col="4" name="date">
                             <separator colspan="4" string="Dates" />
-                            <field name="delivery_requested_date" on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order)" />
+                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
                             <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
-                                   on_change="requested_date_change(minimum_planned_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
-                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(minimum_planned_date, est_transport_lead_time)" />
+                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
                             <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
                             <field name="shipment_date" />
                             <field name="receipt_date" readonly="1" />

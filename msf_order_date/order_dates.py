@@ -153,6 +153,12 @@ class purchase_order(osv.osv):
         '''
         Checks if dates are good before writing
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        if not 'date_order' in data:
+            data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
+            
         check_dates(self, cr, uid, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
@@ -162,8 +168,8 @@ class purchase_order(osv.osv):
                 if data.get(field, False) and data.get(field, False) != order[field]:
                     history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
                                                  'purchase_id': order['id'],
-                                                 'old_value': order[field],
-                                                 'new_value': data.get(field, False),
+                                                 'old_value': order[field] or 'False',
+                                                 'new_value': data.get(field, 'False'),
                                                  'user_id': uid,
                                                  'time': time.strftime('%y-%m-%d %H:%M:%S')})
         
@@ -363,17 +369,28 @@ class purchase_order_line(osv.osv):
         '''
         Create history if date values changed
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for line in self.browse(cr, uid, ids):
+            if 'date_planned' in data:
+                if line.order_id.delivery_requested_date > data['date_planned']:
+                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
+            if 'confirmed_delivery_date' in data:
+                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
+                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
+        
         res = super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
         
-        for order in self.read(cr, uid, ids, fields_date, context=context):
+        for order in self.read(cr, uid, ids, fields_date_line, context=context):
             for field in fields_date_line:
                 if data.get(field, False) and data.get(field, False) != order[field]:
                     history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
                                                  'purchase_line_id': order['id'],
-                                                 'old_value': order[field],
-                                                 'new_value': data.get(field, False),
+                                                 'old_value': order[field] or 'False',
+                                                 'new_value': data.get(field, 'False'),
                                                  'user_id': uid,
                                                  'time': time.strftime('%y-%m-%d %H:%M:%S')})
                     
@@ -452,6 +469,8 @@ class sale_order(osv.osv):
         '''
         Checks if dates are good before writing
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         check_dates(self, cr, uid, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
@@ -461,8 +480,8 @@ class sale_order(osv.osv):
                 if data.get(field, False) and data.get(field, False) != order[field]:
                     history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
                                                  'sale_id': order['id'],
-                                                 'old_value': order[field],
-                                                 'new_value': data.get(field, False),
+                                                 'old_value': order[field] or 'False',
+                                                 'new_value': data.get(field, 'False'),
                                                  'user_id': uid,
                                                  'time': time.strftime('%y-%m-%d %H:%M:%S')})
         
@@ -662,6 +681,17 @@ class sale_order_line(osv.osv):
         '''
         Create history if date values changed
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for line in self.browse(cr, uid, ids):
+            if 'date_planned' in data:
+                if line.order_id.delivery_requested_date > data['date_planned']:
+                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
+            if 'confirmed_delivery_date' in data:
+                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
+                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
+                
         res = super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
         
         history_obj = self.pool.get('history.order.date')
@@ -671,8 +701,8 @@ class sale_order_line(osv.osv):
                 if data.get(field, False) and data.get(field, False) != order[field]:
                     history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
                                                  'sale_line_id': order['id'],
-                                                 'old_value': order[field],
-                                                 'new_value': data.get(field, False),
+                                                 'old_value': order[field] or 'False',
+                                                 'new_value': data.get(field, 'False'),
                                                  'user_id': uid,
                                                  'time': time.strftime('%y-%m-%d %H:%M:%S')})
                     
@@ -755,8 +785,8 @@ class history_order_date(osv.osv):
         'purchase_line_id': fields.many2one('purchase.order.line', string='Line'),
         'sale_id': fields.many2one('sale.order', string='Order'),
         'sale_line_id': fields.many2one('sale.order.line', string='Line'),
-        'old_value': fields.date(string='Old value', required=True),
-        'new_value': fields.date(string='New value', required=True),
+        'old_value': fields.char(size=64, string='Old value', required=True),
+        'new_value': fields.char(size=64, string='New value', required=True),
         'user_id': fields.many2one('res.users', string='User'),
         'time': fields.datetime(string='Time', required=True),
     }

@@ -44,7 +44,7 @@
     ],
     'test': [
         'test/create_data.yml',
-        #'test/purchase_dates.yml',
+        'test/purchase_dates.yml',
     ],
     'installable': True,
     'active': False,
