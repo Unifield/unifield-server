@@ -299,6 +299,7 @@ class wizard_cash_return(osv.osv_memory):
             for inv_move_line_id in inv_move_line_ids:
                 inv_data = move_line_obj.read(cr, uid, inv_move_line_id, ['date', 'name', 'debit', 'credit', 'account_id', 'partner_id'], \
                     context=context)
+                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 vals = {
                     'date': inv_data.get('date', False),
                     'name': inv_data.get('name', '/'),
@@ -307,6 +308,7 @@ class wizard_cash_return(osv.osv_memory):
                     'partner_id': inv_data.get('partner_id', False)[0] or False,
                     'statement_id': register.id,
                     'from_cash_return': True, # this permits to disable the return function on the statement line
+                    'sequence_for_reference': seq,
                 }
                 inv_st_id = absl_obj.create(cr, uid, vals, context=context)
                 # Make the link between the statement line and the move line
@@ -314,6 +316,7 @@ class wizard_cash_return(osv.osv_memory):
             # create the statement line for the advance closing
             adv_data = move_line_obj.read(cr, uid, adv_id, ['date', 'name', 'credit', 'account_id', 'employee_id'], context=context)
             adv_test = move_line_obj.browse(cr, uid, adv_id, context=context)
+            seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
             vals = {
                 'date': adv_data.get('date', False),
                 'name': adv_data.get('name', False),
@@ -322,6 +325,7 @@ class wizard_cash_return(osv.osv_memory):
                 'employee_id': adv_data.get('employee_id', False)[0] or False,
                 'statement_id': register.id,
                 'from_cash_return': True, # this permits to disable the return function on the statement line
+                'sequence_for_reference': seq,
             }
             adv_st_id = absl_obj.create(cr, uid, vals, context=context)
             # Make the link between the statement line and the move line
