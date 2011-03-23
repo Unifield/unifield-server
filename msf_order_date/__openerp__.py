@@ -38,6 +38,7 @@
     ],
     'update_xml': [
         'security/msf_order_date_groups.xml',
+        'security/ir.model.access.csv',
         'order_dates_view.xml',
     ],
     'demo_xml': [
@@ -46,6 +47,7 @@
         'test/create_data.yml',
         'test/purchase_dates.yml',
         'test/sale_dates.yml',
+        'test/history_dates.yml',
     ],
     'installable': True,
     'active': False,

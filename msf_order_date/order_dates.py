@@ -76,10 +76,10 @@ def check_date_order(self, cr, uid, date=False, context={}):
     
     period_obj = self.pool.get('account.period')
     ## TODO: See if the period state changed in financial part of Unifiedl
-    period_ids= period_obj.search(cr, uid, [('state', '=', 'draft')], context=context)
+    period_ids = period_obj.search(cr, uid, [('state', '=', 'draft')], context=context)
     for p in period_obj.browse(cr, uid, period_ids, context=context):
-        if date > p.date_start and date < p.date_stop:
-            res = True
+        if date >= p.date_start and date <= p.date_stop:
+            return True
             
     return res
 
