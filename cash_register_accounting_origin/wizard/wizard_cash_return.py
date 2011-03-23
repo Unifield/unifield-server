@@ -306,6 +306,7 @@ class wizard_cash_return(osv.osv_memory):
                     'account_id': inv_data.get('account_id', False)[0] or False,
                     'partner_id': inv_data.get('partner_id', False)[0] or False,
                     'statement_id': register.id,
+                    'from_cash_return': True, # this permits to disable the return function on the statement line
                 }
                 inv_st_id = absl_obj.create(cr, uid, vals, context=context)
                 # Make the link between the statement line and the move line
@@ -320,10 +321,13 @@ class wizard_cash_return(osv.osv_memory):
                 'account_id': adv_data.get('account_id', False)[0] or False,
                 'employee_id': adv_data.get('employee_id', False)[0] or False,
                 'statement_id': register.id,
+                'from_cash_return': True, # this permits to disable the return function on the statement line
             }
             adv_st_id = absl_obj.create(cr, uid, vals, context=context)
             # Make the link between the statement line and the move line
             absl_obj.write(cr, uid, [adv_st_id], {'move_ids': [(4, move_id, False)]}, context=context)
+            # Disable the return function on the statement line origin (on which we launch the wizard)
+            absl_obj.write(cr, uid, [wizard.advance_st_line_id.id], {'from_cash_return': True}, context=context)
         else:
             # TODO:  make treatment for advance lines
             pass

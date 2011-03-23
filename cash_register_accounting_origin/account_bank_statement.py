@@ -242,6 +242,11 @@ class account_bank_statement_line(osv.osv):
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
         'mandatory': fields.char(string="Mandatory", size=120),
+        'from_cash_return': fields.boolean(string='Come from a cash return?'),
+    }
+
+    _defaults = {
+        'from_cash_return': False,
     }
 
     def _updating_amount(self, values):
@@ -392,7 +397,9 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
-        if state  == 'hard':
+        if state  == 'hard' and 'from_cash_return' in values and values.get('from_cash_return') is True:
+            return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        elif state == 'hard':
             return False
         # First update amount
         values = self._updating_amount(values=values)
