@@ -11,6 +11,8 @@
     partner_address_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
+    delivery_confirmed_date: !eval time.strftime('%Y-%m-%d')
+    delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
   A line for this Purchase Order
 -
@@ -36,6 +38,8 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
+    delivery_confirmed_date: !eval time.strftime('%Y-%m-%d')
+    delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
   A line for this Sale Order
 -
@@ -139,17 +143,23 @@
 -
   !python {model: sale.order}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('so2'), {'delivery_requested_date': time.strftime('%Y-%m-%d')})
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('sale_id', '=', ref('so2'))])) == 1, "Wrong number of history on Delivery Requested Date"
+    self.write(cr, uid, ref('so2'), {'delivery_requested_date': two_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', two_days), ('sale_id', '=', ref('so2'))])) == 1, "Wrong number of history on Delivery Requested Date"
 -
   For Delivery Requested Date in Purchase
 -
   !python {model: purchase.order}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('po2'), {'delivery_requested_date': time.strftime('%Y-%m-%d')})
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('purchase_id', '=', ref('po2'))])) == 1, "Wrong number of history on Delivery Requested Date"
+    self.write(cr, uid, ref('po2'), {'delivery_requested_date': two_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', two_days), ('purchase_id', '=', ref('po2'))])) == 1, "Wrong number of history on Delivery Requested Date"
 -
   For Delivery Confirmed Date in Sale
 -
@@ -233,38 +243,46 @@
 -
   Line level
 -
-  Date Planned on Sale
+  Date Planned on Sale Order Line
 -
   !python {model: sale.order.line}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    ten_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=10)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('so2_line1'), {'date_planned': time.strftime('%Y-%m-%d')})
-    print len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('sale_line_id', '=', ref('so2_line1'))]))
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('sale_line_id', '=', ref('so2_line1'))])) == 1, "Wrong number of history on Planned Date on line"
+    self.write(cr, uid, ref('so2_line1'), {'date_planned': ten_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', ten_days), ('sale_line_id', '=', ref('so2_line1'))])) == 1, "Wrong number of history on Planned Date on line"
 -
-  Date Planned on Purchase
+  Date Planned on Purchase Line
 -
   !python {model: purchase.order.line}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    ten_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=10)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('po2_line1'), {'date_planned': time.strftime('%Y-%m-%d')})
-    len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('purchase_line_id', '=', ref('po2_line1'))]))
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('purchase_line_id', '=', ref('po2_line1'))])) == 1, "Wrong number of history on Planned Date on line"
+    self.write(cr, uid, ref('po2_line1'), {'date_planned': ten_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', ten_days), ('purchase_line_id', '=', ref('po2_line1'))])) == 1, "Wrong number of history on Planned Date on line"
 -
-  Delivery Confirmed Date on Sale
+  Delivery Confirmed Date on Sale Line
 -
   !python {model: sale.order.line}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    fourty_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=4)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('so2_line1'), {'confirmed_delivery_date': time.strftime('%Y-%m-%d')})
-    len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('sale_line_id', '=', ref('so2_line1'))]))
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('sale_line_id', '=', ref('so2_line1'))])) == 2, "Wrong number of history on Delivery Requested Date on line"
+    self.write(cr, uid, ref('so2_line1'), {'confirmed_delivery_date': fourty_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', fourty_days), ('sale_line_id', '=', ref('so2_line1'))])) == 1, "Wrong number of history on Delivery Requested Date on line"
 -
-  Delivery Confirmed Date on Purchase
+  Delivery Confirmed Date on Purchase Line
 -
   !python {model: purchase.order.line}: |
     import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    fourty_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=40)).strftime('%Y-%m-%d')
     history_obj = self.pool.get('history.order.date')
-    self.write(cr, uid, ref('po2_line1'), {'confirmed_delivery_date': time.strftime('%Y-%m-%d')})
-    len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('purchase_line_id', '=', ref('po2_line1'))]))
-    assert len(history_obj.search(cr, uid, [('new_value', '=', time.strftime('%Y-%m-%d')), ('purchase_line_id', '=', ref('po2_line1'))])) == 2, "Wrong number of history on Delivery Requested Date on line"
+    self.write(cr, uid, ref('po2_line1'), {'confirmed_delivery_date': fourty_days})
+    assert len(history_obj.search(cr, uid, [('new_value', '=', fourty_days), ('purchase_line_id', '=', ref('po2_line1'))])) == 1, "Wrong number of history on Delivery Requested Date on line"

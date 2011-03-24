@@ -145,6 +145,159 @@ def check_dates(self, cr, uid, data, context={}):
     
     return True
 
+def create_history(self, cr, uid, ids, data, class_name, field_name, fields, context={}):
+    '''
+    Creates an entry in dates history of the object self._name
+    '''
+    history_obj = self.pool.get('history.order.date')
+    
+    for order in self.pool.get(class_name).read(cr, uid, ids, fields, context=context):
+        for field in fields:
+            if data.get(field, False) and data.get(field, False) != order[field]:
+                history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
+                                             field_name: order['id'],
+                                             'old_value': order[field] or 'False',
+                                             'new_value': data.get(field, 'False'),
+                                             'user_id': uid,
+                                             'time': time.strftime('%y-%m-%d %H:%M:%S')})
+                
+    return
+
+def common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context={}):
+    '''
+    Common function when type of order is changing
+    '''
+    v = {}
+    if order_type == 'international' and rts and not shipment_date:
+        v.update({'shipment_date': rts})
+        
+    return v
+
+def common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
+    '''
+    Common function when requested date is changing
+    '''
+    message = {}
+    v = {}
+    if isinstance(leadtime, str):
+        leadtime = int(leadtime)
+    
+    if not confirmed_date:
+        confirmed_date = requested_date
+    if not date_order:
+        return {'value': {'delivery_confirmed_date': confirmed_date},
+                'warning': message}
+    
+    # Set the message if the user enter a wrong requested date
+    if not check_delivery_requested(self, requested_date, context=context):
+        message = {'title': _('Warning'),
+                   'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
+    
+    # Set the message if the user enter a wrong confirmed date    
+    if not check_delivery_confirmed(self, confirmed_date, date_order, context):
+        message = {'title': _('Warning'),
+                   'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
+    if requested_date:
+        requested = datetime.strptime(requested_date, '%Y-%m-%d')
+        ready_to_ship = requested - relativedelta(days=leadtime)
+        v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
+        
+    v.update({'delivery_confirmed_date': confirmed_date})
+    
+    return {'value': v,
+            'warning': message}
+    
+def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
+    '''
+    Common function when ready_to_ship date is changing
+    '''
+    message = {}
+    v = {}
+    if not ready_to_ship or not date_order:
+        return {}
+    
+    # Set the message if the user enter a wrong ready to ship date
+    if not check_delivery_confirmed(self, ready_to_ship, date_order, context=context):
+        message = {'title': _('Warning'),
+                   'message': _('The Ready To Ship Date should be older than the Creation date !')}
+    else:
+        if not shipment:
+            v.update({'shipment_date': ready_to_ship})
+        
+    return {'warning': message, 'value': v}
+
+def common_onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
+    '''
+    Common fonction when transport lead time is changing
+    '''
+    res = {}
+    if isinstance(leadtime, str):
+        try:
+            leadtime = int(leadtime)
+        except:
+            res = {}
+    if requested_date:
+        requested = datetime.strptime(requested_date, '%Y-%m-%d')
+        ready_to_ship = requested - relativedelta(days=leadtime)
+        res = {'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')}
+    
+    return {'value': res}
+
+def common_onchange_partner_id(self, cr, uid, ids, part, res={}):
+    '''
+    Common function when Partner is changing
+    '''
+    
+    requested_date = time.strftime('%Y-%m-%d')
+    if part:
+        partner = self.pool.get('res.partner').browse(cr, uid, part)
+        # TODO: Show the po_lead if it's those of company or those of partner
+        requested_date = datetime.strptime(requested_date, '%Y-%m-%d')
+        requested_date = requested_date + relativedelta(days=partner.leadtime)
+        requested_date = requested_date.strftime('%Y-%m-%d')
+    
+    if check_delivery_requested(self, requested_date):
+        res['value'].update({'delivery_requested_date': requested_date,
+                             'ready_to_ship_date': requested_date,
+                             'delivery_confirmed_date': requested_date})
+    else:
+        res.update({'warning': {'title': _('Warning'), 
+                                'message': _('The Delivery Requested Date should be between today and today + 24 months !')}})
+    
+    return res
+
+def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, parent_class, context={}):
+    '''
+    Checks if dates are later than header dates 
+    '''
+    min_confirmed = min_requested = False
+    
+    order_id = context.get('active_id', [])
+    if isinstance(order_id, (int, long)):
+        order_id = [order_id]
+        
+    if order_id:
+        min_confirmed = self.pool.get(parent_class).browse(cr, uid, order_id[0]).delivery_confirmed_date
+        min_requested = self.pool.get(parent_class).browse(cr, uid, order_id[0]).delivery_requested_date
+    
+    for line in self.browse(cr, uid, ids, context=context):
+        min_confirmed = line.order_id.delivery_confirmed_date
+        min_requested = line.order_id.delivery_requested_date
+        
+    if min_confirmed and confirmed_date:
+        if min_confirmed > confirmed_date:
+            return {'warning': {'title': _('Warning'),
+                                'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
+    
+    if min_requested and requested_date:
+        if min_requested > requested_date:
+            return {'warning': {'title': _('Warning'),
+                                'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
+    
+    return {'value': {'date_planned': requested_date,
+                      'confirmed_delivery_date': confirmed_date}}
+        
+
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit= 'purchase.order'
@@ -158,21 +311,11 @@ class purchase_order(osv.osv):
             
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
-            
+        
         check_dates(self, cr, uid, data, context=context)
         
-        history_obj = self.pool.get('history.order.date')
-        
-        for order in self.read(cr, uid, ids, fields_date, context=context):
-            for field in fields_date:
-                if data.get(field, False) and data.get(field, False) != order[field]:
-                    history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
-                                                 'purchase_id': order['id'],
-                                                 'old_value': order[field] or 'False',
-                                                 'new_value': data.get(field, 'False'),
-                                                 'user_id': uid,
-                                                 'time': time.strftime('%y-%m-%d %H:%M:%S')})
-        
+        create_history(self, cr, uid, ids, data, 'purchase.order', 'purchase_id', fields_date, context=context)
+            
         return super(purchase_order, self).write(cr, uid, ids, data, context=context)
     
     def create(self, cr, uid, data, context={}):
@@ -250,12 +393,8 @@ class purchase_order(osv.osv):
     def order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context={}):
         '''
         Set the shipment date if the order_type == international
-        '''
-        v = {}
-        if order_type == 'international' and rts and not shipment_date:
-            v.update({'shipment_date': rts})
-        
-        return {'value': v}
+        '''        
+        return {'value': common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context=context)}
     
     def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
         '''
@@ -295,37 +434,14 @@ class purchase_order(osv.osv):
         '''
         Checks the entered value
         '''
-        message = {}
-        v = {}
-        if not ready_to_ship or not date_order:
-            return {}
-        
-        # Set the message if the user enter a wrong ready to ship date
-        if not check_delivery_confirmed(self, ready_to_ship, date_order, context=context):
-            message = {'title': _('Warning'),
-                       'message': _('The Ready To Ship Date should be older than the Creation date !')}
-        else:
-            if not shipment:
-                v.update({'shipment_date': ready_to_ship})
-            
-        return {'warning': message, 'value': v}
+        return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
     def onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
         '''
         Fills the Ready to ship date
         '''
-        res = {}
-        if isinstance(leadtime, str):
-            try:
-                leadtime = int(leadtime)
-            except:
-                res = {}
-        if requested_date:
-            requested = datetime.strptime(requested_date, '%Y-%m-%d')
-            ready_to_ship = requested - relativedelta(days=leadtime)
-            res = {'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')}
-        
-        return {'value': res}
+        return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
+
     
     def onchange_partner_id(self, cr, uid, ids, part):
         '''
@@ -335,28 +451,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        if not ids:
-            company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        else:
-            company = self.browse(cr, uid, ids[0]).company_id
-        
-        requested_date = time.strftime('%Y-%m-%d')
-        if part:
-            partner = self.pool.get('res.partner').browse(cr, uid, part)
-            # TODO: Show the po_lead if it's those of company or those of partner
-            requested_date = datetime.strptime(requested_date, '%Y-%m-%d')
-            requested_date = requested_date + relativedelta(days=partner.leadtime)
-            requested_date = requested_date.strftime('%Y-%m-%d')
-        
-        if check_delivery_requested(self, requested_date):
-            res['value'].update({'delivery_requested_date': requested_date,
-                                 'ready_to_ship_date': requested_date,
-                                 'delivery_confirmed_date': requested_date})
-        else:
-            res.update({'warning': {'title': _('Warning'), 
-                                    'message': _('The Delivery Requested Date should be between today and today + 24 months !')}})
-        
-        return res
+        return common_onchange_partner_id(self, cr, uid, ids, part, res)
     
 purchase_order()
 
@@ -380,21 +475,9 @@ class purchase_order_line(osv.osv):
                  if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
         
-        res = super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
-        
-        history_obj = self.pool.get('history.order.date')
-        
-        for order in self.read(cr, uid, ids, fields_date_line, context=context):
-            for field in fields_date_line:
-                if data.get(field, False) and data.get(field, False) != order[field]:
-                    history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
-                                                 'purchase_line_id': order['id'],
-                                                 'old_value': order[field] or 'False',
-                                                 'new_value': data.get(field, 'False'),
-                                                 'user_id': uid,
-                                                 'time': time.strftime('%y-%m-%d %H:%M:%S')})
+        create_history(self, cr, uid, ids, data, 'purchase.order.line', 'purchase_line_id', fields_date_line, context=context)
                     
-        return res
+        return super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
     
     _columns = {
         'date_planned': fields.date(string='Requested Date', required=True, select=True,
@@ -439,25 +522,8 @@ class purchase_order_line(osv.osv):
         '''
         Checks if dates are later than header dates 
         '''
-        min_confirmed = context.get('confirmed_date', False)
-        min_requested = context.get('requested_date', False)
-        
-        for line in self.browse(cr, uid, ids, context=context):
-            min_confirmed = line.order_id.delivery_confirmed_date
-            min_requested = line.order_id.delivery_requested_date
-            
-        if min_confirmed and confirmed_date:
-            if min_confirmed > confirmed_date:
-                return {'warning': {'title': _('Warning'),
-                                    'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
-        
-        if min_requested and requested_date:
-            if min_requested > requested_date:
-                return {'warning': {'title': _('Warning'),
-                                    'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
-        
-        return {'value': {'date_planned': requested_date,
-                          'confirmed_delivery_date': confirmed_date}}
+        return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'purchase.order', context=context)
+
     
 purchase_order_line()
 
@@ -477,17 +543,7 @@ class sale_order(osv.osv):
             
         check_dates(self, cr, uid, data, context=context)
         
-        history_obj = self.pool.get('history.order.date')
-        
-        for order in self.read(cr, uid, ids, fields_date, context=context):
-            for field in fields_date:
-                if data.get(field, False) and data.get(field, False) != order[field]:
-                    history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
-                                                 'sale_id': order['id'],
-                                                 'old_value': order[field] or 'False',
-                                                 'new_value': data.get(field, 'False'),
-                                                 'user_id': uid,
-                                                 'time': time.strftime('%y-%m-%d %H:%M:%S')})
+        create_history(self, cr, uid, ids, data, 'sale.order', 'sale_id', fields_date, context=context)
         
         return super(sale_order, self).write(cr, uid, ids, data, context=context)
     
@@ -567,81 +623,26 @@ class sale_order(osv.osv):
         '''
         Set the shipment date if the order_type == international
         '''
-        v = {}
-        if order_type == 'international' and rts and not shipment_date:
-            v.update({'shipment_date': rts})
-        
-        return {'value': v}
+        return {'value': common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context=context)}
     
     def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
         '''
         Set the confirmed date with the requested date if the first is not fill
         '''
-        message = {}
-        v = {}
-        if isinstance(leadtime, str):
-            leadtime = int(leadtime)
-        
-        if not confirmed_date:
-            confirmed_date = requested_date
-        if not date_order:
-            return {'value': {'delivery_confirmed_date': confirmed_date},
-                    'warning': message}
-        
-        # Set the message if the user enter a wrong requested date
-        if not check_delivery_requested(self, requested_date, context=context):
-            message = {'title': _('Warning'),
-                       'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
-        
-        # Set the message if the user enter a wrong confirmed date    
-        if not check_delivery_confirmed(self, confirmed_date, date_order, context):
-            message = {'title': _('Warning'),
-                       'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
-        if requested_date:
-            requested = datetime.strptime(requested_date, '%Y-%m-%d')
-            ready_to_ship = requested - relativedelta(days=leadtime)
-            v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
-            
-        v.update({'delivery_confirmed_date': confirmed_date})
-        
-        return {'value': v,
-                'warning': message}
+        return common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime, context=context)
         
     def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
         '''
         Checks the entered value
         '''
-        message = {}
-        v = {}
-        if not ready_to_ship or not date_order:
-            return {}
-        
-        # Set the message if the user enter a wrong ready to ship date
-        if not check_delivery_confirmed(self, ready_to_ship, date_order, context=context):
-            message = {'title': _('Warning'),
-                       'message': _('The Ready To Ship Date should be older than the Creation date !')}
-        else:
-            if not shipment:
-                v.update({'shipment_date': ready_to_ship})
-            
-        return {'warning': message, 'value': v}
+        return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
+
     
     def onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
         '''
         Fills the Ready to ship date
         '''
-        res = {}
-        if isinstance(leadtime, str):
-            try:
-                leadtime = int(leadtime)
-            except:
-                res = {}
-        if requested_date:
-            requested = datetime.strptime(requested_date, '%Y-%m-%d')
-            ready_to_ship = requested - relativedelta(days=leadtime)
-            res = {'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')}
-        
-        return {'value': res}
+        return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
     
     def onchange_partner_id(self, cr, uid, ids, part):
         '''
@@ -651,28 +652,7 @@ class sale_order(osv.osv):
             ids = [ids]
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        if not ids:
-            company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        else:
-            company = self.browse(cr, uid, ids[0]).company_id
-        
-        requested_date = time.strftime('%Y-%m-%d')
-        if part:
-            partner = self.pool.get('res.partner').browse(cr, uid, part)
-            # TODO: Show the po_lead if it's those of company or those of partner
-            requested_date = datetime.strptime(requested_date, '%Y-%m-%d')
-            requested_date = requested_date + relativedelta(days=partner.leadtime)
-            requested_date = requested_date.strftime('%Y-%m-%d')
-        
-        if check_delivery_requested(self, requested_date):
-            res['value'].update({'delivery_requested_date': requested_date,
-                                 'ready_to_ship_date': requested_date,
-                                 'delivery_confirmed_date': requested_date})
-        else:
-            res.update({'warning': {'title': _('Warning'), 
-                                    'message': _('The Delivery Requested Date should be between today and today + 24 months !')}})
-        
-        return res
+        return common_onchange_partner_id(self, cr, uid, ids, part, res)
     
 sale_order()
 
@@ -695,22 +675,10 @@ class sale_order_line(osv.osv):
             if 'confirmed_delivery_date' in data:
                  if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
-                
-        res = super(sale_order_line, self).write(cr, uid, ids, data, context=context)
         
-        history_obj = self.pool.get('history.order.date')
-        
-        for order in self.read(cr, uid, ids, fields_date_line, context=context):
-            for field in fields_date_line:
-                if data.get(field, False) and data.get(field, False) != order[field]:
-                    history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
-                                                 'sale_line_id': order['id'],
-                                                 'old_value': order[field] or 'False',
-                                                 'new_value': data.get(field, 'False'),
-                                                 'user_id': uid,
-                                                 'time': time.strftime('%y-%m-%d %H:%M:%S')})
+        create_history(self, cr, uid, ids, data, 'sale.order.line', 'sale_line_id', fields_date_line, context=context)
                     
-        return res
+        return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
     
     _columns = {
         'date_planned': fields.date(string='Requested Date', required=True, select=True,
@@ -755,25 +723,7 @@ class sale_order_line(osv.osv):
         '''
         Checks if dates are later than header dates 
         '''
-        min_confirmed = context.get('confirmed_date', False)
-        min_requested = context.get('requested_date', False)
-        
-        for line in self.browse(cr, uid, ids, context=context):
-            min_confirmed = line.order_id.delivery_confirmed_date
-            min_requested = line.order_id.delivery_requested_date
-            
-        if min_confirmed and confirmed_date:
-            if min_confirmed > confirmed_date:
-                return {'warning': {'title': _('Warning'),
-                                    'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
-        
-        if min_requested and requested_date:
-            if min_requested > requested_date:
-                return {'warning': {'title': _('Warning'),
-                                    'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
-        
-        return {'value': {'date_planned': requested_date,
-                          'confirmed_delivery_date': confirmed_date}}
+        return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'sale.order', context=context)
             
     
 sale_order_line()
