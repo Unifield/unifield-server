@@ -16,13 +16,13 @@
                         display_invoice)"/>
                     <newline />
                     <group colspan="4">
-                        <field name='invoice_id' nolabel="1"/>
+                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'out_invoice'), ('state', '=', 'open')]"/>
                         <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
                     <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4"/>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" context="context" nolabel="1" colspan="4"/>
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" />
                     <newline />
                     <field name="total_amount"/>
                     <newline />
