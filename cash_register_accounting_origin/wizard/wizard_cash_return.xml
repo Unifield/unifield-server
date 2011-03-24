@@ -16,7 +16,7 @@
                         display_invoice)"/>
                     <newline />
                     <group colspan="4">
-                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'out_invoice'), ('state', '=', 'open')]"/>
+                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open')]"/>
                         <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
