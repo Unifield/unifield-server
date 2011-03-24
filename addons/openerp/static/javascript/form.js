@@ -646,7 +646,12 @@ function onChange(caller){
                         }
                         break;
                     case 'boolean':
-                        openobject.dom.get(prefix + k + '_checkbox_').checked = value || false;
+                        obj = openobject.dom.get(prefix + k + '_checkbox_')
+                        if (obj) {
+                            obj.checked = value || false;
+                        } else {
+                            openobject.dom.get(prefix + k).value = value || false;
+                        }
                         break;
                     case 'text_html':
                         if (tinyMCE.get(prefix + k)) {
@@ -669,23 +674,24 @@ function onChange(caller){
                             'width': progress
                         }));
                         break;
-		    case 'reference':
-		    	if (value) {
-				ref = openobject.dom.get(prefix + k + '_reference');
-				v = value.split(',');
-				ref.value = v[0];
-				fld._m2o.on_reference_changed();
-                        	fld.value = v[1] || '';
-	                        try {
-        	                    openobject.dom.get(prefix + k + '_text').value = v[2] || '';
-                	        }
-                        	catch (e) {
-                        	}
-			}
+                    case 'reference':
+                        if (value) {
+                        ref = openobject.dom.get(prefix + k + '_reference');
+                        v = value.split(',');
+                        ref.value = v[0];
+                        fld._m2o.on_reference_changed();
+                                    fld.value = v[1] || '';
+                                    try {
+                                        openobject.dom.get(prefix + k + '_text').value = v[2] || '';
+                                    }
+                                    catch (e) {
+                                    }
+                        }
+                        break;
                     default:
                     // do nothing on default
                 }
-
+                jQuery(fld).trigger('onAttrChange');
                 MochiKit.Signal.signal(fld, 'onchange');
                 MochiKit.Signal.signal(window.document, 'onfieldchange', fld);
             }
