@@ -137,10 +137,10 @@ class wizard_cash_return(osv.osv_memory):
         if not journal or not register or not account_id or not move_id:
             return False
 
-        # fetching object
+        # Fetch object
         move_line_obj = self.pool.get('account.move.line')
 
-        # preparing values
+        # Prepare values
         journal_id = journal.id
         period_id = register.period_id.id
         curr_date = time.strftime('%Y-%m-%d')
@@ -148,7 +148,7 @@ class wizard_cash_return(osv.osv_memory):
         register_id = register.id
         analytic_account_id = journal.analytic_journal_id.id
 
-        # creating an account move line
+        # Create an account move line
         move_line_vals = {
             'name': description,
             'date': curr_date,
@@ -167,6 +167,48 @@ class wizard_cash_return(osv.osv_memory):
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context = context)
 
         return move_line_id
+
+    def create_st_line_from_move_line(self, cr, uid, ids, register_id=None, move_id=None, move_line_id=None, context={}):
+        """
+        Create a statement line from a move line and then link it to the move line
+        """
+        #FIXME: complete this function
+        # We need the register_id, the move id and the move line id
+        if not register_id or not move_id or not move_line_id:
+            return False
+
+        # Fetch objects
+        move_line_obj = self.pool.get('account.move.line')
+        absl_obj = self.pool.get('account.bank.statement.line')
+        move_line = move_line_obj.browse(cr, uid, move_line_id, context=context)
+
+        # Prepare some values
+        date = move_line.date
+        name = move_line.name
+        amount = (move_line.credit - move_line.debit) or 0.0
+        account_id = move_line.account_id.id
+        partner_id = move_line.partner_id.id or False
+        employee_id = move_line.employee_id.id or False
+        statement_id = register_id
+        seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
+
+        vals = {
+            'date': date,
+            'name': name,
+            'amount': amount,
+            'account_id': account_id,
+            'partner_id': partner_id,
+            'employee_id': employee_id,
+            'statement_id': register_id,
+            'from_cash_return': True, # this permits to disable the return function on the statement line
+            'sequence_for_reference': seq,
+        }
+
+        # Create the statement line with vals
+        st_line_id = absl_obj.create(cr, uid, vals, context=context)
+        # Make a link between the statement line and the move line
+        absl_obj.write(cr, uid, [st_line_id], {'move_ids': [(4, move_id, False)]}, context=context)
+        return True
 
     def action_add_invoice(self, cr, uid, ids, context={}):
         """
@@ -295,41 +337,10 @@ class wizard_cash_return(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
             # create the statement line for the invoices
             absl_obj = self.pool.get('account.bank.statement.line')
-            move_line_obj = self.pool.get('account.move.line')
             for inv_move_line_id in inv_move_line_ids:
-                inv_data = move_line_obj.read(cr, uid, inv_move_line_id, ['date', 'name', 'debit', 'credit', 'account_id', 'partner_id'], \
-                    context=context)
-                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
-                vals = {
-                    'date': inv_data.get('date', False),
-                    'name': inv_data.get('name', '/'),
-                    'amount': inv_data.get('credit', 0.0) - inv_data.get('debit', 0.0),
-                    'account_id': inv_data.get('account_id', False)[0] or False,
-                    'partner_id': inv_data.get('partner_id', False)[0] or False,
-                    'statement_id': register.id,
-                    'from_cash_return': True, # this permits to disable the return function on the statement line
-                    'sequence_for_reference': seq,
-                }
-                inv_st_id = absl_obj.create(cr, uid, vals, context=context)
-                # Make the link between the statement line and the move line
-                absl_obj.write(cr, uid, [inv_st_id], {'move_ids': [(4, move_id, False)]}, context=context)
+                inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_id, context=context)
             # create the statement line for the advance closing
-            adv_data = move_line_obj.read(cr, uid, adv_id, ['date', 'name', 'credit', 'account_id', 'employee_id'], context=context)
-            adv_test = move_line_obj.browse(cr, uid, adv_id, context=context)
-            seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
-            vals = {
-                'date': adv_data.get('date', False),
-                'name': adv_data.get('name', False),
-                'amount': adv_data.get('credit', 0.0),
-                'account_id': adv_data.get('account_id', False)[0] or False,
-                'employee_id': adv_data.get('employee_id', False)[0] or False,
-                'statement_id': register.id,
-                'from_cash_return': True, # this permits to disable the return function on the statement line
-                'sequence_for_reference': seq,
-            }
-            adv_st_id = absl_obj.create(cr, uid, vals, context=context)
-            # Make the link between the statement line and the move line
-            absl_obj.write(cr, uid, [adv_st_id], {'move_ids': [(4, move_id, False)]}, context=context)
+            adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_id, context=context)
             # Disable the return function on the statement line origin (on which we launch the wizard)
             absl_obj.write(cr, uid, [wizard.advance_st_line_id.id], {'from_cash_return': True}, context=context)
         else:
