@@ -1103,14 +1103,19 @@ class Form(SecuredController):
                 values[k] = "%s,%s,%s"%(relation, v, rpc.name_get(relation, v, context))
             elif relation and kind in ('many2one', 'reference') and values.get(k):
                 values[k] = [values[k], rpc.name_get(relation, values[k], context)]
-
+            elif kind == 'reference' and values.get(k+'/options'):
+                values[k] = {'options': values[k+'/options'], 'selection': False}
+                del(values[k+'/options'])
+                if ',' in values.get(k+'/selection',''):
+                    relation,v = values[k+'/selection'].split(',',2)
+                    values[k]['selection'] = "%s,%s,%s"%(relation, v, rpc.name_get(relation, v, context))
+                    del(values[k+'/selection'])
         result['value'] = values
 
         # convert domains in string to prevent them being converted in JSON
         if 'domain' in result:
             for k in result['domain']:
                 result['domain'][k] = ustr(result['domain'][k])
-        print result
         return result
 
     @expose('json')

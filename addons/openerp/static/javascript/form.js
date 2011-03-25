@@ -676,16 +676,24 @@ function onChange(caller){
                         break;
                     case 'reference':
                         if (value) {
-                        ref = openobject.dom.get(prefix + k + '_reference');
-                        v = value.split(',');
-                        ref.value = v[0];
-                        fld._m2o.on_reference_changed();
-                                    fld.value = v[1] || '';
-                                    try {
-                                        openobject.dom.get(prefix + k + '_text').value = v[2] || '';
-                                    }
-                                    catch (e) {
-                                    }
+                            ref = openobject.dom.get(prefix + k + '_reference');
+                            if (typeof(value)=='object') {
+                                var opts = [OPTION({'value': ''})];
+                                for (var opt in value['options']) {
+                                    opts.push(OPTION({'value': value['options'][opt][0]}, value['options'][opt][1]));
+                                }
+                                MochiKit.DOM.replaceChildNodes(ref, opts);
+                                value = value['selection'];
+                            }
+                            v = value.split(',');
+                            ref.value = v[0];
+                            fld._m2o.on_reference_changed();
+                            fld.value = v[1] || '';
+                            try {
+                                openobject.dom.get(prefix + k + '_text').value = v[2] || '';
+                            }
+                            catch (e) {
+                            }
                         }
                         break;
                     default:
