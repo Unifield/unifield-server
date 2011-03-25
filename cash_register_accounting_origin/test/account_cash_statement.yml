@@ -1,5 +1,5 @@
 -
-  In order to test Cash Register I create a Cash Register with a journal in EURO, then I confirm it and check it's move created
+  In order to test Cash Register I create a Cash Register with a journal in EURO, then I confirm it and check that moves are created
 -
   I create a Cash Register with Opening and Closing balance 1500.
 -
