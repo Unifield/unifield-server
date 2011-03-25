@@ -50,6 +50,7 @@
         'test/account_bank_statement.yml',
         'test/account_cheque_register.yml',
         'test/cash_and_bank_transfers.yml',
+        'test/operational_advance_management.yml',
     ],
     "installable": True,
     "active": False
