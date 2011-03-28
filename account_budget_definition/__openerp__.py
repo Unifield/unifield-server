@@ -28,6 +28,9 @@
     'update_xml': [
         'account_budget_definition_view.xml',
     ],
+    'test': [
+        'test/account_budget_definition.yml',
+    ],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',
