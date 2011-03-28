@@ -230,9 +230,10 @@ class product_asset_event(osv.osv):
         on data update
         '''
         # fetch the asset
-        assetId = vals['asset_id']
-        # add readonly fields to vals
-        vals.update(self._getRelatedAssetFields(cr, user, assetId))
+        if 'asset_id' in vals:
+            assetId = vals['asset_id']
+            # add readonly fields to vals
+            vals.update(self._getRelatedAssetFields(cr, user, assetId))
         
         # save the data to db
         return super(product_asset_event, self).write(cr, user, ids, vals, context)
@@ -244,9 +245,10 @@ class product_asset_event(osv.osv):
         on data creation
         '''
         # fetch the asset
-        assetId = vals['asset_id']
-        # add readonly fields to vals
-        vals.update(self._getRelatedAssetFields(cr, user, assetId))
+        if 'asset_id' in vals:
+            assetId = vals['asset_id']
+            # add readonly fields to vals
+            vals.update(self._getRelatedAssetFields(cr, user, assetId))
         
         # save the data to db
         return super(product_asset_event, self).create(cr, user, vals, context)
