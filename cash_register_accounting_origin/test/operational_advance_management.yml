@@ -24,6 +24,7 @@
     name: Supplier Payable Account
     type: payable
     user_type: account_account_type_receivable0
+    reconcile: True
 -
   I create a 6101 Expense Account.
 -
@@ -170,16 +171,19 @@
   I click on the Cash Return button to launch the wizard and check if all values are given.
 -
   !python {model: account.bank.statement.line}: |
-      wizard = self.button_advance(cr, uid, [ref("account_bank_statement_line0")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
-        "active_ids": [ref("account_bank_statement_7")], "active_id": ref("account_bank_statement_7"), })
+      wizard = self.button_advance(cr, uid, [ref("account_bank_statement_line0")], {"lang": "en_US", "tz": False, \
+        "active_model": "account.bank.statement", "active_ids": [ref("account_bank_statement_7")], \
+        "active_id": ref("account_bank_statement_7"), })
       assert wizard.get('res_model') == 'wizard.cash.return', "This is not the right wizard!"
       assert wizard.get('context') != False, "Context is missing!"
       wizard_context = wizard.get('context')
       assert wizard_context.get('statement_id') == ref("account_bank_statement_7"), "Bad register!"
       assert wizard_context.get('active_id') == ref("account_bank_statement_line0"), "Come from bad register line!"
-      assert wizard_context.get('amount') == self.pool.get('account.bank.statement.line').read(cr, uid, [ref("account_bank_statement_line0")], ['amount'])[0].get('amount', 0.0), "Bad amount value!"
+      assert wizard_context.get('amount') == self.pool.get('account.bank.statement.line').read(cr, uid, [ref("account_bank_statement_line0")], \
+      ['amount'])[0].get('amount', 0.0), "Bad amount value!"
 -
-  In order to test the wizard I create a wizard with some values, then I add an invoice and finally I click on 'Compute' button to do computation of the total amount. I also click on 'Ok' to validate the form.
+  In order to test the wizard I create a wizard with some values, then I add an invoice and finally I click on 'Compute' button to do computation 
+  of the total amount. I also click on 'Ok' to validate the form.
 -
   I create the wizard with a returned_amount of 100.0 and the previous generated invoice
 -
@@ -247,3 +251,112 @@
       move_line = self.browse(cr, uid, move_line_id)
       assert move_line.reconcile_id != False, "Not reconciled line"
       assert move_line.move_id.state == 'posted', "The move is not in the posted state"
+-
+  In order to test the cash return without PO, I create a new cash register then I create an advance of 500 EUR then I return 100 EUR and do an expense of 400 EUR with a Supplier as a Third Party.
+-
+  I create a Cash Register with Opening and Closing balance 1O00.
+-
+ !record {model: account.bank.statement, id: account_bank_statement_8}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account.cash_journal
+    name: 
+    period_id: account.period_10
+    user_id: base.user_root
+    starting_details_ids:
+      -  pieces: 100.0
+         number: 10
+         subtotal: 1000.0
+    balance_start: 1000.0
+    balance_end: 1000.0
+-
+  I clicked on Open CashBox button to open the cashbox
+-
+ !python {model: account.bank.statement}: |
+    self.button_open_cash(cr, uid, [ref("account_bank_statement_8")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_8")], "active_id": ref("account_bank_statement_8"), })
+-
+  I create a Cash Advance in the Cash Register under a Staff Third Party, Brik Abrak
+-
+  !record {model: account.bank.statement.line, id: account_bank_statement_line1}:
+    statement_id: account_bank_statement_8
+    account_id: account_account_advance0
+    amount: -500.0
+    date: !eval time.strftime('%Y-%m-%d')
+    name: Food for staff
+    employee_id: employee_brikabrak
+    sequence: 0.0
+    type: general
+-
+  I update the Cash Register with correct amount
+-
+  !record {model: account.bank.statement, id: account_bank_statement_8}:
+    balance_end: 500.0
+    ending_details_ids:
+      -  pieces: 100.0
+         number: 5
+         subtotal: 500.0
+    balance_end_cash: 500.0
+-
+  I hard post the Advance line in the Cash Register
+-
+   !python {model: account.bank.statement.line}: |
+        self.button_hard_posting(cr, uid, [ref("account_bank_statement_line1")])
+-
+  I create the wizard with a returned_amount of 100.0 and the previous generated invoice
+-
+  !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8")}}:
+    returned_amount: 100.0
+-
+  I check that the Justified Amount is calculated
+-
+  !python {model: wizard.cash.return}: |
+    # Call of default function that initialize some fields
+    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance1")], context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0})
+    self.write(cr, uid, [ref("wiz_advance1")], begin_wizard)
+    # prepare some values
+    returned_amount = self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).returned_amount
+    # update the total_amount when a user give a returned amount and do a modification on the wizard
+    onchange_res = self.onchange_returned_amount(cr, uid, [ref("wiz_advance1")], returned_amount)
+    # writting changes
+    self.write(cr, uid, [ref("wiz_advance1")], onchange_res.get('value'))
+    assert self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).total_amount == 100.0, "Error on dynamic change on the returned_amount field."
+-
+  I register an expense of 400 EUR and select a Supplier as a Third Party
+-
+  !record {model: wizard.advance.line, id: wiz_adv_line0}:
+    date: !eval time.strftime('%Y-%m-%d')
+    description: Food for staff
+    account_id: account_account_expense0
+    partner_id: res_partner_supplier0
+    amount: 400.0
+    wizard_id: wiz_advance1
+-
+  I attach this line to the wizard
+-
+  !python {model: wizard.cash.return, id: wiz_advance1}: |
+        self.write(cr, uid, [ref("wiz_advance1")], {'advance_line_ids': [(4, ref("wiz_adv_line0"))]}, context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0})
+-
+  I click on the 'Ok' button
+-
+  !python {model: wizard.cash.return}: |
+    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance1")], {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8")})
+    assert res.get('type') == 'ir.actions.act_window_close', "Wizard is not closed correctly"
+-
+  I check that Cash Register have lines in "Hard posted" state.
+-
+  !python {model: account.bank.statement.line}: |
+    st_line_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id', '=', ref("account_bank_statement_8"))])
+    for st_line_id in st_line_ids:
+      st_line = self.browse(cr, uid, st_line_id)
+      assert st_line.state == 'hard', "Line %s is not in hard posted state" % st_line_id
+-
+  I check that the Cash Register have a line which correspond to the advance. So that entries are matched.
+-
+  !python {model: account.bank.statement.line}: |
+    advance_line = self.browse(cr, uid, ref("account_bank_statement_line1"))
+    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_8"))])
+    res_line = self.browse(cr, uid, res[0])
+    assert advance_line.account_id.id == res_line.account_id.id, "Found line don't have the same account."
+    assert advance_line.employee_id.id == res_line.employee_id.id, "Found line don't have the same employee."
+    assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
+    assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
