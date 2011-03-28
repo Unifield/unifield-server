@@ -49,6 +49,7 @@
         'test/account_bank_statement.yml',
         'test/account_cheque_register.yml',
         'test/cash_and_bank_transfers.yml',
+        'test/cashbox_balance.yml',
     ],
     "installable": True,
     "active": False
