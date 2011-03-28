@@ -30,6 +30,30 @@ class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
+    def _end_balance(self, cr, uid, ids, name, attr, context=None):
+        """
+        Calculate register's balance
+        """
+        st_line_obj = self.pool.get("account.bank.statement.line")
+        res = {}
+
+        statements = self.browse(cr, uid, ids, context=context)
+        for statement in statements:
+            res[statement.id] = statement.balance_start
+            st_line_ids = st_line_obj.search(cr, uid, [('statement_id', '=', statement.id)], context=context)
+            for st_line_id in st_line_ids:
+                st_line_data = st_line_obj.read(cr, uid, [st_line_id], ['amount'], context=context)[0]
+                if 'amount' in st_line_data:
+                    res[statement.id] += st_line_data.get('amount')
+        for r in res:
+            res[r] = round(res[r], 2)
+        return res
+
+    _columns = {
+        'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', \
+            help="Closing balance based on Starting Balance and Cash Transactions"),
+    }
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
@@ -48,7 +72,6 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
 account_bank_statement()
-
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
