@@ -13,17 +13,16 @@
 -
   I create a budget line
 -
-  !record {model: crossovered.budget, id: budget_1}:
-    crossovered_budget_line:
-      - general_budget_id: account_budget.account_budget_post_purchase0
-        planned_amount: 10000.0
+  !record {model: crossovered.budget.lines, id: budget_line_1}:
+    general_budget_id: account_budget.account_budget_post_purchase0
+    planned_amount: 10000.0
+    crossovered_budget_id: budget_1
     
 -
   I check that the fields are correctly set from the parent budget
 -
-  !assert {model: crossovered.budget, id: budget_1}:
-    crossovered_budget_line:
-      - general_budget_code == 'PUR'
-      - analytic_account_id == account.analytic_super_product_trainings
-      - date_to == !eval "'%s-12-31' %(datetime.now().year+1)"
-      - date_from == !eval "'%s-01-01' %(datetime.now().year+1)"
+  !assert {model: crossovered.budget.lines, id: budget_line_1}:
+    - general_budget_code == 'PUR'
+    - analytic_account_id.id == ref("account.analytic_super_product_trainings")
+    - date_from == str(datetime.now().year+1) + "-01-01"
+    - date_to == str(datetime.now().year+1) + "-12-31"
