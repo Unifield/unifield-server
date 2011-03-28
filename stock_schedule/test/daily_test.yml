@@ -1,0 +1,17 @@
+-
+  In order to test features of the stock_schedule module,
+  I will create a new planification with daily parameter and test
+  different cases
+-
+  First daily test
+-
+  !record {model: 'stock.frequence', id: daily1}:
+    - name: daily
+    - daily_frequency_ok: True
+    - daily_frequency: 3
+    - start_date: !eval time.strptime('2010-03-03', '%Y-%m-%d')
+-
+  Check if the last date is False 
+-
+  !assert {model: 'stock.frequence', id: daily1}:
+    - next_date: False, "Next date found on daily1"
