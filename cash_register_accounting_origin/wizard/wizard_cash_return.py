@@ -261,7 +261,15 @@ class wizard_cash_return(osv.osv_memory):
         # Delete content of invoice_id field
         to_write['invoice_id'] = False
         # write changes in the wizard
-        return self.write(cr, uid, ids, to_write, context=context)
+        self.write(cr, uid, ids, to_write, context=context)
+        return {'type': 'ir.actions.act_window',
+              'res_model': 'wizard.cash.return',
+              'view_type': 'form',
+              'view_mode': 'form',
+              'res_id': ids[0],
+              'context': context,
+              'target': 'new',
+            }
 
     def compute_total_amount(self, cr, uid, ids, context={}):
         """
@@ -280,7 +288,15 @@ class wizard_cash_return(osv.osv_memory):
             for st_line in wizard.advance_line_ids:
                 total+= st_line.amount
         res.update({'total_amount': total})
-        return self.write(cr, uid, ids, res, context=context)
+        self.write(cr, uid, ids, res, context=context)
+        return {'type': 'ir.actions.act_window',
+              'res_model': 'wizard.cash.return',
+              'view_type': 'form',
+              'view_mode': 'form',
+              'res_id': ids[0],
+              'context': context,
+              'target': 'new',
+            }
 
     def action_confirm_cash_return(self, cr, uid, ids, context={}):
         """
