@@ -30,7 +30,20 @@ class account_account_activable(osv.osv):
         'inactivation_date': fields.date('Inactive from'),
         'note': fields.char('Note', size=160),
     }
+       
+    
+    def create(self, cr, uid, vals, context=None):
         
+        if 'active' in vals:
+            if not vals['active']:
+                # if account is set as inactive, add the activation date
+                vals['inactivation_date'] = fields.date.today()
+            elif vals['active']:
+                # if account is set as active, delete the date.
+                vals['inactivation_date'] = None
+        
+        return super(account_account_activable, self).create(cr, uid, vals, context=context)
+     
     
     def write(self, cr, uid, ids, vals, context=None):
         
