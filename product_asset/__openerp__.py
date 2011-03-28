@@ -47,7 +47,7 @@
     "init_xml" : [],
     "demo_xml" : [],
     'test': [
-             #'test/product_asset.yml',
+             'test/product_asset.yml',
              ],
     'update_xml': [
         'product_asset_view.xml',
