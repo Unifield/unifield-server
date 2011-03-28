@@ -504,9 +504,7 @@ class account_bank_statement_line(osv.osv):
         res = []
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
-        statement_id = ids[0]
-        cash_statement = self.browse(cr, uid, statement_id)
-        cash_st_obj = self.pool.get("account.bank.statement")
+        cash_statement = self.browse(cr, uid, ids[0])
         acc_move_obj = self.pool.get("account.move")
         currency_id = cash_statement.statement_id.journal_id.company_id.currency_id.id
         # browse all statement lines for creating move lines
