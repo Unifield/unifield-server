@@ -30,7 +30,7 @@ class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
-    def _end_balance(self, cr, uid, ids, name, attr, context=None):
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance
         """
