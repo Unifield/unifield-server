@@ -38,11 +38,11 @@ class account_budget_definition(osv.osv):
             
             budget_line_vals = {}
             
-            if vals['analytic_account_id']:
+            if 'analytic_account_id' in vals:
                 budget_line_vals['analytic_account_id'] = vals['analytic_account_id']
-            if vals['date_from']:
+            if 'date_from' in vals:
                 budget_line_vals['date_from'] = vals['date_from']
-            if vals['date_to']:
+            if 'date_to' in vals:
                 budget_line_vals['date_to'] = vals['date_to']
                 
             budget_lines_obj.write(cr, uid, budget_line_id, budget_line_vals)
@@ -65,11 +65,11 @@ class crossovered_budget_definition_lines(osv.osv):
         budget_id = budget_obj.search(cr, uid, [('id', '=', vals['crossovered_budget_id'])])
         budget_attributes = budget_obj.read(cr, uid, budget_id, ['analytic_account_id', 'date_from', 'date_to'])[0]                        
                     
-        if budget_attributes['analytic_account_id']:
+        if 'analytic_account_id' in budget_attributes:
             vals['analytic_account_id'] = budget_attributes['analytic_account_id'][0]
-        if budget_attributes['date_from']:
+        if 'date_from' in budget_attributes:
             vals['date_from'] = budget_attributes['date_from']
-        if budget_attributes['date_to']:
+        if 'date_to' in budget_attributes:
             vals['date_to'] = budget_attributes['date_to']
         
         return super(crossovered_budget_definition_lines,self).create(cr, uid, vals, context)
