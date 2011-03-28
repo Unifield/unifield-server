@@ -1,0 +1,177 @@
+-
+  In order to test the new purchase order line screen, we first create new partners.
+  We then create new products with different internal and supplier configuration (code and name).
+  
+  Finally we create purchase orders with purchase order lines for these different products.
+  
+
+  I create the first partner,
+  Name AFRICOM
+  Customer <checked>
+  Supplier <checked>
+
+
+  Creating a res.partner record
+-
+  !record {model: res.partner, id: res_partner_africom0}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: AFRICOM
+    supplier: true
+-
+  I create the second partner,
+  Name AlainDeLoin
+  Customer <checked>
+  Supplier <checked>
+
+
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: res_partner_alaindeloin0}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: AlainDeLoin
+    supplier: true
+-
+  I create the third partner,
+  Name Berthe
+  Customer <checked>
+  Supplier <checked>
+
+
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: res_partner_berthe0}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: Berthe
+    supplier: true
+-
+
+  I create the corresponding addresses
+
+
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: res_partner_address_0}:
+    country_id: base.au
+    partner_id: res_partner_africom0
+    street: street
+    type: default
+    zip: '1234'
+
+
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: res_partner_address_2}:
+    partner_id: res_partner_alaindeloin0
+    street: street
+    
+    
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: res_partner_address_3}:
+    partner_id: res_partner_berthe0
+    street: street
+-
+
+  I create an asset type
+-
+
+  !record {model: product.asset.type, id: product_asset_type_0}:
+    name: IT
+-
+
+  I create the first product, with no specified suppliers,
+  Name Boite à chaussures
+  Reference CHAUSS INT 1234
+
+
+  Creating a product.product record
+- 
+  !record {model: product.product, id: product_product_boitechaussures0}:
+    categ_id: product.cat0
+    cost_method: standard
+    default_code: CHAUSS-INT-1234
+    mes_type: fixed
+    name: Boite \xc3\xa0 chaussures
+    name_template: Boite \xc3\xa0 chaussures
+    procure_method: make_to_stock
+    seller_delay: '1'
+    seller_qty: 0.0
+    standard_price: 1.0
+    supply_method: buy
+    type: consu
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    valuation: manual_periodic
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    subtype: asset
+    asset_type_id: product_asset_type_0
+-
+
+  I create an asset
+
+
+  Creating a product.asset record
+- 
+  !record {model: product.asset, id: product_asset_testassetcamembert0}:
+    asset_code: chaussures
+    asset_type_id: product_asset_type_0
+    hq_brand: d
+    hq_model: d
+    hq_serial_nb: d
+    hq_type: d
+    invo_date: '2011-03-22'
+    invo_num: d
+    invo_val_curr: d
+    name: Boite \xc3\xa0 chaussures asset
+    prod_int_code: CHAUSS-INT-1234
+    prod_int_name: Boite \xc3\xa0 chaussures
+    product_id: product_product_boitechaussures0
+    trac_arriv_date: '2011-03-27'
+    trac_orig_mission_code: d
+    trac_receipt_place: d
+    trac_sourc_ref: d
+-
+
+  I create the product.asset.event record
+
+- 
+  !record {model: product.asset.event, id: product_asset_event_0}:
+    asset_code: chaussures
+    asset_id: product_asset_testassetcamembert0
+    asset_type_id: product_asset_type_0
+    date: '2011-03-28'
+    event_type: reception
+    hq_brand: d
+    hq_model: d
+    prod_int_code: CHAUSS-INT-1234
+    prod_int_name: Boite \xc3\xa0 chaussures
+    state: inUse
+    
+-
+
+  I check the onchange function, it should correspond
+  to data from selected product supplier
+  
+  gather corresponding purchase order line
+  retrieve the values from onChange function
+  compare the data with the one from pol
+  
+  name
+  internal_code
+  internal_name
+  supplier_code
+  supplier_name
+
+-
+
+  !python {model: purchase.order.line}: |
+    assert False
+-
