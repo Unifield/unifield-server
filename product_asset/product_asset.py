@@ -48,7 +48,8 @@ class product_asset(osv.osv):
     
     
     def view_init(self, cr , uid , fields_list, context=None):
-        print 'product asset'
+        #print 'product asset'
+        pass
     
     
     def _getRelatedProductFields(self, cr, uid, productId):
@@ -340,6 +341,10 @@ class stock_move(osv.osv):
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                             loc_dest_id, address_id)
+        
+        if 'value' not in result:
+            result['value'] = {}
+            
         result['value'].update({'asset_id': False})
         
         return result
