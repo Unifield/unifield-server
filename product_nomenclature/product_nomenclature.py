@@ -125,6 +125,7 @@ class product_nomenclature(osv.osv):
                     'title': _('Warning!'),
                     'message': _("You selected a nomenclature of the last mandatory level as parent, the new nomenclature's type must be 'optional'."),
                     })
+                return result
             
         # selected parent ok
         result['value']['level'] = level
@@ -138,15 +139,16 @@ class product_nomenclature(osv.osv):
         
         check level value and type value
         '''
-        level = vals['level']
-        type = vals['type']
-        # level test
-        if level > _LEVELS:
-            raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level,_LEVELS)))
-        # type test
-        if (level == _LEVELS) & (type != 'optional'):
-            raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves'%(type)))
-        
+        if ('level' in vals) and ('type' in vals):
+            level = vals['level']
+            type = vals['type']
+            # level test
+            if level > _LEVELS:
+                raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level,_LEVELS)))
+            # type test
+            if (level == _LEVELS) and (type != 'optional'):
+                raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves'%(type)))
+            
     
     
     def write(self, cr, user, ids, vals, context=None):
@@ -193,6 +195,7 @@ class product_nomenclature(osv.osv):
     _defaults = {
                  'level' : _getDefaultLevel, # no access to actual new values, use onChange function instead
                  'type' : lambda *a : 'mandatory',
+                 'sub_level': lambda *a : '0',
                  'sequence': _getDefaultSequence,
     }
 
@@ -293,8 +296,8 @@ class product_product(osv.osv):
     
     def _generateValueDic(self, cr, uid, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, *optionalList):
         '''
-        generate original dictionnary
-        all values are placed in the update dictionnary
+        generate original dictionary
+        all values are placed in the update dictionary
         to ease the generation of dynamic domain in order_nomenclature
         '''
         

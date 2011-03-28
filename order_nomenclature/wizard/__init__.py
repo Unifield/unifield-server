@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#
+#    
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,28 +15,11 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+import order_nomenclature_select_product
 
 
-{
-    "name" : "Order Nomenclature",
-    "version" : "0.1",
-    "author" : "MSF pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["product_nomenclature","purchase","sale"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Add nomenclature abilities to orders (sale and purchase).
-    """,
-    'test': [
-             'test/order_nomenclature.yml',
-             ],
-    'update_xml': [
-        'order_nomenclature_view.xml',
-    ],
-    'installable': True,
-}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

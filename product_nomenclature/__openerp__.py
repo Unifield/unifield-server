@@ -32,10 +32,12 @@
     Add nomenclature abilities to products.
     """,
     'update_xml': [
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
     ],
-    'test':[],
+    'test': [
+             'test/product_nomenclature.yml',
+             ],
     'installable': True,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

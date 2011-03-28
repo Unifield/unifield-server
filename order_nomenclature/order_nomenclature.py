@@ -38,6 +38,7 @@ import product_nomenclature as pn
 class purchase_order_line(osv.osv):
     '''
     1. add new fields :
+       - nomenclature_id : contains the nomenclature id
        - nomenclature_code : contains the corresponding code
        - nomenclature_description : contains the corresponding description
     '''
@@ -65,7 +66,7 @@ class purchase_order_line(osv.osv):
         override create. don't save filtering data
         '''
         # recreate description because in readonly
-        if vals['product_id']:
+        if ('product_id' in vals) and (vals['product_id']):
             vals.update({'nomenclature_description':False})
         else:
             sale = self.pool.get('sale.order.line')
@@ -83,7 +84,7 @@ class purchase_order_line(osv.osv):
         override write. don't save filtering data
         '''
         # recreate description because in readonly
-        if vals['product_id']:
+        if ('product_id' in vals) and (vals['product_id']):
             vals.update({'nomenclature_description':False})
         else:
             sale = self.pool.get('sale.order.line')
@@ -165,6 +166,7 @@ purchase_order_line()
 class sale_order_line(osv.osv):
     '''
     1. add new fields :
+       - nomenclature_id : contains the nomenclature id
        - nomenclature_code : contains the corresponding code
        - nomenclature_description : contains the corresponding description
     ''' 
@@ -191,7 +193,7 @@ class sale_order_line(osv.osv):
         override create. don't save filtering data
         '''
         # recreate description because in readonly
-        if vals['product_id']:
+        if ('product_id' in vals) and (vals['product_id']):
             vals.update({'nomenclature_description':False})
         else:
             self._setNomenclatureInfo(cr, uid, vals, context)
@@ -208,7 +210,7 @@ class sale_order_line(osv.osv):
         override write. don't save filtering data
         '''
         # recreate description because in readonly
-        if vals['product_id']:
+        if ('product_id' in vals) and (vals['product_id']):
             vals.update({'nomenclature_description':False})
         else:
             self._setNomenclatureInfo(cr, uid, vals, context)
@@ -231,7 +233,7 @@ class sale_order_line(osv.osv):
         # the last selected level
         mandaDesc = ''
         levels = constants['levels']
-        ids = filter(lambda x: values['nomen_manda_%i'%x], range(levels))
+        ids = filter(lambda x: ('nomen_manda_%i'%x in values) and (values['nomen_manda_%i'%x]), range(levels))
         if len(ids) > 0:
             id = values['nomen_manda_%i'%max(ids)]
             mandaDesc = self.pool.get('product.nomenclature').name_get(cr, uid, [id], context)[0][1]
@@ -240,7 +242,7 @@ class sale_order_line(osv.osv):
         
         # add optional names
         sublevels = constants['sublevels']
-        ids = filter(lambda x: values['nomen_sub_%i'%x], range(sublevels))
+        ids = filter(lambda x: ('nomen_sub_%i'%x in values) and (values['nomen_sub_%i'%x]), range(sublevels))
         ids = map(lambda x: values['nomen_sub_%i'%x], ids)
         subNomenclatures = self.pool.get('product.nomenclature').browse(cr, uid, ids, context)
         
