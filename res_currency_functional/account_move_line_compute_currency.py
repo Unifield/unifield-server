@@ -33,7 +33,8 @@ class account_move_line_compute_currency(osv.osv):
             ctx = {}
             if move_line.date:
                 ctx['date'] = move_line.date
-            if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
+            if (move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0) \
+                and move_line.period_id.state != 'done':
                 # Booking currency used for debit/credit;
                 # they are converted to the functional currency
                 debit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
