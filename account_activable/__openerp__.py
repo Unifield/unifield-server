@@ -33,6 +33,9 @@
         'account_activable_view.xml',
         'wizard/account_chart_activable_view.xml',
     ],
+    'test': [
+        'test/account_activable.yml'
+    ],
     'demo_xml': [],
     'installable': True,
     'active': False,

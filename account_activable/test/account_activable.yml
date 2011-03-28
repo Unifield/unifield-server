@@ -1,0 +1,24 @@
+-
+  In order to test the account module, I start by creating a new account as inactive
+  I create Asset Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_asset0}:
+    close_method: balance
+    code: asset
+    name: Asset
+    sign: 1
+
+-
+  I create the account
+-
+  !record {model: account.account, id: account_1}:
+    name: "Test Account"
+    code: "TEST"
+    user_type: account_account_type_asset0
+    active: False
+    
+-
+  I check that the inactivation date is today
+-
+  !assert {model: account.account, id: account_1}:
+    - inactivation_date == str(datetime.now().strftime('%Y-%m-%d'))
