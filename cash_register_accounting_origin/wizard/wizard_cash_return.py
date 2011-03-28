@@ -80,6 +80,7 @@ class wizard_cash_return(osv.osv_memory):
         'invoice_id': fields.many2one('account.invoice', string='Invoice', required=False),
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
+        'currency_id': fields.many2one('account.currency', string='Currency'),
     }
 
     _defaults = {
@@ -99,7 +100,9 @@ class wizard_cash_return(osv.osv_memory):
             if amount >= 0:
                 raise osv.except_osv(_('Error'), _('A wrong amount was selected. Please select an advance with a positive amount.'))
             else:
-                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('active_id')})
+                st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, context.get('active_id'), context=context)
+                currency_id = st_line.statement_id.journal_id.currency.id
+                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('active_id'), 'currency_id': currency_id})
         return res
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context={}):
@@ -148,10 +151,24 @@ class wizard_cash_return(osv.osv_memory):
         curr_date = time.strftime('%Y-%m-%d')
         if date:
             curr_date = date
-
         currency_id = register.currency.id
         register_id = register.id
         analytic_account_id = journal.analytic_journal_id.id
+        amount_currency = 0.0
+        new_debit = debit
+        new_credit = credit
+
+        # Case where currency is different from company currency
+        if currency_id != register.company_id.currency_id.id:
+            currency_obj = self.pool.get('res.currency')
+            if debit > 0:
+                amount_currency = debit
+                new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, debit, context=context)
+                new_debit = abs(new_amount)
+            else:
+                amount_currency = credit
+                new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, credit, context=context)
+                new_credit = abs(new_amount)
 
         # Create an account move line
         move_line_vals = {
@@ -161,12 +178,13 @@ class wizard_cash_return(osv.osv_memory):
             'partner_id': partner_id or False,
             'employee_id': employee_id or False,
             'account_id': account_id,
-            'credit': credit,
-            'debit': debit,
+            'credit': new_credit,
+            'debit': new_debit,
             'statement_id': register_id,
             'journal_id': journal_id,
             'period_id': period_id,
             'currency_id': currency_id,
+            'amount_currency': amount_currency,
             'analytic_account_id': analytic_account_id,
         }
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context = context)
@@ -177,7 +195,6 @@ class wizard_cash_return(osv.osv_memory):
         """
         Create a statement line from a move line and then link it to the move line
         """
-        #FIXME: complete this function
         # We need the register_id, the move id and the move line id
         if not register_id or not move_id or not move_line_id:
             return False
@@ -197,10 +214,17 @@ class wizard_cash_return(osv.osv_memory):
         statement_id = register_id
         seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
 
+        # Verify that the currency is the same as those of the Register
+        register = self.pool.get('account.bank.statement').browse(cr, uid, register_id, context=context)
+        new_amount = amount
+
+        if register.journal_id.currency and (register.journal_id.currency.id == move_line.currency_id.id):
+            new_amount = move_line.amount_currency
+
         vals = {
             'date': date,
             'name': name,
-            'amount': amount,
+            'amount': new_amount,
             'account_id': account_id,
             'partner_id': partner_id,
             'employee_id': employee_id,
@@ -224,6 +248,11 @@ class wizard_cash_return(osv.osv_memory):
         new_lines = []
         total = 0.0
         if wizard.invoice_id:
+            # Verify that the invoice is in the same currency as those of the register
+            inv_currency = wizard.invoice_id.currency_id.id
+            st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
+            if st_currency and st_currency != inv_currency:
+                raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
             # Make a list of invoices that have already been added in this wizard
             added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
             # Do operations only if our invoice is not in our list
@@ -246,7 +275,10 @@ class wizard_cash_return(osv.osv_memory):
                     # abs() should be deleted if we take care of "Credit Note".
                     #+ Otherwise abs() give an absolute amount.
                     amount = abs(move_line.balance) or 0.0
-                    # Add this line to 
+                    # Calculate the good amount seeing currency
+                    if move_line.currency_id and move_line.currency_id.id == st_currency:
+                        amount = abs(move_line.amount_currency) or 0.0
+                    # Add this line to our wizard
                     new_lines.append((0, 0, {'date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
                         'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': wizard.invoice_id.id}))
                     # Add amount to total_amount
