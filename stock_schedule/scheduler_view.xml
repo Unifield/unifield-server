@@ -141,7 +141,7 @@
                         <field name="recurrence_type" nolabel="1" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
                     </group>
                     <field name="calculated_end_date" />
-                    <field name="last_date" />
+                    <field name="next_date" />
                  </form>
             </field>
         </record>
@@ -155,7 +155,7 @@
                     <field name="name" />
                     <field name="start_date" />
                     <field name="calculated_end_date" />
-                    <field name="last_date" />
+                    <field name="next_date" />
                 </tree>
             </field>
         </record>

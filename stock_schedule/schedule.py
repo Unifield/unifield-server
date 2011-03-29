@@ -22,10 +22,13 @@
 from osv import osv, fields
 
 import time
+import re
 
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+
+from mx.DateTime import *
 
 
 
@@ -46,6 +49,30 @@ MONTHS = [('january', 'January'), ('february', 'February'), ('march','March'),
 class stock_frequence(osv.osv):
     _name = 'stock.frequence'
     _description = 'Stock scheduler'
+    
+    def get_datetime_day(self, monthly_choose_day):
+        '''
+        Return the good DateTime value according to the type of the day param.
+        '''
+        # Get the day number of the selected day
+        if monthly_choose_day == 'sunday':
+            day = Sunday
+        elif monthly_choose_day == 'monday':
+            day = Monday
+        elif monthly_choose_day == 'tuesday':
+            day = Tuesday
+        elif monthly_choose_day == 'wednesday':
+            day = Wednesday
+        elif monthly_choose_day == 'thursday':
+            day = Thursday
+        elif monthly_choose_day == 'friday':
+            day = Friday
+        elif monthly_choose_day == 'saturday':
+            day = Saturday
+        else:
+            day = Sunday
+            
+        return day
     
     def check_data(self, data):
         '''
@@ -103,6 +130,10 @@ class stock_frequence(osv.osv):
         '''
         Check if all required data aren't empty
         '''
+        for field in self._columns:
+            if field not in data:
+                data[field] = self.read(cr, uid, ids, [field])[0][field]
+        
         self.check_data(data)
         
         return super(stock_frequence, self).write(cr, uid, ids, data, context=context)
@@ -145,16 +176,19 @@ class stock_frequence(osv.osv):
             return False
         else:
             if frequence.daily_working_days:
+                # Check if the number of day is in working days
                 if int(time.strftime('%w')) > 0 and int(time.strftime('%w')) < 6:
                     return time.strftime('%Y-%m-%d')
                 else:
+                    # Return the date of next Monday
                     if int(time.strftime('%w')) == 0:
                         return (datetime.today() + relativedelta(days=1)).strftime('%Y-%m-%d')
                     elif int(time.strftime('%w')) == 6:
                         return (datetime.today() + relativedelta(days=2)).strftime('%Y-%m-%d')
             elif frequence.daily_frequency_ok:
+                # Return the next date matching with the frequency parameter
                 next_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
-                while next_date <= datetime.today():
+                while next_date < datetime.today():
                     next_date = next_date + relativedelta(days=frequence.daily_frequency)
                 return next_date.strftime('%Y-%m-%d')
         
@@ -166,29 +200,170 @@ class stock_frequence(osv.osv):
         '''
         if not isinstance(frequence_id, (int, long)):
             raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
-        res = False
         
-        return res
+        frequence = self.browse(cr, uid, frequence_id)
+        if frequence.name != 'weekly':
+            return False
+        else:
+            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+            next_date = DateTime(int(start_date.strftime('%Y')), 
+                                 int(start_date.strftime('%m')), 
+                                 int(start_date.strftime('%d')),
+                                 23, 59, 59)
+            while next_date < now():
+                next_date = next_date + RelativeDateTime(weeks=+frequence.weekly_frequency)
+            next_date = next_date + RelativeDateTime(days=-7)
+            while next_date < now():
+                next_date = next_date + RelativeDateTime(days=+1)
+            test = False
+            while not test:
+                day = datetime.fromtimestamp(next_date).strftime('%w')
+                # Check if the next_date matching with parameters
+                if int(day) == 0 and frequence.weekly_sunday_ok:
+                    test = True
+                elif int(day) == 1 and frequence.weekly_monday_ok:
+                    test = True
+                elif int(day) == 2 and frequence.weekly_tuesday_ok:
+                    test = True
+                elif int(day) == 3 and frequence.weekly_wednesday_ok:
+                    test = True
+                elif int(day) == 4 and frequence.weekly_thursday_ok:
+                    test = True
+                elif int(day) == 5 and frequence.weekly_friday_ok:
+                    test = True
+                elif int(day) == 6 and frequence.weekly_saturday_ok:
+                    test = True
+                else:
+                    next_date = next_date + RelativeDateTime(days=+1)
+                    
+            return datetime.fromtimestamp(next_date)
+        
+        return False
     
     def _compute_next_monthly_date(self, cr, uid, frequence_id):
         '''
         Compute the next date when the frequence is a monthly frequence
         '''
         if not isinstance(frequence_id, (int, long)):
-            raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_monthly_date'))
-        res = False
+            raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
         
-        return res
+        frequence = self.browse(cr, uid, frequence_id)
+        if frequence.name != 'monthly':
+            return False
+        else:
+            next = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+            while next < datetime.today():
+                next = next + relativedelta(months=frequence.monthly_frequency, day=1)
+            
+            # Create a DateTime object to compare
+            y = int(next.strftime('%Y'))
+            m = int(next.strftime('%m'))
+            d = int(next.strftime('%d'))
+            next_date = DateTime(y, m, d)
+            
+            if frequence.monthly_one_day:
+                freq = 0
+                day = self.get_datetime_day(frequence.monthly_choose_day)
+                        
+                # Get the value for the choose frequence
+                i = 0
+                for f in FREQUENCY:
+                    if frequence.monthly_choose_freq == f[0]:
+                        freq = i
+                    i += 1
+                # Return the value -1 if the choosen frequency is 'The last'
+                if freq == 6:
+                    freq = -1
+                    
+                # Search the next date according to the selected day and the selected frequency
+                relative_date = next_date + RelativeDateTime(weekday=(day,freq))
+                while relative_date < next_date:
+                    relative_date = next_date + RelativeDateTime(months=+frequence.monthly_frequency, weekday=(day,freq))
+                
+                return datetime.fromtimestamp(relative_date)
+            elif frequence.monthly_repeating_ok:
+                days_ok = []
+                # Get all fields for choosen days
+                fields = []
+                for col in self._columns:
+                    if re.match('^monthly_day[0-9]', col):
+                        fields.append(col)
+                
+                frequence_read = self.read(cr, uid, [frequence_id], fields)[0]
+                for f in fields:
+                    if frequence_read[f]:
+                        days_ok.append(int(f[-2:]))
+                
+                while int(next.strftime('%d')) not in days_ok:
+                    next = next + relativedelta(days=1)
+                    
+                return next
+                
+        return False
         
     def _compute_next_yearly_date(self, cr, uid, frequence_id):
         '''
         Compute the next date when the frequence is a yearly frequence
         '''
         if not isinstance(frequence_id, (int, long)):
-            raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_yearly_date'))
-        res = False
+            raise osv.except_osv(_('Error'), _('You should pass a integer to the _compute_next_weekly_date'))
         
-        return res
+        frequence = self.browse(cr, uid, frequence_id)
+        if frequence.name != 'yearly':
+            return False
+        else:
+            next = datetime.strptime(frequence.start_date, '%Y-%m-%d')
+            while next < datetime.today():
+                next = next + relativedelta(months=frequence.yearly_frequency, day=1, month=1)
+             # Create a DateTime object to compare
+            y = int(next.strftime('%Y'))
+            m = int(next.strftime('%m'))
+            d = int(next.strftime('%d'))
+            next_date = DateTime.DateTime(y, 1, 1)
+            if frequence.yearly_day_ok:
+                # Get month number
+                month = 1
+                i = 0
+                for m in MONTHS:
+                    if frequence.yearly_choose_month == m:
+                        month = i
+                    i += 1
+                
+                # Get the next date
+                while next_date < DateTime.now():
+                    next_date = next_date + DateTime.RelativeDatetTime(month=month, day=frequence.yearly_day)
+                    
+                return next_date
+            elif frequence.yearly_date_ok:
+                day = self.get_datetime_day(frequence.yearly_choose_day)
+                
+                freq = 0
+                # Get the value for the choose frequence
+                i = 0
+                for f in FREQUENCY:
+                    if frequence.yearly_choose_freq == f[0]:
+                        freq = i
+                    i += 1
+                # Return the value -1 if the choosen frequency is 'The last'
+                if freq == 6:
+                    freq = -1
+                
+                # Get the month number
+                month = 1
+                i = 1
+                for m in MONTHS:
+                    if frequence.yearly_choose_month_freq == m:
+                        month = i
+                    i += 1
+                    
+                # Search the next date according to the selected day and the selected frequency
+                relative_date = next_date + DateTime.RelativeDateTime(weekday=(day,freq))
+                while relative_date < next_date:
+                    relative_date = next_date + DateTime.RelativeDateTime(month=m, weekday=(day,freq), years=+frequence.yearly_frequency)
+                
+                return datetime.fromtimestamp(relative_date)
+        
+        return False
         
     def _compute_next_date(self, cr, uid, ids, field, arg, context={}):
         '''
@@ -295,7 +470,7 @@ class stock_frequence(osv.osv):
                                              ('month', 'Month(s)'), ('year', 'Year(s)')],
                                              string='Type of reccurence'),
         'calculated_end_date': fields.function(_compute_end_date, method=True, type='date', string='End date', store=False),
-        'last_date': fields.function(_compute_next_date, method=True, type='date', string='Next date', store=False),
+        'next_date': fields.function(_compute_next_date, method=True, type='date', string='Next date', store=False),
     }
     
     _defaults = {

@@ -1,0 +1,74 @@
+-
+  In order to test features of the stock_schedule module,
+  I will create a new planification with yearly parameter and test
+  different cases
+-
+  First yearly test
+-
+  !record {model: stock.frequence, id: yearly1}:
+    name: yearly
+    yearly_frequency: 1
+    yearly_day_ok: 1
+    yearly_day: 25
+    yearly_choose_month: april
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2010-03-03', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the last date is April, 25th 
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('yearly1')).next_date
+    assert next_date and next_date.strftime('%d') == 25 and next_date.strftime('%m') == 4, "Next date not April, 25th"
+-
+  Change from day_ok to date_ok
+-
+  !record {model: stock.frequence, id: yearly1}:
+    yearly_day_ok: 0
+    yearly_date_ok: 1
+    yearly_choose_freq: first
+    yearly_choose_day: monday
+    yearly_choose_month_freq: january
+-
+  Check if the next date is the first monday of January
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('yearly1')).next_date
+    assert next_date and next_date.strftime('%w') == 1 and next_date.strftime('%m') == 1 and next_date.strftime('%d') < 8, "Next date not a Sunday or a Wednesday"
+-
+  Change no end date to end date
+-
+  !record {model: stock.frequence, id: yearly1}:
+    no_end_date: False
+    end_date_ok: True
+    end_date: !eval time.strftime('%Y-%m-%d', time.strptime('2011-03-03', '%Y-%m-%d'))
+-
+  Check if the last date is False
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('yearly1')).next_date
+    assert not next_date, "Next date found on yearly1"
+-
+  Change end date to recurrence for 5 years
+-
+  !record {model: stock.frequence, id: yearly1}:
+    end_date_ok: False
+    recurrence_ok: True
+    recurrence_nb: 5
+    recurrence_type: 'year'
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('yearly1')).next_date
+    assert next_date, "Next date not found on yearly1"
+-
+  Change recurrence from 5 years to 5 months
+-
+  !record {model: stock.frequence, id: yearly1}:
+    recurrence_type: 'month'
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('yearly1')).next_date
+    assert not next_date, "Next date not found on yearly1"

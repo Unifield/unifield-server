@@ -1,0 +1,85 @@
+-
+  In order to test features of the stock_schedule module,
+  I will create a new planification with monthly parameter and test
+  different cases
+-
+  First monthly test
+-
+  !record {model: stock.frequence, id: monthly1}:
+    name: monthly
+    monthly_frequency: 1
+    monthly_one_day: True
+    monthly_choose_freq: each
+    monthly_choose_day: thursday
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2011-03-23', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the last date is a Sunday
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    print next_date
+    assert next_date and int(next_date.strftime('%w')) == 0, "Next date not a Sunday"
+-
+  Change one_day to repeating
+-
+  !record {model: stock.frequence, id: monthly1}:
+    monthly_one_day: 0
+    monthly_repeating_ok: 1
+    monthly_day12: 1
+    monthly_day24: 1
+-
+  Check if the next date is a 12th or a 24th day of month
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    assert next_date and (int(next_date.strftime('%d')) == 12 or int(next_date.strftime('%d')) == 24), "Next date not a 12th or a 24th of month"
+-
+  Change the frequency to two months
+-
+  !record {model: stock.frequence, id: monthly1}:
+    monthly_frequency: 3
+-
+ Check if the next date is a 12th or a 24th day of month
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    assert next_date and (int(next_date.strftime('%d')) == 12 or int(next_date.strftime('%d')) == 24), "Next date not a 12th or a 24th of month"
+-
+  Change no end date to end date
+-
+  !record {model: stock.frequence, id: monthly1}:
+    no_end_date: False
+    end_date_ok: True
+    end_date: !eval time.strftime('%Y-%m-%d', time.strptime('2011-03-03', '%Y-%m-%d'))
+-
+  Check if the last date is False
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    assert not next_date, "Next date found on monthly1"
+-
+  Change end date to recurrence for 5 years
+-
+  !record {model: stock.frequence, id: monthly1}:
+    end_date_ok: False
+    recurrence_ok: True
+    recurrence_nb: 5
+    recurrence_type: 'year'
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    assert next_date, "Next date not found on monthly1"
+-
+  Change recurrence from 5 years to 5 months
+-
+  !record {model: stock.frequence, id: monthly1}:
+    recurrence_type: 'month'
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    next_date = self.browse(cr, uid, ref('monthly1')).next_date
+    assert not next_date, "Next date found on monthly1"
