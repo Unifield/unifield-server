@@ -70,6 +70,14 @@ class wizard_cash_return(osv.osv_memory):
     _name = "wizard.cash.return"
     _description = "A wizard that link some advance lines to some account move lines"
 
+    def changeline(self, cr, uid, ids, lines, returned_amount, context={}):
+        total_amount = returned_amount or 0.0
+        for line in lines:
+            if line[0] == 1:
+                total_amount += line[2].get('amount',0)
+
+        return {'value': {'total_amount': total_amount}}
+
     _columns = {
         'initial_amount': fields.float(string="Initial Advance amount", digits=(16,2), readonly=True),
         'returned_amount': fields.float(string="Advance return amount", digits=(16,2), required=True),

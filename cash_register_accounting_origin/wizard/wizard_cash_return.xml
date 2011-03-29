@@ -20,9 +20,9 @@
                         <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
-                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4"/>
+                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" on_change="changeline(invoice_line_ids, returned_amount)"/>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" />
+                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
