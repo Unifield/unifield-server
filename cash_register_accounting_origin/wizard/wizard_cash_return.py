@@ -70,6 +70,14 @@ class wizard_cash_return(osv.osv_memory):
     _name = "wizard.cash.return"
     _description = "A wizard that link some advance lines to some account move lines"
 
+    def changeline(self, cr, uid, ids, lines, returned_amount, context={}):
+        total_amount = returned_amount or 0.0
+        for line in lines:
+            if line[0] == 1:
+                total_amount += line[2].get('amount',0)
+
+        return {'value': {'total_amount': total_amount}}
+
     _columns = {
         'initial_amount': fields.float(string="Initial Advance amount", digits=(16,2), readonly=True),
         'returned_amount': fields.float(string="Advance return amount", digits=(16,2), required=True),
@@ -297,8 +305,9 @@ class wizard_cash_return(osv.osv_memory):
                 move_line_obj = self.pool.get('account.move.line')
                 account_id = wizard.invoice_id.account_id.id
                 # recompute the total_amount
-                self.compute_total_amount(cr, uid, ids, context=context)
-                total += self.read(cr, uid, ids[0], ['total_amount'], context=context).get('total_amount', 0.0)
+                total = wizard.returned_amount or 0
+                for line in wizard.invoice_line_ids:
+                    total += line.amount
                 # We search all move_line that results from an invoice (so they have the same move_id that the invoice)
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', wizard.invoice_id.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
@@ -322,14 +331,14 @@ class wizard_cash_return(osv.osv_memory):
             # Change display_invoice to True in order to show invoice lines
             if new_lines:
                 to_write['display_invoice'] = True
-        # Add lines to elements to be written
-        to_write['invoice_line_ids'] = new_lines
-        # Add total_amount to elements to be written
-        to_write['total_amount'] = total
-        # Delete content of invoice_id field
-        to_write['invoice_id'] = False
-        # write changes in the wizard
-        self.write(cr, uid, ids, to_write, context=context)
+                # Add lines to elements to be written
+                to_write['invoice_line_ids'] = new_lines
+                # Add total_amount to elements to be written
+                to_write['total_amount'] = total
+                # Delete content of invoice_id field
+                to_write['invoice_id'] = False
+                # write changes in the wizard
+                self.write(cr, uid, ids, to_write, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.cash.return',
