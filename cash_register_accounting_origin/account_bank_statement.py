@@ -447,7 +447,9 @@ class account_bank_statement_line(osv.osv):
                                 res_currency_obj = self.pool.get('res.currency')
                                 #TODO : change this when we have debate on "instance" definition
                                 # Note: the first currency_id must be those of the journal of the cash statement
-                                line_accounting_value = res_currency_obj.compute(cr, uid, st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
+                                context.update({'date': move_line.get('date', False)}) # this permit to make the change with currency at the good date
+                                line_accounting_value = res_currency_obj.compute(cr, uid, \
+                                    st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
                                 if line_is_debit:
                                     new_debit = abs(line_accounting_value)
                                     new_credit = 0.0
