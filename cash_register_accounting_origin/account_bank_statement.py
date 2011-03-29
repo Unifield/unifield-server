@@ -30,6 +30,10 @@ class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
+    _sql_constraints = [
+        ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
+    ]
+
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance
@@ -76,6 +80,8 @@ account_bank_statement()
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
+
+    _order = 'date desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
