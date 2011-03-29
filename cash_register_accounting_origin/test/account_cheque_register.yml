@@ -18,7 +18,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cheque_0
     name: some name
-    period_id: account.period_10
+    period_id: account.period_5
     user_id: base.user_root
 -
   I check that the initially Cheque Register is in the "Draft" state

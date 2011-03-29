@@ -8,7 +8,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.bank_journal
     name:
-    period_id: account.period_10
+    period_id: account.period_6
     user_id: base.user_root
 -
   I click on 'Open Bank' button to open the Bank Register
@@ -23,7 +23,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.cash_journal
     name: Our cash register
-    period_id: account.period_10
+    period_id: account.period_6
     user_id: base.user_root
 -
   I click on 'Open Cash' button to open the Cash Register

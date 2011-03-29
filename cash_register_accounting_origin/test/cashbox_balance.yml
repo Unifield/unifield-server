@@ -1,13 +1,23 @@
 -
   In order to test the cashbox balance I create a Cash Register then I open it and I create some lines. Then I check that the cashbox balance is OK.
 -
+  I create a period
+-
+  !record {model: account.period, id: period_3}:
+    company_id: base.main_company
+    date_start: !eval "'%s-03-01' %(datetime.now().year)"
+    date_stop: !eval "'%s-03-31' %(datetime.now().year)"
+    fiscalyear_id: account.data_fiscalyear
+    name: !eval "'Jan-%s' %(datetime.now().year)"
+    special: 1
+-
   I create a Cash Register with Opening balance to 475 EUR.
 -
  !record {model: account.bank.statement, id: account_bank_statement_0}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.cash_journal
     name: 
-    period_id: account.period_10
+    period_id: period_3
     user_id: base.user_root
     starting_details_ids:
       -  pieces: 10.0

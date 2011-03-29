@@ -56,7 +56,7 @@
     supplier: true
     property_account_payable: account_account_payable_supplier0
 -
-  I create a Cash Register with Opening and Closing balance 1O00.
+  I create a Cash Register with Opening and Closing balance 1000.
 -
  !record {model: account.bank.statement, id: account_bank_statement_7}:
     date: !eval time.strftime('%Y-%m-%d')
@@ -254,13 +254,23 @@
 -
   In order to test the cash return without PO, I create a new cash register then I create an advance of 500 EUR then I return 100 EUR and do an expense of 400 EUR with a Supplier as a Third Party.
 -
-  I create a Cash Register with Opening and Closing balance 1O00.
+  I create a period
+-
+  !record {model: account.period, id: period_1}:
+    company_id: base.main_company
+    date_start: !eval "'%s-01-01' %(datetime.now().year)"
+    date_stop: !eval "'%s-01-31' %(datetime.now().year)"
+    fiscalyear_id: account.data_fiscalyear
+    name: !eval "'Jan-%s' %(datetime.now().year)"
+    special: 1
+-
+  I create a Cash Register with Opening and Closing balance 1000.
 -
  !record {model: account.bank.statement, id: account_bank_statement_8}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.cash_journal
     name: 
-    period_id: account.period_10
+    period_id: period_1
     user_id: base.user_root
     starting_details_ids:
       -  pieces: 100.0
