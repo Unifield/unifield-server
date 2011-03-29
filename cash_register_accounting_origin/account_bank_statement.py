@@ -30,6 +30,34 @@ class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
+    _sql_constraints = [
+        ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
+    ]
+
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Calculate register's balance
+        """
+        st_line_obj = self.pool.get("account.bank.statement.line")
+        res = {}
+
+        statements = self.browse(cr, uid, ids, context=context)
+        for statement in statements:
+            res[statement.id] = statement.balance_start
+            st_line_ids = st_line_obj.search(cr, uid, [('statement_id', '=', statement.id)], context=context)
+            for st_line_id in st_line_ids:
+                st_line_data = st_line_obj.read(cr, uid, [st_line_id], ['amount'], context=context)[0]
+                if 'amount' in st_line_data:
+                    res[statement.id] += st_line_data.get('amount')
+        for r in res:
+            res[r] = round(res[r], 2)
+        return res
+
+    _columns = {
+        'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', \
+            help="Closing balance based on Starting Balance and Cash Transactions"),
+    }
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
@@ -52,6 +80,8 @@ account_bank_statement()
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
+
+    _order = 'date desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
@@ -489,9 +519,7 @@ class account_bank_statement_line(osv.osv):
         res = []
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
-        statement_id = ids[0]
-        cash_statement = self.browse(cr, uid, statement_id)
-        cash_st_obj = self.pool.get("account.bank.statement")
+        cash_statement = self.browse(cr, uid, ids[0])
         acc_move_obj = self.pool.get("account.move")
         currency_id = cash_statement.statement_id.journal_id.company_id.currency_id.id
         # browse all statement lines for creating move lines

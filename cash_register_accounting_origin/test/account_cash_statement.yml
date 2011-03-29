@@ -40,21 +40,21 @@
   !record {model: account.bank.statement, id: account_bank_statement_1}:
     line_ids:
       - account_id: account.a_recv
-        amount: 500.0
+        amount: -500.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test1
         partner_id: base.res_partner_4
         sequence: 0.0
         type: general
       - account_id: account.a_recv
-        amount: 380.0
+        amount: -380.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test2
         partner_id: base.res_partner_3
         sequence: 1.0
         type: general
       - account_id: account.a_recv
-        amount: 320.0
+        amount: -320.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test3
         partner_id: base.res_partner_4
