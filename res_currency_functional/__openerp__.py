@@ -32,6 +32,9 @@
     'update_xml': [
         'res_currency_functional_view.xml',
     ],
+    'test': [
+        'test/res_currency_functional.yml',
+    ],
     'demo_xml': [],
     'installable': True,
     'active': False,

@@ -35,5 +35,13 @@ class res_currency_functional(osv.osv):
         'k_currency': 1,
     }
     
+    def _get_conversion_rate(self, cr, uid, from_currency, to_currency, context=None):
+        conversion_rate = super(res_currency_functional, self)._get_conversion_rate(cr, uid, from_currency, to_currency, context)
+        if from_currency.k_currency_active:
+            conversion_rate /= from_currency.k_currency
+        if to_currency.k_currency_active:
+            conversion_rate *= to_currency.k_currency
+        return conversion_rate
+    
 res_currency_functional()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
