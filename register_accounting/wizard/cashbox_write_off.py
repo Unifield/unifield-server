@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -59,14 +58,14 @@ class cashbox_write_off(osv.osv_memory):
         """
         id = context.get('active_id', False)
         if not id:
-            raise osv.except_osv('Warning', 'You cannot decide about Cash Discrepancy without selecting any CashBox!')
+            raise osv.except_osv(_('Warning'), _('You cannot decide about Cash Discrepancy without selecting any CashBox!'))
         else:
             # search cashbox object
             cashbox = self.pool.get('account.bank.statement').browse(cr, uid, id)
             cstate = cashbox.state
             # What about cashbox state ?
             if cstate not in ['partial_close', 'confirm']:
-                raise osv.except_osv('Warning', 'You cannot do anything as long as the CashBox has been closed!')
+                raise osv.except_osv(_('Warning'), _('You cannot do anything as long as the CashBox has been closed!'))
             # look at user choice
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
@@ -76,7 +75,7 @@ class cashbox_write_off(osv.osv_memory):
             elif choice == 'writeoff':
                 # writing-off case
                 if cstate != 'partial_close':
-                    raise osv.except_osv('Warning', 'This option is only useful for CashBox with cash discrepancy!')
+                    raise osv.except_osv(_('Warning'), _('This option is only useful for CashBox with cash discrepancy!'))
                     return False
                 else:
                     account_id = self.browse(cr, uid, ids)[0].account_id.id
@@ -168,7 +167,7 @@ class cashbox_write_off(osv.osv_memory):
                         raise osv.except_osv(_('Warning'), _('Please select an account to do a write-off!'))
                 return { 'type': 'ir.actions.act_window_close', 'res_id': id}
             else:
-                raise osv.except_osv('Warning', 'An error has occured !')
+                raise osv.except_osv(_('Warning'), _('An error has occured !'))
         return { 'type': 'ir.actions.act_window_close', 'res_id': id}
 
 cashbox_write_off()

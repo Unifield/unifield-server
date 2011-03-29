@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -23,12 +22,13 @@
 ##############################################################################
 
 {
-    "name" : "Cash Register",
+    "name" : "Registers",
     "version" : "1.0",
     "description" : """
-        This module aims to add Cash Register Attributes for Sprint 1 in Unifield project for MSF.
+        This module aims to add some registers into accounting menu and change the method to do accounting by using
+        all registers.
     """,
-    "author" : "Tempo Consulting",
+    "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     "depends" : ["base", "account", "hr", "account_payment"],

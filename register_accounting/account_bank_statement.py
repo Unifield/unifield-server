@@ -2,8 +2,8 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -134,11 +134,11 @@ class account_bank_statement_line(osv.osv):
         - draft
         - temp
         """
-        result = []
         # Test how many arguments we have
         if not len(args):
-            return res
-        # We just support "=" case
+            return []
+
+        # We just support = and in operators
         if args[0][1] not in ['=', 'in']:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Case where we search draft lines
@@ -152,30 +152,23 @@ class account_bank_statement_line(osv.osv):
             LEFT JOIN account_move m ON m.id = rel.statement_id 
             WHERE m.state = 'draft'
             """
-        if args[0][2] == 'draft':
+        ids = []
+        filterok = False
+        if args[0][1] == '=' and args[0][2] == 'draft' or 'draft' in args[0][2]:
             sql = sql_draft
             cr.execute(sql)
-            result = cr.fetchall()
+            ids += [x[0] for x in cr.fetchall()]
+            filterok = True
         # Case where we search temp lines
-        elif args[0][2] == 'temp':
+        if args[0][1] == '=' and args[0][2] == 'temp' or 'temp' in args[0][2]:
             sql = sql_temp
             cr.execute(sql)
-            result = cr.fetchall()
-        # Case where we search with 'in'
-        elif args[0][1] == 'in':
-            # if we search draft and temp posting lines
-            if args[0][2] == 'draft,temp':
-                cr.execute(sql_draft)
-                result_draft = cr.fetchall()
-                cr.execute(sql_temp)
-                result_temp = cr.fetchall()
-                result = result_draft + result_temp
-            else:
-                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
-        # Non excpected case
-        else:
+            ids += [x[0] for x in cr.fetchall()]
+            filterok = True
+        # Non expected case
+        if not filterok:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
-        return [('id', 'in', [x[0] for x in result])]
+        return [('id', 'in', ids)]
 
     def _get_reconciled_state(self, cr, uid, ids, field_name=None, args=None, context={}):
         """
@@ -278,6 +271,106 @@ class account_bank_statement_line(osv.osv):
     _defaults = {
         'from_cash_return': False,
     }
+    
+    def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
+        # @@@override@ account.account_bank_statement.create_move_from_st_line()
+        if context is None:
+            context = {}
+        res_currency_obj = self.pool.get('res.currency')
+        account_move_obj = self.pool.get('account.move')
+        account_move_line_obj = self.pool.get('account.move.line')
+        st_line = self.browse(cr, uid, st_line_id, context=context)
+        st = st_line.statement_id
+
+        context.update({'date': st_line.date})
+
+        move_id = account_move_obj.create(cr, uid, {
+            'journal_id': st.journal_id.id,
+            'period_id': st.period_id.id,
+            'date': st_line.date,
+            'name': st_line_number,
+        }, context=context)
+        self.write(cr, uid, [st_line.id], {
+            'move_ids': [(4, move_id, False)]
+        })
+
+        torec = []
+        if st_line.amount >= 0:
+            account_id = st.journal_id.default_credit_account_id.id
+        else:
+            account_id = st.journal_id.default_debit_account_id.id
+
+        acc_cur = ((st_line.amount<=0) and st.journal_id.default_debit_account_id) or st_line.account_id
+        context.update({
+                'res.currency.compute.account': acc_cur,
+            })
+        amount = res_currency_obj.compute(cr, uid, st.currency.id,
+                company_currency_id, st_line.amount, context=context)
+
+        val = {
+            'name': st_line.name,
+            'date': st_line.date,
+            'ref': st_line.ref,
+            'move_id': move_id,
+            'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
+            'account_id': (st_line.account_id) and st_line.account_id.id,
+            'credit': ((amount>0) and amount) or 0.0,
+            'debit': ((amount<0) and -amount) or 0.0,
+            'statement_id': st.id,
+            'journal_id': st.journal_id.id,
+            'period_id': st.period_id.id,
+            'currency_id': st.currency.id,
+            'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
+        }
+
+        if st.currency.id <> company_currency_id:
+            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
+                        st.currency.id, amount, context=context)
+            val['amount_currency'] = -amount_cur
+
+        if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
+            val['currency_id'] = st_line.account_id.currency_id.id
+            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
+                    st_line.account_id.currency_id.id, amount, context=context)
+            val['amount_currency'] = -amount_cur
+
+        move_line_id = account_move_line_obj.create(cr, uid, val, context=context)
+        torec.append(move_line_id)
+
+        # Fill the secondary amount/currency
+        # if currency is not the same than the company
+        amount_currency = False
+        currency_id = False
+        if st.currency.id <> company_currency_id:
+            amount_currency = st_line.amount
+            currency_id = st.currency.id
+        account_move_line_obj.create(cr, uid, {
+            'name': st_line.name,
+            'date': st_line.date,
+            'ref': st_line.ref,
+            'move_id': move_id,
+            'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
+            'account_id': account_id,
+            'credit': ((amount < 0) and -amount) or 0.0,
+            'debit': ((amount > 0) and amount) or 0.0,
+            'statement_id': st.id,
+            'journal_id': st.journal_id.id,
+            'period_id': st.period_id.id,
+            'amount_currency': amount_currency,
+            'currency_id': currency_id,
+            }, context=context)
+
+        for line in account_move_line_obj.browse(cr, uid, [x.id for x in
+                account_move_obj.browse(cr, uid, move_id,
+                    context=context).line_id],
+                context=context):
+            if line.state <> 'valid':
+                raise osv.except_osv(_('Error !'),
+                        _('Journal Item "%s" is not valid') % line.name)
+        # @@@end
+
+        # Removed post from original method
+        return move_id
 
     def _updating_amount(self, values):
         """
@@ -422,7 +515,6 @@ class account_bank_statement_line(osv.osv):
     def write(self, cr, uid, ids, values, context={}):
         """
         Write some existing account bank statement lines with 'values'.
-        
         """
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
@@ -510,52 +602,45 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
+
+    def posting(self, cr, uid, ids, postype, context={}):
+        """
+        Write some statement line into some account move lines with a state that depends on postype.
+        """
+        if postype not in ('hard', 'temp'):
+            raise osv.except_osv(_('Warning'), _('Post type has to be hard or temp'))
+        if not len(ids):
+            raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
+        acc_move_obj = self.pool.get("account.move")
+        # browse all statement lines for creating move lines
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.state == "hard":
+                raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
+            elif absl.state == "temp" and postype == "temp":
+                    raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
+
+
+            if absl.state == "draft":
+                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, 
+                                            absl.name+ '/' + str(absl.sequence), context=context)
+
+            if postype == "hard":
+                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
+                self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
+                acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+        return True
+
     def button_hard_posting(self, cr, uid, ids, context={}):
         """
         Write some statement line into some account move lines in posted state.
-        Warning! : this function is used by 'button_temp_posting'. Please take care of returning all account_move_ids !
         """
-        # Variable initialisation
-        res = []
-        if not len(ids):
-            raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
-        cash_statement = self.browse(cr, uid, ids[0])
-        acc_move_obj = self.pool.get("account.move")
-        currency_id = cash_statement.statement_id.journal_id.company_id.currency_id.id
-        # browse all statement lines for creating move lines
-        for absl in self.browse(cr, uid, ids, context=context):
-            # create move lines
-            # Give a sequence number. But pay attention that button_temp_posting use this function.
-            #+ That's why we make a condition not to do the sequence number if we come from "button_temp_posting"
-            if 'from' not in context:
-                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
-                self.pool.get('account.bank.statement.line').write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-            if absl.state == "draft":
-                #FIXME: which code could we return for the move line ?
-                st_name = cash_statement.name + '/' + str(absl.sequence)
-                # create move from statement line
-                res_id = self.create_move_from_st_line(cr, uid, absl.id, currency_id, st_name, context=context)
-                res.append(res_id)
-            elif absl.state == "temp":
-                # Change state of these moves
-                for move in absl.move_ids:
-                    res.append(acc_move_obj.write(cr, uid, [move.id], {'state': 'posted'}, context=context))
-        return res
+        return self.posting(cr, uid, ids, 'hard', context=context)
 
     def button_temp_posting(self, cr, uid, ids, context={}):
         """
         Write some statement lines into some account move lines in draft state.
-        Warning! : this function take advantage of 'button_hard_posting' for temp posting entries.
-        Indeed you have to use account moves returned by 'button_hard_posting' to unpost them.
         """
-        # Variable initialisation
-        acc_move_obj = self.pool.get("account.move")
-        # update context to pass it the origin of the call
-        #+ this is necessary to hedge problem with sequence creation on button_hard_posting
-        context.update({'from': 'button_temp_posting'})
-        hard_posting_ids = self.button_hard_posting(cr, uid, ids, context=context)
-        res_ids = acc_move_obj.write(cr, uid, hard_posting_ids, {'state': 'draft'}, context=context)
-        return res_ids
+        return self.posting(cr, uid, ids, 'temp', context=context)
 
     def unlink(self, cr, uid, ids, context={}):
         """

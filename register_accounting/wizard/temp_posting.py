@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -24,25 +23,26 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
-class wizard_hard_posting(osv.osv_memory):
-    _name = "wizard.hard.posting"
+class wizard_temp_posting(osv.osv_memory):
+    _name = "wizard.temp.posting"
 
-    def action_confirm_hard_posting(self, cr, uid, ids, context={}):
+    def action_confirm_temp_posting(self, cr, uid, ids, context={}):
         """
-        Hard post some statement lines
+        Temp post some statement lines
         """
         if 'active_ids' in context:
             # Retrieve statement line ids
             st_line_ids = context.get('active_ids')
             # Browse statement lines
             for st_line_id in st_line_ids:
-                # Verify that the line isn't in hard state
+                # Verify that the line is in draft state ('Empty')
                 st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, [st_line_id])[0]
                 state = st_line.state
-                if state != 'hard':
+                if state == 'draft':
                     # If in the good state : temp posting !
-                    self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, [st_line_id], context=context)
+                    self.pool.get('account.bank.statement.line').button_temp_posting(cr, uid, [st_line_id], context=context)
             mod_obj = self.pool.get('ir.model.data')
             act_obj = self.pool.get('ir.actions.act_window')
             result = mod_obj._get_id(cr, uid, 'account', 'action_view_bank_statement_tree')
@@ -60,8 +60,8 @@ class wizard_hard_posting(osv.osv_memory):
             result['target'] = 'crush'
             return result
         else:
-            raise osv.except_osv('Warning', 'You have to select some lines before using this wizard.')
+            raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))
 
-wizard_hard_posting()
+wizard_temp_posting()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

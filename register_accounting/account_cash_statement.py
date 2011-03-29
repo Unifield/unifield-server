@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -93,22 +92,18 @@ class account_cash_statement(osv.osv):
             'target': 'new',
             'view_mode': 'form',
             'view_type': 'form',
-            'context': 
-            {
-                'active_id': ids[0],
-                'active_ids': ids
-            }
+            'context': {
+                    'active_id': ids[0],
+                    'active_ids': ids
+                }
         }
 
     _columns = {
-            'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), \
+            'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
-            'name': fields.char('Name', size=64, required=False, readonly=True, \
-                help='if you give the Name other than     /, its created Accounting Entries Move will be with same name as \
-                statement name. This allows the statement entries to have the same references than the     statement itself'),
-            'period_id': fields.many2one('account.period', 'Period', required=True, states={'partial_close':[('readonly', True)], \
-                'confirm':[('readonly', True)]}),
-            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', \
+            'name': fields.char('Name', size=64, required=False, readonly=True),
+            'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
+            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)]}),
     }
 
@@ -132,7 +127,7 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
-        domain = [('statement_id', '=', ids[0]), ('state', 'in', 'draft,temp')]
+        domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         return {
             'name': 'Select elements for Hard Posting',
             'type': 'ir.actions.act_window',

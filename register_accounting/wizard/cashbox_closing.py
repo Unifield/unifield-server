@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -37,7 +36,7 @@ class wizard_closing_cashbox(osv.osv_memory):
         # retrieve context active id (verification)
         id = context.get('active_id', False)
         if not id:
-            raise osv.except_osv('Warning', _("You don't select any item!"))
+            raise osv.except_osv(_('Warning'), _("You don't select any item!"))
         else:
             # retrieve user's choice
             res = self.browse(cr,uid,ids)[0].be_sure
@@ -95,7 +94,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                         res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm'}, context=context)
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
             else:
-                raise osv.except_osv('Warning', _("You don't have really confirm by ticking!"))
+                raise osv.except_osv(_('Warning'), _("You don't have really confirm by ticking!"))
         return { 'type' : 'ir.actions.act_window_close', 'active_id' : id }
 
 wizard_closing_cashbox()

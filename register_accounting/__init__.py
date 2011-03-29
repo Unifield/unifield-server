@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>). All Rights Reserved
-#    Author: Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -22,11 +21,11 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import cashbox_write_off
-import temp_posting
-import hard_posting
-import wizard_cash_return
+import wizard
+import account_move_line
+import account_bank_statement
+import account_cash_statement
+import account
+import account_cheque_register
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
