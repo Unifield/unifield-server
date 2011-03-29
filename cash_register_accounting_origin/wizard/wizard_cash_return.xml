@@ -16,22 +16,24 @@
                         display_invoice)"/>
                     <newline />
                     <group colspan="4">
-                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open')]"/>
+                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
+                            ('currency_id', '=', currency_id)]"/>
                         <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
-                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" on_change="changeline(invoice_line_ids, returned_amount)"/>
+                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />
                     <newline />
                     <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
-                    <field name='display_invoice' invisible="1"/>
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />
                         <button string="Compute" name="compute_total_amount" type="object" icon='gtk-execute'/>
                         <button string='Ok' name='action_confirm_cash_return' type='object' icon='gtk-apply' />
                     </group>
+                    <field name='currency_id' invisible="1" />
+                    <field name='display_invoice' invisible="1"/>
                 </form>
             </field>
           </record>
