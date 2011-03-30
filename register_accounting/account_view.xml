@@ -37,12 +37,10 @@
                                         <field name="document_date"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="ref"/>
-                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
                                         <field name="partner_type"/>
-                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                        <field name="employee_id"/>
-                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                         <field name="amount" invisible="1"/>
@@ -63,9 +61,6 @@
                                         <field name="ref"/>
                                         <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                                         <field name="partner_type"/>
-                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                        <field name="employee_id"/>
-                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                         <field name="amount" invisible="1"/>
@@ -128,11 +123,10 @@
                                         <field name="date" groups="base.group_extended"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
-                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
                                         <field name="partner_type"/>
-                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                        <field name="employee_id"/>
-                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                         <field name="analytic_account_id" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
                                             groups="analytic.group_analytic_accounting" />
@@ -152,9 +146,6 @@
                                         <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                                         <field name="type" on_change="onchange_type(partner_id, type)"/>
                                         <field name="ref"/>
-                                        <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                        <field name="employee_id"/>
-                                        <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                         <field name="analytic_account_id" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
                                             groups="analytic.group_analytic_accounting" />
@@ -443,12 +434,10 @@ irm'" string="Register">
                                     <field name="mandatory"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
+                                    <field name="partner_type_mandatory" invisible="1"/>
                                     <field name="ref"/>
-                                    <field domain="[('journal_id','=',parent.journal_id)]" name="account_id"/>
+                                    <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
                                     <field name="partner_type"/>
-                                    <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                    <field name="employee_id"/>
-                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                         domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                     <field name="amount" invisible="1"/>
@@ -470,9 +459,6 @@ irm'" string="Register">
                                     <field name="ref"/>
                                     <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                                     <field name="partner_type"/>
-                                    <field name="register_id" domain="[('type', '=', 'liquidity')]"/>
-                                    <field name="employee_id"/>
-                                    <field name="partner_id" on_change="onchange_partner_id(partner_id)"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                         domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                     <field name="amount" invisible="1"/>
@@ -575,6 +561,19 @@ irm'" string="Register">
     <!-- Cheque Register Menu -->
         <menuitem string="Cheque Registers" action="action_cheque_register_tree" id="menu_cash_register" 
             parent="account.menu_finance_bank_and_cash" sequence="7"/>
+
+    <!-- Account View -->
+        <record id="inherit_view_account_form" model="ir.ui.view">
+            <field name='name'>inherit.view.account.form</field>
+            <field name='model'>account.account</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_account_form' />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="type_for_register"/>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>

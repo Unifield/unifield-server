@@ -2,9 +2,8 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) Tempo Consulting (<http://www.tempo-consulting.fr/>), MSF.
-#    All Rigts Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -41,5 +40,30 @@ class account_journal(osv.osv):
         }
 
 account_journal()
+
+class account_account(osv.osv):
+    _name = "account.account"
+    _inherit = "account.account"
+
+    _columns = {
+        'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Transfer'), ('advance', 'Advance')], string="Type for registers", 
+            help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
+            that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
+            when he add a new register line.
+            """, required=True)
+    }
+
+    _defaults = {
+        'type_for_register': lambda *a: 'none',
+    }
+
+    def name_get(self, cr, uid, ids, context={}):
+        """
+        Give only code account for each id given by ids
+        """
+        res = self.pool.get('account.account').read(cr, uid, ids, ['code'], context=context)
+        return [(x['id'], x['code']) for x in res]
+
+account_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

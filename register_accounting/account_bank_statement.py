@@ -253,14 +253,15 @@ class account_bank_statement_line(osv.osv):
         return [('id', 'in', [x[0] for x in result])]
 
     _columns = {
-        'register_id': fields.many2one("account.account", "Register"),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), \
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
-        'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
+        'partner_type': fields.reference("Third Parties", [('res.partner', 'Partner'), ('hr.employee', 'Employee'), \
             ('account.bank.statement', 'Register')], 128),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
@@ -269,7 +270,7 @@ class account_bank_statement_line(osv.osv):
     }
 
     _defaults = {
-        'from_cash_return': False,
+        'from_cash_return': lambda *a: 0,
     }
     
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
@@ -393,6 +394,22 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
+    def _update_third_parties(self, values):
+        """
+        Update partner_id, employee_id and register_id from partner_type into values
+        """
+        res = values.copy()
+        if 'partner_type' not in values or not values.get('partner_type', False):
+            return res
+        field = values.get('partner_type').split(",")
+        if field[0] == 'hr.employee':
+            res.update({'employee_id': field[1]})
+        elif field[0] == 'account.bank.statement':
+            res.update({'register_id': field[1]})
+        elif field[0] == 'res.partner':
+            res.update({'partner_id': field[1]})
+        return res
+
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         # @@@override@account.account_bank_statement.create_move_from_st_line()
         if context is None:
@@ -507,6 +524,12 @@ class account_bank_statement_line(osv.osv):
         """
         Create a new account bank statement line with values
         """
+        # update third parties fields
+        values = self._update_third_parties(values=values)
+        # Verify that no supplementary field is not required
+        if 'partner_type_mandatory' in values:
+            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
+                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # First update amount
         values = self._updating_amount(values=values)
         # Then create a new bank statement line
@@ -518,6 +541,12 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
+        # update third parties fields
+        values = self._update_third_parties(values=values)
+        # Verify that no supplementary field is not required
+        if 'partner_type_mandatory' in values:
+            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
+                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # Verify that the statement line isn't in hard state
         if state  == 'hard' and 'from_cash_return' in values and values.get('from_cash_return') is True:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
@@ -700,5 +729,29 @@ class account_bank_statement_line(osv.osv):
         else:
             return False
         # NB: in the wizard we have to verify that we have a bank statement_line in the context, else do an osv error
+
+    def onchange_account(self, cr, uid, ids, account_id, context={}):
+        """
+        Update Third Party type regarding account type_for_register field.
+        """
+        # Prepare some values
+        acc_obj = self.pool.get('account.account')
+        third_type = [('res.partner', 'Partner')]
+        third_required = False
+        third_selection = 'res.partner,0'
+        # if an account is given, then attempting to change third_type and information about the third required
+        if account_id:
+            account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
+            acc_type = account.type_for_register
+            # FIXME: what about payable and receivable accounts ?
+            if acc_type == 'transfer':
+                third_type = [('account.bank.statement', 'Register')]
+                third_required = True
+                third_selection = 'account.bank.statement,0'
+            elif acc_type == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'hr.employee,0'
+        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
 
 account_bank_statement_line()
