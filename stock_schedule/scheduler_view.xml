@@ -56,18 +56,18 @@
                         <newline />
                         <group colspan="14" col="32">
 	                        <label colspan="8" />
-	                        <field name="monthly_day1" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day2" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day3" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day4" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day5" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day6" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day7" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day01" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day02" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day03" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day04" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day05" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day06" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day07" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
 	                        <label colspan="10" />
 	                        <newline />
 	                        <label colspan="8" />
-	                        <field name="monthly_day8" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
-	                        <field name="monthly_day9" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day08" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day09" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
 	                        <field name="monthly_day10" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
 	                        <field name="monthly_day11" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
 	                        <field name="monthly_day12" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
@@ -141,7 +141,7 @@
                         <field name="recurrence_type" nolabel="1" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
                     </group>
                     <field name="calculated_end_date" />
-                    <field name="next_date" />
+                    <field name="next_date" widget="date" />
                  </form>
             </field>
         </record>

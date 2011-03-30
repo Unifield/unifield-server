@@ -10,16 +10,16 @@
     monthly_frequency: 1
     monthly_one_day: True
     monthly_choose_freq: each
-    monthly_choose_day: thursday
-    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2011-03-23', '%Y-%m-%d'))
+    monthly_choose_day: monday
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2010-03-23', '%Y-%m-%d'))
     no_end_date: True
 -
-  Check if the last date is a Sunday
+  Check if the last date is a Monday
 -
   !python {model: stock.frequence}: |
-    next_date = self.browse(cr, uid, ref('monthly1')).next_date
-    print next_date
-    assert next_date and int(next_date.strftime('%w')) == 0, "Next date not a Sunday"
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('monthly1')).next_date)
+    assert next_date and next_date.weekday() == 0, "Next date not a Monday"
 -
   Change one_day to repeating
 -
@@ -32,8 +32,9 @@
   Check if the next date is a 12th or a 24th day of month
 -
   !python {model: stock.frequence}: |
-    next_date = self.browse(cr, uid, ref('monthly1')).next_date
-    assert next_date and (int(next_date.strftime('%d')) == 12 or int(next_date.strftime('%d')) == 24), "Next date not a 12th or a 24th of month"
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('monthly1')).next_date)
+    assert next_date and (next_date.day == 12 or next_date.day == 24), "Next date not a 12th or a 24th of month"
 -
   Change the frequency to two months
 -
@@ -43,8 +44,9 @@
  Check if the next date is a 12th or a 24th day of month
 -
   !python {model: stock.frequence}: |
-    next_date = self.browse(cr, uid, ref('monthly1')).next_date
-    assert next_date and (int(next_date.strftime('%d')) == 12 or int(next_date.strftime('%d')) == 24), "Next date not a 12th or a 24th of month"
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('monthly1')).next_date)
+    assert next_date and (next_date.day == 12 or next_date.day == 24), "Next date not a 12th or a 24th of month"
 -
   Change no end date to end date
 -
@@ -83,3 +85,24 @@
   !python {model: stock.frequence}: |
     next_date = self.browse(cr, uid, ref('monthly1')).next_date
     assert not next_date, "Next date found on monthly1"
+-
+  Second monthly test
+-
+  !record {model: stock.frequence, id: monthly2}:
+    name: monthly
+    monthly_frequency: 1
+    monthly_one_day: True
+    monthly_choose_freq: each
+    monthly_choose_day: monday
+    start_date: !eval time.strftime('%Y-%m-%d')
+    no_end_date: True
+-
+  Check if the next date is the next monday
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('monthly2')).next_date)
+    next_monday = today()
+    while next_monday.weekday() != 0:
+      next_monday = next_monday + RelativeDateTime(days=1)
+    assert next_date and next_date == next_monday, "Error to define next monday"

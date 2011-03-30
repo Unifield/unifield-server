@@ -46,7 +46,7 @@
         'test/daily_test.yml',
         'test/weekly_test.yml',
         'test/monthly_test.yml',
-#        'test/yearly_test.yml',
+        'test/yearly_test.yml',
     ],
     'installable': True,
     'active': False,
