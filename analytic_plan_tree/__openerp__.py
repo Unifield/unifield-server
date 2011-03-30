@@ -26,7 +26,9 @@
     "depends" : ["analytic", "account"],
     "description": """Module for defining analytic accounting object.
     """,
-    "init_xml" : [],
+    "init_xml" : [
+        'data/analytic_account_data.xml',
+    ],
     "update_xml": [
         'analytic_account_activable_view.xml',
     ],
