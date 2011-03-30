@@ -128,6 +128,26 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = default_amount
         return res
 
+    def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Get Third Parties following other fields
+        """
+        res = {}
+        for st_line in self.browse(cr, uid, ids, context=context):
+            if st_line.employee_id:
+                res[st_line.id] = 'hr.employee,%s' % st_line.employee_id.id
+            elif st_line.register_id:
+                res[st_line.id] = ('account.bank.statement,%s' % st_line.register_id.id)
+            elif st_line.partner_id:
+                res[st_line.id] = ('res.partner,%s' % st_line.partner_id.id)
+        return res
+
+    def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
+        return True
+
+    def _search_third_parties(self, cr, uid, obj, name=None, args=None):
+        return True
+
     def _search_state(self, cr, uid, obj, name, args, context={}):
         """
         Search elements by state :
@@ -259,8 +279,8 @@ class account_bank_statement_line(osv.osv):
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), \
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
-        'partner_type': fields.reference("Third Parties", [('res.partner', 'Partner'), ('hr.employee', 'Employee'), \
-            ('account.bank.statement', 'Register')], 128),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', fnct_search=_search_third_parties, \
+            method=True, string="Third Parties"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
@@ -708,7 +728,8 @@ class account_bank_statement_line(osv.osv):
         if amount >= 0:
             raise osv.except_osv(_('Warning'), _('Please select a line with a filled out "amount out"!'))
         wiz_obj = self.pool.get('wizard.cash.return')
-        wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], 'currency_id': st_line.statement_id.journal_id.currency.id}, context={})
+        wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
+            'currency_id': st_line.statement_id.journal_id.currency.id}, context={})
         if statement_id:
             return {
                 'name' : "Advance Return",
@@ -736,6 +757,7 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         acc_obj = self.pool.get('account.account')
+        # FIXME: Verify that no other piece of data is written
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
@@ -744,6 +766,7 @@ class account_bank_statement_line(osv.osv):
             account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
             acc_type = account.type_for_register
             # FIXME: what about payable and receivable accounts ?
+
             if acc_type == 'transfer':
                 third_type = [('account.bank.statement', 'Register')]
                 third_required = True
