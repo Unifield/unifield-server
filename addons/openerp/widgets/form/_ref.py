@@ -47,6 +47,10 @@ class Reference(TinyInputWidget):
         self.onchange = None # override onchange in js code
 
     def set_value(self, value):
+        if isinstance(value, dict):
+            if value.get('options'):
+                self.options = value['options']
+            value = value.get('selection',"")
         if value:
             self.relation, self.default = value.split(",")
             self.text = rpc.name_get(self.relation, self.default, rpc.session.context)
