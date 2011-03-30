@@ -34,6 +34,9 @@
         'account_period_closing_level_view.xml',
         'wizard/account_period_create_view.xml',
     ],
+    "test": [
+        'test/account_period_closing_level.yml',
+    ],
     'demo_xml': [],
     'installable': True,
     'active': False,
