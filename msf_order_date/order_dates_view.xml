@@ -32,7 +32,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'requested_date': delivery_requested_date 'confirmed_date': delivery_confirmed_date}">
+                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'requested_date': delivery_requested_date, 'confirmed_date': delivery_confirmed_date}">
                                 <tree string="Purchase Order Lines">
                                     <field name="date_planned"/>
                                     <field name="name"/>
@@ -61,7 +61,7 @@
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='delivery_requested_date']" position="replace" />
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />
 	            </data>
             </field>
         </record>
