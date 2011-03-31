@@ -66,4 +66,15 @@ class account_account(osv.osv):
 
 account_account()
 
+class account_move(osv.osv):
+    _name = "account.move"
+    _inherit = "account.move"
+
+    _columns = {
+        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
+            ('res.partner', 'Partner')], size=128, readonly="1"),
+    }
+
+account_move()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

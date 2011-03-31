@@ -137,9 +137,9 @@ class account_bank_statement_line(osv.osv):
             if st_line.employee_id:
                 res[st_line.id] = 'hr.employee,%s' % st_line.employee_id.id
             elif st_line.register_id:
-                res[st_line.id] = ('account.bank.statement,%s' % st_line.register_id.id)
+                res[st_line.id] = 'account.bank.statement,%s' % st_line.register_id.id
             elif st_line.partner_id:
-                res[st_line.id] = ('res.partner,%s' % st_line.partner_id.id)
+                res[st_line.id] = 'res.partner,%s' % st_line.partner_id.id
         return res
 
     def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
@@ -277,10 +277,10 @@ class account_bank_statement_line(osv.osv):
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
-        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), \
+        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
-        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', fnct_search=_search_third_parties, \
-            method=True, string="Third Parties"),
+        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
+            ('res.partner', 'Partner')], size=128),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
@@ -443,11 +443,20 @@ class account_bank_statement_line(osv.osv):
 
         context.update({'date': st_line.date})
 
+        # Prepare partner_type
+        partner_type = False
+        if st_line.partner_type:
+            partner_type = ','.join([str(st_line.partner_type._table_name), str(st_line.partner_type.id)])
+        # end of add
+
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
             'date': st_line.date,
             'name': st_line_number,
+            ## Add partner_type
+            'partner_type': partner_type or False,
+            # end of add
         }, context=context)
         account_bank_statement_line_obj.write(cr, uid, [st_line.id], {
             'move_ids': [(4, move_id, False)]
@@ -472,9 +481,11 @@ class account_bank_statement_line(osv.osv):
             'ref': st_line.ref,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id and register_id support
+            # Add employee_id, register_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'partner_type': partner_type or False,
+            'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': (st_line.account_id) and st_line.account_id.id,
             'credit': ((amount>0) and amount) or 0.0,
@@ -516,6 +527,8 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id and register_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'partner_type': partner_type or False,
+            'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': account_id,
             'credit': ((amount < 0) and -amount) or 0.0,
@@ -749,7 +762,6 @@ class account_bank_statement_line(osv.osv):
             }
         else:
             return False
-        # NB: in the wizard we have to verify that we have a bank statement_line in the context, else do an osv error
 
     def onchange_account(self, cr, uid, ids, account_id, context={}):
         """
@@ -757,15 +769,17 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        # FIXME: Verify that no other piece of data is written
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
+        domain = {}
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
             acc_type = account.type_for_register
-            # FIXME: what about payable and receivable accounts ?
+            # if the account is a payable account, then we change the domain
+            if account.type == "payable":
+                domain = {'partner_type': [('property_account_payable', '=', account_id), ('supplier', '=', 1)]}
 
             if acc_type == 'transfer':
                 third_type = [('account.bank.statement', 'Register')]
@@ -775,6 +789,6 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
+        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}, 'domain': domain}
 
 account_bank_statement_line()
