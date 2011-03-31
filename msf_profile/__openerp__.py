@@ -35,6 +35,7 @@
         "register_accounting",
         "stock_inventory_type",
         "account_payment",  # openERP module
+        "analytic_plan_tree",
     ],
     "update_xml": [
     ],
