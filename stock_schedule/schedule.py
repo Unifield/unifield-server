@@ -337,13 +337,13 @@ class stock_frequence(osv.osv):
                 
                 freq = 1
                 # Get the value for the choose frequence
-                i = 1
+                i = 0
                 for f in FREQUENCY:
                     if frequence.yearly_choose_freq == f[0]:
                         freq = i
                     i += 1
                 # Return the value -1 if the choosen frequency is 'The last'
-                if freq == 7:
+                if freq == 6:
                     freq = -1
                 
                 # Get the month number
@@ -356,7 +356,9 @@ class stock_frequence(osv.osv):
                     
                 # Search the next date according to the selected day and the selected frequency
                 next_date = next_date + RelativeDate(month=month, weekday=(day,freq))
-                if next_date.month > today().month or (next_date.month == today().month and next_date.day > today().day):
+                if next_date < today() or next_date.year > today().year or (next_date.year == today().year and next_date.month > today().month):
+                    freq = 1
+                if next_date.month > today().month or (next_date.month == today().month and next_date.day >= today().day):
                     return next_date
                 else:
                     next_date = next_date + RelativeDate(years=+frequence.yearly_frequency, month=month, weekday=(2,freq))
@@ -414,7 +416,7 @@ class stock_frequence(osv.osv):
         'weekly_wednesday_ok': fields.boolean(string="Wednesday"),
         'weekly_thursday_ok': fields.boolean(string="Thursday"),
         'weekly_friday_ok': fields.boolean(string="Friday"),
-        'weekly_saturday_ok': fields.boolean(string="Saturday"),
+        'weekly_saturday_ok': fields.boolean(string="Satu7rday"),
         
         # Monthly configuration
         'monthly_frequency': fields.integer(string='Each'),
@@ -501,20 +503,32 @@ class stock_frequence(osv.osv):
         'start_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
     
-    def check_date_in_month(self, cr, uid, ids, date, field):
+    def check_date_in_month(self, cr, uid, ids, day, month):
         '''
         Checks if the date in parameter is higher than 1 and smaller than 31 
         '''
-        if date < 1 or date > 31:
-            if date < 1:
-                date = 1
-            else:
-                date = 31
-            return {'warning': {'title': _('Error'),
-                                'message': _('The entered number is not a valid number of day')},
-                    'result': {field: date}}
+        warning = True
+        warn = {}
         
-        return {}
+        if day < 1:
+            day = 1
+        elif month == 'february' and day > 29:
+            day = 28
+        elif month in ['april', 'june', 'september', 'november'] and day > 30:
+            day = 30
+        elif day > 31:
+            day = 31
+        elif month == 'february' and day == 29:
+            warn = {'title': _('Warning'), 
+                    'message': _('You have selected February, the 29th as shedule date. For non leap years, the action will be run on March, the 1st !')}
+        else:
+            warning = False
+            
+#        if warning:
+#            warn = {'title': _('Error'), 
+#                    'message': _('The entered number is not a valid number of day')}
+#        
+        return {'warning': warn, 'value': {'yearly_day': day}}
     
     def choose_daily_frequency(self, cr, uid, ids, daily_frequency_ok=False, daily_working_days=False):
         '''

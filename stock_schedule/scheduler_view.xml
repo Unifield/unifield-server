@@ -109,8 +109,8 @@
                         <newline />
                         <label />
                         <field name="yearly_day_ok" nolabel="1" on_change="yearly_freq_change(yearly_day_ok, False)" />
-                        <field name="yearly_day" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" on_change="check_date_in_month(yearly_day, 'yearly_day')" />
-                        <field name="yearly_choose_month" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" />
+                        <field name="yearly_day" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" on_change="check_date_in_month(yearly_day, yearly_choose_month)" />
+                        <field name="yearly_choose_month" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" on_change="check_date_in_month(yearly_day, yearly_choose_month)" />
                         <newline />
                         <label />
                         <field name="yearly_date_ok" nolabel="1" on_change="yearly_freq_change(False, yearly_date_ok)" />
