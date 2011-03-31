@@ -17,7 +17,7 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('weekly1')).next_date)
-    assert next_date and next_date.weekday() == 6, "Next date not a Sunday"
+    assert next_date and next_date.weekday() == 6 and next_date >= today(), "Next date not a Sunday"
 -
   Add wednesday to the weekly1
 -
@@ -29,7 +29,7 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('weekly1')).next_date)
-    assert next_date and (next_date.weekday() == 6 or next_date.weekday() == 2), "Next date not a Sunday or a Wednesday"
+    assert next_date and (next_date.weekday() == 6 or next_date.weekday() == 2) and next_date >= today(), "Next date not a Sunday or a Wednesday"
 -
   Change no end date to end date
 -
@@ -55,8 +55,9 @@
   Check if the last date isn't False 
 -
   !python {model: stock.frequence}: |
+    from mx.DateTime import *
     next_date = self.browse(cr, uid, ref('weekly1')).next_date
-    assert next_date, "Next date not found on weekly1"
+    assert next_date and next_date >= today(), "Next date not found on weekly1"
 -
   Change recurrence from 5 years to 5 months
 -

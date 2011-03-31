@@ -22,11 +22,11 @@
     next_yearly = DateTime(2009, 03, 03)
     if (today().year-2009)%2 == 0:
       if today().month < 3 or (today().month == 3 and today().day < 3):
-        assert next_date == DateTime(today().year, 3, 3), "Next date is not March, the 3rd of the current year"
+        assert next_date == DateTime(today().year, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3, 3), "Next date is not March, the 3rd of %s" %today().year+2
+        assert next_date == DateTime(today().year+2, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+2
     else:
-      assert next_date == DateTime(today().year+1, 3, 3), "Next date is not March, the 3rd of %s" %today().year+1
+      assert next_date == DateTime(today().year+1, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+1
 -
   Change the start date to October the 3rd.
 -
@@ -41,11 +41,11 @@
     next_yearly = DateTime(2009, 10, 03)
     if (today().year-2009)%2 == 0:
       if today().month < 3 or (today().month == 3 and today().day < 3):
-        assert next_date == DateTime(today().year, 3, 3), "Next date is not March, the 3rd of the current year"
+        assert next_date == DateTime(today().year, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3, 3), "Next date is not March, the 3rd of %s" %today().year+2
+        assert next_date == DateTime(today().year+2, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+2
     else:
-      assert next_date == DateTime(today().year+1, 3, 3), "Next date is not March, the 3rd of %s" %today().year+1
+      assert next_date == DateTime(today().year+1, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+1
 -
   Change the choose month to October
 -
@@ -60,11 +60,11 @@
     next_yearly = DateTime(2009, 10, 03)
     if (today().year-2009)%2 == 0:
       if today().month < 10 or (today().month == 10 and today().day < 3):
-        assert next_date == DateTime(today().year, 10, 3), "Next date is not October, the 3rd of the current year"
+        assert next_date == DateTime(today().year, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of the current year"
       else:
-        assert next_date == DateTime(today().year+2, 10, 3), "Next date is not October, the 3rd of %s" %today().year+2
+        assert next_date == DateTime(today().year+2, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s" %today().year+2
     else:
-      assert next_date == DateTime(today().year+1, 10, 3), "Next date is not October, the 3rd of %s" %today().year+1
+      assert next_date == DateTime(today().year+1, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s" %today().year+1
 -
   Second yearly test
 -
@@ -86,11 +86,11 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not the first Wednesday of March of the current year"
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not the first Wednesday of March of the 2 next years"
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not the first Wednesday of March of the next year"
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the next year"
 -
   Change the start date
 -
@@ -104,11 +104,11 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(month=3, weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the current year"
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the 2 next years"
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the next year"
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
 -
   Change the choose month
 -
@@ -122,11 +122,11 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month < 10 or (today().month == 10 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the current year"
+        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
       else:
-        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the 2 next years"
+        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the next year"
+      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
 -
   Third yearly test
 -
@@ -148,11 +148,11 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the current year"
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the 2 next years"
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the next year"
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
 -
   Change the start date
 -
@@ -166,11 +166,11 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month < 3 or (today().month == 3 and today().day < (today() + RelativeDateTime(month=3, weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the current year"
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
       else:
-        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the 2 next years"
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the next year"
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
 -
   Change the choose month
 -
@@ -184,8 +184,8 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
     if (today().year-2009)%2 == 0:
       if today().month <= 10 or (today().month == 10 and today().day < (today() + RelativeDateTime(month=10, weekday=(2, 1)))):
-        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the current year"
+        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
       else:
-        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the 2 next years"
+        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
     else:
-      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)), "The next date is not in the next year"
+      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"

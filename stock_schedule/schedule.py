@@ -101,7 +101,10 @@ class stock_frequence(osv.osv):
                 i = 0
                 while i < 32 and not test:
                     i += 1
-                    field = 'monthly_day%s' %str(i)
+                    if i <10:
+                        field = 'monthly_day0%s' %str(i)
+                    else:
+                        field = 'monthly_day%s' %str(i)
                     if field in data and data.get(field, False):
                         test = True
                 if not test:
@@ -288,7 +291,7 @@ class stock_frequence(osv.osv):
                     if frequence_read[f]:
                         days_ok.append(int(f[-2:]))
                 
-                while next_date.day not in days_ok:
+                while next_date.day not in days_ok or next_date < today():
                     next_date = next_date + RelativeDate(days=+1)
                     
                 return next_date
