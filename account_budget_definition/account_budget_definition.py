@@ -2,8 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2008 PC Solutions (<http://pcsol.be>). All Rights Reserved
-#    $Id$
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,8 +26,9 @@ class account_budget_definition(osv.osv):
     _inherit="crossovered.budget"
     
     _columns={
-        'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account',required=True),
+        'analytic_account_id': fields.many2one('account.analytic.account', 'Cost Center',required=True),
         'decision_moment': fields.char('Decision Moment', size=32),
+        'currency_id': fields.many2one('res.currency', 'Currency'),
     }
     
     def write(self, cr, uid, ids, vals, context=None):

@@ -25,7 +25,9 @@
              <field name="inherit_id" ref="account_budget.view_crossovered_budget_search"/>
              <field name="arch" type="xml">
                  <field name="date_to" position="after">
+                     <field name="currency_id"/>
                      <field name="decision_moment"/>
+                     <field name="analytic_account_id"/>
                  </field>
              </field>
         </record>
@@ -41,8 +43,9 @@
 	                <field name="creating_user_id" position="replace"/>
 	                <field name="validating_user_id" position="replace"/>
 	                <field name="company_id" position="after">
-	                   <field name="analytic_account_id" groups="analytic.group_analytic_accounting"/>
+	                   <field name="analytic_account_id"/>
 	                   <field name="decision_moment"/>
+                       <field name="currency_id"/>
 	                </field>
 	                <tree string="Budget Lines" position="replace">
                         <tree string="Budget Lines">
