@@ -376,15 +376,20 @@ class stock_frequence(osv.osv):
                 res[frequence.id] = False
             else:
                 if frequence.name == 'daily':
-                    res[frequence.id] = self._compute_next_daily_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
+                    next_date = self._compute_next_daily_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
                 elif frequence.name == 'weekly':
-                    res[frequence.id] = self._compute_next_weekly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
+                    next_date = self._compute_next_weekly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
                 elif frequence.name == 'monthly':
-                    res[frequence.id] = self._compute_next_monthly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
+                    next_date = self._compute_next_monthly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
                 elif frequence.name == 'yearly':
-                    res[frequence.id] = self._compute_next_yearly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
+                    next_date = self._compute_next_yearly_date(cr, uid, frequence.id).strftime('%Y-%m-%d')
                 else:
                     res[frequence.id] = False
+                    
+                if frequence.calculated_end_date and datetime.strptime(next_date, '%Y-%m-%d') < datetime.strptime(frequence.calculated_end_date, '%Y-%m-%d'):
+                    res[frequence.id] = _('End date is past !')
+                else:
+                    res[frequence.id] = next_date
         
         return res
     
