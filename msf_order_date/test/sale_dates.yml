@@ -18,8 +18,6 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
-    delivery_confirmed_date: !eval time.strftime('%Y-%m-%d')
-    delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
   Check if default value is good
 -

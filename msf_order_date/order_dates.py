@@ -322,6 +322,14 @@ class purchase_order(osv.osv):
         '''
         Checks if dates are good before creation
         '''
+        partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'))
+        requested_date = (datetime.today() + relativedelta(days=partner.leadtime)).strftime('%Y-%m-%d')
+        
+        if 'delivery_requested_date' not in data:
+            data['delivery_requested_date'] = requested_date
+        if 'delivery_confirmed_date' not in data:
+            data['delivery_confirmed_date'] = requested_date
+            
         check_dates(self, cr, uid, data, context=context)
         
         return super(purchase_order, self).create(cr, uid, data, context=context)
@@ -551,6 +559,13 @@ class sale_order(osv.osv):
         '''
         Checks if dates are good before creation
         '''
+        partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'))
+        requested_date = (datetime.today() + relativedelta(days=partner.leadtime)).strftime('%Y-%m-%d')
+        if 'delivery_requested_date' not in data:
+            data['delivery_requested_date'] = requested_date
+        if 'delivery_confirmed_date' not in data:
+            data['delivery_confirmed_date'] = requested_date
+        
         check_dates(self, cr, uid, data, context=context)
         
         return super(sale_order, self).create(cr, uid, data, context=context)
