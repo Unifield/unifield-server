@@ -269,7 +269,7 @@ class wizard_cash_return(osv.osv_memory):
         # Verify that balance on currency amount is equal to 0
         for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
             total_currency += move_line.amount_currency
-        if total_currency > 0 or total_currency < 0:
+        if abs(total_currency) > 10 ** -4:
             raise osv.except_osv(_('Error'), _('An error occured on the currency balance.'))
         # Verify that balance is not null
         # If null, then correct the advance line

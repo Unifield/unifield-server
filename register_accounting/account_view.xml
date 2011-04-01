@@ -229,12 +229,34 @@
                 <tree string="Register Line List">
                     <field name="date" />
                     <field name="name" string="Description"/>
-                    <field name="account_id" />
-                    <field name="partner_id" />
+                    <field name="account_id"/>
+                    <field name="partner_type"/>
                     <field name="amount_in" />
                     <field name="amount_out" />
                     <field name="state" />
                 </tree>
+            </field>
+        </record>
+
+    <!-- Bank Statement Line Filter -->
+        <record id="view_account_bank_statement_line_filter" model="ir.ui.view">
+            <field name="name">view.account.bank.statement.line.select</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <search string="Search Bank Register Lines">
+                    <group col="8" colspan="4">
+                        <filter string="Empty" domain="[('state','=','draft')]" icon="terp-document-new"/>
+                        <filter string="Temp" domain="[('state','=','confirm')]" icon="terp-camera_test"/>
+                        <separator orientation="vertical"/>
+                        <field name="date"/>
+                        <field name="name"/>
+                        <field name="account_id"/>
+                        <field name="partner_type"/>
+                        <field name="amount"/>
+                    </group>
+                </search>
             </field>
         </record>
 

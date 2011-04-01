@@ -25,6 +25,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from register_tools import _get_third_parties
+from register_tools import _set_third_parties
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -127,26 +129,6 @@ class account_bank_statement_line(osv.osv):
             else:
                 res[absl.id] = default_amount
         return res
-
-    def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        """
-        Get Third Parties following other fields
-        """
-        res = {}
-        for st_line in self.browse(cr, uid, ids, context=context):
-            if st_line.employee_id:
-                res[st_line.id] = 'hr.employee,%s' % st_line.employee_id.id
-            elif st_line.register_id:
-                res[st_line.id] = 'account.bank.statement,%s' % st_line.register_id.id
-            elif st_line.partner_id:
-                res[st_line.id] = 'res.partner,%s' % st_line.partner_id.id
-        return res
-
-    def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
-        return True
-
-    def _search_third_parties(self, cr, uid, obj, name=None, args=None):
-        return True
 
     def _search_state(self, cr, uid, obj, name, args, context={}):
         """
@@ -279,8 +261,8 @@ class account_bank_statement_line(osv.osv):
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
-        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
@@ -305,144 +287,6 @@ class account_bank_statement_line(osv.osv):
 
         context.update({'date': st_line.date})
 
-        move_id = account_move_obj.create(cr, uid, {
-            'journal_id': st.journal_id.id,
-            'period_id': st.period_id.id,
-            'date': st_line.date,
-            'name': st_line_number,
-        }, context=context)
-        self.write(cr, uid, [st_line.id], {
-            'move_ids': [(4, move_id, False)]
-        })
-
-        torec = []
-        if st_line.amount >= 0:
-            account_id = st.journal_id.default_credit_account_id.id
-        else:
-            account_id = st.journal_id.default_debit_account_id.id
-
-        acc_cur = ((st_line.amount<=0) and st.journal_id.default_debit_account_id) or st_line.account_id
-        context.update({
-                'res.currency.compute.account': acc_cur,
-            })
-        amount = res_currency_obj.compute(cr, uid, st.currency.id,
-                company_currency_id, st_line.amount, context=context)
-
-        val = {
-            'name': st_line.name,
-            'date': st_line.date,
-            'ref': st_line.ref,
-            'move_id': move_id,
-            'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            'account_id': (st_line.account_id) and st_line.account_id.id,
-            'credit': ((amount>0) and amount) or 0.0,
-            'debit': ((amount<0) and -amount) or 0.0,
-            'statement_id': st.id,
-            'journal_id': st.journal_id.id,
-            'period_id': st.period_id.id,
-            'currency_id': st.currency.id,
-            'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
-        }
-
-        if st.currency.id <> company_currency_id:
-            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-                        st.currency.id, amount, context=context)
-            val['amount_currency'] = -amount_cur
-
-        if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
-            val['currency_id'] = st_line.account_id.currency_id.id
-            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-                    st_line.account_id.currency_id.id, amount, context=context)
-            val['amount_currency'] = -amount_cur
-
-        move_line_id = account_move_line_obj.create(cr, uid, val, context=context)
-        torec.append(move_line_id)
-
-        # Fill the secondary amount/currency
-        # if currency is not the same than the company
-        amount_currency = False
-        currency_id = False
-        if st.currency.id <> company_currency_id:
-            amount_currency = st_line.amount
-            currency_id = st.currency.id
-        account_move_line_obj.create(cr, uid, {
-            'name': st_line.name,
-            'date': st_line.date,
-            'ref': st_line.ref,
-            'move_id': move_id,
-            'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            'account_id': account_id,
-            'credit': ((amount < 0) and -amount) or 0.0,
-            'debit': ((amount > 0) and amount) or 0.0,
-            'statement_id': st.id,
-            'journal_id': st.journal_id.id,
-            'period_id': st.period_id.id,
-            'amount_currency': amount_currency,
-            'currency_id': currency_id,
-            }, context=context)
-
-        for line in account_move_line_obj.browse(cr, uid, [x.id for x in
-                account_move_obj.browse(cr, uid, move_id,
-                    context=context).line_id],
-                context=context):
-            if line.state <> 'valid':
-                raise osv.except_osv(_('Error !'),
-                        _('Journal Item "%s" is not valid') % line.name)
-        # @@@end
-
-        # Removed post from original method
-        return move_id
-
-    def _updating_amount(self, values):
-        """
-        Update amount in 'values' with the difference between amount_in and amount_out.
-        """
-        res = values.copy()
-        amount = None
-        if 'amount_in' not in values and 'amount_out' not in values:
-            return res
-        if values:
-            amount_in = values.get('amount_in', 0.0)
-            amount_out = values.get('amount_out', 0.0)
-            if amount_in > 0 and amount_out == 0:
-                amount = amount_in
-            elif amount_in == 0 and amount_out > 0:
-                amount = - amount_out
-            else:
-                raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
-        if amount:
-            res.update({'amount': amount})
-        return res
-
-    def _update_third_parties(self, values):
-        """
-        Update partner_id, employee_id and register_id from partner_type into values
-        """
-        res = values.copy()
-        if 'partner_type' not in values or not values.get('partner_type', False):
-            return res
-        field = values.get('partner_type').split(",")
-        if field[0] == 'hr.employee':
-            res.update({'employee_id': field[1]})
-        elif field[0] == 'account.bank.statement':
-            res.update({'register_id': field[1]})
-        elif field[0] == 'res.partner':
-            res.update({'partner_id': field[1]})
-        return res
-
-    def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
-        # @@@override@account.account_bank_statement.create_move_from_st_line()
-        if context is None:
-            context = {}
-        res_currency_obj = self.pool.get('res.currency')
-        account_move_obj = self.pool.get('account.move')
-        account_move_line_obj = self.pool.get('account.move.line')
-        account_bank_statement_line_obj = self.pool.get('account.bank.statement.line')
-        st_line = account_bank_statement_line_obj.browse(cr, uid, st_line_id, context=context)
-        st = st_line.statement_id
-
-        context.update({'date': st_line.date})
-
         # Prepare partner_type
         partner_type = False
         if st_line.partner_type:
@@ -458,7 +302,7 @@ class account_bank_statement_line(osv.osv):
             'partner_type': partner_type or False,
             # end of add
         }, context=context)
-        account_bank_statement_line_obj.write(cr, uid, [st_line.id], {
+        self.write(cr, uid, [st_line.id], {
             'move_ids': [(4, move_id, False)]
         })
 
@@ -547,18 +391,36 @@ class account_bank_statement_line(osv.osv):
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error !'),
                         _('Journal Item "%s" is not valid') % line.name)
-
-        # Bank statements will not consider boolean on journal entry_posted
-        account_move_obj.post(cr, uid, [move_id], context=context)
-        return move_id
         # @@@end
+
+        # Removed post from original method
+        return move_id
+
+    def _updating_amount(self, values):
+        """
+        Update amount in 'values' with the difference between amount_in and amount_out.
+        """
+        res = values.copy()
+        amount = None
+        if 'amount_in' not in values and 'amount_out' not in values:
+            return res
+        if values:
+            amount_in = values.get('amount_in', 0.0)
+            amount_out = values.get('amount_out', 0.0)
+            if amount_in > 0 and amount_out == 0:
+                amount = amount_in
+            elif amount_in == 0 and amount_out > 0:
+                amount = - amount_out
+            else:
+                raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
+        if amount:
+            res.update({'amount': amount})
+        return res
 
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
         """
-        # update third parties fields
-        values = self._update_third_parties(values=values)
         # Verify that no supplementary field is not required
         if 'partner_type_mandatory' in values:
             if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
@@ -574,8 +436,6 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
-        # update third parties fields
-        values = self._update_third_parties(values=values)
         # Verify that no supplementary field is not required
         if 'partner_type_mandatory' in values:
             if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
@@ -664,7 +524,6 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
-
     def posting(self, cr, uid, ids, postype, context={}):
         """
         Write some statement line into some account move lines with a state that depends on postype.
@@ -681,10 +540,9 @@ class account_bank_statement_line(osv.osv):
             elif absl.state == "temp" and postype == "temp":
                     raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
-
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, 
-                                            absl.name+ '/' + str(absl.sequence), context=context)
+                    absl.name+ '/' + str(absl.sequence), context=context)
 
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')

@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from operator import itemgetter
+from register_tools import _get_third_parties
+from register_tools import _set_third_parties
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -33,8 +35,8 @@ class account_move_line(osv.osv):
     _columns = {
         'register_id': fields.many2one("account.account", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
-        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
     }
 
@@ -218,7 +220,8 @@ class account_move_line(osv.osv):
             acc_type = account.type_for_register
             # if the account is a payable account, then we change the domain
             if account.type == "payable":
-                domain = {'partner_type': [('property_account_payable', '=', account_id), ('supplier', '=', 1)]}
+                domain = {'partner_type': ['|', ('property_account_payable', '=', account_id), ('property_account_receivable', '=', account_id), 
+                    ('supplier', '=', 1)]}
 
             if acc_type == 'transfer':
                 third_type = [('account.bank.statement', 'Register')]
