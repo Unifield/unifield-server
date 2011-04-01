@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -28,7 +28,9 @@
     This module changes the view and adds a searchable "Active" attribute.
     
     """,
-    "init_xml": [],
+    "init_xml": [
+        'data/account_type.xml',
+    ],
     'update_xml': [
         'account_activable_view.xml',
         'wizard/account_chart_activable_view.xml',
