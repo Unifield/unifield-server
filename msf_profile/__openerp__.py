@@ -34,7 +34,8 @@
         "procurement_list",
         "register_accounting",
         "stock_inventory_type",
-        "account_payment",  # openERP module
+        "account_payment",  
+        "account_period_closing_level", # openERP module
     ],
     "update_xml": [
     ],
