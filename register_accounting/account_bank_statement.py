@@ -649,4 +649,43 @@ class account_bank_statement_line(osv.osv):
                 third_selection = 'hr.employee,0'
         return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}, 'domain': domain}
 
+    def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context={}):
+        """
+        Update account_id field if partner_type change
+        NB:
+         - amount_out = debit
+         - amount_in = credit
+        """
+        res = {}
+        amount = (amount_in or 0.0) - (amount_out or 0.0)
+        if not partner_type and not amount:
+            return res
+        if partner_type:
+            partner_data = partner_type.split(",")
+            if partner_data:
+                obj = partner_data[0]
+                id = int(partner_data[1])
+            # Case where the partner_type is res.partner
+            if obj == 'res.partner':
+                # if amount is inferior to 0, then we give the account_payable
+                if amount < 0:
+                    res_account = self.pool.get('res.partner').read(cr, uid, [id], 
+                        ['property_account_payable'], context=context)[0].get('property_account_payable', False)
+                elif amount > 0:
+                    res_account = self.pool.get('res.partner').read(cr, uid, [id], 
+                        ['property_account_receivable'], context=context)[0].get('property_account_receivable', False)
+                if res_account:
+                    res['value'] = {'account_id': res_account[0]}
+            # Case where the partner_type is account.bank.statement
+            if obj == 'account.bank.statement':
+                # if amount is inferior to 0, then we give the debit account
+                register = self.pool.get('account.bank.statement').browse(cr, uid, [id], context=context)
+                if register and amount < 0:
+                    account_id = register[0].journal_id.default_debit_account_id.id
+                elif register and amount > 0:
+                    account_id = register[0].journal_id.default_credit_account_id.id
+                if account_id:
+                    res['value'] = {'account_id': account_id}
+        return res
+
 account_bank_statement_line()

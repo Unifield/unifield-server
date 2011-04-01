@@ -167,7 +167,7 @@ class account_move_line(osv.osv):
             elif field in ('partner_id',):
                 attrs.append("invisible=\"1\"")
             elif field in ('partner_type',):
-                attrs.append("invisible=\"0\"")
+                attrs.append("on_change=\"onchange_partner_type(partner_type, credit, debit)\" invisible=\"0\"")
             elif field in ('partner_type_mandatory',):
                 attrs.append("invisible=\"1\"")
             # end of add
@@ -234,6 +234,11 @@ class account_move_line(osv.osv):
         val.update({'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}})
         return {'value': val, 'domain': domain}
 
+    def onchange_partner_type(self, cr, uid, ids, partner_type=None, credit=None, debit=None, context={}):
+        """
+        Give the right account_id according partner_type and third parties choosed
+        """
+        return self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, ids, partner_type, credit, debit, context=context)
 
 account_move_line()
 
