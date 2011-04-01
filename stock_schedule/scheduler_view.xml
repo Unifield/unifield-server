@@ -142,6 +142,8 @@
                     </group>
                     <field name="calculated_end_date" />
                     <field name="next_date" widget="date" />
+                    <label colspan="2" />
+                    <button colspan="2" name="choose_frequency" type="object" string="Validate the frequency" icon="gtk-ok" />
                  </form>
             </field>
         </record>

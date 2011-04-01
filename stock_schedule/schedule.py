@@ -121,6 +121,21 @@ class stock_frequence(osv.osv):
         
         return
     
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        Returns a description of the frequence
+        '''
+        res = super(stock_frequence, self).name_get(cr, uid, ids, context=context)
+        
+        # TODO: Modif of name_get method to return a comprehensive name for frequence
+#        res = []
+#        
+#        for freq in self.browse(cr, uid, ids):
+#            title = 'tot'
+#            res.append((freq.id, title))
+        
+        return res
+    
     def create(self, cr, uid, data, context={}):
         '''
         Check if all required data aren't empty
@@ -133,6 +148,9 @@ class stock_frequence(osv.osv):
         '''
         Check if all required data aren't empty
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for field in self._columns:
             if field not in data:
                 data[field] = self.read(cr, uid, ids, [field])[0][field]
@@ -397,6 +415,12 @@ class stock_frequence(osv.osv):
                     res[frequence.id] = next_date
         
         return res
+    
+    def choose_frequency(self, cr, uid, ids, context={}):
+        '''
+        Empty method. Override this method to implement your own features
+        '''
+        return {'type': 'ir.actions.act_window_close'}
     
     _columns = {
         'name': fields.selection([('daily', 'Daily'), ('weekly', 'Weekly'),
