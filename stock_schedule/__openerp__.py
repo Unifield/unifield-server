@@ -39,6 +39,7 @@
     'update_xml': [
         'scheduler_view.xml',
         'scheduler_data.xml',
+        'security/ir.model.access.csv',
     ],
     'demo_xml': [
     ],

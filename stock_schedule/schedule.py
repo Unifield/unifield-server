@@ -416,7 +416,7 @@ class stock_frequence(osv.osv):
         'weekly_wednesday_ok': fields.boolean(string="Wednesday"),
         'weekly_thursday_ok': fields.boolean(string="Thursday"),
         'weekly_friday_ok': fields.boolean(string="Friday"),
-        'weekly_saturday_ok': fields.boolean(string="Satu7rday"),
+        'weekly_saturday_ok': fields.boolean(string="Saturday"),
         
         # Monthly configuration
         'monthly_frequency': fields.integer(string='Each'),

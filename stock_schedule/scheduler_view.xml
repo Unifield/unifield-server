@@ -167,9 +167,9 @@
             <field name="view_mode">tree,form</field>
         </record>
         
-        <menuitem action="action_stock_frequence_new"
+<!--         <menuitem action="action_stock_frequence_new"
                   id="menu_stock_frequence"
-                  parent="stock.menu_stock_warehouse_mgmt" />
+                  parent="stock.menu_stock_warehouse_mgmt" /> -->
     
     </data>
 </openerp>
