@@ -28,25 +28,6 @@ class stock_frequence(osv.osv):
     _name = 'stock.frequence'
     _inherit = 'stock.frequence'
     
-    _columns = {
-#        'automatic_ids': fields.one2many('stock.warehouse.automatic.supply', 'frequence_id', string='Automatic Supplies'),
-    }
-    
-    def name_get(self, cr, uid, ids, context={}):
-        '''
-        Returns a description of the frequence
-        '''
-        res = super(stock_frequence, self).name_get(cr, uid, ids, context=context)
-        
-        # TODO: Modif of name_get method to return a comprehensive name for frequence
-#        res = []
-#        
-#        for freq in self.browse(cr, uid, ids):
-#            title = 'tot'
-#            res.append((freq.id, title))
-        
-        return res
-    
     def choose_frequency(self, cr, uid, ids, context={}):
         '''
         Adds the support of automatic supply on choose frequency method
@@ -70,6 +51,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
+        'product_uom_id': fields.many2one('product.uom', string='Product UoM'),
+        'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', string='Location'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
@@ -77,6 +60,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
+        'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True),
     }
     
     _defaults = {
