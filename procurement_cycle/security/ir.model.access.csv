@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_stock_warehouse_order_cycle_all","stock.warehouse.order.cycle all","model_stock_warehouse_order_cycle",,1,1,1,1
+"access_stock_warehouse_order_cycle_line_all","stock.warehouse.order.cycle.line all","model_stock_warehouse_order_cycle_line",,1,1,1,1
