@@ -20,10 +20,12 @@
 ##############################################################################
 
 from osv import osv, fields
-import time
 from datetime import datetime
-
 from tools.translate import _
+
+import time
+import pooler
+import netsvc
 
 
 # Cache for product/location
@@ -33,18 +35,24 @@ class procurement_order(osv.osv):
     _name = 'procurement.order'
     _inherit = 'procurement.order'
     
-    def run_automatic_supply(self, cr, uid, context={}):
+    def run_automatic_supply(self, cr, uid, use_new_cursor=False, context={}):
         '''
         Create procurement on fixed date
         '''
+        if use_new_cursor:
+            cr = pooler.get_db(use_new_cursor).cursor()
+            
         request_obj = self.pool.get('res.request')
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
-        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '=', False)])
+        proc_obj = self.pool.get('procurement.order')
         
+        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '=', False)])
         
         created_proc = []
         report = []
         report_except = 0
+        
+        start_date = datetime.now()
         
         # We start with only category Automatic Supply
         for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):
@@ -53,7 +61,7 @@ class procurement_order(osv.osv):
             if not auto_sup.location_id or not auto_sup.location_id.id:
                 location_id = auto_sup.warehouse_id.lot_input_id.id
             else:
-                location_id = autop_sup.location_id.id
+                location_id = auto_sup.location_id.id
                 
             for line in auto_sup.line_ids:
                 proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
@@ -70,16 +78,21 @@ class procurement_order(osv.osv):
             if not auto_sup.location_id or not auto_sup.location_id.id:
                 location_id = auto_sup.warehouse_id.lot_input_id.id
             else:
-                location_id = autop_sup.location_id.id
+                location_id = auto_sup.location_id.id
                 
-            proc_id = self.create_proc_order(cr, uid, auto_sup, product_id, product_uom_id.id, product_qty, location_id, context)
+            proc_id = self.create_proc_order(cr, uid, auto_sup, auto_sup.product_id, auto_sup.product_uom_id.id, 
+                                             auto_sup.product_qty, location_id, context)
+            if proc_id:
+                created_proc.append(proc_id)
                     
-        for proc in auto_sup_obj.browse(cr, uid, created_proc):
-            if proc_id.state == 'exception':
+        for proc in proc_obj.browse(cr, uid, created_proc):
+            if proc.state == 'exception':
                 report.append('PROC %d: from stock - %3.2f %-5s - %s' % \
                                (proc.id, proc.product_qty, proc.product_uom.name,
                                 proc.product_id.name,))
                 report_except += 1
+                
+        end_date = datetime.now()
                 
         summary = '''Here is the procurement scheduling report for Automatic Supplies
 
@@ -90,12 +103,16 @@ class procurement_order(osv.osv):
 
         Exceptions:\n'''% (start_date, end_date, len(created_proc), report_except)
         summary += '\n'.join(report)
-        request.create(cr, uid,
+        request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report.",
                  'act_from': uid,
                  'act_to': uid,
                  'body': summary,
                 })
+        
+        if use_new_cursor:
+            cr.commit()
+            cr.close()
             
         return {}
     
@@ -107,6 +124,8 @@ class procurement_order(osv.osv):
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
         wf_service = netsvc.LocalService("workflow")
         report = []
+        proc_id = False
+        
         # Enter the stock location in cache to know which products has been already replenish for this location
         if not cache.get(location_id, False):
             cache.update({location_id: []})
