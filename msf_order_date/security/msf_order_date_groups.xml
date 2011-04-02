@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="purchase_admin_group" model="res.groups">
+            <field name="name">Purchase / Admin</field>
+        </record>
+        
+        <record id="sale_admin_group" model="res.groups">
+            <field name="name">Sale / Admin</field>
+        </record>
+    
+    </data>
+</openerp>
