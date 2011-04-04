@@ -502,6 +502,7 @@ class wizard_cash_return(osv.osv_memory):
                             'period_id': period_id,
                             'date': curr_date,
                             'name': supp_move_name,
+                            'partner_id': supplier_id,
                         }
                         # search account_id of the supplier
                         account_id = self.pool.get('res.partner').read(cr, uid, supplier_id, ['property_account_payable'], context=context)
