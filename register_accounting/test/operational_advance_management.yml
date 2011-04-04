@@ -208,7 +208,7 @@
   I add the previous generated invoice by clicking on Add invoice
 -
   !python {model: wizard.cash.return}: |
-    invoice_res = self.action_add_invoice(cr, uid, [ref("wiz_advance0")])
+    invoice_res = self.action_add_invoice(cr, uid, [ref("wiz_advance0")]).get('res_id', False)
     assert invoice_res == ref("wiz_advance0"), "Add invoice failed"
 -
   I click on the 'Ok' button
