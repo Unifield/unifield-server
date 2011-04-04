@@ -317,9 +317,9 @@ class account_bank_statement_line(osv.osv):
         }
 
         if st.currency.id <> company_currency_id:
-            #amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-            #            st.currency.id, amount, context=context)
-            val['amount_currency'] = st_line.amount
+            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
+                        st.currency.id, amount, context=context)
+            val['amount_currency'] = -st_line.amount
 
         if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
             val['currency_id'] = st_line.account_id.currency_id.id
@@ -431,7 +431,8 @@ class account_bank_statement_line(osv.osv):
             acc_move_line_obj = self.pool.get('account.move.line')
             for st_line in self.browse(cr, uid, ids, context=context):
                 for move_line_id in acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id)]):
-                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], context=context)[0]
+                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], ['debit', 'credit', 'date', 'account_id'], context=context)[0]
+                    date_line = values.get('date') or move_line.get('date') 
                     # Update values
                     # Let's have a look to the amount
                     # first retrieve some values
@@ -466,7 +467,7 @@ class account_bank_statement_line(osv.osv):
                                 res_currency_obj = self.pool.get('res.currency')
                                 #TODO : change this when we have debate on "instance" definition
                                 # Note: the first currency_id must be those of the journal of the cash statement
-                                context.update({'date': move_line.get('date', False)}) # this permit to make the change with currency at the good date
+                                context.update({'date': date_line}) # this permit to make the change with currency at the good date
                                 line_accounting_value = res_currency_obj.compute(cr, uid, \
                                     st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
                                 if line_is_debit:
