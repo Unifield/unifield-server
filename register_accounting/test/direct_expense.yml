@@ -1,0 +1,61 @@
+-
+  In order to test the Direct Expense, I create a period, a cash register, I add an expense for a supplier and then I hard post the line. Finally I check that all lines were written and the move is reconciliated.
+-
+  I create a period
+-
+  !record {model: account.period, id: period_4}:
+    company_id: base.main_company
+    date_start: !eval "'%s-06-01' %(datetime.now().year)"
+    date_stop: !eval "'%s-06-30' %(datetime.now().year)"
+    fiscalyear_id: account.data_fiscalyear
+    name: !eval "'Jan-%s' %(datetime.now().year)"
+    special: 1
+-
+  I create a Cash Register with Opening and Closing balance 1000.
+-
+ !record {model: account.bank.statement, id: account_bank_statement_8}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account.cash_journal
+    name: 
+    period_id: period_4
+    user_id: base.user_root
+    starting_details_ids:
+      -  pieces: 100.0
+         number: 10
+         subtotal: 1000.0
+    balance_start: 1000.0
+    balance_end: 1000.0
+-
+  I clicked on Open CashBox button to open the cashbox
+-
+ !python {model: account.bank.statement}: |
+    self.button_open_cash(cr, uid, [ref("account_bank_statement_8")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_8")], "active_id": ref("account_bank_statement_8"), })
+-
+  I register a direct expense with the supplier "Local Miscellaneous" who's attached to a reconciliable 401 account.
+-
+  !record {model: account.bank.statement.line, id: account_bank_statement_line2}:
+    statement_id: account_bank_statement_8
+    account_id: account_account_expense0
+    amount: -238.41
+    date: !eval time.strftime('%Y-%m-%d')
+    name: Some water
+    partner_id: res_partner_supplier0
+    sequence: 0.0
+    type: general
+-
+  I hard post this line
+-
+  !python {model: account.bank.statement.line}: |
+    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line2")])
+-
+  I check that there is a move for this partner that has been reconciliated and have the same amount
+-
+  !python {model: account.move}: |
+    res_ids = self.search(cr, uid, [('state', '=', 'posted'), ('name', '=', 'DirectExpense/Some water')])
+    moves = self.browse(cr, uid, res_ids)
+    for move in moves:
+        for move_line in move.line_id:
+            assert move_line.reconcile_id != False, "A line have not been reconciled!"
+            assert move_line.partner_id.id == ref("res_partner_supplier0"), "The supplier was not written correctly."
+        assert move.amount == 238.41, "The amount don't correspond"

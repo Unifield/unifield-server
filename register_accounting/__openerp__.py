@@ -52,6 +52,7 @@
         'test/cash_and_bank_transfers.yml',
         'test/operational_advance_management.yml',
         'test/cashbox_balance.yml',
+        'test/direct_expense.yml',
     ],
     "installable": True,
     "active": False
