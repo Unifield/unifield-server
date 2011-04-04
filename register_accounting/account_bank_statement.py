@@ -2,8 +2,8 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF.
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    All Rigts Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -25,10 +25,40 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from register_tools import _get_third_parties
+from register_tools import _set_third_parties
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
+
+    _sql_constraints = [
+        ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
+    ]
+
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Calculate register's balance
+        """
+        st_line_obj = self.pool.get("account.bank.statement.line")
+        res = {}
+
+        statements = self.browse(cr, uid, ids, context=context)
+        for statement in statements:
+            res[statement.id] = statement.balance_start
+            st_line_ids = st_line_obj.search(cr, uid, [('statement_id', '=', statement.id)], context=context)
+            for st_line_id in st_line_ids:
+                st_line_data = st_line_obj.read(cr, uid, [st_line_id], ['amount'], context=context)[0]
+                if 'amount' in st_line_data:
+                    res[statement.id] += st_line_data.get('amount')
+        for r in res:
+            res[r] = round(res[r], 2)
+        return res
+
+    _columns = {
+        'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', \
+            help="Closing balance based on Starting Balance and Cash Transactions"),
+    }
 
     def button_open_bank(self, cr, uid, ids, context={}):
         """
@@ -44,15 +74,16 @@ class account_bank_statement(osv.osv):
         for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
             reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
             if not reconciled_state:
-                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm Bank.'))
+                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm this Register.'))
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
 account_bank_statement()
 
-
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
+
+    _order = 'date desc'
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
@@ -162,18 +193,86 @@ class account_bank_statement_line(osv.osv):
                 res[absl.id] = False
         return res
 
+    def _search_reconciled(self, cr, uid, obj, name, args, context={}):
+        """
+        Search all lines that are reconciled or not
+        """
+        result = []
+        # Test how many arguments we have
+        if not len(args):
+            return res
+        # We just support "=" case
+        if args[0][1] not in ['=', 'in']:
+            raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
+        # Search statement lines that have move lines and which moves are posted
+        sql_posted_moves = """
+            SELECT st.id FROM account_bank_statement_line st
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+            LEFT JOIN account_move move ON rel.statement_id = move.id
+            WHERE rel.move_id is not null AND move.state = 'posted'
+        """
+        cr.execute(sql_posted_moves)
+        res = cr.fetchall()
+        st_line_obj = self.pool.get('account.bank.statement.line')
+        move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
+        reconciled = []
+        for id in res:
+            moves = st_line_obj.read(cr, uid, id[0], ['move_ids'], context=context).get('move_ids')
+            # Search in this moves all move lines that have a reconciliable account
+            move_ids = "(%s)" % ','.join(map(str, moves))
+            sql_reconciliable_moves = """
+                SELECT line.id FROM account_move_line line, account_move move, account_account ac
+                WHERE move.id in """ + move_ids + """
+                AND line.account_id = ac.id AND ac.reconcile = 't'
+            """
+            cr.execute(sql_reconciliable_moves)
+            lines = cr.fetchall()
+            # Retrive number of lines that have a reconciliable account
+            nb_lines = len(lines)
+            # Now we remember the number of lines that have a reconcile_id (this imply they are reconciled)
+            count = 0
+            for line_id in lines:
+                reconcile_id = move_line_obj.read(cr, uid, line_id[0], ['reconcile_id'], context=context).get('reconcile_id', False)
+                if reconcile_id:
+                    count += 1
+            # If all browsed lines are reconciled we add the st_line_id (id) in the result
+            if count == nb_lines:
+                reconciled.append(id)
+        # Give result regarding args[0][2] (True or False)
+        if args[0][2] == True:
+            result = reconciled
+        elif args[0][2] == False:
+            # Search all statement lines
+            sql = """
+                SELECT st.id FROM account_bank_statement_line st
+                """
+            cr.execute(sql)
+            statement_line_ids = cr.fetchall()
+            # Make a difference between
+            result = list(set(statement_line_ids) - set(reconciled))
+        # Return a list of tuple (id,) that correspond to the search
+        return [('id', 'in', [x[0] for x in result])]
+
     _columns = {
-        'register_id': fields.many2one("account.account", "Register"),
-        'employee_id': fields.many2one("account.account", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
+        'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
-        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), \
+        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
-        'partner_type': fields.reference("Third Parties", [('res.partner', 'Partners'), ('hr.employee', 'Employee'), \
-            ('account.bank.statement', 'Register')], 128),
-        'reconciled': fields.function(_get_reconciled_state, method=True, string="Amount Reconciled", type='boolean'),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
+        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
+        'mandatory': fields.char(string="Mandatory", size=120),
+        'from_cash_return': fields.boolean(string='Come from a cash return?'),
+    }
+
+    _defaults = {
+        'from_cash_return': lambda *a: 0,
     }
     
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
@@ -188,11 +287,20 @@ class account_bank_statement_line(osv.osv):
 
         context.update({'date': st_line.date})
 
+        # Prepare partner_type
+        partner_type = False
+        if st_line.partner_type:
+            partner_type = ','.join([str(st_line.partner_type._table_name), str(st_line.partner_type.id)])
+        # end of add
+
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
             'date': st_line.date,
             'name': st_line_number,
+            ## Add partner_type
+            'partner_type': partner_type or False,
+            # end of add
         }, context=context)
         self.write(cr, uid, [st_line.id], {
             'move_ids': [(4, move_id, False)]
@@ -217,6 +325,12 @@ class account_bank_statement_line(osv.osv):
             'ref': st_line.ref,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
+            # Add employee_id, register_id and partner_type support
+            'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
+            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'partner_type': partner_type or False,
+            'partner_type_mandatory': st_line.partner_type_mandatory or False,
+            # end of add
             'account_id': (st_line.account_id) and st_line.account_id.id,
             'credit': ((amount>0) and amount) or 0.0,
             'debit': ((amount<0) and -amount) or 0.0,
@@ -254,6 +368,12 @@ class account_bank_statement_line(osv.osv):
             'ref': st_line.ref,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
+            # Add employee_id and register_id support
+            'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
+            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'partner_type': partner_type or False,
+            'partner_type_mandatory': st_line.partner_type_mandatory or False,
+            # end of add
             'account_id': account_id,
             'credit': ((amount < 0) and -amount) or 0.0,
             'debit': ((amount > 0) and amount) or 0.0,
@@ -301,6 +421,10 @@ class account_bank_statement_line(osv.osv):
         """
         Create a new account bank statement line with values
         """
+        # Verify that no supplementary field is not required
+        if 'partner_type_mandatory' in values:
+            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
+                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # First update amount
         values = self._updating_amount(values=values)
         # Then create a new bank statement line
@@ -309,12 +433,17 @@ class account_bank_statement_line(osv.osv):
     def write(self, cr, uid, ids, values, context={}):
         """
         Write some existing account bank statement lines with 'values'.
-        
         """
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
+        # Verify that no supplementary field is not required
+        if 'partner_type_mandatory' in values:
+            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
+                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # Verify that the statement line isn't in hard state
-        if state  == 'hard':
+        if state  == 'hard' and 'from_cash_return' in values and values.get('from_cash_return') is True:
+            return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        elif state == 'hard':
             return False
         # First update amount
         values = self._updating_amount(values=values)
@@ -362,7 +491,9 @@ class account_bank_statement_line(osv.osv):
                                 res_currency_obj = self.pool.get('res.currency')
                                 #TODO : change this when we have debate on "instance" definition
                                 # Note: the first currency_id must be those of the journal of the cash statement
-                                line_accounting_value = res_currency_obj.compute(cr, uid, st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
+                                context.update({'date': move_line.get('date', False)}) # this permit to make the change with currency at the good date
+                                line_accounting_value = res_currency_obj.compute(cr, uid, \
+                                    st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
                                 if line_is_debit:
                                     new_debit = abs(line_accounting_value)
                                     new_credit = 0.0
@@ -393,13 +524,14 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
-
     def posting(self, cr, uid, ids, postype, context={}):
+        """
+        Write some statement line into some account move lines with a state that depends on postype.
+        """
         if postype not in ('hard', 'temp'):
             raise osv.except_osv(_('Warning'), _('Post type has to be hard or temp'))
         if not len(ids):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
-        
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
         for absl in self.browse(cr, uid, ids, context=context):
@@ -408,10 +540,9 @@ class account_bank_statement_line(osv.osv):
             elif absl.state == "temp" and postype == "temp":
                     raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
-
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, 
-                                            absl.name+ '/' + str(absl.sequence), context=context)
+                    absl.name+ '/' + str(absl.sequence), context=context)
 
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
@@ -420,9 +551,15 @@ class account_bank_statement_line(osv.osv):
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):
+        """
+        Write some statement line into some account move lines in posted state.
+        """
         return self.posting(cr, uid, ids, 'hard', context=context)
 
     def button_temp_posting(self, cr, uid, ids, context={}):
+        """
+        Write some statement lines into some account move lines in draft state.
+        """
         return self.posting(cr, uid, ids, 'temp', context=context)
 
     def unlink(self, cr, uid, ids, context={}):
@@ -439,5 +576,116 @@ class account_bank_statement_line(osv.osv):
                 else:
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
+
+    def button_advance(self, cr, uid, ids, context={}):
+        """
+        Launch a wizard when you press "Advance return" button on a bank statement line in a Cash Register
+        """
+        # Some verifications
+        if len(ids) > 1:
+            raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
+        # others verifications
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # verify that the journal id is a cash journal
+            if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
+                or st_line.statement_id.journal_id.type != 'cash':
+                raise osv.except_osv(_('Error'), _("The attached journal is not a Cash Journal"))
+            # verify that there is a third party, particularly an employee_id in order to do something
+            if not st_line.employee_id:
+                raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
+        # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
+        statement_id = self.read(cr, uid, ids[0], ['statement_id']).get('statement_id', False)[0]
+        amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
+        if amount >= 0:
+            raise osv.except_osv(_('Warning'), _('Please select a line with a filled out "amount out"!'))
+        wiz_obj = self.pool.get('wizard.cash.return')
+        wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
+            'currency_id': st_line.statement_id.journal_id.currency.id}, context={})
+        if statement_id:
+            return {
+                'name' : "Advance Return",
+                'type' : 'ir.actions.act_window',
+                'res_model' :"wizard.cash.return",
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': [wiz_id],
+                'context': 
+                {
+                    'active_id': ids[0],
+                    'active_ids': ids,
+                    'statement_id': statement_id,
+                    'amount': amount
+                }
+            }
+        else:
+            return False
+
+    def onchange_account(self, cr, uid, ids, account_id, context={}):
+        """
+        Update Third Party type regarding account type_for_register field.
+        """
+        # Prepare some values
+        acc_obj = self.pool.get('account.account')
+        third_type = [('res.partner', 'Partner')]
+        third_required = False
+        third_selection = 'res.partner,0'
+        domain = {}
+        # if an account is given, then attempting to change third_type and information about the third required
+        if account_id:
+            account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
+            acc_type = account.type_for_register
+            # if the account is a payable account, then we change the domain
+            if account.type == "payable":
+                domain = {'partner_type': [('property_account_payable', '=', account_id), ('supplier', '=', 1)]}
+
+            if acc_type == 'transfer':
+                third_type = [('account.bank.statement', 'Register')]
+                third_required = True
+                third_selection = 'account.bank.statement,0'
+            elif acc_type == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_required = True
+                third_selection = 'hr.employee,0'
+        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}, 'domain': domain}
+
+    def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context={}):
+        """
+        Update account_id field if partner_type change
+        NB:
+         - amount_out = debit
+         - amount_in = credit
+        """
+        res = {}
+        amount = (amount_in or 0.0) - (amount_out or 0.0)
+        if not partner_type and not amount:
+            return res
+        if partner_type:
+            partner_data = partner_type.split(",")
+            if partner_data:
+                obj = partner_data[0]
+                id = int(partner_data[1])
+            # Case where the partner_type is res.partner
+            if obj == 'res.partner':
+                # if amount is inferior to 0, then we give the account_payable
+                if amount < 0:
+                    res_account = self.pool.get('res.partner').read(cr, uid, [id], 
+                        ['property_account_payable'], context=context)[0].get('property_account_payable', False)
+                elif amount > 0:
+                    res_account = self.pool.get('res.partner').read(cr, uid, [id], 
+                        ['property_account_receivable'], context=context)[0].get('property_account_receivable', False)
+                if res_account:
+                    res['value'] = {'account_id': res_account[0]}
+            # Case where the partner_type is account.bank.statement
+            if obj == 'account.bank.statement':
+                # if amount is inferior to 0, then we give the debit account
+                register = self.pool.get('account.bank.statement').browse(cr, uid, [id], context=context)
+                if register and amount < 0:
+                    account_id = register[0].journal_id.default_debit_account_id.id
+                elif register and amount > 0:
+                    account_id = register[0].journal_id.default_credit_account_id.id
+                if account_id:
+                    res['value'] = {'account_id': account_id}
+        return res
 
 account_bank_statement_line()

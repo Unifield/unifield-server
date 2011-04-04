@@ -1,0 +1,100 @@
+-
+  In order to test Cash and Bank transfers, I create a Bank Register, then I create a Cash Register. Finally I write 1 line on each register
+  to test if they are correctly registered.
+-
+  I create a Bank Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_4}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account.bank_journal
+    name:
+    period_id: account.period_6
+    user_id: base.user_root
+-
+  I click on 'Open Bank' button to open the Bank Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_bank(cr, uid, [ref("account_bank_statement_4")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_4")], "active_id": ref("account_bank_statement_4"), })
+-
+  Then I create a Cash Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_5}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account.cash_journal
+    name: Our cash register
+    period_id: account.period_6
+    user_id: base.user_root
+-
+  I click on 'Open Cash' button to open the Cash Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_cash(cr, uid, [ref("account_bank_statement_5")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_5")], "active_id": ref("account_bank_statement_5"), })
+-
+  In order to test transfer between two registers, I create a transfer account type then I create a transfer account
+-
+  I create a transfer account type
+-
+  !record {model: account.account.type, id: account_account_type_transfer_0}:
+    close_method: balance
+    code: transfer
+    name: Transfer
+    sign: 1
+    report_type: asset
+-
+  I create a transfer account
+-
+  !record {model: account.account, id: account_account_transfer_0}:
+    name: Internal Transfer
+    code: '5815-bank-and-cash-transfer-test'
+    type: liquidity
+    user_type: account_account_type_transfer_0
+    company_id: base.main_company
+    currency_mode: current
+-
+  I create a line in the Bank Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_4}:
+    line_ids:
+        - name: Transfer to a CashBox
+          date: !eval time.strftime('%Y-%m-%d')
+          account_id: account_account_transfer_0
+          amount: -1000.0
+-
+  I click on a button to hard post this line
+-
+  !python {model: account.bank.statement.line}: |
+      absl_obj = self.pool.get('account.bank.statement.line')
+      absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_4"))])
+      for id in absl_ids:
+          absl_obj.button_hard_posting(cr, uid, [id])
+-
+  I create a line in the Cash Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_5}:
+    line_ids:
+        - name: Transfer from 
+          date: !eval time.strftime('%Y-%m-%d')
+          account_id: account_account_transfer_0
+          amount: 1000.0
+-
+  I click on a button to hard post this line
+-
+  !python {model: account.bank.statement.line}: |
+      absl_obj = self.pool.get('account.bank.statement.line')
+      absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_5"))])
+      for id in absl_ids:
+          absl_obj.button_hard_posting(cr, uid, [id])
+-
+  I check that all lines are correctly written
+-
+  !python {model: account.bank.statement.line}: |
+      move_line_obj = self.pool.get('account.move.line')
+      first_bank_transfer_id = move_line_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_4")), \
+        ('account_id', '=', ref("account_account_transfer_0"))])[0]
+      first_cash_transfer_id = move_line_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_5")), \
+        ('account_id', '=', ref("account_account_transfer_0"))])[0]
+      first_bank_transfer_debit = move_line_obj.read(cr, uid, first_bank_transfer_id).get('debit')
+      first_cash_transfer_credit = move_line_obj.read(cr, uid, first_cash_transfer_id).get('credit')
+      assert first_bank_transfer_debit == first_cash_transfer_credit, "Bank Transfer Debit is not the same as Cash Transfer Credit"

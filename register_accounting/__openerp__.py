@@ -22,10 +22,11 @@
 ##############################################################################
 
 {
-    "name" : "Cash/Bank Registers",
+    "name" : "Registers",
     "version" : "1.0",
     "description" : """
-        This module aims to add Cash Register Attributes for Sprint 1 in Unifield project for MSF.
+        This module aims to add some registers into accounting menu and change the method to do accounting by using
+        all registers.
     """,
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
@@ -33,18 +34,24 @@
     "depends" : ["base", "account", "hr", "account_payment"],
     "init_xml" : [],
     "update_xml" : [
-        "account_view.xml",
+        'security/ir.model.access.csv',
+        'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
         'wizard/wizard_cashbox_write_off.xml',
         'wizard/wizard_temp_posting.xml',
         'wizard/wizard_hard_posting.xml',
         'account_cash_statement_sequence.xml',
+        'wizard/wizard_cash_return.xml',
     ],
     "demo_xml" : [],
     "test": [
         'test/account_cash_statement.yml',
         'test/account_bank_statement.yml',
+        'test/account_cheque_register.yml',
+        'test/cash_and_bank_transfers.yml',
+        'test/operational_advance_management.yml',
+        'test/cashbox_balance.yml',
     ],
     "installable": True,
     "active": False

@@ -3,8 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
-#    Copyright (C) 
-#    Author: 2011 TeMPO Consulting, MSF.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -103,8 +102,7 @@ class account_cash_statement(osv.osv):
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Name', size=64, required=False, readonly=True),
-            'period_id': fields.many2one('account.period', 'Period', required=True, states={'partial_close':[('readonly', True)], 
-                'confirm':[('readonly', True)]}),
+            'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)]}),
     }

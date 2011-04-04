@@ -103,15 +103,25 @@ class cashbox_write_off(osv.osv_memory):
                         # create attached account move lines
                         # first for the bank account
                         description = "writeoff" + '/' + curr_date
+                        # make a verification that no other currency is choose
+                        # if another currency is applied on the journal, then we do a calculation of the new amount
+                        amount = False
+                        if currency_id != cashbox.company_id.currency_id.id:
+                            res_currency_obj = self.pool.get('res.currency')
+                            amount = res_currency_obj.compute(cr, uid, currency_id, cashbox.company_id.currency_id.id, cash_difference, context=context)
                         if cash_difference > 0:
                             # the cash difference is positive that's why we do a move from credit (for bank)
                             #+ and the opposite for the writeoff
                             bank_account_id = account_credit_id
                             bank_debit = 0.0
                             bank_credit = abs(cash_difference)
+                            if amount:
+                                bank_credit = abs(amount) # if another currency
                         else:
                             bank_account_id = account_debit_id
                             bank_debit = abs(cash_difference)
+                            if amount:
+                                bank_debit = abs(amount) # if another currency
                             bank_credit = 0.0
                         # move lines are the opposite of bank for the writeoff
                         writeoff_debit = bank_credit
@@ -130,6 +140,9 @@ class cashbox_write_off(osv.osv_memory):
                             'currency_id': currency_id,
                             'analytic_account_id': analytic_account_id
                         }
+                        # add an amount currency if the currency is different from company currency
+                        if amount:
+                            bank_move_line_vals.update({'amount_currency': cash_difference})
                         bank_move_line_id = move_line_obj.create(cr, uid, bank_move_line_vals, context = context)
                         # then for the writeoff account
                         writeoff_move_line_vals = {
@@ -146,6 +159,8 @@ class cashbox_write_off(osv.osv_memory):
                             'analytic_account_id': analytic_account_id
                         }
                         writeoff_move_line_id = move_line_obj.create(cr, uid, writeoff_move_line_vals, context = context)
+                        # Make the write-off in posted state
+                        res_move_id = acc_mov_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
                         # Change cashbox state into "Closed"
                         cashbox.write({'state': 'confirm'})
                     else:

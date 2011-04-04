@@ -1,0 +1,58 @@
+-
+  In order to test the Cheque Register I create a Cheque Register, then I open it
+-
+  I create a Cheque Journal
+-
+  !record {model: account.journal, id: account_journal_cheque_0}:
+    code: chq
+    company_id: base.main_company
+    name: Cheque Journal
+    type: cheque
+    view_id: account.account_journal_view
+    default_debit_account_id: account.cash
+    default_credit_account_id: account.cash
+-
+  I create a Cheque Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_3}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account_journal_cheque_0
+    name: some name
+    period_id: account.period_5
+    user_id: base.user_root
+-
+  I check that the initially Cheque Register is in the "Draft" state
+-
+  !assert {model: account.bank.statement, id: account_bank_statement_3}:
+    - state == 'draft'
+-
+  I click on 'Open Cheque' button to open the Bank Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_cheque(cr, uid, [ref("account_bank_statement_3")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_3")], "active_id": ref("account_bank_statement_3"), })
+-
+  I check that the Cheque Register is in the "Open" state
+-
+  !assert {model: account.bank.statement, id: account_bank_statement_3}:
+    - state == 'open'
+-
+  I create an entry in the Cheque Register
+-
+  !record {model: account.bank.statement, id: account_bank_statement_3}:
+    line_ids:
+      - account_id: account.a_recv
+        amount: 111.0
+        date: !eval time.strftime('%Y-%m-%d')
+        name: cheque1
+        partner_id: base.res_partner_2
+        sequence: 0.0
+        type: general
+-
+  I click on this line to hard post it
+-
+  !python {model: account.bank.statement.line}: |
+      absl_obj = self.pool.get('account.bank.statement.line')
+      absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_3"))])
+      for id in absl_ids:
+          absl_obj.button_hard_posting(cr, uid, [id])

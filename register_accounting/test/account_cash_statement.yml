@@ -1,5 +1,5 @@
 -
-  In order to test Cash Register I create a Cash Register with a journal in EURO, then I confirm it and check it's move created
+  In order to test Cash Register I create a Cash Register with a journal in EURO, then I confirm it and check that moves are created
 -
   I create a Cash Register with Opening and Closing balance 1500.
 -
@@ -7,7 +7,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.cash_journal
     name: 
-    period_id: account.period_10
+    period_id: account.period_5
     user_id: base.user_root
     starting_details_ids:
       -  pieces: 100.0
@@ -40,21 +40,21 @@
   !record {model: account.bank.statement, id: account_bank_statement_1}:
     line_ids:
       - account_id: account.a_recv
-        amount: 500.0
+        amount: -500.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test1
         partner_id: base.res_partner_4
         sequence: 0.0
         type: general
       - account_id: account.a_recv
-        amount: 380.0
+        amount: -380.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test2
         partner_id: base.res_partner_3
         sequence: 1.0
         type: general
       - account_id: account.a_recv
-        amount: 320.0
+        amount: -320.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test3
         partner_id: base.res_partner_4

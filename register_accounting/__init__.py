@@ -22,7 +22,11 @@
 ##############################################################################
 
 import wizard
+import partner
+import account_move_line
 import account_bank_statement
 import account_cash_statement
+import account
+import account_cheque_register
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
