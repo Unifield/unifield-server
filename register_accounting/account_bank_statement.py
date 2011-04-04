@@ -52,16 +52,10 @@ class account_bank_statement(osv.osv):
         st_line_obj = self.pool.get("account.bank.statement.line")
         res = {}
 
-        statements = self.browse(cr, uid, ids, context=context)
-        for statement in statements:
+        for statement in self.browse(cr, uid, ids, context=context):
             res[statement.id] = statement.balance_start
-            st_line_ids = st_line_obj.search(cr, uid, [('statement_id', '=', statement.id)], context=context)
-            for st_line_id in st_line_ids:
-                st_line_data = st_line_obj.read(cr, uid, [st_line_id], ['amount'], context=context)[0]
-                if 'amount' in st_line_data:
-                    res[statement.id] += st_line_data.get('amount')
-        for r in res:
-            res[r] = round(res[r], 2)
+            for st_line in statement.line_ids:
+                res[statement.id] += st_line.amount or 0.0
         return res
 
     _columns = {
