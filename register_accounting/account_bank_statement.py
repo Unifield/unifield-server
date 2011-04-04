@@ -270,10 +270,13 @@ class account_bank_statement_line(osv.osv):
         'document_date': fields.date(string="Document Date"),
         'mandatory': fields.char(string="Mandatory", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
+        'direct_invoice': fields.boolean(string='Direct invoice type?'),
+        'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
     }
 
     _defaults = {
         'from_cash_return': lambda *a: 0,
+        'direct_invoice': lambda *a: 0,
     }
     
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
@@ -686,6 +689,28 @@ class account_bank_statement_line(osv.osv):
             }
         else:
             return False
+
+    def button_open_invoice(self, cr, uid, ids, context={}):
+        """
+        Open the attached invoice
+        """
+        for st_line in self.browse(cr, uid, ids, context=context):
+            if not st_line.direct_invoice or not st_line.invoice_id:
+                raise osv.except_osv(_('Warning'), _('No invoice founded.'))
+        return {
+            'name': "Supplier Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context':
+            {
+                'active_id': ids[0],
+                'type': 'in_invoice',
+                'active_ids': ids,
+            }
+        }
 
     def onchange_account(self, cr, uid, ids, account_id, context={}):
         """

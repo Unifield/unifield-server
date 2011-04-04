@@ -46,6 +46,10 @@
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
+                                        <field name="direct_invoice"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('direct_invoice', '!=', True)]}" 
+                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -66,6 +70,10 @@
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
+                                        <field name="direct_invoice"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('direct_invoice', '!=', True)]}" 
+                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <field name="reconciled"/>
                                         <field name="sequence" readonly="0" invisible="1"/>
                                         <separator colspan="4" string="Notes"/>
@@ -134,6 +142,10 @@
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
+                                        <field name="direct_invoice"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('direct_invoice', '!=', True)]}" 
+                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
@@ -154,6 +166,10 @@
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
+                                        <field name="direct_invoice"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('direct_invoice', '!=', True)]}" 
+                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <separator colspan="4" string="Notes"/>
                                         <field colspan="4" name="note" nolabel="1"/>
                                         <field name="state" readonly="True"/>
@@ -466,6 +482,7 @@
                                     <field name="amount" invisible="1"/>
                                     <field name="amount_in" readonly="0"/>
                                     <field name="amount_out" readonly="0"/>
+                                    <field name="direct_invoice"/>
                                     <field name="reconciled"/>
                                     <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                         context="context"/>
@@ -487,6 +504,7 @@
                                     <field name="amount" invisible="1"/>
                                     <field name="amount_in" readonly="0"/>
                                     <field name="amount_out" readonly="0"/>
+                                    <field name="direct_invoice"/>
                                     <field name="reconciled"/>
                                     <field name="sequence" readonly="0" invisible="1"/>
                                     <separator colspan="4" string="Notes"/>
