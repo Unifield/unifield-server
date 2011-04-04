@@ -54,9 +54,9 @@ class stock_warehouse_order_cycle(osv.osv):
         'order_coverage': fields.integer(string='Order coverage'),
         'safety_stock_time': fields.integer(string='Safety stock in time'),
         'safety_stock': fields.integer(string='Safety stock (quantity'),
-        'past_consumption': fields.boolean(string='Past monthly consumtion'),
-        'reviewed_consumption': fields.boolean(string='Reviewed monthly consumtion'),
-        'manual_consumption': fields.boolean(string='Manual monthly consumtion'),
+        'past_consumption': fields.boolean(string='Past monthly consumption'),
+        'reviewed_consumption': fields.boolean(string='Reviewed monthly consumption'),
+        'manual_consumption': fields.boolean(string='Manual monthly consumption'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
@@ -67,6 +67,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.order.cycle') or '',
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.order.cycle', context=c)
+        'order_coverage': lambda *a: 3,
     }
     
     def choose_change_frequence(self, cr, uid, ids, context={}):

@@ -19,39 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name": "Procurement Order Cycle",
-    "version": "1.0",
-    "depends": ["base",
-                "procurement",
-                "stock",
-                "product_consumption",
-                "stock_schedule"],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Warehouse & Stock",
-    "description": """
-        This module aims to add a new replenishment policies with
-        fixed dates and variable quantities.
-        
-        BE CAREFUL: THIS MODULE WAS CREATED DURING THE DEVELOPMENT
-        OF THE STOCK REPLENISHMENT MODULE IN ITERATION 1. DON'T FORGET
-        TO CHANGE BEHAVIOUR OF THIS MODULE IF YOUR CHANGE THE LOGIC OF THIS 
-        NEW MODULE
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'procurement_view.xml',
-        'procurement_data.xml',
-        'wizard/schedulers_all_view.xml',
-        'security/ir.model.access.csv',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import product
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

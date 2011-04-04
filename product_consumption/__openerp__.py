@@ -20,32 +20,19 @@
 ##############################################################################
 
 {
-    "name": "Procurement Order Cycle",
+    "name": "Product Consumption",
     "version": "1.0",
-    "depends": ["base",
-                "procurement",
-                "stock",
-                "product_consumption",
-                "stock_schedule"],
+    "depends": ["base", "product", "stock"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
-    "category": "Warehouse & Stock",
+    "category": "Stock & Warehouse",
     "description": """
-        This module aims to add a new replenishment policies with
-        fixed dates and variable quantities.
-        
-        BE CAREFUL: THIS MODULE WAS CREATED DURING THE DEVELOPMENT
-        OF THE STOCK REPLENISHMENT MODULE IN ITERATION 1. DON'T FORGET
-        TO CHANGE BEHAVIOUR OF THIS MODULE IF YOUR CHANGE THE LOGIC OF THIS 
-        NEW MODULE
+    This module aims to compute stock consumption for products
     """,
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_view.xml',
-        'procurement_data.xml',
-        'wizard/schedulers_all_view.xml',
-        'security/ir.model.access.csv',
+        'product_view.xml',
     ],
     'demo_xml': [
     ],
