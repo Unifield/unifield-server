@@ -43,6 +43,10 @@
     ],
     'demo_xml': [
     ],
+    'test': [
+        'test/data.yml',
+        'test/proc_auto.yml',
+    ] ,
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',

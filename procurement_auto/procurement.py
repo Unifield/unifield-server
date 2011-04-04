@@ -24,25 +24,6 @@ from osv import osv, fields
 import time
 from tools.translate import _
 
-class stock_frequence(osv.osv):
-    _name = 'stock.frequence'
-    _inherit = 'stock.frequence'
-    
-    def choose_frequency(self, cr, uid, ids, context={}):
-        '''
-        Adds the support of automatic supply on choose frequency method
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
-            context.get('active_model') == 'stock.warehouse.automatic.supply':
-            self.pool.get('stock.warehouse.automatic.supply').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})
-            
-        return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
-    
-stock_frequence()
-
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
@@ -60,7 +41,17 @@ class stock_warehouse_automatic_supply(osv.osv):
                 res[proc.id] = False
                 
         return res
-
+    
+    def _get_frequence_change(self, cr, uid, ids, context={}):
+        '''
+        Returns Auto. Sup. ids when frequence change
+        '''
+        result = {}
+        for frequence in self.pool.get('stock.frequence').browse(cr, uid, ids, context=context):
+            for sup_id in frequence.auto_sup_ids:
+                result[sup_id.id] = True
+                
+        return result.keys()
     
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
@@ -76,7 +67,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True),
         'next_date': fields.function(_get_next_date_from_frequence, method=True, string='Next scheduled date', type='date', 
-                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c={}: ids, ['frequence_id'],20)}),
+                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c={}: ids, ['frequence_id'],20),
+                                            'stock.frequence': (_get_frequence_change, None, 20)}),
     }
     
     _defaults = {
@@ -168,5 +160,28 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         return {}
     
 stock_warehouse_automatic_supply_line()
+
+class stock_frequence(osv.osv):
+    _name = 'stock.frequence'
+    _inherit = 'stock.frequence'
+    
+    _columns = {
+        'auto_sup_ids': fields.one2many('stock.warehouse.automatic.supply', 'frequence_id', string='Auto. Sup.'),
+    }
+    
+    def choose_frequency(self, cr, uid, ids, context={}):
+        '''
+        Adds the support of automatic supply on choose frequency method
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
+            context.get('active_model') == 'stock.warehouse.automatic.supply':
+            self.pool.get('stock.warehouse.automatic.supply').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})
+            
+        return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
+    
+stock_frequence()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
