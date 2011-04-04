@@ -342,9 +342,9 @@ class account_bank_statement_line(osv.osv):
         }
 
         if st.currency.id <> company_currency_id:
-            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-                        st.currency.id, amount, context=context)
-            val['amount_currency'] = -amount_cur
+            #amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
+            #            st.currency.id, amount, context=context)
+            val['amount_currency'] = st_line.amount
 
         if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
             val['currency_id'] = st_line.account_id.currency_id.id
