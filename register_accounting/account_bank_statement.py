@@ -424,7 +424,7 @@ class account_bank_statement_line(osv.osv):
         """
         for st_line in self.browse(cr, uid, ids, context=context):
             # Do the treatment only if the line is hard posted and have a partner who is a supplier
-            if st_line.state == "hard" and st_line.partner_id and st_line.partner_id.supplier is True:
+            if st_line.state == "hard" and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income'):
                 # Prepare some elements
                 move_obj = self.pool.get('account.move')
                 move_line_obj = self.pool.get('account.move.line')
@@ -439,9 +439,13 @@ class account_bank_statement_line(osv.osv):
                 }
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
                 # Create move lines
-                account_id = st_line.partner_id.property_account_payable.id or False
+                account_id = False
+                if st_line.account_id.user_type.code == 'expense':
+                    account_id = st_line.partner_id.property_account_payable.id or False
+                elif st_line.account_id.user_type.code == 'income':
+                    account_id = st_line.partner_id.property_account_receivable.id or False
                 if not account_id:
-                    raise osv.except_osv(_('Warning'), _('The supplier seems not to have a payable account. \
+                    raise osv.except_osv(_('Warning'), _('The supplier seems not to have a correct account. \
                             Please contact an accountant administrator to resolve this problem.'))
                 val = {
                     'name': st_line.name,
