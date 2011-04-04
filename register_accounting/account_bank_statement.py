@@ -36,6 +36,15 @@ class account_bank_statement(osv.osv):
         ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
     ]
 
+    def __init__(self, pool, cr):
+        super(account_bank_statement, self).__init__(pool, cr)
+        if self.pool._store_function.get(self._name, []):
+            newstore = []
+            for fct in self.pool._store_function[self._name]:
+                if fct[1] != 'balance_end':
+                    newstore.append(fct)
+            self.pool._store_function[self._name] = newstore
+
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance
@@ -56,7 +65,7 @@ class account_bank_statement(osv.osv):
         return res
 
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', \
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
             help="Closing balance based on Starting Balance and Cash Transactions"),
     }
 
