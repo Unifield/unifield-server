@@ -151,11 +151,13 @@ class stock_frequence(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
+        data_bis = data.copy()
+            
         for field in self._columns:
-            if field not in data:
-                data[field] = self.read(cr, uid, ids, [field])[0][field]
+            if field not in data_bis:
+                data_bis[field] = self.read(cr, uid, ids, [field])[0][field]
         
-        self.check_data(data)
+        self.check_data(data_bis)
         
         return super(stock_frequence, self).write(cr, uid, ids, data, context=context)
     
