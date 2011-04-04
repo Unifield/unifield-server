@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,37 +20,8 @@
 #
 ##############################################################################
 
-{
-    "name": "Automatic Procurement",
-    "version": "1.0",
-    "depends": ["base",
-                "procurement",
-                "stock",
-                "stock_schedule"],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Warehouse & Stock",
-    "description": """
-        This module aims to add a new replenishment policies with
-        fixed dates and fixed quantities.
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'procurement_view.xml',
-        'procurement_data.xml',
-        'security/ir.model.access.csv',
-        'wizard/schedulers_all_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/data.yml',
-        'test/proc_auto.yml',
-    ] ,
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import schedule
+import product
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

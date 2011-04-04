@@ -24,48 +24,6 @@ from osv import osv, fields
 import time
 from tools.translate import _
 
-class product_product(osv.osv):
-    _name = 'product.product'
-    _inherit = 'product.product'
-    
-    def _get_categ(self, cr, uid, ids, field_name, arg, context={}):
-        '''
-        Returns the category of the product
-        '''
-        res = {}
-        
-        for product in self.browse(cr, uid, ids):
-            res[product.id] = product.categ_id.id
-            
-        return res
-    
-    def _search_categ(self, cr, uid, obj, name, args, context={}):
-        '''
-        Return False if the research has no category
-        '''
-        ids = []
-        for cond in args:
-            if cond[0] == 'fnct_categ_id' and cond[1] == '=' and not cond[2]:
-                res_ids = self.search(cr, uid, [])
-            elif cond[0] == 'fnct_categ_id':
-                res_ids = self.search(cr, uid, [('categ_id', 'child_of', cond[2])])
-            else:
-                res_ids = self.search(cr, uid, [cond])
-            ids = ids + res_ids
-                
-        if ids:
-            return [('id','in',tuple(ids))]
-        else:
-            return [('id', '=', '0')]
-
-    
-    _columns = {
-        'fnct_categ_id': fields.function(_get_categ, fnct_search=_search_categ, string='Category', 
-                                         method=True, type='many2one', relation='product.category'),
-    }
-    
-product_product()
-
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'

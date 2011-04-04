@@ -24,28 +24,20 @@ from osv import osv, fields
 import time
 from tools.translate import _
 
-class stock_frequence(osv.osv):
-    _name = 'stock.frequence'
-    _inherit = 'stock.frequence'
-    
-    def choose_frequency(self, cr, uid, ids, context={}):
-        '''
-        Adds the support of order cycles on choose frequency method
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
-            context.get('active_model') == 'stock.warehouse.order.cycle':
-            self.pool.get('stock.warehouse.order.cycle').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})
-            
-        return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
-    
-stock_frequence()
-
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _description = 'Order Cycle'
+    
+    def _get_frequence_change(self, cr, uid, ids, context={}):
+        '''
+        Returns ids when the frequence change
+        '''
+        res = {}
+        for frequence in self.pool.get('stock.frequence').browse(cr, uid, ids, context=context):
+            for cycle in frequence.order_cycle_ids:
+                res[cycle.id] = True
+        
+        return res.keys()
     
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
@@ -54,7 +46,6 @@ class stock_warehouse_order_cycle(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', string='Location'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
-        'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date'),
         'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products"),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
@@ -66,6 +57,9 @@ class stock_warehouse_order_cycle(osv.osv):
         'past_consumption': fields.boolean(string='Past monthly consumtion'),
         'reviewed_consumption': fields.boolean(string='Reviewed monthly consumtion'),
         'manual_consumption': fields.boolean(string='Manual monthly consumtion'),
+        'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
+                                    store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
+                                           'stock.frequence': (_get_frequence_change, None, 20)}),
     }
     
     _defaults = {
@@ -125,5 +119,28 @@ class stock_warehouse_order_cycle(osv.osv):
         return super(stock_warehouse_order_cycle, self).copy(cr, uid, id, default, context=context)
     
 stock_warehouse_order_cycle()
+
+class stock_frequence(osv.osv):
+    _name = 'stock.frequence'
+    _inherit = 'stock.frequence'
+    
+    _columns = {
+        'order_cycle_ids': fields.one2many('stock.warehouse.order.cycle', 'frequence_id', string='Order Cycle'),
+    }
+    
+    def choose_frequency(self, cr, uid, ids, context={}):
+        '''
+        Adds the support of order cycles on choose frequency method
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        if not context.get('res_ok', False) and 'active_id' in context and 'active_model' in context and \
+            context.get('active_model') == 'stock.warehouse.order.cycle':
+            self.pool.get('stock.warehouse.order.cycle').write(cr, uid, [context.get('active_id')], {'frequence_id': ids[0]})
+            
+        return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
+    
+stock_frequence()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
