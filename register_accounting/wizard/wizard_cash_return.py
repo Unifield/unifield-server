@@ -230,7 +230,8 @@ class wizard_cash_return(osv.osv_memory):
         register = self.pool.get('account.bank.statement').browse(cr, uid, register_id, context=context)
         new_amount = amount
 
-        if register.journal_id.currency and (register.journal_id.currency.id == move_line.currency_id.id):
+        if register.journal_id.currency and (register.journal_id.currency.id == move_line.currency_id.id) \
+            and (register.journal_id.currency.id != register.company_id.currency_id.id):
             new_amount = move_line.amount_currency
 
         vals = {
@@ -319,7 +320,7 @@ class wizard_cash_return(osv.osv_memory):
                     account_id = move_line.account_id.id or False
                     # abs() should be deleted if we take care of "Credit Note".
                     #+ Otherwise abs() give an absolute amount.
-                    amount = abs(move_line.balance) or 0.0
+                    amount = move_line.invoice.amount_total or 0.0
                     # Calculate the good amount seeing currency
                     if move_line.currency_id and move_line.currency_id.id == st_currency:
                         amount = abs(move_line.amount_currency) or 0.0
