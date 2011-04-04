@@ -47,6 +47,21 @@ class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
     
+    def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context={}):
+        '''
+        Returns the next date of the frequency
+        '''
+        res = {}
+        
+        for proc in self.browse(cr, uid, ids):
+            if proc.frequence_id and proc.frequence_id.next_date:
+                res[proc.id] = proc.frequence_id.next_date
+            else:
+                res[proc.id] = False
+                
+        return res
+
+    
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
@@ -56,11 +71,12 @@ class stock_warehouse_automatic_supply(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', string='Location'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
-        'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date'),
         'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         'procurement_id': fields.many2one('procurement.order', string='Last procurement', readonly=True),
+        'next_date': fields.function(_get_next_date_from_frequence, method=True, string='Next scheduled date', type='date', 
+                                     store={'stock.warehouse.automatic.supply': (lambda self, cr, uid, ids, c={}: ids, ['frequence_id'],20)}),
     }
     
     _defaults = {

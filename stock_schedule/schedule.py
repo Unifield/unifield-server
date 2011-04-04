@@ -501,7 +501,7 @@ class stock_frequence(osv.osv):
                                              ('month', 'Month(s)'), ('year', 'Year(s)')],
                                              string='Type of reccurence'),
         'calculated_end_date': fields.function(_compute_end_date, method=True, type='date', string='End date', store=False),
-        'next_date': fields.function(_compute_next_date, fnct_search=_search_next_date, method=True, type='date', string='Next date', store=False),
+        'next_date': fields.function(_compute_next_date, method=True, type='date', string='Next date', store=False),
     }
     
     _defaults = {
