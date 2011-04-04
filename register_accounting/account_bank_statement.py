@@ -416,7 +416,7 @@ class account_bank_statement_line(osv.osv):
             if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
                 raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # Verify that the statement line isn't in hard state
-        if state  == 'hard' and 'from_cash_return' in values and values.get('from_cash_return') is True:
+        if state  == 'hard' and values == {'from_cash_return': True}:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         elif state == 'hard':
             return False
