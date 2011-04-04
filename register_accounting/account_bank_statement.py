@@ -27,6 +27,7 @@ from osv import fields
 from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+import time
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -417,6 +418,64 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
+    def do_direct_expense(self, cr, uid, ids, context={}):
+        """
+        Do a direct expense when the line is hard posted and content a supplier
+        """
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # Do the treatment only if the line is hard posted and have a partner who is a supplier
+            if st_line.state == "hard" and st_line.partner_id and st_line.partner_id.supplier is True:
+                # Prepare some elements
+                move_obj = self.pool.get('account.move')
+                move_line_obj = self.pool.get('account.move.line')
+                curr_date = time.strftime('%Y-%m-%d')
+                # Create a move
+                move_vals= {
+                    'journal_id': st_line.statement_id.journal_id.id,
+                    'period_id': st_line.statement_id.period_id.id,
+                    'date': st_line.document_date or st_line.date or curr_date,
+                    'name': 'DirectExpense' + st_line.name,
+                }
+                move_id = move_obj.create(cr, uid, move_vals, context=context)
+                # Create move lines
+                account_id = st_line.partner_id.property_account_payable.id or False
+                if not account_id:
+                    raise osv.except_osv(_('Warning'), _('The supplier seems not to have a payable account. \
+                            Please contact an accountant administrator to resolve this problem.'))
+                val = {
+                    'name': st_line.name,
+                    'date': st_line.document_date or st_line.date or curr_date,
+                    'ref': st_line.ref,
+                    'move_id': move_id,
+                    'partner_id': st_line.partner_id.id or False,
+                    'partner_type_mandatory': True,
+                    'account_id': account_id,
+                    'credit': 0.0,
+                    'debit': 0.0,
+                    'statement_id': st_line.statement_id.id,
+                    'journal_id': st_line.statement_id.journal_id.id,
+                    'period_id': st_line.statement_id.period_id.id,
+                    'currency_id': st_line.statement_id.currency.id,
+                    'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
+                }
+                amount = abs(st_line.amount)
+                # update values if we have a different currency that company currency
+                if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
+                    context['date'] = st_line.document_date or st_line.date or curr_date
+                    amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id, 
+                        st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
+                val.update({'debit': amount, 'credit': 0.0})
+                move_line_debit_id = move_line_obj.create(cr, uid, val, context=context)
+                val.update({'debit': 0.0, 'credit': amount})
+                move_line_credit_id = move_line_obj.create(cr, uid, val, context=context)
+                # Post the move
+                move_res_id = move_obj.post(cr, uid, [move_id], context=context)
+                # Do reconciliation
+                move_line_res_id = move_line_obj.reconcile_partial(cr, uid, [move_line_debit_id, move_line_credit_id])
+                # Disable the cash return button on this line
+                self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
+        return True
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -548,6 +607,8 @@ class account_bank_statement_line(osv.osv):
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                # do a move that enable a complete supplier follow-up
+                self.do_direct_expense(cr, uid, [absl.id], context=context)
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):
@@ -668,6 +729,7 @@ class account_bank_statement_line(osv.osv):
             # Case where the partner_type is res.partner
             if obj == 'res.partner':
                 # if amount is inferior to 0, then we give the account_payable
+                res_account = None
                 if amount < 0:
                     res_account = self.pool.get('res.partner').read(cr, uid, [id], 
                         ['property_account_payable'], context=context)[0].get('property_account_payable', False)
