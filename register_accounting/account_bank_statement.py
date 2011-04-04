@@ -74,9 +74,7 @@ class account_bank_statement(osv.osv):
         When using 'Confirm' button in a bank register
         """
         st_line_obj = self.pool.get('account.bank.statement.line')
-        for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
-            reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
-            if not reconciled_state:
+        if st_line_obj.search(cr, uid, [('statement_id', '=', ids[0]), ('reconciled', '=', False)]):
                 raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm this Register.'))
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
