@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="automatic_supply_form_view" model="ir.ui.view">
+            <field name="name">automatic.supply.form.view</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Automatic Supply">
+                    <group colspan="2" col="2">
+                        <separator string="General Information" />
+                        <field name="name" />
+                        <field name="category_id" attrs="{'required': [('product_id', '=', False)]}"/>
+                        <field name="product_id" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/>
+                        <field name="product_uom_id" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
+                        <field name="product_qty" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Locations" />
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
+                        <field name="location_id"/>
+                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Period / Frequence Rule" />
+                        <field name="frequence_id" readonly="1" />
+                        <label />
+                        <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" />
+                        <field name="next_date" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Misc" />
+                        <field name="active" />
+                        <field name="procurement_id" />
+                    </group>
+                    <group colspan="4" col="4" attrs="{'invisible': [('product_id', '!=', False)]}">
+                        <separator colspan="4" string="Order quantity by product" />
+                        <field name="line_ids" nolabel="1" colspan="4">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('categ_id', '=', parent.category_id)]"/>
+                                <field name="product_uom_id" />
+                                <field name="product_qty" />
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="automatic_supply_tree_view" model="ir.ui.view">
+            <field name="name">automatic.supply.tree.view</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Automatic Supply">
+                    <field name="name" />
+                    <field name="category_id" />
+                    <field name="product_id" />
+                    <field name="warehouse_id" />
+                    <field name="location_id" />
+                    <field name="frequence_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_automatic_supply_tree" model="ir.actions.act_window">
+            <field name="name">Automatic Supply</field>
+            <field name="res_model">stock.warehouse.automatic.supply</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem action="action_automatic_supply_tree"
+                  id="menu_automatic_supply"
+                  parent="procurement.menu_stock_procurement" />
+    
+    </data>
+</openerp>

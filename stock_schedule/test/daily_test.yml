@@ -1,0 +1,95 @@
+-
+  In order to test features of the stock_schedule module,
+  I will create a new planification with daily parameter and test
+  different cases
+-
+  First daily test
+-
+  !record {model: stock.frequence, id: daily1}:
+    name: daily
+    daily_frequency_ok: True
+    daily_frequency: 3
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2010-03-03', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = self.browse(cr, uid, ref('daily1')).next_date
+    assert next_date != False and next_date >= today(), "Next date not found on daily1"
+-
+  Change no end date to end date
+-
+  !record {model: stock.frequence, id: daily1}:
+    no_end_date: False
+    end_date_ok: True
+    end_date: !eval time.strftime('%Y-%m-%d', time.strptime('2011-03-03', '%Y-%m-%d'))
+-
+  Check if the last date is False
+-
+  !python {model: stock.frequence}: |
+    assert self.browse(cr, uid, ref('daily1')).next_date == False, "Next date found on daily1"
+-
+  Change end date to recurrence for 5 years
+-
+  !record {model: stock.frequence, id: daily1}:
+    end_date_ok: False
+    recurrence_ok: True
+    recurrence_nb: 5
+    recurrence_type: year
+-
+  Check if the last date isn't False 
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = self.browse(cr, uid, ref('daily1')).next_date
+    assert next_date and next_date >= today(), "Next date not found on daily1"
+-
+  Change recurrence from 5 years to 5 months
+-
+  !record {model: stock.frequence, id: daily1}:
+    recurrence_type: month
+-
+  Check if the last date is False 
+-
+  !python {model: stock.frequence}: |
+    assert not self.browse(cr, uid, ref('daily1')).next_date, "Next date found on daily1"
+-
+  Second daily test
+-
+  !record {model: stock.frequence, id: daily2}:
+    name: daily
+    daily_frequency_ok: True
+    daily_frequency: 3
+    start_date: !eval time.strftime('%Y-%m-%d')
+    no_end_date: True
+-
+  Check if the next_date is equal to start_date + 3 days
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = self.browse(cr, uid, ref('daily2')).next_date
+    assert next_date and next_date == today().strftime('%Y-%m-%d'), "Error on today"
+-
+  Third daily test
+-
+  !record {model: stock.frequence, id: daily3}:
+    name: daily
+    daily_frequency_ok: False
+    daily_working_days: True
+    daily_frequency: 3
+    start_date: !eval time.strftime('%Y-%m-%d')
+    no_end_date: True
+-
+  Check if the next_date is equal to a working day
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = self.browse(cr, uid, ref('daily3')).next_date
+    next_working_day = today()
+    if today().weekday() > 0 and today().weekday() < 6:
+      assert next_date and next_date == today().strftime('%Y-%m-%d'), "Error, today is a working day"
+    while next_working_day.weekday() == 0 or next_working_day.weekday() == 6:
+      next_working_day = next_working_day + RelativeDateTime(days=1)
+    assert next_date and next_date == next_working_day.strftime('%Y-%m-%d') and next_date >= today(), "Error on working days"
