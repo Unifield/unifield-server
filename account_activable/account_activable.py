@@ -20,44 +20,55 @@
 ##############################################################################
 
 import datetime
-import account
 from osv import fields, osv
+from tools.translate import _
 
 class account_account_activable(osv.osv):
     _inherit = 'account.account'
     
+    '''
+        To create a activity period, 2 new fields are created, and are NOT linked to the
+        'active' field, since the behaviors are too different.
+    '''
     _columns = {
+        'activation_date': fields.date('Active from', required=True),
         'inactivation_date': fields.date('Inactive from'),
         'note': fields.char('Note', size=160),
     }
-       
+    
+    _defaults ={
+        'activation_date': lambda *a: datetime.date.today().strftime('%Y-%m-%d')
+    }
+    
+    def _check_date(self, vals):
+        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
+            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d'):
+                 # validate the date (must be > today)
+                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+                # validate that activation date 
+                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
     
     def create(self, cr, uid, vals, context=None):
-        
-        if 'active' in vals:
-            if not vals['active']:
-                # if account is set as inactive, add the activation date
-                vals['inactivation_date'] = fields.date.today()
-            elif vals['active']:
-                # if account is set as active, delete the date.
-                vals['inactivation_date'] = None
-        
+        self._check_date(vals)
         return super(account_account_activable, self).create(cr, uid, vals, context=context)
-     
     
     def write(self, cr, uid, ids, vals, context=None):
-        
-        account_active = self.pool.get('account.account').read(cr, uid, ids, ['active'], context=context)[0]
-        
-        if 'active' in vals:
-            if not vals['active'] and account_active['active']:
-                # if account is set as inactive, add the activation date
-                vals['inactivation_date'] = fields.date.today()
-            elif vals['active']:
-                # if account is set as active, delete the date.
-                vals['inactivation_date'] = None
-        
+        self._check_date(vals)
         return super(account_account_activable, self).write(cr, uid, ids, vals, context=context)
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+            context=None, count=False):
+        if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
+            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append('|')
+            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append(('inactivation_date', '=', False))
+            
+        return super(account_account_activable, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+            
+            
     
 account_account_activable()
 

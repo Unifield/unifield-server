@@ -19,8 +19,8 @@
 #
 ##############################################################################
 
-import account
 import account_activable
+import account_move_line_activable
 import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

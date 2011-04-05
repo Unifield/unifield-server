@@ -18,29 +18,24 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Chart of Accounts for MSF",
-    "version": "1.0",
-    "depends": ["account", "account_chart"],
-    "author" : "MSF: Matthieu Dietrich",
-    "category": "General/Standard",
-    "description": """
-    This module changes the view and adds a searchable "Active" attribute.
+
+import datetime
+from osv import osv
+from tools.translate import _
+
+class account_move_line_activable(osv.osv):
+    _inherit = "account.move.line"
     
-    """,
-    "init_xml": [
-        'data/account_type.xml',
-    ],
-    'update_xml': [
-        'account_activable_view.xml',
-        'wizard/account_chart_activable_view.xml',
-    ],
-    'test': [
-        'test/account_activable.yml'
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+    def _check_date(self, cr, uid, vals, context=None, check=True):
+        if 'date' in vals and vals['date'] is not False:
+            account_obj = self.pool.get('account.account')
+            account = account_obj.browse(cr, uid, vals['account_id'])
+            if vals['date'] < account.activation_date \
+            or vals['date'] >= account.inactivation_date:
+                raise osv.except_osv(_('Error !'), _('You cannot set a date out of the account\'s activity period!'))
+        return super(account_move_line_activable, self)._check_date(self, cr, uid, vals, context, check)
+        
+
+account_move_line_activable()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

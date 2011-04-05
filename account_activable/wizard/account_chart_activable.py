@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import datetime
 from osv import fields, osv
 
 class account_chart_activable(osv.osv_memory):
@@ -28,13 +29,13 @@ class account_chart_activable(osv.osv_memory):
     }
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
-            
+        
         result = super(account_chart_activable, self).account_chart_open_window(cr, uid, ids, context=context)
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
-        result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods'], \
-                                    'state': data['target_move'], 'active_test': not data['show_inactive']})
-        
+        context = eval(result['context'])
+        context['filter_inactive_accounts'] = not data['show_inactive']
+        result['context'] = unicode(context)
         return result
 
 
