@@ -23,19 +23,17 @@ from osv import fields, osv
 
 class account_analytic_chart_activable(osv.osv_memory):
     _inherit = "account.analytic.chart"
+    _columns = {
+        'show_inactive': fields.boolean('Show inactive accounts'),
+    }
     
     def analytic_account_chart_open_window(self, cr, uid, ids, context=None):
         result = super(account_analytic_chart_activable, self).analytic_account_chart_open_window(cr, uid, ids, context=context)
         # add 'active_test' to the result's context; this allows to show or hide inactive items
-        result_context = {}
-        data = self.read(cr, uid, ids, [])[0]
-        if data['from_date']:
-            result_context.update({'from_date': data['from_date']})
-        if data['to_date']:
-            result_context.update({'to_date': data['to_date']})
-        result_context.update({'active_test': False})
-        result['context'] = str(result_context)
-        
+        data = self.read(cr, uid, ids, [], context=context)[0]
+        context = eval(result['context'])
+        context['filter_inactive_accounts'] = not data['show_inactive']
+        result['context'] = unicode(context)
         return result
     
 account_analytic_chart_activable()

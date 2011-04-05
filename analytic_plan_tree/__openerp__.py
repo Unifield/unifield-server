@@ -31,6 +31,7 @@
     ],
     "update_xml": [
         'analytic_account_activable_view.xml',
+        'wizard/account_analytic_chart_view.xml'
     ],
     'demo_xml': [
     ],
