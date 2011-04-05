@@ -78,9 +78,8 @@
     import datetime
     try:
       self.write(cr, uid, ref('account_1'), vals={'inactivation_date': datetime.datetime.now().strftime('%Y-%m-%d')})
-    except:
-      pass
-      
+    except Exception as exception:
+      assert exception.value == "You cannot set an inactivity date lower than tomorrow!"
      
 -
   I change the dates so that activation_date > inactivation_date (forbidden)
@@ -89,9 +88,8 @@
     import datetime
     try:
       self.write(cr, uid, ref('account_1'), vals={'activation_date': '%s-03-12' %(datetime.datetime.now().year + 1), 'inactivation_date': '%s-03-01' %(datetime.datetime.now().year + 1)})
-    except:
-      pass
-      
+    except Exception as exception:
+      assert exception.value == "Activation date must be lower than inactivation date!"
      
 -
   I change the move line date so that it is outside the account's activity period (forbidden)
@@ -99,6 +97,6 @@
   !python {model: account.move.line}: |
     import datetime
     try:
-      self.write(cr, uid, ref('move_line_test'), vals={'date': '%s-03-01' %(datetime.datetime.now().year + 2)})
-    except:
-      pass
+      self.write(cr, uid, ref('move_line_test'), vals={'account_id': ref('account_1'), 'date': '%s-03-01' %(datetime.datetime.now().year + 2)})
+    except Exception as exception:
+      assert exception.value == "You cannot set a date out of the account's activity period!"
