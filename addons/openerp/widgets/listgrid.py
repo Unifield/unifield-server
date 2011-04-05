@@ -312,7 +312,7 @@ class List(TinyWidget):
                 
                 new_values = response["value"]
                 for k, v in new_values.items():
-                    if v not in values or values[k] != v:
+                    if k not in values or values[k] != v:
                         values[k] = v
 
         for f in fields:
