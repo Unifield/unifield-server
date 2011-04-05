@@ -18,7 +18,7 @@
     <td>
         <div class="m2o_container">
             <span class="m2o">
-                <input type="text" id='${name}_text' class="${css_class}" size="1"
+                <input type="text" id='${name}_text' class="${css_class}" size="10"
                     ${py.attrs(attrs, kind=kind, relation=relation, value=text)} style="margin-right: -20px"/>
                 % if error:
                     <span class="fielderror">${error}</span>
