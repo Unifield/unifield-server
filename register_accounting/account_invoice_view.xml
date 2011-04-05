@@ -59,14 +59,16 @@
                                 <field name="residual"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel Invoice" icon="gtk-cancel"/>
-                                    <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
+                                    <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" 
+                                        icon="terp-stock_effects-object-colorize"/>
                                     <button name="invoice_open" states="draft,proforma2" string="Approve" icon="terp-camera_test"/>
                                 </group>
                             </group>
                         </page>
                         <page string="Other Info">
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
-                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" widget="selection" groups="base.group_multi_company"/>
+                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" 
+                                widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="payment_term" widget="selection"/>
                             <field name="name"/>
@@ -96,6 +98,37 @@
                 </form>
             </field>
         </record>
+
+    <!-- Add a filter on Supplier Invoices in order to hide Direct Invoices (those which have register_line_ids) -->
+        <record id="account.action_invoice_tree2" model="ir.actions.act_window">
+            <field name="name">Supplier Invoices</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('type','=','in_invoice'), ('register_line_ids', '=', False)]</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers. 
+                OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice 
+                from your supplier according to what you purchased or received.</field>
+        </record>
+
+    <!-- Give Direct Invoices -->
+        <record id="action_direct_invoice_tree" model="ir.actions.act_window">
+            <field name="name">Supplier Direct Invoices</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field eval="False" name="view_id"/>
+            <field name="domain">[('type','=','in_invoice'), ('register_line_ids', '!=', False)]</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="help">With Supplier Direct Invoices you can enter and manage direct invoices issued by your user into Registers.</field>
+        </record>
+
+    <!-- Supplier Direct Invoices Menu -->
+        <menuitem action="action_direct_invoice_tree" id="menu_action_direct_invoice_tree" parent="account.menu_finance_payables"/>
 
     </data>
 </openerp>
