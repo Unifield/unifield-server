@@ -33,7 +33,7 @@ class account_move_line_activable(osv.osv):
             if vals['date'] < account.activation_date \
             or vals['date'] >= account.inactivation_date:
                 raise osv.except_osv(_('Error !'), _('You cannot set a date out of the account\'s activity period!'))
-        return super(account_move_line_activable, self)._check_date(self, cr, uid, vals, context, check)
+        return super(account_move_line_activable, self)._check_date(cr, uid, vals, context, check)
         
 
 account_move_line_activable()
