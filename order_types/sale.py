@@ -21,27 +21,26 @@
 
 from osv import osv, fields
 
-class purchase_order(osv.osv):
-    _name = 'purchase.order'
-    _inherit = 'purchase.order'
-    
-    _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), ('loan', 'Loan'), 
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True),
-    }
-    
-purchase_order()
-
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True),
+                                        ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
+                                        string='Order Type', required=True),
+        'priority': fields.selection([('emergency', 'Emergency'), ('normal', 'Normal'),
+                                            ('medium', 'Medium'), ('urgent', 'Urgent')], string='Priority'),
+        'categ': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('food', 'Food'),
+                                         ('service', 'Service'), ('asset', 'Asset'), ('mixed', 'Mixed'),
+                                         ('other', 'Other')], string='Order category', required=True),
+        'details': fields.char(size=30, string='Details'),
+    }
+    
+    _defaults = {
+        'order_type': lambda *a: 'regular',
+        'priority': lambda *a: 'normal',
+        'categ': lambda *a: 'mixed',
     }
     
 sale_order()

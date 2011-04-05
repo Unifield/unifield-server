@@ -22,7 +22,7 @@
 {
     "name": "Order Types",
     "version": "1.0",
-    "depends": ["base", "sale", "purchase"],
+    "depends": ["base", "sale", "purchase", "msf_partner"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchase",
@@ -33,7 +33,8 @@
     "init_xml": [
     ],
     'update_xml': [
-        'order_type_view.xml',
+        'purchase_view.xml',
+        'sale_view.xml',
     ],
     'demo_xml': [
     ],
