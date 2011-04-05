@@ -34,7 +34,7 @@ class analytic_line_activable(osv.osv):
             or vals['date'] >= account.inactivation_date:
                 raise osv.except_osv(_('Error !'), _('You cannot set a date out of the account\'s activity period!'))
 
-    def create(self, cr, uid, vals):
+    def create(self, cr, uid, vals, context=None):
         self._check_date(cr, uid, vals)
         return super(analytic_line_activable, self).create(cr, uid, vals, context=context)
     
