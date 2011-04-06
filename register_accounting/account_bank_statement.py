@@ -559,7 +559,7 @@ class account_bank_statement_line(osv.osv):
         if state  == 'hard':
             if 'from_cash_return' in values or 'invoice_id' in values:
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
-            return False
+            raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
         values = self._updating_amount(values=values)
         # Case where _updating_amount return False ! => this imply there is a problem with amount columns
