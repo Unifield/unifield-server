@@ -35,6 +35,8 @@
         "register_accounting",
         "stock_inventory_type",
         "account_payment",  # openERP module
+	"order_nomenclature",
+	"product_nomenclature",
     ],
     "update_xml": [
     ],
