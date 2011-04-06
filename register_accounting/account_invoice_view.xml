@@ -8,6 +8,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="inherit_id" eval="False" />
+            <field name="priority">200</field>
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
@@ -22,7 +23,8 @@
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <newline/>
                         <field name="date_invoice" readonly="1"/>
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection" readonly="1"/>
+                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection" readonly="1" 
+                            string="Posting Period"/>
                         <group colspan="2" col="1" groups="account.group_account_user">
                             <label align="0.0" string="(keep empty to use the current period)"/>
                         </group>
@@ -118,7 +120,7 @@
         </record>
 
     <!-- Give Direct Invoices -->
-        <record id="action_direct_invoice_tree" model="ir.actions.act_window">
+        <record id="action_direct_invoice" model="ir.actions.act_window">
             <field name="name">Supplier Direct Invoices</field>
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
@@ -130,8 +132,22 @@
             <field name="help">With Supplier Direct Invoices you can enter and manage direct invoices issued by your user into Registers.</field>
         </record>
 
+        <record model="ir.actions.act_window.view" id="act_direct_supplier_invoice">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="account.invoice_tree"/>
+            <field name="act_window_id" ref="action_direct_invoice"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="act_direct_supplier_invoice2">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="wizard_supplier_invoice_form_view"/>
+            <field name="act_window_id" ref="action_direct_invoice"/>
+        </record>
+
     <!-- Supplier Direct Invoices Menu -->
-        <menuitem action="action_direct_invoice_tree" id="menu_action_direct_invoice_tree" parent="account.menu_finance_payables"/>
+        <menuitem action="action_direct_invoice" id="menu_action_direct_invoice" parent="account.menu_finance_payables"/>
 
     </data>
 </openerp>
