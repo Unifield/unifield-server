@@ -54,6 +54,7 @@
         'test/operational_advance_management.yml',
         'test/cashbox_balance.yml',
         'test/direct_expense.yml',
+        'test/direct_invoice.yml',
     ],
     "installable": True,
     "active": False
