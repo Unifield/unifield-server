@@ -35,6 +35,8 @@
         "register_accounting",
         "stock_inventory_type",
         "account_payment",  # openERP module
+	"purchase_msf",
+	"product_asset",
     ],
     "update_xml": [
     ],
