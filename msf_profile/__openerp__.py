@@ -36,12 +36,14 @@
         "stock_inventory_type",
         "account_payment",  # openERP module
         "analytic_plan_tree",
+        "order_types",
     ],
     "update_xml": [
     ],
     "demo_xml": [
     ],
     "test": [
+        'test/data.yml',
     ],
     "installable": True,
     "active": False,

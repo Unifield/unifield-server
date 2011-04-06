@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
-                        <field name="order_type" />
+                        <field name="internal_type" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />

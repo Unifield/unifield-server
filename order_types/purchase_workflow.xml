@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="act_loan" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="name">loan</field>
+            <field name="kind">subflow</field>
+            <field name="subflow_id" search="[('osv','=','sale.order')]" type="int"/>
+            <field name="action">action_sale_order_create()</field>
+        </record>
+        <record id="act_loan_done" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order" />
+            <field name="name">loan_done</field>
+        </record>
+        
+        <record id="trans_router_loan" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_router" />
+            <field name="act_to" ref="act_loan" />
+            <field name="condition">internal_type=='loan'</field>
+        </record>
+        <record id="trans_router_loan_done" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_router" />
+            <field name="act_to" ref="act_loan_done" />
+            <field name="condition">internal_type!='loan'</field>
+        </record>
+        <record id="trans_loan_done" model="workflow.transition">
+            <field name="act_from" ref="act_loan"/>
+            <field name="act_to" ref="act_loan_done"/>
+            <field name="signal">subflow.done</field>
+        </record>
+        <record id="trans_loand_done_end" model="workflow.transition">
+            <field name="act_from" ref="act_loan_done" />
+            <field name="act_to" ref="purchase.act_done" />
+        </record>
+    
+    </data>
+</openerp>

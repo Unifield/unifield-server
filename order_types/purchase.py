@@ -20,30 +20,191 @@
 ##############################################################################
 
 from osv import osv, fields
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from tools.translate import _
+
+from mx.DateTime import *
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
     _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
+        'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                         ('direct', 'Direct Purchase Order')], string='Order Type', required=True),
-        'priority': fields.selection([('emergency', 'Emergency'), ('normal', 'Normal'),
-                                            ('medium', 'Medium'), ('urgent', 'Urgent')], string='Priority'),
-        'categ': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('food', 'Food'),
-                                         ('service', 'Service'), ('asset', 'Asset'), ('mixed', 'Mixed'),
-                                         ('other', 'Other')], string='Order category', required=True),
+        'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
         'details': fields.char(size=30, string='Details'),
     }
     
     _defaults = {
-        'order_type': lambda *a: 'regular',
+        'internal_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
     }
     
+    def onchange_internal_type(self, cr, uid, ids, internal_type, partner_id):
+        '''
+        Changes the invoice method of the purchase order according to
+        the choosen internal type
+        '''
+        partner_obj = self.pool.get('res.partner')
+        v = {}
+        
+        if internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            v['invoice_method'] = 'manual'
+
+        if partner_id:
+            partner = partner_obj.browse(cr, uid, partner_id)
+            if partner.partner_type == 'internal' and internal_type == 'regular':
+                v['invoice_method'] = 'manual'
+        
+        return {'value': v}
+    
+    def onchange_partner_id(self, cr, uid, ids, part):
+        '''
+        Fills the Requested and Confirmed delivery dates
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
+        
+        if part:
+            partner_obj = self.pool.get('res.partner')
+            partner = partner_obj.browse(cr, uid, part)
+            if partner.partner_type == 'internal':
+                res['value']['invoice_method'] = 'manual'
+        
+        return res
+    
+    def wkf_approve_order(self, cr, uid, ids, context=None):
+        '''
+        Checks if the invoice should be create from the purchase order
+        or not
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for order in self.browse(cr, uid, ids):
+            if order.partner_id.partner_type == 'internal' and order.internal_type == 'regular':
+                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+            elif order.internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+            
+        return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+    
+    def action_picking_create(self, cr, uid, ids, *args):
+        '''
+        Marks stock moves as 'Loss' if the purchase type is donation before expiry
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        picking_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        model_obj = self.pool.get('ir.model.data')
+        
+        picking_id = super(purchase_order, self).action_picking_create(cr, uid, ids, args)
+
+        for order in self.browse(cr, uid, ids):
+            if order.internal_type == 'donation_exp':
+                type_ids = model_obj.search(cr, uid, [('model', '=', 'stock.adjustment.type'),
+                                                      ('module', '=', 'stock_inventory_type'),
+                                                      ('name', '=', 'adjustment_type_loss')])
+                types = model_obj.read(cr, uid, type_ids, ['res_id'])
+                        
+                if type_ids:
+                    for pick in picking_obj.browse(cr, uid, [picking_id]):
+                        for move in pick.move_lines:
+                            move_obj.write(cr, uid, move.id, {'type_id': types[0]['res_id']})
+                        
+        return picking_id
+    
+    def action_sale_order_create(self, cr, uid, ids, context={}):
+        '''
+        Create a sale order as counterpart for the loan.
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        sale_obj = self.pool.get('sale.order')
+        sale_line_obj = self.pool.get('sale.order.line')
+        sale_shop = self.pool.get('sale.shop')
+        partner_obj = self.pool.get('res.partner')
+            
+        for order in self.browse(cr, uid, ids):
+            two_months = Parser.DateFromString(order.minimum_planned_date) + RelativeDateTime(months=+2)
+            order_id = sale_obj.create(cr, uid, {'shop_id': sale_shop.search(cr, uid, [])[0],
+                                                 'partner_id': order.partner_id.id,
+                                                 'partner_order_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
+                                                 'partner_invoice_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['invoice'])['invoice'],
+                                                 'partner_shipping_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['delivery'])['delivery'],
+                                                 'pricelist_id': order.partner_id.property_product_pricelist.id,
+                                                 'loan_id': order.id,
+                                                 'origin': order.name,
+                                                 'internal_type': 'loan',
+                                                 'delivery_requested_date': two_months.strftime('%Y-%m-%d'),
+                                                 'categ': order.categ,
+                                                 'priority': order.priority,})
+            for line in order.order_line:
+                sale_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
+                                               'product_uom': line.product_uom.id,
+                                               'order_id': order_id,
+                                               'price_unit': line.price_unit,
+                                               'product_uom_qty': line.product_qty,
+                                               'date_planned': two_months.strftime('%Y-%m-%d'),
+                                               'delay': 60.0,
+                                               'name': line.name,
+                                               'type': line.product_id.procure_method})
+            self.write(cr, uid, [order.id], {'loan_id': order_id})
+            
+            sale = sale_obj.browse(cr, uid, order_id)
+            
+            message = _("Loan counterpart '%s' is created.") % (sale.name,)
+            
+            self.log(cr, uid, order.id, message)
+        
+        return order_id
+    
+    def has_stockable_product(self,cr, uid, ids, *args):
+        '''
+        Override the has_stockable_product to return False
+        when the internal_type of the order is 'direct'
+        '''
+        for order in self.browse(cr, uid, ids):
+            if order.internal_type != 'direct':
+                return super(purchase_order, self).has_stockable_product(cr, uid, ids, args)
+        
+        return False
+    
+    def action_invoice_create(self, cr, uid, ids, *args):
+        '''
+        Override this method to check the purchase_list box on invoice
+        when the invoice comes from a purchase list
+        '''
+        invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
+        invoice_obj = self.pool.get('account.invoice')
+        
+        for order in self.browse(cr, uid, ids):
+            if order.internal_type == 'purchase_list':
+                invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
+        
+        return invoice_id
+    
 purchase_order()
+
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+    
+    _columns = {
+        'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list'),
+    }
+    
+account_invoice()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

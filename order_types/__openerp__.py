@@ -22,7 +22,12 @@
 {
     "name": "Order Types",
     "version": "1.0",
-    "depends": ["base", "sale", "purchase", "msf_partner"],
+    "depends": ["base", 
+                "sale", 
+                "purchase", 
+                "msf_partner",
+                "msf_order_date", 
+                "stock_inventory_type"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchase",
@@ -35,8 +40,14 @@
     'update_xml': [
         'purchase_view.xml',
         'sale_view.xml',
+        'purchase_workflow.xml',
     ],
     'demo_xml': [
+    ],
+    'test': [
+        'test/data.yml',
+        'test/purchase_test.yml',
+        'test/sale_test.yml',
     ],
     'installable': True,
     'active': False,

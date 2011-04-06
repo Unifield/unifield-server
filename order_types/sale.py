@@ -20,25 +20,24 @@
 ##############################################################################
 
 from osv import osv, fields
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
     _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True),
-        'priority': fields.selection([('emergency', 'Emergency'), ('normal', 'Normal'),
-                                            ('medium', 'Medium'), ('urgent', 'Urgent')], string='Priority'),
-        'categ': fields.selection([('medical', 'Medical'), ('log', 'Logistic'), ('food', 'Food'),
-                                         ('service', 'Service'), ('asset', 'Asset'), ('mixed', 'Mixed'),
-                                         ('other', 'Other')], string='Order category', required=True),
+        'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
         'details': fields.char(size=30, string='Details'),
     }
     
     _defaults = {
-        'order_type': lambda *a: 'regular',
+        'internal_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
     }
