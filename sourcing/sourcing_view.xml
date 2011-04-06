@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
+			<field name="name">sourcing.line.form</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Sourcing Line">
+
+					<field name="name" />
+					<field name="sale_order_id" />
+					<field name="sale_order_line_id" />
+					<field name="reference" />
+					<field name="state" />
+
+				</form>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_normal_tree_view" model="ir.ui.view">
+			<field name="name">sourcing.line.tree</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Sourcing Lines" editable="top">
+
+					<field name="name" invisible="True" />
+					<field name="sale_order_id" readonly="True" />
+					<field name="sale_order_line_id" readonly="True" domain="[('order_id', '=', sale_order_id)]" />
+					<field name="reference" readonly="True" />
+					<field name="state" invisible="True" />
+					<field name="priority" readonly="True" />
+					<field name="category" readonly="True" />
+					<field name="sale_order_state" readonly="True" />
+					<field name="sale_order_line_number" readonly="True" />
+					<field name="product_id" readonly="True" />
+					<field name="qty" readonly="True" />
+					<field name="uom_id" readonly="True" />
+					<field name="rts" readonly="True" />
+					<field name="sale_order_line_state" readonly="True" />
+					<field name="procurement_method" />
+					<field name="po_cft" />
+					<field name="real_stock" readonly="True" />
+					<field name="available_stock" readonly="True" />
+					<field name="virtual_stock" readonly="True" />
+					<field name="supplier" widget="selection" />
+					<field name="estimated_delivery_date" readonly="True" />
+					<button name="nothing" string="Close" icon="gtk-go-forward" type="object" />
+					
+				</tree>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_action" model="ir.actions.act_window">
+			<field name="name">Orders Sourcing Tool</field>
+			<field name="res_model">sourcing.line</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+
+		<menuitem icon="STOCK_INDENT" action="sourcing_line_action"
+			id="menu_sourcing_line" parent="base.menu_sales" />
+
+
+	</data>
+</openerp>

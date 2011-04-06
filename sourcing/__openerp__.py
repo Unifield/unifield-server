@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,31 +18,27 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
+
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name" : "Sourcing Tool",
+    "version" : "0.1",
+    "author" : "MSF pam",
+    "category" : "Generic Modules/Inventory Control",
+    "depends" : ["sale"],
+    "init_xml" : [],
+    "demo_xml" : [],
     "description": """
-        Modules for Unifield
+    Add sourcing specification
     """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
+    'test': [
+             #'test/picking.yml',
+             ],
+    'update_xml': [
+        'sourcing_sequence.xml',
+        'sourcing_view.xml',
+        #'wizard/picking_create_picking_ticket_view.xml'
     ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "account_payment",  # openERP module
-	"sourcing",
-    ],
-    "update_xml": [
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
+    'installable': True,
 }
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
