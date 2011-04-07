@@ -135,4 +135,40 @@ class purchase_order_line(osv.osv):
 
 purchase_order_line()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+class product_product(osv.osv):
+
+    _inherit = 'product.product'
+    _description = 'Product'
+    
+    def name_get(self, cr, user, ids, context=None):
+        if context is None:
+            context = {}
+        if not len(ids):
+            return []
+        def _name_get(d):
+            name = d.get('name','')
+            code = d.get('default_code',False)
+            if code:
+                name = '[%s] %s' % (code,name)
+            if d.get('variants'):
+                name = name + ' - %s' % (d['variants'],)
+            return (d['id'], name)
+
+        partner_id = context.get('partner_id', False)
+
+        result = []
+        for product in self.browse(cr, user, ids, context=context):
+            mydict = {
+                      'id': product.id,
+                      'name': product.name,
+                      'default_code': product.default_code,
+                      'variants': product.variants
+                      }
+            result.append(_name_get(mydict))
+        return result
+    
+product_product()
+    
+    
+    
