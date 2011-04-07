@@ -69,7 +69,7 @@
       if module_id:
         module = self.browse(cr, uid, module_id)
         # do modification if module is installed or to be upgraded
-        if module.state in ('installed', 'to upgrade'):
+        if module.state in ('installed', 'to upgrade', 'to install'):
           # Hard post lines
           st_line_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id', '=', ref("account_bank_statement_1"))])
           self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, st_line_ids)
