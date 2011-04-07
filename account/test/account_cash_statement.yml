@@ -60,11 +60,28 @@
     balance_end_cash: 1120.0
 
 -
+  I test that register_accounting module is loaded, if yes, hard post account_bank_statement lines before closing CashBox
+-
+  !python {model: ir.module.module}: |
+      # fetch module id
+      module_id = self.search(cr, uid, [('name', '=', 'register_accounting')])[0]
+      # Do something only if module exists
+      if module_id:
+        module = self.browse(cr, uid, module_id)
+        # do modification if module is installed or to be upgraded
+        if module.state in ('installed', 'to upgrade'):
+          # Hard post lines
+          st_line_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id', '=', ref("account_bank_statement_1"))])
+          self.pool.get('account.bank.statement.line').button_hard_posting(cr, uid, st_line_ids)
+          # Confirm CashBox by opening a wizard an confirm it in order to close cashbox
+          wiz_id = self.pool.get('wizard.closing.cashbox').create(cr, uid, {'be_sure': True})
+          self.pool.get('wizard.closing.cashbox').button_close_cashbox(cr, uid, [wiz_id], { "active_ids": [ref("account_bank_statement_1")], \
+        "active_id": ref("account_bank_statement_1"), })
+-
   I clicked on Close CashBox button to close the cashbox
 -
  !python {model: account.bank.statement}: |
       self.button_confirm_cash(cr, uid, [ref("account_bank_statement_1")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", "active_ids": [ref("account_bank_statement_1")], "active_id": ref("account_bank_statement_1"), })
-
 -
   I check that bank statement state is now "Closed"
 -
