@@ -1,24 +1,13 @@
 -
   In order to test the Cheque Register I create a Cheque Register, then I open it
 -
-  I create a Cheque Journal
--
-  !record {model: account.journal, id: account_journal_cheque_0}:
-    code: chq
-    company_id: base.main_company
-    name: Cheque Journal
-    type: cheque
-    view_id: account.account_journal_view
-    default_debit_account_id: account.cash
-    default_credit_account_id: account.cash
--
   I create a Cheque Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_3}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cheque_0
     name: some name
-    period_id: account.period_5
+    period_id: period_5
     user_id: base.user_root
 -
   I check that the initially Cheque Register is in the "Draft" state
@@ -41,7 +30,7 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_3}:
     line_ids:
-      - account_id: account.a_recv
+      - account_id: account_account_receivable0
         amount: 111.0
         date: !eval time.strftime('%Y-%m-%d')
         name: cheque1

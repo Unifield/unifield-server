@@ -47,6 +47,7 @@
     ],
     "demo_xml" : [],
     "test": [
+        'test/register_accounting_data.yml',
         'test/account_cash_statement.yml',
         'test/account_bank_statement.yml',
         'test/account_cheque_register.yml',

@@ -1,21 +1,11 @@
 -
   In order to test the cashbox balance I create a Cash Register then I open it and I create some lines. Then I check that the cashbox balance is OK.
 -
-  I create a period
--
-  !record {model: account.period, id: period_3}:
-    company_id: base.main_company
-    date_start: !eval "'%s-03-01' %(datetime.now().year)"
-    date_stop: !eval "'%s-03-31' %(datetime.now().year)"
-    fiscalyear_id: account.data_fiscalyear
-    name: !eval "'Jan-%s' %(datetime.now().year)"
-    special: 1
--
   I create a Cash Register with Opening balance to 475 EUR.
 -
  !record {model: account.bank.statement, id: account_bank_statement_0}:
     date: !eval time.strftime('%Y-%m-%d')
-    journal_id: account.cash_journal
+    journal_id: account_journal_cash_0
     name: 
     period_id: period_3
     user_id: base.user_root
@@ -50,21 +40,21 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_0}:
     line_ids:
-      - account_id: account.a_expense
+      - account_id: account_account_expense0
         amount: -25.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test1
         partner_id: base.res_partner_4
         sequence: 0.0
         type: general
-      - account_id: account.a_expense
+      - account_id: account_account_expense0
         amount: -50.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test2
         partner_id: base.res_partner_3
         sequence: 1.0
         type: general
-      - account_id: account.a_recv
+      - account_id: account_account_receivable0
         amount: 25.0
         date: !eval time.strftime('%Y-%m-%d')
         name: test3

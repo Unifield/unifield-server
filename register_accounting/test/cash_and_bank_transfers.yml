@@ -6,9 +6,9 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_4}:
     date: !eval time.strftime('%Y-%m-%d')
-    journal_id: account.bank_journal
+    journal_id: account_journal_bank_0
     name:
-    period_id: account.period_6
+    period_id: period_6
     user_id: base.user_root
 -
   I click on 'Open Bank' button to open the Bank Register
@@ -21,9 +21,9 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_5}:
     date: !eval time.strftime('%Y-%m-%d')
-    journal_id: account.cash_journal
+    journal_id: account_journal_cash_0
     name: Our cash register
-    period_id: account.period_6
+    period_id: period_6
     user_id: base.user_root
 -
   I click on 'Open Cash' button to open the Cash Register
@@ -31,27 +31,6 @@
   !python {model: account.bank.statement}: |
     self.button_open_cash(cr, uid, [ref("account_bank_statement_5")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
         "active_ids": [ref("account_bank_statement_5")], "active_id": ref("account_bank_statement_5"), })
--
-  In order to test transfer between two registers, I create a transfer account type then I create a transfer account
--
-  I create a transfer account type
--
-  !record {model: account.account.type, id: account_account_type_transfer_0}:
-    close_method: balance
-    code: transfer
-    name: Transfer
-    sign: 1
-    report_type: asset
--
-  I create a transfer account
--
-  !record {model: account.account, id: account_account_transfer_0}:
-    name: Internal Transfer
-    code: '5815-bank-and-cash-transfer-test'
-    type: liquidity
-    user_type: account_account_type_transfer_0
-    company_id: base.main_company
-    currency_mode: current
 -
   I create a line in the Bank Register
 -
