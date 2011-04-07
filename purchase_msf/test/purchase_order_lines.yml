@@ -209,7 +209,6 @@
     invoice_method: order
     location_id: stock.stock_location_stock
     minimum_planned_date: '2011-03-15'
-    name: PO00004
     partner_address_id: res_partner_address_0
     partner_id: res_partner_africom0
     pricelist_id: purchase.list0
@@ -282,7 +281,6 @@
     invoice_method: order
     location_id: stock.stock_location_stock
     minimum_planned_date: '2011-03-16'
-    name: PO00005
     partner_address_id: res_partner_address_2
     partner_id: res_partner_alaindeloin0
     pricelist_id: purchase.list0
@@ -357,7 +355,6 @@
     invoice_method: order
     location_id: stock.stock_location_stock
     minimum_planned_date: '2011-03-16'
-    name: PO00003
     partner_address_id: res_partner_address_3
     partner_id: res_partner_berthe0
     pricelist_id: purchase.list0
@@ -430,7 +427,6 @@
     invoice_method: order
     location_id: stock.stock_location_stock
     minimum_planned_date: '2011-03-16'
-    name: PO00002
     partner_address_id: res_partner_address_0
     partner_id: res_partner_africom0
     pricelist_id: purchase.list0
