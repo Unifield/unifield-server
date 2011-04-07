@@ -30,6 +30,13 @@ class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
 
+
+    def write(self, cr, uid, ids, values, context={}):
+        """
+        Bypass disgusting default account_bank_statement write function
+        """
+        return super(osv.osv, self).write(cr, uid, ids, values, context=context)
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
@@ -40,11 +47,11 @@ class account_bank_statement(osv.osv):
         """
         When using 'Confirm' button in a bank register
         """
-        st_line_obj = self.pool.get('account.bank.statement.line')
-        for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
-            reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
-            if not reconciled_state:
-                raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm Bank.'))
+        #st_line_obj = self.pool.get('account.bank.statement.line')
+        #for st_line_id in st_line_obj.search(cr, uid, [('statement_id', '=', ids[0])]):
+        #    reconciled_state = st_line_obj.read(cr, uid, st_line_id, ['reconciled']).get('reconciled', False)
+        #    if not reconciled_state:
+        #        raise osv.except_osv(_('Warning'), _('Some lines are not reconciled! Please reconcile all lines before confirm Bank.'))
         return super(account_bank_statement, self).button_confirm_bank(cr, uid, ids, context=context)
 
 account_bank_statement()
