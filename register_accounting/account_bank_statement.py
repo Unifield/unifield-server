@@ -37,6 +37,15 @@ class account_bank_statement(osv.osv):
         ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
     ]
 
+    def __init__(self, pool, cr):
+        super(account_bank_statement, self).__init__(pool, cr)
+        if self.pool._store_function.get(self._name, []):
+            newstore = []
+            for fct in self.pool._store_function[self._name]:
+                if fct[1] != 'balance_end':
+                    newstore.append(fct)
+            self.pool._store_function[self._name] = newstore
+
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Calculate register's balance
@@ -44,20 +53,14 @@ class account_bank_statement(osv.osv):
         st_line_obj = self.pool.get("account.bank.statement.line")
         res = {}
 
-        statements = self.browse(cr, uid, ids, context=context)
-        for statement in statements:
+        for statement in self.browse(cr, uid, ids, context=context):
             res[statement.id] = statement.balance_start
-            st_line_ids = st_line_obj.search(cr, uid, [('statement_id', '=', statement.id)], context=context)
-            for st_line_id in st_line_ids:
-                st_line_data = st_line_obj.read(cr, uid, [st_line_id], ['amount'], context=context)[0]
-                if 'amount' in st_line_data:
-                    res[statement.id] += st_line_data.get('amount')
-        for r in res:
-            res[r] = round(res[r], 2)
+            for st_line in statement.line_ids:
+                res[statement.id] += st_line.amount or 0.0
         return res
 
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=True, string='Balance', \
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
             help="Closing balance based on Starting Balance and Cash Transactions"),
     }
 
@@ -201,54 +204,28 @@ class account_bank_statement_line(osv.osv):
         if args[0][1] not in ['=', 'in']:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
         # Search statement lines that have move lines and which moves are posted
-        sql_posted_moves = """
-            SELECT st.id FROM account_bank_statement_line st
-            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
-            LEFT JOIN account_move move ON rel.statement_id = move.id
-            WHERE rel.move_id is not null AND move.state = 'posted'
-        """
-        cr.execute(sql_posted_moves)
-        res = cr.fetchall()
-        st_line_obj = self.pool.get('account.bank.statement.line')
-        move_obj = self.pool.get('account.move')
-        move_line_obj = self.pool.get('account.move.line')
-        reconciled = []
-        for id in res:
-            moves = st_line_obj.read(cr, uid, id[0], ['move_ids'], context=context).get('move_ids')
-            # Search in this moves all move lines that have a reconciliable account
-            move_ids = "(%s)" % ','.join(map(str, moves))
-            sql_reconciliable_moves = """
-                SELECT line.id FROM account_move_line line, account_move move, account_account ac
-                WHERE move.id in """ + move_ids + """
-                AND line.account_id = ac.id AND ac.reconcile = 't'
-            """
-            cr.execute(sql_reconciliable_moves)
-            lines = cr.fetchall()
-            # Retrive number of lines that have a reconciliable account
-            nb_lines = len(lines)
-            # Now we remember the number of lines that have a reconcile_id (this imply they are reconciled)
-            count = 0
-            for line_id in lines:
-                reconcile_id = move_line_obj.read(cr, uid, line_id[0], ['reconcile_id'], context=context).get('reconcile_id', False)
-                if reconcile_id:
-                    count += 1
-            # If all browsed lines are reconciled we add the st_line_id (id) in the result
-            if count == nb_lines:
-                reconciled.append(id)
-        # Give result regarding args[0][2] (True or False)
         if args[0][2] == True:
-            result = reconciled
-        elif args[0][2] == False:
-            # Search all statement lines
-            sql = """
+            sql_posted_moves = """
                 SELECT st.id FROM account_bank_statement_line st
-                """
-            cr.execute(sql)
-            statement_line_ids = cr.fetchall()
-            # Make a difference between
-            result = list(set(statement_line_ids) - set(reconciled))
-        # Return a list of tuple (id,) that correspond to the search
-        return [('id', 'in', [x[0] for x in result])]
+                    LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+                    LEFT JOIN account_move move ON rel.statement_id = move.id
+                    LEFT JOIN account_move_line line ON line.move_id = move.id
+                    LEFT JOIN account_account ac ON ac.id = line.account_id
+                WHERE rel.move_id is not null AND move.state = 'posted'
+                GROUP BY st.id HAVING COUNT(reconcile_id IS NULL AND ac.reconcile='t' OR NULL)=0
+            """
+        else:
+            sql_posted_moves = """
+                SELECT st.id FROM account_bank_statement_line st
+                    LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+                    LEFT JOIN account_move move ON rel.statement_id = move.id
+                    LEFT JOIN account_move_line line ON line.move_id = move.id
+                    LEFT JOIN account_account ac ON ac.id = line.account_id
+                WHERE 
+                    rel.move_id is null OR move.state != 'posted' OR (line.reconcile_id IS NULL AND ac.reconcile='t')
+            """
+        cr.execute(sql_posted_moves)
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -263,7 +240,7 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
-        'mandatory': fields.char(string="Mandatory", size=120),
+        'mandatory': fields.char(string="Cheque Number", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
@@ -341,9 +318,9 @@ class account_bank_statement_line(osv.osv):
         }
 
         if st.currency.id <> company_currency_id:
-            #amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-            #            st.currency.id, amount, context=context)
-            val['amount_currency'] = st_line.amount
+            amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
+                        st.currency.id, amount, context=context)
+            val['amount_currency'] = -st_line.amount
 
         if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
             val['currency_id'] = st_line.account_id.currency_id.id
@@ -566,7 +543,8 @@ class account_bank_statement_line(osv.osv):
             acc_move_line_obj = self.pool.get('account.move.line')
             for st_line in self.browse(cr, uid, ids, context=context):
                 for move_line_id in acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id)]):
-                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], context=context)[0]
+                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], ['debit', 'credit', 'date', 'account_id'], context=context)[0]
+                    date_line = values.get('date') or move_line.get('date') 
                     # Update values
                     # Let's have a look to the amount
                     # first retrieve some values
@@ -601,7 +579,7 @@ class account_bank_statement_line(osv.osv):
                                 res_currency_obj = self.pool.get('res.currency')
                                 #TODO : change this when we have debate on "instance" definition
                                 # Note: the first currency_id must be those of the journal of the cash statement
-                                context.update({'date': move_line.get('date', False)}) # this permit to make the change with currency at the good date
+                                context.update({'date': date_line}) # this permit to make the change with currency at the good date
                                 line_accounting_value = res_currency_obj.compute(cr, uid, \
                                     st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
                                 if line_is_debit:

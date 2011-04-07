@@ -12,7 +12,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Bank Register">
                         <group col="7" colspan="4">
-                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '=', 'open')]}"/>
+                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1" 
                                 widget="selection"/>
@@ -440,7 +440,7 @@
             <field name="arch" type="xml">
                 <form string="Cheque Register">
                     <group col="7" colspan="4">
-                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '=', 'open')]}"/>
+                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="date" select="1" on_change="onchange_date(date)"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" on_change="onchange_journal_id(journal_id)" select="1" 
                             widget="selection"/>
