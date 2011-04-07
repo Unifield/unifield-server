@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -15,13 +15,13 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 {
     "name": "Multi-Currency Management",
     "version": "1.0",
-    "depends": ["base", "account"],
+    "depends": ["base", "account", "account_analytic_plans"],
     "category": "General/Standard",
     "description": """
     This module aims to only use a subset of currencies, and have them available
@@ -31,6 +31,7 @@
     "init_xml": [],
     'update_xml': [
         'res_currency_functional_view.xml',
+        'account_move_line_view.xml',
     ],
     'test': [
         'test/res_currency_functional.yml',

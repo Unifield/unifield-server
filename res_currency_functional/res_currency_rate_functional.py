@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -15,12 +15,11 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 from osv import fields, osv
-
 
 class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
@@ -56,10 +55,11 @@ class res_currency_rate_functional(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         # This method is used to re-compute all account move lines
         # when a currency is modified
-        currency_obj = self.read(cr, uid, ids, ['currency_id'])[0]
-        currency = currency_obj['currency_id'][0]
-        res = super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
-        self.refresh_move_lines(cr, uid, ids, currency=currency)
+        res = True
+        for currency in self.read(cr, uid, ids, ['currency_id']):
+            currency_id = currency['currency_id'][0]
+            res = res & super(res_currency_rate_functional, self).unlink(cr, uid, [currency_id], context)
+            self.refresh_move_lines(cr, uid, [currency_id], currency=currency)
         return res
     
 
