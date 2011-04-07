@@ -1,7 +1,7 @@
 -
   I create a supplier named "local miscellaneous" with the payable 401 account.
 -
-  !record {model: res.partner, id: res_partner_supplier0}:
+  !record {model: res.partner, id: res_partner_supplier_0}:
     address:
       - country_id: base.in
       - street: St James House, Oliver Street, Somewhere
@@ -52,14 +52,14 @@
     seller_ids:
       - sequence: 10
         min_qty: 0.00
-        name: res_partner_supplier0
+        name: res_partner_supplier_0
 -
   I create an invoice with an amount of 400 EUR, a description "Food for staff" and the 6101 Expense Account
 -
   !record {model: account.invoice, id: account_invoice_food_for_staff0}:
     account_id: account_account_payable_supplier0
-    address_contact_id: base.res_partner_address_3000
-    address_invoice_id: base.res_partner_address_3000
+    address_contact_id: res_partner_address_tempo
+    address_invoice_id: res_partner_address_tempo
     check_total: 400.0
     company_id: base.main_company
     currency_id: base.EUR
@@ -71,7 +71,7 @@
         quantity: 1.0
         uos_id: product.product_uom_unit
     journal_id: account_journal_expenses_0
-    partner_id: res_partner_supplier0
+    partner_id: res_partner_supplier_0
     reference_type: none
     type: in_invoice
 -
@@ -87,7 +87,7 @@
   I create an new employee
 -
   !record {model: hr.employee, id: employee_brikabrak}:
-    address_home_id: base.res_partner_address_1
+    address_home_id: res_partner_address_tempo
     company_id: base.main_company
     gender: male
     marital: hr.hr_employee_marital_status_single
@@ -199,7 +199,7 @@
   I check that there is a journal entry with the invoice amount and that the lines are reconciled
 -
   !python {model: account.move.line}: |
-    move_line_ids = self.search(cr, uid, [('partner_id', '=', ref("res_partner_supplier0")), ('statement_id', '=', False), ('invoice', '=', ref("account_invoice_food_for_staff0"))])
+    move_line_ids = self.search(cr, uid, [('partner_id', '=', ref("res_partner_supplier_0")), ('statement_id', '=', False), ('invoice', '=', ref("account_invoice_food_for_staff0"))])
     for move_line_id in move_line_ids:
       move_line = self.browse(cr, uid, move_line_id)
       assert move_line.reconcile_id != False, "Not reconciled line"
@@ -280,7 +280,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     description: Food for staff
     account_id: account_account_expense0
-    partner_id: res_partner_supplier0
+    partner_id: res_partner_supplier_0
     amount: 400.0
     wizard_id: wiz_advance1
 -

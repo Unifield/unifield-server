@@ -30,7 +30,7 @@
     amount: -238.41
     date: !eval time.strftime('%Y-%m-%d')
     name: Some water
-    partner_id: res_partner_supplier0
+    partner_id: res_partner_supplier_0
     sequence: 0.0
     type: general
 -
@@ -47,5 +47,5 @@
     for move in moves:
         for move_line in move.line_id:
             assert move_line.reconcile_id != False, "A line have not been reconciled!"
-            assert move_line.partner_id.id == ref("res_partner_supplier0"), "The supplier was not written correctly."
+            assert move_line.partner_id.id == ref("res_partner_supplier_0"), "The supplier was not written correctly."
         assert move.amount == 238.41, "The amount don't correspond"

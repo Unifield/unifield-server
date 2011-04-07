@@ -9,7 +9,7 @@
     amount: -50.00
     date: !eval time.strftime('%Y-%m-%d')
     name: Phone Bill
-    partner_id: res_partner_supplier0
+    partner_id: res_partner_supplier_0
     sequence: 0.0
     type: general
     direct_invoice: 1

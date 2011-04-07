@@ -34,7 +34,7 @@
         amount: 111.0
         date: !eval time.strftime('%Y-%m-%d')
         name: cheque1
-        partner_id: base.res_partner_2
+        partner_id: res_partner_john_doe
         sequence: 0.0
         type: general
 -

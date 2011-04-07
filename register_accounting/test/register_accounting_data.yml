@@ -183,7 +183,7 @@
     name: Supplier Payable Account
     type: payable
     user_type: account_account_type_receivable0
-    reconcile: True
+    reconcile: 1
 -
   I create a 6101 Expense Account.
 -
@@ -214,7 +214,7 @@
     name: Cash Advance Account
     type: other
     user_type: account_account_type_expense0
-    reconcile: True
+    reconcile: 1
 -
   I create a X11002 Receivable Account.
 -
@@ -224,7 +224,7 @@
     currency_mode: current
     name: Debtors (test)
     type: receivable
-    reconcile: True
+    reconcile: 1
     user_type : account_account_type_receivable0
 -
   I create a X11003 Cash Account.
@@ -267,7 +267,7 @@
     columns_id:
         - name: Date
           field: date
-          required: True
+          required: 1
           sequence: 3
         - name: Journal Entry
           field: move_id
@@ -275,7 +275,7 @@
           sequence: 1
         - name: Name
           field: name
-          required: True
+          required: 1
           sequence: 7
         - name: Statement
           field: statement_id
@@ -285,7 +285,7 @@
           sequence: 5
         - name: Account
           field: account_id
-          required: True
+          required: 1
           sequence: 6
         - name: Currency Amt.
           field: amount_currency
@@ -345,7 +345,7 @@
     default_credit_account_id: account_account_cheque0
     allow_date: 0
 -
-  I create an Expenses Journal
+  I create an Expenses Journal.
 -
   !record {model: account.journal, id: account_journal_expenses_0}:
     code: expense
@@ -356,3 +356,44 @@
     default_debit_account_id: account_account_expense1
     default_credit_account_id: account_account_expense1
     allow_date: 0
+-
+  I create a Partner Category named "Customers".
+-
+  !record {model: res.partner.category, id: res_partner_category_customer_0}:
+    name: Customer
+-
+  I create a Partner Category named "Supplier".
+-
+  !record {model: res.partner.category, id: res_partner_category_supplier_0}:
+    name: Supplier
+-
+  I create another Partner Category which are under "Supplier".
+-
+  !record {model: res.partner.category, id: res_partner_category_miscellaneous_supplier_0}:
+    name: Miscellaneous Supplier
+    parent_id: res_partner_category_supplier_0
+-
+  I create a Supplier named "Wood Supplier".
+-
+  !record {model: res.partner, id: res_partner_supplier_wood_0}:
+    name: "Wood Supplier"
+    category_id: 
+      - res_partner_category_miscellaneous_supplier_0
+    supplier: 1
+-
+  I create a Partner named "John Doe"
+-
+  !record {model: res.partner, id: res_partner_john_doe}:
+    name: John Doe
+    category_id: 
+      - res_partner_category_customer_0
+-
+  I create an address
+-
+  !record {model: res.partner.address, id: res_partner_address_tempo}:
+    name: Maurice MORETTI
+    street: 9, rue du Parc
+    zip: 67205
+    city: Oberhausbergen
+    phone: +33 3 88 56 82 10
+    email: info@tempo-consulting.fr
