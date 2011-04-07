@@ -687,8 +687,8 @@ function onChange(caller){
                             }
                             v = value.split(',');
                             ref.value = v[0];
-                            fld._m2o.on_reference_changed();
                             fld.value = v[1] || '';
+                            fld._m2o.on_reference_changed();
                             try {
                                 openobject.dom.get(prefix + k + '_text').value = v[2] || '';
                             }
