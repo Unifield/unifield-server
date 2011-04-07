@@ -75,7 +75,6 @@
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <field name="reconciled"/>
-                                        <field name="sequence" readonly="0" invisible="1"/>
                                         <separator colspan="4" string="Notes"/>
                                         <field colspan="4" name="note" nolabel="1"/>
                                     </form>
@@ -467,7 +466,6 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <tree editable="bottom" string="Statement lines">
-                                    <field name="sequence" readonly="1" invisible="1"/>
                                     <field name="date" groups="base.group_extended" string="Posting Date"/>
                                     <field name="document_date"/>
                                     <field name="mandatory"/>
@@ -512,7 +510,6 @@
                                     <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                     <field name="reconciled"/>
-                                    <field name="sequence" readonly="0" invisible="1"/>
                                     <separator colspan="4" string="Notes"/>
                                     <field colspan="4" name="note" nolabel="1"/>
                                 </form>
