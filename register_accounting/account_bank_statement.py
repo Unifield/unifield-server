@@ -177,7 +177,7 @@ class account_bank_statement_line(osv.osv):
         # browse account bank statement lines
         for absl in self.browse(cr, uid, ids):
             # browse each move and move lines
-            if absl.move_ids:
+            if absl.move_ids and absl.state == 'hard':
                 res[absl.id] = True
                 for move in absl.move_ids:
                     for move_line in move.line_id:
