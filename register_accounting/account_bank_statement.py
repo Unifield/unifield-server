@@ -372,7 +372,7 @@ class account_bank_statement_line(osv.osv):
         # Removed post from original method
         return move_id
 
-    def _updating_amount(self, values):
+    def _update_amount(self, values):
         """
         Update amount in 'values' with the difference between amount_in and amount_out.
         """
@@ -509,7 +509,7 @@ class account_bank_statement_line(osv.osv):
         Create a new account bank statement line with values
         """
         # First update amount
-        values = self._updating_amount(values=values)
+        values = self._update_amount(values=values)
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
@@ -525,8 +525,8 @@ class account_bank_statement_line(osv.osv):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
-        values = self._updating_amount(values=values)
-        # Case where _updating_amount return False ! => this imply there is a problem with amount columns
+        values = self._update_amount(values=values)
+        # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
         # In case of Temp Posting, we also update attached account move lines
