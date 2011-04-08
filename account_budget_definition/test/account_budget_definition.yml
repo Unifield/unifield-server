@@ -26,3 +26,34 @@
     - analytic_account_id.id == ref("account.analytic_super_product_trainings")
     - date_from == str(datetime.now().year+1) + "-01-01"
     - date_to == str(datetime.now().year+1) + "-12-31"
+    
+
+-
+  I check that Initially Budget is in "draft" state
+-
+  !assert {model: crossovered.budget, id: budget_1}:
+    - state == 'draft'
+    
+-
+  I pressed the validate button to validate the Budget
+-
+  Performing a workflow action validate on module crossovered.budget
+-
+  !workflow {model: crossovered.budget, action: validate, ref: budget_1}
+-
+  I check that budget is in "Validated" state
+-
+  !assert {model: crossovered.budget, id: budget_1}:
+    - state == 'validate'
+
+-
+  I pressed the done button to set the Budget to "Done" state
+-
+  Performing a workflow action done on module crossovered.budget
+-
+  !workflow {model: crossovered.budget, action: done, ref: budget_1}
+-
+  I check that budget is in "done" state
+-
+  !assert {model: crossovered.budget, id: budget_1}:
+    - state == 'done'

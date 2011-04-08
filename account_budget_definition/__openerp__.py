@@ -27,6 +27,7 @@
     'init_xml': [],
     'update_xml': [
         'account_budget_definition_view.xml',
+        'account_budget_definition_workflow.xml',
     ],
     'test': [
         'test/account_budget_definition.yml',
