@@ -36,6 +36,7 @@
         "stock_inventory_type",
         "account_payment",  # openERP module
         "analytic_plan_tree",
+        "msf_order_date",
     ],
     "update_xml": [
     ],
