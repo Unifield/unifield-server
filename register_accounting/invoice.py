@@ -79,6 +79,12 @@ class account_invoice(osv.osv):
                     ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
 
+    def refresh_wizard_direct_invoice(self, cr, uid, ids, context={}):
+        """
+        Permit to refresh the wizard for direct invoice in order to compute the total of amount given by the invoices lines
+        """
+        return True
+
 account_invoice()
 
 class account_invoice_line(osv.osv):

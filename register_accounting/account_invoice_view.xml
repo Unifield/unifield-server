@@ -57,6 +57,7 @@
                                     <field invisible="True" name="uos_id"/>
                                 </tree>
                             </field>
+                            <button string="Compute" name="refresh_wizard_direct_invoice" type="object" icon='gtk-execute' colspan="4"/>
                             <group col="4" colspan="4">
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>
