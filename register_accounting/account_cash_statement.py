@@ -104,7 +104,7 @@ class account_cash_statement(osv.osv):
             'name': fields.char('Name', size=64, required=False, readonly=True),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
-                states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)]}),
+                states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context={}):
