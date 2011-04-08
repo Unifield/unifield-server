@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data>
-
+<!-- 
 		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
 			<field name="name">sourcing.line.form</field>
 			<field name="model">sourcing.line</field>
@@ -18,6 +18,7 @@
 				</form>
 			</field>
 		</record>
+ -->
 
 
 		<record id="sourcing_line_normal_tree_view" model="ir.ui.view">
@@ -41,8 +42,8 @@
 					<field name="uom_id" readonly="True" />
 					<field name="rts" readonly="True" />
 					<field name="sale_order_line_state" readonly="True" />
-					<field name="procurement_method" />
-					<field name="po_cft" />
+					<field name="type" on_change="onChangeType(type, context)" />
+					<field name="po_cft" /> <!-- attrs="{'readonly': [('type', '=', 'make_to_stock')]}" /> -->
 					<field name="real_stock" readonly="True" />
 					<field name="available_stock" readonly="True" />
 					<field name="virtual_stock" readonly="True" />
