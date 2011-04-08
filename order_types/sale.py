@@ -31,6 +31,78 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
+    #@@@override sale.sale_order._invoiced
+    def _invoiced(self, cr, uid, ids, name, arg, context={}):
+        '''
+        Return True is the sale order is an uninvoiced order
+        '''
+        partner_obj = self.pool.get('res.partner')
+        res = {}
+        
+        for sale in self.browse(cr, uid, ids):
+            partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
+            if sale.internal_type != 'regular' or (partner and partner.partner_type == 'internal'):
+                res[sale.id] = True
+            else:
+                for invoice in sale.invoice_ids:
+                    if invoice.state != 'paid':
+                        res[sale.id] = False
+                        break
+                if not sale.invoice_ids:
+                    res[sale.id] = False
+        return res
+    #@@@end
+    
+    #@@@override sale.sale_order._invoiced_search
+    def _invoiced_search(self, cursor, user, obj, name, args, context={}):
+        if not len(args):
+            return []
+        clause = ''
+        sale_clause = ''
+        no_invoiced = False
+        for arg in args:
+            if arg[1] == '=':
+                if arg[2]:
+                    clause += 'AND inv.state = \'paid\''
+                else:
+                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state <> \'paid\'  AND rel.order_id = sale.id '
+                    sale_clause = ',  sale_order AS sale '
+                    no_invoiced = True
+
+        cursor.execute('SELECT rel.order_id ' \
+                'FROM sale_order_invoice_rel AS rel, account_invoice AS inv '+ sale_clause + \
+                'WHERE rel.invoice_id = inv.id ' + clause)
+        res = cursor.fetchall()
+        if no_invoiced:
+            cursor.execute('SELECT sale.id ' \
+                    'FROM sale_order AS sale ' \
+                    'WHERE sale.id NOT IN ' \
+                        '(SELECT rel.order_id ' \
+                        'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'')
+            res.extend(cursor.fetchall())
+        if not res:
+            return [('id', '=', 0)]
+        return [('id', 'in', [x[0] for x in res])]
+    #@@@end
+    
+    #@@@override sale.sale_order._invoiced_rate
+    def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
+        res = {}
+        for sale in self.browse(cursor, user, ids, context=context):
+            if sale.invoiced:
+                res[sale.id] = 100.0
+                continue
+            tot = 0.0
+            for invoice in sale.invoice_ids:
+                if invoice.state not in ('draft', 'cancel'):
+                    tot += invoice.amount_untaxed
+            if tot:
+                res[sale.id] = min(100.0, tot * 100.0 / (sale.amount_untaxed or 1.00))
+            else:
+                res[sale.id] = 0.0
+        return res
+    #@@@end
+    
     _columns = {
         'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
@@ -39,6 +111,9 @@ class sale_order(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
         'details': fields.char(size=30, string='Details'),
+        'invoiced': fields.function(_invoiced, method=True, string='Paid',
+            fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
+        'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
     }
     
     _defaults = {
@@ -47,19 +122,29 @@ class sale_order(osv.osv):
         'categ': lambda *a: 'mixed',
     }
     
+
+    
     def action_wait(self, cr, uid, ids, *args):
         '''
         Checks if the invoice should be create from the sale order
         or not
         '''
+        line_obj = self.pool.get('sale.order.line')
+        lines = []
         if isinstance(ids, (int, long)):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
             if order.partner_id.partner_type == 'internal' and order.internal_type == 'regular':
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                for line in order.order_line:
+                    lines.append(line.id)
             elif order.internal_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                for line in order.order_line:
+                    lines.append(line.id)
+                    
+        line_obj.write(cr, uid, lines, {'invoiced': 1})
             
         return super(sale_order, self).action_wait(cr, uid, ids, args)
 
