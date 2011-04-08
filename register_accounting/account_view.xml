@@ -460,7 +460,7 @@
                     </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>
-                        <button name="button_display_type" states="open,confirm" string="Display" type="object" icon="terp-stock_zoom" 
+                        <button name="button_display_type" states="open,confirm" string="Apply display type" type="object" icon="terp-stock_zoom" 
                             context="context" colspan="2"/>
                     </group>
                     <notebook colspan="4">

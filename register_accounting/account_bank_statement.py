@@ -53,7 +53,10 @@ class account_bank_statement(osv.osv):
         st_line_obj = self.pool.get("account.bank.statement.line")
         res = {}
 
-        for statement in self.browse(cr, uid, ids, context=context):
+        # Add this context in order to escape cheque register filter
+        ctx = context.copy()
+        ctx.update({'from_end_balance': True})
+        for statement in self.browse(cr, uid, ids, context=ctx):
             res[statement.id] = statement.balance_start
             for st_line in statement.line_ids:
                 res[statement.id] += st_line.amount or 0.0

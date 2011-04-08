@@ -30,7 +30,8 @@ class one2many_register(fields.one2many):
         if context is None:
             context = {}
 
-        if 'journal_type' not in context or context.get('journal_type') != 'cheque':
+        # From end_balance is used by account_bank_statement._end_balance() in order to calculate the balance of Registers
+        if 'journal_type' not in context or context.get('journal_type') != 'cheque' or context.get('from_end_balance'):
             return super(one2many_register, self).get(cr, obj, ids, name, uid, offset, context, values)
 
         if values is None:
