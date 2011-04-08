@@ -500,7 +500,7 @@ class purchase_order_line(osv.osv):
             Returns planned_date
         '''
         order_obj= self.pool.get('purchase.order')
-        res = False
+        res = time.strftime('%y%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('active_id', []))
         if po:
@@ -513,7 +513,7 @@ class purchase_order_line(osv.osv):
             Returns confirmed date
         '''
         order_obj= self.pool.get('purchase.order')
-        res = False
+        res = time.strftime('%y%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('active_id', []))
         if po:
@@ -708,7 +708,7 @@ class sale_order_line(osv.osv):
             Returns planned_date
         '''
         order_obj= self.pool.get('sale.order')
-        res = False
+        res = time.strftime('%y%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('active_id', []))
         if po:
@@ -721,7 +721,7 @@ class sale_order_line(osv.osv):
             Returns confirmed date
         '''
         order_obj= self.pool.get('sale.order')
-        res = False
+        res = time.strftime('%y%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('active_id', []))
         if po:
