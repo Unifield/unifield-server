@@ -40,7 +40,8 @@
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="ref"/>
                                         <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
-                                        <field name="partner_type"/>
+                                        <field name="partner_type" on_change="onchange_partner_type(partner_type, amount_in, amount_out)" 
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                         <field name="amount" invisible="1"/>
@@ -133,7 +134,8 @@
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="ref"/>
                                         <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
-                                        <field name="partner_type" on_change="onchange_partner_type(partner_type, amount_in, amount_out)"/>
+                                        <field name="partner_type" on_change="onchange_partner_type(partner_type, amount_in, amount_out)" 
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                                         <field name="analytic_account_id" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
                                             groups="analytic.group_analytic_accounting" />
@@ -473,7 +475,8 @@
                                     <field name="partner_type_mandatory" invisible="1"/>
                                     <field name="ref"/>
                                     <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" on_change="onchange_account(account_id)"/>
-                                    <field name="partner_type"/>
+                                    <field name="partner_type" on_change="onchange_partner_type(partner_type, amount_in, amount_out)" 
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                         domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
                                     <field name="amount" invisible="1"/>

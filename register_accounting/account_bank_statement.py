@@ -508,10 +508,6 @@ class account_bank_statement_line(osv.osv):
         """
         Create a new account bank statement line with values
         """
-        # Verify that no supplementary field is not required
-        if 'partner_type_mandatory' in values:
-            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
-                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # First update amount
         values = self._updating_amount(values=values)
         # Then create a new bank statement line
@@ -523,10 +519,6 @@ class account_bank_statement_line(osv.osv):
         """
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
-        # Verify that no supplementary field is not required
-        if 'partner_type_mandatory' in values:
-            if values.get('partner_type_mandatory') is True and values.get('partner_type') is False:
-                raise osv.except_osv(_('Warning'), _('You should fill in Third Parties field!'))
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
             if 'from_cash_return' in values or 'invoice_id' in values:
