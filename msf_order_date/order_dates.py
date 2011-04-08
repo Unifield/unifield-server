@@ -495,27 +495,27 @@ class purchase_order_line(osv.osv):
         'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
     }
     
-    def _get_planned_date(self, cr, uid, context, *a):
+    def _get_planned_date(self, cr, uid, context):
         '''
             Returns planned_date
         '''
         order_obj= self.pool.get('purchase.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
             res = po.delivery_requested_date
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context, *a):
+    def _get_confirmed_date(self, cr, uid, context):
         '''
             Returns confirmed date
         '''
         order_obj= self.pool.get('purchase.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
             res = po.delivery_confirmed_date
         
@@ -710,7 +710,7 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
             res = po.delivery_requested_date
         
@@ -723,7 +723,7 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
             res = po.delivery_confirmed_date
         
