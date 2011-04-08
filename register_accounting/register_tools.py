@@ -27,14 +27,27 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
     """
     res = {}
     for st_line in self.browse(cr, uid, ids, context=context):
+        # Default value
+        res[st_line.id] = None
         if st_line.employee_id:
-            res[st_line.id] = 'hr.employee,%s' % st_line.employee_id.id
+            res[st_line.id] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
         elif st_line.register_id:
-            res[st_line.id] = 'account.bank.statement,%s' % st_line.register_id.id
+            res[st_line.id] = {'options': [('account.bank.statement', 'Register')], 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
         elif st_line.partner_id:
-            res[st_line.id] = 'res.partner,%s' % st_line.partner_id.id
-        else:
-            res[st_line.id] = None
+            res[st_line.id] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
+        elif st_line.account_id:
+            # Prepare some values
+            acc_obj = self.pool.get('account.account')
+            third_type = [('res.partner', 'Partner')]
+            third_selection = 'res.partner,0'
+            acc_type = st_line.account_id.type_for_register
+            if acc_type == 'transfer':
+                third_type = [('account.bank.statement', 'Register')]
+                third_selection = 'account.bank.statement,0'
+            elif acc_type == 'advance':
+                third_type = [('hr.employee', 'Employee')]
+                third_selection = 'hr.employee,0'
+            res[st_line.id] = {'options': third_type, 'selection': third_selection}
     return res
 
 def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
