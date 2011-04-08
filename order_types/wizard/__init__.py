@@ -19,41 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name": "Order Types",
-    "version": "1.0",
-    "depends": ["base", 
-                "sale", 
-                "purchase", 
-                "msf_partner",
-                "msf_order_date", 
-                "stock_inventory_type"],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Sales & Purchase",
-    "description": """
-    This module aims at differentiating orders. The goal is to split orders into several types that
-    will be used for the mapping of different workflows.
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'purchase_view.xml',
-        'sale_view.xml',
-        'purchase_workflow.xml',
-        'sale_workflow.xml',
-        'wizard/stock_certificate_picking_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/data.yml',
-        'test/purchase_test.yml',
-        'test/sale_test.yml',
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import stock_certificate_picking
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

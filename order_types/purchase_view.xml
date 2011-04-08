@@ -20,6 +20,9 @@
                         <field name="categ" />
                         <field name="details" />
                     </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='invoice_method']" position="replace">
+                        <field name="invoice_method" attrs="{'readonly': [('internal_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                    </xpath>
                 </data>
             </field>
         </record>

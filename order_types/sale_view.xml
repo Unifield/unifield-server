@@ -10,12 +10,19 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
+                        <!-- <field name="internal_type" on_change="shipping_policy_change(order_policy, internal_type, partner_id, 'internal_type')" /> -->
                         <field name="internal_type" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
                         <field name="details" />
                     </xpath>
+                    <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
+                        <field name="order_policy" on_change="shipping_policy_change(order_policy)" attrs="{'readonly': [('internal_type', '!=', 'regular')]}" />
+                    </xpath>
+                    <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
+                        <field name="order_policy" on_change="shipping_policy_change(order_policy, internal_type, partner_id, 'order_policy')"/>
+                    </xpath> -->
                 </data>
             </field>
         </record>

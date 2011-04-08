@@ -105,7 +105,7 @@
 -
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular2')])
-    assert not invoice_ids, ('Invoice was generated on a Regular sale order with an external partner')
+    assert invoice_ids, ('No invoice was generated on a Regular sale order with an external partner')
 -
   We check if stock moves was generated with good data
 -
@@ -287,4 +287,53 @@
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
-      assert move.order_type == 'regular', ('Generated move hasn\'t the good type')
+      assert move.order_type == 'loan', ('Generated move hasn\'t the good type')
+-
+  We check if a purchase order for counterpart of the loan has been created
+-
+  !python {model: purchase.order}: |
+    from mx.DateTime import *
+    two_month = today() + RelativeDateTime(months=+2)
+    purchase_ids = self.search(cr, uid, [('loan_id', '=', ref('loan5'))])
+    assert purchase_ids, ('No purchase order has been created as counterpart of the loan')
+    for purchase in self.browse(cr, uid, purchase_ids):
+      assert purchase.delivery_requested_date == two_month.strftime('%Y-%m-%d'), ('Requested date of the generated purchase order is not equal to two months')
+-
+  We force the assignation of product for the delivery order linked with the loan
+-
+  !python {model: stock.picking}: |
+    pick_ids = self.search(cr, uid, [('sale_id', '=', ref('loan5'))])
+    self.draft_force_assign(cr, uid, pick_ids)
+-
+  We confirm the picking.
+-
+  !python {model: stock.picking }: |
+    import time
+    pick_ids = self.search(cr, uid, [('sale_id', '=', ref('loan5'))])
+    pick=self.browse(cr,uid,pick_ids[0])
+    partial_datas = {
+          'partner_id': pick.address_id.partner_id.id,
+          'address_id': pick.address_id.id,
+          'delivery_date' : time.strftime('%Y-%m-%d')
+         }
+    for move in pick.move_lines:
+        partial_datas['move%s'%(move.id)]= {
+            'product_id': move.product_id,
+            'product_qty': move.product_qty,
+            'product_uom': move.product_uom.id,
+            }
+    self.do_partial(cr, uid, pick_ids,partial_datas)
+-
+  We confirm the purchase order counterpart
+-
+  !python {model: purchase.order}: |
+    import netsvc
+    wf_service = netsvc.LocalService('workflow')
+    purchase_ids = self.search(cr, uid, [('origin', '=', 'Loan5')])
+    for purchase in purchase_ids:
+      wf_service.trg_validate(uid, 'purchase.order', purchase, 'order_confirm', cr)
+-
+  We check if the Loan is now in done state
+-
+  !assert {model: sale.order, id: loan5}:
+    - state == 'done', ('Loan order is not in done state')

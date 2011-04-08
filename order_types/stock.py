@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from tools.translate import _
 
 class stock_move(osv.osv):
     _name= 'stock.move'
@@ -63,5 +64,40 @@ class stock_move(osv.osv):
     }
     
 stock_move()
+
+class stock_picking(osv.osv):
+    _name = 'stock.picking'
+    _inherit = 'stock.picking'
+
+    def action_process(self, cr, uid, ids, context={}):
+        '''
+        Override the method to display a message to attach
+        a certificate of donation
+        '''
+        certif = False
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type == 'in':
+                for move in pick.move_lines:
+                    if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
+                        certif = True
+                        
+        if certif and not context.get('attach_ok', False):
+            partial_id = self.pool.get("stock.certificate.picking").create(
+                            cr, uid, {'picking_id': ids[0]}, context=dict(context, active_ids=ids))
+            return {'name':_("Attach a certificate of donation"),
+                    'view_mode': 'form',
+                    'view_id': False,
+                    'view_type': 'form',
+                    'res_model': 'stock.certificate.picking',
+                    'res_id': partial_id,
+                    'type': 'ir.actions.act_window',
+                    'nodestroy': True,
+                    'target': 'new',
+                    'domain': '[]',
+                    'context': dict(context, active_ids=ids)}
+        else:
+            return super(stock_picking, self).action_process(cr, uid, ids, context=context)
+
+stock_picking()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

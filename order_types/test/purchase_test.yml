@@ -165,7 +165,6 @@
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('donation3_l1'), ref('donation3_l2')])])
     assert move_ids, ('No generated stock moves from Donation before expiry with internal supplier')
     for move in self.browse(cr, uid, move_ids):
-      assert move.type_id.name == 'Loss', ('Generated stock move isn\'t marked as \'Loss\'')
       assert move.order_priority == 'urgent', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'food', ('Generated move hasn\'t the good category')
       assert move.order_type == 'donation_exp', ('Generated move hasn\'t the good type')

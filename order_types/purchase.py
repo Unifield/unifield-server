@@ -97,33 +97,6 @@ class purchase_order(osv.osv):
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
-    def action_picking_create(self, cr, uid, ids, *args):
-        '''
-        Marks stock moves as 'Loss' if the purchase type is donation before expiry
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        picking_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-        model_obj = self.pool.get('ir.model.data')
-        
-        picking_id = super(purchase_order, self).action_picking_create(cr, uid, ids, args)
-
-        for order in self.browse(cr, uid, ids):
-            if order.internal_type == 'donation_exp':
-                type_ids = model_obj.search(cr, uid, [('model', '=', 'stock.adjustment.type'),
-                                                      ('module', '=', 'stock_inventory_type'),
-                                                      ('name', '=', 'adjustment_type_loss')])
-                types = model_obj.read(cr, uid, type_ids, ['res_id'])
-                        
-                if type_ids:
-                    for pick in picking_obj.browse(cr, uid, [picking_id]):
-                        for move in pick.move_lines:
-                            move_obj.write(cr, uid, move.id, {'type_id': types[0]['res_id']})
-                        
-        return picking_id
-    
     def action_sale_order_create(self, cr, uid, ids, context={}):
         '''
         Create a sale order as counterpart for the loan.
