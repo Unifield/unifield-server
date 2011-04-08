@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,12 +19,6 @@
 #
 ##############################################################################
 
-import res_currency_functional
-import res_currency_rate_functional
-import account_move_compute_currency
-import account_move_line_compute_currency
-import account_bank_statement_line_compute_currency
-import order_line_compute_currency
-import wizard
+import account_journal
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

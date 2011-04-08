@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_account_journal_form_inherit" model="ir.ui.view">
+            <field name="name">account.journal.form.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_journal_1"/>
+            <field name="arch" type="xml">
+                <form string="Account Journal" position="replace">
+                    <form string="Account Journal">
+	                    <group colspan="4" col="6">
+	                        <field name="name" select="1"/>
+	                        <field name="code" select="1"/>
+	                        <field name="type" on_change="onchange_type(type, currency, context)"/>
+	                    </group>
+                        <group col="2" colspan="2">
+                               <separator string="Accounts" colspan="4"/>
+                               <field name="default_debit_account_id" readonly="1" attrs="{'required':[('type','in', ('cash', 'bank'))]}" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                               <field name="default_credit_account_id" readonly="1" attrs="{'required':[('type','in',('cash', 'bank'))]}" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <separator string="Company" colspan="4"/>
+                            <field name="instance_id" readonly="1"/>
+                            <field name="currency"/>
+                            <field name="analytic_journal_id"/>
+                        </group>
+                    </form>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_account_journal_tree_inherit" model="ir.ui.view">
+            <field name="name">account.journal.tree.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_journal_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="code" position="before">
+                        <field name="instance_id"/>
+                    </field>
+                    <field name="user_id" position="replace"/>
+                    <field name="company_id" position="replace"/>
+                </data>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

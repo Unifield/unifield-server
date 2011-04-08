@@ -97,4 +97,4 @@
   After this, I check that the debit in fuctional currency was correctly re-computed
 -
   !assert {model: account.move.line, id: move_line_test}:
-    - debit == 4.242
+    - debit == 4.24

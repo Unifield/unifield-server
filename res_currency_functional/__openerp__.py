@@ -21,7 +21,7 @@
 {
     "name": "Multi-Currency Management",
     "version": "1.0",
-    "depends": ["base", "account", "account_analytic_plans"],
+    "depends": ["base", "account", "account_analytic_plans", "account_journal"],
     "category": "General/Standard",
     "description": """
     This module aims to only use a subset of currencies, and have them available
@@ -32,6 +32,8 @@
     'update_xml': [
         'res_currency_functional_view.xml',
         'account_move_line_view.xml',
+        'account_bank_statement_view.xml',
+        'order_line_view.xml',
     ],
     'test': [
         'test/res_currency_functional.yml',

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="view_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <data>
+	                <tree string="Sales Order Lines" position="replace">
+	                    <tree string="Sales Order Lines">
+	                        <field colspan="4" name="name"/>
+	                        <field name="product_uom_qty" string="Qty"/>
+	                        <field name="product_uom" string="UoM"/>
+	                        <field name="discount"/>
+	                        <field name="price_unit"/>
+	                        <field name="price_subtotal"/>
+	                        <field name="currency_id"/>
+	                        <field name="functional_subtotal"/>
+	                        <field name="functional_currency_id"/>
+	                    </tree>
+	                </tree>
+                    <field name="amount_untaxed" position="before">
+                        <field name="currency_id" readonly="1"/>
+                    </field>
+                    <button string="Advance Invoice" position="after">
+                        <newline/>
+                        <field name="functional_currency_id" readonly="1"/>
+                        <field name="functional_amount_untaxed"/>
+                        <field name="functional_amount_tax"/>
+                        <field name="functional_amount_total"/>
+                    </button>
+                </data>
+            </field>
+        </record>
+        
+        <record id="purchase_order_form_inherit" model="ir.ui.view">
+            <field name="name">purchase.order.form.inherit</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <tree string="Purchase Order Lines" position="replace">
+                        <tree string="Purchase Order Lines">
+                            <field name="date_planned"/>
+                            <field name="name"/>
+                            <field name="product_qty"/>
+                            <field name="product_uom"/>
+                            <field name="price_unit"/>
+                            <field name="price_subtotal"/>
+                            <field name="currency_id"/>
+                            <field name="functional_subtotal"/>
+                            <field name="functional_currency_id"/>
+                        </tree>
+                    </tree>
+                    <group col="7" colspan="4" position="replace">
+                        <group col="11" colspan="4">
+                            <field name="currency_id" readonly="1"/>
+                            <field name="amount_untaxed" sum="Untaxed amount"/>
+                            <field name="amount_tax"/>
+                            <field name="amount_total" sum="Total amount"/>
+                            <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+	                        <newline/>
+	                        <field name="functional_currency_id" readonly="1"/>
+	                        <field name="functional_amount_untaxed"/>
+	                        <field name="functional_amount_tax"/>
+	                        <field name="functional_amount_total"/>
+                        </group>
+                    </group>
+                </data>
+            </field>
+        </record>
+    
+    </data>
+</openerp>
