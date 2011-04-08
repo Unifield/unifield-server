@@ -60,6 +60,7 @@
                                     <form string="Statement lines">
                                         <field name="date" string="Posting Date"/>
                                         <field name="document_date"/>
+                                        <field name="sequence" invisible="1"/>
                                         <field name="sequence_for_reference"/>
                                         <field name="name" string="Description"/>
                                         <field name="ref"/>
@@ -111,13 +112,11 @@
                             <field name="period_id" select="1"/>
                             <field name="currency" invisible="1"/>
                         </group>
-                        <group col="6" colspan="4">
+                        <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
-                            <button name="button_wiz_create_invoice" states="open" string="Create Invoice" type="object" icon="terp-document-new" 
-                                context="context" />
                         </group>
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
@@ -482,8 +481,8 @@
                                     <field name="amount_out" readonly="0"/>
                                     <field name="direct_invoice"/>
                                     <field name="invoice_id" invisible="1"/>
-                                        <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
+                                        string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                     <field name="reconciled"/>
                                     <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                         context="context"/>
@@ -495,6 +494,7 @@
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
                                     <field name="mandatory"/>
+                                    <field name="sequence" invisible="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
                                     <field name="ref"/>
