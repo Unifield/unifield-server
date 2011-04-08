@@ -148,6 +148,8 @@ class purchase_order(osv.osv):
         Override the has_stockable_product to return False
         when the internal_type of the order is 'direct'
         '''
+        # TODO: See with Synchro team which object the system will should create
+        # to have an Incoming Movement in the destination instance
         for order in self.browse(cr, uid, ids):
             if order.internal_type != 'direct':
                 return super(purchase_order, self).has_stockable_product(cr, uid, ids, args)
