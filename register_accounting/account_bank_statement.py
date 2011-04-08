@@ -250,7 +250,7 @@ class account_bank_statement_line(osv.osv):
         'from_cash_return': lambda *a: 0,
         'direct_invoice': lambda *a: 0,
     }
-    
+
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         # @@@override@ account.account_bank_statement.create_move_from_st_line()
         if context is None:
@@ -445,9 +445,9 @@ class account_bank_statement_line(osv.osv):
                     context['date'] = st_line.document_date or st_line.date or curr_date
                     amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id, 
                         st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
-                val.update({'debit': amount, 'credit': 0.0})
+                val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
                 move_line_debit_id = move_line_obj.create(cr, uid, val, context=context)
-                val.update({'debit': 0.0, 'credit': amount})
+                val.update({'debit': 0.0, 'credit': amount, 'amount_currency': -abs(st_line.amount)})
                 move_line_credit_id = move_line_obj.create(cr, uid, val, context=context)
                 # Post the move
                 move_res_id = move_obj.post(cr, uid, [move_id], context=context)
