@@ -29,6 +29,36 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
+    # @@@purchase.purchase_order._invoiced
+    def _invoiced(self, cursor, user, ids, name, arg, context=None):
+        res = {}
+        for purchase in self.browse(cursor, user, ids, context=context):
+            invoiced = False
+            if purchase.invoiced_rate == 100.00:
+                invoiced = True
+            res[purchase.id] = invoiced
+        return res
+    # @@@end
+    
+    # @@@purchase.purchase_order._shipped_rate
+    def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
+        res = {}
+        for purchase in self.browse(cursor, user, ids, context=context):
+            if (purchase.internal_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+                purchase.internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+                res[purchase.id] = 100.0
+            else:
+                tot = 0.0
+                for invoice in purchase.invoice_ids:
+                    if invoice.state not in ('draft','cancel'):
+                        tot += invoice.amount_untaxed
+                if purchase.amount_untaxed:
+                    res[purchase.id] = tot * 100.0 / purchase.amount_untaxed
+                else:
+                    res[purchase.id] = 0.0
+        return res
+    # @@@end
+    
     _columns = {
         'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -38,6 +68,8 @@ class purchase_order(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
         'details': fields.char(size=30, string='Details'),
+        'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
+        'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
     }
     
     _defaults = {
@@ -137,9 +169,9 @@ class purchase_order(osv.osv):
             
             sale = sale_obj.browse(cr, uid, order_id)
             
-            message = _("Loan counterpart '%s' is created.") % (sale.name,)
+            message = _("Loan counterpart '%s' was created.") % (sale.name,)
             
-            self.log(cr, uid, order.id, message)
+            self.log(cr, uid, order_id, message)
         
         return order_id
     

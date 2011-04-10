@@ -33,6 +33,11 @@
             <field name="act_from" ref="act_sale_loan_done" />
             <field name="act_to" ref="sale.act_done" />
         </record>
+        <record id="sale.trans_router_wait_invoice_shipping" model="workflow.transition">
+            <field name="act_from" ref="sale.act_wait_invoice"/>
+            <field name="act_to" ref="sale.act_invoice_end"/>
+            <field name="condition">(order_policy=='picking') or internal_type!='regular' or (internal_type=='regular' and partner_id.partner_type=='internal')</field>
+        </record>
     
     </data>
 </openerp>

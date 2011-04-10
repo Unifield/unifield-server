@@ -30,12 +30,6 @@
     "init_xml": [
     ],
     "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "account_payment",  # openERP module
-        "analytic_plan_tree",
         "order_types",
     ],
     "update_xml": [

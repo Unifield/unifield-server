@@ -32,6 +32,7 @@ class stock_move(osv.osv):
         Returns information about the order linked to the stock move
         '''
         res = {}
+        order = False
         
         for move in self.browse(cr, uid, ids, context=context):
             res[move.id] = False
