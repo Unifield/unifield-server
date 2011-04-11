@@ -46,7 +46,7 @@ class account_bank_statement(osv.osv):
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
 
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
         Calculate register's balance
         """
@@ -247,6 +247,7 @@ class account_bank_statement_line(osv.osv):
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
+        'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
     }
 
     _defaults = {
@@ -341,7 +342,8 @@ class account_bank_statement_line(osv.osv):
         if st.currency.id <> company_currency_id:
             amount_currency = st_line.amount
             currency_id = st.currency.id
-        account_move_line_obj.create(cr, uid, {
+        # Add register_line_id variable
+        first_move_line_id = account_move_line_obj.create(cr, uid, {
             'name': st_line.name,
             'date': st_line.date,
             'ref': st_line.ref,
@@ -373,6 +375,8 @@ class account_bank_statement_line(osv.osv):
         # @@@end
 
         # Removed post from original method
+
+        self.write(cr, uid, [st_line_id], {'first_move_line_id': first_move_line_id}, context=context)
         return move_id
 
     def _update_amount(self, values):
@@ -395,6 +399,89 @@ class account_bank_statement_line(osv.osv):
         if amount:
             res.update({'amount': amount})
         return res
+
+    def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context={}):
+        """
+        Update move lines from given statement lines
+        """
+        if not st_line_id or not values:
+            return False
+
+        # Prepare some values
+        move_line_values = values.copy()
+        acc_move_line_obj = self.pool.get('account.move.line')
+        st_line = self.browse(cr, uid, st_line_id, context=context)
+        # Get first line (from Register account)
+        register_line = st_line.first_move_line_id
+        if register_line:
+            # Search second move line
+            other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
+            other_line = acc_move_line_obj.browse(cr, uid, other_line_id, context=context)
+            other_account_id = values.get('account_id', other_line.account_id.id)
+            amount = values.get('amount', st_line.amount)
+            # Search all data for move lines
+            register_account_id = st_line.statement_id.journal_id.default_debit_account_id.id
+            if amount < 0:
+                register_account_id = st_line.statement_id.journal_id.default_credit_account_id.id
+                register_debit = 0.0
+                register_credit = abs(amount)
+                other_debit = abs(amount)
+                other_credit = 0.0
+            else:
+                register_debit = amount
+                register_credit = 0.0
+                other_debit = 0.0
+                other_credit = amount
+            # What's about register currency ?
+            register_amount_currency = False
+            other_amount_currency = False
+            currency_id = False
+            if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
+                # Prepare value
+                res_currency_obj = self.pool.get('res.currency')
+                # Get date for having a good change rate
+                context.update({'date': values.get('date', st_line.date)})
+                # Change amount
+                new_amount = res_currency_obj.compute(cr, uid, \
+                    st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
+                # Take currency for the move lines
+                currency_id = st_line.statement_id.journal_id.currency.id
+                # Default amount currency
+                register_amount_currency = False
+                if amount < 0:
+                    register_amount_currency = -abs(amount)
+                    register_debit = 0.0
+                    register_credit = new_amount
+                    other_debit = new_amount
+                    other_credit = 0.0
+                else:
+                    register_amount_currency = abs(amount)
+                    register_debit = new_amount
+                    register_credit = 0.0
+                    other_debit = 0.0
+                    other_credit = new_amount
+                # Amount currency for "other line" is the opposite of "register line"
+                other_amount_currency = -register_amount_currency
+            # Update values for register line
+            values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 'amount_currency': register_amount_currency, 
+                'currency_id': currency_id})
+            # Write move line object for register line
+            acc_move_line_obj.write(cr, uid, [register_line.id], values, context=context)
+            # Update values for other line
+            values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
+                'currency_id': currency_id})
+            # Write move line object for other line
+            acc_move_line_obj.write(cr, uid, [other_line.id], values, context=context)
+            # Update move
+            # first prepare partner_type
+            partner_type = False
+            if st_line.partner_type:
+                partner_type = ','.join([str(st_line.partner_type._table_name), str(st_line.partner_type.id)])
+            # then prepare name
+            name = values.get('name', st_line.name) + '/' + str(st_line.sequence)
+            # finally write move object
+            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type, 'name': name}, context=context)
+        return True
 
     def do_direct_expense(self, cr, uid, ids, context={}):
         """
@@ -534,76 +621,8 @@ class account_bank_statement_line(osv.osv):
             return False
         # In case of Temp Posting, we also update attached account move lines
         if state == 'temp':
-            move_line_values = values.copy()
-            acc_move_line_obj = self.pool.get('account.move.line')
-            for st_line in self.browse(cr, uid, ids, context=context):
-                for move_line_id in acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id)]):
-                    move_line = acc_move_line_obj.read(cr, uid, [move_line_id], ['debit', 'credit', 'date', 'account_id'], context=context)[0]
-                    date_line = values.get('date') or move_line.get('date') 
-                    # Update values
-                    # Let's have a look to the amount
-                    # first retrieve some values
-                    # Because of sequence problems and multiple writing on lines, we have to see if variables are given
-                    default_st_account = None
-                    if 'amount' in values and 'credit' in move_line and 'debit' in move_line:
-                        amount = values.get('amount', False)
-                        credit = move_line.get('credit', False)
-                        debit = move_line.get('debit', False)
-                        # then choose where to place amount
-                        new_debit = debit
-                        new_credit = credit
-                        if amount and credit or debit:
-                            line_is_debit = False
-                            line_is_credit = False
-                            # then choose where take it
-                            if debit > credit:
-                                new_debit = abs(amount)
-                                new_credit = 0.0
-                                default_st_account = st_line.statement_id.journal_id.default_debit_account_id.id
-                                line_is_debit = True
-                            elif debit < credit:
-                                new_debit = 0.0
-                                new_credit = abs(amount)
-                                default_st_account = st_line.statement_id.journal_id.default_credit_account_id.id
-                                line_is_credit = True
-                            #+ - if no different currency that OC currency, then update debit and credit
-                            #+ - else update amount_currency
-                            currency_id =  st_line.statement_id.journal_id.currency.id or None
-                            # If a currency exist, we do some computation before sending amount
-                            if currency_id:
-                                res_currency_obj = self.pool.get('res.currency')
-                                #TODO : change this when we have debate on "instance" definition
-                                # Note: the first currency_id must be those of the journal of the cash statement
-                                context.update({'date': date_line}) # this permit to make the change with currency at the good date
-                                line_accounting_value = res_currency_obj.compute(cr, uid, \
-                                    st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, amount, context=context)
-                                if line_is_debit:
-                                    new_debit = abs(line_accounting_value)
-                                    new_credit = 0.0
-                                    new_amount = amount
-                                else:
-                                    new_debit = 0.0
-                                    new_credit = abs(line_accounting_value)
-                                    new_amount = -amount
-                                if currency_id == st_line.company_id.currency_id.id:
-                                    new_amount = 0.0
-                                # update amount_currency for the move line
-                                move_line_values.update({'amount_currency': new_amount})
-                            # Nonetheless the result, we have to update debit and credit
-                            move_line_values.update({'debit': new_debit, 'credit': new_credit})
-
-                    # Then we try to search account_id in order to produce 'account_id' value for the account move line.
-                    #+ But for that, search if we are in a debit line or a credit line
-                    if default_st_account:
-                        st_line_account = st_line.account_id.id
-                        move_line_account = move_line.get('account_id')[0]
-                        if st_line_account == move_line_account:
-                            new_account = values.get('account_id')
-                        else:
-                            new_account = default_st_account
-                        move_line_values.update({'account_id': new_account})
-                    # write of new values
-                    acc_move_line_obj.write(cr, uid, [move_line_id], move_line_values, context=context)
+            for id in ids:
+                self._update_move_from_st_line(cr, uid, id, values, context=context)
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
