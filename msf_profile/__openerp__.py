@@ -37,6 +37,7 @@
         "account_payment",  # openERP module
         "analytic_plan_tree",
         "msf_order_date",
+        "purchase_compare_rfq",
     ],
     "update_xml": [
     ],
