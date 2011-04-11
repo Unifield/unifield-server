@@ -32,7 +32,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form">
+                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" wiget="one2many_list" context="{'purchase_id': active_id}">
                                 <tree string="Purchase Order Lines">
                                     <field name="date_planned"/>
                                     <field name="name"/>
@@ -48,7 +48,7 @@
                     <!--  Add dates history tab -->
                     <xpath expr="/form/notebook/page[@string='Notes']" position="before">
                         <page string="Dates history" groups="base.group_extended">
-	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form">
+	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form" >
 	                            <tree string="Modifications">
 	                                <field name="name" />
 	                                <field name="time" />
@@ -81,7 +81,7 @@
                 <!--  Add dates history tab -->
                     <xpath expr="/form/notebook/page[@string='Notes']" position="before">
                         <page string="Dates history" groups="base.group_extended">
-	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form">
+	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form" >
 	                            <tree string="Modifications">
 	                                <field name="name" />
 	                                <field name="time" />
@@ -126,7 +126,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" mode="tree,form,graph" name="order_line" nolabel="1" widget="one2many_list" >
+                        <field colspan="4" mode="tree,form,graph" name="order_line" nolabel="1" context="{'sale_id': active_id}" >
                             <form string="Sales Order Lines">
                                 <notebook>
                                     <page string="Order Line">

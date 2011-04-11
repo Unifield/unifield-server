@@ -153,11 +153,11 @@ def create_history(self, cr, uid, ids, data, class_name, field_name, fields, con
     
     for order in self.pool.get(class_name).read(cr, uid, ids, fields, context=context):
         for field in fields:
-            if data.get(field, False) and data.get(field, False) != order[field]:
+            if field in data and data.get(field, False) != order[field]:
                 history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
                                              field_name: order['id'],
-                                             'old_value': order[field] or 'False',
-                                             'new_value': data.get(field, 'False'),
+                                             'old_value': order[field] or False,
+                                             'new_value': data.get(field, False),
                                              'user_id': uid,
                                              'time': time.strftime('%y-%m-%d %H:%M:%S')})
                 
@@ -495,27 +495,27 @@ class purchase_order_line(osv.osv):
         'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
     }
     
-    def _get_planned_date(self, cr, uid, context, *a):
+    def _get_planned_date(self, cr, uid, context):
         '''
             Returns planned_date
         '''
         order_obj= self.pool.get('purchase.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
             res = po.delivery_requested_date
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context, *a):
+    def _get_confirmed_date(self, cr, uid, context):
         '''
             Returns confirmed date
         '''
         order_obj= self.pool.get('purchase.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
             res = po.delivery_confirmed_date
         
@@ -710,7 +710,7 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
             res = po.delivery_requested_date
         
@@ -723,7 +723,7 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = time.strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('active_id', []))
+        po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
             res = po.delivery_confirmed_date
         
@@ -754,8 +754,8 @@ class history_order_date(osv.osv):
         'purchase_line_id': fields.many2one('purchase.order.line', string='Line'),
         'sale_id': fields.many2one('sale.order', string='Order'),
         'sale_line_id': fields.many2one('sale.order.line', string='Line'),
-        'old_value': fields.char(size=64, string='Old value', required=True),
-        'new_value': fields.char(size=64, string='New value', required=True),
+        'old_value': fields.char(size=64, string='Old value'),
+        'new_value': fields.char(size=64, string='New value'),
         'user_id': fields.many2one('res.users', string='User'),
         'time': fields.datetime(string='Time', required=True),
     }
