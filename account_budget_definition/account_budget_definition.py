@@ -28,7 +28,11 @@ class account_budget_definition(osv.osv):
     _columns={
         'analytic_account_id': fields.many2one('account.analytic.account', 'Cost Center',required=True),
         'decision_moment': fields.char('Decision Moment', size=32),
-        'currency_id': fields.many2one('res.currency', 'Currency'),
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True),
+    }
+    
+    _defaults = {
+        'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
     
     def write(self, cr, uid, ids, vals, context=None):
