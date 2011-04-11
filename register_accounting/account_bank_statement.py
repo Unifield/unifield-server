@@ -757,8 +757,11 @@ class account_bank_statement_line(osv.osv):
             account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
             acc_type = account.type_for_register
             # if the account is a payable account, then we change the domain
-            if account.type == "payable":
-                domain = {'partner_type': [('property_account_payable', '=', account_id), ('supplier', '=', 1)]}
+            if acc_type == 'partner':
+                if account.type == "payable":
+                    domain = {'partner_type': [('property_account_payable', '=', account_id)]}
+                elif account.type == "receivable":
+                    domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
 
             if acc_type == 'transfer':
                 third_type = [('account.bank.statement', 'Register')]
