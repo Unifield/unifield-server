@@ -32,7 +32,6 @@ from osv.orm import browse_record, browse_null
 
 
 _SELECTION_PO_CFT = [
-                     ('', ''),
                      ('po', 'Purchase Order'),
                      ('cft', 'Call for Tender'),
                      ]
@@ -130,72 +129,82 @@ class sourcing_line(osv.osv):
         # sequence number
         'name': fields.char('Name', size=128),
         # sale order id
-        'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade'),
+        'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
         # sale order line id
-        'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade'),
+        'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         # reference
-        'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference'),
+        'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
         # state
-        'state': fields.selection([('created', 'Created')], string='State'),
+        'state': fields.selection([('created', 'Created')], string='State', readonly=True),
         # priority -> will be changed to related wm order type
-        'priority': fields.char(string='Priority', size=128),
+        'priority': fields.char(string='Priority', size=128, readonly=True),
         # category -> will be changed to related wm order type
-        'category': fields.char(string='Category', size=128),
+        'category': fields.char(string='Category', size=128, readonly=True),
         # sale order state
         'sale_order_state': fields.function(_getRelatedFields, string="Order State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_STATE),
         # line number -> will be changed to related
-        'sale_order_line_number': fields.char(string='Line', size=128),
+        'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),
         # product (name & reference) from sale order line
-        'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product'),
+        'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
         # qty
-        'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity'),
+        'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         # uom
-        'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM'),
+        'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
         # rts
-        'rts': fields.date(string='RTS'),
+        'rts': fields.date(string='RTS', readonly=True),
         # order line state
         'sale_order_line_state': fields.function(_getRelatedFields, string="Line State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE),
         # procurement method
         # if type changes in sale.order.line, we gather the corresponding sourcing.line ids to be updated which is passed to _getRelatedFields
-        'type': fields.function(_getRelatedFields,
-                                string="Procurement Method", multi="states",
-                                method=True, type="selection", selection=_SELECTION_TYPE,
-                                store = {
-                                    'sale.order.line': (_getCorrespondingSourcingLines, ['type'], 20)
-                                }, readonly=False),
+#        'type': fields.function(_getRelatedFields,
+#                                string="Procurement Method", multi="states",
+#                                method=True, type="selection", selection=_SELECTION_TYPE,
+#                                store = {
+#                                    'sale.order.line': (_getCorrespondingSourcingLines, ['type'], 20)
+#                                }, readonly=False),
+        'type': fields.selection(_SELECTION_TYPE, string='Procurement Method'),
         # po/cft
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
         # real stock
-        'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock'),
+        'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
         # available stock -> will be changed to function
-        'available_stock': fields.float('Available Stock'),
+        'available_stock': fields.float('Available Stock', readonly=True),
         # virtual stock
-        'virtual_stock': fields.related('product_id', 'virtual_available', type='float', string='Virtual Stock'),
+        'virtual_stock': fields.related('product_id', 'virtual_available', type='float', string='Virtual Stock', readonly=True),
         # supplier - many2one with default value from supplier from product
         'supplier': fields.many2one('res.partner', 'Supplier'),
         # estimated delivery date
-        'estimated_delivery_date': fields.date(string='Estimated DD'),
+        'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
     _order = 'sale_order_id desc'
     
     
     def write(self, cr, uid, ids, values, context=None):
         '''
-        override write method to write back po_cft and supplier to sale order line
+        _name = 'sourcing.line'
         
-        **NOTE** : type (procurement method) is written back through fnct_inv function.
+        
+        override write method to write back
+         - po_cft
+         - supplier
+         - type
+        
+        to sale order line
         '''
-        for sourcingLine in self.browse(cr, uid, ids, context=context):
-            solId = sourcingLine.sale_order_line_id.id
-            type = 'type' in values and values['type'] or sourcingLine.type
-            # if type == make_to_stock, pocft = False, otherwise modified value of saved value
-            if type == 'make_to_stock':
-                pocft = ''
-            else:
-                pocft = 'po_cft' in values and values['po_cft'] or sourcingLine.po_cft
-            supplier = 'supplier' in values and values['supplier'] or sourcingLine.supplier.id
-            self.pool.get('sale.order.line').write(cr, uid, solId, {'po_cft': pocft, 'supplier': supplier, 'type': type}, context=context)
-    
+        if 'fromOrderLine' not in context:
+            context['fromSourcingLine'] = True
+            for sourcingLine in self.browse(cr, uid, ids, context=context):
+                solId = sourcingLine.sale_order_line_id.id
+                # type
+                type = 'type' in values and values['type'] or sourcingLine.type
+                # pocft: if type == make_to_stock, pocft = False, otherwise modified value or saved value
+                pocft = False
+                if type == 'make_to_order':
+                    pocft = 'po_cft' in values and values['po_cft'] or sourcingLine.po_cft
+                # supplier
+                supplier = 'supplier' in values and values['supplier'] or sourcingLine.supplier.id
+                self.pool.get('sale.order.line').write(cr, uid, solId, {'po_cft': pocft, 'supplier': supplier, 'type': type}, context=context)
+        
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
     
     
@@ -205,40 +214,12 @@ class sourcing_line(osv.osv):
         '''
         value = {}
         if type == 'make_to_stock':
-            value.update({'po_cft': ''})
+            value.update({'po_cft': False})
     
         return {'value': value}
 
     
-    def _getSequenceName(self, cr, uid, c):
-        '''
-        get default sequence value for sourcing line.
-        
-        not used for now
-        '''
-        return self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line')
-        
-        
-        
-    def _getRTS(self, cr, uid, c):
-        '''
-        
-        '''
-        return time.strftime('%Y-%m-%d')
-        
-        
-        
-    def _getEstimatedDeliveryDate(self, cr, uid, c):
-        '''
-        
-        '''
-        return time.strftime('%Y-%m-%d')
-
-        
-    
     _defaults = {
-                 'rts': _getRTS,
-                 'estimated_delivery_date': _getEstimatedDeliveryDate,
                  'state': 'created',
     }
     
@@ -246,17 +227,45 @@ sourcing_line()
 
 
 
+class sale_order(osv.osv):
+    
+    _inherit = 'sale.order'
+    _description = 'Sales Order'
+    _columns = {}
+    
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        _inherit = 'sale.order'
+        
+        
+        override because of Bug #604347
+        
+        on_delete constraints are not generated
+        
+        remove manually all linked sourcing_line
+        '''
+        idsToDelete = []
+        for order in self.browse(cr, uid, ids, context):
+            for orderLine in order.order_line:
+                for sourcingLine in orderLine.sourcing_line_ids:
+                    idsToDelete.append(sourcingLine.id)
+        
+        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
+        
+        return super(sale_order, self).unlink(cr, uid, ids, context)
+
+
+sale_order()
+
+
 class sale_order_line(osv.osv):
 
 
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
-    
-    
-    
     _columns = {
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
-                # supplier - many2one with default value from supplier from product
                 'supplier': fields.many2one('res.partner', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
                 }
@@ -264,6 +273,9 @@ class sale_order_line(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         '''
+        _inherit = 'sale.order.line'
+        
+        
         override create method, create corresponding sourcing.line objects
         
         vals > dict: {
@@ -296,9 +308,11 @@ class sale_order_line(osv.osv):
             sellerId = (seller and seller.id) or False
             deliveryDate = int(template.seller_delay)
         
+        # type
+        type = vals['type']
+        
         # fill po/cft : by default, if mto -> po, if mts -> False
         pocft = False
-        type = 'type' in vals and vals['type']
         if type == 'make_to_order':
             pocft = 'po'
         
@@ -320,11 +334,100 @@ class sale_order_line(osv.osv):
                   'supplier': sellerId,
                   'po_cft': pocft,
                   'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
+                  'rts': time.strftime('%Y-%m-%d'),
+                  'type': vals['type']
                   }
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
         
         
         return result
+        
+        
+        
+        
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        
+        override to update sourcing_linne :
+         - supplier
+         - type
+         - po_cft
+         
+        ''' 
+        # update the corresponding sourcing line if not called from sourcing line updated
+        if 'fromSourcingLine' not in context:
+            context['fromOrderLine'] = True
+            values = {}
+            if 'supplier' in vals:
+                values.update({'supplier': vals['supplier']})
+            if 'po_cft' in vals:
+                values.update({'po_cft': vals['po_cft']})
+            if 'type' in vals:
+                values.update({'type': vals['type']})
+                
+            # for each sale order line
+            for sol in self.browse(cr, uid, ids, context):
+                # for each sourcing line
+                for sourcingLine in sol.sourcing_line_ids:
+                    self.pool.get('sourcing.line').write(cr, uid, sourcingLine.id, values, context)
+        
+        result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+        return result
+    
+    
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        
+        override because of Bug #604347
+        
+        on_delete constraints are not generated
+        
+        remove manually all linked sourcing_line
+        '''
+        idsToDelete = []
+        for orderLine in self.browse(cr, uid, ids, context):
+            for sourcingLine in orderLine.sourcing_line_ids:
+                    idsToDelete.append(sourcingLine.id)
+            
+        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
+        
+        return super(sale_order_line, self).unlink(cr, uid, ids, context)
+        
+        
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
+        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        '''
+        override to update hidden values :
+         - supplier
+         - type
+         - po_cft
+        '''
+        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
+                                                                uom, qty_uos, uos, name, partner_id,
+                                                                lang, update_tax, date_order, packaging, fiscal_position, flag)
+        
+        # add supplier
+        sellerId = False
+        po_cft = False
+        if product:
+            productObj = self.pool.get('product.product').browse(cr, uid, product)
+            template = productObj.product_tmpl_id
+            seller = template.seller_id
+            sellerId = (seller and seller.id) or False
+            type = result['value']['type']
+            if type == 'make_to_order':
+                po_cft = 'po'
+        
+        result['value'].update({'supplier': sellerId, 'po_cft': po_cft})
+        
+        return result
+            
 
 sale_order_line()
 
