@@ -88,7 +88,7 @@
                             <field name="balance_end" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
                             <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
-                            <button name="button_confirm_bank" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
+                            <button name="button_confirm_bank" states="open" string="Confirm" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
                 </xpath>

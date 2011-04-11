@@ -80,9 +80,8 @@ class account_cheque_register(osv.osv):
     def button_confirm_cheque(self, cr, uid, ids, context={}):
         """
         When you press "Confirm" on a Cheque Register.
-        You have to verify that all lines are in hard posting, then that they are reconciled.
+        You have to verify that all lines are in hard posting.
         """
-        # @ this moment, the button_confirm_bank verify that all lines are hard posted and reconciled
         return self.button_confirm_bank(cr, uid, ids, context=context)
 
     def button_display_type(self, cr, uid, ids, context={}):
