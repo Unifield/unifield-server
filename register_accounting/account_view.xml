@@ -126,7 +126,8 @@
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
                                             icon="terp-stock_effects-object-colorize" context="context" 
-                                            attrs="{'invisible': ['|', ('from_cash_return', '=', True), ('amount', '&gt;=', 0)]}"/>
+                                            attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
+                                            ('employee_id', '=', False)]}"/>
                                         <field name="date" groups="base.group_extended"/>
                                         <field name="document_date"/>
                                         <field name="sequence_for_reference"/>
@@ -151,6 +152,7 @@
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
+                                        <field name="employee_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="date"/>
