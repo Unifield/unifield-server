@@ -141,8 +141,12 @@ class cashbox_write_off(osv.osv_memory):
                             'analytic_account_id': analytic_account_id
                         }
                         # add an amount currency if the currency is different from company currency
-                        if amount:
-                            bank_move_line_vals.update({'amount_currency': cash_difference})
+                        if amount and bank_credit > 0:
+                            bank_amount = -abs(cash_difference)
+                            bank_move_line_vals.update({'amount_currency': bank_amount})
+                        elif amount and bank_debit > 0:
+                            bank_amount = abs(cash_difference)
+                            bank_move_line_vals.update({'amount_currency': bank_amount})
                         bank_move_line_id = move_line_obj.create(cr, uid, bank_move_line_vals, context = context)
                         # then for the writeoff account
                         writeoff_move_line_vals = {
@@ -158,6 +162,9 @@ class cashbox_write_off(osv.osv_memory):
                             'currency_id': currency_id,
                             'analytic_account_id': analytic_account_id
                         }
+                        # add an amount currency if the currency is different from company currency
+                        if amount:
+                            writeoff_move_line_vals.update({'amount_currency': -bank_amount})
                         writeoff_move_line_id = move_line_obj.create(cr, uid, writeoff_move_line_vals, context = context)
                         # Make the write-off in posted state
                         res_move_id = acc_mov_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
