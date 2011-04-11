@@ -17,7 +17,7 @@
                             <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1" 
                                 widget="selection"/>
                             <newline/>
-                            <field name="period_id" readonly="1"/>
+                            <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
                             <field name="balance_start"/>
                             <field name="balance_end_real"/>
                             <field name="currency" invisible="1"/>
@@ -110,7 +110,7 @@
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash')]" select="1" 
                                 widget="selection"/>
                             <field name="user_id" select="1" readonly="1"/>
-                            <field name="period_id" select="1"/>
+                            <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
                             <field name="currency" invisible="1"/>
                         </group>
                         <group col="4" colspan="4">
@@ -446,7 +446,7 @@
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" on_change="onchange_journal_id(journal_id)" select="1" 
                             widget="selection"/>
                         <newline/>
-                        <field name="period_id" readonly="1"/>
+                        <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
                         <field name="balance_start"/>
                         <field name="balance_end_real"/>
                         <field name="currency" invisible="1"/>
