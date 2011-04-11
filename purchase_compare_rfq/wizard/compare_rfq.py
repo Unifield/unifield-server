@@ -123,7 +123,8 @@ class wizard_compare_rfq(osv.osv_memory):
             wf_service = netsvc.LocalService("workflow")
             for po in po_ids:
                 wf_service.trg_validate(uid, 'purchase.order', po, 'purchase_confirm', cr)
-                
+
+        context['search_default_draft'] = 0 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
                 'view_type': 'form',
