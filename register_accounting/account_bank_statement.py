@@ -362,6 +362,7 @@ class account_bank_statement_line(osv.osv):
             'period_id': st.period_id.id,
             'date': st_line.date,
             'name': st_line_number,
+            'ref': st_line.ref or False,
             ## Add partner_type
             'partner_type': partner_type or False,
             # end of add
@@ -386,7 +387,6 @@ class account_bank_statement_line(osv.osv):
         val = {
             'name': st_line.name,
             'date': st_line.date,
-            'ref': st_line.ref,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
             # Add employee_id, register_id and partner_type support
@@ -430,7 +430,6 @@ class account_bank_statement_line(osv.osv):
         first_move_line_id = account_move_line_obj.create(cr, uid, {
             'name': st_line.name,
             'date': st_line.date,
-            'ref': st_line.ref,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
             # Add employee_id and register_id support
