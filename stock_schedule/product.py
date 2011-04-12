@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import import osv, fields
+from osv import osv, fields
 
 '''
 Add a new field on product object to allow you

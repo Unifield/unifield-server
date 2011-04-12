@@ -25,8 +25,26 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
+    def _get_monthly_consumption(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the compute monthly consumption of the product
+        '''
+        res = {}
+        for product in self.browse(cr, uid, ids):
+            res[product.id] = 1.00
+            
+        return res
+    
     _columns = {
-        'monthly_consumption': fields.float(digits=(16,2), string='Monthly Consumption'),
+        'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
+                                        help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
+        'monthly_consumption': fields.function(_get_monthly_consumption, method=True, string='Monthly consumption', readonly=True),
+        'reviewed_consumption': fields.float(digits=(16,2), string='Reviewed monthly consumption'),
+    }
+    
+    _defaults = {
+        'reviewed_consumption': lambda *a: 0.00,
+        'procure_delay': lambda *a: 1,
     }
     
 product_product()

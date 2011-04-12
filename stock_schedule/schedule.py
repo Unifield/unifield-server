@@ -202,7 +202,7 @@ class stock_frequence(osv.osv):
                 # Check if the number of day is in working days
                 next_date = today()
                 # Return the date of next Monday
-                while next_date.weekday() == 0 or next_date.weekday() == 6:
+                while next_date.weekday() == 5 or next_date.weekday() == 6:
                     next_date = next_date + RelativeDate(days=+1)
                 return next_date
             elif frequence.daily_frequency_ok:
