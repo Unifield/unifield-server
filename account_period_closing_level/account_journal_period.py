@@ -19,9 +19,27 @@
 #
 ##############################################################################
 
-import account
-import account_period_closing_level
-import account_journal_period
-import wizard
+from osv import fields, osv
+from tools.translate import _
 
+class account_journal_period(osv.osv):
+    _name = "account.journal.period"
+    _inherit = "account.journal.period"
+    
+    # @@@override@account.account_journal_period.create()
+    def create(self, cr, uid, vals, context=None):
+        period_id=vals.get('period_id',False)
+        if period_id:
+            period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
+            # If the period is not open, the move line/account journal period are not created.
+            if period.state == 'created':
+                raise osv.except_osv(_('Error !'), _('Period is not open!'))
+            elif period.state != 'done':
+                vals['state'] = 'draft'
+            else:
+                vals['state'] = 'done'
+        return super(osv.osv, self).create(cr, uid, vals, context)
+    # @@@end
+
+account_journal_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
