@@ -704,8 +704,14 @@ class account_bank_statement_line(osv.osv):
             return False
         # In case of Temp Posting, we also update attached account move lines
         if state == 'temp':
+            # method write removes date in value: save it, then restore it
+            saveddate = False
+            if values.get('date'):
+                saveddate = values['date']
             for id in ids:
                 self._update_move_from_st_line(cr, uid, id, values, context=context)
+            if saveddate:
+                values['date'] = saveddate
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
