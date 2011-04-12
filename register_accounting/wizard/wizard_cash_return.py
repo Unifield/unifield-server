@@ -53,7 +53,7 @@ class wizard_advance_line(osv.osv_memory):
     _columns = {
         'date': fields.date(string='Date', required=True),
         'description': fields.char(string='Description', size=64, required=True),
-        'account_id': fields.many2one('account.account', string='Account', required=True),
+        'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
