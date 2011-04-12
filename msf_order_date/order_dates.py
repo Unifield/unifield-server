@@ -479,7 +479,7 @@ class purchase_order_line(osv.osv):
             if 'date_planned' in data:
                 if line.order_id.delivery_requested_date > data['date_planned']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-            if 'confirmed_delivery_date' in data:
+            if 'confirmed_delivery_date' in data and data.get('confirmed_delivery_date', False):
                  if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
         
@@ -687,7 +687,7 @@ class sale_order_line(osv.osv):
             if 'date_planned' in data:
                 if line.order_id.delivery_requested_date > data['date_planned']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-            if 'confirmed_delivery_date' in data:
+            if 'confirmed_delivery_date' in data and data.get('confirmed_delivery_date', False):
                  if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
                     raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
         
