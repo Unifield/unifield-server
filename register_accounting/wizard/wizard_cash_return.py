@@ -232,7 +232,7 @@ class wizard_cash_return(osv.osv_memory):
 
         if register.journal_id.currency and (register.journal_id.currency.id == move_line.currency_id.id) \
             and (register.journal_id.currency.id != register.company_id.currency_id.id):
-            new_amount = move_line.amount_currency
+            new_amount = -move_line.amount_currency
 
         vals = {
             'date': date,
