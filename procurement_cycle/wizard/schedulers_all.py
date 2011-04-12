@@ -24,7 +24,7 @@ import threading
 from osv import osv, fields
 
 class procurement_compute_all(osv.osv_memory):
-    _name = 'procurement.supply.compute.all'
+    _name = 'procurement.cycle.compute.all'
     _description = 'Compute all schedulers'
 
     _columns = {
@@ -54,7 +54,7 @@ class procurement_compute_all(osv.osv_memory):
         @param ids: List of IDs selected
         @param context: A standard dictionary
         """
-        threaded_calculation = threading.Thread(target=self._procure_calculation_all, args=(cr, uid, ids, context))
+        threaded_calculation = threading.Thread(target=self._procure_calculation_all_cycle, args=(cr, uid, ids, context))
         threaded_calculation.start()
         return {'type': 'ir.actions.act_window_close'}
 
