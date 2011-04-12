@@ -500,7 +500,7 @@ class purchase_order_line(osv.osv):
             Returns planned_date
         '''
         order_obj= self.pool.get('purchase.order')
-        res = time.strftime('%Y-%m-%d')
+        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
@@ -513,7 +513,7 @@ class purchase_order_line(osv.osv):
             Returns confirmed date
         '''
         order_obj= self.pool.get('purchase.order')
-        res = time.strftime('%Y-%m-%d')
+        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('purchase_id', []))
         if po:
@@ -708,7 +708,7 @@ class sale_order_line(osv.osv):
             Returns planned_date
         '''
         order_obj= self.pool.get('sale.order')
-        res = time.strftime('%Y-%m-%d')
+        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
@@ -721,7 +721,7 @@ class sale_order_line(osv.osv):
             Returns confirmed date
         '''
         order_obj= self.pool.get('sale.order')
-        res = time.strftime('%Y-%m-%d')
+        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
         po = order_obj.browse(cr, uid, context.get('sale_id', []))
         if po:
@@ -765,5 +765,28 @@ class history_order_date(osv.osv):
     }
     
 history_order_date()
+
+class procurement_order(osv.osv):
+    _name = 'procurement.order'
+    _inherit = 'procurement.order'
+    
+    # @@@overwrite purchase.procurement_order.make_po
+    def make_po(self, cr, uid, ids, context=None):
+        '''
+        Overwritten the default method to change the requested date of purchase lines
+        '''
+        po_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
+        res = super(procurement_order, self).make_po(cr, uid, ids, context=context)
+        
+        for key in res:
+            purchase = po_obj.browse(cr, uid, res.get(key))
+            for line in purchase.order_line:
+                pol_obj.write(cr, uid, [line.id], {'date_planned': (datetime.now()+relativedelta(days=+2)).strftime('%Y-%m-%d')})
+        
+        return res
+    # @@@end
+
+procurement_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
