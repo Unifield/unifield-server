@@ -480,4 +480,3 @@
     assert (innerDic['internal_name'] or '') == (pol.internal_name or ''), "internal_name %s vs %s" % (innerDic['internal_name'], pol.internal_name)
     assert (innerDic['supplier_code'] or '') == (pol.supplier_code or ''), "supplier_code %s vs %s" % (innerDic['supplier_code'], pol.supplier_code)
     assert (innerDic['supplier_name'] or '') == (pol.supplier_name or ''), "supplier_name %s vs %s" % (innerDic['supplier_name'], pol.supplier_name)
--

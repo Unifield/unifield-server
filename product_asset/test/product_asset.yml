@@ -249,5 +249,3 @@
     values = result['value']
     
     assert values['asset_id'] == False, 'asset_id wrong'
--
-
