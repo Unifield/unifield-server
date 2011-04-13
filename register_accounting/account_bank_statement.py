@@ -330,7 +330,8 @@ class account_bank_statement_line(osv.osv):
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
@@ -340,6 +341,9 @@ class account_bank_statement_line(osv.osv):
         'direct_invoice': fields.boolean(string='Direct invoice?'),
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
+        'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            help="To use for python code when registering", multi="third_parties_key"),
     }
 
     _defaults = {
@@ -364,8 +368,8 @@ class account_bank_statement_line(osv.osv):
 
         # Prepare partner_type
         partner_type = False
-        if st_line.partner_type:
-            partner_type = ','.join([str(st_line.partner_type._table_name), str(st_line.partner_type.id)])
+        if st_line.third_parties:
+            partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
         # end of add
 
         move_id = account_move_obj.create(cr, uid, {
@@ -569,8 +573,8 @@ class account_bank_statement_line(osv.osv):
             # Update move
             # first prepare partner_type
             partner_type = False
-            if st_line.partner_type:
-                partner_type = ','.join([str(st_line.partner_type._table_name), str(st_line.partner_type.id)])
+            if st_line.third_parties:
+                partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # then prepare name
             name = values.get('name', st_line.name) + '/' + str(st_line.sequence)
             # finally write move object
