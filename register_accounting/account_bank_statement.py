@@ -62,9 +62,20 @@ class account_bank_statement(osv.osv):
                 res[statement.id] += st_line.amount or 0.0
         return res
 
+    def _get_register_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Get current register id
+        """
+        res = {}
+        for st in self.browse(cr, uid, ids, context=context):
+            res[st.id] = st.id
+        return res
+
     _columns = {
         'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
             help="Closing balance based on Starting Balance and Cash Transactions"),
+        'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
+            help='Virtual Field that take back the id of the Register'),
     }
 
     def balance_check(self, cr, uid, register_id, journal_type='bank', context=None):
@@ -850,7 +861,7 @@ class account_bank_statement_line(osv.osv):
             }
         }
 
-    def onchange_account(self, cr, uid, ids, account_id, context={}):
+    def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
         """
         Update Third Party type regarding account type_for_register field.
         """
@@ -875,6 +886,9 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('account.bank.statement', 'Register')]
                 third_required = True
                 third_selection = 'account.bank.statement,0'
+                domain = {'partner_type': [('state', '=', 'open')]}
+                if statement_id:
+                    domain = {'partner_type': [('state', '=', 'open'), ('id', '!=', statement_id)]}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
