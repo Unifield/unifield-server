@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_account_analytic_chart" model="ir.ui.view">
+            <field name="name">account.chart_activable.form</field>
+            <field name="model">account.analytic.chart</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.account_analytic_chart_view"/>
+            <field name="arch" type="xml">
+                <label string="(Keep empty to open the current situation)" position="after">
+                    <separator string="Inactive accounts" colspan="4"/>
+                    <field name="show_inactive"/>
+                </label>
+            </field>
+        </record>
+        
+    </data>
+</openerp>
