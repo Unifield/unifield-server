@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,36 +16,9 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
-{
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Modules for Unifield
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "account_payment",  # openERP module
-        "analytic_plan_tree",
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-    ],
-    "update_xml": [
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
-}
+
+import order_dates
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

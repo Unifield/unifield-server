@@ -1,0 +1,77 @@
+<openerp>
+    <data>
+    
+        <record id="view_analytic_account_activable_form" model="ir.ui.view">
+            <field name="name">analytic.account_activable.form</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="parent_id" position="replace">
+                        <field name="parent_id" on_change="on_change_parent(parent_id)" required="1"/>
+                    </field>
+                    <field name="code" position="replace">
+                        <field name="code" select="1" required="1"/>
+                    </field>
+                    <field name="type" position="after">
+                        <field name="active"/>
+                    </field>
+	                <page string="Account Data" position="replace">
+	                    <page string="Account Data">
+	                        <field name="date_start"/>
+	                        <field name="date" select="2"/>
+	                    </page>
+	                </page>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_analytic_account_activable_search" model="ir.ui.view">
+            <field name="name">analytic.account_activable.search</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_search"/>
+            <field name="arch" type="xml">
+                <filter string="Pending" position="before">
+                    <filter name="active" icon="terp-check" string="Active" domain="[('active','=','true')]"/>
+                </filter>
+            </field>
+        </record>
+        
+        <record id="view_account_analytic_account_tree_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.account.tree.inherit</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="inherit_id" ref="account.view_account_analytic_account_tree"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic account" position="replace">
+                    <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic account" toolbar="1" expand_button="1">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
+                        <field name="type"/>
+                        <field name="active"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_account_analytic_account_activable_form" model="ir.actions.act_window">
+            <field name="name">Analytic Accounts</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
+            <field name="search_view_id" ref="view_analytic_account_activable_search"/>
+            <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
+            <field name="context">{'active_test': False, 'search_default_active': 1}</field>
+        </record>
+        
+        <menuitem action="action_account_analytic_account_activable_form"
+                  id="account.account_analytic_def_account"
+                  parent="account.menu_analytic_accounting"
+                  groups="analytic.group_analytic_accounting"/>
+        
+            
+    </data>
+</openerp>
