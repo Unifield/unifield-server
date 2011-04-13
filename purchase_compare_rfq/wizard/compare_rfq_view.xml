@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+        
+	<record id="action_compare_rfq" model="ir.actions.server">
+            <field name="name">Compare RfQ</field>
+            <field name="model_id" ref="model_wizard_compare_rfq"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_compare_rfq(context=context)</field>
+        </record>
+        
+        <record id="ir_open_compare_rfq" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">purchase.order</field>
+            <field name="name">Compare RfQ</field>
+            <field eval="'ir.actions.server,%d'%action_compare_rfq" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    	<record id="wizard_compare_rfq_form_view" model="ir.ui.view">
+    		<field name="name">wizard.compare.rfq.form.view</field>
+    		<field name="model">wizard.compare.rfq</field>
+    		<field name="type">form</field>
+    		<field name="arch" type="xml">
+    			<form string="Compare RfQ">
+    				<separator colspan="4" string="General Information" />
+    				<field name="rfq_number" colspan="4" />
+    				<separator colspan="4" string="Lines" />
+    				<field name="line_ids" colspan="4" nolabel="1" readonly="1" />
+    				<separator colspan="4" />
+    				<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+    				<button name="create_po" string="Create PO" icon="gtk-execute" colspan="2" type="object" /> 
+    			</form>
+    		</field>
+    	</record>
+    	
+    	<record id="wizard_compare_rfq_line_tree" model="ir.ui.view">
+    		<field name="name">wizard.compare.rfq.line.tree</field>
+    		<field name="model">wizard.compare.rfq.line</field>
+    		<field name="type">tree</field>
+    		<field name="arch" type="xml">
+    			<tree string="Compared products" editable="top">
+    				<field name="product_id" />
+    				<field name="supplier_id" />
+    				<field name="po_line_ids" />
+    				<button name="choose_supplier" string="Compare and choose" icon="gtk-go-forward" type="object" />
+    			</tree>
+    		</field>
+    	</record>
+    		
+    	<record id="wizard_choose_supplier_form_view" model="ir.ui.view">
+    		<field name="name">wizard.choose.supplier.form.view</field>
+    		<field name="model">wizard.choose.supplier</field>
+    		<field name="type">form</field>
+    		<field name="arch" type="xml">
+    			<form string="Choose a supplier">
+    				<field name="product_id" readonly="1" />
+    				<field name="supplier_id" readonly="1" />
+    				<separator colspan="4" string="Quotation Lines" />
+    				<field name="line_ids" colspan="4" nolabel="1" />
+    				<separator colspan="4" />
+    				<button name="return_view" string="Cancel" icon="gtk-cancel" type="object" />
+       			</form>
+    		</field>
+    	</record>
+    	
+    	<record id="wizard_choose_supplier_line_tree" model="ir.ui.view">
+    		<field name="name">wizard.choose.supplier.line.tree</field>
+    		<field name="model">wizard.choose.supplier.line</field>
+    		<field name="type">tree</field>
+    		<field name="arch" type="xml">
+    	    	<tree string="Lines">
+    				<field name="supplier_id" readonly="1" />
+	    			<field name="price_unit" readonly="1" />
+    				<field name="qty" />
+    				<field name="price_total" readonly="1" />
+    				<button name="choose_supplier" string="Choose this supplier" icon="terp-camera_test" type="object" />
+    			</tree>
+    		</field>
+    	</record>
+    	
+    	<record id="wizard_choose_supplier_line_form" model="ir.ui.view">
+            <field name="name">wizard.choose.supplier.line.form</field>
+            <field name="model">wizard.choose.supplier.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Line">
+                    <field name="supplier_id" readonly="1" />
+                    <field name="price_unit" readonly="1" />
+                    <field name="qty" />
+                </form>
+            </field>
+        </record>
+
+	</data>
+</openerp>
+
