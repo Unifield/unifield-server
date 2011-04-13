@@ -150,7 +150,7 @@ class account_bank_statement(osv.osv):
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (st.journal_id.name,))
                 if not st_line.amount:
                     continue
-                st_line_number = self.get_next_st_line_number(cr, uid, st_number, st_line, context)
+#                st_line_number = self.get_next_st_line_number(cr, uid, st_number, st_line, context)
                 # Lines are hard posted. That's why create move lines is useless
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
@@ -913,6 +913,7 @@ class account_bank_statement_line(osv.osv):
             if obj == 'account.bank.statement':
                 # if amount is inferior to 0, then we give the debit account
                 register = self.pool.get('account.bank.statement').browse(cr, uid, [id], context=context)
+                account_id = False
                 if register and amount < 0:
                     account_id = register[0].journal_id.default_debit_account_id.id
                 elif register and amount > 0:
