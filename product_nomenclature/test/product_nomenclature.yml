@@ -119,6 +119,3 @@
             ref("product_nomenclature_nomenclaturetest0"), False, False, False, {'test':'test'},False,False,False,False,False,False)
     
     assert result['value']['nomen_manda_0'] == ref("product_nomenclature_nomenclaturetest0"), 'codeChange wrong'
-
-
--
