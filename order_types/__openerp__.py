@@ -43,6 +43,7 @@
         'purchase_workflow.xml',
         'sale_workflow.xml',
         'wizard/stock_certificate_picking_view.xml',
+        'stock_view.xml',
     ],
     'demo_xml': [
     ],
