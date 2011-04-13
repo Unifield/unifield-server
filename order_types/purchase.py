@@ -63,11 +63,11 @@ class purchase_order(osv.osv):
         'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True),
+                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
-        'details': fields.char(size=30, string='Details'),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
     }
@@ -209,7 +209,7 @@ class account_invoice(osv.osv):
     _inherit = 'account.invoice'
     
     _columns = {
-        'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list'),
+        'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
     }
     
 account_invoice()

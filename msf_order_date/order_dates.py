@@ -389,7 +389,7 @@ class purchase_order(osv.osv):
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'order_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
-                                        ('international', 'International')], string='Type'),
+                                        ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
     }
     
@@ -625,7 +625,7 @@ class sale_order(osv.osv):
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'order_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
-                                        ('international', 'International')], string='Type'),
+                                        ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),
         'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
     }
     
