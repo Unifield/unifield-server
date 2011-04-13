@@ -32,7 +32,7 @@
     Add sourcing specification
     """,
     'test': [
-             #'test/picking.yml',
+             'test/sourcing.yml',
              ],
     'update_xml': [
         'sourcing_sequence.xml',
