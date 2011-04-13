@@ -870,7 +870,7 @@ class account_bank_statement_line(osv.osv):
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
-        domain = {}
+        domain = {'partner_type': []}
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id], context=context)[0]

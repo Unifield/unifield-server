@@ -167,7 +167,8 @@ class account_move_line(osv.osv):
             elif field in ('partner_id',):
                 attrs.append("invisible=\"1\"")
             elif field in ('partner_type',):
-                attrs.append("on_change=\"onchange_partner_type(partner_type, credit, debit)\" invisible=\"0\"")
+                attrs.append("on_change=\"onchange_partner_type(partner_type, credit, debit)\" invisible=\"0\" \
+                    attrs=\"{'required': [('partner_type_mandatory', '=', True)]}\"")
             elif field in ('partner_type_mandatory',):
                 attrs.append("invisible=\"1\"")
             # end of add
@@ -213,20 +214,23 @@ class account_move_line(osv.osv):
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
-        domain = {}
+        domain = {'partner_type': []}
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id])[0]
             acc_type = account.type_for_register
             # if the account is a payable account, then we change the domain
-            if account.type == "payable":
-                domain = {'partner_type': ['|', ('property_account_payable', '=', account_id), ('property_account_receivable', '=', account_id), 
-                    ('supplier', '=', 1)]}
+            if acc_type == 'partner':
+                if account.type == "payable":
+                    domain = {'partner_type': [('property_account_payable', '=', account_id)]}
+                elif account.type == "receivable":
+                    domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
 
             if acc_type == 'transfer':
                 third_type = [('account.bank.statement', 'Register')]
                 third_required = True
                 third_selection = 'account.bank.statement,0'
+                domain = {'partner_type': [('state', '=', 'open')]}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
