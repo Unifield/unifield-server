@@ -136,11 +136,11 @@ class sale_order(osv.osv):
             
         for order in self.browse(cr, uid, ids):
             if order.partner_id.partner_type == 'internal' and order.internal_type == 'regular':
-                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
             elif order.internal_type in ['donation_exp', 'donation_st', 'loan']:
-                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
                     
