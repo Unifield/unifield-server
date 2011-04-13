@@ -927,17 +927,17 @@ class account_bank_statement_line(osv.osv):
                         ['property_account_receivable'], context=context)[0].get('property_account_receivable', False)
                 if res_account:
                     res['value'] = {'account_id': res_account[0]}
-            # Case where the partner_type is account.bank.statement
-            if obj == 'account.bank.statement':
-                # if amount is inferior to 0, then we give the debit account
-                register = self.pool.get('account.bank.statement').browse(cr, uid, [id], context=context)
-                account_id = False
-                if register and amount < 0:
-                    account_id = register[0].journal_id.default_debit_account_id.id
-                elif register and amount > 0:
-                    account_id = register[0].journal_id.default_credit_account_id.id
-                if account_id:
-                    res['value'] = {'account_id': account_id}
+#            # Case where the partner_type is account.bank.statement
+#            if obj == 'account.bank.statement':
+#                # if amount is inferior to 0, then we give the debit account
+#                register = self.pool.get('account.bank.statement').browse(cr, uid, [id], context=context)
+#                account_id = False
+#                if register and amount < 0:
+#                    account_id = register[0].journal_id.default_debit_account_id.id
+#                elif register and amount > 0:
+#                    account_id = register[0].journal_id.default_credit_account_id.id
+#                if account_id:
+#                    res['value'] = {'account_id': account_id}
         return res
 
 account_bank_statement_line()
