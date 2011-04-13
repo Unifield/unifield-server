@@ -464,6 +464,8 @@ class Reference(Char):
     def get_text(self):
         self.refrel = False
         self.refid = False
+        if isinstance(self.value, dict):
+            self.value = self.value.get('selection',"")
         if self.value and ',' in self.value:
             self.refrel, self.refid = self.value.split(',', 2)
             self.value = rpc.name_get(self.refrel, self.refid, rpc.session.context)
