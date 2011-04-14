@@ -1,0 +1,53 @@
+-
+  In order to test the period creation, we use the wizard to create periods for next year.
+-
+  !record {model: account.period.create, id: period_create_1}:
+    fiscalyear: next
+
+-
+  We call the wizard's method to create the fiscalyear + periods.
+- 
+  !python {model: account.period.create}: |
+    wiz_obj = self.pool.get('account.period.create')
+    wiz_id = wiz_obj.browse(cr, uid, ref('period_create_1'))
+    wiz_id.account_period_create_periods()
+
+-
+  We check that we have next year's March period...
+-
+  !assert {model: account.period, search: "[('name','=', 'Mar %s' % (datetime.now().year+1))]"}:
+    - date_start == str(datetime.now().year+1) + "-03-01"
+    - date_stop == str(datetime.now().year+1) + "-03-31"
+    - special == False
+    - state == 'created'
+
+-
+  ...and the extra "Period 14" period.
+-
+  !assert {model: account.period, search: "[('name','=', 'Period 14')]"}:
+    - date_start == str(datetime.now().year+1) + "-12-01"
+    - date_stop == str(datetime.now().year+1) + "-12-31"
+    - special == True
+    - state == 'created'
+  
+-
+  We change the period state.
+-
+  !python {model: account.period}: |
+    import datetime
+    per_obj = self.pool.get('account.period')
+    per_ids = per_obj.search(cr, uid, [('name','=', 'Mar %s' % (datetime.datetime.now().year+1))])
+    period = per_obj.browse(cr, uid, per_ids[0])
+    period.action_set_state(context={'state': 'draft'})
+    period = per_obj.browse(cr, uid, per_ids[0])
+    assert period.state == 'draft'
+    period.action_set_state(context={'state': 'field-closed'})
+    period = per_obj.browse(cr, uid, per_ids[0])
+    assert period.state == 'field-closed'
+    period.action_set_state(context={'state': 'mission-closed'})
+    period = per_obj.browse(cr, uid, per_ids[0])
+    assert period.state == 'mission-closed'
+    period.action_set_state(context={'state': 'done'})
+    period = per_obj.browse(cr, uid, per_ids[0])
+    assert period.state == 'done'
+    

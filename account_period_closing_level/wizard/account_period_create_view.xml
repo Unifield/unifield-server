@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_account_create_period" model="ir.ui.view">
+            <field name="name">account.period.create</field>
+            <field name="model">account.period.create</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Create Period">
+                    <field name="fiscalyear"/>
+                    <separator string="" colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="terp-gtk-go-back-rtl" string="Create Periods" name="account_period_create_periods" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_create_period" model="ir.actions.act_window">
+            <field name="name">Create Period</field>
+            <field name="res_model">account.period.create</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_account_create_period"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem action="action_account_create_period"
+            id="menu_action_account_create_period"
+            parent="account.next_id_23" />
+    </data>
+</openerp>

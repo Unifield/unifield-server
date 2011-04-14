@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,38 +16,30 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name": "Account Period for MSF",
+    "version": "1.0",
+    "depends": ["account"],
+    "author" : "MSF: Matthieu Dietrich",
+    "category": "General/Standard",
     "description": """
-        Modules for Unifield
+    This module adds states to the fiscal years and accounting periods,
+    with a new wizard to create tem automatically.
+    
     """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "account_payment",  # openERP module
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-    ],
-    "update_xml": [
-    ],
-    "demo_xml": [
+    "init_xml": [],
+    'update_xml': [
+        'account_period_closing_level_view.xml',
+        'wizard/account_period_create_view.xml',
     ],
     "test": [
+        'test/account_period_closing_level.yml',
     ],
-    "installable": True,
-    "active": False,
+    'demo_xml': [],
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
