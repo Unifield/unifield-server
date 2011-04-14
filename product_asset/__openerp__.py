@@ -52,6 +52,7 @@
     'update_xml': [
         'product_asset_view.xml',
         'security/ir.model.access.csv',
+        'asset_sequence.xml',
     ],
     'installable': True,
 }

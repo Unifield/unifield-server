@@ -14,6 +14,7 @@
 			product_id)]" /> </button> </data> </field> </record>
 		-->
 
+		<!-- internal moves -->
 		<record id="view_picking_form" model="ir.ui.view">
 			<field name="name">stock.picking.form</field>
 			<field name="model">stock.picking</field>
@@ -22,16 +23,69 @@
 			<field name="arch" type="xml">
 				<data>
 
-					<button name="%(stock.move_scrap)d" string="Scrap" type="action"
-						groups="base.group_extended" icon="gtk-convert" context="{'scrap': True}"
-						states="draft,waiting,confirmed,assigned" colspan="1" position="after">
+					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+						position="after">
 						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
-					</button>
+						<!--
+							always visible due to openerp bug, attrs does not respond to
+							modification from on_change function attrs="{'invisible':
+							[('subtype', '!=', 'asset')]}" />
+						-->
+						<field name="subtype" invisible="True" />
+					</xpath>
 
 				</data>
 			</field>
 		</record>
 
+
+		<!-- incoming shipments -->
+		<record id="view_picking_in_form" model="ir.ui.view">
+			<field name="name">stock.picking.in.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="stock.view_picking_in_form" />
+			<field name="arch" type="xml">
+				<data>
+
+					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+						position="after">
+						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
+						<!--
+							always visible due to openerp bug, attrs does not respond to
+							modification from on_change function attrs="{'invisible':
+							[('subtype', '!=', 'asset')]}" />
+						-->
+						<field name="subtype" invisible="True" />
+					</xpath>
+
+				</data>
+			</field>
+		</record>
+
+
+		<record id="view_picking_out_form" model="ir.ui.view">
+			<field name="name">stock.picking.out.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="stock.view_picking_out_form" />
+			<field name="arch" type="xml">
+				<data>
+
+					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+						position="after">
+						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
+						<!--
+							always visible due to openerp bug, attrs does not respond to
+							modification from on_change function attrs="{'invisible':
+							[('subtype', '!=', 'asset')]}" />
+						-->
+						<field name="subtype" invisible="True" />
+					</xpath>
+
+				</data>
+			</field>
+		</record>
 
 
 		<!--
@@ -106,22 +160,21 @@
 
 					<group colspan="4" col="6">
 						<group colspan="4" col="2">
-							<separator string="Product" colspan="2" />
-							<field name="product_id" on_change="onChangeProductId(product_id)" />
-							<field name="prod_int_name" />
-							<field name="prod_int_code" />
+							<separator string="Asset" colspan="2" />
+							<field name="product_id" on_change="onChangeProductId(product_id)" domain="[('subtype', '=', 'asset')]" />
 							<field name="name" />
+							<field name="asset_code" attrs="{'invisible':[('asset_code', '=', False)], 'readonly':[('asset_code', '!=', False)]}"/>
+							<field name="asset_type_id" />
 
 						</group>
 						<group colspan="2" col="2">
-							<separator string="Codes" colspan="2" />
-							<field name="asset_code" />
+							<separator string="MSF Codification" colspan="2" />
+
+							<field name="prod_int_name" />
+							<field name="prod_int_code" />
 							<field name="prod_nomenc_code" />
 						</group>
-						<group colspan="4" col="2">
-							<separator string="Characteristics" colspan="2" />
-							<field name="asset_type_id" />
-						</group>
+
 					</group>
 
 					<group colspan="2" col="2">
@@ -178,11 +231,26 @@
 		</record>
 
 
+		<record id="asset_search_form_view" model="ir.ui.view">
+			<field name="name">asset.search.form</field>
+			<field name="model">product.asset</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Asset">
+					<field name="hq_brand" />
+					<field name="hq_type" />
+					<field name="hq_model" />
+				</search>
+			</field>
+		</record>
+
+
 		<record id="asset_normal_action" model="ir.actions.act_window">
 			<field name="name">Assets</field>
 			<field name="res_model">product.asset</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="search_view_id" ref="asset_search_form_view" />
 		</record>
 
 		<menuitem id="base.menu_asset" name="Assets" parent="base.menu_base_partner"
@@ -246,12 +314,29 @@
 				</tree>
 			</field>
 		</record>
+		
+		
+		<record id="asset_event_search_form_view" model="ir.ui.view">
+			<field name="name">asset.event.search.form</field>
+			<field name="model">product.asset.event</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Asset Event">
+					<field name="asset_code" />
+					<field name="prod_int_code" />
+					<field name="hq_brand" />
+					<field name="hq_model" />
+					<field name="proj_code" />
+				</search>
+			</field>
+		</record>
 
 		<record id="asset_event_normal_action" model="ir.actions.act_window">
 			<field name="name">Asset Events</field>
 			<field name="res_model">product.asset.event</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="search_view_id" ref="asset_event_search_form_view" />
 		</record>
 
 		<menuitem action="asset_event_normal_action" id="menu_asset_event"

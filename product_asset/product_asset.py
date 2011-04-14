@@ -89,7 +89,7 @@ class product_asset(osv.osv):
         return super(product_asset, self).write(cr, user, ids, vals, context)
     
     
-    def create(self, cr, user, vals, context=None):
+    def create(self, cr, uid, vals, context=None):
         '''
         override create method to force readonly fields to be saved to db
         on data creation
@@ -98,10 +98,12 @@ class product_asset(osv.osv):
         if 'product_id' in vals:
             productId = vals['product_id']
             # add readonly fields to vals
-            vals.update(self._getRelatedProductFields(cr, user, productId))
+            vals.update(self._getRelatedProductFields(cr, uid, productId))
+            
+        vals['asset_code'] = self.pool.get('ir.sequence').get(cr, uid, 'product.asset')
         
         # save the data to db
-        return super(product_asset, self).create(cr, user, vals, context)
+        return super(product_asset, self).create(cr, uid, vals, context)
         
         
     
@@ -139,7 +141,7 @@ class product_asset(osv.osv):
     _columns = {
                 'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
-                'asset_code': fields.char('Asset Code', size=64, required=True),
+                'asset_code': fields.char('Asset ID', size=64, readonly=True),
                 'name': fields.char('Asset Name', size=128),
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from product
                 # HQ reference
@@ -156,6 +158,7 @@ class product_asset(osv.osv):
                 #                                       multi='product'),
                 'prod_int_code': fields.char('Product Internal Code', size=128, readonly=True), # from product
                 'prod_int_name': fields.char('Product Internal Name', size=128, readonly=True), # from product
+                'prod_nomenclature': fields.char('Product Nomenclature', size=128), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
                 'prod_nomenc_code': fields.char('Product Nomenclature Code', size=128),
                 # traceability
                 'trac_orig_req_ref': fields.char('Original Requested Reference (Project PO)', size=128),
@@ -174,6 +177,8 @@ class product_asset(osv.osv):
     _defaults = {
         'trac_arriv_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+    
+    
     
 product_asset()
 
@@ -271,14 +276,14 @@ class product_asset_event(osv.osv):
                 'asset_id': fields.many2one('product.asset', 'Asset', required=True, ondelete='cascade'),
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
                 'date': fields.date('Date', required=True),
-                'name': fields.char('Event Name', size=128),
+                'name': fields.char('Event Name', size=128, required=True),
                 'asset_code': fields.char('Asset Code', size=128, readonly=True), # from asset
                 'prod_int_code': fields.char('Product Internal Code', size=128, readonly=True), # from asset
                 'prod_int_name': fields.char('Product Internal Name', size=128, readonly=True), # from asset
                 'hq_brand': fields.char('Brand', size=128, readonly=True), # from asset
                 'hq_model': fields.char('Model', size=128, readonly=True), # from asset
-                'location': fields.char('Location', size=128),
-                'proj_code': fields.char('Project Code', size=128),
+                'location': fields.char('Location', size=128, required=True),
+                'proj_code': fields.char('Project Code', size=128, required=True),
                 'event_type': fields.selection(eventTypeSelection, 'Event Type', required=True), # TODO many2one or selection ?
                 'remark': fields.char('Remark', size=128),
                 'state': fields.selection(stateSelection, 'Current Status', required=True), # TODO many2one or selection ?
@@ -336,6 +341,22 @@ class stock_move(osv.osv):
     _description = "Stock Move"
     
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override for adding subtype on creation if product is specified
+        '''
+        if 'product_id' in vals:
+            prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+            vals.update({'subtype': prod.product_tmpl_id.subtype})
+            
+            
+        result = super(stock_move, self).create(cr, uid, vals, context)
+        
+        return result
+        
+
+    
+    
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
                             loc_dest_id=False, address_id=False):
         '''
@@ -346,6 +367,11 @@ class stock_move(osv.osv):
         
         if 'value' not in result:
             result['value'] = {}
+        
+        if prod_id:
+            prod = self.pool.get('product.product').browse(cr, uid, prod_id)
+            result['value'].update({'subtype': prod.product_tmpl_id.subtype})
+            
             
         result['value'].update({'asset_id': False})
         
@@ -353,7 +379,8 @@ class stock_move(osv.osv):
     
     
     _columns = {
-        'asset_id': fields.many2one('product.asset', 'Asset')
+        'asset_id': fields.many2one('product.asset', 'Asset'),
+        'subtype': fields.char(string='Product Subtype', size=128),
     }
     
     

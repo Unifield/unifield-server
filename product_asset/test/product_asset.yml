@@ -160,6 +160,9 @@
     prod_int_code: CHAUSS-INT-1234
     prod_int_name: Boite \xc3\xa0 chaussures
     state: inUse
+    proj_code: 1123
+    location: warzazat
+    name: an event
 
 - 
   Creating a stock.location record
