@@ -36,7 +36,7 @@ class res_partner(osv.osv):
 
     _defaults = {
         'manufacturer': lambda *a: False,
-        'partner_type': lambda *a: 'internal',
+        'partner_type': lambda *a: 'external',
     }
 
 res_partner()
