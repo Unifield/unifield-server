@@ -43,6 +43,9 @@
                                 </option>
                             % endfor
                         </select>
+                        % if tree.expand_button:
+                            <button onclick="TREEVIEW.current.expand_all(); return false" title="Expand all tree elements.">Expand all</button>
+                        % endif
                     </div>
                     % endif
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
