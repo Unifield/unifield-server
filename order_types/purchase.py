@@ -76,12 +76,14 @@ class purchase_order(osv.osv):
         'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
     }
     
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
+        'loan_duration': 2,
     }
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
@@ -153,7 +155,7 @@ class purchase_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
-            two_months = Parser.DateFromString(order.minimum_planned_date) + RelativeDateTime(months=+2)
+            loan_duration = Parser.DateFromString(order.minimum_planned_date) + RelativeDateTime(months=+order.loan_duration)
             order_id = sale_obj.create(cr, uid, {'shop_id': sale_shop.search(cr, uid, [])[0],
                                                  'partner_id': order.partner_id.id,
                                                  'partner_order_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
@@ -163,7 +165,7 @@ class purchase_order(osv.osv):
                                                  'loan_id': order.id,
                                                  'origin': order.name,
                                                  'order_type': 'loan',
-                                                 'delivery_requested_date': two_months.strftime('%Y-%m-%d'),
+                                                 'delivery_requested_date': loan_duration.strftime('%Y-%m-%d'),
                                                  'categ': order.categ,
                                                  'priority': order.priority,})
             for line in order.order_line:
@@ -172,7 +174,7 @@ class purchase_order(osv.osv):
                                                'order_id': order_id,
                                                'price_unit': line.price_unit,
                                                'product_uom_qty': line.product_qty,
-                                               'date_planned': two_months.strftime('%Y-%m-%d'),
+                                               'date_planned': loan_duration.strftime('%Y-%m-%d'),
                                                'delay': 60.0,
                                                'name': line.name,
                                                'type': line.product_id.procure_method})

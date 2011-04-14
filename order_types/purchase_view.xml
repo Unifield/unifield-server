@@ -18,6 +18,7 @@
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
+                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='invoice_method']" position="replace">

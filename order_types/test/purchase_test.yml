@@ -240,6 +240,7 @@
     priority: medium
     categ: asset
     name: Loan5
+    loan_duration: 6
     partner_id: supplier1
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
@@ -294,7 +295,7 @@
 -
   !python {model: sale.order}: |
     from mx.DateTime import *
-    two_month = today() + RelativeDateTime(months=+2)
+    two_month = today() + RelativeDateTime(months=+6)
     sale_ids = self.search(cr, uid, [('loan_id', '=', ref('loan5'))])
     assert sale_ids, ('No sale order has been created as counterpart of the loan')
     for sale in self.browse(cr, uid, sale_ids):

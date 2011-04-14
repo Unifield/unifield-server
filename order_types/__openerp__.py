@@ -27,6 +27,8 @@
                 "purchase", 
                 "msf_partner",
                 "msf_order_date", 
+                "stock",
+                "product_expiry",
                 "stock_inventory_type"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
