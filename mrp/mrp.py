@@ -251,6 +251,10 @@ class mrp_bom(osv.osv):
         @param product_id: Changed product_id
         @return:  Dictionary of changed values
         """
+        if context is None:
+            context = {}
+            context['lang'] = self.pool.get('res.users').browse(cr,uid,uid).context_lang
+            
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v = {'product_uom': prod.uom_id.id}
@@ -709,7 +713,7 @@ class mrp_production(osv.osv):
                         if consumed_qty == 0:
                             consumed_qty = production_qty * f.product_qty / production.product_qty
                         if consumed_qty > 0:
-                            stock_mov_obj.action_consume(cr, uid, [raw_product.id], consumed_qty, production.location_src_id.id, context=context)
+                            stock_mov_obj.action_consume(cr, uid, [raw_product.id], consumed_qty, raw_product.location_id.id, context=context)
 
         if production_mode == 'consume_produce':
             # To produce remaining qty of final product

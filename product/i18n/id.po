@@ -7,14 +7,14 @@ msgstr ""
 "Project-Id-Version: OpenERP Server 6.0dev\n"
 "Report-Msgid-Bugs-To: support@openerp.com\n"
 "POT-Creation-Date: 2011-01-11 11:15+0000\n"
-"PO-Revision-Date: 2011-01-19 12:00+0000\n"
-"Last-Translator: <>\n"
+"PO-Revision-Date: 2011-04-08 06:05+0000\n"
+"Last-Translator: moelyana <Unknown>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-01-25 06:54+0000\n"
-"X-Generator: Launchpad (build 12177)\n"
+"X-Launchpad-Export-Date: 2011-04-09 06:16+0000\n"
+"X-Generator: Launchpad (build 12735)\n"
 
 #. module: product
 #: model:product.template,name:product.product_product_ram512_product_template
@@ -24,7 +24,7 @@ msgstr ""
 #. module: product
 #: field:product.packaging,rows:0
 msgid "Number of Layers"
-msgstr ""
+msgstr "Nomor Layer"
 
 #. module: product
 #: constraint:product.pricelist.item:0
@@ -32,6 +32,8 @@ msgid ""
 "Error ! You cannot assign the Main Pricelist as Other Pricelist in PriceList "
 "Item!"
 msgstr ""
+"Error! Anda tidak dapat menetapkan Pricelist utama sebagai  Pricelist  "
+"lainnya  di Item Pricelist!"
 
 #. module: product
 #: help:product.pricelist.item,product_tmpl_id:0
@@ -39,11 +41,13 @@ msgid ""
 "Set a template if this rule only apply to a template of product. Keep empty "
 "for all products"
 msgstr ""
+"Set template jika aturan ini hanya berlaku untuk  template  produk. Jauhkan "
+"kosong untuk semua  produk"
 
 #. module: product
 #: model:product.category,name:product.cat1
 msgid "Sellable"
-msgstr ""
+msgstr "Bisa Dijual"
 
 #. module: product
 #: model:product.template,name:product.product_product_mb2_product_template
@@ -53,17 +57,17 @@ msgstr ""
 #. module: product
 #: help:product.template,seller_qty:0
 msgid "This is minimum quantity to purchase from Main Supplier."
-msgstr ""
+msgstr "Ini adalah jumlah  minimal  untuk  membeli  dari Pemasok Utama."
 
 #. module: product
 #: model:product.uom,name:product.uom_day
 msgid "Day"
-msgstr ""
+msgstr "Hari"
 
 #. module: product
 #: view:product.product:0
 msgid "UoM"
-msgstr ""
+msgstr "Satuan Unit"
 
 #. module: product
 #: model:product.template,name:product.product_product_pc2_product_template
@@ -73,12 +77,12 @@ msgstr ""
 #. module: product
 #: field:product.product,incoming_qty:0
 msgid "Incoming"
-msgstr ""
+msgstr "Barang Masuk"
 
 #. module: product
 #: field:product.template,mes_type:0
 msgid "Measure Type"
-msgstr ""
+msgstr "Jeni Satuan"
 
 #. module: product
 #: help:res.partner,property_product_pricelist:0
@@ -86,6 +90,8 @@ msgid ""
 "This pricelist will be used, instead of the default one, for sales to the "
 "current partner"
 msgstr ""
+"Pricelist ini akan digunakan, bukan default, untuk penjualan ke mitra saat "
+"ini"
 
 #. module: product
 #: constraint:product.supplierinfo:0
@@ -93,16 +99,17 @@ msgid ""
 "Error: The default UOM and the Supplier Product UOM must be in the same "
 "category."
 msgstr ""
+"Error: The UOM default dan Pemasok Produk UOM harus dalam kategori yang sama."
 
 #. module: product
 #: field:product.template,seller_qty:0
 msgid "Supplier Quantity"
-msgstr ""
+msgstr "Supplier Kuantitas"
 
 #. module: product
 #: selection:product.template,mes_type:0
 msgid "Fixed"
-msgstr ""
+msgstr "Tetap"
 
 #. module: product
 #: code:addons/product/pricelist.py:186
@@ -110,7 +117,7 @@ msgstr ""
 #: code:addons/product/pricelist.py:357
 #, python-format
 msgid "Warning !"
-msgstr ""
+msgstr "Peringatan !"
 
 #. module: product
 #: model:ir.actions.report.xml,name:product.report_product_pricelist
@@ -119,29 +126,29 @@ msgstr ""
 #: field:product.product,pricelist_id:0
 #: view:product.supplierinfo:0
 msgid "Pricelist"
-msgstr ""
+msgstr "Harga"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Base Prices"
-msgstr ""
+msgstr "Harga Dasar"
 
 #. module: product
 #: field:product.pricelist.item,name:0
 msgid "Rule Name"
-msgstr ""
+msgstr "Aturan nama"
 
 #. module: product
 #: field:product.product,code:0
 #: field:product.product,default_code:0
 msgid "Reference"
-msgstr ""
+msgstr "Referensi"
 
 #. module: product
 #: constraint:product.category:0
 msgid "Error ! You can not create recursive categories."
-msgstr ""
+msgstr "Error! Anda tidak dapat membuat kategori rekursif"
 
 #. module: product
 #: help:pricelist.partnerinfo,min_quantity:0
@@ -149,16 +156,18 @@ msgid ""
 "The minimal quantity to trigger this rule, expressed in the supplier UoM if "
 "any or in the default UoM of the product otherrwise."
 msgstr ""
+"Jumlah minimal untuk memicu aturan ini, dinyatakan dalam UoM pemasok jika "
+"ada atau dalam UoM default produk lainnya"
 
 #. module: product
 #: model:product.template,name:product.product_product_24_product_template
 msgid "Keyboard"
-msgstr ""
+msgstr "Papan Ketik:"
 
 #. module: product
 #: model:ir.model,name:product.model_res_partner
 msgid "Partner"
-msgstr ""
+msgstr "Rekanan"
 
 #. module: product
 #: help:product.template,supply_method:0
@@ -166,22 +175,24 @@ msgid ""
 "Produce will generate production order or tasks, according to the product "
 "type. Purchase will trigger purchase orders when requested."
 msgstr ""
+"Produksi akan menghasilkan order produksi  atau tugas, sesuai dengan jenis "
+"produk. bagian pembelian akan memicu pesanan pembelian pada saat diminta"
 
 #. module: product
 #: selection:product.template,cost_method:0
 msgid "Average Price"
-msgstr ""
+msgstr "Harga Rata-rata"
 
 #. module: product
 #: help:product.pricelist.item,name:0
 msgid "Explicit rule name for this pricelist line."
-msgstr ""
+msgstr "Aturan eksplisit nama untuk baris daftar harga ini."
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_uom_categ_form_action
 #: model:ir.ui.menu,name:product.menu_product_uom_categ_form_action
 msgid "Units of Measure Categories"
-msgstr ""
+msgstr "Kategori berdasarkan satuan unit"
 
 #. module: product
 #: model:product.template,name:product.product_product_cpu1_product_template
@@ -196,12 +207,12 @@ msgstr ""
 #. module: product
 #: field:product.price_list,price_list:0
 msgid "PriceList"
-msgstr ""
+msgstr "Daftar Harga"
 
 #. module: product
 #: view:product.template:0
 msgid "UOM"
-msgstr ""
+msgstr "Satuan Ukur"
 
 #. module: product
 #: model:product.uom,name:product.product_uom_unit
@@ -211,12 +222,12 @@ msgstr ""
 #. module: product
 #: view:product.template:0
 msgid "Miscelleanous"
-msgstr ""
+msgstr "Lain lain"
 
 #. module: product
 #: model:product.template,name:product.product_product_worker0_product_template
 msgid "Worker"
-msgstr ""
+msgstr "Pekerja"
 
 #. module: product
 #: help:product.template,sale_ok:0
@@ -224,28 +235,30 @@ msgid ""
 "Determines if the product can be visible in the list of product within a "
 "selection from a sale order line."
 msgstr ""
+"Menentukan apakah produk dapat terlihat di daftar produk dalam pilihan dari "
+"daftar order penjualan."
 
 #. module: product
 #: model:product.pricelist.version,name:product.ver0
 msgid "Default Public Pricelist Version"
-msgstr ""
+msgstr "Acuan Dasar versi daftar harga public"
 
 #. module: product
 #: selection:product.template,cost_method:0
 msgid "Standard Price"
-msgstr ""
+msgstr "Standar Harga"
 
 #. module: product
 #: model:product.pricelist.type,name:product.pricelist_type_sale
 #: field:res.partner,property_product_pricelist:0
 msgid "Sale Pricelist"
-msgstr ""
+msgstr "Daftar Harga  Jual"
 
 #. module: product
 #: view:product.template:0
 #: field:product.template,type:0
 msgid "Product Type"
-msgstr ""
+msgstr "Tipe Produk"
 
 #. module: product
 #: view:product.uom:0
@@ -256,12 +269,12 @@ msgstr ""
 #: code:addons/product/product.py:378
 #, python-format
 msgid "Products: "
-msgstr ""
+msgstr "Produk : "
 
 #. module: product
 #: field:product.category,parent_id:0
 msgid "Parent Category"
-msgstr ""
+msgstr "Induk Kategori"
 
 #. module: product
 #: help:product.product,outgoing_qty:0
@@ -269,6 +282,8 @@ msgid ""
 "Quantities of products that are planned to leave in selected locations or "
 "all internal if none have been selected."
 msgstr ""
+"Kuantitas produk yang direncanakan untuk meninggalkan  di lokasi yang "
+"dipilih  atau semua internal jika tidak ada yang dipilih."
 
 #. module: product
 #: help:product.template,procure_method:0
@@ -277,11 +292,14 @@ msgid ""
 "supplying. 'Make to Order': When needed, purchase or produce for the "
 "procurement request."
 msgstr ""
+"'Jadikan ke Stok': Jika diperlukan, ambil dari stok atau menunggu sampai "
+"kembali dipasok. 'Jadikan ke  Order': Jika diperlukan, membeli atau "
+"memproduksi untuk permintaan procurement."
 
 #. module: product
 #: model:process.node,note:product.process_node_supplier0
 msgid "Supplier name, price, product code, ..."
-msgstr ""
+msgstr "Nama Supplier , harga , produk , kode produk ..."
 
 #. module: product
 #: model:product.template,name:product.product_product_hdd3_product_template
@@ -296,7 +314,7 @@ msgstr ""
 #. module: product
 #: field:product.template,seller_id:0
 msgid "Main Supplier"
-msgstr ""
+msgstr "Pemasok Utama"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_ul_form_action
@@ -306,19 +324,20 @@ msgstr ""
 #: view:product.product:0
 #: view:product.ul:0
 msgid "Packaging"
-msgstr ""
+msgstr "Kemasan"
 
 #. module: product
 #: view:product.product:0
 #: field:product.template,categ_id:0
 msgid "Category"
-msgstr ""
+msgstr "Kategori"
 
 #. module: product
 #: help:product.pricelist.item,min_quantity:0
 msgid ""
 "The rule only applies if the partner buys/sells more than this quantity."
 msgstr ""
+"Aturan hanya berlaku jika rekanan membeli / menjual lebih dari jumlah ini."
 
 #. module: product
 #: model:product.template,name:product.product_product_woodmm0_product_template
@@ -328,65 +347,65 @@ msgstr ""
 #. module: product
 #: field:product.price_list,qty1:0
 msgid "Quantity-1"
-msgstr ""
+msgstr "Kuantitas - 2"
 
 #. module: product
 #: help:product.packaging,ul_qty:0
 msgid "The number of packages by layer"
-msgstr ""
+msgstr "Jumlah paket berdasarkan layer"
 
 #. module: product
 #: field:product.packaging,qty:0
 msgid "Quantity by Package"
-msgstr ""
+msgstr "Kuantitas berdasarkan paket"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 #: field:product.template,state:0
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #. module: product
 #: help:product.template,categ_id:0
 msgid "Select category for the current product"
-msgstr ""
+msgstr "Pilih kategori untuk produk saat ini"
 
 #. module: product
 #: field:product.product,outgoing_qty:0
 msgid "Outgoing"
-msgstr ""
+msgstr "Keluar"
 
 #. module: product
 #: selection:product.uom,uom_type:0
 msgid "Reference UoM for this category"
-msgstr ""
+msgstr "Referensi UoM untuk kategori ini"
 
 #. module: product
 #: model:product.price.type,name:product.list_price
 #: field:product.product,lst_price:0
 msgid "Public Price"
-msgstr ""
+msgstr "Harga Publik"
 
 #. module: product
 #: field:product.price_list,qty5:0
 msgid "Quantity-5"
-msgstr ""
+msgstr "Kuantitas-5"
 
 #. module: product
 #: model:product.category,name:product.product_category_10
 msgid "IT components"
-msgstr ""
+msgstr "Komponen IT"
 
 #. module: product
 #: field:product.template,product_manager:0
 msgid "Product Manager"
-msgstr ""
+msgstr "Manajer Produk"
 
 #. module: product
 #: field:product.supplierinfo,product_name:0
 msgid "Supplier Product Name"
-msgstr ""
+msgstr "Nama Produk Supplier"
 
 #. module: product
 #: model:product.template,name:product.product_product_pc3_product_template
@@ -401,80 +420,84 @@ msgid ""
 "information about your products related to procurement logistics, sales "
 "price, product category, suppliers and so on."
 msgstr ""
+"Produk dapat dibeli dan / atau dijual. Mereka dapat bahan baku, produk yang  "
+"stockable, bahan habis pakai  atau jasa. Bentuk produk berisi informasi "
+"rinci tentang produk anda yang berkaitan dengan pengadaan  logistik, harga "
+"jual, kategori produk, pemasok dan sebagainya."
 
 #. module: product
 #: view:product.pricelist:0
 msgid "Products Price Search"
-msgstr ""
+msgstr "Cari Harga Produk"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 #: field:product.template,description_sale:0
 msgid "Sale Description"
-msgstr ""
+msgstr "Deskripsi Penjualan"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Storage Localisation"
-msgstr ""
+msgstr "Lokalisasi Penyimpanan"
 
 #. module: product
 #: help:product.packaging,length:0
 msgid "The length of the package"
-msgstr ""
+msgstr "Panjang Paket"
 
 #. module: product
 #: help:product.template,weight_net:0
 msgid "The net weight in Kg."
-msgstr ""
+msgstr "Berat Bersih dalam Kg"
 
 #. module: product
 #: help:product.template,state:0
 msgid "Tells the user if he can use the product or not."
-msgstr ""
+msgstr "Beri tahu pengguna jika dia dapat menggunakan produk atau tidak"
 
 #. module: product
 #: field:pricelist.partnerinfo,min_quantity:0
 #: field:product.supplierinfo,qty:0
 msgid "Quantity"
-msgstr ""
+msgstr "Kuantitas"
 
 #. module: product
 #: field:product.packaging,height:0
 msgid "Height"
-msgstr ""
+msgstr "Tinggi"
 
 #. module: product
 #: help:product.pricelist.version,date_end:0
 msgid "Ending date for this pricelist version to be valid."
-msgstr ""
+msgstr "Tanggal akhir untuk versi daftar harga ini akan valid"
 
 #. module: product
 #: model:product.category,name:product.cat0
 msgid "All products"
-msgstr ""
+msgstr "Semua Produk"
 
 #. module: product
 #: model:ir.model,name:product.model_pricelist_partnerinfo
 msgid "pricelist.partnerinfo"
-msgstr ""
+msgstr "Daftar harga.informasi rekanan"
 
 #. module: product
 #: field:product.price_list,qty2:0
 msgid "Quantity-2"
-msgstr ""
+msgstr "Kuantitas-2"
 
 #. module: product
 #: field:product.price_list,qty3:0
 msgid "Quantity-3"
-msgstr ""
+msgstr "Kuantitas-3"
 
 #. module: product
 #: view:product.product:0
 msgid "Codes"
-msgstr ""
+msgstr "Kode"
 
 #. module: product
 #: help:product.supplierinfo,product_uom:0
@@ -482,21 +505,22 @@ msgid ""
 "Choose here the Unit of Measure in which the prices and quantities are "
 "expressed below."
 msgstr ""
+"Pilih di sini Unit Ukuran di mana harga dan kuantitas dinyatakan di bawah ini"
 
 #. module: product
 #: field:product.price_list,qty4:0
 msgid "Quantity-4"
-msgstr ""
+msgstr "Kuantitas-4"
 
 #. module: product
 #: view:res.partner:0
 msgid "Sales & Purchases"
-msgstr ""
+msgstr "Penjualan & Pembelian"
 
 #. module: product
 #: model:product.uom.categ,name:product.uom_categ_wtime
 msgid "Working Time"
-msgstr ""
+msgstr "Hari Kerja"
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_pricelist_action2
@@ -507,6 +531,12 @@ msgid ""
 "each version has several rules. Example: the customer price of a product "
 "category will be based on the supplier price multiplied by 1.80."
 msgstr ""
+"Sebuah daftar harga berisi aturan untuk dievaluasi dalam rangka untuk "
+"menghitung pembelian atau harga jual untuk semua mitra yang ditetapkan  ke "
+"daftar harga. Daftar Harga memiliki beberapa versi  (2010, 2011, Promosi "
+"Februari 2010, dll) dan versi masing-masing  memiliki  beberapa aturan.  "
+"Contoh: harga konsumen dari suatu kategori produk akan didasarkan pada harga "
+"pemasok dikalikan dengan 1,80."
 
 #. module: product
 #: help:product.product,active:0
@@ -514,6 +544,8 @@ msgid ""
 "If the active field is set to False, it will allow you to hide the product "
 "without removing it."
 msgstr ""
+"Jika kolom aktif diatur ke False, itu akan memungkinkan Anda untuk "
+"menyembunyikan produk tanpa menghapusnya."
 
 #. module: product
 #: model:product.template,name:product.product_product_metalcleats0_product_template
@@ -527,11 +559,13 @@ msgid ""
 "No active version for the selected pricelist !\n"
 "Please create or activate one."
 msgstr ""
+"Tidak ada versi  aktif  untuk  daftar harga  yang dipilih!\n"
+"Silakan membuat atau mengaktifkan satu."
 
 #. module: product
 #: model:ir.model,name:product.model_product_uom_categ
 msgid "Product uom categ"
-msgstr ""
+msgstr "Kategori UoM Produk"
 
 #. module: product
 #: model:product.ul,name:product.product_ul_box
@@ -541,17 +575,17 @@ msgstr ""
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Price Computation"
-msgstr ""
+msgstr "Penghitungan Harga"
 
 #. module: product
 #: field:product.template,purchase_ok:0
 msgid "Can be Purchased"
-msgstr ""
+msgstr "Dapat dibeli"
 
 #. module: product
 #: model:product.template,name:product.product_product_cpu2_product_template
 msgid "High speed processor config"
-msgstr ""
+msgstr "Konfigurasi prosessor kecepatan tinggi"
 
 #. module: product
 #: model:process.transition,note:product.process_transition_supplierofproduct0
@@ -559,6 +593,8 @@ msgid ""
 "1 or several supplier(s) can be linked to a product. All information stands "
 "in the product form."
 msgstr ""
+"1 atau beberapa pemasok (s) dapat dikaitkan dengan suatu produk. Semua "
+"informasi berdiri dalam bentuk produk."
 
 #. module: product
 #: help:product.uom,category_id:0
@@ -566,57 +602,59 @@ msgid ""
 "Quantity conversions may happen automatically between Units of Measure in "
 "the same category, according to their respective ratios."
 msgstr ""
+"Konversi Kuantitas dapat terjadi secara otomatis  antara  Satuan Ukuran "
+"dalam  kategori yang sama, sesuai dengan rasio masing-masing."
 
 #. module: product
 #: help:product.packaging,width:0
 msgid "The width of the package"
-msgstr ""
+msgstr "Lebar Paket"
 
 #. module: product
 #: field:product.product,virtual_available:0
 msgid "Virtual Stock"
-msgstr ""
+msgstr "Stok Virtual"
 
 #. module: product
 #: selection:product.category,type:0
 msgid "View"
-msgstr ""
+msgstr "Tampilan"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_template_action_tree
 msgid "Product Templates"
-msgstr ""
+msgstr "Template Produk"
 
 #. module: product
 #: model:product.template,name:product.product_product_restaurantexpenses0_product_template
 msgid "Restaurant Expenses"
-msgstr ""
+msgstr "Beban Restoran"
 
 #. module: product
 #: constraint:product.packaging:0
 #: constraint:product.product:0
 msgid "Error: Invalid ean code"
-msgstr ""
+msgstr "Ada Kesalahan !! kode EAN tidak sah"
 
 #. module: product
 #: field:product.pricelist.item,min_quantity:0
 msgid "Min. Quantity"
-msgstr ""
+msgstr "Min. Kuantitas"
 
 #. module: product
 #: model:ir.model,name:product.model_product_price_type
 msgid "Price Type"
-msgstr ""
+msgstr "Tipe Harga"
 
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Max. Margin"
-msgstr ""
+msgstr "Msx. Marjin"
 
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Base Price"
-msgstr ""
+msgstr "Harga Dasar"
 
 #. module: product
 #: model:product.template,name:product.product_product_fan2_product_template
@@ -626,7 +664,7 @@ msgstr ""
 #. module: product
 #: help:product.supplierinfo,name:0
 msgid "Supplier of this product"
-msgstr ""
+msgstr "Pemasok Produk ini"
 
 #. module: product
 #: help:product.pricelist.version,active:0
@@ -635,6 +673,9 @@ msgid ""
 "not overlaps with original version. You should change the dates and "
 "reactivate the pricelist"
 msgstr ""
+"Ketika versi diduplikasi sudah diatur untuk tidak aktif, sehingga tanggal "
+"tidak tumpang tindih  dengan  versi  aslinya. Anda harus mengubah tanggal "
+"dan mengaktifkan  daftar harga."
 
 #. module: product
 #: model:product.template,name:product.product_product_kitshelfofcm0_product_template
@@ -644,7 +685,7 @@ msgstr ""
 #. module: product
 #: field:product.supplierinfo,name:0
 msgid "Supplier"
-msgstr ""
+msgstr "Pemasok"
 
 #. module: product
 #: model:product.template,name:product.product_product_sidepanel0_product_template
@@ -659,7 +700,7 @@ msgstr ""
 #. module: product
 #: field:product.price.type,name:0
 msgid "Price Name"
-msgstr ""
+msgstr "Nama harga"
 
 #. module: product
 #: model:product.template,name:product.product_product_cpu3_product_template
@@ -673,18 +714,18 @@ msgstr ""
 #: report:product.pricelist:0
 #: field:product.pricelist.version,pricelist_id:0
 msgid "Price List"
-msgstr ""
+msgstr "Daftar Harga"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Suppliers"
-msgstr ""
+msgstr "Pemasok"
 
 #. module: product
 #: view:product.product:0
 msgid "To Purchase"
-msgstr ""
+msgstr "Untuk Pembelian"
 
 #. module: product
 #: help:product.supplierinfo,min_qty:0
@@ -693,11 +734,13 @@ msgid ""
 "Product UoM if not empty, in the default unit of measure of the product "
 "otherwise."
 msgstr ""
+"Kuantitas minimal pembelian kepada  pemasok  ini, dinyatakan dalam Produk "
+"pemasok UoM jika tidak kosong, dalam satuan default ukuran dari produk lain."
 
 #. module: product
 #: view:product.pricelist.item:0
 msgid "New Price ="
-msgstr ""
+msgstr "Harga Baru ="
 
 #. module: product
 #: help:pricelist.partnerinfo,price:0
@@ -705,11 +748,13 @@ msgid ""
 "This price will be considered as a price for the supplier UoM if any or the "
 "default Unit of Measure of the product otherwise"
 msgstr ""
+"Harga ini akan dianggap sebagai harga untuk UoM pemasok jika ada atau Unit "
+"default Ukuran produk lain"
 
 #. module: product
 #: model:product.category,name:product.product_category_accessories
 msgid "Accessories"
-msgstr ""
+msgstr "Aksesori"
 
 #. module: product
 #: field:product.template,sale_delay:0
@@ -719,7 +764,7 @@ msgstr ""
 #. module: product
 #: model:process.transition,name:product.process_transition_supplierofproduct0
 msgid "Supplier of the product"
-msgstr ""
+msgstr "Pemasok  produk"
 
 #. module: product
 #: help:product.template,uos_id:0
@@ -728,6 +773,10 @@ msgid ""
 "management. For example, in food industries, you will manage a stock of ham "
 "but invoice in Kg. Keep empty to use the default UOM."
 msgstr ""
+"Digunakan oleh perusahaan yang mengelola dua unit ukuran: faktur dan "
+"manajemen persediaan. Sebagai contoh, dalam industri makanan, Anda akan "
+"mengelola stok ham tetapi faktur di Kg. Tetap kosong untuk menggunakan  UOM "
+"default."
 
 #. module: product
 #: view:product.pricelist.item:0
@@ -737,50 +786,50 @@ msgstr ""
 #. module: product
 #: field:product.category,child_id:0
 msgid "Child Categories"
-msgstr ""
+msgstr "Kategori Turunan"
 
 #. module: product
 #: field:product.pricelist.version,date_end:0
 msgid "End Date"
-msgstr ""
+msgstr "Tanggal berakhir"
 
 #. module: product
 #: view:product.price_list:0
 msgid "Print"
-msgstr ""
+msgstr "Cetak"
 
 #. module: product
 #: view:product.product:0
 #: field:product.ul,type:0
 msgid "Type"
-msgstr ""
+msgstr "Jenis"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_pricelist_action2
 #: model:ir.ui.menu,name:product.menu_product_pricelist_action2
 #: model:ir.ui.menu,name:product.menu_product_pricelist_main
 msgid "Pricelists"
-msgstr ""
+msgstr "Daftar harga"
 
 #. module: product
 #: field:product.product,partner_ref:0
 msgid "Customer ref"
-msgstr ""
+msgstr "Referensi Pelanggan"
 
 #. module: product
 #: view:product.product:0
 msgid "Miscellaneous"
-msgstr ""
+msgstr "Lain-lain"
 
 #. module: product
 #: field:product.pricelist.type,key:0
 msgid "Key"
-msgstr ""
+msgstr "Kunci"
 
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Rules Test Match"
-msgstr ""
+msgstr "Test Pencocokan Aturan"
 
 #. module: product
 #: help:product.pricelist.item,product_id:0
@@ -788,12 +837,14 @@ msgid ""
 "Set a product if this rule only apply to one product. Keep empty for all "
 "products"
 msgstr ""
+"Mengatur produk jika aturan ini hanya berlaku untuk satu produk. biarkan "
+"tetap kosong untuk semua  produk"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Procurement & Locations"
-msgstr ""
+msgstr "Procurement & Lokasi"
 
 #. module: product
 #: model:product.template,name:product.product_product_kitchendesignproject0_product_template
@@ -803,12 +854,12 @@ msgstr ""
 #. module: product
 #: model:product.uom,name:product.uom_hour
 msgid "Hour"
-msgstr ""
+msgstr "Jam"
 
 #. module: product
 #: selection:product.template,state:0
 msgid "In Development"
-msgstr ""
+msgstr "Dalam Pengembangan"
 
 #. module: product
 #: model:product.template,name:product.product_product_shelfofcm1_product_template
@@ -818,7 +869,7 @@ msgstr ""
 #. module: product
 #: view:product.uom:0
 msgid "Ratio & Precision"
-msgstr ""
+msgstr "Rasio & Presisi"
 
 #. module: product
 #: model:product.uom,name:product.product_uom_gram
@@ -834,20 +885,20 @@ msgstr ""
 #: selection:product.category,type:0
 #: selection:product.template,state:0
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #. module: product
 #: model:process.node,name:product.process_node_supplier0
 #: view:product.supplierinfo:0
 msgid "Supplier Information"
-msgstr ""
+msgstr "Informasi Pemasok"
 
 #. module: product
 #: field:product.price.type,currency_id:0
 #: report:product.pricelist:0
 #: field:product.pricelist,currency_id:0
 msgid "Currency"
-msgstr ""
+msgstr "Mata Uang"
 
 #. module: product
 #: model:product.template,name:product.product_product_ram_product_template
@@ -857,7 +908,7 @@ msgstr ""
 #. module: product
 #: view:product.category:0
 msgid "Product Categories"
-msgstr ""
+msgstr "Kategori Produk"
 
 #. module: product
 #: view:product.uom:0
@@ -871,16 +922,19 @@ msgid ""
 "You can define a conversion rate between several Units of Measure within the "
 "same category."
 msgstr ""
+"Membuat dan mengelola satuan ukuran yang akan  digunakan  dalam  sistem  "
+"anda. Anda dapat menentukan tingkat konversi antara  beberapa  Unit Measure "
+"dalam kategori yang sama."
 
 #. module: product
 #: field:product.packaging,weight:0
 msgid "Total Package Weight"
-msgstr ""
+msgstr "Berat total kemasan"
 
 #. module: product
 #: help:product.packaging,code:0
 msgid "The code of the transport unit."
-msgstr ""
+msgstr "Kode unit transportasi."
 
 #. module: product
 #: help:product.template,standard_price:0
@@ -888,16 +942,18 @@ msgid ""
 "Product's cost for accounting stock valuation. It is the base price for the "
 "supplier price."
 msgstr ""
+"Biaya produk  untuk penilaian akuntansi stok. Ini adalah harga dasar untuk "
+"harga pemasok."
 
 #. module: product
 #: view:product.price.type:0
 msgid "Products Price Type"
-msgstr ""
+msgstr "Jenis Produk Harga"
 
 #. module: product
 #: field:product.product,price_extra:0
 msgid "Variant Price Extra"
-msgstr ""
+msgstr "Variasi harga ekstra"
 
 #. module: product
 #: model:product.template,name:product.product_product_fan_product_template
@@ -907,24 +963,24 @@ msgstr ""
 #. module: product
 #: model:ir.model,name:product.model_product_supplierinfo
 msgid "Information about a product supplier"
-msgstr ""
+msgstr "Informasi tentang produk pemasok"
 
 #. module: product
 #: view:product.product:0
 msgid "Extended Filters..."
-msgstr ""
+msgstr "Filter Tambahan"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 #: field:product.template,description_purchase:0
 msgid "Purchase Description"
-msgstr ""
+msgstr "Deskripsi Pembelian"
 
 #. module: product
 #: constraint:product.pricelist.version:0
 msgid "You cannot have 2 pricelist versions that overlap!"
-msgstr ""
+msgstr "Anda tidak dapat memiliki 2 versi daftar harga yang tumpang tindih!"
 
 #. module: product
 #: help:product.supplierinfo,delay:0
@@ -933,6 +989,9 @@ msgid ""
 "reception of the products in your warehouse. Used by the scheduler for "
 "automatic computation of the purchase order planning."
 msgstr ""
+"Lead waktu dalam hari antara konfirmasi pesanan pembelian dan penerimaan "
+"produk di gudang Anda. Digunakan oleh scheduler untuk perhitungan  otomatis  "
+"dari perencanaan  pesanan  pembelian."
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_pricelist_action
@@ -941,36 +1000,39 @@ msgid ""
 "manage new versions of a price list. Some examples of versions: 2010, 2011, "
 "Summer Promotion, etc."
 msgstr ""
+"Ada bisa lebih dari satu versi sebuah daftar harga . Di sini Anda dapat "
+"membuat dan mengelola versi baru dari daftar harga. Beberapa contoh versi: "
+"2010, 2011, Summer Promosi, dll"
 
 #. module: product
 #: selection:product.template,type:0
 msgid "Stockable Product"
-msgstr ""
+msgstr "Produk yg tersedia"
 
 #. module: product
 #: field:product.packaging,code:0
 msgid "Code"
-msgstr ""
+msgstr "Kode"
 
 #. module: product
 #: view:product.supplierinfo:0
 msgid "Seq"
-msgstr ""
+msgstr "Urutan"
 
 #. module: product
 #: view:product.price_list:0
 msgid "Calculate Product Price per unit base on pricelist version."
-msgstr ""
+msgstr "Kalkulasi Harga Produk per unit berdasarkan versi daftar harga"
 
 #. module: product
 #: model:ir.model,name:product.model_product_ul
 msgid "Shipping Unit"
-msgstr ""
+msgstr "Unit Pengiriman"
 
 #. module: product
 #: field:pricelist.partnerinfo,suppinfo_id:0
 msgid "Partner Information"
-msgstr ""
+msgstr "Informasi Rekanan"
 
 #. module: product
 #: selection:product.ul,type:0
@@ -982,22 +1044,22 @@ msgstr ""
 #: view:product.product:0
 #: view:product.template:0
 msgid "Information"
-msgstr ""
+msgstr "Informasi"
 
 #. module: product
 #: view:product.pricelist.item:0
 msgid "Products Listprices Items"
-msgstr ""
+msgstr "Daftar harga item produk"
 
 #. module: product
 #: view:product.packaging:0
 msgid "Other Info"
-msgstr ""
+msgstr "Informasi Lainnya"
 
 #. module: product
 #: field:product.pricelist.version,items_id:0
 msgid "Price List Items"
-msgstr ""
+msgstr "Daftar harga item"
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_uom_categ_form_action
@@ -1007,21 +1069,25 @@ msgid ""
 "be converted to each other. For example, in the unit of measure category "
 "\"Time\", you will have the following UoM: Hours, Days."
 msgstr ""
+"Membuat dan mengelola unit kategori ukuran yang akan digunakan dalam sistem "
+"anda. Jika beberapa unit ukuran berada dalam kategori yang sama, mereka "
+"dapat dikonversi ke satu sama lain. Sebagai contoh, dalam satuan kategori "
+"mengukur \"Waktu \", Anda akan memiliki UoM berikut: Jam, Hari."
 
 #. module: product
 #: selection:product.uom,uom_type:0
 msgid "Bigger than the reference UoM"
-msgstr ""
+msgstr "Lebih besar dari referensi UoM"
 
 #. module: product
 #: model:ir.module.module,shortdesc:product.module_meta_information
 msgid "Products & Pricelists"
-msgstr ""
+msgstr "Produk & daftar harga"
 
 #. module: product
 #: view:product.product:0
 msgid "To Sell"
-msgstr ""
+msgstr "Untuk dijual"
 
 #. module: product
 #: model:product.category,name:product.product_category_services0
@@ -1031,7 +1097,7 @@ msgstr ""
 #. module: product
 #: field:product.pricelist.item,price_surcharge:0
 msgid "Price Surcharge"
-msgstr ""
+msgstr "Harga Surecharge"
 
 #. module: product
 #: model:product.template,name:product.product_product_mb1_product_template
@@ -1041,7 +1107,7 @@ msgstr ""
 #. module: product
 #: field:product.product,packaging:0
 msgid "Logistical Units"
-msgstr ""
+msgstr "Unit Logistik"
 
 #. module: product
 #: field:product.category,complete_name:0
@@ -1055,12 +1121,12 @@ msgstr ""
 #: field:product.uom,name:0
 #: field:product.uom.categ,name:0
 msgid "Name"
-msgstr ""
+msgstr "Nama"
 
 #. module: product
 #: view:product.product:0
 msgid "Stockable"
-msgstr ""
+msgstr "Bisa Distok"
 
 #. module: product
 #: model:product.template,name:product.product_product_woodlintelm0_product_template
@@ -1075,11 +1141,16 @@ msgid ""
 "contains detailed information about your products related to procurement "
 "logistics, sales price, product category, suppliers and so on."
 msgstr ""
+"Anda harus mendefinisikan sebuah Produk untuk semua yang anda beli atau "
+"jual. Produk dapat bahan baku, produk stockable, bahan habis pakai atau "
+"jasa. Bentuk produk berisi informasi rinci tentang produk anda yang "
+"berkaitan dengan procurement logistik, harga jual, kategori produk, pemasok "
+"dan sebagainya."
 
 #. module: product
 #: model:product.uom,name:product.product_uom_kgm
 msgid "kg"
-msgstr ""
+msgstr "Kg"
 
 #. module: product
 #: model:product.uom,name:product.product_uom_meter
@@ -1089,7 +1160,7 @@ msgstr ""
 #. module: product
 #: selection:product.template,state:0
 msgid "Obsolete"
-msgstr ""
+msgstr "Non-Aktif"
 
 #. module: product
 #: model:product.uom,name:product.product_uom_km
@@ -1103,18 +1174,22 @@ msgid ""
 "at the end of the year), Average Price: the cost price is recomputed at each "
 "reception of products."
 msgstr ""
+"Standar Harga: harga biaya tetap dan menghitung ulang secara periodik "
+"(biasanya pada akhir tahun), Rata-rata Harga: harga biaya menghitung ulang "
+"pada setiap penerimaan produk."
 
 #. module: product
 #: help:product.category,sequence:0
 msgid ""
 "Gives the sequence order when displaying a list of product categories."
 msgstr ""
+"Memberikan perintah urutan ketika menampilkan daftar kategori produk."
 
 #. module: product
 #: field:product.uom,factor:0
 #: field:product.uom,factor_inv:0
 msgid "Ratio"
-msgstr ""
+msgstr "Rasio"
 
 #. module: product
 #: help:product.template,purchase_ok:0
@@ -1122,41 +1197,43 @@ msgid ""
 "Determine if the product is visible in the list of products within a "
 "selection from a purchase order line."
 msgstr ""
+"Menentukan apakah produk yang terlihat di daftar produk dalam pilihan dari "
+"garis order pembelian."
 
 #. module: product
 #: field:product.template,weight_net:0
 msgid "Net weight"
-msgstr ""
+msgstr "Berat Bersih"
 
 #. module: product
 #: field:product.packaging,width:0
 msgid "Width"
-msgstr ""
+msgstr "Lebar"
 
 #. module: product
 #: help:product.price.type,field:0
 msgid "Associated field in the product form."
-msgstr ""
+msgstr "Asosiasi field dalam bentuk produk."
 
 #. module: product
 #: view:product.product:0
 msgid "Unit of Measure"
-msgstr ""
+msgstr "Satuan Ukuran"
 
 #. module: product
 #: field:product.template,procure_method:0
 msgid "Procurement Method"
-msgstr ""
+msgstr "Metode Procurement"
 
 #. module: product
 #: report:product.pricelist:0
 msgid "Printing Date"
-msgstr ""
+msgstr "Mencetak Tanggal"
 
 #. module: product
 #: field:product.template,uos_id:0
 msgid "Unit of Sale"
-msgstr ""
+msgstr "Unit Penjualan"
 
 #. module: product
 #: model:ir.module.module,description:product.module_meta_information
@@ -1189,22 +1266,27 @@ msgid ""
 "and the reception of goods for this product and for the default supplier. It "
 "is used by the scheduler to order requests based on reordering delays."
 msgstr ""
+"Ini adalah keterlambatan rata-rata di hari antara konfirmasi pesanan "
+"pembelian dan penerimaan barang untuk produk ini dan untuk supplier default. "
+"Hal ini digunakan oleh scheduler untuk memesan berdasarkan permintaan "
+"penundaan penataan kembali."
 
 #. module: product
 #: help:product.template,seller_id:0
 msgid "Main Supplier who has highest priority in Supplier List."
 msgstr ""
+"Supplier utama yang memiliki prioritas tertinggi dalam Daftar Supplier."
 
 #. module: product
 #: model:product.category,name:product.product_category_services
 #: view:product.product:0
 msgid "Services"
-msgstr ""
+msgstr "Layanan"
 
 #. module: product
 #: field:product.pricelist.item,base_pricelist_id:0
 msgid "If Other Pricelist"
-msgstr ""
+msgstr "Jika Pricelist Lainnya"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_normal_action
@@ -1213,34 +1295,34 @@ msgstr ""
 #: model:ir.ui.menu,name:product.menu_products
 #: view:product.product:0
 msgid "Products"
-msgstr ""
+msgstr "Produk"
 
 #. module: product
 #: help:product.packaging,rows:0
 msgid "The number of layers on a pallet or box"
-msgstr ""
+msgstr "Nomor dari lapisan pallet atau box"
 
 #. module: product
 #: help:product.pricelist.item,base:0
 msgid "The mode for computing the price for this rule."
-msgstr ""
+msgstr "Mode untuk menghitung harga untuk peraturan ini."
 
 #. module: product
 #: view:product.packaging:0
 #: view:product.product:0
 msgid "Pallet Dimension"
-msgstr ""
+msgstr "Dimensi Pallet"
 
 #. module: product
 #: code:addons/product/product.py:603
 #, python-format
 msgid " (copy)"
-msgstr ""
+msgstr " (salinan)"
 
 #. module: product
 #: field:product.template,seller_ids:0
 msgid "Partners"
-msgstr ""
+msgstr "Rekanan"
 
 #. module: product
 #: help:product.template,sale_delay:0
@@ -1249,18 +1331,21 @@ msgid ""
 "order and the delivery of the finished products. It's the time you promise "
 "to your customers."
 msgstr ""
+"Ini adalah keterlambatan rata-rata di hari antara konfirmasi pesanan "
+"pelanggan dan pengiriman produk jadi. Ini waktu Anda berjanji kepada "
+"pelanggan Anda."
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Second UoM"
-msgstr ""
+msgstr "UoM Kedua"
 
 #. module: product
 #: code:addons/product/product.py:142
 #, python-format
 msgid "Error !"
-msgstr ""
+msgstr "Ada Kesalahan !!!"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_uom_form_action
@@ -1268,12 +1353,12 @@ msgstr ""
 #: model:ir.ui.menu,name:product.next_id_16
 #: view:product.uom:0
 msgid "Units of Measure"
-msgstr ""
+msgstr "Satuan Unit"
 
 #. module: product
 #: field:product.supplierinfo,min_qty:0
 msgid "Minimal Quantity"
-msgstr ""
+msgstr "Kuantitas minimal"
 
 #. module: product
 #: model:product.category,name:product.product_category_pc
@@ -1286,16 +1371,18 @@ msgid ""
 "This supplier's product code will be used when printing a request for "
 "quotation. Keep empty to use the internal one."
 msgstr ""
+"Kode produk pemasok ini akan digunakan saat mencetak permintaan untuk "
+"kuotasi. Tetap kosongkan untuk keperluan internal."
 
 #. module: product
 #: selection:product.template,procure_method:0
 msgid "Make to Stock"
-msgstr ""
+msgstr "Buat Stok"
 
 #. module: product
 #: field:product.pricelist.item,price_version_id:0
 msgid "Price List Version"
-msgstr ""
+msgstr "Versi Daftar Harga"
 
 #. module: product
 #: help:product.pricelist.item,sequence:0
@@ -1304,11 +1391,14 @@ msgid ""
 "gives highest priority to lowest sequence and stops as soon as a matching "
 "item is found."
 msgstr ""
+"Memberikan urutan di mana item daftar harga akan diperiksa. Evaluasi ini "
+"memberikan prioritas tertinggi untuk urutan terendah dan berhenti segera "
+"setelah barang yang cocok ditemukan."
 
 #. module: product
 #: selection:product.template,type:0
 msgid "Consumable"
-msgstr ""
+msgstr "Dapat dikonsumsi"
 
 #. module: product
 #: help:product.price.type,currency_id:0
@@ -1318,33 +1408,33 @@ msgstr ""
 #. module: product
 #: help:product.template,weight:0
 msgid "The gross weight in Kg."
-msgstr ""
+msgstr "Berat kotor dalam kg"
 
 #. module: product
 #: view:product.product:0
 #: view:product.template:0
 msgid "Procurement"
-msgstr ""
+msgstr "procurement"
 
 #. module: product
 #: field:product.uom,category_id:0
 msgid "UoM Category"
-msgstr ""
+msgstr "Kategori UoM"
 
 #. module: product
 #: field:product.template,loc_rack:0
 msgid "Rack"
-msgstr ""
+msgstr "Rak"
 
 #. module: product
 #: field:product.template,uom_po_id:0
 msgid "Purchase Unit of Measure"
-msgstr ""
+msgstr "Unit ukur pembelian"
 
 #. module: product
 #: field:product.template,supply_method:0
 msgid "Supply method"
-msgstr ""
+msgstr "Metode supply"
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_category_action
@@ -1353,11 +1443,14 @@ msgid ""
 "category to get the list of all products linked to this category or to a "
 "child of this category."
 msgstr ""
+"Berikut adalah daftar semua produk Anda diklasifikasikan berdasarkan "
+"kategori. Anda dapat mengklik kategori untuk mendapatkan daftar semua produk "
+"yang terkait dengan kategori ini atau untuk turunan dari kategori ini."
 
 #. module: product
 #: view:product.product:0
 msgid "Group by..."
-msgstr ""
+msgstr "Dikelompokan berdasarkan ...."
 
 #. module: product
 #: model:product.template,name:product.product_product_cpu_gen_product_template
@@ -1371,11 +1464,13 @@ msgid ""
 "Conversion from Product UoM m to Default UoM PCE is not possible as they "
 "both belong to different Category!."
 msgstr ""
+"Konversi dari m UoM Produk ke Default UoM PCE tidak mungkin karena mereka "
+"berdua berasal Kategori berbeda!."
 
 #. module: product
 #: field:product.pricelist.version,date_start:0
 msgid "Start Date"
-msgstr ""
+msgstr "Tanggal Mulai"
 
 #. module: product
 #: help:product.template,produce_delay:0
@@ -1385,6 +1480,10 @@ msgid ""
 "the level of this product. Different lead times will be summed for all "
 "levels and purchase orders."
 msgstr ""
+"Keterlambatan rata-rata di hari untuk menghasilkan produk ini. Ini hanya "
+"untuk urutan produksi dan, jika RUU multi-level material, itu hanya untuk "
+"tingkat produk ini. Lead time yang berbeda akan dijumlahkan untuk semua "
+"tingkatan dan pesanan pembelian."
 
 #. module: product
 #: help:product.product,qty_available:0
@@ -1392,6 +1491,8 @@ msgid ""
 "Current quantities of products in selected locations or all internal if none "
 "have been selected."
 msgstr ""
+"Saat Ini jumlah produk di lokasi yang dipilih atau semua internal jika tidak "
+"satupun yang telah dipilih."
 
 #. module: product
 #: model:product.template,name:product.product_product_pc1_product_template
@@ -1404,37 +1505,41 @@ msgid ""
 "If the active field is set to False, it will allow you to hide the pricelist "
 "without removing it."
 msgstr ""
+"Jika field aktif diset ke False, itu akan memungkinkan Anda untuk "
+"menyembunyikan daftar harga tanpa menghapusnya."
 
 #. module: product
 #: field:product.product,qty_available:0
 msgid "Real Stock"
-msgstr ""
+msgstr "Stok Real"
 
 #. module: product
 #: model:product.uom,name:product.product_uom_cm
 msgid "cm"
-msgstr ""
+msgstr "cm"
 
 #. module: product
 #: model:ir.model,name:product.model_product_uom
 msgid "Product Unit of Measure"
-msgstr ""
+msgstr "Ukuran unit produk"
 
 #. module: product
 #: constraint:product.template:0
 msgid ""
 "Error: The default UOM and the purchase UOM must be in the same category."
 msgstr ""
+"Ada  Kesalahan ! Acuan dasar UoM dan Pembelian UoM harus ada dalam kategori "
+"yang sama."
 
 #. module: product
 #: field:product.uom,rounding:0
 msgid "Rounding Precision"
-msgstr ""
+msgstr "Ketepatan Pembulatan"
 
 #. module: product
 #: view:product.uom:0
 msgid "Unit of Measure Properties"
-msgstr ""
+msgstr "Properti UoM"
 
 #. module: product
 #: model:product.template,name:product.product_product_shelf1_product_template
@@ -1444,12 +1549,12 @@ msgstr ""
 #. module: product
 #: selection:product.template,supply_method:0
 msgid "Buy"
-msgstr ""
+msgstr "Beli"
 
 #. module: product
 #: view:product.uom.categ:0
 msgid "Units of Measure categories"
-msgstr ""
+msgstr "Kategori UoM"
 
 #. module: product
 #: help:product.packaging,weight_ul:0
@@ -1459,7 +1564,7 @@ msgstr ""
 #. module: product
 #: selection:product.uom,uom_type:0
 msgid "Smaller than the reference UoM"
-msgstr ""
+msgstr "Lebih kecil dari referensi UoM"
 
 #. module: product
 #: field:product.price.type,active:0
@@ -1468,38 +1573,38 @@ msgstr ""
 #: field:product.product,active:0
 #: field:product.uom,active:0
 msgid "Active"
-msgstr ""
+msgstr "Aktif"
 
 #. module: product
 #: field:product.product,price_margin:0
 msgid "Variant Price Margin"
-msgstr ""
+msgstr "Varian Margin Harga"
 
 #. module: product
 #: sql_constraint:product.uom:0
 msgid "The conversion ratio for a unit of measure cannot be 0!"
-msgstr ""
+msgstr "Rasio dari konversi untuk UoM tidak boleh 0!"
 
 #. module: product
 #: help:product.packaging,ean:0
 msgid "The EAN code of the package unit."
-msgstr ""
+msgstr "Kode EAN untuk unit paket"
 
 #. module: product
 #: field:product.packaging,weight_ul:0
 msgid "Empty Package Weight"
-msgstr ""
+msgstr "Berat paket kosong"
 
 #. module: product
 #: field:product.price.type,field:0
 msgid "Product Field"
-msgstr ""
+msgstr "Kolom produk"
 
 #. module: product
 #: model:ir.actions.act_window,name:product.product_pricelist_type_action
 #: model:ir.ui.menu,name:product.menu_product_pricelist_type_action2
 msgid "Pricelists Types"
-msgstr ""
+msgstr "Jenis Daftar Harga"
 
 #. module: product
 #: help:product.uom,factor:0
@@ -2215,17 +2320,17 @@ msgstr ""
 #. module: product
 #: field:product.template,list_price:0
 msgid "Sale Price"
-msgstr ""
+msgstr "Harga Jual"
 
 #. module: product
 #: field:product.category,type:0
 msgid "Category Type"
-msgstr ""
+msgstr "Jenis Kategori"
 
 #. module: product
 #: model:product.category,name:product.cat2
 msgid "Private"
-msgstr ""
+msgstr "Pribadi"
 
 #. module: product
 #: help:product.template,uos_coeff:0
@@ -2242,4 +2347,4 @@ msgstr ""
 #. module: product
 #: field:product.pricelist.item,price_discount:0
 msgid "Price Discount"
-msgstr ""
+msgstr "harga discount"

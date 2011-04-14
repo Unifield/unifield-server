@@ -1248,9 +1248,9 @@ class stock_picking(osv.osv):
 
             if new_picking:
                 move_obj.write(cr, uid, [c.id for c in complete], {'picking_id': new_picking})
-                for move in complete:
-                    if prodlot_ids.get(move.id):
-                        move_obj.write(cr, uid, [move.id], {'prodlot_id': prodlot_ids[move.id]})
+            for move in complete:
+                if prodlot_ids.get(move.id):
+                    move_obj.write(cr, uid, [move.id], {'prodlot_id': prodlot_ids[move.id]})
             for move in too_many:
                 product_qty = move_product_qty[move.id]
                 defaults = {
@@ -1463,7 +1463,7 @@ class stock_move(osv.osv):
     _description = "Stock Move"
     _order = 'date_expected desc, id'
     _log_create = False
-    
+
     def action_partial_move(self, cr, uid, ids, context=None):
         if context is None: context = {}
         partial_id = self.pool.get("stock.partial.move").create(
@@ -1481,7 +1481,7 @@ class stock_move(osv.osv):
             'domain': '[]',
             'context': context
         }
-        
+
 
     def name_get(self, cr, uid, ids, context=None):
         res = []
@@ -2556,7 +2556,7 @@ class stock_inventory(osv.osv):
             move_ids = []
             for line in inv.inventory_line_id:
                 pid = line.product_id.id
-                product_context.update(uom=line.product_uom.id,date=inv.date)
+                product_context.update(uom=line.product_uom.id, date=inv.date, prodlot_id=line.prod_lot_id.id)
                 amount = location_obj._product_get(cr, uid, line.location_id.id, [pid], product_context)[pid]
 
                 change = line.product_qty - amount
@@ -2581,11 +2581,6 @@ class stock_inventory(osv.osv):
                             'product_qty': -change,
                             'location_id': line.location_id.id,
                             'location_dest_id': location_id,
-                        })
-                    if lot_id:
-                        value.update({
-                            'prodlot_id': lot_id,
-                            'product_qty': line.product_qty
                         })
                     move_ids.append(self._inventory_line_hook(cr, uid, line, value))
             message = _('Inventory') + " '" + inv.name + "' "+ _("is done.")
@@ -2646,10 +2641,9 @@ class stock_inventory_line(osv.osv):
         @return:  Dictionary of changed values
         """
         if not product:
-            return {}
-        if not uom:
-            prod = self.pool.get('product.product').browse(cr, uid, [product], {'uom': uom})[0]
-            uom = prod.uom_id.id
+            return {'value': {'product_qty': 0.0, 'product_uom': False}}
+        obj_product = self.pool.get('product.product').browse(cr, uid, product)
+        uom = uom or obj_product.uom_id.id
         amount = self.pool.get('stock.location')._product_get(cr, uid, location_id, [product], {'uom': uom, 'to_date': to_date})[product]
         result = {'product_qty': amount, 'product_uom': uom}
         return {'value': result}
