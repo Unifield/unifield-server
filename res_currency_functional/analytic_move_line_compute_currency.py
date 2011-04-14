@@ -18,29 +18,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Multi-Currency Management",
-    "version": "1.0",
-    "depends": ["purchase", "account_analytic_plans", "account_journal"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to only use a subset of currencies, and have them available
-    for each accounting entry.
+
+from osv import fields, osv
+import decimal_precision as dp
+
+class account_analytic_line_compute_currency(osv.osv):
+    _inherit = "account.analytic.line"
     
-    """,
-    "init_xml": [],
-    'update_xml': [
-        'res_currency_functional_view.xml',
-        'account_move_line_view.xml',
-        'account_bank_statement_view.xml',
-        'order_line_view.xml',
-    ],
-    'test': [
-        'test/res_currency_functional.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+    def refresh_rate(self, cr, uid, ids):
+        for analytic_line in self.browse(cr, uid, ids):
+            amount = analytic_line.move_id.debit - analytic_line.move_id.credit
+            cr.execute('update account_analytic_line set amount=%s where id=%s', 
+                      (amount, analytic_line.id))
+    
+account_analytic_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

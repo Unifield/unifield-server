@@ -35,7 +35,14 @@ class account_journal(osv.osv):
                 ('hr', 'HR Journal'), \
                 ('accrual', 'Accrual Journal'), \
                 ('stock', 'Stock Journal'), \
-                ('depreciation', 'Depreciation Journal')]
+                ('depreciation', 'Depreciation Journal'), \
+                # Old journal types: not used, but kept to
+                # not break OpenERP's demo/install data
+                ('sale', 'Sale'), \
+                ('sale_refund','Sale Refund'), \
+                ('purchase_refund','Purchase Refund'), \
+                ('general', 'General'), \
+                ('situation', 'Opening/Closing Situation')]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),

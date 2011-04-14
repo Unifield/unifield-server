@@ -29,34 +29,55 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         analytic_obj = self.pool.get('account.analytic.line')
         for move_line in self.browse(cr, uid, ids):
-            if (move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0) \
-                and move_line.period_id.state != 'done':
-                # amount currency is not set; it is computed from the 2 other fields
-                ctx = {}
-                if move_line.date:
-                    ctx['date'] = move_line.date
-                amount_currency = move_line.debit_currency - move_line.credit_currency
-                debit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
-                    move_line.functional_currency_id.id, move_line.debit_currency, round=True, context=ctx)
-                credit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
-                    move_line.functional_currency_id.id, move_line.credit_currency, round=True, context=ctx)
-                cr.execute('update account_move_line set debit=%s, \
-                                                         credit=%s, \
-                                                         amount_currency=%s where id=%s', 
-                          (debit_computed, credit_computed, amount_currency, move_line.id))
-            else:
-                # debit/credit currency are not set; it is computed from the amount currency
-                debit_currency = 0.0
-                credit_currency = 0.0
-                if move_line.amount_currency < 0:
-                    credit_currency = -move_line.amount_currency
-                else:
-                    debit_currency = move_line.amount_currency
-                cr.execute('update account_move_line set debit_currency=%s, \
-                                                         credit_currency=%s where id=%s', 
-                          (debit_currency, credit_currency, move_line.id))
-            # Refresh the associated analytic lines
-            # analytic_obj.refresh_rate(cr, uid, move_line.analytic_lines)
+            # amount currency is not set; it is computed from the 2 other fields
+            ctx = {}
+            if move_line.date:
+                ctx['date'] = move_line.date
+            if move_line.period_id.state != 'done':
+                if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
+                    # amount currency is not set; it is computed from the 2 other fields
+                    ctx = {}
+                    if move_line.date:
+                        ctx['date'] = move_line.date
+                    amount_currency = move_line.debit_currency - move_line.credit_currency
+                    debit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
+                        move_line.functional_currency_id.id, move_line.debit_currency, round=True, context=ctx)
+                    credit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
+                        move_line.functional_currency_id.id, move_line.credit_currency, round=True, context=ctx)
+                    cr.execute('update account_move_line set debit=%s, \
+                                                             credit=%s, \
+                                                             amount_currency=%s where id=%s', 
+                              (debit_computed, credit_computed, amount_currency, move_line.id))
+                elif move_line.debit_currency == 0.0 and \
+                     move_line.credit_currency == 0.0 and \
+                     move_line.amount_currency == 0.0 and \
+                     (move_line.debit != 0.0 or move_line.debit != 0.0):
+                    # only the debit/credit in functional currency are set;
+                    # the amounts in booking currency are computed
+                    debit_currency_computed = cur_obj.compute(cr, uid, move_line.functional_currency_id.id,
+                        move_line.currency_id.id, move_line.debit, round=True, context=ctx)
+                    credit_currency_computed = cur_obj.compute(cr, uid, move_line.functional_currency_id.id,
+                        move_line.currency_id.id, move_line.credit, round=True, context=ctx)
+                    amount_currency = debit_currency_computed - credit_currency_computed
+                    cr.execute('update account_move_line set debit_currency=%s, \
+                                                             credit_currency=%s, \
+                                                             amount_currency=%s where id=%s', 
+                              (debit_currency_computed, credit_currency_computed, amount_currency, move_line.id))
+                elif move_line.debit_currency == 0.0 and \
+                     move_line.credit_currency == 0.0 and \
+                     move_line.amount_currency != 0.0:
+                    # debit/credit currency are not set; it is computed from the amount currency
+                    debit_currency = 0.0
+                    credit_currency = 0.0
+                    if move_line.amount_currency < 0:
+                        credit_currency = -move_line.amount_currency
+                    else:
+                        debit_currency = move_line.amount_currency
+                    cr.execute('update account_move_line set debit_currency=%s, \
+                                                             credit_currency=%s where id=%s', 
+                              (debit_currency, credit_currency, move_line.id))
+                # Refresh the associated analytic lines
+                analytic_obj.refresh_rate(cr, uid, move_line.analytic_lines)
     
 
     def create(self, cr, uid, vals, context={}):

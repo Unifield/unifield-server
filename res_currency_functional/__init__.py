@@ -24,6 +24,7 @@ import res_currency_rate_functional
 import account_move_compute_currency
 import account_move_line_compute_currency
 import account_bank_statement_line_compute_currency
+import analytic_move_line_compute_currency
 import order_line_compute_currency
 import wizard
 
