@@ -16,7 +16,7 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
-    internal_type: regular
+    order_type: regular
 -
   We create line for this regular sale order
 -
@@ -73,7 +73,7 @@
     partner_shipping_id: address2
     partner_id: supplier2
     pricelist_id: purchase.list0
-    internal_type: regular
+    order_type: regular
 -
   We create line for this regular sale order
 -
@@ -130,7 +130,7 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
-    internal_type: donation_exp
+    order_type: donation_exp
 -
   We create line for this donation
 -
@@ -188,7 +188,7 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
-    internal_type: donation_st
+    order_type: donation_st
 -
   We create line for this donation
 -
@@ -245,7 +245,7 @@
     partner_shipping_id: address1
     partner_id: supplier1
     pricelist_id: purchase.list0
-    internal_type: loan
+    order_type: loan
 -
   We create line for this loan
 -

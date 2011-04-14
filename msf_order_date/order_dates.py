@@ -163,12 +163,12 @@ def create_history(self, cr, uid, ids, data, class_name, field_name, fields, con
                 
     return
 
-def common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context={}):
+def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
     '''
     Common function when type of order is changing
     '''
     v = {}
-    if order_type == 'international' and rts and not shipment_date:
+    if internal_type == 'international' and rts and not shipment_date:
         v.update({'shipment_date': rts})
         
     return v
@@ -388,21 +388,21 @@ class purchase_order(osv.osv):
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'order_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
+        'internal_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
                                         ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
     }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'order_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'internal',
     }
     
-    def order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
         '''
-        Set the shipment date if the order_type == international
+        Set the shipment date if the internal_type == international
         '''        
-        return {'value': common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context=context)}
+        return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
     
     def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
         '''
@@ -624,21 +624,21 @@ class sale_order(osv.osv):
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'order_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
+        'internal_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
                                         ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),
         'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
     }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'order_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'internal',
     }
     
-    def order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
         '''
-        Set the shipment date if the order_type == international
+        Set the shipment date if the internal_type == international
         '''
-        return {'value': common_order_type_change(self, cr, uid, ids, order_type, rts, shipment_date, context=context)}
+        return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
     
     def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
         '''

@@ -10,18 +10,18 @@
             <field name="arch" type="xml">
                 <data>
                     <!-- <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
-                        <field name="partner_id" on_change="onchange_partner_id(partner_id, internal_type)" context="{'search_default_supplier':1}" />
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_supplier':1}" />
                     </xpath> -->
                     
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="internal_type" on_change="onchange_internal_type(internal_type, partner_id)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
                         <field name="details" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='invoice_method']" position="replace">
-                        <field name="invoice_method" attrs="{'readonly': [('internal_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                        <field name="invoice_method" attrs="{'readonly': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
                     </xpath>
                 </data>
             </field>

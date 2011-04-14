@@ -30,6 +30,12 @@ from tools.translate import _
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
+
+    def copy(self, cr, uid, id, defaults, context={}):
+        '''
+        Delete the loan_id field on the new sale.order
+        '''
+        return super(sale_order, self).copy(cr, uid, id, defaults={'loan_id': False}, context=context)
     
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context={}):
@@ -41,7 +47,7 @@ class sale_order(osv.osv):
         
         for sale in self.browse(cr, uid, ids):
             partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
-            if sale.internal_type != 'regular' or (partner and partner.partner_type == 'internal'):
+            if sale.order_type != 'regular' or (partner and partner.partner_type == 'internal'):
                 res[sale.id] = True
             else:
                 for invoice in sale.invoice_ids:
@@ -106,11 +112,11 @@ class sale_order(osv.osv):
     def _get_noinvoice(self, cr, uid, ids, name, arg, context={}):
         res = {}
         for sale in self.browse(cr, uid, ids):
-            res[sale.id] = sale.internal_type != 'regular' or sale.partner_id.partner_type == 'internal'
+            res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
     
     _columns = {
-        'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
@@ -124,7 +130,7 @@ class sale_order(osv.osv):
     }
     
     _defaults = {
-        'internal_type': lambda *a: 'regular',
+        'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
     }
@@ -142,11 +148,11 @@ class sale_order(osv.osv):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
-            if order.partner_id.partner_type == 'internal' and order.internal_type == 'regular':
+            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
-            elif order.internal_type in ['donation_exp', 'donation_st', 'loan']:
+            elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
@@ -198,7 +204,7 @@ class sale_order(osv.osv):
                         })
                     move_id = self.pool.get('stock.move').create(cr, uid, {
                         'name': line.name[:64],
-                        'type_id': order.internal_type == 'donation_exp' and loss_id or False,
+                        'type_id': order.order_type == 'donation_exp' and loss_id or False,
                         'picking_id': picking_id,
                         'product_id': line.product_id.id,
                         'date': date_planned,
@@ -289,7 +295,7 @@ class sale_order(osv.osv):
                                                  'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
                                                  'loan_id': order.id,
                                                  'origin': order.name,
-                                                 'internal_type': 'loan',
+                                                 'order_type': 'loan',
                                                  'delivery_requested_date': two_months.strftime('%Y-%m-%d'),
                                                  'categ': order.categ,
                                                  'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
@@ -318,12 +324,12 @@ class sale_order(osv.osv):
         when the internal_type of the order is 'direct'
         '''
         for order in self.browse(cr, uid, ids):
-            if order.internal_type != 'direct':
+            if order.order_type != 'direct':
                 return super(sale_order, self).has_stockable_product(cr, uid, ids, args)
         
         return False
     
-#    def shipping_policy_change(self, cr, uid, ids, order_policy, internal_type=False, partner_id=False, field=False, context={}):
+#    def shipping_policy_change(self, cr, uid, ids, order_policy, order_type=False, partner_id=False, field=False, context={}):
 #        '''
 #        Display a message if the error tries to associate an internal type with an incompatible
 #        order policy
@@ -345,18 +351,18 @@ class sale_order(osv.osv):
 #        
 #        # Tests
 #        if order_policy != 'manual':
-#            if internal_type == 'regular' and partner and partner.partner_type == 'internal':
+#            if order_type == 'regular' and partner and partner.partner_type == 'internal':
 #                message = {'title': _('Error'),
 #                           'message': _('You cannot define an automatic invoicing policy with an internal partner for a regular order !')}
 #                error = True
-#            elif internal_type != 'regular':
+#            elif order_type != 'regular':
 #                message = {'title': _('Error'), 
 #                           'message': _('You cannot define an automatic invoicing policy for a non-regular order !')}
 #                error = True
 #        
 #        # Displaying
-#        if error and field and field == 'internal_type':
-#            res = {'value': {'internal_type': 'regular'},
+#        if error and field and field == 'order_type':
+#            res = {'value': {'order_type': 'regular'},
 #                   'warning': message,}
 #        elif error and field and field == 'order_policy':
 #            res = {'value': {'order_policy': 'manual'},

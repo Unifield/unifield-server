@@ -28,6 +28,12 @@ from mx.DateTime import *
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
+
+    def copy(self, cr, uid, id, defaults, context={}):
+        '''
+        Remove loan_id field on new purchase.order
+        '''
+        return super(purchase_order, self).copy(cr, uid, id, defaults={'loan_id': False}, context=context)
     
     # @@@purchase.purchase_order._invoiced
     def _invoiced(self, cursor, user, ids, name, arg, context=None):
@@ -44,8 +50,8 @@ class purchase_order(osv.osv):
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for purchase in self.browse(cursor, user, ids, context=context):
-            if (purchase.internal_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
-                purchase.internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            if (purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+                purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 res[purchase.id] = 100.0
             else:
                 tot = 0.0
@@ -60,7 +66,7 @@ class purchase_order(osv.osv):
     # @@@end
     
     _columns = {
-        'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                         ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -73,25 +79,25 @@ class purchase_order(osv.osv):
     }
     
     _defaults = {
-        'internal_type': lambda *a: 'regular',
+        'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
     }
     
-    def onchange_internal_type(self, cr, uid, ids, internal_type, partner_id):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
         '''
         Changes the invoice method of the purchase order according to
-        the choosen internal type
+        the choosen order type
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
         
-        if internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+        if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
 
         if partner_id:
             partner = partner_obj.browse(cr, uid, partner_id)
-            if partner.partner_type == 'internal' and internal_type == 'regular':
+            if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
         
         return {'value': v}
@@ -122,9 +128,9 @@ class purchase_order(osv.osv):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
-            if order.partner_id.partner_type == 'internal' and order.internal_type == 'regular':
+            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
-            elif order.internal_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            elif order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
@@ -151,7 +157,7 @@ class purchase_order(osv.osv):
                                                  'pricelist_id': order.partner_id.property_product_pricelist.id,
                                                  'loan_id': order.id,
                                                  'origin': order.name,
-                                                 'internal_type': 'loan',
+                                                 'order_type': 'loan',
                                                  'delivery_requested_date': two_months.strftime('%Y-%m-%d'),
                                                  'categ': order.categ,
                                                  'priority': order.priority,})
@@ -178,12 +184,12 @@ class purchase_order(osv.osv):
     def has_stockable_product(self,cr, uid, ids, *args):
         '''
         Override the has_stockable_product to return False
-        when the internal_type of the order is 'direct'
+        when the order_type of the order is 'direct'
         '''
         # TODO: See with Synchro team which object the system will should create
         # to have an Incoming Movement in the destination instance
         for order in self.browse(cr, uid, ids):
-            if order.internal_type != 'direct':
+            if order.order_type != 'direct':
                 return super(purchase_order, self).has_stockable_product(cr, uid, ids, args)
         
         return False
@@ -197,7 +203,7 @@ class purchase_order(osv.osv):
         invoice_obj = self.pool.get('account.invoice')
         
         for order in self.browse(cr, uid, ids):
-            if order.internal_type == 'purchase_list':
+            if order.order_type == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
         
         return invoice_id

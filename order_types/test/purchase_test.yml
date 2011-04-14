@@ -115,7 +115,7 @@
   We create a new donation before expiry purchase order with a internal partner
 -
   !record {model: purchase.order, id: donation3}:
-    internal_type: donation_exp
+    order_type: donation_exp
     categ: food
     priority: urgent
     name: Donation3
@@ -174,7 +174,7 @@
   !record {model: purchase.order, id: donation4}:
     priority: emergency
     categ: medical
-    internal_type: donation_st
+    order_type: donation_st
     name: Donation4
     partner_id: supplier1
     company_id: base.main_company
@@ -229,7 +229,7 @@
   We create a loan order with a internal partner
 -
   !record {model: purchase.order, id: loan5}:
-    internal_type: loan
+    order_type: loan
     priority: medium
     categ: asset
     name: Loan5
@@ -335,7 +335,7 @@
   We create a new In-Kind Donation
 -
   !record {model: purchase.order, id: inkind6}:
-    internal_type: in_kind
+    order_type: in_kind
     name: Inkind6
     partner_id: supplier1
     company_id: base.main_company
@@ -390,7 +390,7 @@
   We create a purchase list
 -
   !record {model: purchase.order, id: list7}:
-    internal_type: purchase_list
+    order_type: purchase_list
     name: List7
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
@@ -452,7 +452,7 @@
   We create a direct po with a internal partner
 -
   !record {model: purchase.order, id: direct8}:
-    internal_type: direct
+    order_type: direct
     name: Direct8
     partner_id: supplier2
     company_id: base.main_company

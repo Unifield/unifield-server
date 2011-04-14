@@ -48,7 +48,7 @@ class stock_move(osv.osv):
                 if 'order_category' in fields_name:
                     res[move.id]['order_category'] = order.categ
                 if 'order_type' in fields_name:
-                    res[move.id]['order_type'] = order.internal_type
+                    res[move.id]['order_type'] = order.order_type
         
         return res
     
