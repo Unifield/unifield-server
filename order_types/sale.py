@@ -103,6 +103,12 @@ class sale_order(osv.osv):
         return res
     #@@@end
     
+    def _get_noinvoice(self, cr, uid, ids, name, arg, context={}):
+        res = {}
+        for sale in self.browse(cr, uid, ids):
+            res[sale.id] = sale.internal_type != 'regular' or sale.partner_id.partner_type == 'internal'
+        return res
+    
     _columns = {
         'internal_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
@@ -114,6 +120,7 @@ class sale_order(osv.osv):
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
+        'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
     }
     
     _defaults = {

@@ -16,10 +16,22 @@
                         <newline />
                         <field name="categ" />
                         <field name="details" />
+                        <field name="noinvoice" invisible="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy)" attrs="{'readonly': [('internal_type', '!=', 'regular')]}" />
                     </xpath>
+                    <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
+                        <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
+                            <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice"
+                                  type="action" icon="gtk-execute" states="draft,manual" groups="base.group_extended"/>
+                        </group>
+                    </button>
+                    <button name="manual_invoice" position="replace">
+                        <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
+                            <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
+                        </group>
+                    </button>
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, internal_type, partner_id, 'order_policy')"/>
                     </xpath> -->
