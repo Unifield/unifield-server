@@ -15,6 +15,7 @@
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
+                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="details" />
                         <field name="noinvoice" invisible="1" />
                     </xpath>

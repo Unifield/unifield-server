@@ -246,6 +246,7 @@
     partner_id: supplier1
     pricelist_id: purchase.list0
     order_type: loan
+    loan_duration: 6
 -
   We create line for this loan
 -
@@ -293,11 +294,11 @@
 -
   !python {model: purchase.order}: |
     from mx.DateTime import *
-    two_month = today() + RelativeDateTime(months=+2)
+    loan_duration = today() + RelativeDateTime(months=+6)
     purchase_ids = self.search(cr, uid, [('loan_id', '=', ref('loan5'))])
     assert purchase_ids, ('No purchase order has been created as counterpart of the loan')
     for purchase in self.browse(cr, uid, purchase_ids):
-      assert purchase.delivery_requested_date == two_month.strftime('%Y-%m-%d'), ('Requested date of the generated purchase order is not equal to two months')
+      assert purchase.delivery_requested_date == loan_duration.strftime('%Y-%m-%d'), ('Requested date of the generated purchase order is not equal to two months')
 -
   We force the assignation of product for the delivery order linked with the loan
 -

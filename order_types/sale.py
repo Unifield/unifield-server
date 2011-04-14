@@ -127,12 +127,14 @@ class sale_order(osv.osv):
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
     }
     
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
+        'loan_duration': lambda *a: 2,
     }
     
 
@@ -296,7 +298,7 @@ class sale_order(osv.osv):
                                                  'loan_id': order.id,
                                                  'origin': order.name,
                                                  'order_type': 'loan',
-                                                 'delivery_requested_date': two_months.strftime('%Y-%m-%d'),
+                                                 'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
                                                  'categ': order.categ,
                                                  'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
                                                  'priority': order.priority,})
@@ -306,7 +308,7 @@ class sale_order(osv.osv):
                                                    'order_id': order_id,
                                                    'price_unit': line.price_unit,
                                                    'product_qty': line.product_uom_qty,
-                                                   'date_planned': two_months.strftime('%Y-%m-%d'),
+                                                   'date_planned': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
                                                    'name': line.name,})
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
