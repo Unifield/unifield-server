@@ -29,8 +29,8 @@
     """,
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", "hr", "account_payment"],
+    "category" : "Others",
+    "depends" : ["base", "account", "hr", "account_payment","account_coda"],
     "init_xml" : [],
     "update_xml" : [
         "account_view.xml",
