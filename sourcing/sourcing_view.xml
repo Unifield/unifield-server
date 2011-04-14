@@ -23,15 +23,20 @@
 		</record>
 
 
-		<!--
-			<record id="sourcing_line_normal_form_view" model="ir.ui.view">
-			<field name="name">sourcing.line.form</field> <field
-			name="model">sourcing.line</field> <field name="type">form</field>
-			<field name="arch" type="xml"> <form string="Sourcing Line"> <field
-			name="name" /> <field name="sale_order_id" /> <field
-			name="sale_order_line_id" /> <field name="reference" /> <field
-			name="state" /> </form> </field> </record>
-		-->
+		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
+			<field name="name">sourcing.line.form</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Sourcing Line">
+					<field name="name" />
+					<field name="sale_order_id" />
+					<field name="sale_order_line_id" />
+					<field name="reference" />
+					<field name="state" />
+				</form>
+			</field>
+		</record>
 
 
 		<record id="sourcing_line_normal_tree_view" model="ir.ui.view">
@@ -42,7 +47,7 @@
 				<tree string="Sourcing Lines" editable="top">
 
 					<field name="name" invisible="True" />
-					
+
 					<field name="sale_order_id" />
 					<field name="sale_order_line_number" />
 					<field name="sale_order_line_id" invisible="True" />
@@ -51,23 +56,41 @@
 					<field name="priority" />
 					<field name="category" />
 					<field name="sale_order_state" invisible="True" />
-					
+
 					<field name="product_id" />
 					<field name="qty" />
 					<field name="uom_id" />
 					<field name="rts" />
 					<field name="sale_order_line_state" invisible="True" />
-					<field name="type" on_change="onChangeType(type, context)" />
+					<field name="type" on_change="onChangeType(type)" />
 					<field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
-					<field name="supplier" domain="[('product_id', '=', product_id)]" context="{'product_id':'product_id'}" />
+					<field name="supplier" domain="[('product_id', '=', product_id)]"
+						context="{'product_id':'product_id'}" />
 					<field name="estimated_delivery_date" />
-					<!-- <button name="nothing" string="Close" icon="gtk-go-forward"
-						type="object" /> -->
+					<!--
+						<button name="nothing" string="Close" icon="gtk-go-forward"
+						type="object" />
+					-->
 
 				</tree>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_search_form_view" model="ir.ui.view">
+			<field name="name">sourcing.line.search.form</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Sourcing Line">
+					<field name="sale_order_id" />
+					<field name="sale_order_state" />
+					<field name="product_id" />
+					<field name="type" />
+				</search>
 			</field>
 		</record>
 
@@ -77,6 +100,7 @@
 			<field name="res_model">sourcing.line</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="search_view_id" ref="sourcing_line_search_form_view" />
 		</record>
 
 
