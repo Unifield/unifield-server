@@ -218,7 +218,13 @@ TreeGrid.prototype = {
         tree.setRecords(tree.ajax_url, tree.ajax_params);
 
         return tree;
+    },
+    
+    expand_all: function() {
+    	this.options.expandall = true;
+    	this.render();
     }
+    
 };
 
 var TreeNode = function(tree, record) {

@@ -34,7 +34,8 @@ import treegrid
 class ViewTree(Form):
 
     template = "/openerp/widgets/templates/viewtree.mako"
-    params = ['model', 'id', 'ids', 'domain', 'context', 'view_id', 'toolbar']
+    # UF-133: Added a new button expand_all
+    params = ['model', 'id', 'ids', 'domain', 'context', 'view_id', 'toolbar', 'expand_button']
     member_widgets = ['tree', 'sidebar']
 
     def __init__(self, view, model, res_id=False, domain=[], context={}, action=None, fields=None):
@@ -66,6 +67,8 @@ class ViewTree(Form):
         attrs = node_attributes(root)
         self.string = attrs.get('string', 'Unknown')
         self.toolbar = attrs.get('toolbar', False)
+        # Set the button to be optional
+        self.expand_button = attrs.get('expand_button', False)
 
         ids = []
         id = res_id

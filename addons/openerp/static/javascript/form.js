@@ -7,7 +7,7 @@
 // Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 //
 // The OpenERP web client is distributed under the "OpenERP Public License".
-// It's based on Mozilla Public License Version (MPL) 1.1 with following 
+// It's based on Mozilla Public License Version (MPL) 1.1 with following
 // restrictions:
 //
 // -   All names, links and logos of OpenERP must be kept as in original
@@ -212,7 +212,7 @@ function submit_form(action, src, target){
         action = 'save';
         args['_terp_return_edit'] = 1;
     }
-    
+
     if(action == 'save_and_close') {
         action = 'save';
         args['_terp_close'] = 1;
@@ -406,12 +406,6 @@ function getFormData(extended, include_readonly) {
                 case "picture":
                     name = this.id;
                     break;
-                case 'text_html':
-                    if (!tinyMCE.get(this.name)) {
-                        break;
-                    }
-                    attrs['value'] = tinyMCE.get(this.name).getContent();
-                    break;
                 case 'reference':
                     if (!value) {
                         break;
@@ -487,7 +481,7 @@ function onChange(caller){
     var select = function (id) { return $form.find(idSelector(id_prefix + id)); };
 
     var post_url = callback ? '/openerp/form/on_change' : '/openerp/form/change_default_get';
-    
+
     var form_data = getFormData(1, true);
     /* testing if the record is an empty record, if it does not contain anything except
      * an id, the on_change method is not called
@@ -654,9 +648,7 @@ function onChange(caller){
                         }
                         break;
                     case 'text_html':
-                        if (tinyMCE.get(prefix + k)) {
-                            tinyMCE.execInstanceCommand(prefix + k, 'mceSetContent', false, value || '')
-                        }
+                        $('#' + prefix + k).val(value || '');
                         break;
                     case 'selection':
                         if (typeof(value)=='object') {
@@ -699,8 +691,7 @@ function onChange(caller){
                     default:
                     // do nothing on default
                 }
-                jQuery(fld).trigger('onAttrChange');
-                MochiKit.Signal.signal(fld, 'onchange');
+                $fld.trigger('change');
                 MochiKit.Signal.signal(window.document, 'onfieldchange', fld);
             }
 
@@ -838,10 +829,10 @@ function makeContextMenu(id, kind, relation, val){
 
     var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) + '/' : '';
     if ((prefix.split('/')[0])== '_terp_listfields') {
-        prefix = ''
+        prefix = (prefix.split('/')[1]);
     }
 
-    var model = prefix ? openobject.dom.get(prefix + '_terp_model').value : openobject.dom.get('_terp_model').value;
+    var model = prefix ? openobject.dom.get(prefix + '/_terp_model').value : openobject.dom.get('_terp_model').value;
 
     openobject.http.postJSON(act, {
         'model': model,
@@ -852,7 +843,7 @@ function makeContextMenu(id, kind, relation, val){
     }).addCallback(function(obj){
         var $tbody = jQuery('<tbody>');
         jQuery.each(obj.defaults, function (_, default_) {
-            
+
             jQuery('<tr>').append(jQuery('<td>').append(
                 jQuery('<span>').click(function () {
                     hideContextMenu();
@@ -990,12 +981,16 @@ function do_action(src, context_menu) {
         var id = eval(params['_terp_selection'])[0]
     } else {
         var id = jQuery('[id="'+field+'"]').val();
+        if (id == 'False') {
+        	error_display(_("You must save this record to perform the action !"));
+            return;
+        }
     }
 
     var action_id = $src.attr('action_id') || null;
     var relation = $src.attr('relation');
     var datas = $src.attr('data') || null;
-    
+
     var domain = $src.attr('domain');
     var context = $src.attr('context');
     var context_menu = context_menu ? true: null;
