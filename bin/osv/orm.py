@@ -2175,6 +2175,7 @@ class orm(orm_template):
                 if fget[groupby]['type'] in ('date', 'datetime'):
                     flist = "to_char(%s,'yyyy-mm') as %s " % (qualified_groupby_field, groupby)
                     groupby = "to_char(%s,'yyyy-mm')" % (qualified_groupby_field)
+                    qualified_groupby_field = groupby
                 else:
                     flist = qualified_groupby_field
             else:
@@ -2821,7 +2822,7 @@ class orm(orm_template):
                     'string': field['field_description'],
                     'required': bool(field['required']),
                     'readonly': bool(field['readonly']),
-                    'domain': field['domain'] or None,
+                    'domain': eval(field['domain']) if field['domain'] else None,
                     'size': field['size'],
                     'ondelete': field['on_delete'],
                     'translate': (field['translate']),
@@ -3078,7 +3079,7 @@ class orm(orm_template):
                     for group in groups:
                         module = group.split(".")[0]
                         grp = group.split(".")[1]
-                        cr.execute("select count(*) from res_groups_users_rel where gid IN (select res_id from ir_model_data where name=%s and module=%s and model=%s) and uid=%s"  \
+                        cr.execute("select count(*) from res_groups_users_rel where gid IN (select res_id from ir_model_data where name=%s and module=%s and model=%s) and uid=%s",  \
                                    (grp, module, 'res.groups', user))
                         readonly = cr.fetchall()
                         if readonly[0][0] >= 1:
@@ -3227,9 +3228,26 @@ class orm(orm_template):
 
 
         self.check_access_rule(cr, uid, ids, 'unlink', context=context)
+        pool_model_data = self.pool.get('ir.model.data')
+        pool_ir_values = self.pool.get('ir.values')
         for sub_ids in cr.split_for_in_conditions(ids):
             cr.execute('delete from ' + self._table + ' ' \
                        'where id IN %s', (sub_ids,))
+
+            # Removing the ir_model_data reference if the record being deleted is a record created by xml/csv file,
+            # as these are not connected with real database foreign keys, and would be dangling references.
+            # Step 1. Calling unlink of ir_model_data only for the affected IDS.
+            referenced_ids = pool_model_data.search(cr, uid, [('res_id','in',list(sub_ids)),('model','=',self._name)], context=context)
+            # Step 2. Marching towards the real deletion of referenced records
+            pool_model_data.unlink(cr, uid, referenced_ids, context=context)
+
+            # For the same reason, removing the record relevant to ir_values
+            ir_value_ids = pool_ir_values.search(cr, uid,
+                    ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
+                    context=context)
+            if ir_value_ids:
+                pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
+
         for order, object, store_ids, fields in result_store:
             if object != self._name:
                 obj = self.pool.get(object)
@@ -3237,6 +3255,7 @@ class orm(orm_template):
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
                     obj._store_set_values(cr, uid, rids, fields, context)
+
         return True
 
     #

@@ -1,5 +1,6 @@
 include rpminstall_sh.txt
 include README
+include LICENSE
 include MANIFEST.in
 include setup.nsi
 include setup.cfg
@@ -13,5 +14,7 @@ recursive-include pixmaps *
 recursive-include win32 *
 recursive-include doc *
 recursive-include bin *xml *xsl *sql *rml *sxw *csv *rng
+graft debian
 graft bin/addons
+graft python25-compat
 global-exclude *pyc *~
