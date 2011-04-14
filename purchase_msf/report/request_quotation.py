@@ -19,8 +19,19 @@
 #
 ##############################################################################
 
-import purchase_msf
-import report
+import time
+from report import report_sxw
+from osv import osv
+import pooler
+
+class request_quotation(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(request_quotation, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'user': self.pool.get('res.users').browse(cr, uid, uid, context)
+        })
+report_sxw.report_sxw('report.purchase.msf.quotation','purchase.order','addons/purchase_msf/report/request_quotation.rml',parser=request_quotation)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

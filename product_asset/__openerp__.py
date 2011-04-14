@@ -43,7 +43,7 @@
 
     Print product labels with barcode.
     """,
-    "depends" : ["product","stock"],
+    "depends" : ["product","stock", "sale", "purchase"],
     "init_xml" : [],
     "demo_xml" : [],
     'test': [

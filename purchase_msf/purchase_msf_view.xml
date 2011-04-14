@@ -11,12 +11,19 @@
 			<field name="type">form</field>
 			<field name="inherit_id" ref="purchase.purchase_order_form" />
 			<field name="arch" type="xml">
-				<field name="date_planned" position="after">
-					<field name="internal_code" />
-					<field name="internal_name" />
-					<field name="supplier_code" />
-					<field name="supplier_name" />
-				</field>
+				<data>
+				
+					<xpath expr="//tree/field[@name='name']" position="replace">
+						<field name="name" invisible="True" />
+					</xpath>
+				
+					<field name="date_planned" position="after">
+						<field name="internal_code" />
+						<field name="internal_name" />
+						<field name="supplier_code" />
+						<field name="supplier_name" invisible="True" />
+					</field>
+				</data>
 			</field>
 		</record>
 		
