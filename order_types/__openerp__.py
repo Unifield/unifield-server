@@ -42,6 +42,7 @@
         'sale_view.xml',
         'purchase_workflow.xml',
         'sale_workflow.xml',
+        'order_types_report.xml',
         'wizard/stock_certificate_picking_view.xml',
         'stock_view.xml',
     ],

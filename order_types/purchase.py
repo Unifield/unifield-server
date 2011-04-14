@@ -124,14 +124,19 @@ class purchase_order(osv.osv):
         Checks if the invoice should be create from the purchase order
         or not
         '''
+        line_obj = self.pool.get('purchase.order.line')
         if isinstance(ids, (int, long)):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
             if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                for line in order.order_line:
+                    line_obj.write(cr, uid, [line.id], {'invoiced': 1})
             elif order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
+                for line in order.order_line:
+                    line_obj.write(cr, uid, [line.id], {'invoiced': 1})
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     

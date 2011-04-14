@@ -19,23 +19,6 @@
 #
 ##############################################################################
 
-ORDER_PRIORITY = [('emergency', 'Emergency'), 
-                  ('normal', 'Normal'), 
-                  ('medium', 'Medium'), 
-                  ('urgent', 'Urgent')]
-
-ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'), 
-                  ('food', 'Food'),
-                  ('service', 'Service'), 
-                  ('asset', 'Asset'), 
-                  ('mixed', 'Mixed'),
-                  ('other', 'Other')]
-
-import purchase
-import sale
-import stock
-import report
-import wizard
+import donation_certificate
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

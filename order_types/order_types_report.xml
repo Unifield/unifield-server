@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report id="donation_certificate"
+                string="Donation Certificate"
+                model="stock.picking"
+                auto="False"
+                name="order.type.donation.certificate"
+                multi="False"
+                rml="order_types/report/donation_certificate.rml"
+                menu="False" />
+        
+    </data>
+</openerp>

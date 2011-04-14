@@ -69,6 +69,47 @@ stock_move()
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
+    
+    def _get_certificate(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Return True if at least one stock move requires a donation certificate
+        '''
+        res = {}
+        
+        for pick in self.browse(cr, uid, ids, context=context):
+            certif = False
+            for move in pick.move_lines:
+                if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
+                        certif = True
+                        
+            res[pick.id] = certif
+            
+        return res
+    
+    _columns= {
+        'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
+    }
+    
+    def print_donation_certificate(self, cr, uid, ids, context={}):
+        '''
+        Launch printing of the donation certificate
+        '''
+        certif = False
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.certificate_donation:
+                certif = True
+                        
+        if certif:
+            data = self.read(cr, uid, ids, [], context)[0]
+            datas = {'ids': ids,
+                     'model': 'stock.picking',
+                     'form': data}
+            
+            return {'type': 'ir.actions.report.xml',
+                    'report_name': 'order.type.donation.certificate',
+                    'datas': datas}
+        else:
+            raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a donation certificate'))
 
     def action_process(self, cr, uid, ids, context={}):
         '''

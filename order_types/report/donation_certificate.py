@@ -19,23 +19,30 @@
 #
 ##############################################################################
 
-ORDER_PRIORITY = [('emergency', 'Emergency'), 
-                  ('normal', 'Normal'), 
-                  ('medium', 'Medium'), 
-                  ('urgent', 'Urgent')]
+import time
 
-ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'), 
-                  ('food', 'Food'),
-                  ('service', 'Service'), 
-                  ('asset', 'Asset'), 
-                  ('mixed', 'Mixed'),
-                  ('other', 'Other')]
+from report import report_sxw
+from osv import osv
+from tools.translate import _
 
-import purchase
-import sale
-import stock
-import report
-import wizard
+class donation_certificate(report_sxw.rml_parse):
+
+    def __init__(self, cr, uid, name, context):
+        super(donation_certificate, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'get_lines': self._get_lines,
+        })
+        
+    def _get_lines(self, pick_id):
+        pick_obj = self.pool.get('stock.picking')
+        pick = pick_obj.browse(self.cr, self.uid, pick_id)
+            
+        return pick.move_lines
+    
+report_sxw.report_sxw('report.order.type.donation.certificate', 
+                      'stock.picking', 
+                      'addons/order_types/report/donation_certificate.rml', 
+                      parser= donation_certificate)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

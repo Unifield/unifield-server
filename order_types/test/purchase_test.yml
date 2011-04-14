@@ -159,6 +159,13 @@
     invoice_ids = self.search(cr, uid, [('origin', '=', 'Donation3')])
     assert not invoice_ids, ('Invoice created from Donation before expiry with internal supplier')
 -
+  We check if all lines of the purchase order are marked as invoiced
+-
+  !python {model: purchase.order.line}: |
+    line_ids = self.search(cr, uid, [('order_id', '=', ref('donation3'))])
+    for line in self.browse(cr, uid, line_ids):
+        assert line.invoiced, "Purchase order line on donation aren't marked as 'Invoiced'"
+-
   We check if generated stock moves have good data
 -
   !python {model: stock.move}: |
