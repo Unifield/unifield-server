@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<record id="product_search_form_view" model="ir.ui.view">
+			<field name="name">product.search.form</field>
+			<field name="model">product.product</field>
+			<field name="type">search</field>
+			<field name="inherit_id" ref="product.product_search_form_view" />
+			<field name="arch" type="xml">
+				<data>
+					<group string="Extended Filters..." position="after">
+						<newline />
+						<group expand="0" string="Nomenclature Filters...">
+							<field name="nomen_manda_0" widget="selection"
+								domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" />
+							<field name="nomen_manda_1" widget="selection"
+								domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" />
+							<field name="nomen_manda_2" widget="selection"
+								domain="[('level', '=', '2'), ('type', '=', 'mandatory')]" />
+							<field name="nomen_manda_3" widget="selection"
+								domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" />
+						</group>
+
+					</group>
+					<field name="pricelist_id" position="before">
+						<field name="location_id" context="{'location': self}" />
+						<separator orientation="vertical" />
+					</field>
+				</data>
+			</field>
+		</record>
+
+		<!-- Product new nomenclature tab -->
+		<record id="product_normal_form_view" model="ir.ui.view">
+			<field name="name">product.normal.form</field>
+			<field name="model">product.product</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="product.product_normal_form_view" />
+			<field name="arch" type="xml">
+				<data>
+					<page groups="base.group_extended" string="Packaging"
+						position="after">
+
+						<!-- COPIED TO order_nomenclature_view.xml -->
+						<page string="Nomenclature">
+
+							<group colspan="2" col="5">
+								<separator string="Mandatory Levels" colspan="10" />
+
+
+								<group colspan="4" col="2">
+									<field name="nomen_manda_0"
+										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+										on_change="nomenChange(0, nomen_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_manda_1"
+										domain="[('parent_id', '=', nomen_manda_0), ('level', '=', '1'), ('type', '=', 'mandatory')]"
+										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_manda_2"
+										domain="[('parent_id', '=', nomen_manda_1), ('level', '=', '2'), ('type', '=', 'mandatory')]"
+										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_manda_3"
+										domain="[('parent_id', '=', nomen_manda_2), ('level', '=', '3'), ('type', '=', 'mandatory')]"
+										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+								</group>
+
+								<group colspan="1" col="2">
+									<field name="nomen_c_manda_0"
+										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_manda_1"
+										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_manda_2"
+										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_manda_3"
+										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+								</group>
+
+
+							</group>
+							<group colspan="2" col="4"></group>
+							<newline />
+
+							<group colspan="2" col="5">
+								<separator string="Optional Levels" colspan="4" />
+
+
+								<group colspan="4" col="2">
+									<!--
+										Added False as parent_id clause to enable global optional
+										levels (for med, log,...)
+									-->
+									<field name="nomen_sub_0"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 0),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_sub_1"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 1), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_sub_2"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 2), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_sub_3"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 3), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
+										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_sub_4"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 4), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
+										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_sub_5"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 5), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
+										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+								</group>
+
+								<group colspan="1" col="2">
+									<field name="nomen_c_sub_0"
+										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_sub_1"
+										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_sub_2"
+										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_sub_3"
+										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_sub_4"
+										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+									<field name="nomen_c_sub_5"
+										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+								</group>
+
+							</group>
+						</page>
+						<!-- END COPY TO order_nomenclature_view.xml -->
+
+					</page>
+				</data>
+			</field>
+		</record>
+
+
+		<!-- Product nomenclature screens -->
+		<record id="product_nomenclature_form_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.form</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Product Nomenclature">
+					<field name="name" select="1" />
+					<field name="code" />
+					<field name="type" />
+					<field name="sub_level"
+						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
+					<field name="parent_id" domain="[('type', '=', 'mandatory')]"
+						on_change="onChangeParentId(type, parent_id)" />
+					<field name="sequence" invisible="1" />
+					<field name="level" invisible="1" />
+					<newline />
+				</form>
+			</field>
+		</record>
+		<record id="product_nomenclature_list_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.list</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">tree</field>
+			<field name="priority">1</field>
+			<field name="arch" type="xml">
+				<tree string="Product Nomenclature">
+					<field name="complete_name" />
+					<field name="code" />
+					<field name="type" />
+					<field name="sub_level" />
+				</tree>
+			</field>
+		</record>
+
+		<!-- improvement : filter against nomenclature's type -->
+		<record id="product_nomenclature_tree_view" model="ir.ui.view">
+			<field name="name">product.nomenclature.tree</field>
+			<field name="model">product.nomenclature</field>
+			<field name="type">tree</field>
+			<field name="field_parent">child_id</field>
+			<field name="arch" type="xml">
+				<tree string="Product Nomenclature">
+					<field name="name" />
+					<field name="code" />
+				</tree>
+			</field>
+		</record>
+		<record id="product_nomenclature_action" model="ir.actions.act_window">
+			<field name="name">Products by Nomenclature</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.nomenclature</field>
+			<field name="domain">[('parent_id','=',False)]</field> <!-- initial shape of tree -->
+			<field name="view_type">tree</field>
+			<field name="view_id" ref="product_nomenclature_tree_view" />
+			<field name="help">Here is a list of all your products classified by
+				nomenclature.</field>
+		</record>
+		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature"
+			groups="base.group_extended" parent="base.menu_product" sequence="1" />
+		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
+			<field name="name">Products Nomenclature</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.nomenclature</field>
+			<field name="view_type">form</field>
+			<field name="view_id" ref="product_nomenclature_list_view" />
+		</record>
+		<menuitem action="product_nomenclature_action_form" groups="base.group_extended"
+			id="menu_product_nomenclature_action_form" parent="product.prod_config_main"
+			sequence="3" />
+
+
+		<record id="product_nomenclature_normal_action_tree" model="ir.actions.act_window">
+			<field name="name">Products</field> <!-- TODO what effect on screen ? -->
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">product.product</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('nomenc_categ_id','child_of',[active_id])]
+			</field>
+			<field name="context">{'nomenc_categ_id':active_id}</field>
+		</record>
+		<record id="ir_product_nomenclature_open" model="ir.values">
+			<field eval="'tree_but_open'" name="key2" />
+			<field eval="'product.nomenclature'" name="model" />
+			<field name="name">Products by Nomenclatures</field>
+			<field
+				eval="'ir.actions.act_window,%d'%product_nomenclature_normal_action_tree"
+				name="value" />
+			<field eval="True" name="object" />
+		</record>
+
+
+	</data>
+</openerp>
