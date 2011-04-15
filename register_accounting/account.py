@@ -62,7 +62,7 @@ class account_account(osv.osv):
         Give only code account for each id given by ids
         """
         res = self.pool.get('account.account').read(cr, uid, ids, ['code'], context=context)
-        return [(x['id'], x['code']) for x in res]
+        return [(int(x['id']), x['code']) for x in res]
 
 account_account()
 
