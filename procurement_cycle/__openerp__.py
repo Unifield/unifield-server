@@ -27,6 +27,8 @@
                 "stock",
                 "product_consumption",
                 "stock_schedule",
+                "sale",
+                "purchase",
                 "product_expiry"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -49,6 +51,10 @@
         'security/ir.model.access.csv',
     ],
     'demo_xml': [
+    ],
+    'test': [
+        'test/data.yml',
+        'test/proc_cycle.yml',
     ],
     'installable': True,
     'active': False,

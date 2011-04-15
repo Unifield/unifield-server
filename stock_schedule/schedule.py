@@ -121,21 +121,6 @@ class stock_frequence(osv.osv):
         
         return
     
-    def name_get(self, cr, uid, ids, context={}):
-        '''
-        Returns a description of the frequence
-        '''
-        res = super(stock_frequence, self).name_get(cr, uid, ids, context=context)
-        
-        # TODO: Modif of name_get method to return a comprehensive name for frequence
-#        res = []
-#        
-#        for freq in self.browse(cr, uid, ids):
-#            title = 'tot'
-#            res.append((freq.id, title))
-        
-        return res
-    
     def create(self, cr, uid, data, context={}):
         '''
         Check if all required data aren't empty
@@ -423,6 +408,47 @@ class stock_frequence(osv.osv):
         Empty method. Override this method to implement your own features
         '''
         return {'type': 'ir.actions.act_window_close'}
+    
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        Returns a description of the frequence
+        '''
+        res = super(stock_frequence, self).name_get(cr, uid, ids, context=context)
+        
+        # TODO: Modif of name_get method to return a comprehensive name for frequence
+        res = []
+        
+        for freq in self.browse(cr, uid, ids):
+            if freq.name == 'daily':
+                if freq.daily_frequency_ok:
+                    title = 'Each %d day(s)' %freq.daily_frequency
+                if freq.daily_working_days:
+                    title = 'Each workign days'
+            if freq.name == 'weekly':
+                title = 'All '
+                if freq.weekly_sunday_ok:
+                    title += 'sunday '
+                if freq.weekly_monday_ok:
+                    title += 'monday '
+                if freq.weekly_tuesday_ok:
+                    title += 'tuesday '
+                if freq.weekly_wednesday_ok:
+                    title += 'wadnesday '
+                if freq.weekly_thursday_ok:
+                    title += 'thursday '
+                if freq.weekly_friday_ok:
+                    title += 'friday '
+                if freq.weekly_saturday_ok:
+                    title += 'saturday '
+                title = ' - Each %d week(s)' % freq.weekly_frequency
+            if freq.name == 'monthly':
+                title = 'monthly'
+            if freq.name == 'yearly':
+                title = 'yearly'
+                
+            res.append((freq.id, title))
+        
+        return res
     
     _columns = {
         'name': fields.selection([('daily', 'Daily'), ('weekly', 'Weekly'),

@@ -22,7 +22,8 @@
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Period / Frequence Rule" />
-                        <field name="frequence_id" readonly="1" />
+                        <field name="frequence_name" readonly="1" />
+                        <field name="frequence_id" invisible="1" />
                         <label />
                         <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" />
                         <field name="next_date" />
@@ -44,8 +45,8 @@
                         <label />
                         <newline />
                         <group colspan="6" col="6">
-	                        <field name="past_consumption" />
-	                        <field name="reviewed_consumption" />
+	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, 'past')" />
+	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, 'review')" />
 	                        <field name="manual_consumption" attrs="{'invisible': [('product_id', '=', False)]}"/>
                         </group>
                     </group>

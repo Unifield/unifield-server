@@ -36,6 +36,8 @@
         "stock_inventory_type",
         "account_payment",  # openERP module
         "analytic_plan_tree",
+        "procurement_cycle",
+        "procurement_auto",
     ],
     "update_xml": [
     ],

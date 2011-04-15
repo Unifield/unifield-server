@@ -28,6 +28,25 @@ class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _description = 'Order Cycle'
     
+    def create(self, cr, uid, data, context={}):
+        '''
+        Checks if a frequence was choosen for the cycle
+        '''
+        if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
+            raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !'))
+        
+        return super(stock_warehouse_order_cycle, self).create(cr, uid, data, context=context)
+        
+    def write(self, cr, uid, ids, data, context={}):
+        '''
+        Checks if a frequence was choosen for the cycle
+        '''
+        if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
+            raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !')) 
+        
+        return super(stock_warehouse_order_cycle, self).write(cr, uid, ids, data, context=context)
+        
+    
     def _get_frequence_change(self, cr, uid, ids, context={}):
         '''
         Returns ids when the frequence change
@@ -39,12 +58,23 @@ class stock_warehouse_order_cycle(osv.osv):
         
         return res.keys()
     
+    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the name_get value of the frequence
+        '''
+        res = {}
+        for proc in self.browse(cr, uid, ids):
+            res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+            
+        return res
+    
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', string='Location'),
+        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'product_ids': fields.many2many('product.product', 'order_cycle_product_rel', 'order_cycle_id', 'product_id', string="Products"),
         'company_id': fields.many2one('res.company','Company',required=True),
@@ -55,7 +85,7 @@ class stock_warehouse_order_cycle(osv.osv):
         'safety_stock_time': fields.integer(string='Safety stock in time'),
         'safety_stock': fields.integer(string='Safety stock (quantity'),
         'past_consumption': fields.boolean(string='Past monthly consumption'),
-        'reviewed_consumption': fields.float(digits=(16,2), string='Reviewed monthly consumption'),
+        'reviewed_consumption': fields.boolean(string='Reviewed monthly consumption'),
         'manual_consumption': fields.float(digits=(16,2), string='Manual monthly consumption'),
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
@@ -69,6 +99,22 @@ class stock_warehouse_order_cycle(osv.osv):
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.order.cycle', context=c),
         'order_coverage': lambda *a: 3,
     }
+    
+    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, field='past'):
+        '''
+        Uncheck a box when the other is checked
+        '''
+        v = {}
+        if field == 'past' and past_consumption:
+            v.update({'reviewed_consumption': 0})
+        elif field == 'past' and not past_consumption:
+            v.update({'reviewed_consumption': 1})
+        elif field == 'review' and reviewed_consumption:
+            v.update({'past_consumption': 0})
+        elif field == 'review' and not reviewed_consumption:
+            v.update({'past_consumption': 1})
+            
+        return {'value': v}
     
     def choose_change_frequence(self, cr, uid, ids, context={}):
         '''

@@ -159,13 +159,21 @@ class procurement_order(osv.osv):
         
         # If a rule already exist for the category of the product or for the product
         # itself for the same location, we don't create a procurement order 
-        cycle_ids = cycle_obj.search(cr, uid, [('category_id', '=', product.categ_id.id), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
+        cycle_ids = cycle_obj.search(cr, uid, [('category_id', '=', product.categ_id.id), ('product_id', '=', False), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
         cycle2_ids = cycle_obj.search(cr, uid, [('product_id', '=', product.id), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
-        if cycle_ids or cycle2_ids:
+        if cycle_ids:
+            cr.execute('''SELECT order_cycle_id
+                        FROM order_cycle_product_rel
+                        WHERE order_cycle_id in %s
+                        AND product_id = %s''', (tuple(cycle_ids), product.id))
+            res = cr.fetchall()
+            for r in res:
+                cycle_ids.remove(r[0])
+        if cycle2_ids or cycle_ids:
             return False
         
         newdate = datetime.today()
-        quantity_to_order = self._compute_quantity(cr, uid, product.id, location_id, d_values)
+        quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
             
         if product.id not in cache.get(location_id):
             newdate = datetime.today()
@@ -184,6 +192,7 @@ class procurement_order(osv.osv):
                 })
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                context.update({'button': 'scheduler'})
                 cycle_obj.write(cr, uid, [cycle.id], {'procurement_id': proc_id}, context=context)
             
             # Fill the cache
@@ -191,7 +200,7 @@ class procurement_order(osv.osv):
         
         return proc_id
     
-    def _compute_quantity(self, cr, uid, product_id, location_id, d_values={}, context={}):
+    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values={}, context={}):
         '''
         Compute the quantity of product to order like thid :
             [Delivery lead time (from supplier tab of the product or by default or manually overwritten) x Monthly Consumption]
@@ -199,37 +208,52 @@ class procurement_order(osv.osv):
             - Projected available quantity
         '''
         product_obj = self.pool.get('product.product')
-        supplier_info_obj = self.pool.get('product.suplierinfo')
+        supplier_info_obj = self.pool.get('product.supplierinfo')
         location_obj = self.pool.get('stock.location')
+        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
         
         product = product_obj.browse(cr, uid, product_id)
         location = location_obj.browse(cr, uid, location_id)
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.procure_delay or 1
-        if 'leadtime' in d_values and d_values.get('leadtime', False):
-            delivery_leadtime = d_values.get('leadtime')/30 # We divided by 30 because the leadtime should be in months
+        delivery_leadtime = product.procure_delay and product.procure_delay/30 or 1
+        if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
+            delivery_leadtime = d_values.get('leadtime')/30.0 # We divided by 30 because the leadtime should be in months
         else:
-            supplier_info_ids = supplier_info_obj.search(cr, uid, [('product_id', '=', product_id)], offset=0, limit=1, order='sequence')
-            if supplier_info_ids:
-                delivery_leadtime = supplier_info_obj.browse(cr, uid, supplier_info_ids)[0].delay
+            sequence = False
+            for supplier_info in product.seller_ids:
+                if sequence and supplier_info.sequence < sequence:
+                    sequence = supplier_info.sequence
+                    delivery_leadtime = supplier_info.delay/30.0
+                elif not sequence:
+                    sequence = supplier_info.sequence
+                    delivery_leadtime = supplier_info.delay/30.0
                 
         # Get the monthly consumption
         monthly_consumption = 1.0
-        if 'past_consumption' in d_values and d_values.get('past_consumption', False) \
-            and 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption', False):
-            monthly_consumption = d_values.get('reviewed_consumption')
-        else:
+        
+        if cycle_id.product_id and cycle_id.product_id.id and d_values.get('manual_consumption', 0.00) != 0.00:
             monthly_consumption = d_values.get('manual_consumption')
+        elif 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
+            monthly_consumption = product.reviewed_consumption
+        else:
+            monthly_consumption = product.monthly_consumption
             
         # Get the order coverage
-        order_coverage = d_values.get('order_coverage', 3)
+        order_coverage = d_values.get('coverage', 3)
         
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
         
-        return (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
+        # Get the rounding value according to the rounding of UoM
+        rounding = product.uom_id.rounding
+        i = 0
+        while rounding != 1.00:
+            rounding *= 10
+            i += 1
+        
+        return round((delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty, i)
         
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
@@ -246,32 +270,50 @@ class procurement_order(osv.osv):
         location_obj = self.pool.get('stock.location')
         move_obj = self.pool.get('stock.move')
         
+        context.update({'location': location_id,
+                        'compute_child': True, 
+                        'from_date': time.strftime('%Y-%m-%d')})
+        
+        product = product_obj.browse(cr, uid, product_id, context=context)
+        
+        ''' Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
+        
+            To do validate by Magali
+            
+            Picked reservation will be developed on future sprint
+        ''' 
+        
         # Get the available stock
         # Get the real stock
-        real_stock = product_obj.get_product_available(cr, uid, [product_id], {'location': location_id, 'compute_child': True,})
-        # Get the picked reservation
-        ## TODO: To confirm by Magali
-        picked_reservation = 0.00
-        move_ids = []
-        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
-            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_id', '=', location)]):
-                move_ids.append(move_id)
-            
-        for move in move_obj.browse(cr, uid, move_ids):
-            picked_reservation += move.product_qty
-        
-        available_stock = real_stock.get(product_id) - picked_reservation
-        
-        # Get the quantity on order
-        ## TODO : To confirm by Magali
-        quantity_on_order = 0.00
-        move_ids = []
-        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
-            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_dest_id', '=', location)]):
-                move_ids.append(move_id)
-            
-        for move in move_obj.browse(cr, uid, move_ids):
-            quantity_on_order += move.product_qty
+#        real_stock = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['done'],
+#                                                                                       'what': 'in', 
+#                                                                                       'location': location_id,
+#                                                                                       'compute_child': True, 
+#                                                                                       'from_date': time.strftime('%Y-%m-%d')})
+#        # Get the picked reservation
+#        ## TODO: To confirm by Magali
+#        picked_reservation = 0.00
+#        move_ids = []
+#        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
+#            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_dest_id', '=', location), 
+#                                                     ('state', '!=', 'draft'), ('move_dest_id', '!=', False)]):
+#                move_ids.append(move_id)
+#            
+#        for move in move_obj.browse(cr, uid, move_ids):
+#            picked_reservation += move.product_qty
+#        
+#        available_stock = real_stock.get(product_id) - picked_reservation
+#        
+#        # Get the quantity on order
+#        ## TODO : To confirm by Magali
+#        quantity_on_order = 0.00
+#        move_ids = []
+#        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
+#            for move_id in move_obj.search(cr, uid, [('product_id', '=', product_id), ('location_dest_id', '=', location)]):
+#                move_ids.append(move_id)
+#            
+#        for move in move_obj.browse(cr, uid, move_ids):
+#            quantity_on_order += move.product_qty
             
         # Get the safety stock
         safety_stock = d_values.get('safety', 0)
@@ -280,14 +322,22 @@ class procurement_order(osv.osv):
         safety_time = d_values.get('safety_time', 0)
         
         # Get the expiry quantity
-        expiry_quantity = self.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
+        # Set as comment because expiry quantity will be developed in a future sprint
+#        expiry_quantity = self.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
+        expiry_quantity = 0.00
         
-        return available_stock + quantity_on_order - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
+        # Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
+#        return available_stock + quantity_on_order - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
+
+        return product.virtual_available - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
      
      
     def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
         '''
         Compute the expiry quantities
+        
+        INFO : This method is not use on Sprint1 because the algorithm is
+        not determined
         '''
         product_obj = self.pool.get('product.product')
         stock_obj = self.pool.get('stock.location')
