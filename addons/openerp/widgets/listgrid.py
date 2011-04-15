@@ -39,7 +39,7 @@ from pager import Pager
 class List(TinyWidget):
 
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
-    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable',
+    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
               'hiddens', 'edit_inline', 'field_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex']
 
@@ -55,6 +55,7 @@ class List(TinyWidget):
     data = None
     columns = 0
     headers = None
+    noteditable = None
     model = None
     selectable = False
     editable = False
@@ -67,7 +68,6 @@ class List(TinyWidget):
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
         super(List, self).__init__(name=name, model=model, ids=ids)
-        
         self.context = context or {}
         self.domain = domain or []
         custom_search_domain = getattr(cherrypy.request, 'custom_search_domain', [])
@@ -82,12 +82,11 @@ class List(TinyWidget):
         self.sort_key = ''
         #this Condition is for Dashboard to avoid new, edit, delete operation
         self.dashboard = 0
-        
+        self.noteditable = []
         self.selectable = kw.get('selectable', 0)
         self.editable = kw.get('editable', False)
         self.pageable = kw.get('pageable', True)
         self.view_mode = kw.get('view_mode', [])
-        
         self.offset = kw.get('offset', 0)
         self.limit = kw.get('limit', 0)
         self.count = kw.get('count', 0)
@@ -201,7 +200,7 @@ class List(TinyWidget):
 
         self.values = copy.deepcopy(data)
         self.headers, self.hiddens, self.data, self.field_total, self.buttons = self.parse(root, fields, data)
-
+        
         for k, v in self.field_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_total[k][1] = self.do_sum(self.data, k)
@@ -221,6 +220,13 @@ class List(TinyWidget):
         
         # make editors
         if self.editable and attrs.get('editable') in ('top', 'bottom'):
+            if attrs.get('noteditable'):
+                for x in self.values:
+                    try:
+                        if expr_eval(attrs.get('noteditable'), x):
+                            self.noteditable.append(x['id'])
+                    except:
+                        pass 
 
             for f, fa in self.headers:
                 if not isinstance(fa, int):
@@ -338,6 +344,7 @@ class List(TinyWidget):
         headers = []
         hiddens = []
         buttons = []
+
         field_total = {}
         values  = [row.copy() for row in data]
 
@@ -403,7 +410,6 @@ class List(TinyWidget):
                         field_total[name] = [attrs['sum'], 0.0]
 
                     for i, row in enumerate(data):
-
                         row_value = values[i]
                         if invisible:
                             cell = Hidden(**fields[name])
@@ -421,7 +427,6 @@ class List(TinyWidget):
                                 pass
 
                         row[name] = cell
-
                     if invisible:
                         continue
 
