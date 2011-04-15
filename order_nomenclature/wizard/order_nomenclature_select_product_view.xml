@@ -34,8 +34,6 @@
 			</field>
 		</record>
 
-
-
 		<record id="order_nomenclature_select_product_action" model="ir.actions.act_window">
 			<field name="name">Select Product</field>
 			<field name="type">ir.actions.act_window</field>

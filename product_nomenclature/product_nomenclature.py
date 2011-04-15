@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -24,7 +24,6 @@ from tools.translate import _
 import decimal_precision as dp
 import math
 import re
-
 
 # maximum depth of level
 _LEVELS = 4
@@ -52,13 +51,11 @@ class product_nomenclature(osv.osv):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
     
-    
     def _returnConstants(self):
         '''
         return contants of product_nomenclature object
         '''
         return {'levels':_LEVELS, 'sublevels':_SUB_LEVELS}
-    
     
     def _getDefaultLevel(self, cr, uid, context=None):
         '''
@@ -78,7 +75,6 @@ class product_nomenclature(osv.osv):
         
         return result
     
-    
     def _getDefaultSequence(self, cr, uid, context=None):
         '''
         not use presently. the idea was to use the sequence
@@ -86,16 +82,13 @@ class product_nomenclature(osv.osv):
         '''
         return 0
         
-        
     def onChangeParentId(self, cr, uid, id, type, parentId):
         '''
         parameters:
         - type : the selected type for nomenclature
         - parentId : the id of newly selected parent nomenclature
         
-        
-        onChange method called when the parent nomenclature changes
-        updates the parentLevel value from the parent object
+        onChange method called when the parent nomenclature changes updates the parentLevel value from the parent object
         
         improvement :
         
@@ -113,8 +106,7 @@ class product_nomenclature(osv.osv):
         # level check - parent_id : False + error message
         if level > _LEVELS:
             result['value'].update({'parent_id': False})
-            result['warning'].update({'title': _('Error!'),
-                                      'message': _('The selected nomenclature should not be proposed.')})
+            result['warning'].update({'title': _('Error!'), 'message': _('The selected nomenclature should not be proposed.')})
             return result
         
         if level == _LEVELS:
@@ -132,7 +124,6 @@ class product_nomenclature(osv.osv):
         
         return result
     
-    
     def _nomenclatureCheck(self, vals):
         '''
         Integrity function for creation and update of nomenclature
@@ -148,8 +139,6 @@ class product_nomenclature(osv.osv):
             # type test
             if (level == _LEVELS) and (type != 'optional'):
                 raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves'%(type)))
-            
-    
     
     def write(self, cr, user, ids, vals, context=None):
         '''
@@ -161,18 +150,14 @@ class product_nomenclature(osv.osv):
         # save the data to db
         return super(product_nomenclature, self).write(cr, user, ids, vals, context)
     
-    
     def create(self, cr, user, vals, context=None):
         '''
-        override create method to check the validity of selected
-        parent
+        override create method to check the validity of selected parent
         '''
         self._nomenclatureCheck(vals)
 
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
-    
-
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
@@ -190,7 +175,6 @@ class product_nomenclature(osv.osv):
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
     }
-
 
     _defaults = {
                  'level' : _getDefaultLevel, # no access to actual new values, use onChange function instead
@@ -218,8 +202,6 @@ class product_nomenclature(osv.osv):
 
 product_nomenclature()
 
-
-
 #----------------------------------------------------------
 # Products
 #----------------------------------------------------------
@@ -227,7 +209,6 @@ class product_template(osv.osv):
     
     _inherit = "product.template"
     _description = "Product Template"
-        
         
     ### EXACT COPY-PASTE TO order_nomenclature
     _columns = {
@@ -263,21 +244,10 @@ class product_template(osv.osv):
 
 product_template()
 
-
-
 class product_product(osv.osv):
     
     _inherit = "product.product"
     _description = "Product"
-    
-    
-    def _helloFromProductNomenclature(self, text):
-        '''
-        test function for inter module call
-        '''
-        print text
-        return text
-    
     
     def _resetNomenclatureFields(self, values):
         '''
