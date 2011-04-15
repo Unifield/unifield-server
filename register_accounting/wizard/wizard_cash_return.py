@@ -88,7 +88,7 @@ class wizard_cash_return(osv.osv_memory):
         'invoice_id': fields.many2one('account.invoice', string='Invoice', required=False),
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
-        'currency_id': fields.many2one('account.currency', string='Currency'),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
     }
 
     _defaults = {
@@ -102,17 +102,15 @@ class wizard_cash_return(osv.osv_memory):
         It also keep the bank statement line origin (the advance line) for many treatments.
         """
         res = super(wizard_cash_return, self).default_get(cr, uid, fields, context=context)
-        if 'active_id' in context:
-            amount = self.pool.get('account.bank.statement.line').read(cr, uid, context.get('active_id'), \
+        if 'statement_line_id' in context:
+            amount = self.pool.get('account.bank.statement.line').read(cr, uid, context.get('statement_line_id'), \
                 ['amount'], context=context).get('amount', False)
             if amount >= 0:
                 raise osv.except_osv(_('Error'), _('A wrong amount was selected. Please select an advance with a positive amount.'))
             else:
-                st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, context.get('active_id'), context=context)
-                currency_id = st_line.statement_id.company_id.currency_id.id
-                if st_line.statement_id.journal_id.currency:
-                    currency_id = st_line.statement_id.journal_id.currency.id
-                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('active_id'), 'currency_id': currency_id})
+                st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, context.get('statement_line_id'), context=context)
+                currency_id = st_line.statement_id.currency.id # currency is a mandatory field on statement/register
+                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id})
         return res
 
     def onchange_returned_amount(self, cr, uid, ids, amount=0.0, invoices=None, advances=None, display_invoice=None, context={}):
@@ -295,7 +293,7 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.invoice_id:
             # Verify that the invoice is in the same currency as those of the register
             inv_currency = wizard.invoice_id.currency_id.id
-            st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
+            st_currency = wizard.advance_st_line_id.statement_id.currency.id
             if st_currency and st_currency != inv_currency:
                 raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
             # Make a list of invoices that have already been added in this wizard

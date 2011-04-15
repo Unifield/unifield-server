@@ -134,6 +134,7 @@
       assert wizard_context.get('active_id') == ref("account_bank_statement_line0"), "Come from bad register line!"
       assert wizard_context.get('amount') == self.pool.get('account.bank.statement.line').read(cr, uid, [ref("account_bank_statement_line0")], \
       ['amount'])[0].get('amount', 0.0), "Bad amount value!"
+      assert wizard_context.get('statement_line_id') == ref("account_bank_statement_line0"), "No register line given!"
 -
   In order to test the wizard I create a wizard with some values, then I add an invoice and finally I click on 'Compute' button to do computation 
   of the total amount. I also click on 'Ok' to validate the form.
@@ -148,7 +149,7 @@
 -
   !python {model: wizard.cash.return}: |
     # Call of default function that initialize some fields
-    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance0")], context={'active_id': ref("account_bank_statement_line0"), 'amount': -500.0})
+    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance0")], context={'statement_line_id': ref("account_bank_statement_line0"), 'amount': -500.0, 'active_id': ref("account_bank_statement_line0")})
     self.write(cr, uid, [ref("wiz_advance0")], begin_wizard)
     # prepare some values
     returned_amount = self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance0")).returned_amount
@@ -167,7 +168,7 @@
   I click on the 'Ok' button
 -
   !python {model: wizard.cash.return}: |
-    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance0")], {'active_id': ref("account_bank_statement_line0"), 'active_ids': [ref("account_bank_statement_line0")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_7")})
+    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance0")], {'active_id': ref("account_bank_statement_line0"), 'active_ids': [ref("account_bank_statement_line0")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_7"), 'statement_line_id': ref("account_bank_statement_line0")})
     assert res.get('type') == 'ir.actions.act_window_close', "Wizard is not closed correctly"
 -
   In order to check that all lines are written, I check that Cash Register Lines State, then I check that move lines exists and finally I check that the invoice is closed.
@@ -257,14 +258,14 @@
 -
   I create the wizard with a returned_amount of 100.0 and the previous generated invoice
 -
-  !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8")}}:
+  !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("account_bank_statement_line1")}}:
     returned_amount: 100.0
 -
   I check that the Justified Amount is calculated
 -
   !python {model: wizard.cash.return}: |
     # Call of default function that initialize some fields
-    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance1")], context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0})
+    begin_wizard = self.default_get(cr, uid, [ref("wiz_advance1")], context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0, 'statement_line_id': ref("account_bank_statement_line1")})
     self.write(cr, uid, [ref("wiz_advance1")], begin_wizard)
     # prepare some values
     returned_amount = self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).returned_amount
@@ -287,12 +288,12 @@
   I attach this line to the wizard
 -
   !python {model: wizard.cash.return, id: wiz_advance1}: |
-        self.write(cr, uid, [ref("wiz_advance1")], {'advance_line_ids': [(4, ref("wiz_adv_line0"))]}, context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0})
+        self.write(cr, uid, [ref("wiz_advance1")], {'advance_line_ids': [(4, ref("wiz_adv_line0"))]}, context={'active_id': ref("account_bank_statement_line1"), 'amount': -500.0, 'statement_line_id': ref("account_bank_statement_line1"), 'statement_line_id': ref("account_bank_statement_line1") })
 -
   I click on the 'Ok' button
 -
   !python {model: wizard.cash.return}: |
-    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance1")], {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8")})
+    res = self.action_confirm_cash_return(cr, uid, [ref("wiz_advance1")], {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("account_bank_statement_line1")})
     assert res.get('type') == 'ir.actions.act_window_close', "Wizard is not closed correctly"
 -
   I check that Cash Register have lines in "Hard posted" state.
