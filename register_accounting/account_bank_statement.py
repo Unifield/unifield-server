@@ -709,7 +709,7 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
-            if 'from_cash_return' in values or 'invoice_id' in values:
+            if values == {'from_cash_return': True} or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
