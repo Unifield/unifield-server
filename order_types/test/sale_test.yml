@@ -27,7 +27,6 @@
     price_unit: 1.50
     product_uom_qty: 10
     name: P1
-    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We create a second line for this sale order
 -
@@ -38,7 +37,6 @@
     price_unit: 3
     product_uom_qty: 30
     name: P2
-    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We confirm this sale order
 -

@@ -50,6 +50,7 @@ class sale_order(osv.osv):
             if sale.order_type != 'regular' or (partner and partner.partner_type == 'internal'):
                 res[sale.id] = True
             else:
+                res[sale.id] = True
                 for invoice in sale.invoice_ids:
                     if invoice.state != 'paid':
                         res[sale.id] = False

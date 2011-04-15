@@ -27,6 +27,21 @@ class stock_move(osv.osv):
     _name= 'stock.move'
     _inherit = 'stock.move'
     
+#    def copy(self, cr, uid, id, defaults={}, context={}):
+#        '''
+#        Adds functionnal field from copy
+#        '''
+#        move = self.browse(cr, uid, id, context=context)
+#        
+#        if not 'order_type' in defaults:
+#            defaults['order_type'] = ''
+#        if not 'order_category' in defaults:
+#            defaults['order_category'] = ''
+#        if not 'order_priority' in defaults:
+#            defaults['order_priority'] = ''
+#        
+#        return super(stock_move, self).copy(cr, uid, id, defaults, context=context)
+    
     def _get_order_information(self, cr, uid, ids, fields_name, arg, context={}):
         '''
         Returns information about the order linked to the stock move
@@ -35,7 +50,9 @@ class stock_move(osv.osv):
         order = False
         
         for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
+            res[move.id] = {'order_priority': False,
+                            'order_category': False,
+                            'order_type': False}
             if move.purchase_line_id and move.purchase_line_id.id:
                 order = move.purchase_line_id.order_id
             elif move.sale_line_id and move.sale_line_id.id:
