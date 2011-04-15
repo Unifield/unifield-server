@@ -18,38 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 ##############################################################################
-{
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Modules for Unifield
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "account_payment",  # openERP module
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-	"purchase_msf",
-	"product_asset",
-    ],
-    "update_xml": [
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
-}
+
+import product_asset
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

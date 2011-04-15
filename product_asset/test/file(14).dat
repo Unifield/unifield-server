@@ -1,0 +1,158 @@
+- 
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: res_partner_testpartner0}:
+    address:
+      - street: test street
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: test partner
+    supplier: true
+    
+
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: res_partner_address_0}:
+    partner_id: res_partner_testpartner0
+    street: test street
+    
+    
+- 
+  Creating a product.asset record
+- 
+  !record {model: product.asset, id: product_asset_testassetname0}:
+    asset_code: test asset code
+    asset_type_id: 'False'
+    event_ids:
+      - asset_code: test asset code
+        asset_type_id: 'False'
+        date: '2011-03-28'
+        event_type: reception
+        hq_brand: '1'
+        hq_model: '1'
+        name: test event name
+        prod_int_name: product test
+        state: inUse
+    hq_brand: '1'
+    hq_model: '1'
+    hq_serial_nb: '1'
+    hq_type: '1'
+    invo_date: '2011-03-29'
+    invo_num: '1'
+    invo_val_curr: '1'
+    name: test asset name
+    prod_int_name: product test
+    product_id: 'False'
+    trac_arriv_date: '2011-03-28'
+    trac_orig_mission_code: '1'
+    trac_receipt_place: '1'
+    trac_sourc_ref: '1'
+    
+    
+- 
+  Creating a product.asset.event record
+- 
+  !record {model: product.asset.event, id: product_asset_event_testeventname0}:
+    asset_code: test asset code
+    asset_id: product_asset_testassetname0
+    asset_type_id: 'False'
+    date: '2011-03-28'
+    event_type: reception
+    hq_brand: '1'
+    hq_model: '1'
+    name: test event name
+    prod_int_name: product test
+    state: inUse
+    
+    
+- 
+  Creating a product.asset.type record
+- 
+  !record {model: product.asset.type, id: product_asset_type_it0}:
+    name: IT
+    
+    
+- 
+  Creating a product.category record
+- 
+  !record {model: product.category, id: product_category_allproducts0}:
+    name: All products
+    sequence: 0.0
+    
+    
+- 
+  Creating a product.product record
+- 
+  !record {model: product.product, id: product_product_producttest0}:
+    asset_ids:
+      - asset_code: test asset code
+        asset_type_id: product_asset_type_it0
+        event_ids:
+          - asset_code: test asset code
+            asset_type_id: product_asset_type_it0
+            date: '2011-03-28'
+            event_type: reception
+            hq_brand: '1'
+            hq_model: '1'
+            name: test event name
+            prod_int_name: product test
+            state: inUse
+        hq_brand: '1'
+        hq_model: '1'
+        hq_serial_nb: '1'
+        hq_type: '1'
+        invo_date: '2011-03-29'
+        invo_num: '1'
+        invo_val_curr: '1'
+        name: test asset name
+        prod_int_name: product test
+        trac_arriv_date: '2011-03-28'
+        trac_orig_mission_code: '1'
+        trac_receipt_place: '1'
+        trac_sourc_ref: '1'
+    asset_type_id: product_asset_type_it0
+    categ_id: product_category_allproducts0
+    cost_method: standard
+    mes_type: fixed
+    name: product test
+    name_template: product test
+    procure_method: make_to_stock
+    seller_delay: '1'
+    seller_qty: 0.0
+    standard_price: 1.0
+    subtype: asset
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    valuation: manual_periodic
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    
+    
+- 
+  Creating a product.template record
+- 
+  !record {model: product.template, id: product_template_producttest0}:
+    asset_type_id: product_asset_type_it0
+    categ_id: product_category_allproducts0
+    cost_method: standard
+    mes_type: fixed
+    name: product test
+    procure_method: make_to_stock
+    standard_price: 1.0
+    subtype: asset
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume: 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    
+    
+    
