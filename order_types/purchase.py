@@ -29,11 +29,11 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
-    def copy(self, cr, uid, id, defaults, context={}):
+    def copy(self, cr, uid, id, default, context={}):
         '''
         Remove loan_id field on new purchase.order
         '''
-        return super(purchase_order, self).copy(cr, uid, id, defaults={'loan_id': False}, context=context)
+        return super(purchase_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
     
     # @@@purchase.purchase_order._invoiced
     def _invoiced(self, cursor, user, ids, name, arg, context=None):

@@ -31,11 +31,11 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def copy(self, cr, uid, id, defaults, context={}):
+    def copy(self, cr, uid, id, default, context={}):
         '''
         Delete the loan_id field on the new sale.order
         '''
-        return super(sale_order, self).copy(cr, uid, id, defaults={'loan_id': False}, context=context)
+        return super(sale_order, self).copy(cr, uid, id, default={'loan_id': False}, context=context)
     
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context={}):
