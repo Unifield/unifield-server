@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
 	<data>
-	
-	    <record id="action_choose_supplier" model="ir.actions.server">
-            <field name="name">Choose Supplier</field>
-            <field name="model_id" ref="model_procurement_choose_supplier"/>
-            <field name="state">code</field>
-            <field name="code">action = obj.start_choose_supplier(context=context)</field>
-        </record>
-
         <record id="procurement_list_form_view" model="ir.ui.view">
             <field name="name">procurement.list.form.view</field>
             <field name="model">procurement.list</field>
