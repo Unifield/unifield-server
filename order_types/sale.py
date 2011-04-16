@@ -333,51 +333,6 @@ class sale_order(osv.osv):
         
         return False
     
-#    def shipping_policy_change(self, cr, uid, ids, order_policy, order_type=False, partner_id=False, field=False, context={}):
-#        '''
-#        Display a message if the error tries to associate an internal type with an incompatible
-#        order policy
-#        '''
-#        qty = False
-#        partner = False
-#        error = False
-#        message = {}
-#        res = {}
-#        
-#        # Get super values
-#        res2 = super(sale_order, self).shipping_policy_change(cr, uid, ids, order_policy, context=context)
-#        if res2 and 'value' in res2 and 'invoice_quantity' in res2['value']:
-#            qty = res2['value']['invoice_quantity']
-#        
-#        # Get partne information
-#        if partner_id:
-#            partner= self.pool.get('res.partner').browse(cr, uid, [partner_id])[0]
-#        
-#        # Tests
-#        if order_policy != 'manual':
-#            if order_type == 'regular' and partner and partner.partner_type == 'internal':
-#                message = {'title': _('Error'),
-#                           'message': _('You cannot define an automatic invoicing policy with an internal partner for a regular order !')}
-#                error = True
-#            elif order_type != 'regular':
-#                message = {'title': _('Error'), 
-#                           'message': _('You cannot define an automatic invoicing policy for a non-regular order !')}
-#                error = True
-#        
-#        # Displaying
-#        if error and field and field == 'order_type':
-#            res = {'value': {'order_type': 'regular'},
-#                   'warning': message,}
-#        elif error and field and field == 'order_policy':
-#            res = {'value': {'order_policy': 'manual'},
-#                   'warning': message}
-#        if qty and 'value' in res:
-#            res['value'].update({'invoice_quantity': qty})
-#        elif qty:
-#            res = {'value': {'invoice_quantity': qty}}
-#            
-#        return res
-    
 sale_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
