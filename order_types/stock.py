@@ -95,9 +95,11 @@ class stock_picking(osv.osv):
         
         for pick in self.browse(cr, uid, ids, context=context):
             certif = False
-            for move in pick.move_lines:
-                if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
+            if pick.type == 'out':
+                for move in pick.move_lines:
+                   if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
+                        break
                         
             res[pick.id] = certif
             
