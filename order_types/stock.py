@@ -26,33 +26,47 @@ from tools.translate import _
 class stock_move(osv.osv):
     _name= 'stock.move'
     _inherit = 'stock.move'
-    
-#    def copy(self, cr, uid, id, defaults={}, context={}):
-#        '''
-#        Adds functionnal field from copy
-#        '''
-#        move = self.browse(cr, uid, id, context=context)
-#        
-#        if not 'order_type' in defaults:
-#            defaults['order_type'] = ''
-#        if not 'order_category' in defaults:
-#            defaults['order_category'] = ''
-#        if not 'order_priority' in defaults:
-#            defaults['order_priority'] = ''
-#        
-#        return super(stock_move, self).copy(cr, uid, id, defaults, context=context)
-    
+   
+    def _search_order(self, cr, uid, obj, name, args, context={}):
+        if not len(args):
+            return []
+        matching_fields = {'order_priority': 'priority', 'order_category': 'categ'}
+        sale_obj = self.pool.get('sale.order')
+        purch_obj = self.pool.get('purchase.order')
+
+        search_args = []
+        for arg in args:
+            search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
+
+        sale_ids = sale_obj.search(cr, uid, search_args, limit=0)
+        purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
+
+        newrgs = []
+        if sale_ids:
+            newrgs.append(('sale_ref_id', 'in', sale_ids))
+        if purch_ids:
+            newrgs.append(('purchase_ref_id', 'in', purch_ids))
+        
+        if not newrgs:
+            return [('id', '=', 0)]
+
+        if len(newrgs) > 1:
+            newrgs.insert(0,'|')
+        
+        return newrgs
+
     def _get_order_information(self, cr, uid, ids, fields_name, arg, context={}):
         '''
         Returns information about the order linked to the stock move
         '''
         res = {}
-        order = False
         
         for move in self.browse(cr, uid, ids, context=context):
             res[move.id] = {'order_priority': False,
                             'order_category': False,
                             'order_type': False}
+            order = False
+            
             if move.purchase_line_id and move.purchase_line_id.id:
                 order = move.purchase_line_id.order_id
             elif move.sale_line_id and move.sale_line_id.id:
@@ -71,14 +85,16 @@ class stock_move(osv.osv):
     
     _columns = {
         'order_priority': fields.function(_get_order_information, method=True, string='Priority', type='selection', 
-                                          selection=ORDER_PRIORITY, multi='move_order'),
+                                          selection=ORDER_PRIORITY, multi='move_order', fnct_search=_search_order),
         'order_category': fields.function(_get_order_information, method=True, string='Category', type='selection', 
-                                          selection=ORDER_CATEGORY, multi='move_order'),
+                                          selection=ORDER_CATEGORY, multi='move_order', fnct_search=_search_order),
         'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection', 
                                       selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                                  ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                                  ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                                 ('direct', 'Direct Purchase Order')], multi='move_order'),
+                                                 ('direct', 'Direct Purchase Order')], multi='move_order', fnct_search=_search_order),
+        'sale_ref_id': fields.related('sale_line_id', 'order_id', type='many2one', relation='sale.order', string='Sale', readonly=True),
+        'purchase_ref_id': fields.related('purchase_line_id', 'order_id', type='many2one', relation='purchase.order', string='Purchase', readonly=True),
     }
     
 stock_move()
