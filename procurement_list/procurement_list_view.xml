@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
 	<data>
+	
+	    <record id="action_choose_supplier" model="ir.actions.server">
+            <field name="name">Choose Supplier</field>
+            <field name="model_id" ref="model_procurement_choose_supplier"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_choose_supplier(context=context)</field>
+        </record>
 
         <record id="procurement_list_form_view" model="ir.ui.view">
             <field name="name">procurement.list.form.view</field>
@@ -25,17 +32,18 @@
                                     <field name="comment" />
                                     <field name="from_stock" />
                                     <field name="latest" />
+                                    <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" />
+                                    <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
+                                    <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" />
                                 </tree>
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="cancel" string="Cancel" icon="gtk-cancel" type="object" states="draft"/>
-                                <button name="create_rfq" string="Create RfQ" icon="gtk-execute" type="object" states="draft" />
+                                <button name="create_rfq" type="object" string="Create RfQ" icon="gtk-execute" states="draft" />
+                                <button name="create_po" type="object" string="Create PO" icon="gtk-execute" states="draft" />
                                 <button name="reset" string="Reset to Draft" icon="gtk-ok" type="object" states="cancel" />
                             </group>
-                        </page>
-                        <page string="Suppliers">
-                            <field name="supplier_ids" nolabel="1" />
                         </page>
                         <page string="Sourcing Documents">
                         	<field name="order_ids" nolabel="1" colspan="4">

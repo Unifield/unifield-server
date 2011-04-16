@@ -43,10 +43,6 @@ class procurement_list(osv.osv):
         'line_ids': fields.one2many('procurement.list.line', 'list_id', string='Lines', readonly=True,
                                     states={'draft': [('readonly', False)]}),
         'notes': fields.text(string='Notes'),
-        'supplier_ids': fields.many2many('res.partner', 'procurement_list_supplier_rel',
-                                         'list_id', 'supplier_id', string='Suppliers',
-                                         domain="[('supplier', '=', True)]",
-                                         states={'done': [('readonly', True)]}),
         'order_ids': fields.many2many('purchase.order', 'procurement_list_order_rel',
                                       'list_id', 'order_id', string='Orders', readonly=True),
     }
@@ -75,6 +71,82 @@ class procurement_list(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'})
 
         return True
+    
+    def create_po(self, cr, uid, ids, context={}):
+        '''
+        Creates all purchase orders according to choices on lines
+        '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        order_obj = self.pool.get('purchase.order')
+        order_line_obj = self.pool.get('purchase.order.line')
+        proc_obj = self.pool.get('procurement.list')
+        line_obj = self.pool.get('procurement.list.line')
+        prod_sup_obj = self.pool.get('product.supplierinfo')
+
+        # We search if at least one line hasn't defined supplier
+        for list in self.browse(cr, uid, ids):
+            for line in list.line_ids:
+                if not line.supplier_id:
+                    raise osv.except_osv(_('Error'), _('You cannot create purchase orders while all lines haven\'t a defined supplier'))
+
+            # We search lines group by supplier_id
+            po_exists = {}
+            po_id = False
+            po_ids = []
+            line_ids = line_obj.search(cr, uid, [('list_id', 'in', ids)], order='supplier_id')
+            for l in line_obj.browse(cr, uid, line_ids):
+                # Search if a PO already exists in the system
+                if not po_exists.get(l.supplier_id.id, False):
+                    # If no PO in local memory, search in DB
+                    po_exist = order_obj.search(cr, uid, [('origin', '=', l.list_id.name), ('partner_id', '=', l.supplier_id.id)])
+                    if po_exist:
+                        # A PO exists in DB, set the id in local memory
+                        po_exists[l.supplier_id.id] = po_exist[0]
+                    else: 
+                        # try to create a new PO, and set its id in local memory
+                        address = l.supplier_id.address_get().get('default')
+                        # Returns an error when the supplier has not defined address
+                        if not address:
+                            raise osv.except_osv(_('Error'), _('The supplier %s has no address defined on its form' %l.supplier_id.name))
+                        # When starting or when the supplier changed, we create a Purchase Order
+                        po_id = order_obj.create(cr, uid, {'partner_id': l.supplier_id.id,
+                                                           'partner_address_id': address,
+                                                           'pricelist_id': l.supplier_id.property_product_pricelist.id,
+                                                           'origin': l.list_id.name,
+                                                           'location_id': proc_obj._get_location(cr, uid, l.list_id.warehouse_id)})
+                        po_exists[l.supplier_id.id] = po_id
+    
+                # Get the PO id in local memory
+                po_id = po_exists.get(l.supplier_id.id)
+                    
+                # We create all lines for this supplier
+                price_unit = prod_sup_obj.price_get(cr, uid, [l.supplier_id.id], l.product_id.id, l.product_qty)
+                order_line_obj.create(cr, uid, {'product_uom': l.product_uom_id.id,
+                                                'product_id': l.product_id.id,
+                                                'order_id': po_id,
+                                                'price_unit': price_unit[l.supplier_id.id],
+                                                'date_planned': l.list_id.order_date,
+                                                'product_qty': l.product_qty,
+                                                'name': l.product_id.name,})
+    
+            for supplier in po_exists:
+                po_ids.append(po_exists.get(supplier))
+    
+            # We confirm all created orders
+            wf_service = netsvc.LocalService("workflow")
+            for po in po_ids:
+                wf_service.trg_validate(uid, 'purchase.order', po, 'purchase_confirm', cr)
+    
+            proc_obj.write(cr, uid, ids[0], {'state': 'done', 'order_ids': [(6, 0, po_ids)]}) 
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', po_ids)],
+               }
 
     def create_rfq(self, cr, uid, ids, context={}):
         ''' 
@@ -86,43 +158,21 @@ class procurement_list(osv.osv):
         order_ids = []
 
         for list in self.browse(cr, uid, ids, context=context):
-            # Returns an error message if no suppliers or no products
-            if not list.supplier_ids or len(list.supplier_ids) == 0:
-                raise osv.except_osv(_('Error'), _('No supplier defined for this list !'))
+            # Returns an error message if no products defined
             if not list.line_ids or len(list.line_ids) == 0:
                 raise osv.except_osv(_('Error'), _('No line defined for this list !'))
 
             location_id = self._get_location(cr, uid, list.warehouse_id)
-            # Creates a RfQ for each supplier...
-            for supplier in list.supplier_ids:
-                po_id = purchase_obj.create(cr, uid, {'partner_id': supplier.id,
-                                                      'partner_address_id': supplier.address_get().get('default'),
-                                                      'pricelist_id': supplier.property_product_pricelist.id,
-                                                      'origin': list.name,
-                                                      'location_id': location_id})
-                order_ids.append(po_id)
 
-                # ... with all lines...
-                for line in list.line_ids:
-                    # ... which aren't from stock
-                    if not line.from_stock:
-                        line_obj.create(cr, uid, {'product_uom': line.product_uom_id.id,
-                                                  'product_id': line.product_id.id,
-                                                  'order_id': po_id,
-                                                  'price_unit': 0.00,
-                                                  'date_planned': list.order_date,
-                                                  'product_qty': line.product_qty,
-                                                  'procurement_line_id': line.id,
-                                                  'name': line.product_id.name,})
-                    self.pool.get('procurement.list.line').write(cr, uid, line.id, {'latest': 'RfQ In Progress'})
-
-        self.write(cr, uid, ids, {'state': 'done', 'order_ids': [(6, 0, order_ids)]})
+        context['active_ids'] = ids
+        context['active_id'] = ids[0]
 
         return {'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
+                'res_model': 'procurement.choose.supplier.rfq',
+                'target': 'new',
                 'view_type': 'form',
-                'view_mode': 'tree,form',
-                'domain': [('id', 'in', order_ids)]}
+                'view_mode': 'form',
+                'context': context}
 
     def reset(self, cr, uid, ids, context={}):
         '''
@@ -158,6 +208,7 @@ class procurement_list_line(osv.osv):
         'from_stock': fields.boolean(string='From stock ?'),
         'latest': fields.char(size=64, string='Latest document', readonly=True),
         'list_id': fields.many2one('procurement.list', string='List', required=True, ondelete='cascade'),
+        'supplier_id': fields.many2one('res.partner', string='Supplier'),
     }
     
     _defaults = {
@@ -183,12 +234,48 @@ class procurement_list_line(osv.osv):
 
         v = {}
         if not product_id:
-            v.update({'product_uom_id': False})
+            v.update({'product_uom_id': False, 'supplier_id': False})
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom_id': product.uom_id.id})
+            v.update({'product_uom_id': product.uom_id.id, 'supplier_id': product.seller_id.id})
 
         return {'value': v}
+    
+    
+    def split_line(self, cr, uid, ids, context={}):
+        '''
+        Split a line into two lines
+        '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
+        for line in self.browse(cr, uid, ids):
+            state = line.list_id.state
+        context.update({'line_id': ids[0], 'state': state})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.list.line.split',
+                'target': 'new',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'context': context,
+                }
+        
+    def merge_line(self, cr, uid, ids, context={}):
+        '''
+        Merges two lines
+        '''
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
+        for line in self.browse(cr, uid, ids):
+            state = line.list_id.state
+        context.update({'line_id': ids[0], 'state': state})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'procurement.list.line.merge',
+                'target': 'new',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'context': context,
+                }
 
 procurement_list_line()
 
