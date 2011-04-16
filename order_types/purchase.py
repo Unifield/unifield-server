@@ -131,14 +131,10 @@ class purchase_order(osv.osv):
             ids = [ids]
             
         for order in self.browse(cr, uid, ids):
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
+            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
+                         order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
-                for line in order.order_line:
-                    line_obj.write(cr, uid, [line.id], {'invoiced': 1})
-            elif order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
-                self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
-                for line in order.order_line:
-                    line_obj.write(cr, uid, [line.id], {'invoiced': 1})
+                line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
