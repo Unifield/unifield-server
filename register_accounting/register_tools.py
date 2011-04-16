@@ -42,14 +42,14 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 # Prepare some values
                 acc_obj = self.pool.get('account.account')
                 third_type = [('res.partner', 'Partner')]
-                third_selection = 'res.partner,0'
+                third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
                 if acc_type == 'transfer':
                     third_type = [('account.bank.statement', 'Register')]
-                    third_selection = 'account.bank.statement,0'
+                    third_selection = 'account.bank.statement,'
                 elif acc_type == 'advance':
                     third_type = [('hr.employee', 'Employee')]
-                    third_selection = 'hr.employee,0'
+                    third_selection = 'hr.employee,'
                 res[st_line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
     return res
 
