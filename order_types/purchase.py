@@ -163,6 +163,7 @@ class purchase_order(osv.osv):
                                                  'partner_shipping_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['delivery'])['delivery'],
                                                  'pricelist_id': order.partner_id.property_product_pricelist.id,
                                                  'loan_id': order.id,
+                                                 'loan_duration': order.loan_duration,
                                                  'origin': order.name,
                                                  'order_type': 'loan',
                                                  'delivery_requested_date': loan_duration.strftime('%Y-%m-%d'),
@@ -184,7 +185,7 @@ class purchase_order(osv.osv):
             
             message = _("Loan counterpart '%s' was created.") % (sale.name,)
             
-            self.log(cr, uid, order_id, message)
+            sale_obj.log(cr, uid, order_id, message)
         
         return order_id
     
