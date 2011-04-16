@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="act_sale_loan" model="workflow.activity">
+            <field name="wkf_id" ref="sale.wkf_sale"/>
+            <field name="name">loan</field>
+            <field name="kind">subflow</field>
+            <field name="subflow_id" search="[('osv','=','purchase.order')]" type="int"/>
+            <field name="action">action_purchase_order_create()</field>
+        </record>
+        <record id="act_sale_loan_done" model="workflow.activity">
+            <field name="wkf_id" ref="sale.wkf_sale" />
+            <field name="name">loan_done</field>
+        </record>
+        
+        <record id="trans_sale_router_loan" model="workflow.transition">
+            <field name="act_from" ref="sale.act_router" />
+            <field name="act_to" ref="act_sale_loan" />
+            <field name="condition">order_type=='loan' and not loan_id</field>
+        </record>
+        <record id="trans_sale_router_loan_done" model="workflow.transition">
+            <field name="act_from" ref="sale.act_router" />
+            <field name="act_to" ref="act_sale_loan_done" />
+            <field name="condition">order_type!='loan' or loan_id</field>
+        </record>
+        <record id="trans_sale_loan_done" model="workflow.transition">
+            <field name="act_from" ref="act_sale_loan"/>
+            <field name="act_to" ref="act_sale_loan_done"/>
+            <field name="signal">subflow.done</field>
+        </record>
+        <record id="trans_sale_loand_done_end" model="workflow.transition">
+            <field name="act_from" ref="act_sale_loan_done" />
+            <field name="act_to" ref="sale.act_done" />
+        </record>
+        <record id="sale.trans_router_wait_invoice_shipping" model="workflow.transition">
+            <field name="act_from" ref="sale.act_wait_invoice"/>
+            <field name="act_to" ref="sale.act_invoice_end"/>
+            <field name="condition">(order_policy=='picking') or order_type!='regular' or (order_type=='regular' and partner_id.partner_type=='internal')</field>
+        </record>
+    
+    </data>
+</openerp>

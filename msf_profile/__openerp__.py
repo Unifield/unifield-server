@@ -45,6 +45,7 @@
 	    "product_asset",
 	    "order_nomenclature",
 	    "product_nomenclature",
+        "order_types",
     ],
     "update_xml": [
     ],

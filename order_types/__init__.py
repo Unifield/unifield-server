@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,26 +19,23 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
+ORDER_PRIORITY = [('emergency', 'Emergency'), 
+                  ('normal', 'Normal'), 
+                  ('medium', 'Medium'), 
+                  ('urgent', 'Urgent')]
 
+ORDER_CATEGORY = [('medical', 'Medical'), 
+                  ('log', 'Logistic'), 
+                  ('food', 'Food'),
+                  ('service', 'Service'), 
+                  ('asset', 'Asset'), 
+                  ('mixed', 'Mixed'),
+                  ('other', 'Other')]
 
-class res_partner(osv.osv):
-    _name = 'res.partner'
-    _inherit = 'res.partner'
-
-    _columns = {
-        'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
-        'partner_type': fields.selection([('internal', 'Internal'), ('section', 'Inter-section'),
-                                          ('external', 'External')], string='Partner type', required=True),
-    }
-
-    _defaults = {
-        'manufacturer': lambda *a: False,
-        'partner_type': lambda *a: 'external',
-    }
-
-res_partner()
+import purchase
+import sale
+import stock
+import report
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

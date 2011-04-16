@@ -193,7 +193,7 @@
     from dateutil.relativedelta import relativedelta
     two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
     ship_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') - relativedelta(days=28)).strftime('%Y-%m-%d')
-    res = self.order_type_change(cr, uid, [ref('so1')], 'international', two_days, False)
+    res = self.internal_type_change(cr, uid, [ref('so1')], 'international', two_days, False)
     assert res.get('value', False) and res['value'].get('shipment_date', False) == two_days, "Error when selecting International as Order type"
 -
     I create a line for P1 in SO 1
