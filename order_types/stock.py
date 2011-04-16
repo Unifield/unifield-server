@@ -141,6 +141,7 @@ class stock_picking(osv.osv):
                 for move in pick.move_lines:
                     if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
+                        break
                         
         if certif and not context.get('attach_ok', False):
             partial_id = self.pool.get("stock.certificate.picking").create(
