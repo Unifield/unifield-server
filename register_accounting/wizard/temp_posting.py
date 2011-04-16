@@ -45,7 +45,21 @@ class wizard_temp_posting(osv.osv_memory):
                     self.pool.get('account.bank.statement.line').button_temp_posting(cr, uid, [st_line_id], context=context)
             mod_obj = self.pool.get('ir.model.data')
             act_obj = self.pool.get('ir.actions.act_window')
-            result = mod_obj._get_id(cr, uid, 'account', 'action_view_bank_statement_tree')
+            # action_cheque_register_tree = Cheque Register
+            # action_view_bank_statement_tree = Cash Register
+            # action_bank_statement_tree = Bank Register
+            st_type = st_line.statement_id.journal_id.type
+            module = 'account'
+            mod_action = 'action_view_bank_statement_tree'
+            if st_type:
+                if st_type == 'cash':
+                    mod_action = 'action_view_bank_statement_tree'
+                elif st_type == 'bank':
+                    mod_action = 'action_bank_statement_tree'
+                elif st_type == 'cheque':
+                    mod_action = 'action_cheque_register_tree'
+                    module = 'register_accounting'
+            result = mod_obj._get_id(cr, uid, module, mod_action)
             id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
             result = act_obj.read(cr, uid, [id], context=context)[0]
             result['res_id'] = st_line.statement_id.id

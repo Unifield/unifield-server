@@ -1,0 +1,67 @@
+-
+  In order to test direct invoice creation, I create a register line in the CashBox with "Direct Invoice?" tick in then I hard post this line.
+-
+  I create a register line in the cashbox with "Direct Invoice?" tick in
+-
+  !record {model: account.bank.statement.line, id: account_bank_statement_line3}:
+    statement_id: account_bank_statement_8
+    account_id: account_account_payable_supplier0
+    amount: -50.00
+    date: !eval time.strftime('%Y-%m-%d')
+    name: Phone Bill
+    partner_id: res_partner_supplier_0
+    sequence: 0.0
+    type: general
+    direct_invoice: 1
+-
+  I hard post this line
+-
+  !python {model: account.bank.statement.line}: |
+    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line3")])
+-
+  I check that an invoice is attached
+-
+  !assert {model: account.bank.statement.line, id: account_bank_statement_line3}:
+    - invoice_id != False
+-
+  In order to test direct invoice I add some lines into invoice then I approve it and check that the register line and resulted move line from invoice are reconciled
+-
+  I add a line into invoice
+-
+  !python {model: account.invoice}: |
+    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
+    invoice_id = reg_line.invoice_id.id
+    inv_line_obj = self.pool.get('account.invoice.line')
+    inv_line_obj.create(cr, uid, {'name': 'Spent time', 'invoice_id': invoice_id, 'account_id': ref("account_account_expense0"), 'price_unit': 1.00, 'quantity': 50})
+-
+  I approve the invoice by opening it
+-
+  !python {model: account.invoice}: |
+    import netsvc
+    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
+    wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'account.invoice', reg_line.invoice_id.id, 'invoice_open', cr)
+-
+  I check that invoice have a move and verify that one of move lines is reconciled. Then I check that the reconciled is linked to the register line
+-
+  !python {model: account.invoice}: |
+    # Fetch register line
+    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
+    # Fetch invoice
+    invoice_id = reg_line.invoice_id
+    # Verify mode id from invoice and register
+    inv_move = self.browse(cr, uid, invoice_id.id).move_id
+    assert inv_move != False, "No move id found for invoice"
+    assert reg_line.move_ids != False, "No move id found for register line"
+    # Prepare some elements
+    move_line_obj = self.pool.get('account.move.line')
+    reconcile_obj = self.pool.get('account.')
+    total = 0
+    for ml in inv_move.line_id:
+        if ml.reconcile_id:
+            total += 1
+            reconcile_id = ml.reconcile_id.id
+    assert total > 0, "No reconciliation in invoice move"
+    # Search reconcile id from move line that become from the register line
+    res_ids = move_line_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('reconcile_id', '=', reconcile_id)])
+    assert res_ids != False, "No move line that becomes from the register line is reconciled!"

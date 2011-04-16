@@ -5,9 +5,9 @@
 -
   !record {model: account.bank.statement, id: account_bank_statement_2}:
     date: !eval time.strftime('%Y-%m-%d')
-    journal_id: account.bank_journal
+    journal_id: account_journal_bank_0
     name:
-    period_id: account.period_10
+    period_id: period_5
     user_id: base.user_root
 -
   I check that the initially Bank Register is in the "Draft" state
