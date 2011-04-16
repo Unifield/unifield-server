@@ -333,6 +333,43 @@ class sale_order(osv.osv):
         
         return False
     
+    #@@@override sale.sale_order.action_invoice_end
+    def action_invoice_end(self, cr, uid, ids, context=None):
+        ''' 
+        Modified to set lines invoiced when order_type is not regular
+        '''
+        for order in self.browse(cr, uid, ids, context=context):
+            #
+            # Update the sale order lines state (and invoiced flag).
+            #
+            for line in order.order_line:
+                vals = {}
+                #
+                # Check if the line is invoiced (has asociated invoice
+                # lines from non-cancelled invoices).
+                #
+                invoiced = order.noinvoice
+                if not invoiced:
+                    for iline in line.invoice_lines:
+                        if iline.invoice_id and iline.invoice_id.state != 'cancel':
+                            invoiced = True
+                            break
+                if line.invoiced != invoiced:
+                    vals['invoiced'] = invoiced
+                # If the line was in exception state, now it gets confirmed.
+                if line.state == 'exception':
+                    vals['state'] = 'confirmed'
+                # Update the line (only when needed).
+                if vals:
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], vals, context=context)
+            #
+            # Update the sales order state.
+            #
+            if order.state == 'invoice_except':
+                self.write(cr, uid, [order.id], {'state': 'progress'}, context=context)
+        return True
+        #@@@end
+
 sale_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
