@@ -63,6 +63,7 @@
                     <field name="name" />
                     <field name="order_date" />
                     <field name="requestor" />
+                    <field name="state" />
                 </tree>
             </field>
         </record>
