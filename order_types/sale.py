@@ -128,7 +128,7 @@ class sale_order(osv.osv):
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
     }
     
     _defaults = {

@@ -76,7 +76,7 @@ class purchase_order(osv.osv):
         'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
     }
     
     _defaults = {
