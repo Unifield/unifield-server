@@ -84,7 +84,10 @@ class procurement_list_line_split(osv.osv_memory):
                                       'product_id': obj.line_id.product_id.id,
                                       'product_uom_id': obj.line_id.product_uom_id.id,
                                       'product_qty': obj.qty,
-                                      'supplier_id': False,})
+                                      'supplier_id': False,
+                                      'from_stock': obj.line_id.from_stock, 
+                                     }
+                            )
             
         return {'type': 'ir.actions.act_window_close'}
             
@@ -208,8 +211,11 @@ class procurement_choose_supplier_rfq(osv.osv_memory):
              
             # Creates one RfQ for each supplier
             for s in obj.supplier_ids:
+                address = s.address_get().get('default')
+                if not address:
+                    raise osv.except_osv(_('Error'), _('The supplier %s has no address defined on its form' %s.name))
                 po_id = order_obj.create(cr, uid, {'partner_id': s.id,
-                                                   'partner_address_id': s.address_get().get('default'),
+                                                   'partner_address_id': address,
                                                    'pricelist_id': s.property_product_pricelist.id,
                                                    'origin': origin,
                                                    'location_id': location_id})
