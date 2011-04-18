@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="product_normal_form_view" model="ir.ui.view">
+            <field name="name">product.normal.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <group colspan="4" col="6" position="replace">
+	                    <group colspan="4" col="6">
+	                        <group colspan="4" col="2">
+	                            <separator string="Name" colspan="2"/>
+	                            <field name="name"/>
+	                            <field groups="product.group_product_variant" name="variants" />
+	                        </group>
+	                        <group colspan="1" col="2">
+	                            <separator string="Codes" colspan="2"/>
+	                            <field name="default_code" required="1"/>
+	                        </group>
+	                    </group>
+                    </group>
+                    <group name="misc" position="replace"/>
+                    <field name="product_manager" position="replace">
+                        <field name="active"/>
+                    </field>
+                    <field name="uom_po_id" position="replace">
+                        <field name="uom_po_id" string="Exchangeable Unit of Measure" groups="base.group_extended"/>
+                    </field>
+                    <group name="uos" position="replace"/>
+                    <field name="warranty" position="replace"/>
+                    <field name="loc_rack" position="replace">
+                        <field name="loc_indic" attrs="{'readonly':[('type','=','service')]}" />
+                    </field>
+                    <field name="loc_row" position="replace"/>
+                    <field name="loc_case" position="replace"/>
+                    <field name="ean" position="replace"/>
+                </data>
+            </field>
+        </record>
+        
+        <record id="stock.view_normal_stock_property_form" model="ir.ui.view">
+            <field name="name">product.normal.stock.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <group name="status" position="after">
+                    <group colspan="2" col="3">
+                        <separator string="Stocks" colspan="4"/>
+                        <field name="qty_available"/>
+                        <button name="%(stock.action_view_change_product_quantity)d" string="Update" attrs="{'invisible': [('type', '=', 'service')]}"
+                            type="action" icon="gtk-execute" groups = "stock.group_stock_manager,stock.group_stock_user"/>
+                        <newline/>
+                        <field name="virtual_available"/>
+                    </group>
+                </group>
+            </field>
+        </record>
+        
+        <record id="product_packaging_tree_view" model="ir.ui.view">
+            <field name="name">product.packaging.tree.view.inherit</field>
+            <field name="model">product.packaging</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="product.product_packaging_tree_view"/>
+            <field name="arch" type="xml">
+                <field name="ean" position="replace"/>
+            </field>
+        </record>
+        
+        
+        <record id="product_supplierinfo_form_view" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view.inherit</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="sequence" position="replace">
+                        <field name="sequence" string="Ranking"/>
+                    </field>
+                    <field name="company_id" position="replace"/>
+                </data>
+            </field>
+        </record>
+        
+        <record id="product_supplierinfo_tree_view" model="ir.ui.view">
+            <field name="name">product.supplierinfo.tree.view.inherit</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="sequence" position="replace">
+                        <field name="sequence" string="Ranking"/>
+                     </field>
+                    <field name="company_id" position="replace"/>
+                </data>
+            </field>
+        </record>
+        
+        <record id="stock_location.product_normal_form_inherit_location" model="ir.ui.view">
+            <field name="name">product.product.form</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <data/>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="product_manufacturer.view_product_form_expiry">
+            <field name="name">product.normal.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <data/>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_expiry.view_product_form_expiry">
+            <field name="name">product.normal.form</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="Dates">
+                        <field name="life_time" />
+                        <field name="use_time" />
+                        <field name="alert_time" />
+                    </page>
+                </notebook>
+            </field>
+        </record>
+        
+    </data>
+</openerp>
