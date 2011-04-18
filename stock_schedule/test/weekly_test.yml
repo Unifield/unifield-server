@@ -9,6 +9,7 @@
     name: weekly
     weekly_frequency: 1
     weekly_sunday_ok: 1
+    weekly_monday_ok: 0
     start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2010-03-03', '%Y-%m-%d'))
     no_end_date: True
 -
