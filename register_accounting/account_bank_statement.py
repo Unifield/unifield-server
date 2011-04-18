@@ -98,7 +98,11 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function
         """
-        return super(osv.osv, self).write(cr, uid, ids, values, context=context)
+        super(osv.osv, self).write(cr, uid, ids, values, context=context)
+        res = self._get_starting_balance(cr, uid, ids)
+        for rs in res:
+            super(osv.osv, self).write(cr, uid, [rs], res.get(rs))
+        return True
 
     def button_open_bank(self, cr, uid, ids, context={}):
         """
