@@ -53,6 +53,16 @@ class stock_warehouse_automatic_supply(osv.osv):
                 
         return result.keys()
     
+    def _get_frequence_name(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the name_get value of the frequence
+        '''
+        res = {}
+        for proc in self.browse(cr, uid, ids):
+            res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+            
+        return res
+    
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
@@ -61,6 +71,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True),
         'location_id': fields.many2one('stock.location', string='Location'),
+        'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequence', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequence'),
         'line_ids': fields.one2many('stock.warehouse.automatic.supply.line', 'supply_id', string="Products"),
         'company_id': fields.many2one('res.company','Company',required=True),

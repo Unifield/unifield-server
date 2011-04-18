@@ -46,9 +46,23 @@ MONTHS = [('january', 'January'), ('february', 'February'), ('march','March'),
           ('july', 'July'), ('august', 'August'), ('september', 'September'),
           ('october', 'October'), ('november', 'November'), ('december', 'December'),]
 
+
 class stock_frequence(osv.osv):
     _name = 'stock.frequence'
     _description = 'Stock scheduler'
+    
+    def get_selection(self, cr, uid, o, field):
+        """
+        Returns the field.selection label
+        """
+        sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        if tr_ids:
+            return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+        else:
+            return res
     
     def get_datetime_day(self, monthly_choose_day):
         '''
@@ -421,30 +435,69 @@ class stock_frequence(osv.osv):
         for freq in self.browse(cr, uid, ids):
             if freq.name == 'daily':
                 if freq.daily_frequency_ok:
-                    title = 'Each %d day(s)' %freq.daily_frequency
+                    title = _('Each %d day(s)' %freq.daily_frequency)
                 if freq.daily_working_days:
-                    title = 'Each workign days'
+                    title = _('Each working days')
             if freq.name == 'weekly':
-                title = 'All '
+                sunday = monday = tuesday = wednesday = thursday = friday = saturday = ''
                 if freq.weekly_sunday_ok:
-                    title += 'sunday '
+                    sunday = 'sunday '
                 if freq.weekly_monday_ok:
-                    title += 'monday '
+                    monday = 'monday '
                 if freq.weekly_tuesday_ok:
-                    title += 'tuesday '
+                    tuesday = 'tuesday '
                 if freq.weekly_wednesday_ok:
-                    title += 'wadnesday '
+                    wednesday = 'wednesday '
                 if freq.weekly_thursday_ok:
-                    title += 'thursday '
+                    thursday = 'thursday '
                 if freq.weekly_friday_ok:
-                    title += 'friday '
+                    friday = 'friday '
                 if freq.weekly_saturday_ok:
-                    title += 'saturday '
-                title = ' - Each %d week(s)' % freq.weekly_frequency
+                    saturday = 'saturday '
+                title = _('All %s%s%s%s%s%s%s - Each %d week(s)' %(sunday, monday, tuesday, \
+                                                                 wednesday, thursday, \
+                                                                 friday, saturday, freq.weekly_frequency))
             if freq.name == 'monthly':
-                title = 'monthly'
+                if freq.monthly_one_day:
+                    choose_freq = self.get_selection(cr, uid, freq, 'monthly_choose_freq')
+                    choose_day = self.get_selection(cr, uid, freq, 'monthly_choose_day')
+                    title = _('%s %s - Each %s month(s)' % (choose_freq, choose_day, freq.monthly_frequency))
+                elif freq.monthly_repeating_ok:
+                    title = _('All ')
+                    i = 1
+                    # For each days
+                    while i < 32:
+                        day_f = 'th'
+                        field = i < 10 and '0%s' %i or '%s' %i
+                        if i in (1, 21, 31):
+                            day_f = 'st'
+                        elif i in (2, 22):
+                            day_f = 'nd'
+                        elif i in (3, 23):
+                            day_f = 'rd'
+                        day_ok = self.read(cr, uid, [freq.id], ['monthly_day%s' %field])[0]['monthly_day%s' %field]
+                        title += day_ok and 'the %s%s, ' %(i, day_f) or ''
+                        i += 1
+                    # Remove the last comma
+                    title = title[:-2]
+                    title += _(' of month - Each %s month(s)' % freq.monthly_frequency)
             if freq.name == 'yearly':
-                title = 'yearly'
+                if freq.yearly_day_ok:
+                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month')
+                    day_f = 'th'
+                    if freq.yearly_day in (1, 21, 31):
+                        day_f = 'st'
+                    elif freq.yearly_day in (2, 22):
+                        day_f = 'nd'
+                    elif freq.yearly_day in (3, 23):
+                        day_f = 'rd'
+                    title = _('All %s, the %s%s' %(month, freq.yearly_day, day_f))
+                elif freq.yearly_date_ok:
+                    frequence = self.get_selection(cr, uid, freq, 'yearly_choose_freq')
+                    day = self.get_selection(cr, uid, freq, 'yearly_choose_day')
+                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month_freq')
+                    title = _('All %s %s of %s' % (frequence, day, month))
+                title += _(' - Each %s year(s)' %(freq.yearly_frequency))
                 
             res.append((freq.id, title))
         

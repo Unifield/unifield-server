@@ -22,12 +22,13 @@
                         <field name="location_id"/>
                         <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     </group>
-                    <group colspan="2" col="2">
-                        <separator string="Period / Frequence Rule" />
-                        <field name="frequence_id" readonly="1" />
+                    <group colspan="2" col="4">
+                        <separator string="Period / Frequence Rule" colspan="4" />
+                        <field name="frequence_name" readonly="1" colspan="4" />
+                        <field name="frequence_id" invisible="1" />
                         <label />
-                        <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" />
-                        <field name="next_date" />
+                        <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="3" />
+                        <field name="next_date" colspan="4" />
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Misc" />
