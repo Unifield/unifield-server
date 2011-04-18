@@ -84,16 +84,16 @@
       </tr>
       <tr>
         <td>
-          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ move.date ]]</para>
+          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ move.date[0:10] ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.type ]]</para>
+          <para style="P4">[[ get_type(move, move.type) ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.prodlot_id.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.expired_date and movE.expired_date or '' ]]</para>
+          <para style="P4">[[ move.expired_date and move.expired_date or '/' ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.name ]]</para>
@@ -105,7 +105,7 @@
           <para style="P4">[[ move.location_dest_id.name]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.product_qty ]] [[ move.product_uom_id.name ]]</para>
+          <para style="P4">[[ move.product_qty ]] [[ move.product_uom.name ]]</para>
         </td>
       </tr>
     </blockTable>
