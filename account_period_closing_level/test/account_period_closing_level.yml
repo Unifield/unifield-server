@@ -15,7 +15,7 @@
 -
   We check that we have next year's March period...
 -
-  !assert {model: account.period, search: "[('name','=', 'Mar %s' % (datetime.now().year+1))]"}:
+  !assert {model: account.period, search: "[('name','=', '%s %s'%(datetime.now().replace(month=3).strftime('%b'), datetime.now().year+1))]"}:
     - date_start == str(datetime.now().year+1) + "-03-01"
     - date_stop == str(datetime.now().year+1) + "-03-31"
     - special == False
@@ -36,7 +36,7 @@
   !python {model: account.period}: |
     import datetime
     per_obj = self.pool.get('account.period')
-    per_ids = per_obj.search(cr, uid, [('name','=', 'Mar %s' % (datetime.datetime.now().year+1))])
+    per_ids = per_obj.search(cr, uid, [('name','=', '%s %s'%(datetime.datetime.now().strftime('%b'), datetime.datetime.now().year+1))])
     period = per_obj.browse(cr, uid, per_ids[0])
     period.action_set_state(context={'state': 'draft'})
     period = per_obj.browse(cr, uid, per_ids[0])
