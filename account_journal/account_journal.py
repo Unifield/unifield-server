@@ -57,7 +57,7 @@ class account_journal(osv.osv):
         'update_posted': True,
         'group_invoice_lines': False,
         'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.name,
-        'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
     
     def get_current_period(self, cr, uid, context=None):
