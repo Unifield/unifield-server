@@ -59,7 +59,9 @@ class account_account_activable(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
             context=None, count=False):
-        if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
+        if not context:
+            context = {}
+        if context.get('filter_inactive_accounts'):
             args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
             args.append('|')
             args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
