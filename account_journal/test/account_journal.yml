@@ -1,0 +1,34 @@
+-
+  We create Timesheet journal for employee.
+-
+  !record {model: account.analytic.journal, id: analytic_journal_1}:
+    code: CANJ
+    name: Cash Analytic Journal
+    type: general
+
+-
+  In order to check the Journal default value and register creation, we create a new cash journal.
+-
+  !record {model: account.journal, id: account_journal_1}:
+    name: Cash Journal
+    code: CEUR
+    currency: base.EUR
+    type: cash
+    analytic_journal_id: analytic_journal_1
+    
+-
+  We check that the default parameters are correctly set
+-
+  !assert {model: account.journal, id: account_journal_1}:
+    - allow_date == False
+    - centralisation == False
+    - entry_posted == False
+    - update_posted == True
+    - group_invoice_lines == False
+    
+-
+  We check that the cash register was created
+-
+  !assert {model: account.bank.statement, search: "[('journal_id', '=', ref('account_journal.account_journal_1'))]"}:
+    - name == 'REG1CEUR'
+    - currency.id == ref("base.EUR")

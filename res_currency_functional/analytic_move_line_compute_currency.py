@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,43 +16,20 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
-{
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Modules for Unifield
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-        "purchase_msf",
-	    "product_asset",
-	    "order_nomenclature",
-	    "product_nomenclature",
-        "order_types",
-        "res_currency_functional",
-    ],
-    "update_xml": [
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
-}
+
+from osv import fields, osv
+import decimal_precision as dp
+
+class account_analytic_line_compute_currency(osv.osv):
+    _inherit = "account.analytic.line"
+    
+    def refresh_rate(self, cr, uid, ids):
+        for analytic_line in self.browse(cr, uid, ids):
+            amount = analytic_line.move_id.debit - analytic_line.move_id.credit
+            cr.execute('update account_analytic_line set amount=%s where id=%s', 
+                      (amount, analytic_line.id))
+    
+account_analytic_line_compute_currency()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

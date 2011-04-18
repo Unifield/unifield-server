@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,43 +16,25 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 {
-    "name" : "MSF Modules",
+    "name" : "Accounting Journal for MSF",
     "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Modules for Unifield
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
+    "author" : "MSF: Matthieu Dietrich",
+    "category": 'Generic Modules/Accounting',
+    'init_xml': [],
+    "depends" : ["account"],
+    'update_xml': [
+        'account_journal_view.xml',
     ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-        "purchase_msf",
-	    "product_asset",
-	    "order_nomenclature",
-	    "product_nomenclature",
-        "order_types",
-        "res_currency_functional",
+    'demo_xml': [
     ],
-    "update_xml": [
+    'test': [
+        'test/account_journal.yml'
     ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
+    'installable': True,
+    'active': False,
+    #'certificate': 'certificate',
 }
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

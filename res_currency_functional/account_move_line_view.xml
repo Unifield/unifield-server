@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record model="ir.ui.view" id="view_move_line_tree">
+            <field name="name">account.move.line.tree</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="1"/>
+            <field name="arch" type="xml">
+                <tree string="Account Entry Line">
+                    <field name="journal_code"/>
+                    <field name="journal_sequence"/>
+                    <field name="instance"/>
+                    <field name="ref"/>
+                    <field name="date" string="Posting Date"/>
+                    <field name="period_id"/>
+                    <field name="account_id"/>
+                    <field name="name"/>
+                    <field name="partner_id" string="Third Party"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
+                    <field name="functional_currency_id"/>
+                    <field name="credit_currency" sum="Total Booking Credit"/>
+                    <field name="debit_currency" sum="Total Booking Debit"/>
+                    <field name="currency_id" string="Booking Currency"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_move_line_form" model="ir.ui.view">
+            <field name="name">account.move.line.form</field>
+            <field name="model">account.move.line</field>
+            <field name="type">form</field>
+            <field eval="1" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Journal Item">
+                    <group col="6" colspan="4">
+                        <field name="name" select="1"/>
+                        <field name="ref"/>
+                        <field name="partner_id" select="1" on_change="onchange_partner_id(False,partner_id,account_id,debit,credit,date)" string="Third Party"/>
+
+                        <field name="journal_id"/>
+                        <field name="period_id"/>
+                        <field name="instance"/>
+                    </group>
+                    
+                    <group col="2" colspan="2">
+                        <separator colspan="2" string="Amount"/>
+                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                        <field name="credit" string="Functional In" readonly="1"/>
+                        <field name="debit" string="Functional Out" readonly="1"/>
+                    </group>
+
+                    <group col="2" colspan="2">
+                        <separator colspan="2" string="Dates"/>
+                        <field name="date" string="Posting Date"/>
+                    </group>
+
+                    <group col="2" colspan="2" attrs="{'readonly':[('state','=','valid')]}" >
+                        <separator colspan="2" string="Currency"/>
+                        <field name="currency_id" string="Booking Currency"/>
+                        <field name="credit_currency"/>
+                        <field name="debit_currency"/>
+                    </group>
+
+                    <group col="2" colspan="2">
+                        <separator colspan="2" string="States"/>
+                        <field name="state"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    
+    </data>
+</openerp>
