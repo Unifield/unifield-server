@@ -475,11 +475,12 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.display_invoice:
             for inv_move_line_data in inv_move_line_ids:
                 inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], context=context)
-                # Confirm the payment for the invoice
-                invoice_id = inv_move_line_data[1]
-                inv_paid = self.pool.get('account.invoice').write(cr, uid, invoice_id, {'state': 'paid'}, context=context)
-                if not inv_paid:
-                    raise osv.except_osv(_('Error'), _('The payment confirmation of an invoice failed.'))
+#                # Confirm the payment for the invoice
+#                invoice_id = inv_move_line_data[1]
+#                # TODO: make reconciliation here and call invoice.test_paid() method to validate paid state, then write invoice in paid state
+#                inv_paid = self.pool.get('account.invoice').write(cr, uid, invoice_id, {'state': 'paid'}, context=context)
+#                if not inv_paid:
+#                    raise osv.except_osv(_('Error'), _('The payment confirmation of an invoice failed.'))
         else:
             for adv_move_line_id in adv_move_line_ids:
                 adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)
