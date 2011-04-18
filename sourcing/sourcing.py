@@ -133,7 +133,7 @@ class sourcing_line(osv.osv):
         '''
         self.read()
         
-        
+    
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
     _columns = {
@@ -141,6 +141,7 @@ class sourcing_line(osv.osv):
         'name': fields.char('Name', size=128),
         # sale order id
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
+        #'sale_order_id': fields.related('sale_order_line_id', 'order_id', relation='sale.order', type='many2one', string='Sale Order', readonly=True, store=True),
         # sale order line id
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         # reference
@@ -190,6 +191,9 @@ class sourcing_line(osv.osv):
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
     _order = 'sale_order_id desc'
+    _defaults = {
+             'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
+    }
     
     
     def write(self, cr, uid, ids, values, context=None):
@@ -232,11 +236,44 @@ class sourcing_line(osv.osv):
             value.update({'po_cft': False})
     
         return {'value': value}
-
     
-    _defaults = {
-                 'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
-    }
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy method from sourcing_line
+        '''
+        result = super(sourcing_line, self).copy(cr, uid, id, default, context)
+        return result
+    
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create method from sourcing_line
+        '''
+        result = super(sourcing_line, self).create(cr, uid, vals, context)
+        return result
+    
+    
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        copy_data method for soucring_line
+        '''
+        if not default:
+            default = {}
+            
+        if not context:
+            context = {}
+        # updated sequence number
+        default.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),})
+        # get sale_order_id
+#        if '__copy_data_seen' in context and 'sale.order' in context['__copy_data_seen'] and len(context['__copy_data_seen']['sale.order']) == 1:
+#            soId = context['__copy_data_seen']['sale.order'][0]
+#            default.update({'sale_order_id': soId,})
+            
+        return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
+
     
 sourcing_line()
 
@@ -246,7 +283,29 @@ class sale_order(osv.osv):
     
     _inherit = 'sale.order'
     _description = 'Sales Order'
-    _columns = {}
+    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),}
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create from sale_order
+        '''
+        return super(sale_order, self).create(cr, uid, vals, context)
+    
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale_order
+        
+        dont copy sourcing lines, they are generated at sale order lines creation
+        '''
+        if not default:
+            default={}
+            
+        default['sourcing_line_ids']=[]
+        
+        return super(sale_order, self).copy(cr, uid, id, default, context)
     
     
     def unlink(self, cr, uid, ids, context=None):
@@ -463,11 +522,35 @@ class sale_order_line(osv.osv):
                   'rts': time.strftime('%Y-%m-%d'),
                   'type': vals['type']
                   }
+        
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
         
         
         return result
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
         
+        result = super(sale_order_line, self).copy(cr, uid, id, default, context)
+        return result
+    
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        copy_data from sale order line
+        
+        dont copy sourcing lines, they are generated at sale order lines creation
+        '''
+        if not default:
+            default = {}
+        default.update({'sourcing_line_ids': []})
+        
+        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
         
         
         
@@ -494,6 +577,8 @@ class sale_order_line(osv.osv):
                 values.update({'po_cft': vals['po_cft']})
             if 'type' in vals:
                 values.update({'type': vals['type']})
+                if vals['type'] == 'make_to_stock':
+                    values.update({'po_cft': False})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):
@@ -753,6 +838,8 @@ product_template()
 class product_supplierinfo(osv.osv):
     '''
     override name_get to display name of the related supplier
+    
+    override create to be able to create a new supplierinfo from sourcing view
     '''
     
     
@@ -761,6 +848,10 @@ class product_supplierinfo(osv.osv):
 
 
     def name_get(self, cr, uid, ids, context=None):
+        '''
+        product_supplierinfo
+        display the name of the product instead of the id of supplierinfo
+        '''
         if not ids:
             return []
         
@@ -771,6 +862,20 @@ class product_supplierinfo(osv.osv):
         
         return result
     
+    def create(self, cr, uid, values, context=None):
+        '''
+        product_supplierinfo
+        inject product_id in newly created supplierinfo
+        '''
+        if not values:
+            values = {}
+        if context and 'sourcing-product_id' in context:
+            values.update({'product_id': context['sourcing-product_id']})
+        
+        return super(product_supplierinfo, self).create(cr, uid, values, context)
+        
+    
 product_supplierinfo()
+
 
     

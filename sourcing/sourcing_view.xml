@@ -62,13 +62,13 @@
 					<field name="uom_id" />
 					<field name="rts" />
 					<field name="sale_order_line_state" invisible="True" />
-					<field name="type" on_change="onChangeType(type)" />
-					<field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
+					<field name="type" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+					<field name="po_cft" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
 					<field name="supplier" domain="[('product_id', '=', product_id)]"
-						context="{'product_id':'product_id'}" />
+						context="{'sourcing-product_id':product_id}" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 					<field name="estimated_delivery_date" />
 					<!--
 						<button name="nothing" string="Close" icon="gtk-go-forward"
