@@ -195,6 +195,9 @@ class account_move_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         fiscal_pos_obj = self.pool.get('account.fiscal.position')
         val = {}
+        if isinstance(account_id, (list, tuple)):
+            account_id = account_id[0]
+
         # Add partner_id variable in order to the function to works
         partner_id = False
         if third_party:
@@ -246,6 +249,9 @@ class account_move_line(osv.osv):
         """
         Give the right account_id according partner_type and third parties choosed
         """
+        ## TO BE FIXED listgrid.py
+        if isinstance(partner_type, dict):
+            partner_type = partner_type.get('selection')
         return self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, ids, partner_type, credit, debit, context=context)
 
 account_move_line()
