@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import decimal_precision as dp
+from tools.translate import _
 
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
@@ -79,13 +80,22 @@ class account_move_line_compute_currency(osv.osv):
                 # Refresh the associated analytic lines
                 analytic_obj.refresh_rate(cr, uid, move_line.analytic_lines)
     
+    def check_date(self, cr, uid, vals):
+        # check that date is in period
+        if 'period_id' in vals and 'date' in vals:
+            period = self.pool.get('account.period').browse(cr, uid, vals['period_id'])
+            if vals['date'] < period.date_start or vals['date'] > period.date_end:
+                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
+            
 
     def create(self, cr, uid, vals, context={}):
+        self.check_date(cr, uid, vals)
         res_id = super(account_move_line_compute_currency, self).create(cr, uid, vals, context)
         self.refresh_rate(cr, uid, [res_id])
         return res_id
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        self.check_date(cr, uid, vals)
         res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check, update_check)
         self.refresh_rate(cr, uid, ids)
         return res
