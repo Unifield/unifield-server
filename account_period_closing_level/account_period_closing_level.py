@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class account_period_closing_level(osv.osv):
     _inherit = "account.period"
@@ -37,7 +38,14 @@ class account_period_closing_level(osv.osv):
                 ('done', 'HQ-Closed'))
     
     def action_set_state(self, cr, uid, ids, context):
+        # check if unposted move lines are linked to this period
+        move_line_obj = self.pool.get('account.move.line')
+        move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
+        for move_line in move_line_obj.browse(cr, uid, move_lines):
+            if move_line.state != 'valid':
+                raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
         
+        # otherwise, change the period's and journal period's states
         if context['state']:
             state = context['state']
             if state == 'done':
