@@ -1,0 +1,881 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    MSF 2011
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from datetime import datetime, timedelta, date
+from dateutil.relativedelta import relativedelta, relativedelta
+from osv import osv, fields
+from osv.orm import browse_record, browse_null
+from tools.translate import _
+
+import decimal_precision as dp
+import netsvc
+import pooler
+import time
+
+
+
+
+
+
+_SELECTION_PO_CFT = [
+                     ('po', 'Purchase Order'),
+                     ('cft', 'Call for Tender'),
+                     ]
+
+
+
+class sourcing_line(osv.osv):
+    '''
+    Class for sourcing_line
+    
+    sourcing lines are generated when a Sale Order is created
+    (overriding of create method of sale_order)
+    '''
+    
+    _SELECTION_TYPE = [
+                       ('make_to_stock', 'from stock'),
+                       ('make_to_order', 'on order'),
+                       ]
+    
+    
+    _SELECTION_SALE_ORDER_STATE = [
+                                   ('draft', 'Quotation'),
+                                   ('waiting_date', 'Waiting Schedule'),
+                                   ('manual', 'Manual In Progress'),
+                                   ('progress', 'In Progress'),
+                                   ('shipping_except', 'Shipping Exception'),
+                                   ('invoice_except', 'Invoice Exception'),
+                                   ('done', 'Done'),
+                                   ('cancel', 'Cancelled'),
+                                   ]
+    
+    
+    _SELECTION_SALE_ORDER_LINE_STATE = [
+                                        ('draft', 'Draft'),
+                                        ('confirmed', 'Confirmed'),
+                                        ('done', 'Done'),
+                                        ('cancel', 'Cancelled'),
+                                        ('exception', 'Exception'),
+                                        ]
+    
+    
+    def _getRelatedFields(self, cr, uid, ids, name, arg, context=None):
+        '''
+        function returning related data
+        '''
+        result = {}
+        
+        for sourcingLine in self.browse(cr, uid, ids, context=context):
+            
+            id = sourcingLine.id
+            so = sourcingLine.sale_order_id
+            sol = sourcingLine.sale_order_line_id
+            
+            result[id] = {'sale_order_state': so.state,
+                          'sale_order_line_state': sol.state,
+                          'state': sol.state,
+                          'type': sol.type,
+                          }
+            
+        return result
+    
+    
+    
+    def _saveRelatedFields(self, cr, uid, ids, name, value, arg, context=None):
+        '''
+        function saving related data
+        
+        **NOTE** not used, saving done in write method
+        '''
+        for sourcingLine in self.browse(cr, uid, ids, context=context):
+            # corresponding sale order line
+            solId = sourcingLine.sale_order_line_id.id
+            self.pool.get('sale.order.line').write(cr, uid, solId, {name: value}, context=context)
+        
+        return True
+    
+    
+    def _getCorrespondingSourcingLines(self, cr, uid, ids, context=None):
+        '''
+        Where ids will be the ids of records in the other object’s table
+        that have changed values in the watched fields. The function should
+        return a list of ids of records in its own table that should have the
+        field recalculated. That list will be sent as a parameter for the main
+        function of the field.
+        '''
+        result = []
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+            result.extend(map(lambda x: x.id, sol.sourcing_line_ids))
+            
+        return result
+    
+    
+    def _getProductid(self, cr, uid, ids, name, arg, context):
+        '''
+        
+        '''
+        self.read()
+        
+    
+    _name = 'sourcing.line'
+    _description = 'Sourcing Line'
+    _columns = {
+        # sequence number
+        'name': fields.char('Name', size=128),
+        # sale order id
+        'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
+        #'sale_order_id': fields.related('sale_order_line_id', 'order_id', relation='sale.order', type='many2one', string='Sale Order', readonly=True, store=True),
+        # sale order line id
+        'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
+        # reference
+        'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
+        # state
+        #'state': fields.selection([('created', 'Created')], string='State', readonly=True),
+        'state': fields.function(_getRelatedFields, string="State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True),
+        # priority -> will be changed to related wm order type
+        'priority': fields.char(string='Priority', size=128, readonly=True),
+        # category -> will be changed to related wm order type
+        'category': fields.char(string='Category', size=128, readonly=True),
+        # sale order state
+        'sale_order_state': fields.function(_getRelatedFields, string="Order State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True),
+        # line number -> will be changed to related
+        'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),
+        # product (name & reference) from sale order line
+        'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
+        # qty
+        'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
+        # uom
+        'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
+        # rts
+        'rts': fields.date(string='RTS', readonly=True),
+        # order line state
+        'sale_order_line_state': fields.function(_getRelatedFields, string="Line State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True),
+        # procurement method
+        # if type changes in sale.order.line, we gather the corresponding sourcing.line ids to be updated which is passed to _getRelatedFields
+#        'type': fields.function(_getRelatedFields,
+#                                string="Procurement Method", multi="states",
+#                                method=True, type="selection", selection=_SELECTION_TYPE,
+#                                store = {
+#                                    'sale.order.line': (_getCorrespondingSourcingLines, ['type'], 20)
+#                                }, readonly=False),
+        'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
+        # po/cft
+        'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
+        # real stock
+        'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
+        # available stock -> will be changed to function
+        'available_stock': fields.float('Available Stock', readonly=True),
+        # virtual stock
+        'virtual_stock': fields.related('product_id', 'virtual_available', type='float', string='Virtual Stock', readonly=True),
+        # supplier - many2one with default value from supplier from product
+        #'supplier': fields.many2one('res.partner', 'Supplier'),
+        'supplier': fields.many2one('product.supplierinfo', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}),
+        # estimated delivery date
+        'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+    }
+    _order = 'sale_order_id desc'
+    _defaults = {
+             'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
+    }
+    
+    
+    def write(self, cr, uid, ids, values, context=None):
+        '''
+        _name = 'sourcing.line'
+        
+        
+        override write method to write back
+         - po_cft
+         - supplier
+         - type
+        
+        to sale order line
+        '''
+        if not context:
+            context={}
+        if 'fromOrderLine' not in context:
+            context['fromSourcingLine'] = True
+            for sourcingLine in self.browse(cr, uid, ids, context=context):
+                solId = sourcingLine.sale_order_line_id.id
+                # type
+                type = 'type' in values and values['type'] or sourcingLine.type
+                # pocft: if type == make_to_stock, pocft = False, otherwise modified value or saved value
+                pocft = False
+                if type == 'make_to_order':
+                    pocft = 'po_cft' in values and values['po_cft'] or sourcingLine.po_cft
+                # supplier
+                supplier = 'supplier' in values and values['supplier'] or sourcingLine.supplier.id
+                self.pool.get('sale.order.line').write(cr, uid, solId, {'po_cft': pocft, 'supplier': supplier, 'type': type}, context=context)
+        
+        return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
+    
+    
+    def onChangeType(self, cr, uid, id, type, context=None):
+        '''
+        if type == make to stock, change pocft to False
+        '''
+        value = {}
+        if type == 'make_to_stock':
+            value.update({'po_cft': False})
+    
+        return {'value': value}
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy method from sourcing_line
+        '''
+        result = super(sourcing_line, self).copy(cr, uid, id, default, context)
+        return result
+    
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create method from sourcing_line
+        '''
+        result = super(sourcing_line, self).create(cr, uid, vals, context)
+        return result
+    
+    
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        copy_data method for soucring_line
+        '''
+        if not default:
+            default = {}
+            
+        if not context:
+            context = {}
+        # updated sequence number
+        default.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),})
+        # get sale_order_id
+#        if '__copy_data_seen' in context and 'sale.order' in context['__copy_data_seen'] and len(context['__copy_data_seen']['sale.order']) == 1:
+#            soId = context['__copy_data_seen']['sale.order'][0]
+#            default.update({'sale_order_id': soId,})
+            
+        return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
+
+    
+sourcing_line()
+
+
+
+class sale_order(osv.osv):
+    
+    _inherit = 'sale.order'
+    _description = 'Sales Order'
+    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),}
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create from sale_order
+        '''
+        return super(sale_order, self).create(cr, uid, vals, context)
+    
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale_order
+        
+        dont copy sourcing lines, they are generated at sale order lines creation
+        '''
+        if not default:
+            default={}
+            
+        default['sourcing_line_ids']=[]
+        
+        return super(sale_order, self).copy(cr, uid, id, default, context)
+    
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        _inherit = 'sale.order'
+        
+        
+        override because of Bug #604347
+        
+        on_delete constraints are not generated
+        
+        remove manually all linked sourcing_line
+        '''
+        idsToDelete = []
+        for order in self.browse(cr, uid, ids, context):
+            for orderLine in order.order_line:
+                for sourcingLine in orderLine.sourcing_line_ids:
+                    idsToDelete.append(sourcingLine.id)
+        
+        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
+        
+        return super(sale_order, self).unlink(cr, uid, ids, context)
+    
+    
+    # @@@override from sale>sale.py>sale_order
+    def action_ship_create(self, cr, uid, ids, *args):
+        wf_service = netsvc.LocalService("workflow")
+        picking_id = False
+        move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        for order in self.browse(cr, uid, ids, context={}):
+            proc_ids = []
+            output_id = order.shop_id.warehouse_id.lot_output_id.id
+            picking_id = False
+            for line in order.order_line:
+                proc_id = False
+                date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
+                date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
+
+                if line.state == 'done':
+                    continue
+                move_id = False
+                if line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu'):
+                    location_id = order.shop_id.warehouse_id.lot_stock_id.id
+                    if not picking_id:
+                        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+                        picking_id = self.pool.get('stock.picking').create(cr, uid, {
+                            'name': pick_name,
+                            'origin': order.name,
+                            'type': 'out',
+                            'state': 'auto',
+                            'move_type': order.picking_policy,
+                            'sale_id': order.id,
+                            'address_id': order.partner_shipping_id.id,
+                            'note': order.note,
+                            'invoice_state': (order.order_policy=='picking' and '2binvoiced') or 'none',
+                            'company_id': order.company_id.id,
+                        })
+                    move_id = self.pool.get('stock.move').create(cr, uid, {
+                        'name': line.name[:64],
+                        'picking_id': picking_id,
+                        'product_id': line.product_id.id,
+                        'date': date_planned,
+                        'date_expected': date_planned,
+                        'product_qty': line.product_uom_qty,
+                        'product_uom': line.product_uom.id,
+                        'product_uos_qty': line.product_uos_qty,
+                        'product_uos': (line.product_uos and line.product_uos.id)\
+                                or line.product_uom.id,
+                        'product_packaging': line.product_packaging.id,
+                        'address_id': line.address_allotment_id.id or order.partner_shipping_id.id,
+                        'location_id': location_id,
+                        'location_dest_id': output_id,
+                        'sale_line_id': line.id,
+                        'tracking_id': False,
+                        'state': 'draft',
+                        #'state': 'waiting',
+                        'note': line.notes,
+                        'company_id': order.company_id.id,
+                    })
+
+                if line.product_id:
+                    proc_id = self.pool.get('procurement.order').create(cr, uid, {
+                        'name': line.name,
+                        'origin': order.name,
+                        'date_planned': date_planned,
+                        'product_id': line.product_id.id,
+                        'product_qty': line.product_uom_qty,
+                        'product_uom': line.product_uom.id,
+                        'product_uos_qty': (line.product_uos and line.product_uos_qty)\
+                                or line.product_uom_qty,
+                        'product_uos': (line.product_uos and line.product_uos.id)\
+                                or line.product_uom.id,
+                        'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                        'procure_method': line.type,
+                        'move_id': move_id,
+                        'property_ids': [(6, 0, [x.id for x in line.property_ids])],
+                        'company_id': order.company_id.id,
+                        # new field representing selected supplierinfo from sourcing tool
+                        'supplier': line.supplier.id,
+                    })
+                    proc_ids.append(proc_id)
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id})
+                    if order.state == 'shipping_except':
+                        for pick in order.picking_ids:
+                            for move in pick.move_lines:
+                                if move.state == 'cancel':
+                                    mov_ids = move_obj.search(cr, uid, [('state', '=', 'cancel'),('sale_line_id', '=', line.id),('picking_id', '=', pick.id)])
+                                    if mov_ids:
+                                        for mov in move_obj.browse(cr, uid, mov_ids):
+                                            move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
+                                            proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
+
+            val = {}
+
+            if picking_id:
+                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+
+            for proc_id in proc_ids:
+                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+
+            if order.state == 'shipping_except':
+                val['state'] = 'progress'
+                val['shipped'] = False
+
+                if (order.order_policy == 'manual'):
+                    for line in order.order_line:
+                        if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
+                            val['state'] = 'manual'
+                            break
+            self.write(cr, uid, [order.id], val)
+        return True
+    #@@@override end
+
+sale_order()
+
+
+class sale_order_line(osv.osv):
+
+
+    _inherit = 'sale.order.line'
+    _description = 'Sales Order Line'
+    _columns = {
+                'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
+                #'supplier': fields.many2one('res.partner', 'Supplier'),
+                'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
+                'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
+                }
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        
+        override create method, create corresponding sourcing.line objects
+        
+        vals > dict: {
+        'property_ids': [(6, 0, [])], 
+        'product_uos_qty': 1.0, 
+        'name': '[PC1] Basic PC', 
+        'product_uom': 1, 
+        'order_id': 14, 
+        'notes': False, 
+        'product_uom_qty': 1.0, 
+        'delay': 2.0, 
+        'discount': 0.0, 
+        'product_id': 3, 
+        'th_weight': 0.0, 
+        'product_uos': False, 
+        'product_packaging': False, 
+        'tax_id': [(6, 0, [])], 
+        'type': 'make_to_stock', 
+        'price_unit': 450.0, 
+        'address_allotment_id': False
+        }
+        '''
+        # if a product has been selected, get supplier default value
+        sellerId = False
+        deliveryDate = False
+        if 'product_id' in vals and vals['product_id']:
+            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context)
+            template = product.product_tmpl_id
+            seller = template.seller_info_id
+            sellerId = (seller and seller.id) or False
+            deliveryDate = int(template.seller_delay)
+        
+        # type
+        type = vals['type']
+        
+        # fill po/cft : by default, if mto -> po, if mts -> False
+        pocft = False
+        if type == 'make_to_order':
+            pocft = 'po'
+        
+        # fill the default pocft and supplier
+        vals.update({'po_cft': pocft})
+        vals.update({'supplier': sellerId})
+        # create the new sale order line
+        result = super(sale_order_line, self).create(cr, uid, vals, context=context)
+
+        # delivery date : supplier lead-time and 2 days for administrative treatment
+        daysToAdd = deliveryDate and deliveryDate + 2 or 2
+        estDeliveryDate = date.today()
+        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+        
+        values = {
+                  'sale_order_id': vals['order_id'],
+                  'sale_order_line_id': result,
+                  'supplier': sellerId,
+                  'po_cft': pocft,
+                  'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
+                  'rts': time.strftime('%Y-%m-%d'),
+                  'type': vals['type']
+                  }
+        
+        self.pool.get('sourcing.line').create(cr, uid, values, context=context)
+        
+        
+        return result
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
+        
+        result = super(sale_order_line, self).copy(cr, uid, id, default, context)
+        return result
+    
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        copy_data from sale order line
+        
+        dont copy sourcing lines, they are generated at sale order lines creation
+        '''
+        if not default:
+            default = {}
+        default.update({'sourcing_line_ids': []})
+        
+        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+        
+        
+        
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        
+        override to update sourcing_linne :
+         - supplier
+         - type
+         - po_cft
+         
+        ''' 
+        if not context:
+            context={}
+        # update the corresponding sourcing line if not called from sourcing line updated
+        if 'fromSourcingLine' not in context:
+            context['fromOrderLine'] = True
+            values = {}
+            if 'supplier' in vals:
+                values.update({'supplier': vals['supplier']})
+            if 'po_cft' in vals:
+                values.update({'po_cft': vals['po_cft']})
+            if 'type' in vals:
+                values.update({'type': vals['type']})
+                if vals['type'] == 'make_to_stock':
+                    values.update({'po_cft': False})
+                
+            # for each sale order line
+            for sol in self.browse(cr, uid, ids, context):
+                # for each sourcing line
+                for sourcingLine in sol.sourcing_line_ids:
+                    self.pool.get('sourcing.line').write(cr, uid, sourcingLine.id, values, context)
+        
+        result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+        return result
+    
+    
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        _inherit = 'sale.order.line'
+        
+        
+        override because of Bug #604347
+        
+        on_delete constraints are not generated
+        
+        remove manually all linked sourcing_line
+        '''
+        idsToDelete = []
+        for orderLine in self.browse(cr, uid, ids, context):
+            for sourcingLine in orderLine.sourcing_line_ids:
+                    idsToDelete.append(sourcingLine.id)
+            
+        self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
+        
+        return super(sale_order_line, self).unlink(cr, uid, ids, context)
+        
+        
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
+        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        '''
+        override to update hidden values :
+         - supplier
+         - type
+         - po_cft
+        '''
+        result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
+                                                                uom, qty_uos, uos, name, partner_id,
+                                                                lang, update_tax, date_order, packaging, fiscal_position, flag)
+        
+        # add supplier
+        sellerId = False
+        po_cft = False
+        type = 'type' in result['value'] and result['value']['type']
+        if product and type:
+            productObj = self.pool.get('product.product').browse(cr, uid, product)
+            template = productObj.product_tmpl_id
+            seller = template.seller_info_id
+            sellerId = (seller and seller.id) or False
+            
+            if type == 'make_to_order':
+                po_cft = 'po'
+                
+            result['value'].update({'supplier': sellerId, 'po_cft': po_cft})
+        
+        return result
+            
+
+sale_order_line()
+
+
+
+class procurement_order(osv.osv):
+    """
+    Procurement Orders
+    
+    modififed workflow to take into account
+    the supplier specified during sourcing step
+    """
+    _inherit = "procurement.order"
+    _description = "Procurement"
+    _columns = {
+        'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
+    }
+    
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        override for workflow modification
+        '''
+        return super(procurement_order, self).write(cr, uid, ids, vals, context)
+
+
+    # @@@override procurement.py > procurement.order > check_buy
+    def check_buy(self, cr, uid, ids):
+        """ Checks product type.
+        @return: True or Product Id.
+        """
+        user = self.pool.get('res.users').browse(cr, uid, uid)
+        partner_obj = self.pool.get('res.partner')
+        for procurement in self.browse(cr, uid, ids):
+            if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
+                return False
+            # use new selection field instead
+            # the new selection field does not exist when the procurement has been produced by
+            # an order_point (minimum stock rules). in this case we take the default supplier from product
+            #if not procurement.product_id.seller_ids:
+            if not procurement.supplier and not procurement.product_id.seller_ids:
+                cr.execute('update procurement_order set message=%s where id=%s',
+                        (_('No supplier defined for this product !'), procurement.id))
+                return False
+            # use new selection field instead, **FIRST** the new one, and if not exist, from product
+            # the new selection field does not exist when the procurement has been produced by
+            # an order_point (minimum stock rules). in this case we take the default supplier from product
+            #partner = procurement.product_id.seller_id #Taken Main Supplier of Product of Procurement.
+            partner = procurement.supplier.name or procurement.product_id.seller_id
+
+            if user.company_id and user.company_id.partner_id:
+                if partner.id == user.company_id.partner_id.id:
+                    return False
+            address_id = partner_obj.address_get(cr, uid, [partner.id], ['delivery'])['delivery']
+            if not address_id:
+                cr.execute('update procurement_order set message=%s where id=%s',
+                        (_('No address defined for the supplier'), procurement.id))
+                return False
+        return True
+    # @@@override end
+
+
+    # @@@override purchase>purchase.py>procurement_order
+    def make_po(self, cr, uid, ids, context=None):
+        """ Make purchase order from procurement
+        @return: New created Purchase Orders procurement wise
+        """
+        res = {}
+        if context is None:
+            context = {}
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+        partner_obj = self.pool.get('res.partner')
+        uom_obj = self.pool.get('product.uom')
+        pricelist_obj = self.pool.get('product.pricelist')
+        prod_obj = self.pool.get('product.product')
+        acc_pos_obj = self.pool.get('account.fiscal.position')
+        po_obj = self.pool.get('purchase.order')
+        for procurement in self.browse(cr, uid, ids, context=context):
+            res_id = procurement.move_id.id
+            # use new selection field instead, **FIRST** the new one, and if not exist, from product
+            # the new selection field does not exist when the procurement has been produced by
+            # an order_point (minimum stock rules). in this case we take the default supplier from product
+            if procurement.supplier:
+                partner = procurement.supplier.name
+                seller_qty = procurement.supplier.qty
+                seller_delay = int(procurement.supplier.delay)
+                
+            else:
+                partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
+                seller_qty = procurement.product_id.seller_qty
+                seller_delay = int(procurement.product_id.seller_delay)
+            
+            partner_id = partner.id
+            address_id = partner_obj.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
+            pricelist_id = partner.property_product_pricelist_purchase.id
+
+            uom_id = procurement.product_id.uom_po_id.id
+
+            qty = uom_obj._compute_qty(cr, uid, procurement.product_uom.id, procurement.product_qty, uom_id)
+            if seller_qty:
+                qty = max(qty,seller_qty)
+
+            price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
+
+            newdate = datetime.strptime(procurement.date_planned, '%Y-%m-%d %H:%M:%S')
+            newdate = (newdate - relativedelta(days=company.po_lead)) - relativedelta(days=seller_delay)
+
+            #Passing partner_id to context for purchase order line integrity of Line name
+            context.update({'lang': partner.lang, 'partner_id': partner_id})
+
+            product = prod_obj.browse(cr, uid, procurement.product_id.id, context=context)
+
+            line = {
+                'name': product.partner_ref,
+                'product_qty': qty,
+                'product_id': procurement.product_id.id,
+                'product_uom': uom_id,
+                'price_unit': price,
+                'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                'move_dest_id': res_id,
+                'notes': product.description_purchase,
+            }
+
+            taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
+            taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
+            line.update({
+                'taxes_id': [(6,0,taxes)]
+            })
+            purchase_id = po_obj.create(cr, uid, {
+                'origin': procurement.origin,
+                'partner_id': partner_id,
+                'partner_address_id': address_id,
+                'location_id': procurement.location_id.id,
+                'pricelist_id': pricelist_id,
+                'order_line': [(0,0,line)],
+                'company_id': procurement.company_id.id,
+                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False
+            })
+            res[procurement.id] = purchase_id
+            self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
+        return res
+    # @@@override end
+
+procurement_order()
+
+
+
+class purchase_order(osv.osv):
+    '''
+    override for workflow modification
+    '''
+    
+    
+    _inherit = "purchase.order"
+    _description = "Purchase Order"
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override for debugging purpose
+        '''
+        return super(purchase_order, self).create(cr, uid, vals, context)
+        
+    
+purchase_order()
+
+
+
+class product_template(osv.osv):
+    '''
+    override to add new seller_info_id : default seller but supplierinfo object
+    '''
+    
+    def _calc_seller(self, cr, uid, ids, fields, arg, context=None):
+        result = super(product_template, self)._calc_seller(cr, uid, ids, fields, arg, context)
+        
+        for product in self.browse(cr, uid, ids, context=context):
+            if product.seller_ids:
+                partner_list = sorted([(partner_id.sequence, partner_id) for partner_id in  product.seller_ids if partner_id and partner_id.sequence])
+                main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
+                result[product.id]['seller_info_id'] = main_supplier and main_supplier.id or False
+        return result
+    
+    _inherit = "product.template"
+    _description = "Product Template"
+    _columns = {
+                'seller_info_id': fields.function(_calc_seller, method=True, type='many2one', relation='product.supplierinfo', string='Main Supplier Info', help="Main Supplier who has highest priority in Supplier List - Info object.", multi="seller_id"),
+                }
+    
+product_template()
+
+
+
+class product_supplierinfo(osv.osv):
+    '''
+    override name_get to display name of the related supplier
+    
+    override create to be able to create a new supplierinfo from sourcing view
+    '''
+    
+    
+    _inherit = "product.supplierinfo"
+    _description = "Information about a product supplier"
+
+
+    def name_get(self, cr, uid, ids, context=None):
+        '''
+        product_supplierinfo
+        display the name of the product instead of the id of supplierinfo
+        '''
+        if not ids:
+            return []
+        
+        result = []
+        for supinfo in self.browse(cr, uid, ids, context=context):
+            supplier = supinfo.name
+            result.append((supinfo.id, supplier.name_get(context=context)[0][1]))
+        
+        return result
+    
+    def create(self, cr, uid, values, context=None):
+        '''
+        product_supplierinfo
+        inject product_id in newly created supplierinfo
+        '''
+        if not values:
+            values = {}
+        if context and 'sourcing-product_id' in context:
+            values.update({'product_id': context['sourcing-product_id']})
+        
+        return super(product_supplierinfo, self).create(cr, uid, values, context)
+        
+    
+product_supplierinfo()
+
+
+    

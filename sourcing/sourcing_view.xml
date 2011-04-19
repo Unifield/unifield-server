@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<!-- sale.order.line embedded in sale.order -->
+		<record id="view_order_form" model="ir.ui.view">
+			<field name="name">sale.order.form</field>
+			<field name="model">sale.order</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="sale.view_order_form" />
+			<field name="arch" type="xml">
+				<data>
+
+
+					<field name="price_unit" position="after">
+						<field name="supplier" invisible="True" />
+						<field name="po_cft" invisible="True" />
+					</field>
+
+
+				</data>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
+			<field name="name">sourcing.line.form</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Sourcing Line">
+					<field name="name" />
+					<field name="sale_order_id" />
+					<field name="sale_order_line_id" />
+					<field name="reference" />
+					<field name="state" />
+				</form>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_normal_tree_view" model="ir.ui.view">
+			<field name="name">sourcing.line.tree</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Sourcing Lines" editable="top">
+
+					<field name="name" invisible="True" />
+
+					<field name="sale_order_id" />
+					<field name="sale_order_line_number" />
+					<field name="sale_order_line_id" invisible="True" />
+					<field name="reference" invisible="True" />
+					<field name="state" />
+					<field name="priority" />
+					<field name="category" />
+					<field name="sale_order_state" invisible="True" />
+
+					<field name="product_id" />
+					<field name="qty" />
+					<field name="uom_id" />
+					<field name="rts" />
+					<field name="sale_order_line_state" invisible="True" />
+					<field name="type" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+					<field name="po_cft" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+					<field name="real_stock" />
+					<field name="available_stock" />
+					<field name="virtual_stock" />
+					<field name="supplier" domain="[('product_id', '=', product_id)]"
+						context="{'sourcing-product_id':product_id}" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+					<field name="estimated_delivery_date" />
+					<!--
+						<button name="nothing" string="Close" icon="gtk-go-forward"
+						type="object" />
+					-->
+
+				</tree>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_search_form_view" model="ir.ui.view">
+			<field name="name">sourcing.line.search.form</field>
+			<field name="model">sourcing.line</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Sourcing Line">
+					<field name="sale_order_id" />
+					<field name="sale_order_state" />
+					<field name="product_id" />
+					<field name="type" />
+				</search>
+			</field>
+		</record>
+
+
+		<record id="sourcing_line_action" model="ir.actions.act_window">
+			<field name="name">Orders Sourcing Tool</field>
+			<field name="res_model">sourcing.line</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="search_view_id" ref="sourcing_line_search_form_view" />
+		</record>
+
+
+		<menuitem icon="STOCK_INDENT" action="sourcing_line_action"
+			id="menu_sourcing_line" parent="base.menu_sales" />
+
+
+	</data>
+</openerp>
