@@ -88,22 +88,22 @@
 										Added False as parent_id clause to enable global optional levels (for med, log,...)
 									-->
 									<field name="nomen_sub_0"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 0),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '0'),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
 										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 									<field name="nomen_sub_1"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 1), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '1'), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
 										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 									<field name="nomen_sub_2"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 2), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '2'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
 										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 									<field name="nomen_sub_3"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 3), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '3'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
 										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 									<field name="nomen_sub_4"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 4), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '4'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
 										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 									<field name="nomen_sub_5"
-										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', 5), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
+										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
 										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 								</group>
 
