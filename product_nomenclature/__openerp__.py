@@ -35,6 +35,9 @@
         'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
     ],
+    "demo_xml": [
+        "product_nomenclature_data.xml",
+    ],
     'test': [
              'test/product_nomenclature.yml',
              ],
