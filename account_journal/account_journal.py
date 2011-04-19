@@ -103,7 +103,7 @@ class account_journal(osv.osv):
                 .create(cr, uid, {'journal_id': journal_obj,
                                   'name': "REG1" + vals['code'],
                                   'period_id': self.get_current_period(cr, uid, context),
-                                  'currency': vals['currency']}, \
+                                  'currency': vals.get('currency')}, \
                                   context=context)
                 
         return journal_obj

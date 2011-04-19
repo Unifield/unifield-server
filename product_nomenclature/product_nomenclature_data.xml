@@ -1,0 +1,30 @@
+<openerp>
+    <data>
+        <record model="product.nomenclature" id="product_nomenclature_med">
+            <field name="code">01</field>
+            <field name="name">MED</field>
+            <field name="type">mandatory</field>
+        </record>
+
+        <record model="product.nomenclature" id="product_nomenclature_drugs">
+            <field name="code">D</field>
+            <field name="name">Drugs</field>
+            <field name="type">mandatory</field>
+            <field name="parent_id" ref="product_nomenclature_med"/>
+        </record>
+
+        <record model="product.nomenclature" id="product_nomenclature_infusions">
+            <field name="code">INF</field>
+            <field name="name">Infusions</field>
+            <field name="type">mandatory</field>
+            <field name="parent_id" ref="product_nomenclature_drugs"/>
+        </record>
+
+        <record model="product.nomenclature" id="product_nomenclature_dextrose">
+            <field name="code">DEXT</field>
+            <field name="name">Dextrose</field>
+            <field name="type">mandatory</field>
+            <field name="parent_id" ref="product_nomenclature_infusions"/>
+        </record>
+    </data>
+</openerp>

@@ -34,6 +34,7 @@
     'update_xml': [
         'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
+        'product_nomenclature_data.xml',
     ],
     'test': [
              'test/product_nomenclature.yml',
