@@ -7,31 +7,25 @@
             <field name="model">sale.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="priority" eval="50"/>
             <field name="arch" type="xml">
                 <data>
-	                <tree string="Sales Order Lines" position="replace">
-	                    <tree string="Sales Order Lines">
-	                        <field colspan="4" name="name"/>
-	                        <field name="product_uom_qty" string="Qty"/>
-	                        <field name="product_uom" string="UoM"/>
-	                        <field name="discount"/>
-	                        <field name="price_unit"/>
-	                        <field name="price_subtotal"/>
-	                        <field name="currency_id"/>
-	                        <field name="functional_subtotal"/>
-	                        <field name="functional_currency_id"/>
-	                    </tree>
-	                </tree>
+                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
+                        <field name="currency_id"/>
+                        <field name="functional_subtotal"/>
+                        <field name="functional_currency_id"/>
+                    </xpath>
                     <field name="amount_untaxed" position="before">
                         <field name="currency_id" readonly="1"/>
                     </field>
-                    <button string="Advance Invoice" position="after">
+                    <field name="amount_total" position="after">
                         <newline/>
                         <field name="functional_currency_id" readonly="1"/>
                         <field name="functional_amount_untaxed"/>
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
-                    </button>
+                        <newline/>
+                    </field>
                 </data>
             </field>
         </record>
@@ -41,21 +35,14 @@
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="priority" eval="50"/>
             <field name="arch" type="xml">
                 <data>
-                    <tree string="Purchase Order Lines" position="replace">
-                        <tree string="Purchase Order Lines">
-                            <field name="date_planned"/>
-                            <field name="name"/>
-                            <field name="product_qty"/>
-                            <field name="product_uom"/>
-                            <field name="price_unit"/>
-                            <field name="price_subtotal"/>
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
                             <field name="currency_id"/>
                             <field name="functional_subtotal"/>
                             <field name="functional_currency_id"/>
-                        </tree>
-                    </tree>
+                    </xpath>
                     <group col="7" colspan="4" position="replace">
                         <group col="11" colspan="4">
                             <field name="currency_id" readonly="1"/>
