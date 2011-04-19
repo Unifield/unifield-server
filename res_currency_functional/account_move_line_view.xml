@@ -73,5 +73,39 @@
             </field>
         </record>
     
+        <record model="ir.ui.view" id="view_move_line_tree_editable">
+            <field name="name">account.move.line.tree.editable</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="250"/>
+            <field name="arch" type="xml">
+                <tree string="Account Entry Line" editable="bottom">
+                    <field name="journal_code"/>
+                    <field name="journal_sequence"/>
+                    <field name="instance"/>
+                    <field name="ref"/>
+                    <field name="date" string="Posting Date"/>
+                    <field name="period_id"/>
+                    <field name="account_id"/>
+                    <field name="name"/>
+                    <field name="partner_id" string="Third Party"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
+                    <field name="functional_currency_id"/>
+                    <field name="credit_currency" sum="Total Booking Credit"/>
+                    <field name="debit_currency" sum="Total Booking Debit"/>
+                    <field name="currency_id" string="Booking Currency"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+    <record id="action_journal_entries_editable_tree_view" model="ir.actions.act_window.view">
+        <field eval="10" name="sequence"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_move_line_tree_editable"/>
+        <field name="act_window_id" ref="account.action_account_moves_all_a"/>
+    </record>
+
     </data>
 </openerp>
