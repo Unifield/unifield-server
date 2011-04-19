@@ -9,7 +9,7 @@
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line">
-                    <field name="journal_code"/>
+                    <field name="journal_id" string="Journal Code"/>
                     <field name="journal_sequence"/>
                     <field name="instance"/>
                     <field name="ref"/>
@@ -80,7 +80,7 @@
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom">
-                    <field name="journal_code"/>
+                    <field name="journal_id" string="Journal Code"/>
                     <field name="journal_sequence"/>
                     <field name="instance"/>
                     <field name="ref"/>
@@ -89,9 +89,9 @@
                     <field name="account_id"/>
                     <field name="name"/>
                     <field name="partner_id" string="Third Party"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
-                    <field name="functional_currency_id"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In" readonly="1"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Out" readonly="1"/>
+                    <field name="functional_currency_id" readonly="1"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="currency_id" string="Booking Currency"/>

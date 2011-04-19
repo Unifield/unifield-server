@@ -66,6 +66,14 @@ class account_journal(osv.osv):
             return periods[0]
         return False
     
+    def name_get(self, cr, user, ids, context=None):
+        result = self.browse(cr, user, ids, context=context)
+        res = []
+        for rs in result:
+            code = rs.code
+            res += [(rs.id, code)]
+        return res
+    
     def create(self, cr, uid, vals, context=None):
         
         # TODO: add default accounts

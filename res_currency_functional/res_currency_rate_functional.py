@@ -24,6 +24,14 @@ from osv import fields, osv
 class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
     
+    _columns = {
+        'k_currency': fields.selection([(1,'1'),(1000,'1000'),(1000000,'1000000')],'K-currency', required=True),
+    }
+
+    _defaults = {
+        'k_currency': 1,
+    }
+    
     def refresh_move_lines(self, cr, uid, ids, date=None, currency=None):
         cur_obj = self.pool.get('res.currency')
         account_obj = self.pool.get('account.account')
@@ -58,8 +66,8 @@ class res_currency_rate_functional(osv.osv):
         res = True
         for currency in self.read(cr, uid, ids, ['currency_id']):
             currency_id = currency['currency_id'][0]
-            res = res & super(res_currency_rate_functional, self).unlink(cr, uid, [currency_id], context)
-            self.refresh_move_lines(cr, uid, [currency_id], currency=currency)
+            res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
+            self.refresh_move_lines(cr, uid, ids, currency=currency_id)
         return res
     
 
