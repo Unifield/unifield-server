@@ -46,6 +46,7 @@
 	    "product_nomenclature",
         "order_types",
         "res_currency_functional",
+        "product_attributes",
     ],
     "update_xml": [
     ],
