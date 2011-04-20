@@ -4,7 +4,7 @@
   I create a Bank Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_2}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-05-01')
     journal_id: account_journal_bank_0
     name:
     period_id: period_5

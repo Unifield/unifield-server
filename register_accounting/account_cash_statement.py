@@ -62,8 +62,12 @@ class account_cash_statement(osv.osv):
 
     def button_open_cash(self, cr, uid, ids, context={}):
         """
-        when pressing 'Open CashBox' button
+        when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
+        # Calculate the starting balance
+        res = self._get_starting_balance(cr, uid, ids)
+        for rs in res:
+            self.write(cr, uid, [rs], res.get(rs))
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
         st = self.browse(cr, uid, ids)[0]

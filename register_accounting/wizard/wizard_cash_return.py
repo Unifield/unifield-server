@@ -386,8 +386,8 @@ class wizard_cash_return(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.initial_amount != wizard.total_amount:
             raise osv.except_osv('Warning', 'Initial amount and Justified amount are not similar. First correct. Then press Compute button')
-        if not wizard.invoice_line_ids and not wizard.advance_line_ids:
-            raise osv.except_osv(_('Warning'), _('Please give some data or click on Cancel.'))
+#        if not wizard.invoice_line_ids and not wizard.advance_line_ids:
+#            raise osv.except_osv(_('Warning'), _('Please give some data or click on Cancel.'))
         # All exceptions passed. So let's go doing treatments on data !
         # prepare some values
         move_obj = self.pool.get('account.move')
@@ -431,6 +431,9 @@ class wizard_cash_return(osv.osv_memory):
             # create move line from advance line
             adv_move_line_ids = []
             for advance in wizard.advance_line_ids:
+                # Case where line equals 0
+                if advance.amount == 0.0:
+                    continue
                 adv_date = advance.date
                 adv_name = advance.description
                 partner_id = advance.partner_id.id or False
@@ -472,11 +475,12 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.display_invoice:
             for inv_move_line_data in inv_move_line_ids:
                 inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], context=context)
-                # Confirm the payment for the invoice
-                invoice_id = inv_move_line_data[1]
-                inv_paid = self.pool.get('account.invoice').write(cr, uid, invoice_id, {'state': 'paid'}, context=context)
-                if not inv_paid:
-                    raise osv.except_osv(_('Error'), _('The payment confirmation of an invoice failed.'))
+#                # Confirm the payment for the invoice
+#                invoice_id = inv_move_line_data[1]
+#                # TODO: make reconciliation here and call invoice.test_paid() method to validate paid state, then write invoice in paid state
+#                inv_paid = self.pool.get('account.invoice').write(cr, uid, invoice_id, {'state': 'paid'}, context=context)
+#                if not inv_paid:
+#                    raise osv.except_osv(_('Error'), _('The payment confirmation of an invoice failed.'))
         else:
             for adv_move_line_id in adv_move_line_ids:
                 adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)

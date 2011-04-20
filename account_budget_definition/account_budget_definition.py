@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+import logging
 
 class account_budget_definition(osv.osv):
     
@@ -34,7 +35,24 @@ class account_budget_definition(osv.osv):
     _defaults = {
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
-    
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+
+        if not context:
+            context={}
+        
+        if context.get('update_mode') in ['init', 'update']:
+            if 'analytic_account_id' not in vals:
+                ana_ids = self.pool.get('account.analytic.account').search(cr, uid, [], limit=1)
+                if ana_ids:
+                    logging.getLogger('init').info('Loading default value for crossovered.budget: analytic_account_id: %s'%(ana_ids[0],))
+                    vals['analytic_account_id'] = ana_ids[0]
+
+        return super(account_budget_definition, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         # We have to set the analytic account and the dates on all budget lines
         budget_lines_obj = self.pool.get('crossovered.budget.lines')

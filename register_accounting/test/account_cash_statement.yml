@@ -4,7 +4,7 @@
   I create a Cash Register with Opening and Closing balance 1500.
 -
  !record {model: account.bank.statement, id: account_bank_statement_1}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-05-10')
     journal_id: account_journal_cash_0
     name: 
     period_id: period_5
@@ -41,21 +41,21 @@
     line_ids:
       - account_id: account_account_receivable0
         amount: -500.0
-        date: !eval time.strftime('%Y-%m-%d')
+        date: !eval time.strftime('%Y-05-10')
         name: test1
         partner_id: res_partner_supplier_wood_0
         sequence: 0.0
         type: general
       - account_id: account_account_receivable0
         amount: -380.0
-        date: !eval time.strftime('%Y-%m-%d')
+        date: !eval time.strftime('%Y-05-10')
         name: test2
         partner_id: res_partner_john_doe
         sequence: 1.0
         type: general
       - account_id: account_account_receivable0
         amount: -320.0
-        date: !eval time.strftime('%Y-%m-%d')
+        date: !eval time.strftime('%Y-05-10')
         name: test3
         partner_id: res_partner_supplier_wood_0
         sequence: 2.0

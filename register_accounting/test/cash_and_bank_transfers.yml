@@ -5,7 +5,7 @@
   I create a Bank Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_4}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-06-10')
     journal_id: account_journal_bank_0
     name:
     period_id: period_6
@@ -20,7 +20,7 @@
   Then I create a Cash Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_5}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-06-10')
     journal_id: account_journal_cash_0
     name: Our cash register
     period_id: period_6
@@ -37,7 +37,7 @@
   !record {model: account.bank.statement, id: account_bank_statement_4}:
     line_ids:
         - name: Transfer to a CashBox
-          date: !eval time.strftime('%Y-%m-%d')
+          date: !eval time.strftime('%Y-06-10')
           account_id: account_account_transfer_0
           amount: -1000.0
 -
@@ -54,7 +54,7 @@
   !record {model: account.bank.statement, id: account_bank_statement_5}:
     line_ids:
         - name: Transfer from 
-          date: !eval time.strftime('%Y-%m-%d')
+          date: !eval time.strftime('%Y-06-10')
           account_id: account_account_transfer_0
           amount: 1000.0
 -

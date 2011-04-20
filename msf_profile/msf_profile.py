@@ -18,29 +18,23 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Multi-Currency Management",
-    "version": "1.0",
-    "depends": ["purchase", "account_analytic_plans", "account_journal", "register_accounting"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to only use a subset of currencies, and have them available
-    for each accounting entry.
-    
-    """,
-    "init_xml": [],
-    'update_xml': [
-        'res_currency_functional_view.xml',
-        'account_move_line_view.xml',
-        'account_bank_statement_view.xml',
-        'order_line_view.xml',
-    ],
-    'test': [
-        'test/res_currency_functional.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+from osv import osv, fields
+from tools.translate import _
+
+
+class ir_model_data(osv.osv):
+    _inherit = 'ir.model.data'
+    _name = 'ir.model.data'
+
+    def _update(self,cr, uid, model, module, values, xml_id=False, store=True, noupdate=False, mode='init', res_id=False, context=None):
+        """ 
+            Store in context that we came from _update
+        """
+        if not context:
+            context = {}
+        ctx = context.copy()
+        ctx['update_mode'] = mode
+        return super(ir_model_data, self)._update(cr, uid, model, module, values, xml_id, store, noupdate, mode, res_id, ctx)
+
+ir_model_data()

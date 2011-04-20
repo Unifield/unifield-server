@@ -12,7 +12,7 @@
   I create a Cash Register with Opening and Closing balance 1000.
 -
  !record {model: account.bank.statement, id: account_bank_statement_7}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-10-12')
     journal_id: account_journal_cash_0
     name: 
     period_id: period_10
@@ -100,7 +100,7 @@
     statement_id: account_bank_statement_7
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-10-12')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -192,11 +192,6 @@
     assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
     assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
 -
-  I check that the invoice is paid
--
-  !assert {model: account.invoice, id: account_invoice_food_for_staff0}:
-    - state == 'paid'
--
   I check that there is a journal entry with the invoice amount and that the lines are reconciled
 -
   !python {model: account.move.line}: |
@@ -211,7 +206,7 @@
   I create a Cash Register with Opening and Closing balance 1000.
 -
  !record {model: account.bank.statement, id: account_bank_statement_8}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-01-03')
     journal_id: account_journal_cash_0
     name: 
     period_id: period_1
@@ -235,7 +230,7 @@
     statement_id: account_bank_statement_8
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-01-03')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0

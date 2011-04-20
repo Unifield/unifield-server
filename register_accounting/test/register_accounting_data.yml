@@ -4,11 +4,21 @@
   I create a fiscalyear
 -
   !record {model: account.fiscalyear, id: fiscalyear0}:
-    code: !eval "'FY%s'% (datetime.now().year+1)"
+    code: !eval "'FY%s'% (datetime.now().year+10)"
     company_id: base.main_company
-    date_start: !eval "'%s-01-01' %(datetime.now().year+1)"
-    date_stop: !eval "'%s-12-31' %(datetime.now().year+1)"
-    name: !eval "'Fiscal Year %s' %(datetime.now().year+1)"
+    date_start: !eval "'%s-01-01' %(datetime.now().year+10)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+10)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+10)"
+-
+  I create the period 00 for the write-off
+-
+  !record {model: account.period, id: period_00}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    fiscalyear_id: fiscalyear0
+    name: JAN-HHHHH
+    special: 1
 -
   I create the period 01
 -
