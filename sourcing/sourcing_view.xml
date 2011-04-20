@@ -68,7 +68,7 @@
 					<field name="available_stock" />
 					<field name="virtual_stock" />
 					<field name="supplier" domain="[('product_id', '=', product_id)]"
-						context="{'sourcing-product_id':product_id}" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+						context="{'sourcing-product_id':product_id}" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}" />
 					<field name="estimated_delivery_date" />
 					<!--
 						<button name="nothing" string="Close" icon="gtk-go-forward"
