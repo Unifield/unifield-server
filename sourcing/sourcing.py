@@ -495,11 +495,12 @@ class sale_order_line(osv.osv):
             deliveryDate = int(template.seller_delay)
         
         # type
-        type = vals['type']
+        if not vals.get('type'):
+            vals['type'] = 'make_to_stock'
         
         # fill po/cft : by default, if mto -> po, if mts -> False
         pocft = False
-        if type == 'make_to_order':
+        if vals['type'] == 'make_to_order':
             pocft = 'po'
         
         # fill the default pocft and supplier
