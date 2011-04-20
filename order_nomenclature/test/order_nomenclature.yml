@@ -106,7 +106,7 @@
     invoice_method: order
     location_id: stock.stock_location_stock
     minimum_planned_date: '2011-03-28'
-    name: PO00001
+    name: UNIQPO00001
     partner_address_id: res_partner_address_0
     partner_id: res_partner_partnertest0
     pricelist_id: purchase.list0
