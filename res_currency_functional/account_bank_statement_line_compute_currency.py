@@ -30,7 +30,6 @@ class account_bank_statement_line_compute_currency(osv.osv):
         res = {}
         for statement_line in self.browse(cr, uid, ids):
             res[statement_line.id] = {
-                'amount': statement_line.amount_out - statement_line.amount_in,
                 'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,
                     statement_line.functional_currency_id.id, statement_line.amount_in, round=True),
                 'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
@@ -39,13 +38,10 @@ class account_bank_statement_line_compute_currency(osv.osv):
         return res
     
     _columns = {
-        'amount_in': fields.float('In'),
-        'amount_out': fields.float('Out'),
-        'amount': fields.function(_compute, method=True, store=False, type='float', string='Amount', multi='amount_in, amount_out'),
         'currency_id': fields.related('statement_id', 'currency', type="many2one", relation="res.currency", string="Currency", store=False),
-        'functional_in': fields.function(_compute, method=True, store=False, type='float', string='Functional In', multi='amount_in, amount_out'),
-        'functional_out': fields.function(_compute, method=True, store=False, type='float', string='Functional Out', multi='amount_in, amount_out'),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'functional_in': fields.function(_compute, method=True, store=False, type='float', string='Func. In', multi='amount_in, amount_out'),
+        'functional_out': fields.function(_compute, method=True, store=False, type='float', string='Func. Out', multi='amount_in, amount_out'),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
     }
     
 account_bank_statement_line_compute_currency()
