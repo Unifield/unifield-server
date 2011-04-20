@@ -19,13 +19,28 @@
 	                        <group colspan="1" col="2">
 	                            <separator string="Codes" colspan="2"/>
 	                            <field name="default_code" required="1"/>
+                                <field name="old_code"/>
 	                        </group>
 	                    </group>
                     </group>
+                    <field name="price_extra" position="replace"/>
                     <group name="misc" position="replace"/>
-                    <field name="product_manager" position="replace">
-                        <field name="active"/>
-                    </field>
+                    <group name="status" position="replace">
+                        <group colspan="2" col="2" name="status" groups="base.group_extended">
+                            <separator string="Status" colspan="2"/>
+                            <field name="categ_id"/>
+                            <field name="international_status"/>
+                            <field name="state"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group name="uom" position="before">
+                        <group colspan="2" col="2" name="quality">
+                            <separator string="Quality" colspan="2"/>
+                            <field name="perishable"/>
+                            <field name="batch_management"/>
+                        </group>
+                    </group>
                     <field name="uom_po_id" position="replace">
                         <field name="uom_po_id" string="Exchangeable Unit of Measure" groups="base.group_extended"/>
                     </field>
@@ -36,7 +51,60 @@
                     </field>
                     <field name="loc_row" position="replace"/>
                     <field name="loc_case" position="replace"/>
+                    <page string="Descriptions" position="replace">
+                        <page string="Descriptions">
+                            <separator string="Description"/>
+                            <field name="product_catalog_page"/>
+                            <field name="product_catalog_path"/>
+                            <separator string="Description"/>
+                            <field colspan="4" name="description" nolabel="1"/>
+                            <field colspan="4" name="description2" nolabel="1"/>
+                            <separator string="Sale Description"/>
+                            <field colspan="4" name="description_sale" nolabel="1"/>
+                            <separator string="Purchase Description"/>
+                            <field colspan="4" name="description_purchase" nolabel="1"/>
+                        </page>
+                    </page>
                     <field name="ean" position="replace"/>
+                    <notebook position="inside">
+                        <page string="Miscellaneous">
+                            <group colspan="2" col="2">
+                                <separator string="Information" colspan="2"/>
+                                <field name="criticism" colspan="2"/>
+                                <field name="abc_class" colspan="2"/>
+                                <separator string="List" colspan="2"/>
+                                <field name="sublist" colspan="2"/>
+                                <separator string="Other" colspan="2"/>
+                                <field name="options_ids" colspan="2" nolabel="1"/>
+                                <field name="composed_kit" colspan="2"/>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Diffusion" colspan="2"/>
+                                <field name="section_code_ids" colspan="2" nolabel="1"/>
+                                <field name="library" colspan="2"/>
+                                <field name="supply_source_ids" colspan="2" nolabel="1"/>
+                                <field name="order_list" colspan="2"/>
+                            </group>
+                        </page>
+                        <page string="Medical">
+                            <group colspan="2" col="2">
+                                <separator string="Quality" colspan="2"/>
+                                <field name="heat_sensitive_item" colspan="2"/>
+                                <field name="cold_chain" colspan="2" attrs="{'invisible': [('heat_sensitive_item','in',['*','**','***'])]}"/>
+                                <field name="sterilized" colspan="2"/>
+                                <field name="single_use" colspan="2"/>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Diffusion" colspan="2"/>
+                                <field name="justification_code_id" colspan="2"/>
+                                <field name="med_device_class" colspan="2"/>
+                                <field name="closed_article" colspan="2"/>
+                                <field name="gmdn_code" colspan="2"/>
+                                <field name="gmdn_description" colspan="2"/>
+                                <field name="dangerous_goods" colspan="2"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </data>
             </field>
         </record>
@@ -130,10 +198,58 @@
                 <notebook position="inside">
                     <page string="Dates">
                         <field name="life_time" />
+                        <field name="short_shelf_life" />
                         <field name="use_time" />
                         <field name="alert_time" />
                     </page>
                 </notebook>
+            </field>
+        </record>
+        
+        
+        <record id="product_search_form_view" model="ir.ui.view">
+            <field name="name">product.search.form</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="product.product_search_form_view" />
+            <field name="arch" type="xml">
+               <field name="default_code" position="after">
+                   <field name="old_code"/>
+               </field>
+            </field>
+        </record>
+        
+        <record id="product_section_code_tree_view" model="ir.ui.view">
+            <field name="name">product.section.code.tree</field>
+            <field name="model">product.section.code</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Section Code">
+                    <field name="code" nolabel="1"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="product_supply_source_tree_view" model="ir.ui.view">
+            <field name="name">product.supply.source.tree</field>
+            <field name="model">product.supply.source</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Supply Source">
+                    <field name="source" nolabel="1"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="product_justification_code_tree_view" model="ir.ui.view">
+            <field name="name">product.justification.code.tree</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Justification Code">
+                    <field name="code"/>
+                    <field name="description"/>
+                </tree>
             </field>
         </record>
         

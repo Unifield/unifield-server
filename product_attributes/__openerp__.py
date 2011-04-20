@@ -24,7 +24,11 @@
     'category': 'Generic Modules',
     'author': 'MSF: Matthieu Dietrich',
     'depends': ['stock_location', 'product_expiry', 'product_manufacturer'],
-    'init_xml': [],
+    'init_xml': [
+        'data/product_section_code.xml',
+        'data/product_supply_source.xml',
+        'data/product_justification_code.xml',
+    ],
     'update_xml': [
         'product_attributes_view.xml',
     ],

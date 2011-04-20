@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        
+        <record id="section_code_oca" model="product.section.code">
+            <field name="code">OCA</field>
+        </record>
+        <record id="section_code_ocb" model="product.section.code">
+            <field name="code">OCB</field>
+        </record>
+        <record id="section_code_ocba" model="product.section.code">
+            <field name="code">OCBA</field>
+        </record>
+        <record id="section_code_ocg" model="product.section.code">
+            <field name="code">OCG</field>
+        </record>
+        <record id="section_code_ocp" model="product.section.code">
+            <field name="code">OCP</field>
+        </record>
+        
+    </data>
+</openerp>
