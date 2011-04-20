@@ -443,6 +443,25 @@ class product_product(osv.osv):
             result['value'].update({'nomen_c_sub_%s'%fieldNumber:newCode})
             
         result = context['result']
+        
+        # correction of bug when we select the nomenclature with a mouse click
+        # the nomenclature was reset to False
+        # this is due to the fact that onchange is called twice when we use the mouse click
+        # the first time with the selected value to False. This value was set to False
+        # at the first call which reset the selected value.
+        #
+        # in product_nomenclature > product_nomenclature.py > product_product > nomenChange
+        #
+        if not nomenclatureId:
+            # we remove the concerned field if it is equal to False
+            if nomenclatureType == 'mandatory':
+                nameToRemove = 'nomen_manda_%i'%fieldNumber
+                result['value'].pop(nameToRemove, False)
+                
+            elif nomenclatureType == 'optional':
+                nameToRemove = 'nomen_sub_%i'%fieldNumber
+                result['value'].pop(nameToRemove, False)
+    
         return result
 
 

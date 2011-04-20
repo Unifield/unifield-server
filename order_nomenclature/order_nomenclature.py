@@ -296,6 +296,7 @@ class sale_order_line(osv.osv):
         self._setNomenclatureInfo(cr, uid, context['result']['value'], context)
         
         result = context['result']
+        
         return result
         
     
