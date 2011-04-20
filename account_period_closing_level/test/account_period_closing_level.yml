@@ -16,8 +16,8 @@
   We check that we have next year's March period...
 -
   !assert {model: account.period, search: "[('name','=', '%s %s'%(datetime.now().replace(month=3).strftime('%b'), datetime.now().year+1))]"}:
-    - date_start == str(datetime.now().year+3) + "-03-01"
-    - date_stop == str(datetime.now().year+3) + "-03-31"
+    - date_start == str(datetime.now().year+1) + "-03-01"
+    - date_stop == str(datetime.now().year+1) + "-03-31"
     - special == False
     - state == 'created'
 
