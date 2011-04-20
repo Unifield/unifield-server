@@ -102,7 +102,7 @@
 					<field name="type" position="after">
 						<field name="subtype" attrs="{'invisible':[('type','!=','product')]}" />
 						<field name="asset_type_id" widget="selection"
-							attrs="{'invisible':[('subtype','!=','asset')]}" />
+							attrs="{'invisible':[('subtype','!=','asset')], 'required':[('subtype','=','asset')]}" />
 
 
 					</field>
@@ -148,6 +148,10 @@
 			domain="[('product_id', '=', active_id)]" name="Assets" res_model="product.asset"
 			src_model="product.product" />
 
+		<act_window id="product_2_events_normal_link" context="{}"
+			domain="[('product_id', '=', active_id)]" name="Follow Up Events" res_model="product.asset.event"
+			src_model="product.product" />
+
 		<!--
 			Main asset form
 		-->
@@ -161,9 +165,11 @@
 					<group colspan="4" col="6">
 						<group colspan="4" col="2">
 							<separator string="Asset" colspan="2" />
-							<field name="product_id" on_change="onChangeProductId(product_id)" domain="[('subtype', '=', 'asset')]" />
+							<field name="product_id" on_change="onChangeProductId(product_id)"
+								domain="[('subtype', '=', 'asset')]" />
 							<field name="name" />
-							<field name="asset_code" attrs="{'invisible':[('asset_code', '=', False)], 'readonly':[('asset_code', '!=', False)]}"/>
+							<field name="asset_code"
+								attrs="{'invisible':[('asset_code', '=', False)], 'readonly':[('asset_code', '!=', False)]}" />
 							<field name="asset_type_id" />
 
 						</group>
@@ -278,6 +284,7 @@
 						<field name="asset_id" on_change="onChangeAssetId(asset_id)" />
 						<field name="asset_code" />
 						<field name="asset_type_id" />
+						<field name="product_id" />
 						<field name="prod_int_name" />
 						<field name="prod_int_code" />
 					</group>
@@ -314,8 +321,8 @@
 				</tree>
 			</field>
 		</record>
-		
-		
+
+
 		<record id="asset_event_search_form_view" model="ir.ui.view">
 			<field name="name">asset.event.search.form</field>
 			<field name="model">product.asset.event</field>

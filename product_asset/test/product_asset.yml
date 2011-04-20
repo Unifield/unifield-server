@@ -127,7 +127,6 @@
   Creating a product.asset record
 - 
   !record {model: product.asset, id: product_asset_testassetcamembert0}:
-    asset_code: chaussures asset code
     asset_type_id: product_asset_type_0
     hq_brand: brand
     hq_model: model
@@ -150,7 +149,6 @@
 
 - 
   !record {model: product.asset.event, id: product_asset_event_0}:
-    asset_code: chaussures
     asset_id: product_asset_testassetcamembert0
     asset_type_id: product_asset_type_0
     date: '2011-03-28'
@@ -163,6 +161,7 @@
     proj_code: 1123
     location: warzazat
     name: an event
+    product_id: product_product_boitechaussures0
 
 - 
   Creating a stock.location record
@@ -236,7 +235,7 @@
     assert values['asset_type_id'] == ref("product_asset_type_0"), 'asset_type_id wrong'
     assert values['prod_int_code'] == 'CHAUSS-INT-1234', 'prod_int_code wrong'
     assert values['prod_int_name'] == 'Boite \\xc3\\xa0 chaussures', 'prod_int_name wrong'
-    assert values['asset_code'] == 'chaussures asset code', 'asset_code wrong'
+    assert values['asset_code'], 'asset_code wrong (%s)'%(values['asset_code'])
     assert values['hq_brand'] == 'brand', 'hq_brand wrong'
     assert values['hq_model'] == 'model', 'hq_model wrong'
 -
