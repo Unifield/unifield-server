@@ -78,6 +78,10 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
     }
 
+    _defaults = {
+        'balance_start': lambda *a: 0.0,
+    }
+
     def balance_check(self, cr, uid, register_id, journal_type='bank', context=None):
         """
         Check the balance for Registers
@@ -98,11 +102,7 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function
         """
-        super(osv.osv, self).write(cr, uid, ids, values, context=context)
-        res = self._get_starting_balance(cr, uid, ids)
-        for rs in res:
-            super(osv.osv, self).write(cr, uid, [rs], res.get(rs))
-        return True
+        return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
     def button_open_bank(self, cr, uid, ids, context={}):
         """
