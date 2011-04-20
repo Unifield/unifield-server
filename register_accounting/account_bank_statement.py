@@ -809,7 +809,11 @@ class account_bank_statement_line(osv.osv):
             if not st_line.employee_id:
                 raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
         # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
-        statement_id = self.read(cr, uid, ids[0], ['statement_id']).get('statement_id', False)[0]
+        st_obj = self.pool.get('account.bank.statement.line')
+        st = st_obj.browse(cr, uid, ids[0]).statement_id
+        if st and st.state != 'open':
+            raise osv.except_osv(_('Error'), _('You cannot do a cash return in Register which is in another state that "open"!'))
+        statement_id = st.id
         amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
         if amount >= 0:
             raise osv.except_osv(_('Warning'), _('Please select a line with a filled out "amount out"!'))
