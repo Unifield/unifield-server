@@ -84,8 +84,12 @@ class cashbox_write_off(osv.osv_memory):
                         acc_mov_obj = self.pool.get('account.move')
                         move_line_obj = self.pool.get('account.move.line')
                         journal_id = cashbox.journal_id.id
-                        period_id = cashbox.period_id.id
                         curr_date = time.strftime('%Y-%m-%d')
+                        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start','<=', curr_date), ('date_stop', '>=', curr_date)])
+                        if not period_ids:
+                            raise osv.except_osv(_('Error'), _('No accounting period for today !'))
+
+                        period_id = period_ids[0]
                         move_name = "writeoff" + "/" + curr_date
                         cash_difference = cashbox.balance_end - cashbox.balance_end_cash
                         account_debit_id = cashbox.journal_id.default_debit_account_id.id
