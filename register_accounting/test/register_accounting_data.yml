@@ -10,6 +10,16 @@
     date_stop: !eval "'%s-12-31' %(datetime.now().year+10)"
     name: !eval "'Fiscal Year %s' %(datetime.now().year+10)"
 -
+  I create the period 000 for the operational advance
+-
+  !record {model: account.period, id: period_000}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    fiscalyear_id: fiscalyear0
+    name: JAN-HHHHH-OP
+    special: 1
+-
   I create the period 00 for the write-off
 -
   !record {model: account.period, id: period_00}:
