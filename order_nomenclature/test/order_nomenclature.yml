@@ -139,7 +139,7 @@
     company_id: base.main_company
     date_order: '2011-03-28'
     invoice_quantity: order
-    name: SO001
+    name: UNIQSO001
     order_policy: manual
     partner_id: res_partner_partnertest0
     partner_invoice_id: res_partner_address_0
