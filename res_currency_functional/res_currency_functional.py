@@ -19,28 +19,43 @@
 #
 ##############################################################################
 
+import time
 from osv import fields, osv
 
 class res_currency_functional(osv.osv):
     _inherit = 'res.currency'
     
+    def _current_k_currency(self, cr, uid, ids, name, arg, context=None):
+        if context is None:
+            context = {}
+        res = {}
+        if 'date' in context:
+            date = context['date']
+        else:
+            date = time.strftime('%Y-%m-%d')
+        date = date or time.strftime('%Y-%m-%d')
+        for id in ids:
+            cr.execute("SELECT id, k_currency FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(id, date))
+            if cr.rowcount:
+                id, k_currency = cr.fetchall()[0]
+                res[id] = k_currency
+            else:
+                res[id] = 1
+        return res
+    
     _columns = {
-        'k_currency_active': fields.boolean('Activate K-currency?'),
-        'k_currency': fields.integer('K-currency'),
+        'current_k_currency': fields.function(_current_k_currency, method=True, string='Current K-Currency')
     }
 
     _defaults = {
         'accuracy': 4, 
-        'k_currency_active': False,
-        'k_currency': 1,
     }
     
     def _get_conversion_rate(self, cr, uid, from_currency, to_currency, context=None):
         conversion_rate = super(res_currency_functional, self)._get_conversion_rate(cr, uid, from_currency, to_currency, context)
-        if from_currency.k_currency_active:
-            conversion_rate /= from_currency.k_currency
-        if to_currency.k_currency_active:
-            conversion_rate *= to_currency.k_currency
+        # we add the k-currency
+        conversion_rate /= from_currency.current_k_currency 
+        conversion_rate *= to_currency.current_k_currency
         return conversion_rate
     
 res_currency_functional()
