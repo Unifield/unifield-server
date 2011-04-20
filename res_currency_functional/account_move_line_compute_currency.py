@@ -37,9 +37,6 @@ class account_move_line_compute_currency(osv.osv):
             if move_line.period_id.state != 'done':
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
                     # amount currency is not set; it is computed from the 2 other fields
-                    ctx = {}
-                    if move_line.date:
-                        ctx['date'] = move_line.date
                     amount_currency = move_line.debit_currency - move_line.credit_currency
                     debit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
                         move_line.functional_currency_id.id, move_line.debit_currency, round=True, context=ctx)

@@ -47,13 +47,18 @@ class sale_order_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for order in self.browse(cr, uid, ids, context=context):
+            # The confirmed date, if present, is used as a "freeze" date
+            # for the currency rate
+            ctx = {}
+            if order.date_confirm:
+                ctx['date'] = order.date_confirm
             res[order.id] = {
                             'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True),
+                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
                             'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                    order.functional_currency_id.id, order.amount_tax, round=True),
+                                                                    order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
                             'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                      order.functional_currency_id.id, order.amount_total, round=True),
+                                                                      order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
                             }
         return res
     
@@ -93,13 +98,18 @@ class purchase_order_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for order in self.browse(cr, uid, ids, context=context):
+            # The approved date, if present, is used as a "freeze" date
+            # for the currency rate
+            ctx = {}
+            if order.date_approve:
+                ctx['date'] = order.date_approve
             res[order.id] = {
                             'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True),
+                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
                             'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                    order.functional_currency_id.id, order.amount_tax, round=True),
+                                                                    order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
                             'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                      order.functional_currency_id.id, order.amount_total, round=True),
+                                                                      order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
                             }
         return res
     
