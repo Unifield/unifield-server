@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+import logging
 
 class account_period_closing_level(osv.osv):
     _inherit = "account.period"
@@ -55,7 +56,17 @@ class account_period_closing_level(osv.osv):
         'state': fields.selection(_get_state, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
     }
-    
+   
+    def create(self, cr, uid, vals, context={}):
+        if not context:
+            context = {}
+
+        if context.get('update_mode') in ['init', 'update'] and 'state' not in vals:
+            logging.getLogger('init').info('Loading default draft state for account.period')
+            vals['state'] = 'draft'
+
+        return super(account_period_closing_level, self).create(cr, uid, vals, context=context)
+
     _defaults = {
         'state': 'created'
     }
