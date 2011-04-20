@@ -12,7 +12,7 @@
         amount: 30000.0
         type: cr
     partner_id: base.res_partner_seagate
-    period_id: account.period_9
+    period_id: current_period
     type: sale
     
 -
@@ -57,7 +57,7 @@
         'currency_id': ref('base.EUR'),
         'journal_id': ref('account.bank_journal'),
         'partner_id': ref('base.res_partner_seagate'),
-        'period_id': ref('account.period_8'),
+        'period_id': ref('account_voucher.current_period'),
         'type': 'receipt',
     }
     if not res['value']['line_cr_ids']:

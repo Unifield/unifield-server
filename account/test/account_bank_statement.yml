@@ -9,7 +9,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account.bank_journal
     name: /
-    period_id: account.period_10
+    period_id: current_period
     line_ids:
       - account_id: account.a_recv
         amount: 1000.0
@@ -29,7 +29,7 @@
   !python {model: account.bank.statement}: |
     self.button_dummy(cr, uid, [ref("account_bank_statement_0")], {"lang": "en_US",
       "tz": False, "active_model": "ir.ui.menu", "journal_type": "bank", "section_id":
-      False, "period_id": 10, "active_ids": [ref("account.menu_bank_statement_tree")],
+      False, "period_id": ref('current_period'), "active_ids": [ref("account.menu_bank_statement_tree")],
       "active_id": ref("account.menu_bank_statement_tree"), })
 
 -
@@ -63,7 +63,7 @@
   !python {model: account.bank.statement}: |
     self.button_confirm_bank(cr, uid, [ref("account_bank_statement_0")], {"lang":
       "en_US", "tz": False, "active_model": "ir.ui.menu", "journal_type": "bank",
-      "section_id": False, "period_id": 10, "active_ids": [ref("account.menu_bank_statement_tree")],
+      "section_id": False, "period_id": ref('current_period'), "active_ids": [ref("account.menu_bank_statement_tree")],
       "active_id": ref("account.menu_bank_statement_tree"), })
 -
   I check that bank statement state is now "Closed"

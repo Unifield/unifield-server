@@ -5,6 +5,16 @@
     name : Tax Code Test
     sign : 1.00
 -
+  Current Period
+-
+  !record {model: account.period, id: current_period}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    fiscalyear_id: account.data_fiscalyear
+    name: Current Period
+    special: 1
+-
   In order to test the 'Post Journal Entries' wizard in OpenERP, I created an account move
 -
   !record {model: account.move, id: account_move_0}:
@@ -19,11 +29,11 @@
         journal_id: account.bank_journal
         name: Basic Computer
         partner_id: base.res_partner_desertic_hispafuentes
-        period_id: account.period_6
+        period_id: current_period
         ref: '2011010'
         tax_amount: 0.0
       - journal_id: account.bank_journal
-        period_id: account.period_6
+        period_id: current_period
         ref: '2011010'
         tax_code_id: account_tax_code_0      
         tax_amount: 0.0
@@ -36,7 +46,7 @@
         partner_id: base.res_partner_desertic_hispafuentes
         quantity: 0.0
     name: /
-    period_id: account.period_6
+    period_id: current_period
     ref: '2011010'
     state: draft
 
@@ -50,7 +60,7 @@
 -
   !record {model: validate.account.move, id: validate_account_move_0}:
     journal_id: account.bank_journal
-    period_id: account.period_6
+    period_id: current_period
 -
   I click on validate Button
 -

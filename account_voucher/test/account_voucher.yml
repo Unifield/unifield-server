@@ -1,4 +1,14 @@
 -
+  Current Period
+-
+  !record {model: account.period, id: current_period}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    fiscalyear_id: account.data_fiscalyear
+    name: Current Period
+    special: 1
+-
   In order to check account voucher module in OpenERP I create a customer voucher
 -
   !record {model: account.voucher, id: account_voucher_voucherforaxelor0}:
@@ -14,7 +24,7 @@
         amount: 1000.0
         name: Voucher for Axelor
     partner_id: base.res_partner_desertic_hispafuentes
-    period_id: account.period_6
+    period_id: current_period
     reference: none
 
 -
@@ -61,7 +71,7 @@
         amount: 1000.0
         name: Voucher Axelor
     partner_id: base.res_partner_desertic_hispafuentes
-    period_id: account.period_6
+    period_id: current_period
     reference: none
 
 -
