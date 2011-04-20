@@ -24,6 +24,9 @@ from tools.translate import _
 import decimal_precision as dp
 import math
 import re
+import tools
+from os import path
+import logging
 
 # maximum depth of level
 _LEVELS = 4
@@ -34,6 +37,17 @@ _SUB_LEVELS = 6
 # Nomenclatures
 #----------------------------------------------------------
 class product_nomenclature(osv.osv):
+
+    def init(self, cr):
+        """
+        Load product_nomenclature_data.xml brefore product
+        """
+        if hasattr(super(product_nomenclature, self), 'init'):
+            super(product_nomenclature, self).init(cr)
+        logging.getLogger('init').info('HOOK: module product_nomenclature: loading product_nomenclature_data.xml')
+        pathname = path.join('product_nomenclature', 'product_nomenclature_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
@@ -238,6 +252,35 @@ class product_template(osv.osv):
                 'nomen_c_sub_5': fields.char('C10', size=128),
     }
     ### END OF COPY
+
+    def _get_default_nom(self, cr, uid, context={}):
+        res = {}
+        toget = [('nomen_manda_0', 'nomen_med'), ('nomen_manda_1', 'nomen_med_drugs'), 
+            ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
+
+        for field, xml_id in toget:
+            nom = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_nomenclature', xml_id)
+            res[field] = nom[1]
+        return res
+
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for product.template')
+                vals.update(self._get_default_nom(cr, uid, context))
+        return super(product_template, self).create(cr, uid, vals, context)
 
     _defaults = {
     }
