@@ -4,7 +4,7 @@
   I create a Cheque Register
 -
   !record {model: account.bank.statement, id: account_bank_statement_3}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-05-02')
     journal_id: account_journal_cheque_0
     name: some name
     period_id: period_5
@@ -32,7 +32,7 @@
     line_ids:
       - account_id: account_account_receivable0
         amount: 111.0
-        date: !eval time.strftime('%Y-%m-%d')
+        date: !eval time.strftime('%Y-05-02')
         name: cheque1
         partner_id: res_partner_john_doe
         sequence: 0.0

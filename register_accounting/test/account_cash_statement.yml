@@ -4,7 +4,7 @@
   I create a Cash Register with Opening and Closing balance 1500.
 -
  !record {model: account.bank.statement, id: account_bank_statement_1}:
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-05-%d')
     journal_id: account_journal_cash_0
     name: 
     period_id: period_5
