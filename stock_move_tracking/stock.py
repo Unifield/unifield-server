@@ -25,10 +25,28 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
     
+    def _get_picking_ids(self, cr, uid, ids, context={}):
+        res = []
+        picking_ids = self.pool.get('stock.picking').browse(cr, uid, ids, context=context)
+        for pick in picking_ids:
+            res += self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', pick.id)])
+
+        return res
+    
+    def _get_lot_ids(self, cr, uid, ids, context={}):
+        res = []
+        lot_ids = self.pool.get('stock.production.lot').browse(cr, uid, ids, context=context)
+        for lot in lot_ids:
+            res += self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', lot.id)])
+        
+        return res
+    
     _columns = {
         'type': fields.related('picking_id', 'type', string='Type', type='selection', 
-                               selection=[('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True, store=True),
-        'expired_date': fields.related('prodlot_id', 'life_date', string='Expired Date', type='date', readonly=True, store=True),
+                               selection=[('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True, 
+                               store={'stock.picking': (_get_picking_ids, ['type'], 20)}),
+        'expired_date': fields.related('prodlot_id', 'life_date', string='Expired Date', type='date', readonly=True, 
+                                        store={'stock.production.lot': (_get_lot_ids, ['life_date'], 20)}),
     }
     
 stock_move()
