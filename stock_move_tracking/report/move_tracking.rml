@@ -93,7 +93,7 @@
           <para style="P4">[[ move.prodlot_id.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.prodlot_id.life_date and move.prodlot_id.life_date or '/' ]]</para>
+          <para style="P4">[[ move.expired_date and move.expired_date != "False" and move.expired_date or '/' ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.name ]]</para>

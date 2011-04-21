@@ -71,13 +71,16 @@ class stock_move_tracking(osv.osv_memory):
             prodlot_id = track.prodlot_id and track.prodlot_id.name or False
             expired_date = track.expired_date
         
-        data = {'move_ids': self.get_ids(cr, uid, ids, context=context),
+        data = {
                 'product_id': product_name,
                 'product_code': product_code,
                 'prodlot_id': prodlot_id,
                 'expired_date': expired_date}
-        
-        datas = {'ids': self.get_ids(cr, uid, ids, context=context),
+       
+        move_ids = self.get_ids(cr, uid, ids, context=context)
+        if not move_ids:
+            raise osv.except_osv(_('Warning !'), _('Your search did not match any moves'))
+        datas = {'ids': move_ids,
                  'model': 'stock.move',
                  'form': data}
 
@@ -92,12 +95,6 @@ class stock_move_tracking(osv.osv_memory):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
 
-        result_tree = mod_obj._get_id(cr, uid, 'stock_move_tracking', 'stock_move_tracking_tree_view')
-        tree_id = mod_obj.read(cr, uid, [result_tree], ['res_id'], context=context)[0]['res_id']
-
-        result_search = mod_obj._get_id(cr, uid, 'stock_move_tracking', 'stock_move_tracking_search_view')
-        search_id = mod_obj.read(cr, uid, [result_search], ['res_id'], context=context)[0]['res_id']
-        
         result = mod_obj._get_id(cr, uid, 'stock_move_tracking', 'action_stock_move_tracking')
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
         
