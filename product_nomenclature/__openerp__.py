@@ -37,7 +37,6 @@
         'product_nomenclature_data.xml',
     ],
     "demo_xml": [
-        "product_nomenclature_data.xml",
     ],
     'test': [
              'test/product_nomenclature.yml',
