@@ -39,7 +39,7 @@
 			<field name="inherit_id" ref="product.product_normal_form_view" />
 			<field name="arch" type="xml">
 				<data>
-					<page groups="base.group_extended" string="Packaging"
+					<page string="Information"
 						position="after">
 
 						<!-- COPIED TO order_nomenclature_view.xml -->
