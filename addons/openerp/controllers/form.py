@@ -395,15 +395,18 @@ class Form(SecuredController):
         # bypass save, for button action in non-editable view
         if params.editable:
             if not params.id:
-
                 if params.default_o2m:
                     data.update(params.default_o2m)
                 ctx = dict((params.context or {}), **rpc.session.context)
+                if params.button and params.button.name:
+                    ctx.update({'button': params.button.name})
                 params.id = int(Model.create(data, ctx))
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
             else:
                  ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
+                 if params.button and params.button.name:
+                    ctx.update({'button': params.button.name})
                  Model.write([params.id], data, ctx)
 
             tw.ConcurrencyInfo.update(
