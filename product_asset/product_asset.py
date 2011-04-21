@@ -218,6 +218,7 @@ class product_asset_event(osv.osv):
         asset = self.pool.get('product.asset').browse(cr, uid, assetId)
         
         result.update({
+                       'product_id': asset.product_id.id,
                        'asset_code': asset.asset_code,
                        'asset_type_id': asset.asset_type_id.id,
                        'prod_int_code': asset.prod_int_code,
@@ -270,6 +271,7 @@ class product_asset_event(osv.osv):
         return result
     
     _columns = {
+                'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
                 'asset_id': fields.many2one('product.asset', 'Asset', required=True, ondelete='cascade'),
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
                 'date': fields.date('Date', required=True),
@@ -282,7 +284,7 @@ class product_asset_event(osv.osv):
                 'location': fields.char('Location', size=128, required=True),
                 'proj_code': fields.char('Project Code', size=128, required=True),
                 'event_type': fields.selection(eventTypeSelection, 'Event Type', required=True), # TODO many2one or selection ?
-                'remark': fields.char('Remark', size=128),
+                'remark': fields.text('Remark'),
                 'state': fields.selection(stateSelection, 'Current Status', required=True), # TODO many2one or selection ?
     }
     
