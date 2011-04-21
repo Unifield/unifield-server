@@ -305,7 +305,7 @@ class product_template(osv.osv):
     _description = "Product Template"
     
     _columns = {
-        'subtype': fields.selection([('single','Single Item'),('kit', 'Kit'),('asset','Asset')], 'Product SubType', required=True, help="Will change the way procurements are processed."),
+        'subtype': fields.selection([('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')], 'Product SubType', required=True, help="Will change the way procurements are processed."),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'),
     }
 
