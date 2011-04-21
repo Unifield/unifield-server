@@ -44,7 +44,8 @@
     """,
     "depends" : ["product","stock", "sale", "purchase"],
     "init_xml" : [],
-    "demo_xml" : [],
+    "demo_xml": [
+    ],
     'test': [
              'test/product_asset.yml',
              ],
@@ -52,6 +53,7 @@
         'product_asset_view.xml',
         'security/ir.model.access.csv',
         'asset_sequence.xml',
+        "asset_type_data.xml",
     ],
     'installable': True,
 }
