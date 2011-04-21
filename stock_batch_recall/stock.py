@@ -64,34 +64,24 @@ class stock_batch_recall(osv.osv_memory):
         '''
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
-
-        context = {'search_default_real':1,
-                   'search_default_location_type_internal': 1,
-                  'search_default_group_location':1,
-                  'group_by_no_leaf': 1,
-                  'search_default_group_lot':1,
-                  'search_default_group_expired':1,
-                  'search_default_group_product':1,}
-        domain = []
-                  
-        for recall in self.browse(cr, uid, ids):
-            if recall.product_id:
-                context.update({'product_id': recall.product_id.id,})
-                domain.append(('product_id', '=', recall.product_id.id))
-            if recall.prodlot_id:
-                context.update({'prodlot_id': recall.prodlot_id.id, })
-                domain.append(('prodlot_id', '=', recall.prodlot_id.id))
-            if recall.expired_date:
-                context.update({'expired_date': recall.expired_date, })
-                domain.append(('expired_date', '=', recall.expired_date))
         
-        return {'type': 'ir.actions.act_window',
-                'name': 'Batch Recall',
-                'res_model': 'report.batch.recall',
-                'view_type': 'form',
-                'view_mode': 'tree',
-                'domain': domain,
-                'context': context}
+        context = {'group_by_no_leaf': 1,
+                   'search_default_internal': 1,
+                   'search_default_group_location': 1,
+                   'search_default_group_lot': 1,
+                   'search_default_group_expired': 1,
+                   'search_default_group_product': 1}
+        
+        domain = [('id', 'in', self.get_ids(cr, uid, ids))]
+        
+        result = mod_obj._get_id(cr, uid, 'stock_batch_recall', 'action_report_batch_recall')
+        id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
+        
+        result = act_obj.read(cr, uid, [id], context=context)[0]
+        result['domain'] = domain
+        result['context'] = context
+        
+        return result
         
 stock_batch_recall()
 

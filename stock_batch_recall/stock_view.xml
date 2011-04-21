@@ -85,6 +85,14 @@
         <menuitem action="action_batch_recall"
                   id="menu_batch_recall"
                   parent="stock.menu_traceability" />
+                  
+        <record id="action_report_batch_recall" model="ir.actions.act_window">
+            <field name="name">Batch Recall</field>
+            <field name="res_model">report.batch.recall</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+        </record>
+            
             
     </data>
 </openerp>
