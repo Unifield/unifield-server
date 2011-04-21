@@ -44,9 +44,18 @@ class stock_move(osv.osv):
     _columns = {
         'type': fields.related('picking_id', 'type', string='Type', type='selection', 
                                selection=[('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True, 
-                               store={'stock.picking': (_get_picking_ids, ['type'], 20)}),
-        'expired_date': fields.related('prodlot_id', 'life_date', string='Expired Date', type='date', readonly=True, 
-                                        store={'stock.production.lot': (_get_lot_ids, ['life_date'], 20)}),
+                               store={
+                                'stock.picking': (_get_picking_ids, ['type'], 20),
+                                'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['picking_id'], 20),
+                                }
+                               
+                               ),
+        'expired_date': fields.related('prodlot_id', 'life_date', string='Expired Date', type='datetime', readonly=True, 
+                                        store={
+                                            'stock.production.lot': (_get_lot_ids, ['life_date'], 20),
+                                            'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['prodlot_id'], 20), 
+                                            }
+                                        ),
     }
     
 stock_move()
