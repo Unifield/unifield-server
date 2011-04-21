@@ -75,29 +75,6 @@ class sourcing_line(osv.osv):
                                         ('exception', 'Exception'),
                                         ]
     
-    
-    def _getRelatedFields(self, cr, uid, ids, name, arg, context=None):
-        '''
-        function returning related data
-        '''
-        result = {}
-        
-        for sourcingLine in self.browse(cr, uid, ids, context=context):
-            
-            id = sourcingLine.id
-            so = sourcingLine.sale_order_id
-            sol = sourcingLine.sale_order_line_id
-            
-            result[id] = {'sale_order_state': so.state,
-                          'sale_order_line_state': sol.state,
-                          'state': sol.state,
-                          'type': sol.type,
-                          }
-            
-        return result
-    
-    
-    
     def _saveRelatedFields(self, cr, uid, ids, name, value, arg, context=None):
         '''
         function saving related data
@@ -139,34 +116,22 @@ class sourcing_line(osv.osv):
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
-        # sale order id
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
-        #'sale_order_id': fields.related('sale_order_line_id', 'order_id', relation='sale.order', type='many2one', string='Sale Order', readonly=True, store=True),
-        # sale order line id
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
-        # reference
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
-        # state
-        #'state': fields.selection([('created', 'Created')], string='State', readonly=True),
-        'state': fields.function(_getRelatedFields, string="State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True),
+        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
         # priority -> will be changed to related wm order type
         'priority': fields.char(string='Priority', size=128, readonly=True),
         # category -> will be changed to related wm order type
         'category': fields.char(string='Category', size=128, readonly=True),
-        # sale order state
-        'sale_order_state': fields.function(_getRelatedFields, string="Order State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True),
+        'sale_order_state': fields.related('sale_order_id', 'state', string="Order State", type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True, store=False),
         # line number -> will be changed to related
         'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),
-        # product (name & reference) from sale order line
         'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
-        # qty
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
-        # uom
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        # rts
         'rts': fields.date(string='RTS', readonly=True),
-        # order line state
-        'sale_order_line_state': fields.function(_getRelatedFields, string="Line State", multi="states", method=True, type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True),
+        'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         # procurement method
         # if type changes in sale.order.line, we gather the corresponding sourcing.line ids to be updated which is passed to _getRelatedFields
 #        'type': fields.function(_getRelatedFields,
@@ -176,18 +141,13 @@ class sourcing_line(osv.osv):
 #                                    'sale.order.line': (_getCorrespondingSourcingLines, ['type'], 20)
 #                                }, readonly=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
-        # po/cft
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
-        # real stock
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
-        # available stock -> will be changed to function
         'available_stock': fields.float('Available Stock', readonly=True),
-        # virtual stock
         'virtual_stock': fields.related('product_id', 'virtual_available', type='float', string='Virtual Stock', readonly=True),
         # supplier - many2one with default value from supplier from product
         #'supplier': fields.many2one('res.partner', 'Supplier'),
         'supplier': fields.many2one('product.supplierinfo', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}),
-        # estimated delivery date
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
     _order = 'sale_order_id desc'
