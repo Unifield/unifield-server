@@ -66,6 +66,7 @@ class stock_batch_recall(osv.osv_memory):
         act_obj = self.pool.get('ir.actions.act_window')
         
         context = {'group_by_no_leaf': 1,
+                   'search_default_location_type_internal': 1,
                    'search_default_internal': 1,
                    'search_default_group_location': 1,
                    'search_default_group_lot': 1,
