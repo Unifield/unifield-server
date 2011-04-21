@@ -37,7 +37,7 @@ class res_currency_functional(osv.osv):
         for id in ids:
             cr.execute("SELECT id, k_currency FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(id, date))
             if cr.rowcount:
-                id, k_currency = cr.fetchall()[0]
+                kid, k_currency = cr.fetchall()[0]
                 res[id] = k_currency
             else:
                 res[id] = 1
