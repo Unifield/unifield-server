@@ -45,7 +45,9 @@
     """,
     "depends" : ["product","stock", "sale", "purchase"],
     "init_xml" : [],
-    "demo_xml" : [],
+    "demo_xml": [
+        "asset_type_data.xml",
+    ],
     'test': [
              'test/product_asset.yml',
              ],
