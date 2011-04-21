@@ -25,7 +25,9 @@ import re
 class product_section_code(osv.osv):
     _name = "product.section.code"
     _columns = {
-        'code': fields.char('Section code', size=4),
+        'code': fields.char('Code', size=4),
+        'section': fields.char('Section', size=32),
+        'description': fields.char('Description', size=128),
     }
 product_section_code()
 
@@ -59,7 +61,7 @@ class product_attributes(osv.osv):
     _inherit = "product.product"
     
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable Consumable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
@@ -77,12 +79,12 @@ class product_attributes(osv.osv):
         'product_catalog_path' : fields.char('Product Catalog Path', size=64),
         'short_shelf_life': fields.boolean('Short Shelf Life'),
         'criticism': fields.selection([('',''),
-            ('1','1-Expectional'),
-            ('2','2-Specific'),
-            ('3','3-Important'),
-            ('4','4-Medium'),
-            ('5','5-Common'),
-            ('x','X-Other')], 'Criticism'),
+            ('exceptional','1-Expectional'),
+            ('specific','2-Specific'),
+            ('important','3-Important'),
+            ('medium','4-Medium'),
+            ('common','5-Common'),
+            ('other','X-Other')], 'Criticism'),
         'abc_class': fields.selection([('',''),
             ('a','A'),
             ('b','B'),
@@ -94,7 +96,6 @@ class product_attributes(osv.osv):
             ('l3','L3'),
             ('l4','L4')], 'Library'),
         'supply_source_ids': fields.many2many('product.supply.source','product_supply_source_rel','product_id','supply_source_id','Supply Source'),
-        'order_list': fields.boolean('Order List'),
         'sublist' : fields.char('Sublist', size=64),
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
@@ -119,7 +120,7 @@ class product_attributes(osv.osv):
         'med_device_class': fields.selection([('',''),
             ('1','Class I (General controls)'),
             ('2','Class II (General control with special controls)'),
-            ('3','Class III (General controls and premarket)')], 'Cold Chain'),
+            ('3','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -127,6 +128,7 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
+        'type': 'product',
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
