@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,46 +16,32 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
+
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name": "Batch Recall",
+    "version": "1.0",
+    "depends": ["base", "stock_move_tracking"],
+    "author": "TeMPO Consulting, MSF",
+    "website": "",
+    "category": "Warehouse",
     "description": """
-        Modules for Unifield
+    This module adds a wizard to see a specific product/bacth/expired date
+    in stock.
+    It also modifies the stock inventory view to add expired date.
     """,
-    "website": "http://unifield.msf.org",
     "init_xml": [
     ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-        "purchase_msf",
-	    "product_asset",
-	    "order_nomenclature",
-	    "product_nomenclature",
-        "order_types",
-        "res_currency_functional",
-	    "sourcing",
-        "stock_move_tracking",
-        "stock_batch_recall",
+    'update_xml': [
+        'stock_view.xml',
+        'security/ir.model.access.csv',
     ],
-    "update_xml": [
+    'demo_xml': [
     ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
