@@ -326,6 +326,9 @@ function form_setRequired(container, field, required) {
     
     if (field.type == 'hidden' && kind == 'many2one') {
         form_setRequired(container, openobject.dom.get(field.name + '_text'), required);
+    } else if (field.type == 'hidden' && kind == 'reference') {
+        form_setRequired(container, openobject.dom.get(field.name + '_reference'), required);
+        form_setRequired(container, openobject.dom.get(field.name + '_text'), required);
     }
 }
 

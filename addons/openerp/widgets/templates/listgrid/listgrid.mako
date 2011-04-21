@@ -27,7 +27,11 @@
                 % if field == 'button':
                     <td class="grid-cell"></td>
                 % else:
-                    <td class="grid-cell ${field_attrs.get('type', 'char')}">
+                    <td class="grid-cell ${field_attrs.get('type', 'char')}"
+                        % if field_attrs.get('attrs'):
+                            ${py.attrs(id=field_attrs.get('prefix'),attrs=field_attrs.get('attrs'),widget=field_attrs.get('prefix')+'/'+field_attrs.get('name',''))}
+                        % endif
+                    >
                         ${editors[field].display()}
                     </td>
                 % endif
@@ -49,7 +53,7 @@
             row_class = 'grid-row-odd'
     %>
     % if editors:
-        <tr class="grid-row inline_editors ${row_class}" record="${data['id']}">
+        <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}">
     % else:
         <tr class="grid-row ${row_class}" record="${data['id']}">
     % endif
@@ -78,7 +82,7 @@
                 <img alt="edit record" src="/openerp/static/images/iconset-b-edit.gif"
                     class="listImage" border="0" title="${_('Edit')}"
                     onclick="editRecord(${data['id']}, '${source}')"/>
-            % else:
+            % elif not data['id'] or data['id'] not in noteditable:
                 <%
                     if o2m and not data['id']:
                         edit_image = '/openerp/static/images/listgrid/save_inline.gif'
@@ -329,12 +333,14 @@
                         <script type="text/javascript">
                             /* In editable grid, clicking on empty row will create new and on existing row will edit. */
                            jQuery('table[id=${name}_grid] tr.grid-row').each(function(index, row) {
+                               if (! jQuery(row).hasClass('noteditable')) {
                                jQuery(row).click(function(event) {
                                    if (!jQuery(event.target).is(':input, img, option, a.listImage-container, td.m2o_coplition')) {
                                        var record_id = parseInt(jQuery(row).attr('record'), 10) || -1;
                                        listgridValidation('${name}','${o2m or 0}', record_id);
                                    }
                                });
+                               }
                            });
                         </script>
                     % else:

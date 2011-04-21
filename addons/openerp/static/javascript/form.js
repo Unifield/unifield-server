@@ -332,6 +332,9 @@ function getFormData(extended, include_readonly) {
             return;
         }
 
+	if (/_reference$/.test(this.id)) {
+	    return;
+	}
         // work around to skip o2m values (list mode)
         var value;
         if (name.indexOf('/__id') > 0) {
@@ -410,16 +413,14 @@ function getFormData(extended, include_readonly) {
                     attrs['value'] = "[" + value + ",'" + $this.attr('relation') + "']";
                     break;
             }
-
             // stringify the attr object
             frm[name] = serializeJSON(attrs);
-
+	    
         }
         else {
             frm[name] = this.value;
         }
     });
-
     return frm;
 }
 
@@ -604,7 +605,6 @@ function onChange(caller){
                         new ListView(prefix + k).reload();
                     }
                 }
-
                 switch (kind) {
                     case 'picture':
                         fld.src = value;
@@ -640,7 +640,12 @@ function onChange(caller){
                         }
                         break;
                     case 'boolean':
-                        openobject.dom.get(prefix + k + '_checkbox_').checked = value || false;
+                        obj = openobject.dom.get(prefix + k + '_checkbox_')
+                        if (obj) {
+                            obj.checked = value || false;
+                        } else {
+                            openobject.dom.get(prefix + k).value = value || false;
+                        }
                         break;
                     case 'text_html':
                         $('#' + prefix + k).val(value || '');
@@ -661,10 +666,31 @@ function onChange(caller){
                             'width': progress
                         }));
                         break;
+                    case 'reference':
+                        if (value) {
+                            ref = openobject.dom.get(prefix + k + '_reference');
+                            if (typeof(value)=='object') {
+                                var opts = [OPTION({'value': ''})];
+                                for (var opt in value['options']) {
+                                    opts.push(OPTION({'value': value['options'][opt][0]}, value['options'][opt][1]));
+                                }
+                                MochiKit.DOM.replaceChildNodes(ref, opts);
+                                value = value['selection'];
+                            }
+                            v = value.split(',');
+                            ref.value = v[0];
+                            fld.value = v[1] || '';
+                            fld._m2o.on_reference_changed();
+                            try {
+                                openobject.dom.get(prefix + k + '_text').value = v[2] || '';
+                            }
+                            catch (e) {
+                            }
+                        }
+                        break;
                     default:
                     // do nothing on default
                 }
-
                 $fld.trigger('change');
                 MochiKit.Signal.signal(window.document, 'onfieldchange', fld);
             }
