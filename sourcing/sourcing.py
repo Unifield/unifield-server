@@ -568,6 +568,9 @@ class sale_order_line(osv.osv):
         ''' 
         if not context:
             context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # update the corresponding sourcing line if not called from sourcing line updated
         if 'fromSourcingLine' not in context:
             context['fromOrderLine'] = True
