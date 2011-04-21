@@ -193,6 +193,7 @@
     user_type: account_account_type_transfer_0
     company_id: base.main_company
     currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create Supplier 401 Payable Account.
 -
@@ -204,6 +205,7 @@
     type: payable
     user_type: account_account_type_receivable0
     reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a 6101 Expense Account.
 -
@@ -214,6 +216,7 @@
     name: Expense Account
     type: other
     user_type: account_account_type_expense0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X2110 Expense Account.
 -
@@ -224,6 +227,7 @@
     name: Expense (test)
     type: other
     user_type: account_account_type_expense0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create Cash Advance 4204 Account.
 -
@@ -235,6 +239,7 @@
     type: other
     user_type: account_account_type_expense0
     reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11002 Receivable Account.
 -
@@ -246,6 +251,7 @@
     type: receivable
     reconcile: 1
     user_type : account_account_type_receivable0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11003 Cash Account.
 -
@@ -257,6 +263,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11004 Bank Account.
 -
@@ -268,6 +275,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a X11005 Cheque Account
 -
@@ -279,6 +287,7 @@
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
 -
   I create a Journal View with some columns
 -
