@@ -23,7 +23,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 
-class account_period_create(osv.osv):
+class account_period_create(osv.osv_memory):
     _name="account.period.create"
     
     _columns = {
