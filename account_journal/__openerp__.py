@@ -23,6 +23,9 @@
     "version" : "1.0",
     "author" : "MSF: Matthieu Dietrich",
     "category": 'Generic Modules/Accounting',
+    "description": '''
+        Journals view and datas
+    ''',
     'init_xml': [],
     "depends" : ["account"],
     'update_xml': [

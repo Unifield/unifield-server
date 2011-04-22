@@ -21,7 +21,7 @@
 
 from osv import fields, osv
 
-class activate_currencies(osv.osv):
+class activate_currencies(osv.osv_memory):
     _name = "activate.currencies"
     
     _columns = {
