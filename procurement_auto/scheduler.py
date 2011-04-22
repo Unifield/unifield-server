@@ -45,7 +45,9 @@ class procurement_order(osv.osv):
         request_obj = self.pool.get('res.request')
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
         proc_obj = self.pool.get('procurement.order')
-        
+       
+        # TODO JFB
+        # change condition <= , verification de non prise en compte de NULL
         auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '=', False)])
         
         created_proc = []
@@ -69,7 +71,8 @@ class procurement_order(osv.osv):
                                                  location_id, context=context)
                 if proc_id:
                     created_proc.append(proc_id)
-        
+            # TODO JFB
+            # Write last_run 
         # Next, for one product automatic supply
         auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '!=', False)])
         for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):

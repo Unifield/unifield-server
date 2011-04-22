@@ -17,10 +17,6 @@
                         <field name="daily_frequency" attrs="{'readonly': [('daily_frequency_ok', '=', 0)], 'required': [('daily_frequency_ok', '=', True)]}" />
                         <label string="day(s)" />
                         <newline />
-                        <label />
-                        <field name="daily_working_days" nolabel="1" on_change="choose_daily_frequency(False, daily_working_days)" />
-                        <label string="Each working days" colspan="2" />
-                        <newline />
                     </group>
                     <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'weekly')]}">
                         <separator colspan="16" string="Weekly configuration" />
@@ -140,8 +136,11 @@
                         <field name="recurrence_nb" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
                         <field name="recurrence_type" nolabel="1" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
                     </group>
-                    <field name="calculated_end_date" />
-                    <field name="next_date" widget="date" />
+                    <group  colspan="4" col="6">
+                        <field name="last_run" />
+                        <field name="calculated_end_date" />
+                        <field name="next_date" widget="date" />
+                    </group>
                     <label colspan="2" />
                     <button colspan="2" name="choose_frequency" type="object" string="Validate the frequency" icon="gtk-ok" />
                  </form>

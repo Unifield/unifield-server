@@ -29,7 +29,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import date, datetime
 
 from mx.DateTime import *
-
+import math
 
 
 WEEK_DAYS = [('sunday', 'Sunday'), ('monday', 'Monday'),
@@ -37,14 +37,14 @@ WEEK_DAYS = [('sunday', 'Sunday'), ('monday', 'Monday'),
              ('thursday', 'Thursday'), ('friday', 'Friday'), 
              ('saturday', 'Saturday')]
 
-FREQUENCY = [('each', 'Each'), ('first', 'The first'), ('second', 'The second'),
-             ('third', 'The third'), ('fourth', 'The fourth'), ('fifth', 'The fifth'),
-             ('last', 'The last')]
+FREQUENCY = [(1, 'The first'), (2, 'The second'),
+             (3, 'The third'), (4, 'The fourth'), (5, 'The fifth'),
+             (-1, 'The last')]
 
-MONTHS = [('january', 'January'), ('february', 'February'), ('march','March'),
-          ('april', 'April'), ('may', 'May'), ('june', 'June'),
-          ('july', 'July'), ('august', 'August'), ('september', 'September'),
-          ('october', 'October'), ('november', 'November'), ('december', 'December'),]
+MONTHS = [(1, 'January'), (2, 'February'), (3,'March'),
+          (4, 'April'), (5, 'May'), (6, 'June'),
+          (7, 'July'), (8, 'August'), (9, 'September'),
+          (10, 'October'), (11, 'November'), (12, 'December'),]
 
 
 class stock_frequence(osv.osv):
@@ -69,32 +69,15 @@ class stock_frequence(osv.osv):
         Return the good Date value according to the type of the day param.
         '''
         # Get the day number of the selected day
-        if monthly_choose_day == 'sunday':
-            day = 6
-        elif monthly_choose_day == 'monday':
-            day = 0
-        elif monthly_choose_day == 'tuesday':
-            day = 1
-        elif monthly_choose_day == 'wednesday':
-            day = 2
-        elif monthly_choose_day == 'thursday':
-            day = 3
-        elif monthly_choose_day == 'friday':
-            day = 4
-        elif monthly_choose_day == 'saturday':
-            day = 5
-        else:
-            day = 6
-            
-        return day
+        data = {'sunday': 6, 'monday':0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5}
+        return data.get(monthly_choose_day, 6)
     
     def check_data(self, data):
         '''
         Check if all required data aren't empty
         '''
         if data['name'] == 'daily':
-            if (not 'daily_frequency_ok' in data or not data.get('daily_frequency_ok', False)) and \
-               (not 'daily_working_days' in data or not data.get('daily_working_days', False)):
+            if  not data.get('daily_frequency_ok', False):
                 raise osv.except_osv(_('Error'), _('You should make a choice for the Daily configuration'))
         elif data['name'] == 'weekly':
             if (not 'weekly_sunday_ok' in data or not data.get('weekly_sunday_ok', False)) and \
@@ -134,7 +117,13 @@ class stock_frequence(osv.osv):
             raise osv.except_osv(_('Error'), _('You should make a choice for the Replenishment repeating !'))
         
         return
-    
+  
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default['last_run'] = False
+        return super(stock_frequence, self).copy(cr, uid, id, default, context)
+
     def create(self, cr, uid, data, context={}):
         '''
         Check if all required data aren't empty
@@ -197,22 +186,16 @@ class stock_frequence(osv.osv):
         if frequence.name != 'daily':
             return False
         else:
-            if frequence.daily_working_days:
-                # Check if the number of day is in working days
-                next_date = today()
-                # Return the date of next Monday
-                while next_date.weekday() == 5 or next_date.weekday() == 6:
-                    next_date = next_date + RelativeDate(days=+1)
-                return next_date
-            elif frequence.daily_frequency_ok:
-                # Return the next date matching with the frequency parameter
-                start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
-                next_date = Date(start_date.year, start_date.month, start_date.day)
-                while next_date < today():
-                    next_date = next_date + RelativeDate(days=frequence.daily_frequency)
-                return next_date
-        
-        return False
+            start_date = strptime(frequence.start_date, '%Y-%m-%d')
+            if start_date > today():
+                return start_date
+
+            if not frequence.last_run:
+                return today()
+                #numdays = (today() - start_date).day
+                #modulo = math.ceil(numdays/frequence.daily_frequency_ok)*frequence.daily_frequency_ok
+                #return start_date+RelativeDate(days=modulo)
+            return max(today(), strptime(frequence.last_run, '%Y-%m-%d')+RelativeDate(days=frequence.daily_frequency))
         
     def _compute_next_weekly_date(self, cr, uid, frequence_id):
         '''
@@ -225,38 +208,30 @@ class stock_frequence(osv.osv):
         if frequence.name != 'weekly':
             return False
         else:
-            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
-            next_date = Date(start_date.year, start_date.month, start_date.day)
+            data = ['monday','tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+            if not frequence.weekly_sunday_ok and not frequence.weekly_monday_ok and not frequence.weekly_tuesday_ok \
+                and not frequence.weekly_wednesday_ok and not frequence.weekly_thursday_ok and not frequence.weekly_friday_ok \
+                and not frequence.weekly_saturday_ok:
+                   raise osv.except_osv(_('Error'), _('You should choose at least one day of week !'))
             
-            while next_date < today():
-                next_date = next_date + RelativeDate(weeks=+frequence.weekly_frequency)
-                
-            next_date = next_date + RelativeDate(weeks=-1)
-            while next_date < today():
-                next_date = next_date + RelativeDate(days=+1)
-                
-            test = False
-            while not test:
-                day = next_date.weekday()
-                # Check if the next_date matching with parameters
-                if day == 6 and frequence.weekly_sunday_ok:
-                    test = True
-                elif day == 0 and frequence.weekly_monday_ok:
-                    test = True
-                elif day == 1 and frequence.weekly_tuesday_ok:
-                    test = True
-                elif day == 2 and frequence.weekly_wednesday_ok:
-                    test = True
-                elif day == 3 and frequence.weekly_thursday_ok:
-                    test = True
-                elif day == 4 and frequence.weekly_friday_ok:
-                    test = True
-                elif day == 5 and frequence.weekly_saturday_ok:
-                    test = True
-                else:
-                    next_date = next_date + RelativeDate(days=+1)
-                    
-            return next_date
+            if not frequence.last_run:
+                start_date = strptime(frequence.start_date, '%Y-%m-%d')
+                if start_date < today():
+                    start_date = today()
+                while True:
+                    i = start_date.weekday()
+                    if getattr(frequence, 'weekly_%s_ok'%(data[i])):
+                        return start_date
+                    start_date += RelativeDate(days=1)
+
+            next_date = strptime(frequence.last_run, '%Y-%m-%d')+RelativeDate(days=1)
+            while True:
+                if getattr(frequence, 'weekly_%s_ok'%(data[next_date.weekday()])):
+                    return max(today(), next_date)
+                next_date += RelativeDate(days=1)
+                if next_date.weekday() == 0:
+                    next_date += RelativeDate(weeks=frequence.weekly_frequency-1) 
         
         return False
     
@@ -271,32 +246,20 @@ class stock_frequence(osv.osv):
         if frequence.name != 'monthly':
             return False
         else:
-            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
-            next_date = Date(start_date.year, start_date.month, start_date.day)
-            
-            while next_date.year != today().year or next_date.month < today().month:
-                    next_date = next_date + RelativeDate(months=+frequence.monthly_frequency)
-            
             if frequence.monthly_one_day:
-                freq = 0
                 day = self.get_datetime_day(frequence.monthly_choose_day)
-                        
-                # Get the value for the choose frequence
-                i = 0
-                for f in FREQUENCY:
-                    if frequence.monthly_choose_freq == f[0]:
-                        freq = i
-                    i += 1
-                # Return the value -1 if the choosen frequency is 'The last'
-                if freq == 6:
-                    freq = -1
-                    
-                # Search the next date according to the selected day and the selected frequency
-                relative_date = next_date + RelativeDate(weekday=(day,freq))
-                while relative_date < today():
-                    relative_date = relative_date + RelativeDate(weeks=+1, weekday=(day,freq))
-                
-                return relative_date
+                if frequence.last_run:
+                    from_date = strptime(frequence.last_run, '%Y-%m-%d')
+                    return max(today(), from_date + RelativeDate(months=+frequence.monthly_frequency, weekday=(day,frequence.monthly_choose_freq)))
+                else:
+                    start_date = strptime(frequence.start_date, '%Y-%m-%d')
+                    if start_date < today():
+                        start_date = today()
+                    next_date = start_date + RelativeDate(weekday=(day,frequence.monthly_choose_freq))
+                    if next_date < start_date:
+                        next_date = start_date + RelativeDate(months=1, weekday=(day,frequence.monthly_choose_freq))
+                    return next_date
+
             elif frequence.monthly_repeating_ok:
                 days_ok = []
                 # Get all fields for choosen days
@@ -304,17 +267,36 @@ class stock_frequence(osv.osv):
                 for col in self._columns:
                     if re.match('^monthly_day[0-9]', col):
                         fields.append(col)
-                
                 frequence_read = self.read(cr, uid, [frequence_id], fields)[0]
                 for f in fields:
                     if frequence_read[f]:
                         days_ok.append(int(f[-2:]))
-                
-                while next_date.day not in days_ok or next_date < today():
-                    next_date = next_date + RelativeDate(days=+1)
-                    
-                return next_date
-                
+                days_ok.sort()
+
+                if frequence.last_run:
+                    from_date = strptime(frequence.last_run, '%Y-%m-%d')+RelativeDateTime(days=1)
+                    force = True
+                else:
+                    from_date = strptime(frequence.start_date, '%Y-%m-%d')
+                    if from_date < today():
+                        from_date = today()
+                    force = False
+               
+                if from_date.day > days_ok[-1]:
+                    # switch to next month
+                    if force:
+                        from_date += RelativeDate(day=days_ok[0], months=frequence.monthly_frequency)
+                        return max(today(), from_date)
+                    else:
+                        from_date += RelativeDate(day=days_ok[0], months=1)
+                        return from_date
+
+                days = filter(lambda a: a>=from_date.day , days_ok)
+                from_date += RelativeDate(day=days[0])
+                if force:
+                    return max(today(), from_date)
+                return from_date
+
         return False
         
     def _compute_next_yearly_date(self, cr, uid, frequence_id):
@@ -328,62 +310,30 @@ class stock_frequence(osv.osv):
         if frequence.name != 'yearly':
             return False
         else:
-            start_date = datetime.strptime(frequence.start_date, '%Y-%m-%d')
-            next_date = Date(start_date.year, start_date.month, start_date.day)
-            
-            while next_date.year < today().year:
-                next_date = next_date + RelativeDate(years=+frequence.yearly_frequency)
-            
+            start_date = strptime(frequence.start_date, '%Y-%m-%d')
+            if start_date < today():
+                start_date = today()
+            if not frequence.last_run:
+                if frequence.yearly_day_ok:
+                    next_date = start_date + RelativeDate(month=frequence.yearly_choose_month, day=frequence.yearly_day)
+                    if next_date < start_date:
+                        return start_date + RelativeDate(month=frequence.yearly_choose_month, day=frequence.yearly_day, years=1)
+                    return next_date
+                if frequence.yearly_date_ok:
+                    day = self.get_datetime_day(frequence.yearly_choose_day)
+                    next_date = start_date + RelativeDate(month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq))
+                    if next_date < start_date:
+                        return start_date + RelativeDate(years=1, month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq))
+                    return next_date
+
+            next_date = strptime(frequence.last_run, '%Y-%m-%d')
             if frequence.yearly_day_ok:
-                # Get month number
-                month = 1
-                i = 1
-                for m in MONTHS:
-                    if frequence.yearly_choose_month == m[0]:
-                        month = i
-                    i += 1
-                
-                # Get the next date
-                next_date = next_date + RelativeDate(month=month, day=frequence.yearly_day)
-                if next_date.month > today().month or (next_date.month == today().month and next_date.day > today().day):
-                    return next_date
-                else:
-                    next_date = next_date + RelativeDate(years=+frequence.yearly_frequency)
-                    
-                return next_date
-            elif frequence.yearly_date_ok:
+                next_date += RelativeDate(years=frequence.yearly_frequency, month=frequence.yearly_choose_month, day=frequence.yearly_day)
+            else:
                 day = self.get_datetime_day(frequence.yearly_choose_day)
-                
-                freq = 1
-                # Get the value for the choose frequence
-                i = 0
-                for f in FREQUENCY:
-                    if frequence.yearly_choose_freq == f[0]:
-                        freq = i
-                    i += 1
-                # Return the value -1 if the choosen frequency is 'The last'
-                if freq == 6:
-                    freq = -1
-                
-                # Get the month number
-                month = 1
-                i = 1
-                for m in MONTHS:
-                    if frequence.yearly_choose_month_freq == m[0]:
-                        month = i
-                    i += 1
-                    
-                # Search the next date according to the selected day and the selected frequency
-                next_date = next_date + RelativeDate(month=month, weekday=(day,freq))
-                if next_date < today() or next_date.year > today().year or (next_date.year == today().year and next_date.month > today().month):
-                    freq = 1
-                if next_date.month > today().month or (next_date.month == today().month and next_date.day >= today().day):
-                    return next_date
-                else:
-                    next_date = next_date + RelativeDate(years=+frequence.yearly_frequency, month=month, weekday=(2,freq))
-                
-                return next_date
-        
+                next_date += RelativeDate(years=frequence.yearly_frequency, month=frequence.yearly_choose_month_freq, weekday=(day, frequence.yearly_choose_freq)) 
+            return max(today(), next_date)
+
         return False
         
     def _compute_next_date(self, cr, uid, ids, field, arg, context={}):
@@ -436,8 +386,6 @@ class stock_frequence(osv.osv):
             if freq.name == 'daily':
                 if freq.daily_frequency_ok:
                     title = _('Each %d day(s)' %freq.daily_frequency)
-                if freq.daily_working_days:
-                    title = _('Each working days')
             if freq.name == 'weekly':
                 sunday = monday = tuesday = wednesday = thursday = friday = saturday = ''
                 if freq.weekly_sunday_ok:
@@ -511,7 +459,6 @@ class stock_frequence(osv.osv):
         # Daily configuration
         'daily_frequency_ok': fields.boolean(string='Frequence'),
         'daily_frequency': fields.integer(string='Each'),
-        'daily_working_days': fields.boolean(string='Each working Days'),
         
         # Weekly configuration
         'weekly_frequency': fields.integer(string='Each'),
@@ -526,7 +473,7 @@ class stock_frequence(osv.osv):
         # Monthly configuration
         'monthly_frequency': fields.integer(string='Each'),
         'monthly_one_day': fields.boolean(string='One day'),
-        'monthly_choose_freq': fields.selection(FREQUENCY, string='Choose frequence'),
+        'monthly_choose_freq': fields.selection(FREQUENCY, string='Choose frequence', size=-1),
         'monthly_choose_day': fields.selection(WEEK_DAYS,string='Choose days'),
         'monthly_repeating_ok': fields.boolean(string='Repeatition'),
         'monthly_day01': fields.boolean(string='1'),
@@ -565,11 +512,11 @@ class stock_frequence(osv.osv):
         'yearly_frequency': fields.integer(string='Each'),
         'yearly_day_ok': fields.boolean(string='Days'),
         'yearly_day': fields.integer(string='Day'),
-        'yearly_choose_month': fields.selection(MONTHS, string='Choose a month'),
+        'yearly_choose_month': fields.selection(MONTHS, string='Choose a month', size=-1),
         'yearly_date_ok': fields.boolean(string='Date'),
-        'yearly_choose_freq': fields.selection(FREQUENCY, string='Choose frequence'),
+        'yearly_choose_freq': fields.selection(FREQUENCY, string='Choose frequence', size=-1),
         'yearly_choose_day': fields.selection(WEEK_DAYS, string='Choose day'),
-        'yearly_choose_month_freq': fields.selection(MONTHS, string='Choose a month'),
+        'yearly_choose_month_freq': fields.selection(MONTHS, string='Choose a month', size=-1),
         
         # Recurrence configuration
         'start_date': fields.date(string='Start date', required=True),
@@ -581,18 +528,20 @@ class stock_frequence(osv.osv):
         'recurrence_type': fields.selection([('day', 'Day(s)'), ('week', 'Week(s)'),
                                              ('month', 'Month(s)'), ('year', 'Year(s)')],
                                              string='Type of reccurence'),
+
+        'last_run': fields.date(string='Last run', readonly=True),
         'calculated_end_date': fields.function(_compute_end_date, method=True, type='date', string='End date', store=False),
         'next_date': fields.function(_compute_next_date, method=True, type='date', string='Next date', store=False),
     }
     
     _defaults = {
         'name': lambda *a: 'daily',
-        'monthly_choose_freq': lambda *a: 'each',
+        'monthly_choose_freq': lambda *a: 1,
         'monthly_choose_day': lambda *a: 'monday',
-        'yearly_choose_month': lambda *a: 'january',
-        'yearly_choose_freq': lambda *a: 'each',
+        'yearly_choose_month': lambda *a: 1,
+        'yearly_choose_freq': lambda *a: 1,
         'yearly_choose_day': lambda *a: 'monday',
-        'yearly_choose_month_freq': lambda *a: 'january',
+        'yearly_choose_month_freq': lambda *a: 1,
         'daily_frequency': lambda *a: 1,
         'weekly_frequency': lambda *a: 1,
         'monthly_frequency': lambda *a: 1,
@@ -606,6 +555,7 @@ class stock_frequence(osv.osv):
         'daily_frequency_ok': lambda *a: True,
         'weekly_monday_ok': lambda *a: True,
         'start_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'last_run': lambda *a: False,
     }
     
     def check_date_in_month(self, cr, uid, ids, day, month):
@@ -635,16 +585,6 @@ class stock_frequence(osv.osv):
 #        
         return {'warning': warn, 'value': {'yearly_day': day}}
     
-    def choose_daily_frequency(self, cr, uid, ids, daily_frequency_ok=False, daily_working_days=False):
-        '''
-        Uncheck automatically the other choose when one is choosing
-        '''
-        if daily_frequency_ok:
-            return {'value': {'daily_working_days': False}}
-        if daily_working_days:
-            return {'value': {'daily_frequency_ok': False}}
-        
-        return {}
     
     def monthly_freq_change(self, cr, uid, ids, monthly_one_day=False, monthly_repeating_ok=False):
         '''

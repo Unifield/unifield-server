@@ -75,6 +75,9 @@ class procurement_order(osv.osv):
             not_products = []
             for p in cycle.product_ids:
                 not_products.append(p.id)
+
+            ## TODO JFB
+            ## Recursive categ ?
             product_ids = product_obj.search(cr, uid, [('categ_id', 'child_of', cycle.category_id.id), ('id', 'not in', not_products)])
             
             for product in product_obj.browse(cr, uid, product_ids):

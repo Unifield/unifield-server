@@ -132,11 +132,28 @@ class stock_warehouse_automatic_supply(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
+        obj = self.read(cr, uid, id, ['frequence_id'])
+        if obj['frequence_id']:
+            default['frequence_id'] = self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context)
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.automatic.supply') or '',
+            'procurement_id': False,
         })
         return super(stock_warehouse_automatic_supply, self).copy(cr, uid, id, default, context=context)
-    
+ 
+    def _check_frequency(self, cr, uid, ids, context={}):
+        if context.get('button') == 'choose_change_frequence':
+            return True
+
+        for auto in self.read(cr, uid, ids, ['frequence_id']):
+            if not auto['frequence_id']:
+                return False
+        return True
+
+    _constraints = [
+        (_check_frequency, 'Error ! Frequence is mandatory, please add one by clicking on the "Change/Choose Frequency" button.', ['frequence_name'])
+    ]
+
 stock_warehouse_automatic_supply()
 
 class stock_warehouse_automatic_supply_line(osv.osv):
@@ -166,7 +183,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         """
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v = {'product_uom': prod.uom_id.id}
+            v = {'product_uom_id': prod.uom_id.id}
             return {'value': v}
         return {}
     
@@ -193,6 +210,12 @@ class stock_frequence(osv.osv):
             
         return super(stock_frequence, self).choose_frequency(cr, uid, ids, context=context)
     
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default['auto_sup_ids'] = False
+        return super(stock_frequence, self).copy(cr, uid, id, default, context)
+
 stock_frequence()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

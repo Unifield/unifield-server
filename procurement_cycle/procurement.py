@@ -160,6 +160,10 @@ class stock_warehouse_order_cycle(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
+        obj = self.read(cr, uid, id, ['frequence_id'])
+        if obj['frequence_id']:
+            default['frequence_id'] = self.pool.get('stock.frequence').copy(cr, uid, obj['frequence_id'][0], context=context)
+
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.order.cycle') or '',
         })
@@ -174,7 +178,13 @@ class stock_frequence(osv.osv):
     _columns = {
         'order_cycle_ids': fields.one2many('stock.warehouse.order.cycle', 'frequence_id', string='Order Cycle'),
     }
-    
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default['order_cycle_ids'] = False
+        return super(stock_frequence, self).copy(cr, uid, id, default, context)
+
     def choose_frequency(self, cr, uid, ids, context={}):
         '''
         Adds the support of order cycles on choose frequency method
