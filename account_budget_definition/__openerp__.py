@@ -24,6 +24,9 @@
     'category': 'Generic Modules/Accounting',
     'author': 'MSF: Matthieu Dietrich',
     'depends': ['account', 'account_budget'],
+    'description': '''
+        Budget view
+    ''',
     'init_xml': [],
     'update_xml': [
         'account_budget_definition_view.xml',
