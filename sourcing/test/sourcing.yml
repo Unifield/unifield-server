@@ -152,14 +152,14 @@
     
     self.pool.get('procurement.order').run_scheduler(cr, uid)
     
-    ids = self.pool.get('purchase.order').search(cr, uid, [])
+    ids = self.pool.get('purchase.order').search(cr, uid, [('origin', '=', sol.order_id.name)])
     
     count = 0
     for po in self.pool.get('purchase.order').browse(cr, uid, ids):
       if po.partner_id.id == ref("res_partner_b0"):
         count = count + 1
     
-    assert count == 1, 'too much purchase order'
+    assert count == 1, 'purchase order number does not match (%i, %i)'%(len(sol.order_id.order_line), count)
     
     #assert sol.procurement_id.purchase_id.partner_id.id == ref("res_partner_b0"), 'partner is wrong for purchase order (%i, %i)'%(sol.procurement_id.purchase_id.partner_id.id, ref("res_partner_b0"))
      

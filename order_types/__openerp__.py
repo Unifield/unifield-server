@@ -22,14 +22,15 @@
 {
     "name": "Order Types",
     "version": "1.0",
-    "depends": ["base", 
+    "depends": [
                 "sale", 
                 "purchase", 
                 "msf_partner",
                 "msf_order_date", 
                 "stock",
                 "product_expiry",
-                "stock_inventory_type"],
+                "stock_inventory_type",
+                "sale_override"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchase",

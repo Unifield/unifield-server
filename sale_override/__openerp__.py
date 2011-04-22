@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,29 +16,28 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# 
 ##############################################################################
-
-
 {
-    "name" : "Sourcing Tool",
-    "version" : "0.1",
-    "author" : "MSF pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override"],
-    "init_xml" : [],
-    "demo_xml" : [],
+    "name" : "Sale override",
+    "version" : "1.0",
+    "author" : "TeMPO Consulting, MSF",
+    "category": "Others",
     "description": """
-    Add sourcing specification
+        Add hooks to sale class
     """,
-    'test': [
-             'test/sourcing.yml',
-             ],
-    'update_xml': [
-        'sourcing_sequence.xml',
-        'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
+    "website": "http://unifield.msf.org",
+    "init_xml": [
     ],
-    'installable': True,
+    "depends" : [
+        "sale",
+    ],
+    "update_xml": [
+    ],
+    "demo_xml": [
+    ],
+    "test": [
+    ],
+    "installable": True,
+    "active": False,
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
