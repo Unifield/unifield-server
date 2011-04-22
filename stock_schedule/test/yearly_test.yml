@@ -1,0 +1,191 @@
+-
+  In order to test features of the stock_schedule module,
+  I will create a new planification with yearly parameter and test
+  different cases
+-
+  First yearly test
+-
+  !record {model: stock.frequence, id: yearly1}:
+    name: yearly
+    yearly_frequency: 2
+    yearly_day_ok: 1
+    yearly_day: 3
+    yearly_choose_month: march
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-03-03', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the next date is the next March, the 3rd of an odd-numbered year
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
+    next_yearly = DateTime(2009, 03, 03)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3 or (today().month == 3 and today().day < 3):
+        assert next_date == DateTime(today().year, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+2
+    else:
+      assert next_date == DateTime(today().year+1, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+1
+-
+  Change the start date to October the 3rd.
+-
+  !record {model: stock.frequence, id: yearly1}:
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-10-03', '%Y-%m-%d'))
+-
+  Check if the next date is always March, the 3rd of an odd-numbered year
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
+    next_yearly = DateTime(2009, 10, 03)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3 or (today().month == 3 and today().day < 3):
+        assert next_date == DateTime(today().year, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+2
+    else:
+      assert next_date == DateTime(today().year+1, 3, 3) and next_date >= today(), "Next date is not March, the 3rd of %s" %today().year+1
+-
+  Change the choose month to October
+-
+  !record {model: stock.frequence, id: yearly1}:
+    yearly_choose_month: october
+-
+  Check if the next date is now the next October, the 3rd
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
+    next_yearly = DateTime(2009, 10, 03)
+    if (today().year-2009)%2 == 0:
+      if today().month < 10 or (today().month == 10 and today().day < 3):
+        assert next_date == DateTime(today().year, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s" %today().year+2
+    else:
+      assert next_date == DateTime(today().year+1, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s" %today().year+1
+-
+  Second yearly test
+-
+  !record {model: stock.frequence, id: yearly2}:
+    name: yearly
+    yearly_frequency: 2
+    yearly_date_ok: 1
+    yearly_day_ok: 0
+    yearly_choose_freq: each
+    yearly_choose_day: wednesday
+    yearly_choose_month_freq: march
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-03-03', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the next date is the first wednesday of March
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not the first Wednesday of March of the next year"
+-
+  Change the start date
+-
+  !record {model: stock.frequence, id: yearly2}:
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-10-03', '%Y-%m-%d'))
+-
+  Check if the next date is always the first Wednesday of March
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(month=3, weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
+-
+  Change the choose month
+-
+  !record {model: stock.frequence, id: yearly2}:
+    yearly_choose_month_freq: october
+-
+  Check if the next date is correct
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly2')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month < 10 or (today().month == 10 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
+-
+  Third yearly test
+-
+  !record {model: stock.frequence, id: yearly3}:
+    name: yearly
+    yearly_frequency: 2
+    yearly_date_ok: 1
+    yearly_day_ok: 0
+    yearly_choose_freq: each
+    yearly_choose_day: wednesday
+    yearly_choose_month_freq: march
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-01-03', '%Y-%m-%d'))
+    no_end_date: True
+-
+  Check if the next date is correct
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3  or (today().month == 3 and today().day < (today() + RelativeDateTime(weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
+-
+  Change the start date
+-
+  !record {model: stock.frequence, id: yearly3}:
+    start_date: !eval time.strftime('%Y-%m-%d', time.strptime('2009-10-03', '%Y-%m-%d'))
+-
+  Check if the next date is correct
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month < 3 or (today().month == 3 and today().day < (today() + RelativeDateTime(month=3, weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 3) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"
+-
+  Change the choose month
+-
+  !record {model: stock.frequence, id: yearly3}:
+    yearly_choose_month_freq: october
+-
+  Check if the next date is correct
+-
+  !python {model: stock.frequence}: |
+    from mx.DateTime import *
+    next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
+    if (today().year-2009)%2 == 0:
+      if today().month <= 10 or (today().month == 10 and today().day < (today() + RelativeDateTime(month=10, weekday=(2, 1)))):
+        assert next_date == DateTime(today().year, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the current year"
+      else:
+        assert next_date == DateTime(today().year+2, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the 2 next years"
+    else:
+      assert next_date == DateTime(today().year+1, 10) + RelativeDateTime(weekday=(2, 1)) and next_date >= today(), "The next date is not in the next year"

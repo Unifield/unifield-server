@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,48 +16,40 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
+
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name": "Automatic Procurement",
+    "version": "1.0",
+    "depends": ["base",
+                "procurement",
+                "stock",
+                "stock_schedule"],
+    "author": "TeMPO Consulting, MSF",
+    "website": "",
+    "category": "Warehouse & Stock",
     "description": """
-        Modules for Unifield
+        This module aims to add a new replenishment policies with
+        fixed dates and fixed quantities.
     """,
-    "website": "http://unifield.msf.org",
     "init_xml": [
     ],
-    "depends" : [
-        "msf_partner",
-        "procurement_list",
-        "register_accounting",
-        "stock_inventory_type",
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-        "purchase_msf",
-	    "product_asset",
-	    "order_nomenclature",
-	    "product_nomenclature",
-        "order_types",
-        "res_currency_functional",
-	    "sourcing",
-        "stock_move_tracking",
-        "stock_batch_recall",
-        "procurement_cycle",
-        "procurement_auto",
+    'update_xml': [
+        'procurement_view.xml',
+        'procurement_data.xml',
+        'security/ir.model.access.csv',
+        'wizard/schedulers_all_view.xml',
     ],
-    "update_xml": [
+    'demo_xml': [
     ],
-    "demo_xml": [
-    ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
+    'test': [
+        'test/data.yml',
+        'test/proc_auto.yml',
+    ] ,
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
