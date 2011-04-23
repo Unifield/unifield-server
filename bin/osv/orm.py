@@ -923,7 +923,7 @@ class orm_template(object):
         error_msgs = []
         for constraint in self._constraints:
             fun, msg, fields = constraint
-            if not fun(self, cr, uid, ids):
+            if not fun(self, cr, uid, ids, context=context):
                 # Check presence of __call__ directly instead of using
                 # callable() because it will be deprecated as of Python 3.0
                 if hasattr(msg, '__call__'):
