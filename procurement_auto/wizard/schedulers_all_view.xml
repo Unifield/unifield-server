@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--  Compute Schedulers -->
+
+		<record id="view_compute_schedulers_wizard" model="ir.ui.view">
+            <field name="name">Compute Schedulers Supply</field>
+            <field name="model">procurement.supply.compute.all</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Scheduler Parameters">
+				    <group col="2" colspan="4">
+                		<button icon='gtk-cancel' special="cancel"
+                			string="Cancel" />
+                		<button name="procure_calculation" string="Compute Schedulers"
+                			colspan="1" type="object" icon="gtk-ok" />
+                	</group>
+                </form>
+            </field>
+        </record>
+
+         <act_window name="Compute Schedulers Supply"
+		    res_model="procurement.supply.compute.all"
+		    src_model="procurement.order"
+		    view_mode="form"
+		    target="new"
+            key2="client_action_multi"
+		    id="action_compute_schedulers_supply"/>
+		    
+		<menuitem action="action_compute_schedulers_supply" id="menu_stock_proc_schedulers_supply" parent="procurement.menu_stock_sched" sequence="20" groups="stock.group_stock_manager"/>
+		    
+
+	</data>
+</openerp>
