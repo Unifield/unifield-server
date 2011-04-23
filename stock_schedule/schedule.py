@@ -567,13 +567,13 @@ class stock_frequence(osv.osv):
         
         if day < 1:
             day = 1
-        elif month == 'february' and day > 29:
+        elif month == 2 and day > 29:
             day = 28
-        elif month in ['april', 'june', 'september', 'november'] and day > 30:
+        elif month in [4, 6, 9, 11] and day > 30:
             day = 30
         elif day > 31:
             day = 31
-        elif month == 'february' and day == 29:
+        elif month == 2 and day == 29:
             warn = {'title': _('Warning'), 
                     'message': _('You have selected February, the 29th as shedule date. For non leap years, the action will be run on March, the 1st !')}
         else:
