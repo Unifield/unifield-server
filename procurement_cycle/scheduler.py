@@ -238,15 +238,8 @@ class procurement_order(osv.osv):
         
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
-       
-        # Get the rounding value according to the rounding of UoM
-        rounding = product.uom_id.rounding
-        i = 0
-        while rounding != 1.00:
-            rounding *= 10
-            i += 1
         
-        return round((delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty, i)
+        return (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
         
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
