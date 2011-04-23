@@ -29,8 +29,6 @@ import pooler
 import netsvc
 
 
-# Cache for product/location
-cache = {}
 
 class procurement_order(osv.osv):
     _name = 'procurement.order'
@@ -47,14 +45,19 @@ class procurement_order(osv.osv):
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
         proc_obj = self.pool.get('procurement.order')
         product_obj = self.pool.get('product.product')
+        freq_obj = self.pool.get('stock.frequence')
+
+        start_date = datetime.now()
         
-        cycle_ids = cycle_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '=', False)])
+        cycle_ids = cycle_obj.search(cr, uid, [('next_date', '<=', start_date.strftime('%Y-%m-%d'))])
         
         created_proc = []
         report = []
         report_except = 0
         
-        start_date = datetime.now()
+        # Cache for product/location
+        cache = {}
+
         
         # We start with only category Automatic Supply
         for cycle in cycle_obj.browse(cr, uid, cycle_ids):
@@ -72,42 +75,29 @@ class procurement_order(osv.osv):
                         'past_consumption': cycle.past_consumption,
                         'reviewed_consumption': cycle.reviewed_consumption,
                         'manual_consumption': cycle.manual_consumption,}
-            not_products = []
-            for p in cycle.product_ids:
-                not_products.append(p.id)
 
-            ## TODO JFB
-            ## Recursive categ ?
-            product_ids = product_obj.search(cr, uid, [('categ_id', 'child_of', cycle.category_id.id), ('id', 'not in', not_products)])
-            
-            for product in product_obj.browse(cr, uid, product_ids):
-                proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values)
+            if not cycle.product_id:
+                not_products = []
+                for p in cycle.product_ids:
+                    not_products.append(p.id)
+
+                product_ids = product_obj.search(cr, uid, [('categ_id', 'child_of', cycle.category_id.id), ('id', 'not in', not_products)])
+                
+                for product in product_obj.browse(cr, uid, product_ids):
+                    proc_id = self.create_proc_cycle(cr, uid, cycle, product.id, location_id, d_values, cache=cache)
+                    
+
+                    if proc_id:
+                        created_proc.append(proc_id)
+            else:
+                proc_id = self.create_proc_cycle(cr, uid, cycle, cycle.product_id.id, location_id, d_values, cache=cache)
                 
                 if proc_id:
                     created_proc.append(proc_id)
         
-        # Next, for one product automatic supply
-        cycle_ids = cycle_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '!=', False)])
-        for cycle in cycle_obj.browse(cr, uid, cycle_ids):
-            # We define the replenish location
-            location_id = False
-            if not cycle.location_id or not cycle.location_id.id:
-                location_id = cycle.warehouse_id.lot_input_id.id
-            else:
-                location_id = cycle.location_id.id
-                
-            d_values = {'leadtime': cycle.leadtime,
-                        'coverage': cycle.order_coverage,
-                        'safety_time': cycle.safety_stock_time,
-                        'safety': cycle.safety_stock,
-                        'past_consumption': cycle.past_consumption,
-                        'reviewed_consumption': cycle.reviewed_consumption,
-                        'manual_consumption': cycle.manual_consumption,}
-            
-            proc_id = self.create_proc_cycle(cr, uid, cycle, cycle.product_id.id, location_id, d_values)
-            
-            if proc_id:
-                created_proc.append(proc_id)
+            if cycle.frequence_id:
+                freq_obj.write(cr, uid, cycle.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
+
                     
         for proc in proc_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':
@@ -124,15 +114,16 @@ class procurement_order(osv.osv):
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-
-        Exceptions:\n'''% (start_date, end_date, len(created_proc), report_except)
+        \n'''% (start_date, end_date, len(created_proc), report_except)
         summary += '\n'.join(report)
-        request_obj.create(cr, uid,
+        req_id = request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report.",
                  'act_from': uid,
                  'act_to': uid,
                  'body': summary,
                 })
+        if req_id:
+            request_obj.request_send(cr, uid, [req_id])
         
         if use_new_cursor:
             cr.commit()
@@ -140,7 +131,7 @@ class procurement_order(osv.osv):
             
         return {}
     
-    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values={}, context={}):
+    def create_proc_cycle(self, cr, uid, cycle, product_id, location_id, d_values={}, cache={}, context={}):
         '''
         Creates a procurement order for a product and a location
         '''
@@ -161,25 +152,24 @@ class procurement_order(osv.osv):
             cache.update({location_id: []})
         
         # If a rule already exist for the category of the product or for the product
-        # itself for the same location, we don't create a procurement order 
-        cycle_ids = cycle_obj.search(cr, uid, [('category_id', '=', product.categ_id.id), ('product_id', '=', False), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
-        cycle2_ids = cycle_obj.search(cr, uid, [('product_id', '=', product.id), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
-        if cycle_ids:
-            cr.execute('''SELECT order_cycle_id
-                        FROM order_cycle_product_rel
-                        WHERE order_cycle_id in %s
-                        AND product_id = %s''', (tuple(cycle_ids), product.id))
-            res = cr.fetchall()
-            for r in res:
-                cycle_ids.remove(r[0])
-        if cycle2_ids or cycle_ids:
-            return False
+        # itself for the same location, we don't create a procurement order
+        #cycle_ids = cycle_obj.search(cr, uid, [('category_id', '=', product.categ_id.id), ('product_id', '=', False), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
+        #cycle2_ids = cycle_obj.search(cr, uid, [('product_id', '=', product.id), ('location_id', '=', location_id), ('id', '!=', cycle.id)])
+        #if cycle_ids:
+        #    cr.execute('''SELECT order_cycle_id
+        #                FROM order_cycle_product_rel
+        #                WHERE order_cycle_id in %s
+        #                AND product_id = %s''', (tuple(cycle_ids), product.id))
+        #    res = cr.fetchall()
+        #    for r in res:
+        #        cycle_ids.remove(r[0])
+        #if cycle2_ids or cycle_ids:
+        #    return False
         
-        newdate = datetime.today()
-        quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
             
         if product.id not in cache.get(location_id):
             newdate = datetime.today()
+            quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
             if quantity_to_order <= 0:
                 return False
             else:
@@ -248,7 +238,7 @@ class procurement_order(osv.osv):
         
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
-        
+       
         # Get the rounding value according to the rounding of UoM
         rounding = product.uom_id.rounding
         i = 0

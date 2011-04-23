@@ -27,6 +27,7 @@ from tools.translate import _
 class stock_warehouse_automatic_supply(osv.osv):
     _name = 'stock.warehouse.automatic.supply'
     _description = 'Automatic Supply'
+    _order = 'sequence, id'
     
     def _get_next_date_from_frequence(self, cr, uid, ids, name, args, context={}):
         '''
@@ -64,6 +65,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         return res
     
     _columns = {
+        'sequence': fields.integer(string='Order', required=True, help='A higher order value means a low priority'),
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
@@ -83,6 +85,7 @@ class stock_warehouse_automatic_supply(osv.osv):
     }
     
     _defaults = {
+        'sequence': lambda *a: 10,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.automatic.supply') or '',
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.automatic.supply', context=c)
@@ -128,7 +131,18 @@ class stock_warehouse_automatic_supply(osv.osv):
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
-    
+   
+    def unlink(self, cr, uid, ids, context):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        freq_ids = []
+        for auto in self.read(cr, uid, ids, ['frequence_id']):
+            if auto['frequence_id']:
+                freq_ids.append(auto['frequence_id'][0])
+        if freq_ids:
+            self.pool.get('stock.frequence').unlink(cr, uid, freq_ids, context)
+        return super(stock_warehouse_automatic_supply, self).unlink(cr, uid, ids, context=context)
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -165,7 +179,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
-        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply')
+        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade')
     }
     
     _defaults = {

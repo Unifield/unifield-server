@@ -28,8 +28,6 @@ import pooler
 import netsvc
 
 
-# Cache for product/location
-cache = {}
 
 class procurement_order(osv.osv):
     _name = 'procurement.order'
@@ -45,16 +43,17 @@ class procurement_order(osv.osv):
         request_obj = self.pool.get('res.request')
         auto_sup_obj = self.pool.get('stock.warehouse.automatic.supply')
         proc_obj = self.pool.get('procurement.order')
-       
-        # TODO JFB
-        # change condition <= , verification de non prise en compte de NULL
-        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '=', False)])
+        freq_obj = self.pool.get('stock.frequence')
+
+        start_date = datetime.now()
+        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '<=', start_date.strftime('%Y-%m-%d'))])
         
         created_proc = []
         report = []
         report_except = 0
         
-        start_date = datetime.now()
+        # Cache for product/location
+        cache = {}
         
         # We start with only category Automatic Supply
         for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):
@@ -64,29 +63,24 @@ class procurement_order(osv.osv):
                 location_id = auto_sup.warehouse_id.lot_input_id.id
             else:
                 location_id = auto_sup.location_id.id
-                
-            for line in auto_sup.line_ids:
-                proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
-                                                 line.product_uom_id.id, line.product_qty,
-                                                 location_id, context=context)
+               
+            if auto_sup.product_id:
+                proc_id = self.create_proc_order(cr, uid, auto_sup, auto_sup.product_id, auto_sup.product_uom_id.id, 
+                             auto_sup.product_qty, location_id, cache=cache, context=context)
                 if proc_id:
                     created_proc.append(proc_id)
-            # TODO JFB
-            # Write last_run 
-        # Next, for one product automatic supply
-        auto_sup_ids = auto_sup_obj.search(cr, uid, [('next_date', '=', datetime.today().strftime('%Y-%m-%d')), ('product_id', '!=', False)])
-        for auto_sup in auto_sup_obj.browse(cr, uid, auto_sup_ids):
-            # We define the replenish location
-            location_id = False
-            if not auto_sup.location_id or not auto_sup.location_id.id:
-                location_id = auto_sup.warehouse_id.lot_input_id.id
+            
             else:
-                location_id = auto_sup.location_id.id
-                
-            proc_id = self.create_proc_order(cr, uid, auto_sup, auto_sup.product_id, auto_sup.product_uom_id.id, 
-                                             auto_sup.product_qty, location_id, context)
-            if proc_id:
-                created_proc.append(proc_id)
+                for line in auto_sup.line_ids:
+                    proc_id = self.create_proc_order(cr, uid, auto_sup, line.product_id,
+                                                     line.product_uom_id.id, line.product_qty,
+                                                     location_id, cache=cache, context=context)
+                    if proc_id:
+                        created_proc.append(proc_id)
+            
+            if auto_sup.frequence_id:
+                freq_obj.write(cr, uid, auto_sup.frequence_id.id, {'last_run': start_date.strftime('%Y-%m-%d')})
+
                     
         for proc in proc_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':
@@ -103,23 +97,24 @@ class procurement_order(osv.osv):
         End Time: %s
         Total Procurements processed: %d
         Procurements with exceptions: %d
-
-        Exceptions:\n'''% (start_date, end_date, len(created_proc), report_except)
+        \n'''% (start_date, end_date, len(created_proc), report_except)
         summary += '\n'.join(report)
-        request_obj.create(cr, uid,
+        req_id = request_obj.create(cr, uid,
                 {'name': "Procurement Processing Report.",
                  'act_from': uid,
                  'act_to': uid,
                  'body': summary,
                 })
-        
+        if req_id:
+            request_obj.request_send(cr, uid, [req_id])
+
         if use_new_cursor:
             cr.commit()
             cr.close()
             
         return {}
     
-    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, context={}):
+    def create_proc_order(self, cr, uid, auto_sup, product_id, product_uom, qty, location_id, cache={}, context={}):
         '''
         Creates a procurement order for a product and a location
         '''

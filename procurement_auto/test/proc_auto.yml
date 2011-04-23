@@ -37,7 +37,7 @@
     yearly_frequency: 1
     yearly_day_ok: 1
     yearly_day: 1
-    yearly_choose_month: january
+    yearly_choose_month: 1
 -
   We check if the compute next date is equal to next January, the 1st
 -

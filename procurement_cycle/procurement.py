@@ -27,7 +27,8 @@ from tools.translate import _
 class stock_warehouse_order_cycle(osv.osv):
     _name = 'stock.warehouse.order.cycle'
     _description = 'Order Cycle'
-    
+    _order = 'sequence, id'
+
     def create(self, cr, uid, data, context={}):
         '''
         Checks if a frequence was choosen for the cycle
@@ -69,6 +70,7 @@ class stock_warehouse_order_cycle(osv.osv):
         return res
     
     _columns = {
+        'sequence': fields.integer(string='Order', required=True, help='A higher order value means a low priority'),
         'name': fields.char(size=64, string='Name', required=True),
         'category_id': fields.many2one('product.category', string='Category'),
         'product_id': fields.many2one('product.product', string='Specific product'),
@@ -93,6 +95,7 @@ class stock_warehouse_order_cycle(osv.osv):
     }
     
     _defaults = {
+        'sequence': lambda *a: 10,
         'past_consumption': lambda *a: 1,
         'active': lambda *a: 1,
         'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.order.cycle') or '',
@@ -156,6 +159,17 @@ class stock_warehouse_order_cycle(osv.osv):
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
+    
+    def unlink(self, cr, uid, ids, context):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        freq_ids = []
+        for auto in self.read(cr, uid, ids, ['frequence_id']):
+            if auto['frequence_id']:
+                freq_ids.append(auto['frequence_id'][0])
+        if freq_ids:
+            self.pool.get('stock.frequence').unlink(cr, uid, freq_ids, context)
+        return super(stock_warehouse_order_cycle, self).unlink(cr, uid, ids, context=context)
     
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:

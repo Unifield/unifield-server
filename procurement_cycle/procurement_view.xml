@@ -11,6 +11,7 @@
                     <group colspan="2" col="2">
                         <separator string="General Information" />
                         <field name="name" />
+                        <field name="sequence" />
                         <field name="category_id" attrs="{'required': [('product_id', '=', False)]}"/>
                         <field name="product_id" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/>
                     </group>
@@ -64,6 +65,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Order Cycle">
+                    <field name="sequence" select="1"/>
                     <field name="name" />
                     <field name="category_id" />
                     <field name="product_id" />

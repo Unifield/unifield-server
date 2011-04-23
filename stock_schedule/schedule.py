@@ -360,8 +360,8 @@ class stock_frequence(osv.osv):
                 else:
                     res[frequence.id] = False
                     
-                if frequence.calculated_end_date and datetime.strptime(next_date, '%Y-%m-%d') < datetime.strptime(frequence.calculated_end_date, '%Y-%m-%d'):
-                    res[frequence.id] = _('End date is past !')
+                if frequence.calculated_end_date and datetime.strptime(next_date, '%Y-%m-%d') >= datetime.strptime(frequence.calculated_end_date, '%Y-%m-%d'):
+                    res[frequence.id] = False
                 else:
                     res[frequence.id] = next_date
         
@@ -385,7 +385,7 @@ class stock_frequence(osv.osv):
         for freq in self.browse(cr, uid, ids):
             if freq.name == 'daily':
                 if freq.daily_frequency_ok:
-                    title = _('Each %d day(s)' %freq.daily_frequency)
+                    title = _('Every %d day(s)' %freq.daily_frequency)
             if freq.name == 'weekly':
                 sunday = monday = tuesday = wednesday = thursday = friday = saturday = ''
                 if freq.weekly_sunday_ok:
@@ -402,16 +402,16 @@ class stock_frequence(osv.osv):
                     friday = 'friday '
                 if freq.weekly_saturday_ok:
                     saturday = 'saturday '
-                title = _('All %s%s%s%s%s%s%s - Each %d week(s)' %(sunday, monday, tuesday, \
+                title = _('Every %d week(s) on %s%s%s%s%s%s%s' %(freq.weekly_frequency, sunday, monday, tuesday, \
                                                                  wednesday, thursday, \
-                                                                 friday, saturday, freq.weekly_frequency))
+                                                                 friday, saturday))
             if freq.name == 'monthly':
                 if freq.monthly_one_day:
                     choose_freq = self.get_selection(cr, uid, freq, 'monthly_choose_freq')
                     choose_day = self.get_selection(cr, uid, freq, 'monthly_choose_day')
-                    title = _('%s %s - Each %s month(s)' % (choose_freq, choose_day, freq.monthly_frequency))
+                    title = _('%s %s - Every %s month(s)' % (choose_freq, choose_day, freq.monthly_frequency))
                 elif freq.monthly_repeating_ok:
-                    title = _('All ')
+                    title = _('On ')
                     i = 1
                     # For each days
                     while i < 32:
@@ -428,7 +428,7 @@ class stock_frequence(osv.osv):
                         i += 1
                     # Remove the last comma
                     title = title[:-2]
-                    title += _(' of month - Each %s month(s)' % freq.monthly_frequency)
+                    title += _(' - Every %s month(s)' % freq.monthly_frequency)
             if freq.name == 'yearly':
                 if freq.yearly_day_ok:
                     month = self.get_selection(cr, uid, freq, 'yearly_choose_month')
@@ -444,8 +444,8 @@ class stock_frequence(osv.osv):
                     frequence = self.get_selection(cr, uid, freq, 'yearly_choose_freq')
                     day = self.get_selection(cr, uid, freq, 'yearly_choose_day')
                     month = self.get_selection(cr, uid, freq, 'yearly_choose_month_freq')
-                    title = _('All %s %s of %s' % (frequence, day, month))
-                title += _(' - Each %s year(s)' %(freq.yearly_frequency))
+                    title = _('All %s %s in %s' % (frequence, day, month))
+                title += _(' - Every %s year(s)' %(freq.yearly_frequency))
                 
             res.append((freq.id, title))
         
@@ -458,10 +458,10 @@ class stock_frequence(osv.osv):
                                   
         # Daily configuration
         'daily_frequency_ok': fields.boolean(string='Frequence'),
-        'daily_frequency': fields.integer(string='Each'),
+        'daily_frequency': fields.integer(string='Every'),
         
         # Weekly configuration
-        'weekly_frequency': fields.integer(string='Each'),
+        'weekly_frequency': fields.integer(string='Every'),
         'weekly_sunday_ok': fields.boolean(string="Sunday"),
         'weekly_monday_ok': fields.boolean(string="Monday"),
         'weekly_tuesday_ok': fields.boolean(string="Tuesday"),
@@ -471,45 +471,45 @@ class stock_frequence(osv.osv):
         'weekly_saturday_ok': fields.boolean(string="Saturday"),
         
         # Monthly configuration
-        'monthly_frequency': fields.integer(string='Each'),
+        'monthly_frequency': fields.integer(string='Every'),
         'monthly_one_day': fields.boolean(string='One day'),
         'monthly_choose_freq': fields.selection(FREQUENCY, string='Choose frequence', size=-1),
         'monthly_choose_day': fields.selection(WEEK_DAYS,string='Choose days'),
         'monthly_repeating_ok': fields.boolean(string='Repeatition'),
-        'monthly_day01': fields.boolean(string='1'),
-        'monthly_day02': fields.boolean(string='2'),
-        'monthly_day03': fields.boolean(string='3'),
-        'monthly_day04': fields.boolean(string='4'),
-        'monthly_day05': fields.boolean(string='5'),
-        'monthly_day06': fields.boolean(string='6'),
-        'monthly_day07': fields.boolean(string='7'),
-        'monthly_day08': fields.boolean(string='8'),
-        'monthly_day09': fields.boolean(string='9'),
-        'monthly_day10': fields.boolean(string='10'),
-        'monthly_day11': fields.boolean(string='11'),
-        'monthly_day12': fields.boolean(string='12'),
-        'monthly_day13': fields.boolean(string='13'),
-        'monthly_day14': fields.boolean(string='14'),
-        'monthly_day15': fields.boolean(string='15'),
-        'monthly_day16': fields.boolean(string='16'),
-        'monthly_day17': fields.boolean(string='17'),
-        'monthly_day18': fields.boolean(string='18'),
-        'monthly_day19': fields.boolean(string='19'),
-        'monthly_day20': fields.boolean(string='20'),
-        'monthly_day21': fields.boolean(string='21'),
-        'monthly_day22': fields.boolean(string='22'),
-        'monthly_day23': fields.boolean(string='23'),
-        'monthly_day24': fields.boolean(string='24'),
-        'monthly_day25': fields.boolean(string='25'),
-        'monthly_day26': fields.boolean(string='26'),
-        'monthly_day27': fields.boolean(string='27'),
-        'monthly_day28': fields.boolean(string='28'),
-        'monthly_day29': fields.boolean(string='29'),
-        'monthly_day30': fields.boolean(string='30'),
-        'monthly_day31': fields.boolean(string='31'),
+        'monthly_day01': fields.boolean(string='1st'),
+        'monthly_day02': fields.boolean(string='2nd'),
+        'monthly_day03': fields.boolean(string='3rd'),
+        'monthly_day04': fields.boolean(string='4th'),
+        'monthly_day05': fields.boolean(string='5th'),
+        'monthly_day06': fields.boolean(string='6th'),
+        'monthly_day07': fields.boolean(string='7th'),
+        'monthly_day08': fields.boolean(string='8th'),
+        'monthly_day09': fields.boolean(string='9th'),
+        'monthly_day10': fields.boolean(string='10th'),
+        'monthly_day11': fields.boolean(string='11th'),
+        'monthly_day12': fields.boolean(string='12th'),
+        'monthly_day13': fields.boolean(string='13th'),
+        'monthly_day14': fields.boolean(string='14th'),
+        'monthly_day15': fields.boolean(string='15th'),
+        'monthly_day16': fields.boolean(string='16th'),
+        'monthly_day17': fields.boolean(string='17th'),
+        'monthly_day18': fields.boolean(string='18th'),
+        'monthly_day19': fields.boolean(string='19th'),
+        'monthly_day20': fields.boolean(string='20th'),
+        'monthly_day21': fields.boolean(string='21st'),
+        'monthly_day22': fields.boolean(string='22nd'),
+        'monthly_day23': fields.boolean(string='23rd'),
+        'monthly_day24': fields.boolean(string='24th'),
+        'monthly_day25': fields.boolean(string='25th'),
+        'monthly_day26': fields.boolean(string='26th'),
+        'monthly_day27': fields.boolean(string='27th'),
+        'monthly_day28': fields.boolean(string='28th'),
+        'monthly_day29': fields.boolean(string='29th'),
+        'monthly_day30': fields.boolean(string='30th'),
+        'monthly_day31': fields.boolean(string='31st'),
         
         # Yearly configuration
-        'yearly_frequency': fields.integer(string='Each'),
+        'yearly_frequency': fields.integer(string='Every'),
         'yearly_day_ok': fields.boolean(string='Days'),
         'yearly_day': fields.integer(string='Day'),
         'yearly_choose_month': fields.selection(MONTHS, string='Choose a month', size=-1),
@@ -521,7 +521,7 @@ class stock_frequence(osv.osv):
         # Recurrence configuration
         'start_date': fields.date(string='Start date', required=True),
         'end_date_ok': fields.boolean(string='End date'),
-        'end_date': fields.date(string='Repeat to'),
+        'end_date': fields.date(string='Until'),
         'no_end_date': fields.boolean(string='No end date'),
         'recurrence_ok': fields.boolean(string='Reccurence'),
         'recurrence_nb': fields.integer(string='Continuing for'),

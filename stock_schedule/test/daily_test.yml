@@ -71,25 +71,3 @@
     from mx.DateTime import *
     next_date = self.browse(cr, uid, ref('daily2')).next_date
     assert next_date and next_date == today().strftime('%Y-%m-%d'), "Error on today"
--
-  Third daily test
--
-  !record {model: stock.frequence, id: daily3}:
-    name: daily
-    daily_frequency_ok: False
-    daily_working_days: True
-    daily_frequency: 3
-    start_date: !eval time.strftime('%Y-%m-%d')
-    no_end_date: True
--
-  Check if the next_date is equal to a working day
--
-  !python {model: stock.frequence}: |
-    from mx.DateTime import *
-    next_date = self.browse(cr, uid, ref('daily3')).next_date
-    next_working_day = today()
-    if today().weekday() >= 0 and today().weekday() < 5:
-      assert next_date and next_date == today().strftime('%Y-%m-%d'), "Error, today is a working day"
-    while next_working_day.weekday() == 6 or next_working_day.weekday() == 5:
-      next_working_day = next_working_day + RelativeDateTime(days=1)
-    assert next_date and next_date == next_working_day.strftime('%Y-%m-%d') and next_date >= today(), "Error on working days"

@@ -25,7 +25,7 @@
                         <label string="week(s)" />
                         <newline />
                         <label />
-                        <label string="The :" />
+                        <label string="On :" />
                         <field name="weekly_sunday_ok" />
                         <field name="weekly_monday_ok" />
                         <field name="weekly_tuesday_ok" />
@@ -48,7 +48,7 @@
                         <label />
                         
                         <field name="monthly_repeating_ok" nolabel="1" on_change="monthly_freq_change(False, monthly_repeating_ok)" />
-                        <label string="Repeat all days :" colspan="1" />
+                        <label string="On the :" colspan="1" />
                         <newline />
                         <group colspan="14" col="32">
 	                        <label colspan="8" />
@@ -115,11 +115,11 @@
                         <newline />
                         <label />
                         <label />
-                        <label string="Of : " />
+                        <label string="In : " />
                         <field name="yearly_choose_month_freq" nolabel="1" attrs="{'readonly': [('yearly_date_ok', '=', False)], 'required': [('yearly_date_ok', '=', True)]}" />
                     </group>
                     <group colspan="4" col="16">
-                        <separator colspan="16" string="Replenishment repeating" />
+                        <separator colspan="16" string="Replenishment scheduling" />
                         <label />
                         <field name="start_date" />
                         <newline />
