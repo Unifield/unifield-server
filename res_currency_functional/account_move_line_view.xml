@@ -15,9 +15,9 @@
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
-                    <field name="account_id"/>
                     <field name="name"/>
-                    <field name="partner_id" string="Third Party"/>
+                    <field name="account_id"/>
+                    <field name="partner_type"/>
                     <field name="credit" sum="Total Functional Credit" string="Functional In"/>
                     <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
                     <field name="functional_currency_id"/>
@@ -86,9 +86,11 @@
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
-                    <field name="account_id"/>
+                    <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
+                    <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
+                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                    <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
-                    <field name="partner_id" string="Third Party"/>
                     <field name="credit" sum="Total Functional Credit" string="Functional In" readonly="1"/>
                     <field name="debit" sum="Total Functional Debit" string="Functional Out" readonly="1"/>
                     <field name="functional_currency_id" readonly="1"/>
