@@ -23,8 +23,12 @@
     'version': '1.0',
     'category': 'Generic Modules',
     'author': 'MSF: Matthieu Dietrich',
+    'description': """
+        This module displays more fields for future sprints in the Products form view.
+    """,
     'depends': ['stock_location', 'product_expiry', 'product_manufacturer'],
     'init_xml': [
+        'security/ir.model.access.csv',
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',
