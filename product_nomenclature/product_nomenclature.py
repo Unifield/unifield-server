@@ -553,10 +553,13 @@ product_product()
 
 class act_window(osv.osv):
     _name = 'ir.actions.act_window'
+    '''
+    inherit act_window to extend domain size, as the size for screen sales>product by nomenclature is longer than 250 character
+    '''
     _inherit = 'ir.actions.act_window'
-
     _columns = {
-        'domain': fields.char('Domain Value', size=512, help="Optional domain filtering of the destination data, as a Python expression"),
+        'domain': fields.char('Domain Value', size=1024,
+            help="Optional domain filtering of the destination data, as a Python expression"),
     }
 
 act_window()
