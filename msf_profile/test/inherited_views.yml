@@ -1,0 +1,8 @@
+-
+  I test that inherited views could appear
+-
+  !python {model: ir.ui.view}: |
+    view_ids = self.search(cr, uid, [('inherit_id', '!=', False)])
+    for view in self.browse(cr, uid, view_ids):
+        obj = self.pool.get(view.model)
+        res = obj.fields_view_get(cr, uid, view.id, view.type, {})

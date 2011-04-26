@@ -58,6 +58,7 @@
     "demo_xml": [
     ],
     "test": [
+        'test/inherited_views.yml',
     ],
     "installable": True,
     "active": False,
