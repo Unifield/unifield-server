@@ -1102,6 +1102,7 @@
 
 		<!-- OPTIONAL LEVEL 5 -->
 		<!-- MED -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno0_med_blank">
 			<field name="code">5.00</field>
 			<field name="name"> </field>
@@ -1110,6 +1111,7 @@
 			<field name="level">1</field>
 			<field name="sub_level">0</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno0_med_200">
 			<field name="code">5.01</field>
@@ -1193,6 +1195,7 @@
 		</record>
 
 		<!-- LOG -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno0_log_blank">
 			<field name="code">5.10</field>
 			<field name="name"> </field>
@@ -1201,6 +1204,7 @@
 			<field name="level">1</field>
 			<field name="sub_level">0</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno0_log_flexi">
 			<field name="code">5.11</field>
@@ -1266,6 +1270,7 @@
 		</record>
 
 		<!-- LOG - P - COL -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_blank">
 			<field name="code">5.18</field>
 			<field name="name"> </field>
@@ -1274,6 +1279,7 @@
 			<field name="level">3</field>
 			<field name="sub_level">0</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_electro">
 			<field name="code">5.19</field>
@@ -1358,6 +1364,7 @@
 
 		<!-- LEVEL 6 -->
 		<!-- MED -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno1_med_blank">
 			<field name="code">6.00</field>
 			<field name="name"> </field>
@@ -1366,6 +1373,7 @@
 			<field name="level">1</field>
 			<field name="sub_level">1</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno1_med_noinf">
 			<field name="code">6.01</field>
@@ -1449,6 +1457,7 @@
 		</record>
 
 		<!-- LOG -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno1_log_blank">
 			<field name="code">6.10</field>
 			<field name="name"> </field>
@@ -1457,6 +1466,7 @@
 			<field name="level">1</field>
 			<field name="sub_level">1</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno1_log_20">
 			<field name="code">6.11</field>
@@ -1549,6 +1559,7 @@
 		</record>
 
 		<!-- LOG - P - COL -->
+		<!-- 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_blank">
 			<field name="code">6.21</field>
 			<field name="name"> </field>
@@ -1557,6 +1568,7 @@
 			<field name="level">3</field>
 			<field name="sub_level">1</field>
 		</record>
+		 -->
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_30">
 			<field name="code">6.22</field>
