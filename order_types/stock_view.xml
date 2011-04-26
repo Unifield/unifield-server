@@ -9,7 +9,7 @@
             <field name="inherit_id" ref="stock.stock_move_tree2" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/tree/field[@name='product_uom]" position="after">
+                    <xpath expr="/tree/field[@name='product_uom']" position="after">
                         <field name="order_type" />
                         <field name="order_category" />
                         <field name="order_priority" />
