@@ -57,11 +57,23 @@ class product_justification_code(osv.osv):
         
 product_justification_code()
 
+class product_attributes_template(osv.osv):
+    _inherit = "product.template"
+    
+    _columns = {
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+    }
+    
+    _defaults = {
+        'type': 'product',
+    }
+    
+product_attributes_template()
+
 class product_attributes(osv.osv):
     _inherit = "product.product"
     
     _columns = {
-        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
@@ -128,7 +140,6 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
-        'type': 'product',
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,

@@ -1,0 +1,4 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_product_section_code_all","product.section.code.all","model_product_section_code",,1,1,1,1
+"access_product_justification_code_all","product.justification.code.all","model_product_justification_code",,1,1,1,1
+"access_product_supply_source_all","product.supply.source.all","model_product_supply_source",,1,1,1,1

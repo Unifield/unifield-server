@@ -51,7 +51,7 @@
         "stock_batch_recall",
         "procurement_cycle",
         "procurement_auto",
-#        "product_attributes",
+        "product_attributes",
     ],
     "update_xml": [
     ],
