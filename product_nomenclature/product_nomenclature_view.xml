@@ -39,8 +39,7 @@
 			<field name="inherit_id" ref="product.product_normal_form_view" />
 			<field name="arch" type="xml">
 				<data>
-					<page string="Information"
-						position="after">
+					<page string="Information" position="after">
 
 						<!-- COPIED TO order_nomenclature_view.xml -->
 						<page string="Nomenclature">
@@ -212,9 +211,19 @@
 			<field name="res_model">product.product</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
-			<field name="domain">[('nomenc_categ_id','child_of',[active_id])]
+			<field name="domain">[
+				'|', ('nomen_manda_0', '=', active_id),
+				'|', ('nomen_manda_1', '=', active_id),
+				'|', ('nomen_manda_2', '=', active_id),
+				'|', ('nomen_manda_3', '=', active_id),
+				'|', ('nomen_sub_0', '=', active_id),
+				'|', ('nomen_sub_1', '=', active_id),
+				'|', ('nomen_sub_2', '=', active_id),
+				'|', ('nomen_sub_3', '=', active_id),
+				'|', ('nomen_sub_4', '=', active_id),
+				('nomen_sub_5', '=', active_id),]
 			</field>
-			<field name="context">{'nomenc_categ_id':active_id}</field>
+			<field name="context"></field>
 		</record>
 		<record id="ir_product_nomenclature_open" model="ir.values">
 			<field eval="'tree_but_open'" name="key2" />
