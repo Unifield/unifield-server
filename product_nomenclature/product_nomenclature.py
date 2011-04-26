@@ -550,3 +550,13 @@ class product_product(osv.osv):
         
 
 product_product()
+
+class act_window(osv.osv):
+    _name = 'ir.actions.act_window'
+    _inherit = 'ir.actions.act_window'
+
+    _columns = {
+        'domain': fields.char('Domain Value', size=512, help="Optional domain filtering of the destination data, as a Python expression"),
+    }
+
+act_window()
