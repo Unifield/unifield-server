@@ -26,7 +26,7 @@ from tools.translate import _
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
     
-    def refresh_rate(self, cr, uid, ids):
+    def update_amounts(self, cr, uid, ids):
         cur_obj = self.pool.get('res.currency')
         analytic_obj = self.pool.get('account.analytic.line')
         for move_line in self.browse(cr, uid, ids):
@@ -75,7 +75,10 @@ class account_move_line_compute_currency(osv.osv):
                                                              credit_currency=%s where id=%s', 
                               (debit_currency, credit_currency, move_line.id))
                 # Refresh the associated analytic lines
-                analytic_obj.refresh_rate(cr, uid, move_line.analytic_lines)
+                analytic_line_ids = []
+                for analytic_line in move_line.analytic_lines:
+                    analytic_line_ids.append(analytic_line.id)
+                analytic_obj.update_amounts(cr, uid, analytic_line_ids)
     
     def check_date(self, cr, uid, vals):
         # check that date is in period
@@ -88,13 +91,13 @@ class account_move_line_compute_currency(osv.osv):
     def create(self, cr, uid, vals, context={}):
         self.check_date(cr, uid, vals)
         res_id = super(account_move_line_compute_currency, self).create(cr, uid, vals, context)
-        self.refresh_rate(cr, uid, [res_id])
+        self.update_amounts(cr, uid, [res_id])
         return res_id
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         self.check_date(cr, uid, vals)
         res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check, update_check)
-        self.refresh_rate(cr, uid, ids)
+        self.update_amounts(cr, uid, ids)
         return res
     
     _columns = {

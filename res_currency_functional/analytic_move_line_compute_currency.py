@@ -25,7 +25,7 @@ import decimal_precision as dp
 class account_analytic_line_compute_currency(osv.osv):
     _inherit = "account.analytic.line"
     
-    def refresh_rate(self, cr, uid, ids):
+    def update_amounts(self, cr, uid, ids):
         for analytic_line in self.browse(cr, uid, ids):
             amount = analytic_line.move_id.debit - analytic_line.move_id.credit
             cr.execute('update account_analytic_line set amount=%s where id=%s', 
