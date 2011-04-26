@@ -27,7 +27,7 @@
         Journals view and datas
     ''',
     'init_xml': [],
-    "depends" : ["account", "account_analytic_plans"],
+    "depends" : ["account"],
     'update_xml': [
         'account_journal_view.xml',
     ],

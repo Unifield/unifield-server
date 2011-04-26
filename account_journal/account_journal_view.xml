@@ -6,7 +6,8 @@
             <field name="name">account.journal.form.inherit</field>
             <field name="model">account.journal</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="account.view_account_journal_1"/>
+            <field name="priority" eval="250" />
+            <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <form string="Account Journal" position="replace">
                     <form string="Account Journal">
