@@ -383,7 +383,7 @@ class account_bank_statement_line(osv.osv):
             'name': st_line_number,
             'ref': st_line.ref or False,
             ## Add partner_type
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             # end of add
         }, context=context)
         self.write(cr, uid, [st_line.id], {
@@ -411,7 +411,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id, register_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': (st_line.account_id) and st_line.account_id.id,
@@ -454,7 +454,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id and register_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': account_id,
