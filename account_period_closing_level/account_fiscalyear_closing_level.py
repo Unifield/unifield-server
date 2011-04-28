@@ -45,6 +45,7 @@ class account_fiscalyear_closing_level(osv.osv):
                 })
                 ds = ds + relativedelta(months=interval)
                  
+            ds = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
             for period_nb in (13, 14, 15):   
                 self.pool.get('account.period').create(cr, uid, {
                     'name': 'Period %d' % (period_nb),
