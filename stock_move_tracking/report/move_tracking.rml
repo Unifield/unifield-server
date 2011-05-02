@@ -22,7 +22,7 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="12.0" leading="15" alignment="LEFT"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="11.0" leading="14" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT"/>
-    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="CENTER"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="10.0" leading="13" alignment="CENTER"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -52,13 +52,10 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="69.0,63.0,70.0,70.0,90.0,180.0,180.0,64.0" style="Table1">
+    <blockTable colWidths="86.0,86.0,86.0,75.0,116.0,135.0,135.0,67.0" style="Table1">
       <tr>
         <td>
           <para style="P5">Date</para>
-        </td>
-        <td>
-          <para style="P5">Type</para>
         </td>
         <td>
           <para style="P5">Batch </para>
@@ -66,6 +63,9 @@
         </td>
         <td>
           <para style="P5">Expired Date</para>
+        </td>
+        <td>
+          <para style="P5">Origin</para>
         </td>
         <td>
           <para style="P5">Move number</para>
@@ -84,16 +84,16 @@
       </tr>
       <tr>
         <td>
-          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ move.date[0:10] ]]</para>
-        </td>
-        <td>
-          <para style="P4">[[ get_type(move, move.type) ]]</para>
+          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ move.date[:10] ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.prodlot_id.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.expired_date and move.expired_date != "False" and move.expired_date or '/' ]]</para>
+          <para style="P4">[[ move.expired_date!= False and move.expired_date[:10] or '' ]]</para>
+        </td>
+        <td>
+          <para style="P4">[[ move.origin ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.name ]]</para>
@@ -105,7 +105,7 @@
           <para style="P4">[[ move.location_dest_id.name]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.product_qty ]] [[ move.product_uom.name ]]</para>
+          <para style="P4">[[ move.product_qty ]] [[ move.product_uom_id.name ]]</para>
         </td>
       </tr>
     </blockTable>
