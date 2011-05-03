@@ -13,13 +13,17 @@
                         <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_supplier':1}" />
                     </xpath> -->
                     
-                    <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
-                        <field name="priority" />
+                    <xpath expr="/form/group" position="after">
                         <newline />
-                        <field name="categ" />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                        <field name="details" />
+                        <group colspan="4" col="6">
+	                        <separator colspan="6" />
+	                        <field name="categ" />
+	                        <field name="priority" />
+	                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
+	                        <newline />
+	                        <field name="details" colspan="4" />
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                        </group>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='invoice_method']" position="replace">
                         <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />

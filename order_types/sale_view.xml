@@ -11,7 +11,7 @@
                 <data>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
-                        <field name="order_type" />
+                        <field name="order_type" onchange="order_type_change(order_type)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />

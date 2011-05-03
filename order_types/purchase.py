@@ -90,6 +90,7 @@ class purchase_order(osv.osv):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
+        Changes the partner to local market if the type is Purchase List
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
@@ -101,7 +102,21 @@ class purchase_order(osv.osv):
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
-        
+                
+        if order_type == 'purchase_list':
+            # Search the local market partner id
+            data_obj = self.pool.get('ir.model.data')
+            data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
+            if data_id:
+                partner_id = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+                v['partner_id'] = partner.id
+                if partner.address:
+                    v['dest_address_id'] = partner.address[0].id
+                    v['partner_address_id'] = partner.address[0].id
+                if partner.property_product_pricelist_purchase:
+                    v['pricelist_id'] = partner.property_product_pricelist_purchase.id
+                    
         return {'value': v}
     
     def onchange_partner_id(self, cr, uid, ids, part):
