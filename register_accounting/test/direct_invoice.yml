@@ -7,7 +7,7 @@
     statement_id: account_bank_statement_8
     account_id: account_account_payable_supplier0
     amount: -50.00
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-04-%d')
     name: Phone Bill
     partner_id: res_partner_supplier_0
     sequence: 0.0
