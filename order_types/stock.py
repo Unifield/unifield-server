@@ -125,6 +125,27 @@ class stock_picking(osv.osv):
         'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
     }
     
+    def print_gift_certificate(self, cr, uid, ids, context={}):
+        '''
+        Launch printing of the gift certificate
+        '''
+        certif = False
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.certificate_donation:
+                certif = True
+                        
+        if certif:
+            data = self.read(cr, uid, ids, [], context)[0]
+            datas = {'ids': ids,
+                     'model': 'stock.picking',
+                     'form': data}
+            
+            return {'type': 'ir.actions.report.xml',
+                    'report_name': 'order.type.gift.certificate',
+                    'datas': datas}
+        else:
+            raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a gift certificate'))
+    
     def print_donation_certificate(self, cr, uid, ids, context={}):
         '''
         Launch printing of the donation certificate

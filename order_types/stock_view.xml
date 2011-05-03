@@ -164,7 +164,8 @@
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page[@string='Products']/group/button[@name='action_process']" position="after">
                     <field name="certificate_donation" invisible="1" />
-                    <button name="print_donation_certificate" type="object" icon="gtk-print" string="Print certificate" attrs="{'invisible': [('certificate_donation', '=', False)]}" />
+                    <button name="print_donation_certificate" type="object" icon="gtk-print" string="Print donation certificate" attrs="{'invisible': [('certificate_donation', '=', False)]}" />
+                    <button name="print_gift_certificate" type="object" icon="gtk-print" string="Print gift certificate" attrs="{'invisible': [('certificate_donation', '=', False)]}" />
                 </xpath>
             </field>
         </record>

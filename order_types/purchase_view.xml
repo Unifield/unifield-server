@@ -16,7 +16,6 @@
                     <xpath expr="/form/group" position="after">
                         <newline />
                         <group colspan="4" col="6">
-	                        <separator colspan="6" />
 	                        <field name="categ" />
 	                        <field name="priority" />
 	                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
