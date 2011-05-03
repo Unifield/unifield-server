@@ -230,7 +230,7 @@ class product_template(osv.osv):
                 'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True),
                 'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True),
                 'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True),
-                'nomen_manda_3': fields.many2one('product.nomenclature', 'Leaf', required=True),
+                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True),
                 # codes
                 'nomen_c_manda_0': fields.char('C1', size=32),
                 'nomen_c_manda_1': fields.char('C2', size=32),
