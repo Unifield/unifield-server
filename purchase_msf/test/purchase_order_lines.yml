@@ -205,10 +205,10 @@
     amount_total: 1.0
     amount_untaxed: 1.0
     company_id: base.main_company
-    date_order: '2011-03-15'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-03-15'
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
     partner_address_id: res_partner_address_0
     partner_id: res_partner_africom0
     pricelist_id: purchase.list0
@@ -220,7 +220,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_boitechaussures0}:
     company_id: base.main_company
-    date_planned: '2011-03-15'
+    date_planned: !eval time.strftime('%Y-%m-%d')
     internal_code: CHAUSS-INT-1234
     internal_name: Boite \xc3\xa0 chaussures
     name: Boite \xc3\xa0 chaussures
@@ -277,10 +277,10 @@
     amount_total: 1.0
     amount_untaxed: 1.0
     company_id: base.main_company
-    date_order: '2011-03-15'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-03-16'
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
     partner_address_id: res_partner_address_2
     partner_id: res_partner_alaindeloin0
     pricelist_id: purchase.list0
@@ -293,7 +293,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_pneu2}:
     company_id: base.main_company
-    date_planned: '2011-03-16'
+    date_planned: !eval time.strftime('%Y-%m-%d')
     internal_code: PNEU-INT-1234
     internal_name: Pneu
     name: Pneu
@@ -351,10 +351,10 @@
     amount_total: 1.0
     amount_untaxed: 1.0
     company_id: base.main_company
-    date_order: '2011-03-15'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-03-16'
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
     partner_address_id: res_partner_address_3
     partner_id: res_partner_berthe0
     pricelist_id: purchase.list0
@@ -367,7 +367,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_pneu1}:
     company_id: base.main_company
-    date_planned: '2011-03-16'
+    date_planned: !eval time.strftime('%Y-%m-%d')
     internal_code: PNEU-INT-1234
     internal_name: Pneu
     name: Pneu
@@ -423,10 +423,10 @@
     amount_total: 1.0
     amount_untaxed: 1.0
     company_id: base.main_company
-    date_order: '2011-03-15'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-03-16'
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
     partner_address_id: res_partner_address_0
     partner_id: res_partner_africom0
     pricelist_id: purchase.list0
@@ -438,7 +438,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_pneu0}:
     company_id: base.main_company
-    date_planned: '2011-03-16'
+    date_planned: !eval time.strftime('%Y-%m-%d')
     internal_code: PNEU-INT-1234
     internal_name: Pneu
     name: Pneu
