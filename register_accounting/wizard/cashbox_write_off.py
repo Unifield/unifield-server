@@ -90,7 +90,10 @@ class cashbox_write_off(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('No accounting period for today !'))
 
                         period_id = period_ids[0]
-                        move_name = "writeoff" + "/" + curr_date
+                        # description = register period (YYYYMM) + "-" + register code + " " + "Write-off"
+                        cash_period = cashbox.period_id.date_start
+                        desc_period = time.strftime('%Y%m', time.strptime(cash_period, '%Y-%m-%d'))
+                        description = "" + desc_period[:6] + "-" + cashbox.name + " " + "Write-off"
                         cash_difference = cashbox.balance_end - cashbox.balance_end_cash
                         account_debit_id = cashbox.journal_id.default_debit_account_id.id
                         account_credit_id = cashbox.journal_id.default_credit_account_id.id
@@ -101,12 +104,11 @@ class cashbox_write_off(osv.osv_memory):
                             'journal_id': journal_id,
                             'period_id': period_id,
                             'date': curr_date,
-                            'name': move_name,
+                            'name': description,
                         }
                         move_id = acc_mov_obj.create(cr, uid, move_vals, context=context)
                         # create attached account move lines
                         # first for the bank account
-                        description = "writeoff" + '/' + curr_date
                         # make a verification that no other currency is choose
                         # if another currency is applied on the journal, then we do a calculation of the new amount
                         amount = False
