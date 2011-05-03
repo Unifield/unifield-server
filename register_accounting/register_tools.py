@@ -28,16 +28,16 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
     res = {}
     for st_line in self.browse(cr, uid, ids, context=context):
         if st_line.employee_id:
-            res[st_line.id] = {'third_party': 'hr.employee,%s' % st_line.employee_id.id}
+            res[st_line.id] = {'third_parties': 'hr.employee,%s' % st_line.employee_id.id}
             res[st_line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
         elif st_line.register_id:
-            res[st_line.id] = {'third_party': 'account.bank.statement,%s' % st_line.register_id.id}
+            res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
         elif st_line.partner_id:
-            res[st_line.id] = {'third_party': 'res.partner,%s' % st_line.partner_id.id}
+            res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
         else:
-            res[st_line.id] = {'third_party': False}
+            res[st_line.id] = {'third_parties': False}
             if st_line.account_id:
                 # Prepare some values
                 acc_obj = self.pool.get('account.account')

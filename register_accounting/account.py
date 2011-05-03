@@ -70,9 +70,45 @@ class account_move(osv.osv):
     _name = "account.move"
     _inherit = "account.move"
 
+    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Give the third parties of the given account.move.
+        If all move lines content the same third parties, then return this third parties.
+        If a partner_id field is filled in, then comparing both.
+        """
+        res = {}
+        for move in self.browse(cr, uid, ids, context=context):
+            line_ids = []
+            res[move.id] = False
+            move_line_obj = self.pool.get('account.move.line')
+            if move.partner_id:
+                res[move.id] = 'res.partner,%s' % move.partner_id.id
+            else:
+                # Catching lines that have a third party
+                move_lines_with_third_parties = []
+                for move_line in move.line_id:
+                    if move_line.third_parties:
+                        move_lines_with_third_parties.append(move_line)
+                # If number of remembered lines is equivalent to all attaches move lines, so we can display a third parties
+                nb_move_line = len(move.line_id)
+                nb_line_with_third_parties = len(move_lines_with_third_parties)
+                if nb_move_line == nb_line_with_third_parties:
+                    # Verify that all third parties are similar
+                    total = 0
+                    for (i, mlwtp) in enumerate(move_lines_with_third_parties):
+                        if i == 0:
+                            first_third_party = mlwtp.third_parties
+                            total += 1
+                        else:
+                            if first_third_party == mlwtp.third_parties:
+                                total += 1
+                    if total == nb_line_with_third_parties:
+                        res[move.id] = ','.join([str(first_third_party._table_name), str(first_third_party.id)])
+        return res
+
     _columns = {
-        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128, readonly="1"),
+        'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
+            ('res.partner', 'Partner')], size=128, readonly="1", type="reference", method=True),
     }
 
 account_move()
