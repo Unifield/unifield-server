@@ -26,16 +26,16 @@ class account_journal(osv.osv):
     _inherit = "account.journal"
     
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank Journal'), \
-                ('cash','Cash Journal'), \
-                ('purchase', 'Purchase Journal'), \
-                ('correction','Correction Journal'), \
-                ('cheque', 'Cheque Journal'), \
-                ('hq', 'HQ Journal'), \
-                ('hr', 'HR Journal'), \
-                ('accrual', 'Accrual Journal'), \
-                ('stock', 'Stock Journal'), \
-                ('depreciation', 'Depreciation Journal'), \
+        return [('bank', 'Bank'), \
+                ('cash','Cash'), \
+                ('purchase', 'Purchase'), \
+                ('correction','Correction'), \
+                ('cheque', 'Cheque'), \
+                ('hq', 'HQ'), \
+                ('hr', 'HR'), \
+                ('accrual', 'Accrual'), \
+                ('stock', 'Stock'), \
+                ('depreciation', 'Depreciation'), \
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
                 ('sale', 'Sale'), \
