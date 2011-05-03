@@ -8,7 +8,7 @@
                   <field name='arch' type='xml'>
                         <form string="Hard Posting - Wizard">
                             <separator string="Hard Posting" />
-                            <label string="The selected items will be hard-posted."/>
+                            <label string="The selected items will be hard-posted." colspan="4"/>
                             <group colspan="4">
                                 <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
                                 <button name="action_confirm_hard_posting" string="Hard Post" type="object" icon="gtk-apply" colspan="2" />
