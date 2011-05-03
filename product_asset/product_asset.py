@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import fields, osv
@@ -337,6 +337,48 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move"
     
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_move, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assert defaults is not None
+        
+        assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
+        if assetId:
+            defaults.update({'asset_id': assetId})
+        
+        return defaults
+    
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
+                            loc_dest_id=False, address_id=False):
+        '''
+        override on change for the product, we clear the selected asset.
+        '''
+        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
+                                                    loc_dest_id, address_id)
+        
+        result['value'].update({'asset_id': False})
+        return result
+    
+    def _check_asset(self, cr, uid, ids, context=None):
+        """ Checks if asset is assigned to stock move or not.
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state == 'done':
+                if move.product_id.subtype == 'asset':
+                    if not move.asset_id:
+                        return False
+        return True
+    
     def create(self, cr, uid, vals, context=None):
         '''
         override for adding subtype on creation if product is specified
@@ -375,7 +417,41 @@ class stock_move(osv.osv):
         'subtype': fields.char(string='Product Subtype', size=128),
     }
     
+    _constraints = [
+        (_check_asset,
+            'You must assign an asset for this product',
+            ['asset_id']),]
+    
     
 stock_move()
+
+
+class stock_picking(osv.osv):
+    '''
+    
+    '''
+    _inherit = 'stock.picking'
+    _description = 'Stock Picking with hook'
+
+
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
+        if assetId:
+            defaults.update({'asset_id': assetId})
+        
+        return defaults
+
+stock_picking()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

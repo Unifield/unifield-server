@@ -15,6 +15,11 @@
 		-->
 
 		<!-- internal moves -->
+		<!--
+			always visible due to openerp bug, attrs does not respond to
+			modification from on_change function attrs="{'invisible':
+			[('subtype', '!=', 'asset')]}" />
+		-->
 		<record id="view_picking_form" model="ir.ui.view">
 			<field name="name">stock.picking.form</field>
 			<field name="model">stock.picking</field>
@@ -22,24 +27,21 @@
 			<field name="inherit_id" ref="stock.view_picking_form" />
 			<field name="arch" type="xml">
 				<data>
-
-					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
 						position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
-						<!--
-							always visible due to openerp bug, attrs does not respond to
-							modification from on_change function attrs="{'invisible':
-							[('subtype', '!=', 'asset')]}" />
-						-->
-						<field name="subtype" invisible="True" />
+						<field name="asset_id" />
 					</xpath>
-
 				</data>
 			</field>
 		</record>
 
 
 		<!-- incoming shipments -->
+		<!--
+			always visible due to openerp bug, attrs does not respond to
+			modification from on_change function attrs="{'invisible':
+			[('subtype', '!=', 'asset')]}" />
+		-->
 		<record id="view_picking_in_form" model="ir.ui.view">
 			<field name="name">stock.picking.in.form</field>
 			<field name="model">stock.picking</field>
@@ -47,23 +49,20 @@
 			<field name="inherit_id" ref="stock.view_picking_in_form" />
 			<field name="arch" type="xml">
 				<data>
-
-					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
 						position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
-						<!--
-							always visible due to openerp bug, attrs does not respond to
-							modification from on_change function attrs="{'invisible':
-							[('subtype', '!=', 'asset')]}" />
-						-->
-						<field name="subtype" invisible="True" />
+						<field name="asset_id" />
 					</xpath>
-
 				</data>
 			</field>
 		</record>
 
 
+		<!--
+			always visible due to openerp bug, attrs does not respond to
+			modification from on_change function attrs="{'invisible':
+			[('subtype', '!=', 'asset')]}" />
+		-->
 		<record id="view_picking_out_form" model="ir.ui.view">
 			<field name="name">stock.picking.out.form</field>
 			<field name="model">stock.picking</field>
@@ -71,18 +70,10 @@
 			<field name="inherit_id" ref="stock.view_picking_out_form" />
 			<field name="arch" type="xml">
 				<data>
-
-					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']"
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
 						position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
-						<!--
-							always visible due to openerp bug, attrs does not respond to
-							modification from on_change function attrs="{'invisible':
-							[('subtype', '!=', 'asset')]}" />
-						-->
-						<field name="subtype" invisible="True" />
+						<field name="asset_id" />
 					</xpath>
-
 				</data>
 			</field>
 		</record>
@@ -103,41 +94,7 @@
 						<field name="subtype" attrs="{'invisible':[('type','!=','product')]}" />
 						<field name="asset_type_id" widget="selection"
 							attrs="{'invisible':[('subtype','!=','asset')], 'required':[('subtype','=','asset')]}" />
-
-
 					</field>
-
-					<!--
-						<page string="Information" position="after"> <page string="Assets"
-						attrs="{'invisible':[('subtype','!=','asset')]}"> <field
-						colspan="4" name="asset_ids" nolabel="True" mode="tree,form"
-						widget="one2many_list"
-						default_get="{'prod_int_code':parent.default_code,
-						'prod_int_name': parent.name, 'asset_type_id':
-						parent.asset_type_id.id}"> <form string="Asset"> <group
-						colspan="4" col="6"> <group colspan="4" col="2"> <separator
-						string="Product" colspan="2" /> <field name="prod_int_name" />
-						<field name="prod_int_code" /> <field name="name" /> </group>
-						<group colspan="2" col="2"> <separator string="Codes" colspan="2"
-						/> <field name="asset_code" /> <field name="prod_nomenc_code" />
-						</group> <group colspan="4" col="2"> <separator
-						string="Characteristics" colspan="2" /> <field
-						name="asset_type_id" /> </group> </group> <group colspan="2"
-						col="2"> <separator string="HQ Reference" colspan="2" /> <field
-						name="hq_local_ref" /> <field name="hq_asset_name" /> <field
-						name="hq_serial_nb" /> <field name="hq_brand" /> <field
-						name="hq_type" /> <field name="hq_model" /> </group> <group
-						colspan="2" col="2"> <separator string="Traceability" colspan="2"
-						/> <field name="trac_orig_req_ref" /> <field
-						name="trac_orig_mission_code" /> <field name="trac_sourc_ref" />
-						<newline /> <field name="trac_arriv_date" /> <field
-						name="trac_receipt_place" /> </group> <group colspan="2" col="2">
-						<separator string="Invoice" colspan="2" /> <field name="invo_num"
-						/> <field name="invo_date" /> <field name="invo_val_curr" />
-						<field name="invo_supplier" /> <field name="invo_donator_code" />
-						</group> </form> </field> </page> </page>
-					-->
-
 
 				</data>
 			</field>
@@ -149,8 +106,8 @@
 			src_model="product.product" />
 
 		<act_window id="product_2_events_normal_link" context="{}"
-			domain="[('product_id', '=', active_id)]" name="Follow Up Events" res_model="product.asset.event"
-			src_model="product.product" />
+			domain="[('product_id', '=', active_id)]" name="Follow Up Events"
+			res_model="product.asset.event" src_model="product.product" />
 
 		<!--
 			Main asset form

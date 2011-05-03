@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 {
@@ -42,9 +42,10 @@
 
     Print product labels with barcode.
     """,
-    "depends" : ["product","stock", "sale", "purchase"],
+    "depends" : ["product","stock_override", "sale", "purchase"],
     "init_xml" : [],
     "demo_xml": [
+        "asset_type_data.xml",
     ],
     'test': [
              'test/product_asset.yml',
@@ -53,7 +54,7 @@
         'product_asset_view.xml',
         'security/ir.model.access.csv',
         'asset_sequence.xml',
-        "asset_type_data.xml",
+        'wizard/stock_partial_move_view.xml',
     ],
     'installable': True,
 }

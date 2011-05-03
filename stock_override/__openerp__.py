@@ -18,7 +18,21 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import product_asset
-import wizard
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
+{
+    "name" : "Stock override",
+    "version" : "1.0",
+    "author" : "MSF",
+    "description" : """
+    Add hook to stock class and wizard
+    """,
+    "website": "http://unifield.msf.org",
+    "depends" : ["stock"],
+    "category" : "Generic Modules/Inventory Control",
+    "init_xml" : [],
+    "demo_xml" : [],
+    "update_xml" : [],
+    'test': [],
+    'installable': True,
+    'active': False,
+}
