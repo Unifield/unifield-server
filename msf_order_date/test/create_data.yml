@@ -142,9 +142,9 @@
   !record {model: account.fiscalyear, id: account_fiscalyear_fiscalyear0}:
     code: !eval "'FY%s'% (datetime.now().year+1)"
     company_id: base.main_company
-    date_start: !eval "'%s-01-01' %(datetime.now().year+1)"
-    date_stop: !eval "'%s-12-31' %(datetime.now().year+1)"
-    name: !eval "'Fiscal Year %s' %(datetime.now().year+1)"
+    date_start: !eval "'%s-01-01' %(datetime.now().year+10)"
+    date_stop: !eval "'%s-12-31' %(datetime.now().year+10)"
+    name: !eval "'Fiscal Year %s' %(datetime.now().year+10)"
 -
   I create a new accounting period
 -
