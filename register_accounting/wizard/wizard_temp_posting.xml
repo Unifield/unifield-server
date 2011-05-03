@@ -8,7 +8,7 @@
                   <field name='arch' type='xml'>
                         <form string="Temp Posting - Wizard">
                             <separator string="Temp Posting" />
-                            <label string="Are you sure to temp post these lines ?"/>
+                            <label string="The selected items will be temp-posted." colspan="4"/>
                             <group colspan="4">
                                 <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
                                 <button name="action_confirm_temp_posting" string="Temp Post" type="object" icon="gtk-apply" colspan="2" />

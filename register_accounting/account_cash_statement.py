@@ -117,7 +117,7 @@ class account_cash_statement(osv.osv):
         """
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         return {
-            'name': 'Temp Posting',
+            'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
@@ -133,7 +133,7 @@ class account_cash_statement(osv.osv):
         """
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         return {
-            'name': 'Select elements for Hard Posting',
+            'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
