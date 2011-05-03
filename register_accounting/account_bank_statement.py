@@ -28,6 +28,7 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 import time
+from datetime import datetime
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -172,7 +173,7 @@ class account_bank_statement(osv.osv):
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm'}, context=context)
+        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
 
 account_bank_statement()
@@ -502,6 +503,22 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
+    def _verify_dates(self, cr, uid, values=None, register_id=None, context={}):
+        """
+        Verify that the given parameter contains date. Then validate date with regarding register period.
+        """
+        if not values or 'date' not in values:
+            return False
+        if 'statement_id' in values:
+            register_id = values.get('statement_id', False)
+        date = values.get('date', False)
+        register = self.pool.get('account.bank.statement').browse(cr, uid, register_id, context=context)
+        period_start = register.period_id.date_start
+        period_stop = register.period_id.date_stop
+        if date < period_start or date > period_stop:
+            raise osv.except_osv(_('Error'), _('The date is outside the register period!'))
+        return True
+
     def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context={}):
         """
         Update move lines from given statement lines
@@ -702,6 +719,8 @@ class account_bank_statement_line(osv.osv):
         """
         # First update amount
         values = self._update_amount(values=values)
+        # Verify dates
+        self._verify_dates(cr, uid, values, context=context)
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
@@ -718,6 +737,8 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
         values = self._update_amount(values=values)
+        # Verify dates
+        self._verify_dates(cr, uid, values, self.browse(cr, uid, ids[0], context=context).statement_id.id, context=context)
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
