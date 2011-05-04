@@ -119,7 +119,7 @@
   I hard post the Advance line in the Cash Register
 -
    !python {model: account.bank.statement.line}: |
-        self.button_hard_posting(cr, uid, [ref("account_bank_statement_line0")])
+        self.button_hard_posting(cr, uid, [ref("account_bank_statement_line0")], context={})
 -
   I click on the Cash Return button to launch the wizard and check if all values are given.
 -
@@ -249,7 +249,7 @@
   I hard post the Advance line in the Cash Register
 -
    !python {model: account.bank.statement.line}: |
-        self.button_hard_posting(cr, uid, [ref("account_bank_statement_line1")])
+        self.button_hard_posting(cr, uid, [ref("account_bank_statement_line1")], context={})
 -
   I create the wizard with a returned_amount of 100.0 and the previous generated invoice
 -
