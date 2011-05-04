@@ -103,7 +103,7 @@ class account_move_line_compute_currency(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         self.check_date(cr, uid, vals)
-        res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check=False, update_check=update_check)
+        res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check, update_check)
         self.update_amounts(cr, uid, ids)
         #@@@override@account.account_move_line.write()
         # The validation is re-done after the amounts have been modified.
