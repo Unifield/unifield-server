@@ -125,47 +125,30 @@ class stock_picking(osv.osv):
         'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
     }
     
-    def print_gift_certificate(self, cr, uid, ids, context={}):
+    def print_certificate(self, cr, uid, ids, context={}):
         '''
-        Launch printing of the gift certificate
-        '''
-        certif = False
-        for pick in self.browse(cr, uid, ids, context=context):
-            if pick.certificate_donation:
-                certif = True
-                        
-        if certif:
-            data = self.read(cr, uid, ids, [], context)[0]
-            datas = {'ids': ids,
-                     'model': 'stock.picking',
-                     'form': data}
-            
-            return {'type': 'ir.actions.report.xml',
-                    'report_name': 'order.type.gift.certificate',
-                    'datas': datas}
-        else:
-            raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a gift certificate'))
-    
-    def print_donation_certificate(self, cr, uid, ids, context={}):
-        '''
-        Launch printing of the donation certificate
-        '''
-        certif = False
-        for pick in self.browse(cr, uid, ids, context=context):
-            if pick.certificate_donation:
-                certif = True
-                        
-        if certif:
-            data = self.read(cr, uid, ids, [], context)[0]
-            datas = {'ids': ids,
-                     'model': 'stock.picking',
-                     'form': data}
-            
-            return {'type': 'ir.actions.report.xml',
-                    'report_name': 'order.type.donation.certificate',
-                    'datas': datas}
-        else:
-            raise osv.except_osv(_('Warning'), _('This picking doesn\'t require a donation certificate'))
+        Launches the wizard to print the certificate
+        '''        
+        print_id = self.pool.get('stock.print.certificate').create(cr, uid, {'type': 'donation',
+                                                                             'picking_id': ids[0]})
+        
+        for picking in self.browse(cr, uid, ids):
+            for move in picking.move_lines:
+                self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
+                                                                              'product_id': move.product_id.id,
+                                                                              'qty': move.product_qty,
+                                                                              'print_id': print_id,
+                                                                              'move_id': move.id,
+                                                                              'prodlot_id': move.prodlot_id.id,
+                                                                              'unit_price': move.product_id.list_price})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.print.certificate',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+                'res_id': print_id,
+                'target': 'new'}
 
     def action_process(self, cr, uid, ids, context={}):
         '''

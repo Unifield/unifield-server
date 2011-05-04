@@ -25,17 +25,17 @@ from report import report_sxw
 from osv import osv
 from tools.translate import _
 
-class donation_certificate(report_sxw.rml_parse):
+class gift_certificate(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context):
-        super(donation_certificate, self).__init__(cr, uid, name, context=context)
+        super(gift_certificate, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
         })
     
-report_sxw.report_sxw('report.order.type.donation.certificate', 
+report_sxw.report_sxw('report.order.type.gift.certificate', 
                       'stock.picking', 
-                      'addons/order_types/report/donation_certificate.rml', 
-                      parser= donation_certificate)
+                      'addons/order_types/report/gift_certificate.rml', 
+                      parser= gift_certificate)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
