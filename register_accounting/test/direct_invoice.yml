@@ -17,7 +17,7 @@
   I hard post this line
 -
   !python {model: account.bank.statement.line}: |
-    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line3")])
+    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line3")], context={})
 -
   I check that an invoice is attached
 -

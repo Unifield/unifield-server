@@ -102,10 +102,10 @@
     amount_total: 0.0
     amount_untaxed: 0.0
     company_id: base.main_company
-    date_order: '2011-03-28'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-03-28'
+    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
     partner_address_id: res_partner_address_0
     partner_id: res_partner_partnertest0
     pricelist_id: purchase.list0
@@ -116,7 +116,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_nomenclaturepo0}:
     company_id: base.main_company
-    date_planned: '2011-03-28'
+    date_planned: !eval time.strftime('%Y-%m-%d')
     name: nomenclature PO
     nomenclature_description: nomenclature test 1 / nomenclature test 2 / nomenclature
       test 3 / nomenclature test 4
@@ -136,7 +136,7 @@
     amount_total: 0.0
     amount_untaxed: 0.0
     company_id: base.main_company
-    date_order: '2011-03-28'
+    date_order: !eval time.strftime('%Y-%m-%d')
     invoice_quantity: order
     order_policy: manual
     partner_id: res_partner_partnertest0

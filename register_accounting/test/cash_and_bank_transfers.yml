@@ -47,7 +47,7 @@
       absl_obj = self.pool.get('account.bank.statement.line')
       absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_4"))])
       for id in absl_ids:
-          absl_obj.button_hard_posting(cr, uid, [id])
+          absl_obj.button_hard_posting(cr, uid, [id], context={})
 -
   I create a line in the Cash Register
 -
@@ -64,7 +64,7 @@
       absl_obj = self.pool.get('account.bank.statement.line')
       absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_5"))])
       for id in absl_ids:
-          absl_obj.button_hard_posting(cr, uid, [id])
+          absl_obj.button_hard_posting(cr, uid, [id], context={})
 -
   I check that all lines are correctly written
 -
