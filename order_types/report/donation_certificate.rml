@@ -9,7 +9,27 @@
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-    </blockTableStyle>
+    </blockTableStyle><lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,0" stop="1,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" stop="1,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,0" stop="2,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="2,0" stop="2,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,0" stop="3,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="3,0" stop="3,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="3,0" stop="3,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,1" stop="2,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,1" stop="3,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="3,1" stop="3,-1"/>
+      
     <blockTableStyle id="Table1">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -24,8 +44,6 @@
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="6.0"/>
-    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="6.0"/>
-    <paraStyle name="P8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="List" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -74,7 +92,7 @@
     <para style="P1">
       <font color="white"> </font>
     </para>
-    <para style="P2">Date : [[ formatLang(time.today())) ]]</para>
+    <para style="P2">Date : [[ time.strftime('%Y-%m-%d') ]]</para>
     <para style="P2">From : [[ o.company_id.name ]]</para>
     <para style="P2">To : [[ o.address_id and o.address_id.partner_id.name or '' ]]</para>
     <para style="P2">
@@ -84,7 +102,7 @@
       <font color="white"> </font>
     </para>
     <para style="P2">Products : </para>
-    <blockTable colWidths="161.0,61.0,103.0,103.0,103.0" style="Table1">
+    <blockTable colWidths="200.0,75.0,127.0,127.0" style="Table1">
       <tr>
         <td>
           <para style="P6">Product</para>
@@ -98,25 +116,19 @@
         <td>
           <para style="P6">Expiry date</para>
         </td>
-        <td>
-          <para style="P6">Valuation</para>
-        </td>
       </tr>
       <tr>
         <td>
-          <para style="P3">[[ repeatIn(data['form'], 'm') ]] [[ '[%s]' %m['product_code'] ]] [[ m['product_name'] ]]</para>
+          <para style="P3">[[ repeatIn(get_lines(o.id), 'm') ]] [[ '[%s]' %m.product_id.default_code ]] [[ m.product_id.name ]]</para>
         </td>
         <td>
-          <para style="P5">[[ m['product_qty'] ]] [[ m['product_uom'] ]]</para>
+          <para style="P5">[[ m.product_qty ]] [[ m.product_uom.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ m['prodlot_name'] ]]</para>
+          <para style="P4">[[ m.prodlot_id.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ m['life_date'][:10] ]]</para>
-        </td>
-        <td>
-          <para style="P4">[[ m['valuation'] ]]</para>
+          <para style="P4">[[ formatLang(m.prodlot_id.life_date) ]]</para>
         </td>
       </tr>
     </blockTable>

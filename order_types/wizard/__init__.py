@@ -20,6 +20,5 @@
 ##############################################################################
 
 import stock_certificate_picking
-import stock_print_certificate
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
