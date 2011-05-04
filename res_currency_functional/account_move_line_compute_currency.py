@@ -88,16 +88,31 @@ class account_move_line_compute_currency(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
             
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None, check=True):
         self.check_date(cr, uid, vals)
-        res_id = super(account_move_line_compute_currency, self).create(cr, uid, vals, context)
+        res_id = super(account_move_line_compute_currency, self).create(cr, uid, vals, context, check=False)
         self.update_amounts(cr, uid, [res_id])
+        #@@@override@account.account_move_line.create()
+        # The validation is re-done after the amounts have been modified.
+        journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
+        if check and ((not context.get('no_store_function')) or journal.entry_posted):
+            tmp = self.pool.get('account.move').validate(cr, uid, [vals['move_id']], context)
+            if journal.entry_posted and tmp:
+                self.pool.get('account.move').button_validate(cr,uid, [vals['move_id']], context)
         return res_id
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         self.check_date(cr, uid, vals)
-        res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check, update_check)
+        res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check=False, update_check=update_check)
         self.update_amounts(cr, uid, ids)
+        #@@@override@account.account_move_line.write()
+        # The validation is re-done after the amounts have been modified.
+        if check:
+            done = []
+            for line in self.browse(cr, uid, ids):
+                if line.move_id.id not in done:
+                    done.append(line.move_id.id)
+                    self.pool.get('account.move').validate(cr, uid, [line.move_id.id], context)
         return res
     
     _columns = {
