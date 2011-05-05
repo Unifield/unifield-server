@@ -21,8 +21,10 @@
 -
   I check that the activation date is today
 -
-  !assert {model: account.account, id: account_1}:
-    - activation_date == str(datetime.now().strftime('%Y-%m-%d'))
+  !python {model: account.account}: |
+    ac = self.browse(cr, uid, ref("account_1"))
+    from mx import DateTime
+    assert  ac.activation_date == (DateTime.now()+DateTime.RelativeDateTime(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
 
 -
   I create an analytical journal, ...
@@ -86,7 +88,7 @@
     try:
       self.write(cr, uid, ref('account_1'), vals={'inactivation_date': datetime.datetime.now().strftime('%Y-%m-%d')})
     except Exception as exception:
-      assert exception.value == "You cannot set an inactivity date lower than tomorrow!"
+      assert exception.value == "You cannot set an inactivity date lower than tomorrow!", "Incative date lower"
      
 -
   I change the dates so that activation_date > inactivation_date (forbidden)
@@ -96,7 +98,7 @@
     try:
       self.write(cr, uid, ref('account_1'), vals={'activation_date': '%s-03-12' %(datetime.datetime.now().year + 1), 'inactivation_date': '%s-03-01' %(datetime.datetime.now().year + 1)})
     except Exception as exception:
-      assert exception.value == "Activation date must be lower than inactivation date!"
+      assert exception.value == "Activation date must be lower than inactivation date!", "Activation lower"
      
 -
   I change the move line date so that it is outside the account's activity period (forbidden)
@@ -106,4 +108,4 @@
     try:
       self.write(cr, uid, ref('move_line_test'), vals={'account_id': ref('account_1'), 'date': '%s-03-01' %(datetime.datetime.now().year + 2)})
     except Exception as exception:
-      assert exception.value == "You cannot set a date out of the account's activity period!"
+      assert exception.value == "The account selected is not active.", "Date out"
