@@ -7,8 +7,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Cash Return- Wizard">
-                    <label string="Welcome to the Cash Return Wizard. This wizard help you to consider a cash return in the cashbox and link 
-                        it to some invoices." colspan="4"/>
+                    <label string="Cash Return Wizard will help you book advances return." colspan="4"/>
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <newline />
