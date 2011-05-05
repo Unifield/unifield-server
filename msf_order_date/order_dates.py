@@ -129,6 +129,9 @@ def check_dates(self, cr, uid, data, context={}):
     '''
     Runs all tests on dates
     '''
+    # Comment this line if you would check date on PO/SO creation/write
+    return True
+    
     date_order = data.get('date_order', False)
     requested_date = data.get('delivery_requested_date', False)
     confirmed_date = data.get('delivery_confirmed_date', False)
