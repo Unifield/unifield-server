@@ -20,6 +20,16 @@
     name: JAN-HHHHH-OP
     special: 1
 -
+  I create the current period for some test
+-
+  !record {model: account.period, id: current_period}:
+    company_id: base.main_company
+    date_start: !eval time.strftime('%Y-%m-01')
+    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    fiscalyear_id: fiscalyear0
+    name: Our current period
+    special: 1
+-
   I create the period 00 for the write-off
 -
   !record {model: account.period, id: period_00}:

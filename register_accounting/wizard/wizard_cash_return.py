@@ -89,11 +89,13 @@ class wizard_cash_return(osv.osv_memory):
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
+        'date': fields.date(string='Date for cash return', required=True),
     }
 
     _defaults = {
         'initial_amount': lambda self, cr, uid, c={}: c.get('amount', False),
         'display_invoice': False, # this permits to show only advance lines tree. Then add an invoice make the invoice tree to be displayed
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def default_get(self, cr, uid, fields, context={}):
@@ -348,6 +350,33 @@ class wizard_cash_return(osv.osv_memory):
             'target': 'new',
         }
 
+    def clean_invoices(self, cr, uid, ids, context={}):
+        """
+        Clean content of invoice list and refresh view.
+        """
+        # Delete links to invoice_line_ids and inform wizard of that
+        self.write(cr, uid, ids, {'display_invoice': False, 'invoice_line_ids': [(5,)]}, context=context)
+        # Update total amount
+        self.compute_total_amount(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.cash.return',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
+        }
+
+    def verify_date(self, cr, uid, ids, context={}):
+        """
+        Verify that date is superior than advance_line date.
+        """
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.date < wizard.advance_st_line_id.date:
+            raise osv.except_osv(_('Warning'), _('The entered date must be greater than or equal to advance posting date.'))
+        return True
+
     def compute_total_amount(self, cr, uid, ids, context={}):
         """
         Compute the total of amount given by the invoices (if exists) or by the advance lines (if exists)
@@ -382,6 +411,8 @@ class wizard_cash_return(osv.osv_memory):
         """
         # Do computation of total_amount
         self.compute_total_amount(cr, uid, ids, context=context)
+        # Verify dates
+        self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.initial_amount != wizard.total_amount:
@@ -452,8 +483,9 @@ class wizard_cash_return(osv.osv_memory):
         # create the advance closing line
         adv_closing_name = "Advance closing"
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
+        adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
-        adv_closing_id = self.create_move_line(cr, uid, ids, curr_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
+        adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
             0.0, wizard.initial_amount, move_id, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
