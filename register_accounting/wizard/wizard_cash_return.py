@@ -348,6 +348,24 @@ class wizard_cash_return(osv.osv_memory):
             'target': 'new',
         }
 
+    def clean_invoices(self, cr, uid, ids, context={}):
+        """
+        Clean content of invoice list and refresh view.
+        """
+        # Delete links to invoice_line_ids and inform wizard of that
+        self.write(cr, uid, ids, {'display_invoice': False, 'invoice_line_ids': [(5,)]}, context=context)
+        # Update total amount
+        self.compute_total_amount(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.cash.return',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
+        }
+
     def compute_total_amount(self, cr, uid, ids, context={}):
         """
         Compute the total of amount given by the invoices (if exists) or by the advance lines (if exists)

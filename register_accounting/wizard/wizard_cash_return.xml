@@ -23,6 +23,11 @@
                     <newline />
                     <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />
                     <newline />
+                    <group colspan="4">
+                        <label colspan="3"/>
+                        <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
+                    </group>
+                    <newline />
                     <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount)"/>
                     <newline />
                     <field name="total_amount"/>
