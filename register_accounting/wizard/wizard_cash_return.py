@@ -450,7 +450,7 @@ class wizard_cash_return(osv.osv_memory):
                 adv_move_line_ids.append(adv_id)
 
         # create the advance closing line
-        adv_closing_name = "Advance closing"
+        adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
         employee_id = wizard.advance_st_line_id.employee_id.id
         adv_closing_id = self.create_move_line(cr, uid, ids, curr_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
