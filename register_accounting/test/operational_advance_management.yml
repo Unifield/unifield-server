@@ -144,6 +144,7 @@
   !record {model: wizard.cash.return, id: wiz_advance0, context: {'active_id': ref("account_bank_statement_line0"), 'active_ids': [ref("account_bank_statement_line0")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_7")}}:
     returned_amount: 100.0
     invoice_id: account_invoice_food_for_staff0
+    date: !eval time.strftime('%Y-%m-%d')
 -
   I check that the Justified Amount is calculated
 -
@@ -255,6 +256,7 @@
 -
   !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("account_bank_statement_line1")}}:
     returned_amount: 100.0
+    date: !eval time.strftime('%Y-%m-%d')
 -
   I check that the Justified Amount is calculated
 -
