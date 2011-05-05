@@ -88,16 +88,79 @@ class account_move_line_compute_currency(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
             
 
-    def create(self, cr, uid, vals, context={}):
+    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, debit_currency=False, credit_currency=False):
+        newvals = {}
+        ctxcurr = {}
+        cur_obj = self.pool.get('res.currency')
+        
+        if vals.get('date', date):
+            ctxcurr['date'] = vals.get('date', date)
+        
+        if vals.get('credit_currency') or vals.get('debit_currency'):
+            newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif vals.get('debit') or vals.get('credit'):
+            newvals['credit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('credit') or 0.0, round=True, context=ctxcurr)
+            newvals['debit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('debit') or 0.0, round=True, context=ctxcurr)
+            newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
+        elif vals.get('amount_currency'):
+                if vals['amount_currency'] < 0:
+                    newvals['credit_currency'] = -vals['amount_currency']
+                    newvals['debit_currency'] = 0
+                else:
+                    newvals['debit_currency'] = vals['amount_currency']
+                    newvals['credit_currency'] = 0
+                newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+                newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif date and (credit_currency or debit_currency):
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
+            newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
+        return newvals
+
+    def create(self, cr, uid, vals, context=None, check=True):
         self.check_date(cr, uid, vals)
-        res_id = super(account_move_line_compute_currency, self).create(cr, uid, vals, context)
-        self.update_amounts(cr, uid, [res_id])
-        return res_id
+        if not context:
+            context = {}
+        move_obj = self.pool.get('account.move')
+        journal_obj = self.pool.get('account.journal')
+        account_obj = self.pool.get('account.account')
+        
+        ctx = context.copy()
+        data = {}
+        if 'journal_id' in vals:
+            ctx['journal_id'] = vals['journal_id']
+        if ('journal_id' not in ctx) and vals.get('move_id'):
+            m = move_obj.browse(cr, uid, vals['move_id'])
+            ctx['journal_id'] = m.journal_id.id
+        journal = journal_obj.browse(cr, uid, ctx['journal_id'])
+
+        account = account_obj.browse(cr, uid, vals['account_id'], context=context)
+        curr_fun = account.company_id.currency_id.id
+        
+        newvals = vals.copy()
+        if not newvals.get('currency_id'):
+            if account.currency_id:
+                newvals['currency_id'] = account.currency_id.id
+            else:
+                newvals['currency_id'] = curr_fun
+        newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
+
+        return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
     
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         self.check_date(cr, uid, vals)
-        res = super(account_move_line_compute_currency, self).write(cr, uid, ids, vals, context, check, update_check)
-        self.update_amounts(cr, uid, ids)
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        res = True
+        for line in self.browse(cr, uid, ids):
+            newvals = vals.copy()
+            date = vals.get('date', line.date)
+            currency_id = vals.get('currency_id') or line.currency_id.id
+            func_currency = line.account_id.company_id.currency_id.id
+            newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, vals.get('date'), line.debit_currency, line.credit_currency))
+            res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
         return res
     
     _columns = {
