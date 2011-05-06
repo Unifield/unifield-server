@@ -511,36 +511,37 @@ class account_bank_statement_line(osv.osv):
         """
         Verify that the given parameter contains date. Then validate date with regarding register period.
         """
-        # Prepare some values
-        st_line = self.browse(cr, uid, ids[0], context=context)
-        register = st_line.statement_id
-        account_id = st_line.account_id.id
-        date = st_line.date
-        period_start = register.period_id.date_start
-        period_stop = register.period_id.date_stop
-        # Verify that the date is included between period_start and period_stop
-        if date < period_start or date > period_stop:
-            raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!' % st_line.name))
-        # Verify that the date is useful with default debit or credit account activable date 
-        #+ (in fact the default debit and credit account have an activation date, and the given account_id too)
-        register_debit_account_id = register.journal_id.default_debit_account_id.id
-        register_credit_account_id = register.journal_id.default_credit_account_id.id
-        amount = st_line.amount
-        acc_obj = self.pool.get('account.account')
-        register_account = None
-        if amount > 0:
-            register_account = acc_obj.browse(cr, uid, register_debit_account_id, context=context)
-        elif amount < 0:
-            register_account = acc_obj.browse(cr, uid, register_credit_account_id, context=context)
-        if register_account:
-            if date < register_account.activation_date or (register_account.inactivation_date and date > register_account.inactivation_date):
-                raise osv.except_osv(_('Error'), 
-                    _('Posting date for "%s" is outside the validity period of the default account for this register!' % st_line.name))
-        if account_id:
-            account = acc_obj.browse(cr, uid, account_id, context=context)
-            if date < account.activation_date or (account.inactivation_date and date > account.inactivation_date):
-                raise osv.except_osv(_('Error'), 
-                    _('Posting date for "%s" is outside the validity period of the selected account for this record!' % st_line.name))
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            register = st_line.statement_id
+            account_id = st_line.account_id.id
+            date = st_line.date
+            period_start = register.period_id.date_start
+            period_stop = register.period_id.date_stop
+            # Verify that the date is included between period_start and period_stop
+            if date < period_start or date > period_stop:
+                raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!' % st_line.name))
+            # Verify that the date is useful with default debit or credit account activable date 
+            #+ (in fact the default debit and credit account have an activation date, and the given account_id too)
+            #+ That means default debit and credit account are required for registers !
+            register_debit_account_id = register.journal_id.default_debit_account_id.id
+            register_credit_account_id = register.journal_id.default_credit_account_id.id
+            amount = st_line.amount
+            acc_obj = self.pool.get('account.account')
+            register_account = None
+            if amount > 0:
+                register_account = acc_obj.browse(cr, uid, register_debit_account_id, context=context)
+            elif amount < 0:
+                register_account = acc_obj.browse(cr, uid, register_credit_account_id, context=context)
+            if register_account:
+                if date < register_account.activation_date or (register_account.inactivation_date and date > register_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the default account for this register!' % st_line.name))
+            if account_id:
+                account = acc_obj.browse(cr, uid, account_id, context=context)
+                if date < account.activation_date or (account.inactivation_date and date > account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the selected account for this record!' % st_line.name))
         return True
 
     _constraints = [
