@@ -416,7 +416,7 @@ class wizard_cash_return(osv.osv_memory):
         # retrieve some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.initial_amount != wizard.total_amount:
-            raise osv.except_osv('Warning', 'Initial amount and Justified amount are not similar. First correct. Then press Compute button')
+            raise osv.except_osv(_('Warning'), _('Initial advance amount does not match the amount you justified. First correct. Then press Compute button'))
 #        if not wizard.invoice_line_ids and not wizard.advance_line_ids:
 #            raise osv.except_osv(_('Warning'), _('Please give some data or click on Cancel.'))
         # All exceptions passed. So let's go doing treatments on data !
@@ -481,7 +481,7 @@ class wizard_cash_return(osv.osv_memory):
                 adv_move_line_ids.append(adv_id)
 
         # create the advance closing line
-        adv_closing_name = "Advance closing"
+        adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
         adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
