@@ -271,7 +271,7 @@ class wizard_cash_return(osv.osv_memory):
         for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
             total_currency += move_line.amount_currency
         if abs(total_currency) > 10 ** -4:
-            raise osv.except_osv(_('Error'), _('An error occured on the currency balance.'))
+            raise osv.except_osv(_('Error'), _('An error occured on the currency balance. Total is %s' % total_currency))
         # Verify that balance is not null
         # If null, then correct the advance line
         if balance > 0 or balance < 0:
@@ -448,11 +448,12 @@ class wizard_cash_return(osv.osv_memory):
             inv_move_line_ids = []
             for invoice in wizard.invoice_line_ids:
                 inv_name = "Invoice" + " " + invoice.invoice_id.internal_number
+                inv_date = invoice.invoice_id.date_invoice
                 partner_id = invoice.partner_id.id
                 debit = invoice.amount
                 credit = 0.0
                 account_id = invoice.account_id.id
-                inv_id = self.create_move_line(cr, uid, ids, curr_date, inv_name, journal, register, partner_id, False, account_id, \
+                inv_id = self.create_move_line(cr, uid, ids, inv_date, inv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, context=context)
                 inv_move_line_ids.append((inv_id, invoice.invoice_id.id))
         else:
@@ -476,7 +477,7 @@ class wizard_cash_return(osv.osv_memory):
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
-                adv_id = self.create_move_line(cr, uid, ids, curr_date, adv_name, journal, register, partner_id, False, account_id, \
+                adv_id = self.create_move_line(cr, uid, ids, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, context=context)
                 adv_move_line_ids.append(adv_id)
 
