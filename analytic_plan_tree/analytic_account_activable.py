@@ -20,6 +20,7 @@
 ##############################################################################
 
 import datetime
+from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
 
@@ -36,7 +37,7 @@ class analytic_account_activable(osv.osv):
     }
     
     _defaults ={
-        'activation_date': lambda *a: datetime.date.today().strftime('%Y-%m-%d')
+        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
     
     def _check_date(self, vals):
