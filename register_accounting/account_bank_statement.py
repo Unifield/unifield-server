@@ -29,6 +29,7 @@ from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 import time
 from datetime import datetime
+import decimal_precision as dp
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -74,9 +75,12 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance based on Starting Balance and Cash Transactions"),
+            help="Closing balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
+        'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
+            help="Closing balance"),
+
     }
 
     _defaults = {
