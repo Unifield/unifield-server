@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Line">
                     <field name="journal_id" string="Journal Code"/>
-                    <field name="journal_sequence"/>
+                    <field name="move_id"/>
                     <field name="instance"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
@@ -81,7 +81,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom">
                     <field name="journal_id" string="Journal Code"/>
-                    <field name="journal_sequence"/>
+                    <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="instance"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
