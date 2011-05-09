@@ -42,19 +42,21 @@
 
     Print product labels with barcode.
     """,
-    "depends" : ["product","stock_override", "sale", "purchase"],
+    "depends" : ["product","stock_override", "sale", "purchase", "order_nomenclature"],
     "init_xml" : [],
     "demo_xml": [
         "asset_type_data.xml",
     ],
     'test': [
              'test/product_asset.yml',
+             'test/product_asset_report.yml',
              ],
     'update_xml': [
         'product_asset_view.xml',
         'security/ir.model.access.csv',
         'asset_sequence.xml',
         'wizard/stock_partial_move_view.xml',
+        'product_asset_report.xml',
     ],
     'installable': True,
 }

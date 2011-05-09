@@ -46,12 +46,6 @@ class product_asset(osv.osv):
     _name = "product.asset"
     _description = "A specific asset of a product"
     
-    
-    def view_init(self, cr , uid , fields_list, context=None):
-        #print 'product asset'
-        pass
-    
-    
     def _getRelatedProductFields(self, cr, uid, productId):
         '''
         get related fields from product
@@ -68,12 +62,24 @@ class product_asset(osv.osv):
                        'asset_type_id': product.asset_type_id.id,
                        'prod_int_code': product.default_code,
                        'prod_int_name': product.name,
+                       'nomenclature_description': product.nomenclature_description,
                      })
         
         return result
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        override copy to update the asset code which comes from a sequence
+        '''
+        if not default:
+            default = {}
+        default.update({
+            'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
+        })
         
-    
-    
+        # call to super
+        return super(product_asset, self).copy(cr, uid, id, default, context=context)
+
     def write(self, cr, user, ids, vals, context=None):
         '''
         override write method to force readonly fields to be saved to db
@@ -88,7 +94,6 @@ class product_asset(osv.osv):
         # save the data to db
         return super(product_asset, self).write(cr, user, ids, vals, context)
     
-    
     def create(self, cr, uid, vals, context=None):
         '''
         override create method to force readonly fields to be saved to db
@@ -100,31 +105,12 @@ class product_asset(osv.osv):
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
             
-        vals['asset_code'] = self.pool.get('ir.sequence').get(cr, uid, 'product.asset')
-        
         # save the data to db
         return super(product_asset, self).create(cr, uid, vals, context)
         
-        
-    
-    def _compute_product(self, cr, uid, ids, context=None):
-        '''
-        origininally used for fields.function test
-        
-        not used presently
-        '''
-        assets = self.browse(cr, uid, ids)
-        
-        result = {}
-        
-        for asset in assets:
-            pass
-            
-            
-            
     def onChangeProductId(self, cr, uid, ids, productId):
         '''
-        
+        on change function when the product is changed
         '''
         result = {}
         
@@ -136,49 +122,97 @@ class product_asset(osv.osv):
                        })
         
         return result
-            
     
+    
+    def onChangeYear(self, cr, uid, ids, year):
+        '''
+        year must be 4 digit long and comprised between 1900 and 2100
+        '''
+        value = {}
+        warning = {}
+        result = {'value': value, 'warning': warning}
+        
+        if not year:
+            return result
+        
+        # check that the year specified is a number
+        try:
+            intValue = int(year)
+        except:
+            intValue = False
+        
+        if not intValue:
+            warning.update({
+                    'title':'The format of year is invalid.',
+                    'message':
+                        'The format of the year must be 4 digits, e.g. 1983.'
+                })
+        elif len(year) != 4:
+            warning.update({
+                    'title':'The length of year is invalid.',
+                    'message':
+                        'The length of year must be 4 digits long, e.g. 1983.'
+                })
+        elif (intValue < 1900) or (intValue > 2100):
+            warning.update({
+                    'title':'The year is invalid.',
+                    'message':
+                        'The year must be between 1900 and 2100.'
+                })
+        
+        # if a warning has been generated, clear the field
+        if 'title' in warning:
+            value.update({'year': ''})
+        
+        return result
+        
     _columns = {
-                'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
-                'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
-                'asset_code': fields.char('Asset ID', size=64, readonly=True),
-                'name': fields.char('Asset Name', size=128),
+                # asset
+                'name': fields.char('Asset Code', size=128, required=True),
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from product
-                # HQ reference
-                'hq_local_ref': fields.char('Local Reference', size=128),
-                'hq_asset_name': fields.char('Asset Name', size=128),
-                'hq_serial_nb': fields.char('Serial Number', size=128, required=True),
-                'hq_brand': fields.char('Brand', size=128, required=True),
-                'hq_type': fields.char('Type', size=128, required=True),
-                'hq_model': fields.char('Model', size=128, required=True),
-                # MSF codification
-                # TODO or fields.reference or fields.related ?
-                #'codif_prod_int_code': fields.function(_compute_product, arg={'test':'test', 'field':product_id}, method=True, string='Product Internal Code',
-                #                                       store={'product.product': (lambda self, cr, uid, ids, c={}: '', ['code'], 10),},
-                #                                       multi='product'),
-                'prod_int_code': fields.char('Product Internal Code', size=128, readonly=True), # from product
-                'prod_int_name': fields.char('Product Internal Name', size=128, readonly=True), # from product
-                'prod_nomenclature': fields.char('Product Nomenclature', size=128), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
-                'prod_nomenc_code': fields.char('Product Nomenclature Code', size=128),
+                'description': fields.char('Asset Description', size=128),
+                'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
+                # msf codification
+                'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
+                'prod_int_name': fields.char('Product Name', size=128, readonly=True), # from product
+                'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
+                'hq_ref': fields.char('HQ Reference', size=128),
+                'local_ref': fields.char('Local Reference', size=128),
+                # asset reference
+                'serial_nb': fields.char('Serial Number', size=128, required=True),
+                'brand': fields.char('Brand', size=128, required=True),
+                'type': fields.char('Type', size=128, required=True),
+                'model': fields.char('Model', size=128, required=True),
+                'year': fields.char('Year', size=4),
+                # remark
+                'comment': fields.text('Comment'),
                 # traceability
-                'trac_orig_req_ref': fields.char('Original Requested Reference (Project PO)', size=128),
-                'trac_orig_mission_code': fields.char('Original Mission Code', size=128, required=True),
-                'trac_sourc_ref': fields.char('Sourcing Reference', size=128, required=True),
-                'trac_arriv_date': fields.date('Arrival Date', required=True),
-                'trac_receipt_place': fields.char('Receipt Place', size=128, required=True),
+                'project_po': fields.char('Project PO', size=128),
+                'orig_mission_code': fields.char('Original Mission Code', size=128, required=True),
+                'international_po': fields.char('International PO', size=128, required=True),
+                'arrival_date': fields.date('Arrival Date', required=True),
+                'receipt_place': fields.char('Receipt Place', size=128, required=True),
                 # Invoice
                 'invo_num': fields.char('Invoice Number', size=128, required=True),
                 'invo_date': fields.date('Invoice Date', required=True),
-                'invo_val_curr': fields.char('Value and Corresponding Currency', size=128, required=True),
+                'invo_value': fields.float('Value', required=True),
+                'invo_currency': fields.char('Currency', size=128, required=True),
                 'invo_supplier': fields.char('Supplier', size=128),
                 'invo_donator_code': fields.char('Donator Code', size=128),
+                'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
+                # event history
+                'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
     }
     
     _defaults = {
-        'trac_arriv_date': lambda *a: time.strftime('%Y-%m-%d'),
+                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
+                 'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
+                 'receipt_place': 'Country/Project/Activity',
     }
-    
-    
+    _sql_constraints = [
+                        ('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
+    ]
+    _order = 'name desc'
     
 product_asset()
 
@@ -205,6 +239,17 @@ class product_asset_event(osv.osv):
         ('other', 'Other'),
     ]
     
+    def name_get(self, cr, uid, ids, context=None):
+        '''
+        override because no name field is defined
+        '''
+        result = []
+        for e in self.read(cr, uid, ids, ['asset_id', 'date'], context):
+            # e = dict: {'asset_id': (68, u'AF/00045'), 'date': '2011-05-05', 'id': 75}
+            result.append((e['id'], '%s - %s'%(e['asset_id'][1], e['date'])))
+            
+        return result
+        
     def _getRelatedAssetFields(self, cr, uid, assetId):
         '''
         get related fields from product
@@ -214,17 +259,15 @@ class product_asset_event(osv.osv):
         if not assetId:
             return result
         
-        # newly selected asset object        
+        # newly selected asset object
         asset = self.pool.get('product.asset').browse(cr, uid, assetId)
         
         result.update({
                        'product_id': asset.product_id.id,
-                       'asset_code': asset.asset_code,
                        'asset_type_id': asset.asset_type_id.id,
-                       'prod_int_code': asset.prod_int_code,
-                       'prod_int_name': asset.prod_int_name,
-                       'hq_brand': asset.hq_brand,
-                       'hq_model': asset.hq_model,
+                       'serial_nb': asset.serial_nb, 
+                       'brand': asset.brand,
+                       'model': asset.model,
                     })
         
         return result
@@ -242,7 +285,6 @@ class product_asset_event(osv.osv):
         
         # save the data to db
         return super(product_asset_event, self).write(cr, user, ids, vals, context)
-    
     
     def create(self, cr, user, vals, context=None):
         '''
@@ -271,27 +313,26 @@ class product_asset_event(osv.osv):
         return result
     
     _columns = {
-                'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
-                'asset_id': fields.many2one('product.asset', 'Asset', required=True, ondelete='cascade'),
-                'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
+                # event information
                 'date': fields.date('Date', required=True),
-                'name': fields.char('Event Name', size=128, required=True),
-                'asset_code': fields.char('Asset Code', size=128, readonly=True), # from asset
-                'prod_int_code': fields.char('Product Internal Code', size=128, readonly=True), # from asset
-                'prod_int_name': fields.char('Product Internal Name', size=128, readonly=True), # from asset
-                'hq_brand': fields.char('Brand', size=128, readonly=True), # from asset
-                'hq_model': fields.char('Model', size=128, readonly=True), # from asset
                 'location': fields.char('Location', size=128, required=True),
                 'proj_code': fields.char('Project Code', size=128, required=True),
-                'event_type': fields.selection(eventTypeSelection, 'Event Type', required=True), # TODO many2one or selection ?
-                'remark': fields.text('Remark'),
-                'state': fields.selection(stateSelection, 'Current Status', required=True), # TODO many2one or selection ?
+                'event_type': fields.selection(eventTypeSelection, 'Event Type', required=True),
+                'state': fields.selection(stateSelection, 'Current Status'),
+                # selection
+                'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade'),
+                'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
+                'serial_nb': fields.char('Serial Number', size=128, readonly=True),
+                'brand': fields.char('Brand', size=128, readonly=True), # from asset
+                'model': fields.char('Model', size=128, readonly=True), # from asset
+
+                'comment': fields.text('Comment'),
+                
+                'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
     }
     
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
-        'event_type': lambda *a: 'reception',
-        'state': lambda *a: 'inUse',
     }
     
 product_asset_event()
@@ -422,7 +463,6 @@ class stock_move(osv.osv):
             'You must assign an asset for this product',
             ['asset_id']),]
     
-    
 stock_move()
 
 
@@ -432,7 +472,6 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _description = 'Stock Picking with hook'
-
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

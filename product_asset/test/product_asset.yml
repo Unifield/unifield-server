@@ -128,21 +128,22 @@
 - 
   !record {model: product.asset, id: product_asset_testassetcamembert0}:
     asset_type_id: product_asset_type_0
-    hq_brand: brand
-    hq_model: model
-    hq_serial_nb: d
-    hq_type: d
+    brand: brand
+    model: model
+    serial_nb: d
+    type: d
     invo_date: '2011-03-22'
     invo_num: d
-    invo_val_curr: d
+    invo_value: 120.1
+    invo_currency: d
     name: Boite \xc3\xa0 chaussures asset
     prod_int_code: CHAUSS-INT-1234
     prod_int_name: Boite \xc3\xa0 chaussures
     product_id: product_product_boitechaussures0
-    trac_arriv_date: '2011-03-27'
-    trac_orig_mission_code: d
-    trac_receipt_place: d
-    trac_sourc_ref: d
+    arrival_date: '2011-03-27'
+    orig_mission_code: d
+    receipt_place: d
+    international_po: d
 -
 
   I create the product.asset.event record
@@ -150,17 +151,11 @@
 - 
   !record {model: product.asset.event, id: product_asset_event_0}:
     asset_id: product_asset_testassetcamembert0
-    asset_type_id: product_asset_type_0
     date: '2011-03-28'
     event_type: reception
-    hq_brand: d
-    hq_model: d
-    prod_int_code: CHAUSS-INT-1234
-    prod_int_name: Boite \xc3\xa0 chaussures
     state: inUse
     proj_code: 1123
     location: warzazat
-    name: an event
     product_id: product_product_boitechaussures0
 
 - 
@@ -233,12 +228,10 @@
     
     values = result['value']
     
-    assert values['asset_type_id'] == ref("product_asset_type_0"), 'asset_type_id wrong'
-    assert values['prod_int_code'] == 'CHAUSS-INT-1234', 'prod_int_code wrong'
-    assert values['prod_int_name'] == 'Boite \\xc3\\xa0 chaussures', 'prod_int_name wrong'
-    assert values['asset_code'], 'asset_code wrong (%s)'%(values['asset_code'])
-    assert values['hq_brand'] == 'brand', 'hq_brand wrong'
-    assert values['hq_model'] == 'model', 'hq_model wrong'
+    assert values['product_id'] == ref("product_product_boitechaussures0"), 'product wrong'
+    assert values['brand'] == 'brand', 'brand wrong'
+    assert values['model'] == 'model', 'model wrong'
+    assert values['serial_nb'] == 'd', 'serial wrong (%s, %s)'%(values['serial_nb'], 'd')
 -
 
   I check the onchange function, stock_move.onchange_product_id
