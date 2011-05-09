@@ -31,6 +31,7 @@
     "init_xml": [],
     'update_xml': [
         'res_currency_functional_view.xml',
+        'account_move_view.xml',
         'account_move_line_view.xml',
         'account_bank_statement_view.xml',
         'order_line_view.xml',

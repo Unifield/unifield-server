@@ -35,7 +35,7 @@ class account_move_compute_currency(osv.osv):
                 amount_currency += line.amount_currency
             
             if len(sorted_line_ids) >= 2:
-                if abs(amount_currency) > 10 ** -4:
+                if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = sorted_line_ids[1]
@@ -51,7 +51,7 @@ class account_move_compute_currency(osv.osv):
                                                              debit_currency=%s, \
                                                              credit_currency=%s where id=%s',
                               (amount_currency, debit_currency, credit_currency, line_to_be_balanced.id))
-                if abs(amount) > 10 ** -4:
+                elif abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = sorted_line_ids[1]
