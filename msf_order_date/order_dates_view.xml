@@ -112,19 +112,22 @@
                     </xpath>
                     
                     <!--  Add dates on 'Other Information' tab -->
-                    <xpath expr="/form/notebook/page[@string='Other Information']/group" position="before">
-                        <group colspan="4" col="4" name="date">
-                            <separator colspan="4" string="Dates" />
-                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
-                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
-                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
-                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
-                            <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
-                            <field name="shipment_date" />
-                            <field name="receipt_date" readonly="1" />
-                            <!-- <field name="arrival_date" attrs="{'invisible': [('internal_type', '!=', 'international')]}" /> -->
-                            <field name="arrival_date" />
-                        </group>
+                    <xpath expr="/form/notebook/page[@string='Other Information']" position="before">
+                        <page string="Order dates">
+	                        <group colspan="4" col="4" name="date">
+	                            <separator colspan="4" string="Dates" />
+	                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
+	                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+	                            <field name="transport_type" />
+	                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
+	                            <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
+	                            <field name="shipment_date" />
+	                            <field name="receipt_date" readonly="1" />
+	                            <!-- <field name="arrival_date" attrs="{'invisible': [('internal_type', '!=', 'international')]}" /> -->
+	                            <field name="arrival_date" />
+	                        </group>
+	                    </page>
                     </xpath>
                     
                     <!-- Give the context when create a new PO line -->

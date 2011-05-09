@@ -617,13 +617,14 @@ class sale_order(osv.osv):
     _columns = {
         'date_order': fields.date('Creation Date', select=True, readonly=True, 
                                   required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True, 
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, #required=True, 
                                             states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', required=True, 
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', #required=True, 
                                                help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'est_transport_lead_time': fields.selection([('10', 'By Flight'), ('30', 'By Road'),
-                                                     ('60', 'By Boat')], string='Estimated Transport Lead-Time',
-                                                     help='Number of days this field has to be associated with a transport mode selection'),
+        'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
+                                            ('boat', 'By Boat')], string='Transport Type',
+                                            help='Number of days this field has to be associated with a transport mode selection'),
+        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                           help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
@@ -673,7 +674,8 @@ class sale_order(osv.osv):
             ids = [ids]
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        #return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        return res
     
 sale_order()
 
