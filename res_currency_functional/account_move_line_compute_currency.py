@@ -106,7 +106,6 @@ class account_move_line_compute_currency(osv.osv):
         'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
-        'journal_sequence': fields.related('journal_id', 'sequence_id', 'name', type="char", string="Journal Sequence", store=False),
         'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
     }
     

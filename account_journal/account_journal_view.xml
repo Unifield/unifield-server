@@ -24,7 +24,7 @@
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
                             <field name="instance_id" readonly="1"/>
-                            <field name="currency"/>
+                            <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                             <field name="analytic_journal_id"/>
                         </group>
                     </form>
