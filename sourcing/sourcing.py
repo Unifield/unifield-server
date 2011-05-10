@@ -196,6 +196,15 @@ class sourcing_line(osv.osv):
 #            default.update({'sale_order_id': soId,})
             
         return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
+    
+    def confirmLine(self, cr, uid, ids, context=None):
+        '''
+        set the corresponding line's state to 'confirmed'
+        if all lines are 'confirmed', the sale order is confirmed
+        '''
+        for sl in self.browse(cr, uid, ids, context):
+            sl.sale_order_line_id.state = 'confirmed'
+        
 
 sourcing_line()
 
