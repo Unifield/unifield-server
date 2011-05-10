@@ -396,7 +396,7 @@ class purchase_order(osv.osv):
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'national',
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
@@ -638,7 +638,7 @@ class sale_order(osv.osv):
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'national',
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
