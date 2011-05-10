@@ -221,23 +221,22 @@ class product_asset_event(osv.osv):
     _name = "product.asset.event"
     _description = "Event for asset follow up"
     
-    stateSelection = [
-        ('inUse', 'In Use'),
-        ('stock', 'Stock'),
-        ('repair', 'Repair'),
-    ]
+    stateSelection = [('blank', ' '),
+                      ('inUse', 'In Use'),
+                      ('stock', 'Stock'),
+                      ('repair', 'Repair'),
+                      ]
     
-    eventTypeSelection = [
-        ('reception', 'Reception'),
-        ('startUse', 'Start Use'),
-        ('repairing', 'Repairing'),
-        ('endUse', 'End Use'),
-        ('obsolete', 'Obsolete'),
-        ('loaning', 'Loaning'),
-        ('transfer', 'Transfer (internal)'),
-        ('donation', 'Donation (external)'),
-        ('other', 'Other'),
-    ]
+    eventTypeSelection = [('reception', 'Reception'),
+                          ('startUse', 'Start Use'),
+                          ('repairing', 'Repairing'),
+                          ('endUse', 'End Use'),
+                          ('obsolete', 'Obsolete'),
+                          ('loaning', 'Loaning'),
+                          ('transfer', 'Transfer (internal)'),
+                          ('donation', 'Donation (external)'),
+                          ('other', 'Other'),
+                          ]
     
     def name_get(self, cr, uid, ids, context=None):
         '''
@@ -325,7 +324,6 @@ class product_asset_event(osv.osv):
                 'serial_nb': fields.char('Serial Number', size=128, readonly=True),
                 'brand': fields.char('Brand', size=128, readonly=True), # from asset
                 'model': fields.char('Model', size=128, readonly=True), # from asset
-
                 'comment': fields.text('Comment'),
                 
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
@@ -333,6 +331,7 @@ class product_asset_event(osv.osv):
     
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'state': 'blank',
     }
     
 product_asset_event()
