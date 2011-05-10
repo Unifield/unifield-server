@@ -29,6 +29,8 @@ import netsvc
 import pooler
 import time
 
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
                      ('cft', 'Call for Tender'),
@@ -65,12 +67,6 @@ class sourcing_line(osv.osv):
                                         ('exception', 'Exception'),
                                         ]
     
-    _SELECTION_ORDER_PRIORITY = [
-                                 ('emergency', 'Emergency'), 
-                                 ('normal', 'Normal'), 
-                                 ('medium', 'Medium'), 
-                                 ('urgent', 'Urgent')]
-    
     def _saveRelatedFields(self, cr, uid, ids, name, value, arg, context=None):
         '''
         function saving related data
@@ -97,12 +93,6 @@ class sourcing_line(osv.osv):
             result.extend(map(lambda x: x.id, sol.sourcing_line_ids))
             
         return result
-    
-    def _getProductid(self, cr, uid, ids, name, arg, context):
-        '''
-        
-        '''
-        self.read()
         
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
@@ -113,9 +103,8 @@ class sourcing_line(osv.osv):
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
         'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
-        'priority': fields.related('sale_order_id', 'priority', type="selection", selection=_SELECTION_ORDER_PRIORITY, readonly=True, string='Priority', store=False),
-        # category -> will be changed to related wm order type
-        'category': fields.char(string='Category', size=128, readonly=True),
+        'priority': fields.related('sale_order_id', 'priority', type="selection", selection=ORDER_PRIORITY, readonly=True, string='Priority', store=False),
+        'categ': fields.related('sale_order_id', 'categ', type="selection", selection=ORDER_CATEGORY, readonly=True, string='Category', store=False),
         'sale_order_state': fields.related('sale_order_id', 'state', string="Order State", type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True, store=False),
         # line number -> will be changed to related
         'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),

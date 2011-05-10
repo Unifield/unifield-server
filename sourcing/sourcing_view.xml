@@ -50,7 +50,7 @@
 					<field name="reference" invisible="True" />
 					<field name="state" />
 					<field name="priority" />
-					<field name="category" />
+					<field name="categ" />
 					<field name="sale_order_state" invisible="True" />
 
 					<field name="product_id" />
