@@ -363,9 +363,13 @@
     partner_id: supplier1
     pricelist_id: purchase.list0
 -
-  I confirm this purchase order
+  I validate this purchase order
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: po1}
+-
+  I approve this purchase order
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: po1}
 -
   I check if the availability of P3 is correct
 -
