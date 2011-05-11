@@ -82,9 +82,9 @@ class stock_warehouse_order_cycle(osv.osv):
         'company_id': fields.many2one('res.company','Company',required=True),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the automatic supply without removing it."),
         # Parameters for quantity calculation
-        'leadtime': fields.integer(string='Delivery lead time to consider'),
-        'order_coverage': fields.integer(string='Order coverage'),
-        'safety_stock_time': fields.integer(string='Safety stock in time'),
+        'leadtime': fields.float(digits=(16,2), string='Delivery lead time to consider', help='Delivery lead time in month'),
+        'order_coverage': fields.float(digits=(16,2), string='Order coverage'),
+        'safety_stock_time': fields.float(digits=(16,2), string='Safety stock in time'),
         'safety_stock': fields.integer(string='Safety stock (quantity'),
         'past_consumption': fields.boolean(string='Past monthly consumption'),
         'reviewed_consumption': fields.boolean(string='Reviewed monthly consumption'),
@@ -103,18 +103,22 @@ class stock_warehouse_order_cycle(osv.osv):
         'order_coverage': lambda *a: 3,
     }
     
-    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, field='past'):
+    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, product_id, field='past'):
         '''
         Uncheck a box when the other is checked
         '''
         v = {}
         if field == 'past' and past_consumption:
-            v.update({'reviewed_consumption': 0})
+            v.update({'reviewed_consumption': 0, 'manual_consumption': 0.00})
         elif field == 'past' and not past_consumption:
-            v.update({'reviewed_consumption': 1})
+            v.update({'reviewed_consumption': 1, 'manual_consumption': 0.00})
         elif field == 'review' and reviewed_consumption:
-            v.update({'past_consumption': 0})
+            v.update({'past_consumption': 0, 'manual_consumption': 0.00})
         elif field == 'review' and not reviewed_consumption:
+            v.update({'past_consumption': 1, 'manual_consumption': 0.00})
+        elif field == 'manual' and manual_consumption != 0.00 and product_id:
+            v.update({'reviewed_consumption': 0, 'past_consumption': 0})
+        elif field == 'manual' and (manual_consumption == 0.00 or not product_id):
             v.update({'past_consumption': 1})
             
         return {'value': v}
