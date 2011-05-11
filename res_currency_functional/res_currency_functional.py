@@ -44,13 +44,14 @@ class res_currency_functional(osv.osv):
         return res
     
     _columns = {
+        'currency_name': fields.char('Currency Name', size=64, required=True),
         'current_k_currency': fields.function(_current_k_currency, method=True, string='Current K-Currency')
     }
 
     _defaults = {
         'accuracy': 4, 
     }
-    
+
     def _get_conversion_rate(self, cr, uid, from_currency, to_currency, context=None):
         conversion_rate = super(res_currency_functional, self)._get_conversion_rate(cr, uid, from_currency, to_currency, context)
         # we add the k-currency

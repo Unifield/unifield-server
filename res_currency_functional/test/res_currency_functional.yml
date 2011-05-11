@@ -5,8 +5,10 @@
 -
   !record {model: res.currency, id: currency_test}:
     name: TST
+    currency_name: TEST CURRENCY
     symbol: TST
     active: True
+    rounding: 0.001
     rate_ids:
       - name: !eval "'%s-01-01' %(datetime.now().year+1)"
         rate: 100.00

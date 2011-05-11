@@ -29,11 +29,14 @@ class account_bank_statement_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for statement_line in self.browse(cr, uid, ids):
+            ctx = {}
+            if statement_line.date:
+                ctx['date'] = statement_line.date
             res[statement_line.id] = {
                 'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                    statement_line.functional_currency_id.id, statement_line.amount_in, round=True),
+                    statement_line.functional_currency_id.id, statement_line.amount_in, round=True, context=ctx),
                 'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                    statement_line.functional_currency_id.id, statement_line.amount_out, round=True),
+                    statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
             }
         return res
     

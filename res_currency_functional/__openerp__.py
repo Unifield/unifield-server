@@ -28,7 +28,9 @@
     for each accounting entry.
     
     """,
-    "init_xml": [],
+    "init_xml": [
+        'data/currency_data.xml',
+    ],
     'update_xml': [
         'res_currency_functional_view.xml',
         'account_move_line_view.xml',
