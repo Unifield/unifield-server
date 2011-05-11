@@ -84,13 +84,13 @@
       </tr>
       <tr>
         <td>
-          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ move.date[0:10] ]]</para>
+          <para style="P4">[[ repeatIn(objects, 'move') ]] [[ formatLang(move.date[0:10], date=True) ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.prodlot_id.name ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.expired_date and move.expired_date != "False" and move.expired_date[0:10] or '/' ]]</para>
+          <para style="P4">[[ move.expired_date and move.expired_date != "False" and formatLang(move.expired_date[0:10], date=True) or '/' ]]</para>
         </td>
         <td>
           <para style="P4">[[ move.origin ]]</para>
