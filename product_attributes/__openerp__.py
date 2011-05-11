@@ -26,8 +26,9 @@
     'description': """
         This module displays more fields for future sprints in the Products form view.
     """,
-    'depends': ['stock_location', 'product_expiry', 'product_manufacturer'],
+    'depends': ['product_expiry', 'product_manufacturer'],
     'init_xml': [
+        'product_remove_demo.xml',
         'security/ir.model.access.csv',
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
