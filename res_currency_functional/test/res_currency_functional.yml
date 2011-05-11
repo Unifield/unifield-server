@@ -5,6 +5,7 @@
 -
   !record {model: res.currency, id: currency_test}:
     name: TST
+    currency_name: TEST CURRENCY
     symbol: TST
     active: True
     rounding: 0.001
