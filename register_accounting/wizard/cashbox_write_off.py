@@ -175,7 +175,7 @@ class cashbox_write_off(osv.osv_memory):
                         # Make the write-off in posted state
                         res_move_id = acc_mov_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
                         # Change cashbox state into "Closed"
-                        cashbox.write({'state': 'confirm'})
+                        cashbox.write({'state': 'confirm', 'closing_date': curr_date})
                     else:
                         raise osv.except_osv(_('Warning'), _('Please select an account to do a write-off!'))
                 return { 'type': 'ir.actions.act_window_close', 'res_id': id}

@@ -72,6 +72,7 @@ class account_move(osv.osv):
                     if prev is None:
                         prev = move_line.third_parties
                     elif prev != move_line.third_parties:
+                        prev = False
                         break
                 if prev:
                     res[move.id] = "%s,%s"%(prev._table_name, prev.id)

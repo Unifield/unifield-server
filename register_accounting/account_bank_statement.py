@@ -28,6 +28,8 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 import time
+from datetime import datetime
+import decimal_precision as dp
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -73,9 +75,12 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance based on Starting Balance and Cash Transactions"),
+            help="Closing balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
+        'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
+            help="Closing balance"),
+
     }
 
     _defaults = {
@@ -172,7 +177,7 @@ class account_bank_statement(osv.osv):
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm'}, context=context)
+        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
 
 account_bank_statement()
@@ -501,6 +506,47 @@ class account_bank_statement_line(osv.osv):
         if amount:
             res.update({'amount': amount})
         return res
+
+    def _verify_dates(self, cr, uid, ids, context={}):
+        """
+        Verify that the given parameter contains date. Then validate date with regarding register period.
+        """
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            register = st_line.statement_id
+            account_id = st_line.account_id.id
+            date = st_line.date
+            period_start = register.period_id.date_start
+            period_stop = register.period_id.date_stop
+            # Verify that the date is included between period_start and period_stop
+            if date < period_start or date > period_stop:
+                raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!' % st_line.name))
+            # Verify that the date is useful with default debit or credit account activable date 
+            #+ (in fact the default debit and credit account have an activation date, and the given account_id too)
+            #+ That means default debit and credit account are required for registers !
+            register_debit_account_id = register.journal_id.default_debit_account_id.id
+            register_credit_account_id = register.journal_id.default_credit_account_id.id
+            amount = st_line.amount
+            acc_obj = self.pool.get('account.account')
+            register_account = None
+            if amount > 0:
+                register_account = acc_obj.browse(cr, uid, register_debit_account_id, context=context)
+            elif amount < 0:
+                register_account = acc_obj.browse(cr, uid, register_credit_account_id, context=context)
+            if register_account:
+                if date < register_account.activation_date or (register_account.inactivation_date and date > register_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the default account for this register!' % st_line.name))
+            if account_id:
+                account = acc_obj.browse(cr, uid, account_id, context=context)
+                if date < account.activation_date or (account.inactivation_date and date > account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the selected account for this record!' % st_line.name))
+        return True
+
+    _constraints = [
+        (_verify_dates, "Date is not correct. Verify that it's in the register's period. ", ['date']),
+    ]
 
     def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context={}):
         """

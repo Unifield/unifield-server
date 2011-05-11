@@ -166,7 +166,7 @@
         <record model="account.account" id="msf_chart_of_account.ch_4202">
             <field name="code">4202</field>
             <field name="reconcile" eval="1"/>
-            <field name="type_for_register">none</field>
+            <field name="type_for_register">advance</field>
             <field name="type">other</field>
             <field name="active" eval="1"/>
             <field name="parent_right">16</field>
