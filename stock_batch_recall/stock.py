@@ -48,7 +48,8 @@ class stock_batch_recall(osv.osv_memory):
             
             domain = []
             if track.expired_date:
-                domain.append(('expired_date', '=', track.expired_date))
+                domain.append(('expired_date', '>=', track.expired_date))
+                domain.append(('expired_date', '<=', track.expired_date))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
