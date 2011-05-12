@@ -38,6 +38,31 @@ class account_bank_statement(osv.osv):
     _sql_constraints = [
         ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')
     ]
+    
+    def button_create_invoice(self, cr, uid, ids, context={}):
+        """
+        Open the attached invoice
+        """
+        # Search the customized view we made for Supplier Invoice (for * Register's users)
+        currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
+        if isinstance(currency, tuple):
+            currency =currency[0]
+        id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0]})
+        return {
+            'name': "Supplier Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.account.invoice',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': id,
+            'context':
+            {
+                'active_id': ids[0],
+                'type': 'in_invoice',
+                'active_ids': ids,
+            }
+        }
 
     def __init__(self, pool, cr):
         super(account_bank_statement, self).__init__(pool, cr)
