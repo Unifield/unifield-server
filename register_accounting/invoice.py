@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -83,6 +84,15 @@ class account_invoice(osv.osv):
         """
         Permit to refresh the wizard for direct invoice in order to compute the total of amount given by the invoices lines
         """
+        return True
+
+    def action_date_assign(self, cr, uid, ids, *args):
+        """
+        No longer fills the date automatically, but requires it to be set
+        """
+        for inv in self.browse(cr, uid, ids):
+            if not inv.date_invoice:
+                raise osv.except_osv(_('No invoice date !'), _('No invoice date is set! Please set a date before approving the invoice.'))
         return True
 
 account_invoice()
