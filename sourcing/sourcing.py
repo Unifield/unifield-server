@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    MSF 2011
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -93,7 +93,7 @@ class sourcing_line(osv.osv):
             result.extend(map(lambda x: x.id, sol.sourcing_line_ids))
             
         return result
-        
+    
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
     _columns = {
@@ -103,12 +103,15 @@ class sourcing_line(osv.osv):
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
         'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
-        'priority': fields.related('sale_order_id', 'priority', type="selection", selection=ORDER_PRIORITY, readonly=True, string='Priority', store=False),
-        'categ': fields.related('sale_order_id', 'categ', type="selection", selection=ORDER_CATEGORY, readonly=True, string='Category', store=False),
-        'sale_order_state': fields.related('sale_order_id', 'state', string="Order State", type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True, store=False),
-        # line number -> will be changed to related
-        'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),
-        'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
+        #'priority': fields.related('sale_order_id', 'priority', type="selection", selection=ORDER_PRIORITY, readonly=True, string='Priority', store=False),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
+        #'categ': fields.related('sale_order_id', 'categ', type="selection", selection=ORDER_CATEGORY, readonly=True, string='Category', store=False),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
+        #'sale_order_state': fields.related('sale_order_id', 'state', string="Order State", type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True, store=False),
+        'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        'line_number': fields.integer(string='Line', readonly=True),
+        #'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
+        'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
         'rts': fields.date(string='RTS', readonly=True),
@@ -121,7 +124,7 @@ class sourcing_line(osv.osv):
         'supplier': fields.many2one('product.supplierinfo', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
-    _order = 'sale_order_id desc'
+    _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
     }
@@ -139,6 +142,8 @@ class sourcing_line(osv.osv):
         '''
         if not context:
             context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if 'fromOrderLine' not in context:
             context['fromSourcingLine'] = True
             for sourcingLine in self.browse(cr, uid, ids, context=context):
@@ -202,23 +207,78 @@ class sourcing_line(osv.osv):
         set the corresponding line's state to 'confirmed'
         if all lines are 'confirmed', the sale order is confirmed
         '''
+        wf_service = netsvc.LocalService("workflow")
+        result = []
         for sl in self.browse(cr, uid, ids, context):
-            sl.sale_order_line_id.state = 'confirmed'
+            # set the corresponding sale order line to 'confirmed'
+            result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
+            # check if all order lines have been confirmed
+            linesConfirmed = True
+            for ol in sl.sale_order_id.order_line:
+                if ol.state != 'confirmed':
+                    linesConfirmed = False
+            # if all lines have been confirmed, we confirm the sale order
+            if linesConfirmed:
+                wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                
+        return result
+    
+    def unconfirmLine(self, cr, uid, ids, context=None):
+        '''
+        set the sale order line state to 'draft'
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        result = []
+        for sl in self.browse(cr, uid, ids, context):
+            result.append((sl.id, sl.sale_order_line_id.write(cr, uid, sl.sale_order_line_id.id, {'state':'draft'}, context)))
+                
+        return result
         
-
 sourcing_line()
 
 class sale_order(osv.osv):
     
     _inherit = 'sale.order'
     _description = 'Sales Order'
-    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),}
+    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),
+                }
     
     def create(self, cr, uid, vals, context=None):
         '''
         create from sale_order
         '''
         return super(sale_order, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        _inherit = 'sale.order'
+        
+        override to update sourcing_line :
+         - priority
+         - category
+         - order state
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+   
+        values = {}
+        if 'priority' in vals:
+            values.update({'priority': vals['priority']})
+        if 'categ' in vals:
+            values.update({'categ': vals['categ']})
+        if 'state' in vals:
+            values.update({'sale_order_state': vals['state']})
+        
+        # for each sale order
+        for so in self.browse(cr, uid, ids, context):
+            # for each sale order line
+            for sol in so.order_line:
+                # update the sourcing line
+                for sl in sol.sourcing_line_ids:
+                    self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
+        
+        return super(sale_order, self).write(cr, uid, ids, vals, context)
+        
     
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -270,7 +330,6 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
     _columns = {
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
-                #'supplier': fields.many2one('res.partner', 'Supplier'),
                 'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
                 }
@@ -323,6 +382,7 @@ class sale_order_line(osv.osv):
         # fill the default pocft and supplier
         vals.update({'po_cft': pocft})
         vals.update({'supplier': sellerId})
+        
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
 
@@ -331,6 +391,12 @@ class sale_order_line(osv.osv):
         estDeliveryDate = date.today()
         estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
         
+        # order state
+        order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
+        orderState = order.state
+        orderPriority = order.priority
+        orderCategory = order.categ
+        
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
@@ -338,7 +404,12 @@ class sale_order_line(osv.osv):
                   'po_cft': pocft,
                   'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
                   'rts': time.strftime('%Y-%m-%d'),
-                  'type': vals['type']
+                  'type': vals['type'],
+                  'line_number': vals['line_number'],
+                  'product_id': vals['product_id'],
+                  'priority': orderPriority,
+                  'categ': orderCategory,
+                  'sale_order_state': orderState,
                   }
         
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
@@ -371,19 +442,18 @@ class sale_order_line(osv.osv):
         '''
         _inherit = 'sale.order.line'
         
-        
-        override to update sourcing_linne :
+        override to update sourcing_line :
          - supplier
          - type
          - po_cft
-         
+         - product_id
         ''' 
         if not context:
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # update the corresponding sourcing line if not called from sourcing line updated
+        # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
             context['fromOrderLine'] = True
             values = {}
@@ -395,6 +465,8 @@ class sale_order_line(osv.osv):
                 values.update({'type': vals['type']})
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
+            if 'product_id' in vals:
+                values.update({'product_id': vals['product_id']})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):

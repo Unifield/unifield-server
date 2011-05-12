@@ -21,25 +21,22 @@
 
 
 {
-    "name" : "Sourcing Tool",
+    "name" : "Order Line Number",
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number"],
+    "depends" : ["sale", "purchase"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
-    Add sourcing specification
+    Add numbering to order lines
     """,
     'test': [
-             'test/sourcing.yml',
+             #'test/sourcing.yml',
              ],
     'update_xml': [
-        'security/ir.model.access.csv',
-        'sourcing_sequence.xml',
-        'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
+        #'security/ir.model.access.csv',
+        'order_line_number_view.xml',
     ],
     'installable': True,
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
