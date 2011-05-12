@@ -386,5 +386,5 @@
 -
   !python {model: procurement.list}: |
     for order in self.browse(cr, uid, ref('list3')).order_ids:
-      assert order.state == 'approved', "PO state isn't confirmed"
+      assert order.state == 'confirmed', "PO state isn't confirmed"
     
