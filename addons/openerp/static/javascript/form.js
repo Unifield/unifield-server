@@ -296,9 +296,11 @@ function onBooleanClicked(name){
  * readonly fields (default: excludes disabled fields and fields with
  * readonly="True"
  */
-function getFormData(extended, include_readonly) {
+function getFormData(extended, include_readonly, parentNode) {
 
-    var parentNode = openobject.dom.get('_terp_list') || document.forms['view_form'];
+    if (!parentNode) {
+        var parentNode = openobject.dom.get('_terp_list') || document.forms['view_form'];
+    }
 
     var frm = {};
 
@@ -464,7 +466,6 @@ function onChange(caller){
 
     var $caller = jQuery(openobject.dom.get(caller));
     var $form = $caller.closest('form');
-
     var callback = $caller.attr('callback');
     var change_default = $caller.attr('change_default');
 
@@ -482,7 +483,7 @@ function onChange(caller){
 
     var post_url = callback ? '/openerp/form/on_change' : '/openerp/form/change_default_get';
 
-    var form_data = getFormData(1, true);
+    var form_data = getFormData(1, true, $form);
     /* testing if the record is an empty record, if it does not contain anything except
      * an id, the on_change method is not called
      */
@@ -653,8 +654,10 @@ function onChange(caller){
                     case 'selection':
                         if (typeof(value)=='object') {
                             var opts = [OPTION({'value': ''})];
-                            opts.push(OPTION({'value': value[0], 'selected' : value[1] }, value[1]));
-                            MochiKit.DOM.replaceChildNodes(fld, map(function(x){return x;}, opts));
+                            for (var opt in value) {
+                                opts.push(OPTION({'value': value[opt][0]}, value[opt][1]));
+                            }
+                            MochiKit.DOM.replaceChildNodes(fld, opts);
                         }
                         else {
                             fld.value = value;
