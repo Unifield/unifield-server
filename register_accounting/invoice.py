@@ -92,7 +92,7 @@ class account_invoice(osv.osv):
         """
         for inv in self.browse(cr, uid, ids):
             if not inv.date_invoice:
-                raise osv.except_osv(_('No invoice date !'), _('No invoice date is set! Please set a date before approving the invoice.'))
+                raise osv.except_osv(_('No invoice date !'), _('Please indicate an invoice date before approving the invoice!'))
         return True
 
 account_invoice()
