@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number"],
+    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """

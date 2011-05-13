@@ -58,8 +58,9 @@
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
-					<field name="supplier" colspan="2" domain="[('product_id', '=', product_id)]"
-						context="{'sourcing-product_id':product_id}" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}" />
+					<field name="supplier" colspan="2" domain="[('product_product_ids', '=', product_id)]"
+						context="{'sourcing-product_id':product_id}" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
+						on_change="onChangeSupplier(supplier)" />
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Confirm line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" />
 					<!-- does not work. openerp bug ? <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('state', '!=', 'confirmed'), ('sale_order_state', '!=', 'draft')]}" />--> 
@@ -103,6 +104,7 @@
 			<field name="res_model">sourcing.line</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="domain">[('sale_order_state','!=','procurement')]</field>
 			<field name="search_view_id" ref="sourcing_line_search_form_view" />
 		</record>
 
