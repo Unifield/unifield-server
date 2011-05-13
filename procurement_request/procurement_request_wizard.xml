@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <wizard
+            id="wizard_request_to_order"
+            model="sale.order"
+            name="wizard_request_to_order"
+            keyword="client_action_relate"
+            string="Purchase Orders" />
+
+        <wizard
+            id="wizard_request_to_rfq"
+            model="sale.order"
+            name="wizard_request_to_rfq"
+            keyword="client_action_relate"
+            string="Requests for Quotation" />
+
+	</data>
+</openerp>
+
