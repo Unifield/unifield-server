@@ -21,10 +21,40 @@
 
 from osv import osv, fields
 from tools.translate import _
+import decimal_precision as dp
 
 class procurement_request(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
+    
+    def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Override the method to return 0.0 if the sale.order is a prcourement request
+        '''
+        res = {}
+        new_ids = []
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.procurement_request:
+                res[order.id] = {}
+                res[order.id]['amount_tax'] = 0.0
+                res[order.id]['amount_total'] = 0.0
+                res[order.id]['amount_untaxed'] = 0.0
+            else:
+                new_ids.append(order.id)
+                
+        res.update(super(procurement_request, self)._amount_all(cr, uid, new_ids, field_name, arg, context=context))
+        
+        return res
+    
+    #@@@ override sale.sale.orer._get_order
+    # Not modified method, but simply add here to fix an error on amount_total field
+    def _get_order(self, cr, uid, ids, context=None):
+        result = {}
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+            result[line.order_id.id] = True
+        return result.keys()
+    #@@@end override
     
     _columns = {
         'requestor': fields.char(size=128, string='Requestor'),
@@ -32,6 +62,8 @@ class procurement_request(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
         'notes': fields.text(string='Notes'),
+        'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
+                                      'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=False, change_default=True, select=True),
@@ -39,9 +71,28 @@ class procurement_request(osv.osv):
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="Shipping address for current sales order."),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=False, readonly=True, states={'draft': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'procurement': [('readonly', False)], 'draft': [('readonly', False)]}),
+        'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The amount without tax."),
+        'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The tax amount."),
+        'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The total amount."),
         'state': fields.selection([
             ('procurement', 'Internal Supply Requirement'),
-            ('proc_progress', 'In Progress'),
+            ('proc_progress', 'Waiting Sourcing'),
             ('proc_cancel', 'Cancelled'),
             ('proc_done', 'Done'),
             ('draft', 'Quotation'),
@@ -60,6 +111,20 @@ class procurement_request(osv.osv):
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
     }
+    
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+        '''
+        Adds automatically a domain to search only True sale orders if no procurement_request in context
+        '''
+        test = True
+        for a in args:
+            if a[0] == 'procurement_request':
+                test = False
+        
+        if not context.get('procurement_request', False) and test:
+            args.append(('procurement_request', '=', False))
+            
+        return super(procurement_request, self).search(cr, uid, args, offset, limit, order, context, count)
     
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -83,16 +148,41 @@ class procurement_request(osv.osv):
         
         return super(sale_order, self).copy(cr, uid, id, default, context=context)
     
+    def confirm_procurement(self, cr, uid, ids, context={}):
+        '''
+        Confirmed the request
+        '''
+        self.write(cr, uid, ids, {'state': 'proc_progress'})
+        
+        return True
+    
 procurement_request()
 
 class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
     _inherit= 'sale.order.line'
     
+    def _amount_line(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Override the method to return 0.0 if the line is a procurement request line
+        '''
+        res = {}
+        new_ids= []
+        for line in self.browse(cr, uid, ids):
+            if line.order_id.procurement_request:
+                res[line.id] = 0.0
+            else:
+                new_ids.append(line.id)
+                
+        res.update(super(procurement_request_line, self)._amount_line(cr, uid, new_ids, field_name, arg, context=context))
+        
+        return res
+    
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
+        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
     
     _defaults = {
@@ -108,10 +198,10 @@ class procurement_request_line(osv.osv):
 
         v = {}
         if not product_id:
-            v.update({'product_uom': False, 'supplier_id': False})
+            v.update({'product_uom': False, 'supplier_id': False, 'name': ''})
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'supplier_id': product.seller_id.id})
+            v.update({'product_uom': product.uom_id.id, 'supplier_id': product.seller_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
 
         return {'value': v}
     

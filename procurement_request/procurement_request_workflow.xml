@@ -15,7 +15,7 @@
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">procurement_confirm</field>
             <field name="kind">function</field>
-            <field name="action">write({'state': 'proc_progress')</field>
+            <field name="action">confirm_procurement()</field>
         </record>
         <record id="act_proc_cancel" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
@@ -41,22 +41,22 @@
             <field name="act_from" ref="act_procurement"/>
             <field name="act_to" ref="act_proc_confirm"/>
             <field name="condition">procurement_request==True</field>
-            <field name="signal">confirm_procurement</field>
+            <field name="signal">procurement_confirm</field>
         </record>
         <record id="trans_procurement_cancel" model="workflow.transition">
             <field name="act_from" ref="act_procurement"/>
             <field name="act_to" ref="act_proc_cancel"/>
-            <field name="signal">cancel_procurement</field>
+            <field name="signal">procurement_cancel</field>
         </record>
         <record id="trans_confirm_proc_cancel" model="workflow.transition">
             <field name="act_from" ref="act_proc_confirm"/>
             <field name="act_to" ref="act_proc_cancel"/>
-            <field name="signal">cancel_procurement</field>
+            <field name="signal">procurement_cancel</field>
         </record>
         <record id="trans_confirm_proc_done" model="workflow.transition">
             <field name="act_from" ref="act_proc_confirm"/>
             <field name="act_to" ref="act_proc_done"/>
-            <field name="signal">done_procurement</field>
+            <field name="signal">order_confirm</field>
         </record>
         
     

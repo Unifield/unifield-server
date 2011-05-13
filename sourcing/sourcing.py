@@ -52,6 +52,10 @@ class sourcing_line(osv.osv):
     
     
     _SELECTION_SALE_ORDER_STATE = [
+                                   ('procurement', 'Internal Supply Requirement'),
+                                   ('proc_progress', 'In Progress'),
+                                   ('proc_cancel', 'Cancelled'),
+                                   ('proc_done', 'Done'),
                                    ('draft', 'Quotation'),
                                    ('waiting_date', 'Waiting Schedule'),
                                    ('manual', 'Manual In Progress'),
