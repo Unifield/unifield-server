@@ -28,7 +28,7 @@
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
-                            <button name="button_create_invoice" states="open" string="Create Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                         </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
@@ -120,7 +120,7 @@
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
-                            <button name="button_create_invoice" states="open" string="Create Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                         </group>
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
@@ -463,7 +463,7 @@
                             context="context"/>
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                             context="context"/>
-                        <button name="button_create_invoice" states="open" string="Create Invoice" type="object" icon="terp-document-new" />
+                        <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                     </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>

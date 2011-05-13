@@ -33,6 +33,8 @@ from ..register_tools import open_register_view
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
     _inherit = 'account.invoice'
+    _description = 'Direct Invoice'
+
     _columns  = {
         'invoice_line': fields.one2many('wizard.account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False, 

@@ -26,7 +26,7 @@
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
                             <field name="check_total" readonly="1" invisible="1"/>
-                            <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': 
+                            <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1">
                                 <tree editable="bottom" string="Invoice lines">
@@ -48,8 +48,8 @@
                             <group col="4" colspan="4">
                                 <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
-                                    <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object"/>
-                                    <button name="invoice_cancel_wizard" string="Cancel Invoice" icon="gtk-cancel" type="object"/>
+                                    <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
+                                    <button name="invoice_cancel_wizard" string="Delete Invoice" icon="gtk-cancel" type="object"/>
                                     <button name="invoice_create_wizard" string="Approve" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
