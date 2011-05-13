@@ -188,7 +188,9 @@ class account_bank_statement(osv.osv):
         currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
         if isinstance(currency, tuple):
             currency =currency[0]
-        id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'})
+        id = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
+        if not id:
+            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
             'name': "Supplier Invoice",
             'type': 'ir.actions.act_window',

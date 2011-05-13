@@ -1,67 +1,51 @@
 -
-  In order to test direct invoice creation, I create a register line in the CashBox with "Direct Invoice?" tick in then I hard post this line.
+  I click on create invoice and check journal_id on currency are ok
 -
-  I create a register line in the cashbox with "Direct Invoice?" tick in
+  !python {model: account.bank.statement}: |
+    bk = self.browse(cr, uid, ref('account_bank_statement_8'))
+    ret = self.button_create_invoice(cr, uid, [ref('account_bank_statement_8')])
+    inv_id = ret['res_id']
+    inv_wiz = self.pool.get('wizard.account.invoice').browse(cr, uid, inv_id)
+    assert inv_wiz.currency_id.id == bk.currency.id, "New direct invoice: wrong currency"
+    assert inv_wiz.journal_id.type == 'purchase', "New direct invoice: wrong journal_type"
+    assert inv_wiz.type == 'in_invoice', "New direct invoice: wrong type"
 -
-  !record {model: account.bank.statement.line, id: account_bank_statement_line3}:
-    statement_id: account_bank_statement_8
-    account_id: account_account_payable_supplier0
-    amount: -50.00
-    date: !eval time.strftime('%Y-04-%d')
-    name: Phone Bill
+  I create a new invoice
+-
+  !record {model: wizard.account.invoice, id: new_direct_inv}: 
     partner_id: res_partner_supplier_0
-    sequence: 0.0
-    type: general
-    direct_invoice: 1
+    address_invoice_id: res_partner_address_tempo
+    account_id: account_account_payable_supplier0
+    invoice_line:
+        - account_id: account_account_expense0
+          name: XXX
+          price_unit: 200
+          product_id: product_food_for_staff0
+          quantity: 1.0
+          uos_id: product.product_uom_unit
+    type: 'in_invoice'
+    currency_id: base.EUR
+    register_id: account_bank_statement_8
+
 -
-  I hard post this line
+  I validate this invoice and check reconcilation
 -
-  !python {model: account.bank.statement.line}: |
-    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line3")], context={})
--
-  I check that an invoice is attached
--
-  !assert {model: account.bank.statement.line, id: account_bank_statement_line3}:
-    - invoice_id != False
--
-  In order to test direct invoice I add some lines into invoice then I approve it and check that the register line and resulted move line from invoice are reconciled
--
-  I add a line into invoice
--
-  !python {model: account.invoice}: |
-    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
-    invoice_id = reg_line.invoice_id.id
-    inv_line_obj = self.pool.get('account.invoice.line')
-    inv_line_obj.create(cr, uid, {'name': 'Spent time', 'invoice_id': invoice_id, 'account_id': ref("account_account_expense0"), 'price_unit': 1.00, 'quantity': 50})
--
-  I approve the invoice by opening it
--
-  !python {model: account.invoice}: |
-    import netsvc
-    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
-    wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'account.invoice', reg_line.invoice_id.id, 'invoice_open', cr)
--
-  I check that invoice have a move and verify that one of move lines is reconciled. Then I check that the reconciled is linked to the register line
--
-  !python {model: account.invoice}: |
-    # Fetch register line
-    reg_line = self.pool.get('account.bank.statement.line').browse(cr, uid, ref("account_bank_statement_line3"))
-    # Fetch invoice
-    invoice_id = reg_line.invoice_id
-    # Verify mode id from invoice and register
-    inv_move = self.browse(cr, uid, invoice_id.id).move_id
-    assert inv_move != False, "No move id found for invoice"
-    assert reg_line.move_ids != False, "No move id found for register line"
-    # Prepare some elements
-    move_line_obj = self.pool.get('account.move.line')
-    reconcile_obj = self.pool.get('account.')
-    total = 0
-    for ml in inv_move.line_id:
-        if ml.reconcile_id:
-            total += 1
-            reconcile_id = ml.reconcile_id.id
-    assert total > 0, "No reconciliation in invoice move"
-    # Search reconcile id from move line that become from the register line
-    res_ids = move_line_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('reconcile_id', '=', reconcile_id)])
-    assert res_ids != False, "No move line that becomes from the register line is reconciled!"
+ !python {model: wizard.account.invoice}: |
+    self.invoice_create_wizard(cr, uid, [ref('new_direct_inv')])
+    st = self.pool.get('account.bank.statement').browse(cr, uid, ref('account_bank_statement_8'))
+    line_id = max(st.line_ids, key=lambda a:a.id)
+    assert line_id.direct_invoice, "Direct Invoice: statement not direct"
+    inv = line_id.invoice_id
+    assert inv.state == 'paid', "Direct invoice not paid"
+    assert inv.reconciled, "Direct invoice not reconciled"
+    assert line_id.state == 'hard', 'Direct Invoice: statement line not hard posted'
+    rec = False
+    # Find the account move line reconciled
+    rec_line = filter(lambda a:a.reconcile_id, line_id.move_ids[0].line_id)
+
+    # Check this line is reconciled with the invoice
+    for move_rec in rec_line[0].reconcile_id.line_id:
+        if move_rec.invoice and move_rec.invoice.id == inv.id:
+            rec = True
+            break
+    assert rec, "Direct Invoice: st move line not reconciled with invoice move line"

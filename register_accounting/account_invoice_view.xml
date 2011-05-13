@@ -10,7 +10,6 @@
             <field name="priority">200</field>
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
-                    <group col="8" colspan="4">
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
                         <field name="number" readonly="1" invisible="1"/>
                         <field name="type" invisible="1"/>
@@ -21,15 +20,11 @@
                         <newline/>
                         <field name="date_invoice" required="1"/>
                         <field name="register_posting_date" />
-                        <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection" readonly="1" 
-                            string="Posting Period"/>
-                    </group>
+                        <field name="state" invisible="1" />
+                        <field name="amount_total"/>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
-                            <field name="reference_type" nolabel="1" size="0"/>
-                            <field name="reference" nolabel="1"/>
-                            <field name="date_due"/>
                             <field name="check_total" readonly="1" invisible="1"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
@@ -51,11 +46,11 @@
                                 </tree>
                             </field>
                             <group col="4" colspan="4">
-                                <field name="reconciled"/>
-                                <field name="state"/>
+                                <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
-                                    <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel Invoice" icon="gtk-cancel"/>
-                                    <button name="invoice_create_wizard" states="draft,proforma2" string="Approve" icon="terp-camera_test" type="object"/>
+                                    <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object"/>
+                                    <button name="invoice_cancel_wizard" string="Cancel Invoice" icon="gtk-cancel" type="object"/>
+                                    <button name="invoice_create_wizard" string="Approve" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
                         </page>
@@ -133,7 +128,6 @@
                                     <field invisible="True" name="uos_id"/>
                                 </tree>
                             </field>
-                            <button string="Compute" name="refresh_wizard_direct_invoice" type="object" icon='gtk-execute' colspan="4"/>
                             <group col="4" colspan="4">
                                 <field name="reconciled"/>
                                 <field name="amount_total"/>

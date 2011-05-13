@@ -28,6 +28,7 @@ from datetime import datetime
 import decimal_precision as dp
 import time
 import netsvc
+from ..register_tools import open_register_view
 
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
@@ -43,12 +44,30 @@ class wizard_account_invoice(osv.osv):
         'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
         'reconciled' : fields.boolean('Reconciled'),
         'residual': fields.float('Residual', digits_compute=dp.get_precision('Account')),
+        'amount_total': fields.float('Total', digits_compute=dp.get_precision('Account'), readonly=True),
         'register_posting_date': fields.date(string="Register posting date", required=True),
     }
     _defaults = {
         'currency_id': lambda cr, uid, ids, c: c.get('currency'),
         'register_posting_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'date_invoice': lambda *a: time.strftime('%Y-%m-%d'),
     }
+
+    def compute_wizard(self, cr, uid, ids, context={}):
+        for wiz_inv in self.browse(cr, uid, ids):
+            amount = 0
+            for line in wiz_inv.invoice_line:
+                amount += line.price_subtotal
+            self.write(cr, uid, [wiz_inv.id], {'amount_total': amount})
+        return True
+
+    def invoice_reset_wizard(self, cr, uid, ids, context={}):
+        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 'partner_id': False, 'address_invoice_id': False, 'account_id': False})
+        return True
+
+    def invoice_cancel_wizard(self, cr, uid, ids, context={}):
+        self.unlink(cr, uid, ids)
+        return {}
 
     def invoice_create_wizard(self, cr, uid, ids, context={}):
         """
@@ -70,7 +89,6 @@ class wizard_account_invoice(osv.osv):
             amount = 0
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
                 ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id']):
-                print line['account_id']
                 vals['invoice_line'].append( (0, 0,
                     {
                         'product_id': line['product_id'] and line['product_id'][0] or False,
@@ -101,7 +119,7 @@ class wizard_account_invoice(osv.osv):
         inv_number = inv_obj.read(cr, uid, inv_id, ['number'])['number']
         
         # Create the attached register line and link the invoice to the register
-        reg_id = absl_obj.create(cr, uid, {
+        reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
             'currency_id': vals['currency_id'],
             'date': time.strftime('%Y-%m-%d'),
@@ -114,10 +132,10 @@ class wizard_account_invoice(osv.osv):
         })
         
         # Hard post the line
-        absl_obj.button_hard_posting(cr, uid, [reg_id], context=context)
+        absl_obj.button_hard_posting(cr, uid, [reg_line_id], context=context)
         
         # Link invoice and register_line
-        res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_id)]}, context=context)
+        res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
         
         # Do reconciliation
         inv_obj.action_reconcile_direct_invoice(cr, uid, [inv_id], context=context)
@@ -126,34 +144,7 @@ class wizard_account_invoice(osv.osv):
         # TODO: correct this to work
         self.unlink(cr, uid, ids, context=context)
 
-        # TODO: to be factorized
-        st_type = self.pool.get('account.bank.statement').browse(cr, uid, inv['register_id'][0]).journal_id.type
-        module = 'account'
-        mod_action = 'action_view_bank_statement_tree'
-        mod_obj = self.pool.get('ir.model.data')
-        act_obj = self.pool.get('ir.actions.act_window')
-        if st_type:
-            if st_type == 'cash':
-                mod_action = 'action_view_bank_statement_tree'
-            elif st_type == 'bank':
-                mod_action = 'action_bank_statement_tree'
-            elif st_type == 'cheque':
-                mod_action = 'action_cheque_register_tree'
-                module = 'register_accounting'
-        result = mod_obj._get_id(cr, uid, module, mod_action)
-        id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
-        result = act_obj.read(cr, uid, [id], context=context)[0]
-        result['res_id'] = inv['register_id'][0]
-        result['view_mode'] = 'form,tree,graph'
-        views_id = {}
-        for (num, typeview) in result['views']:
-            views_id[typeview] = num
-        result['views'] = []
-        for typeview in ['form','tree','graph']:
-            if views_id.get(typeview):
-                result['views'].append((views_id[typeview], typeview))
-        result['target'] = 'crush'
-        return result
+        return open_register_view(self, cr, uid,inv['register_id'][0])
 
 wizard_account_invoice()
 

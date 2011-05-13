@@ -73,4 +73,33 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             cr.execute(sql)
     return True
 
+def open_register_view(self, cr, uid, register_id, context={}): 
+    st_type = self.pool.get('account.bank.statement').browse(cr, uid, register_id).journal_id.type
+    module = 'account'
+    mod_action = 'action_view_bank_statement_tree'
+    mod_obj = self.pool.get('ir.model.data')
+    act_obj = self.pool.get('ir.actions.act_window')
+    if st_type:
+        if st_type == 'cash':
+            mod_action = 'action_view_bank_statement_tree'
+        elif st_type == 'bank':
+            mod_action = 'action_bank_statement_tree'
+        elif st_type == 'cheque':
+            mod_action = 'action_cheque_register_tree'
+            module = 'register_accounting'
+    result = mod_obj._get_id(cr, uid, module, mod_action)
+    id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
+    result = act_obj.read(cr, uid, [id], context=context)[0]
+    result['res_id'] = register_id
+    result['view_mode'] = 'form,tree,graph'
+    views_id = {}
+    for (num, typeview) in result['views']:
+        views_id[typeview] = num
+    result['views'] = []
+    for typeview in ['form','tree','graph']:
+        if views_id.get(typeview):
+            result['views'].append((views_id[typeview], typeview))
+    result['target'] = 'crush'
+    return result
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
