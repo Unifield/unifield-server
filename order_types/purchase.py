@@ -50,8 +50,8 @@ class purchase_order(osv.osv):
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for purchase in self.browse(cursor, user, ids, context=context):
-            if (purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
-                purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            if purchase.state != 'draft' and ((purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+                purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = 100.0
             else:
                 tot = 0.0
