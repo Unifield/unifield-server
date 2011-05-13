@@ -34,7 +34,7 @@ class wizard_account_invoice(osv.osv):
     _inherit = 'account.invoice'
     _columns  = {
         'invoice_line': fields.one2many('wizard.account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
-        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False, states={'draft':[('readonly',False)]}),
+        'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False, states={'draft':[('readonly',False)]}, domain=[('supplier','=',True)]),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft':[('readonly',False)]}),
         'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]}, help="The partner account used for this invoice."),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True),
