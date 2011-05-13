@@ -172,6 +172,26 @@ class product_nomenclature(osv.osv):
 
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
+    
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the number of products for the nomenclature
+        '''
+        res = {}
+        
+        for nomen in self.browse(cr, uid, ids, context=context):
+            name = ''
+            if nomen.type == 'mandatory':
+                name = 'nomen_manda_%s'%nomen.level
+            if nomen.type == 'optional':
+                name = 'nomen_sub_%s'%nomen.sub_level
+            products = self.pool.get('product.product').search(cr, uid, [(name, '=', nomen.id)], context=context)
+            if not products:
+                res[nomen.id] = 0
+            else:
+                res[nomen.id] = len(products)
+            
+        return res
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
@@ -188,6 +208,7 @@ class product_nomenclature(osv.osv):
         'type': fields.selection([('mandatory','Mandatory'), ('optional','Optional')], 'Nomenclature Type'),
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
+        'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
     }
 
     _defaults = {
