@@ -28,6 +28,7 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [
+        "data.xml",
     ],
     "depends" : [
         "msf_partner",
