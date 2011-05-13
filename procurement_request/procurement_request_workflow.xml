@@ -4,6 +4,8 @@
     
         <record id="sale.act_draft" model="workflow.activity">
             <field name="flow_start" eval="False" />
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'draft'})</field>
         </record>
         
         <record id="act_procurement" model="workflow.activity">
@@ -29,7 +31,7 @@
             <field name="flow_stop">True</field>
             <field name="name">procurement_done</field>
             <field name="kind">function</field>
-            <field name="action">write({'state': 'proc_done')</field>
+            <field name="action">procurement_done()</field>
         </record>
         
         <record id="trans_proc_draft" model="workflow.transition">

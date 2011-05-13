@@ -59,6 +59,7 @@
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="procurement,proc_progress" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm Request" states="procurement" />
+                                <button name="order_confirm" icon="gtk-execute" string="Close Request" states="proc_progress" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">

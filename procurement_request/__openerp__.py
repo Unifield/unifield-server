@@ -22,7 +22,7 @@
 {
     "name": "Procurement Request",
     "version": "1.0",
-    "depends": ["base", "sale"],
+    "depends": ["base", "sale", "sale_override"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchases",

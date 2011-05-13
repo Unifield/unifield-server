@@ -133,11 +133,11 @@ class procurement_request(osv.osv):
             
         seq_obj = self.pool.get('ir.sequence')
         order = self.browse(cr, uid, id)
-        name = (order.procurement_request or context.get('procurement.request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
-        proc = order.procurement_request or context.get('procurement.request', False)
+        name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
+        proc = order.procurement_request or context.get('procurement_request', False)
             
         default.update({
-            'state': 'draft',
+            'state': 'procurement',
             'shipped': False,
             'invoice_ids': [],
             'picking_ids': [],
@@ -146,13 +146,22 @@ class procurement_request(osv.osv):
             'procurement_request': proc,
         })
         
-        return super(sale_order, self).copy(cr, uid, id, default, context=context)
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
     
     def confirm_procurement(self, cr, uid, ids, context={}):
         '''
         Confirmed the request
         '''
         self.write(cr, uid, ids, {'state': 'proc_progress'})
+        
+        return True
+    
+    def procurement_done(self, cr, uid, ids, context={}):
+        '''
+        Creates all procurement orders according to lines
+        '''
+        self.action_ship_create(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state': 'proc_done'})
         
         return True
     
