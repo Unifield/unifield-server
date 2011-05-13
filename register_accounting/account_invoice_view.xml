@@ -12,14 +12,15 @@
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
-                        <field name="number" readonly="1"/>
+                        <field name="number" readonly="1" invisible="1"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
                         <newline/>
                         <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
-                        <field name="date_invoice" readonly="1"/>
+                        <field name="date_invoice" required="1"/>
+                        <field name="register_posting_date" />
                         <field name="period_id" domain="[('state', '=', 'draft')]" groups="account.group_account_user" widget="selection" readonly="1" 
                             string="Posting Period"/>
                     </group>
@@ -29,6 +30,7 @@
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="date_due"/>
+                            <field name="check_total" readonly="1" invisible="1"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1">
@@ -50,9 +52,7 @@
                             </field>
                             <group col="4" colspan="4">
                                 <field name="reconciled"/>
-                                <field name="amount_total"/>
                                 <field name="state"/>
-                                <field name="residual"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel Invoice" icon="gtk-cancel"/>
                                     <button name="invoice_create_wizard" states="draft,proforma2" string="Approve" icon="terp-camera_test" type="object"/>
@@ -112,7 +112,7 @@
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="date_due"/>
-                            <field name="check_total" required="2" readonly="1"/>
+                            <field name="check_total" required="1" readonly="1"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': 
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" 
                                 name="invoice_line" nolabel="1">
