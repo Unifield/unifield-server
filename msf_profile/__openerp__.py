@@ -56,6 +56,7 @@
         "procurement_report",
     ],
     "update_xml": [
+        "report.xml",
     ],
     "demo_xml": [
     ],
