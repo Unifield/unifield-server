@@ -94,10 +94,15 @@ class modeloverview(report_sxw.rml_parse):
 
 
     def getdefault(self, model, field):
-        dflt = self.pool.get(model)._defaults.get(field)
+        dflt = self.pool.get(model)._defaults.get(field.name)
         if not dflt:
             return False
-        return self.getcall(dflt, self.pool.get(model))
+        if field.ttype == 'binary':
+            return '...'
+        value = self.getcall(dflt, self.pool.get(model))
+        if field.ttype == 'text' and value and len(value) > 100:
+            return value[0:100]+'...'
+        return value
 
 
     def gethelp(self,model,field):
