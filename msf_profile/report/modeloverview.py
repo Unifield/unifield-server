@@ -25,9 +25,17 @@ class modeloverview(report_sxw.rml_parse):
             'makeselcomment': self.makeselcomment,
             'is_inherits': self.is_inherits,
             'get_inherits': self.get_inherits,
+            "set_bold": self.set_bold,
         })
         self.num = 4
         self.modulepos = {}
+
+    def set_bold(self, field):
+        tag = "{urn:oasis:names:tc:opendocument:xmlns:text:1.0}"
+        if not field.required:
+            return ('%sspan'%tag,{})
+        return ('%sspan'%tag,{'%sstyle-name'%tag: 'parabold'})
+
 
     def setlinkname(self, name):
         tag = "{urn:oasis:names:tc:opendocument:xmlns:text:1.0}"
