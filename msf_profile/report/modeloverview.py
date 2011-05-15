@@ -23,6 +23,8 @@ class modeloverview(report_sxw.rml_parse):
             'setlinkname': self.setlinkname,
             'makelink': self.makelink,
             'makeselcomment': self.makeselcomment,
+            'is_inherits': self.is_inherits,
+            'get_inherits': self.get_inherits,
         })
         self.num = 4
         self.modulepos = {}
@@ -96,7 +98,19 @@ class modeloverview(report_sxw.rml_parse):
             ret.append(m['name'])
         self.num += len(ret)
         return ret
-    
+   
+    def is_inherits(self,obj):
+        modobj = self.pool.get(obj)
+        return hasattr(modobj, '_inherits') and modobj._inherits
+
+    def get_inherits(self,obj):
+        modobj = self.pool.get(obj)
+        if not hasattr(modobj, '_inherits') or not modobj._inherits:
+            return []
+        ret = modobj._inherits.items()
+        self.num += len(ret)+1
+        return ret
+            
     def has_constraints(self, obj):
         modobj = self.pool.get(obj)
         if not hasattr(modobj, '_constraints') or not modobj._constraints:
