@@ -19,12 +19,10 @@ class modeloverview(report_sxw.rml_parse):
             'gethelp': self.gethelp,
             'getdefault': self.getdefault,
             'isfun': self.isfun,
-            'allselection': self.allselection,
-            'updatetag': self.updatetag,
-            'set_sel': self.set_sel,
             'getsortedfields': self.getsortedfields,
             'setlinkname': self.setlinkname,
             'makelink': self.makelink,
+            'makeselcomment': self.makeselcomment,
         })
         self.num = 4
         self.modulepos = {}
@@ -54,34 +52,16 @@ class modeloverview(report_sxw.rml_parse):
 
         return sorted(fields, cmp=lambda x,y: cmp(x.name, y.name))
 
-    def set_sel(self, field):
-        tag = "{urn:oasis:names:tc:opendocument:xmlns:table:1.0}"
-        if not field.ttype == 'selection':
-            return ('%stable-cell'%tag,{})
-        return ('%stable-cell'%tag,{'%scontent-validation-name'%tag: 'num-%s-%s'%(field.model_id.id, field.id) })
-
-
-    def updatetag(self, sel):
-        tag = "{urn:oasis:names:tc:opendocument:xmlns:table:1.0}"
-        selection = []
-        col = self.pool.get(sel.model_id.model)._columns.get(sel.name)
-        selec = self.getcall(col.selection, self.pool.get(sel.model_id.model))
+    def makeselcomment(self, field):
+        if field.ttype not in ('selection', 'reference'):
+            return []
+        ret = []
+        col = self.pool.get(field.model_id.model)._columns.get(field.name)
+        selec = self.getcall(col.selection, self.pool.get(field.model_id.model))
         if selec == "??":
             selec=[('??','??')]
         for elem in selec:
-            selection.append('"%s -> %s"'%(tools.ustr(elem[0]), tools.ustr(elem[1])))
-        return ('%scontent-validation'%tag, {
-                        '%sname'%tag: 'num-%s-%s'%(sel.model_id.id,sel.id),
-                        '%scondition'%tag: 'oooc:cell-content-is-in-list(%s)'%(";".join(selection))
-                    }
-                )
-
-    def allselection(self, objs):
-        ret = []
-        for obj in objs:
-            for field in obj.field_id:
-                if field.ttype == 'selection':
-                    ret.append(field)
+            ret.append(u"%s → %s"%(tools.ustr(elem[0]), tools.ustr(elem[1])))
         return ret
 
     def isfun(self, model, field):
