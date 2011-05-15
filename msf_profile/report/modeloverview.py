@@ -80,9 +80,17 @@ class modeloverview(report_sxw.rml_parse):
             return False
         if isinstance(obj_col, fields.related):
             return "related"
+        attr = []
         if obj_col._fnct_search:
-            return "function with search"
-        return "function"
+            attr.append("with search")
+        if obj_col.store:
+            if isinstance(obj_col.store, dict):
+                attr.append("store=trigger")
+            else:
+                attr.append("store=True")
+        if obj_col._fnct_inv:
+            attr.append("with fnct_inv")
+        return "function %s"%(", ".join(attr), )
 
 
     def getdefault(self, model, field):
