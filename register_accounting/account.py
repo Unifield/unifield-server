@@ -64,18 +64,15 @@ class account_move(osv.osv):
             line_ids = []
             res[move.id] = False
             move_line_obj = self.pool.get('account.move.line')
-            if move.partner_id:
-                res[move.id] = 'res.partner,%s' % move.partner_id.id
-            else:
-                prev = None
-                for move_line in move.line_id:
-                    if prev is None:
-                        prev = move_line.third_parties
-                    elif prev != move_line.third_parties:
-                        prev = False
-                        break
-                if prev:
-                    res[move.id] = "%s,%s"%(prev._table_name, prev.id)
+            prev = None
+            for move_line in move.line_id:
+                if prev is None:
+                    prev = move_line.third_parties
+                elif prev != move_line.third_parties:
+                    prev = False
+                    break
+            if prev:
+                res[move.id] = "%s,%s"%(prev._table_name, prev.id)
         return res
 
     _columns = {
