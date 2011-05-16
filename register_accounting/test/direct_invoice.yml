@@ -25,8 +25,8 @@
           uos_id: product.product_uom_unit
     type: 'in_invoice'
     currency_id: base.EUR
+    journal_id: account_journal_cash_0
     register_id: account_bank_statement_8
-
 -
   I validate this invoice and check reconcilation
 -
