@@ -178,7 +178,7 @@ class wizard_cash_return(osv.osv_memory):
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, debit, round=False, context=context)
                 new_debit = abs(new_amount)
             else:
-                amount_currency = credit
+                amount_currency = -credit
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, credit, round=False, context=context)
                 new_credit = abs(new_amount)
 
@@ -554,7 +554,7 @@ class wizard_cash_return(osv.osv_memory):
                         supp_move_line_credit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, context=context)
                         # We hard post the move
-                        supp_res_id = move_obj.write(cr, uid, [supp_move_id], {'state': 'posted'}, context=context)
+                        supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)
                         # Verify that the posting has succeed
                         if supp_move_id == False:
                             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
