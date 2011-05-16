@@ -180,6 +180,34 @@ class account_bank_statement(osv.osv):
         return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
 
+    def button_create_invoice(self, cr, uid, ids, context={}):
+        """
+        Create a direct invoice
+        """
+        # Search the customized view we made for Supplier Invoice (for * Register's users)
+        currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
+        if isinstance(currency, tuple):
+            currency =currency[0]
+        id = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
+        if not id:
+            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, context={'journal_type': 'purchase', 'type': 'in_invoice'})
+        return {
+            'name': "Supplier Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.account.invoice',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': id,
+            'context':
+            {
+                'active_id': ids[0],
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                'active_ids': ids,
+            }
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):

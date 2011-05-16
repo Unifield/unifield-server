@@ -3,7 +3,7 @@
 -
   I create a Cash Register with Opening and Closing balance 1000.
 -
- !record {model: account.bank.statement, id: account_bank_statement_8}:
+ !record {model: account.bank.statement, id: account_bank_statement_81}:
     date: !eval time.strftime('%Y-04-20')
     journal_id: account_journal_cash_0
     name: 
@@ -19,13 +19,13 @@
   I clicked on Open CashBox button to open the cashbox
 -
  !python {model: account.bank.statement}: |
-    self.button_open_cash(cr, uid, [ref("account_bank_statement_8")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
-        "active_ids": [ref("account_bank_statement_8")], "active_id": ref("account_bank_statement_8"), })
+    self.button_open_cash(cr, uid, [ref("account_bank_statement_81")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("account_bank_statement_81")], "active_id": ref("account_bank_statement_81"), })
 -
   I register a direct expense with the supplier "Local Miscellaneous" who's attached to a reconciliable 401 account.
 -
   !record {model: account.bank.statement.line, id: account_bank_statement_line2}:
-    statement_id: account_bank_statement_8
+    statement_id: account_bank_statement_81
     account_id: account_account_expense0
     amount: -238.41
     date: !eval time.strftime('%Y-04-20')
