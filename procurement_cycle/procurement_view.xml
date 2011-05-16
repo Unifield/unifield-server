@@ -46,9 +46,9 @@
                         <label />
                         <newline />
                         <group colspan="6" col="6">
-	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, 'past')" />
-	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, 'review')" />
-	                        <field name="manual_consumption" attrs="{'invisible': [('product_id', '=', False)]}"/>
+	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'past')" />
+	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'review')" />
+	                        <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'manual')" attrs="{'invisible': [('product_id', '=', False)]}"/>
                         </group>
                     </group>
                     <group colspan="4" col="4" attrs="{'invisible': [('product_id', '!=', False)]}">

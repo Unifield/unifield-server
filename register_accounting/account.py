@@ -24,23 +24,6 @@
 from osv import osv
 from osv import fields
 
-class account_journal(osv.osv):
-    _name = "account.journal"
-    _inherit = "account.journal"
-
-    _columns = {
-        'type': fields.selection([('sale', 'Sale'),('sale_refund','Sale Refund'), ('purchase', 'Purchase'), ('purchase_refund','Purchase Refund'), \
-            ('cash', 'Cash'), ('bank', 'Bank and Cheques'), ('general', 'General'), ('cheque', 'Cheque'), \
-            ('situation', 'Opening/Closing Situation')], 'Type', size=32, required=True,
-             help="Select 'Sale' for Sale journal to be used at the time of making invoice."\
-             " Select 'Purchase' for Purchase Journal to be used at the time of approving purchase order."\
-             " Select 'Cash' to be used at the time of making payment."\
-             " Select 'General' for miscellaneous operations."\
-             " Select 'Opening/Closing Situation' to be used at the time of new fiscal year creation or end of year entries generation."),
-        }
-
-account_journal()
-
 class account_account(osv.osv):
     _name = "account.account"
     _inherit = "account.account"
@@ -70,9 +53,31 @@ class account_move(osv.osv):
     _name = "account.move"
     _inherit = "account.move"
 
+    def _get_third_parties_from_move_line(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Give the third parties of the given account.move.
+        If all move lines content the same third parties, then return this third parties.
+        If a partner_id field is filled in, then comparing both.
+        """
+        res = {}
+        for move in self.browse(cr, uid, ids, context=context):
+            line_ids = []
+            res[move.id] = False
+            move_line_obj = self.pool.get('account.move.line')
+            prev = None
+            for move_line in move.line_id:
+                if prev is None:
+                    prev = move_line.third_parties
+                elif prev != move_line.third_parties:
+                    prev = False
+                    break
+            if prev:
+                res[move.id] = "%s,%s"%(prev._table_name, prev.id)
+        return res
+
     _columns = {
-        'partner_type': fields.reference(string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128, readonly="1"),
+        'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
+            ('res.partner', 'Partner')], size=128, readonly="1", type="reference", method=True),
     }
 
 account_move()

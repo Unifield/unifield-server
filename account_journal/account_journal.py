@@ -26,16 +26,16 @@ class account_journal(osv.osv):
     _inherit = "account.journal"
     
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank Journal'), \
-                ('cash','Cash Journal'), \
-                ('purchase', 'Purchase Journal'), \
-                ('correction','Correction Journal'), \
-                ('cheque', 'Cheque Journal'), \
-                ('hq', 'HQ Journal'), \
-                ('hr', 'HR Journal'), \
-                ('accrual', 'Accrual Journal'), \
-                ('stock', 'Stock Journal'), \
-                ('depreciation', 'Depreciation Journal'), \
+        return [('bank', 'Bank'), \
+                ('cash','Cash'), \
+                ('purchase', 'Purchase'), \
+                ('correction','Correction'), \
+                ('cheque', 'Cheque'), \
+                ('hq', 'HQ'), \
+                ('hr', 'HR'), \
+                ('accrual', 'Accrual'), \
+                ('stock', 'Stock'), \
+                ('depreciation', 'Depreciation'), \
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
                 ('sale', 'Sale'), \
@@ -45,9 +45,9 @@ class account_journal(osv.osv):
                 ('situation', 'Opening/Closing Situation')]
     
     _columns = {
-        'currency': fields.many2one('res.currency', 'Currency', help='The currency used to enter statement', required=True),
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
         'instance_id': fields.char('Proprietary instance', size=32, required=True),
+        'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
     }
 
     _defaults = {
@@ -57,7 +57,6 @@ class account_journal(osv.osv):
         'update_posted': True,
         'group_invoice_lines': False,
         'instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.name,
-        'currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
     
     def get_current_period(self, cr, uid, context=None):

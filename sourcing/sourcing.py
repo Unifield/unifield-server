@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    MSF 2011
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -29,13 +29,12 @@ import netsvc
 import pooler
 import time
 
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
                      ('cft', 'Call for Tender'),
                      ]
-
-
 
 class sourcing_line(osv.osv):
     '''
@@ -44,12 +43,10 @@ class sourcing_line(osv.osv):
     sourcing lines are generated when a Sale Order is created
     (overriding of create method of sale_order)
     '''
-    
     _SELECTION_TYPE = [
                        ('make_to_stock', 'from stock'),
                        ('make_to_order', 'on order'),
                        ]
-    
     
     _SELECTION_SALE_ORDER_STATE = [
                                    ('draft', 'Quotation'),
@@ -62,7 +59,6 @@ class sourcing_line(osv.osv):
                                    ('cancel', 'Cancelled'),
                                    ]
     
-    
     _SELECTION_SALE_ORDER_LINE_STATE = [
                                         ('draft', 'Draft'),
                                         ('confirmed', 'Confirmed'),
@@ -71,41 +67,27 @@ class sourcing_line(osv.osv):
                                         ('exception', 'Exception'),
                                         ]
     
-    def _saveRelatedFields(self, cr, uid, ids, name, value, arg, context=None):
+    def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
-        function saving related data
-        
-        **NOTE** not used, saving done in write method
+        get virtual stock (virtual_available) for the product of the corresponding sourcing line
+        where date of stock.move is smaller than or equal to rts
         '''
-        for sourcingLine in self.browse(cr, uid, ids, context=context):
-            # corresponding sale order line
-            solId = sourcingLine.sale_order_line_id.id
-            self.pool.get('sale.order.line').write(cr, uid, solId, {name: value}, context=context)
-        
-        return True
-    
-    
-    def _getCorrespondingSourcingLines(self, cr, uid, ids, context=None):
-        '''
-        Where ids will be the ids of records in the other object’s table
-        that have changed values in the watched fields. The function should
-        return a list of ids of records in its own table that should have the
-        field recalculated. That list will be sent as a parameter for the main
-        function of the field.
-        '''
-        result = []
-        for sol in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
-            result.extend(map(lambda x: x.id, sol.sourcing_line_ids))
+        result = {}
+        productObj = self.pool.get('product.product')
+        # for each sourcing line
+        for sl in self.browse(cr, uid, ids, context):
+            rts = sl.rts
+            productId = sl.product_id.id
+            if productId:
+                productList = [productId]
+            else:
+                productList = []
+            res = productObj.get_product_available(cr, uid, productList, context={'states': ('confirmed','waiting','assigned','done'),
+                                                                                  'what': ('in', 'out'),
+                                                                                  'to_date': rts})
+            result[sl.id] = res.get(productId, 0.0)
             
         return result
-    
-    
-    def _getProductid(self, cr, uid, ids, name, arg, context):
-        '''
-        
-        '''
-        self.read()
-        
     
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
@@ -116,72 +98,86 @@ class sourcing_line(osv.osv):
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
         'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
-        # priority -> will be changed to related wm order type
-        'priority': fields.char(string='Priority', size=128, readonly=True),
-        # category -> will be changed to related wm order type
-        'category': fields.char(string='Category', size=128, readonly=True),
-        'sale_order_state': fields.related('sale_order_id', 'state', string="Order State", type="selection", selection=_SELECTION_SALE_ORDER_STATE, readonly=True, store=False),
-        # line number -> will be changed to related
-        'sale_order_line_number': fields.char(string='Line', size=128, readonly=True),
-        'product_id': fields.related('sale_order_line_id', 'product_id', relation='product.product', type='many2one', string='Product', readonly=True),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
+        'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        'line_number': fields.integer(string='Line', readonly=True),
+        'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        'rts': fields.date(string='RTS', readonly=True),
+        'rts': fields.related('sale_order_id', 'delivery_requested_date', type='date', string='RTS', readonly=True),
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
-        # procurement method
-        # if type changes in sale.order.line, we gather the corresponding sourcing.line ids to be updated which is passed to _getRelatedFields
-#        'type': fields.function(_getRelatedFields,
-#                                string="Procurement Method", multi="states",
-#                                method=True, type="selection", selection=_SELECTION_TYPE,
-#                                store = {
-#                                    'sale.order.line': (_getCorrespondingSourcingLines, ['type'], 20)
-#                                }, readonly=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
         'available_stock': fields.float('Available Stock', readonly=True),
-        'virtual_stock': fields.related('product_id', 'virtual_available', type='float', string='Virtual Stock', readonly=True),
-        # supplier - many2one with default value from supplier from product
-        #'supplier': fields.many2one('res.partner', 'Supplier'),
+        'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('product.supplierinfo', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
-    _order = 'sale_order_id desc'
+    _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
     }
-    
     
     def write(self, cr, uid, ids, values, context=None):
         '''
         _name = 'sourcing.line'
         
-        
         override write method to write back
          - po_cft
          - supplier
          - type
-        
         to sale order line
         '''
         if not context:
             context={}
-        if 'fromOrderLine' not in context:
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'fromOrderLine' not in context and 'fromOrder' not in context:
             context['fromSourcingLine'] = True
             for sourcingLine in self.browse(cr, uid, ids, context=context):
+                # values to be saved to *sale order line*
+                vals = {}
                 solId = sourcingLine.sale_order_line_id.id
                 # type
-                type = 'type' in values and values['type'] or sourcingLine.type
+                if 'type' in values:
+                    type = values['type']
+                    vals.update({'type': type})
+                else:
+                    type = sourcingLine.type
+                    vals.update({'type': type})
                 # pocft: if type == make_to_stock, pocft = False, otherwise modified value or saved value
-                pocft = False
                 if type == 'make_to_order':
-                    pocft = 'po_cft' in values and values['po_cft'] or sourcingLine.po_cft
+                    if 'po_cft' in values:
+                        pocft = values['po_cft']
+                        vals.update({'po_cft': pocft})
+                else:
+                    # if make to stock, reset anyway to False
+                    pocft = False
+                    vals.update({'po_cft': pocft})
+                
                 # supplier
-                supplier = 'supplier' in values and values['supplier'] or sourcingLine.supplier.id
-                self.pool.get('sale.order.line').write(cr, uid, solId, {'po_cft': pocft, 'supplier': supplier, 'type': type}, context=context)
+                if 'supplier' in values:
+                    supplier = values['supplier']
+                    vals.update({'supplier': supplier})
+                    # update the delivery date according to supplier, only update from the sourcing tool
+                    # not from order line as we dont want the date is udpated when the line's state changes for example
+                    if supplier:
+                        # if a new supplier has been selected update the *sourcing_line* -> values
+                        supplierInfo= self.pool.get('product.supplierinfo').browse(cr, uid, supplier, context)
+                        
+                        daysToAdd = supplierInfo.delay or 0
+                        estDeliveryDate = date.today()
+                        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+                        values.update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
+                    else:
+                        # no supplier is selected, erase the date
+                        values.update({'estimated_delivery_date': False})
+                # update sourcing line
+                self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
         
         return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
-    
     
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
@@ -193,6 +189,24 @@ class sourcing_line(osv.osv):
     
         return {'value': value}
     
+    def onChangeSupplier(self, cr, uid, id, supplier, context=None):
+        '''
+        supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
+        '''
+        result = {'value':{}}
+        
+        if not supplier:
+            return result
+        
+        supplierInfo= self.pool.get('product.supplierinfo').browse(cr, uid, supplier, context)
+        
+        daysToAdd = supplierInfo.delay or 0
+        estDeliveryDate = date.today()
+        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+        
+        result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
+        
+        return result
     
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -201,16 +215,12 @@ class sourcing_line(osv.osv):
         result = super(sourcing_line, self).copy(cr, uid, id, default, context)
         return result
     
-    
-    
     def create(self, cr, uid, vals, context=None):
         '''
         create method from sourcing_line
         '''
         result = super(sourcing_line, self).create(cr, uid, vals, context)
         return result
-    
-    
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -229,18 +239,47 @@ class sourcing_line(osv.osv):
 #            default.update({'sale_order_id': soId,})
             
         return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
-
     
+    def confirmLine(self, cr, uid, ids, context=None):
+        '''
+        set the corresponding line's state to 'confirmed'
+        if all lines are 'confirmed', the sale order is confirmed
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        result = []
+        for sl in self.browse(cr, uid, ids, context):
+            # set the corresponding sale order line to 'confirmed'
+            result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
+            # check if all order lines have been confirmed
+            linesConfirmed = True
+            for ol in sl.sale_order_id.order_line:
+                if ol.state != 'confirmed':
+                    linesConfirmed = False
+            # if all lines have been confirmed, we confirm the sale order
+            if linesConfirmed:
+                wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                
+        return result
+    
+    def unconfirmLine(self, cr, uid, ids, context=None):
+        '''
+        set the sale order line state to 'draft'
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        result = []
+        for sl in self.browse(cr, uid, ids, context):
+            result.append((sl.id, sl.sale_order_line_id.write(cr, uid, sl.sale_order_line_id.id, {'state':'draft'}, context)))
+                
+        return result
+        
 sourcing_line()
-
-
 
 class sale_order(osv.osv):
     
     _inherit = 'sale.order'
     _description = 'Sales Order'
-    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),}
-    
+    _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),
+                }
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -248,7 +287,39 @@ class sale_order(osv.osv):
         '''
         return super(sale_order, self).create(cr, uid, vals, context)
     
-    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        _inherit = 'sale.order'
+        
+        override to update sourcing_line :
+         - priority
+         - category
+         - order state
+        '''
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+   
+        context['fromOrder'] = True
+        values = {}
+        if 'priority' in vals:
+            values.update({'priority': vals['priority']})
+        if 'categ' in vals:
+            values.update({'categ': vals['categ']})
+        if 'state' in vals:
+            values.update({'sale_order_state': vals['state']})
+        
+        # for each sale order
+        for so in self.browse(cr, uid, ids, context):
+            # for each sale order line
+            for sol in so.order_line:
+                # update the sourcing line
+                for sl in sol.sourcing_line_ids:
+                    self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
+        
+        return super(sale_order, self).write(cr, uid, ids, vals, context)
+        
     
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -262,7 +333,6 @@ class sale_order(osv.osv):
         default['sourcing_line_ids']=[]
         
         return super(sale_order, self).copy(cr, uid, id, default, context)
-    
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -292,24 +362,22 @@ class sale_order(osv.osv):
 
 sale_order()
 
-
 class sale_order_line(osv.osv):
-
-
+    '''
+    override of sale_order_line class
+    creation/update/copy of sourcing_line 
+    '''
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
-                #'supplier': fields.many2one('res.partner', 'Supplier'),
                 'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
                 }
     
-    
     def create(self, cr, uid, vals, context=None):
         '''
         _inherit = 'sale.order.line'
-        
         
         override create method, create corresponding sourcing.line objects
         
@@ -341,7 +409,8 @@ class sale_order_line(osv.osv):
             template = product.product_tmpl_id
             seller = template.seller_info_id
             sellerId = (seller and seller.id) or False
-            deliveryDate = int(template.seller_delay)
+            if sellerId:
+                deliveryDate = int(template.seller_delay)
         
         # type
         if not vals.get('type'):
@@ -355,29 +424,42 @@ class sale_order_line(osv.osv):
         # fill the default pocft and supplier
         vals.update({'po_cft': pocft})
         vals.update({'supplier': sellerId})
+        
         # create the new sale order line
         result = super(sale_order_line, self).create(cr, uid, vals, context=context)
 
         # delivery date : supplier lead-time and 2 days for administrative treatment
-        daysToAdd = deliveryDate and deliveryDate + 2 or 2
-        estDeliveryDate = date.today()
-        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+        estDeliveryDate = False
+        if deliveryDate:
+            daysToAdd = deliveryDate
+            estDeliveryDate = date.today()
+            estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+            estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
+        
+        # order state
+        order = self.pool.get('sale.order').browse(cr, uid, vals['order_id'], context)
+        orderState = order.state
+        orderPriority = order.priority
+        orderCategory = order.categ
         
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
                   'supplier': sellerId,
                   'po_cft': pocft,
-                  'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
+                  'estimated_delivery_date': estDeliveryDate,
                   'rts': time.strftime('%Y-%m-%d'),
-                  'type': vals['type']
+                  'type': vals['type'],
+                  'line_number': vals['line_number'],
+                  'product_id': vals['product_id'],
+                  'priority': orderPriority,
+                  'categ': orderCategory,
+                  'sale_order_state': orderState,
                   }
         
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
-        
-        
+            
         return result
-    
     
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -388,7 +470,6 @@ class sale_order_line(osv.osv):
         
         result = super(sale_order_line, self).copy(cr, uid, id, default, context)
         return result
-    
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -402,25 +483,22 @@ class sale_order_line(osv.osv):
         
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
         
-        
-        
     def write(self, cr, uid, ids, vals, context=None):
         '''
         _inherit = 'sale.order.line'
         
-        
-        override to update sourcing_linne :
+        override to update sourcing_line :
          - supplier
          - type
          - po_cft
-         
+         - product_id
         ''' 
         if not context:
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # update the corresponding sourcing line if not called from sourcing line updated
+        # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
             context['fromOrderLine'] = True
             values = {}
@@ -432,6 +510,8 @@ class sale_order_line(osv.osv):
                 values.update({'type': vals['type']})
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
+            if 'product_id' in vals:
+                values.update({'product_id': vals['product_id']})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):
@@ -441,8 +521,6 @@ class sale_order_line(osv.osv):
         
         result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
         return result
-    
-    
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -463,7 +541,6 @@ class sale_order_line(osv.osv):
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
         return super(sale_order_line, self).unlink(cr, uid, ids, context)
-        
         
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
         uom=False, qty_uos=0, uos=False, name='', partner_id=False,
@@ -495,10 +572,7 @@ class sale_order_line(osv.osv):
         
         return result
             
-
 sale_order_line()
-
-
 
 class procurement_order(osv.osv):
     """
@@ -513,13 +587,11 @@ class procurement_order(osv.osv):
         'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
     }
     
-    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override for workflow modification
         '''
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
-
 
     # @@@override procurement.py > procurement.order > check_buy
     def check_buy(self, cr, uid, ids):
@@ -555,7 +627,6 @@ class procurement_order(osv.osv):
                 return False
         return True
     # @@@override end
-
 
     # @@@override purchase>purchase.py>procurement_order
     def make_po(self, cr, uid, ids, context=None):
@@ -640,17 +711,12 @@ class procurement_order(osv.osv):
 
 procurement_order()
 
-
-
 class purchase_order(osv.osv):
     '''
     override for workflow modification
     '''
-    
-    
     _inherit = "purchase.order"
     _description = "Purchase Order"
-    
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -658,16 +724,12 @@ class purchase_order(osv.osv):
         '''
         return super(purchase_order, self).create(cr, uid, vals, context)
         
-    
 purchase_order()
-
-
 
 class product_template(osv.osv):
     '''
     override to add new seller_info_id : default seller but supplierinfo object
     '''
-    
     def _calc_seller(self, cr, uid, ids, fields, arg, context=None):
         result = super(product_template, self)._calc_seller(cr, uid, ids, fields, arg, context)
         
@@ -686,19 +748,44 @@ class product_template(osv.osv):
     
 product_template()
 
-
-
 class product_supplierinfo(osv.osv):
     '''
     override name_get to display name of the related supplier
     
     override create to be able to create a new supplierinfo from sourcing view
     '''
-    
-    
     _inherit = "product.supplierinfo"
     _description = "Information about a product supplier"
-
+    
+    def _get_false(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
+    
+    def _get_product_ids(self, cr, uid, obj, name, args, domain=None, context=None):
+        '''
+        from the product.template id returns the corresponding product.product
+        '''
+        if not args:
+            return []
+        if args[0][1] != '=':
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+        # product id of sourcing line
+        productId = args[0][2]
+        # gather product template id for that product
+        templateId = self.pool.get('product.product').browse(cr, uid, productId, context=context).product_tmpl_id.id
+        # search filter on product_id of supplierinfo
+        return [('product_id', '=', templateId)]
+    
+    _columns = {'product_product_ids': fields.function(_get_false, type='one2many',relation='product.product', string="Products",fnct_search=_get_product_ids),
+                }
 
     def name_get(self, cr, uid, ids, context=None):
         '''
@@ -723,12 +810,10 @@ class product_supplierinfo(osv.osv):
         if not values:
             values = {}
         if context and 'sourcing-product_id' in context:
-            values.update({'product_id': context['sourcing-product_id']})
+            productId = context['sourcing-product_id']
+            product = self.pool.get('product.product').browse(cr, uid, productId, context=context)
+            values.update({'product_id': product.product_tmpl_id.id})
         
         return super(product_supplierinfo, self).create(cr, uid, values, context)
         
-    
 product_supplierinfo()
-
-
-    

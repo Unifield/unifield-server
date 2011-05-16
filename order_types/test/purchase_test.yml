@@ -37,9 +37,13 @@
     name: P2
     date_planned: !eval time.strftime('%Y-%m-%d')
 -
-  We validate the regular1
+  We confirm the regular1
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: regular1}
+-
+  We validate the regular1
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: regular1}
 -
   We check if no invoices has been created by the confirmation of regular1
 -
@@ -92,9 +96,13 @@
     name: P2
     date_planned: !eval time.strftime('%Y-%m-%d')
 -
-  We validate the regular2
+  We confirm the regular2
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: regular2}
+-
+  We validate the regular2
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: regular2}
 -
   We check if invoice has been created by the confirmation of regular2
 -
@@ -149,9 +157,13 @@
     name: P2
     date_planned: !eval time.strftime('%Y-%m-%d')
 -
-  We validate the donation3
+  We confirm the donation3
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: donation3}
+-
+  We validate the donation3
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: donation3}
 -
   We check if no invoices has been created by the confirmation of donation3
 -
@@ -217,6 +229,10 @@
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: donation4}
 -
+  We validate the donation4
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: donation4}
+-
   We check if no invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
@@ -275,6 +291,10 @@
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: loan5}
 -
+  We validate the loan5
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: loan5}
+-
   We check if no invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
@@ -312,19 +332,21 @@
   !python {model: stock.picking }: |
     import time
     pick_ids = self.search(cr, uid, [('purchase_id', '=', ref('loan5'))])
-    pick=self.browse(cr,uid,pick_ids[0])
-    partial_datas = {
-          'partner_id': pick.address_id.partner_id.id,
-          'address_id': pick.address_id.id,
-          'delivery_date' : time.strftime('%Y-%m-%d')
-         }
-    for move in pick.move_lines:
-        partial_datas['move%s'%(move.id)]= {
-            'product_id': move.product_id,
-            'product_qty': move.product_qty,
-            'product_uom': move.product_uom.id,
-            }
-    self.do_partial(cr, uid, pick_ids,partial_datas)
+    assert pick_ids, "No picking found"
+    if pick_ids:
+      pick=self.browse(cr,uid,pick_ids[0])
+      partial_datas = {
+            'partner_id': pick.address_id.partner_id.id,
+            'address_id': pick.address_id.id,
+            'delivery_date' : time.strftime('%Y-%m-%d')
+           }
+      for move in pick.move_lines:
+          partial_datas['move%s'%(move.id)]= {
+              'product_id': move.product_id,
+              'product_qty': move.product_qty,
+              'product_uom': move.product_uom.id,
+              }
+      self.do_partial(cr, uid, pick_ids,partial_datas)
 -
   We confirm the sale order counterpart
 -
@@ -378,6 +400,10 @@
   We validate this In-kind donation
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: inkind6}
+-
+  We validate the inkind6
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: inkind6}
 -
   We check if no invoice has been created by the confirmation
 -
@@ -433,6 +459,10 @@
   We validate this Purchase List
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: list7}
+-
+  We validate the list7
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: list7}
 -
   We check if the supplier is localmarket
 -
@@ -495,6 +525,10 @@
   We validate this Direct Purchase Order
 -
   !workflow {model: purchase.order, action: purchase_confirm, ref: direct8}
+-
+  We validate the direct8
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: direct8}
 -
   We check if no invoice has been created by the confirmation
 -

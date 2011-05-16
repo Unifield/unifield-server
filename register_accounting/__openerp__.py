@@ -31,7 +31,7 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant"],
+    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',

@@ -59,7 +59,6 @@
                 <tree string="Period" position="replace">
 	                <tree colors="blue:state in ('created');gray:state in ('done') " string="Period">
 	                    <field name="name"/>
-	                    <field name="code"/>
 	                    <field name="date_start"/>
 	                    <field name="date_stop"/>
 	                    <field name="special"/>

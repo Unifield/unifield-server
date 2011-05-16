@@ -223,16 +223,6 @@
             </field>
         </record>
         
-        <record id="stock_location.product_normal_form_inherit_location" model="ir.ui.view">
-            <field name="name">product.product.form</field>
-            <field name="model">product.product</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="arch" type="xml">
-                <data/>
-            </field>
-        </record>
-        
         <record model="ir.ui.view" id="product_manufacturer.view_product_form_expiry">
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>

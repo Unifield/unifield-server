@@ -29,7 +29,7 @@ class stock_move_tracking(osv.osv_memory):
     
     _columns= {
         'product_id': fields.many2one('product.product', string='Product'),
-        'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
+        'prodlot_id': fields.char(size=64, string='Batch number'),
         'expired_date': fields.date('Expired date'),
     }
     
@@ -40,21 +40,26 @@ class stock_move_tracking(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         
         res = []
+        lot_ids = False
         for track in self.browse(cr, uid, ids):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
             
             domain = []
             if track.expired_date:
-                domain.append(('expired_date', '=', track.expired_date))
+                # Add two lines in domain because we cannot compare equality between date and datetime
+                domain.append(('expired_date', '>=', track.expired_date))
+                domain.append(('expired_date', '<=', track.expired_date))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
-                domain.append(('prodlot_id', '=', track.prodlot_id.id))
+                # Search all batch begining with the string
+                lot_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=like', '%s%%' %track.prodlot_id)]) 
+                domain.append(('prodlot_id', 'in', lot_ids))
             
             res.extend(move_obj.search(cr, uid, domain, order='date'))
             
-        return res
+        return res, lot_ids
     
     def print_report(self, cr, uid, ids, context={}):
         '''
@@ -66,9 +71,10 @@ class stock_move_tracking(osv.osv_memory):
         expired_date = False
         
         for track in self.browse(cr, uid, ids):
-            product_name = track.product_id and track.product_id.name or False
-            product_code = track.product_id and track.product_id.default_code or False
-            prodlot_id = track.prodlot_id and track.prodlot_id.name or False
+            if track.product_id:
+                product_name = track.product_id and track.product_id.name or False
+                product_code = track.product_id and track.product_id.default_code or False
+            prodlot_id = track.prodlot_id
             expired_date = track.expired_date
         
         data = {
@@ -79,8 +85,8 @@ class stock_move_tracking(osv.osv_memory):
        
         move_ids = self.get_ids(cr, uid, ids, context=context)
         if not move_ids:
-            raise osv.except_osv(_('Warning !'), _('Your search did not match any moves'))
-        datas = {'ids': move_ids,
+            raise osv.except_osv(_('Warning !'), _('Your search did not match with any moves'))
+        datas = {'ids': move_ids[0],
                  'model': 'stock.move',
                  'form': data}
 
@@ -99,7 +105,14 @@ class stock_move_tracking(osv.osv_memory):
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
         
         result = act_obj.read(cr, uid, [id], context=context)[0]
-        result['domain'] = [('id', 'in', self.get_ids(cr, uid, ids, context=context))]
+        
+        res_ids = self.get_ids(cr, uid, ids, context=context)
+        result['domain'] = [('id', 'in', res_ids[0])]
+        
+        if res_ids[1]:
+            result['context'] = {'search_default_group_product': 1}
+            if type(res_ids[1]) == type([]) and len(res_ids[1]) > 0:
+                result['context'].update({'search_default_groupby_prodlot_id': 1,})
         
         return result
     

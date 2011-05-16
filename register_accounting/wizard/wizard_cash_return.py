@@ -89,11 +89,13 @@ class wizard_cash_return(osv.osv_memory):
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
+        'date': fields.date(string='Date for cash return', required=True),
     }
 
     _defaults = {
         'initial_amount': lambda self, cr, uid, c={}: c.get('amount', False),
         'display_invoice': False, # this permits to show only advance lines tree. Then add an invoice make the invoice tree to be displayed
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def default_get(self, cr, uid, fields, context={}):
@@ -176,7 +178,7 @@ class wizard_cash_return(osv.osv_memory):
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, debit, round=False, context=context)
                 new_debit = abs(new_amount)
             else:
-                amount_currency = credit
+                amount_currency = -credit
                 new_amount = currency_obj.compute(cr, uid, currency_id, register.company_id.currency_id.id, credit, round=False, context=context)
                 new_credit = abs(new_amount)
 
@@ -269,7 +271,7 @@ class wizard_cash_return(osv.osv_memory):
         for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
             total_currency += move_line.amount_currency
         if abs(total_currency) > 10 ** -4:
-            raise osv.except_osv(_('Error'), _('An error occured on the currency balance.'))
+            raise osv.except_osv(_('Error'), _('An error occured on the currency balance. Total is %s' % total_currency))
         # Verify that balance is not null
         # If null, then correct the advance line
         if balance > 0 or balance < 0:
@@ -348,6 +350,33 @@ class wizard_cash_return(osv.osv_memory):
             'target': 'new',
         }
 
+    def clean_invoices(self, cr, uid, ids, context={}):
+        """
+        Clean content of invoice list and refresh view.
+        """
+        # Delete links to invoice_line_ids and inform wizard of that
+        self.write(cr, uid, ids, {'display_invoice': False, 'invoice_line_ids': [(5,)]}, context=context)
+        # Update total amount
+        self.compute_total_amount(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.cash.return',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
+        }
+
+    def verify_date(self, cr, uid, ids, context={}):
+        """
+        Verify that date is superior than advance_line date.
+        """
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if wizard.date < wizard.advance_st_line_id.date:
+            raise osv.except_osv(_('Warning'), _('The entered date must be greater than or equal to advance posting date.'))
+        return True
+
     def compute_total_amount(self, cr, uid, ids, context={}):
         """
         Compute the total of amount given by the invoices (if exists) or by the advance lines (if exists)
@@ -382,10 +411,12 @@ class wizard_cash_return(osv.osv_memory):
         """
         # Do computation of total_amount
         self.compute_total_amount(cr, uid, ids, context=context)
+        # Verify dates
+        self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         if wizard.initial_amount != wizard.total_amount:
-            raise osv.except_osv('Warning', 'Initial amount and Justified amount are not similar. First correct. Then press Compute button')
+            raise osv.except_osv(_('Warning'), _('Initial advance amount does not match the amount you justified. First correct. Then press Compute button'))
 #        if not wizard.invoice_line_ids and not wizard.advance_line_ids:
 #            raise osv.except_osv(_('Warning'), _('Please give some data or click on Cancel.'))
         # All exceptions passed. So let's go doing treatments on data !
@@ -417,11 +448,12 @@ class wizard_cash_return(osv.osv_memory):
             inv_move_line_ids = []
             for invoice in wizard.invoice_line_ids:
                 inv_name = "Invoice" + " " + invoice.invoice_id.internal_number
+                inv_date = invoice.invoice_id.date_invoice
                 partner_id = invoice.partner_id.id
                 debit = invoice.amount
                 credit = 0.0
                 account_id = invoice.account_id.id
-                inv_id = self.create_move_line(cr, uid, ids, curr_date, inv_name, journal, register, partner_id, False, account_id, \
+                inv_id = self.create_move_line(cr, uid, ids, inv_date, inv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, context=context)
                 inv_move_line_ids.append((inv_id, invoice.invoice_id.id))
         else:
@@ -445,15 +477,16 @@ class wizard_cash_return(osv.osv_memory):
                 debit = abs(advance.amount)
                 credit = 0.0
                 account_id = advance.account_id.id
-                adv_id = self.create_move_line(cr, uid, ids, curr_date, adv_name, journal, register, partner_id, False, account_id, \
+                adv_id = self.create_move_line(cr, uid, ids, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, context=context)
                 adv_move_line_ids.append(adv_id)
 
         # create the advance closing line
-        adv_closing_name = "Advance closing"
+        adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
+        adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
-        adv_closing_id = self.create_move_line(cr, uid, ids, curr_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
+        adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
             0.0, wizard.initial_amount, move_id, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
@@ -521,7 +554,7 @@ class wizard_cash_return(osv.osv_memory):
                         supp_move_line_credit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, context=context)
                         # We hard post the move
-                        supp_res_id = move_obj.write(cr, uid, [supp_move_id], {'state': 'posted'}, context=context)
+                        supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)
                         # Verify that the posting has succeed
                         if supp_move_id == False:
                             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
