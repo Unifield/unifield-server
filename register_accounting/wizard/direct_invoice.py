@@ -56,6 +56,9 @@ class wizard_account_invoice(osv.osv):
     }
 
     def compute_wizard(self, cr, uid, ids, context={}):
+        """
+        Check invoice lines and compute the total invoice amount
+        """
         for wiz_inv in self.browse(cr, uid, ids):
             amount = 0
             for line in wiz_inv.invoice_line:
@@ -64,10 +67,17 @@ class wizard_account_invoice(osv.osv):
         return True
 
     def invoice_reset_wizard(self, cr, uid, ids, context={}):
-        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 'partner_id': False, 'address_invoice_id': False, 'account_id': False})
+        """
+        Reset the invoice by reseting some fields
+        """
+        self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 
+            'partner_id': False, 'address_invoice_id': False, 'account_id': False})
         return True
 
     def invoice_cancel_wizard(self, cr, uid, ids, context={}):
+        """
+        Delete the wizard from database
+        """
         self.unlink(cr, uid, ids)
         return {}
 

@@ -32,7 +32,8 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
             res[st_line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
         elif st_line.register_id:
             res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
-            res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
+            res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
+                'selection': 'account.bank.statement,%s' % st_line.register_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
@@ -74,6 +75,9 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
     return True
 
 def open_register_view(self, cr, uid, register_id, context={}): 
+    """
+    Return the necessary object in order to return on the register we come from
+    """
     st_type = self.pool.get('account.bank.statement').browse(cr, uid, register_id).journal_id.type
     module = 'account'
     mod_action = 'action_view_bank_statement_tree'
