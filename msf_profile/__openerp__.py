@@ -47,6 +47,7 @@
 	    "product_nomenclature",
         "order_types",
         "res_currency_functional",
+        "order_line_number",
 	    "sourcing",
         "stock_move_tracking",
         "stock_batch_recall",

@@ -100,8 +100,6 @@
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
-    priority: normal
-    categ: medical
     
     
 - 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
 #
@@ -15,13 +15,28 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import sourcing
-#import wizard
-#import report
 
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
+{
+    "name" : "Order Line Number",
+    "version" : "0.1",
+    "author" : "MSF pam",
+    "category" : "Generic Modules/Inventory Control",
+    "depends" : ["sale", "purchase"],
+    "init_xml" : [],
+    "demo_xml" : [],
+    "description": """
+    Add numbering to order lines
+    """,
+    'test': [
+             #'test/sourcing.yml',
+             ],
+    'update_xml': [
+        #'security/ir.model.access.csv',
+        'order_line_number_view.xml',
+    ],
+    'installable': True,
+}
