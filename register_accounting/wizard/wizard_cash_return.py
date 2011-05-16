@@ -493,12 +493,13 @@ class wizard_cash_return(osv.osv_memory):
         if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
             # change the amount_currency of the advance closing line in order to be negative (not done in create_move_line function)
             res_adv_closing = self.pool.get('account.move.line').write(cr, uid, [adv_closing_id], {'amount_currency': -wizard.initial_amount}, context=context)
-            if move_obj._compute_balance(cr, uid, move_id, context=context) <> 0:
-                res_round = self._round_move(cr, uid, move_id, adv_closing_id, context=context)
-                if not res_round:
-                    raise osv.except_osv(_('Error'), _('Rounding the move failed.'))
+            #if move_obj._compute_balance(cr, uid, move_id, context=context) <> 0:
+            #    res_round = self._round_move(cr, uid, move_id, adv_closing_id, context=context)
+            #    if not res_round:
+            #        raise osv.except_osv(_('Error'), _('Rounding the move failed.'))
         # make the move line in posted state
-        res_move_id = move_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
+        #res_move_id = move_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
+        res_move_id = move_obj.post(cr, uid, [move_id], context=context)
         # We create statement lines for invoices and advance closing ONLY IF the move is posted.
         # Verify that the posting has succeed
         if res_move_id == False:
