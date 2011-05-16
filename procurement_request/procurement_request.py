@@ -112,6 +112,28 @@ class procurement_request(osv.osv):
         'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
     }
     
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Changes the state of the order to allow the deletion
+        '''
+        line_obj = self.pool.get('sale.order.line')
+        
+        del_ids = []
+        normal_ids = []
+        
+        for request in self.browse(cr, uid, ids, context=context):
+            if request.procurement_request and request.state in ['procurement', 'proc_cancel']:
+                del_ids.append(request.id)
+            elif not request.procurement_request:
+                normal_ids.append(request.id)
+            else:
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Procurement Request(s) which are already confirmed !'))
+                
+        if del_ids:
+            osv.osv.unlink(self, cr, uid, del_ids, context=context)
+                
+        return super(procurement_request, self).unlink(cr, uid, normal_ids, context=context)
+    
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
         Adds automatically a domain to search only True sale orders if no procurement_request in context

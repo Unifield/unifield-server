@@ -50,7 +50,7 @@
                                     <field name="notes" />
                                     <field name="type" />
                                     <field name="latest" />
-                                    <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" />
+                                    <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
@@ -86,8 +86,33 @@
             <field name="arch" type="xml">
                 <tree string="Procurement Requests">
                     <field name="name" />
-                    <field name="procurement_request" />
+                    <field name="date_order" />
+                    <field name="origin" />
+                    <field name="requestor" />
+                    <field name="state" />
                 </tree>
+            </field>
+        </record>
+        
+        <record id="procurement_request_search_view" model="ir.ui.view">
+            <field name="name">procurement.request.search.view</field>
+            <field name="model">sale.order</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Procurment Requests">
+                    <group string="Filters" expand="1">
+                        <filter name="state_proc" string="Procurement" icon="terp-document-new" domain="[('state', '=', 'procurement')]" />
+                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', '=', 'proc_progress')]" />
+                        <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'proc_done')]" />
+                        <separator orientation="vertical" />
+                        <field name="name" />
+                        <field name="origin" />
+                        <field name="requestor" />
+                    </group>
+                    <group string="Group By...">
+                        <filter string="State" icon="terp-gtk-select-all" domain="[]" context="{'group_by': 'state'}" />
+                    </group>
+                </search>
             </field>
         </record>
         
@@ -96,6 +121,7 @@
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_search_id" ref="procurement_request_search_view" />
             <field name="context">{'procurement_request': True}</field>
             <field name="domain">[('procurement_request', '=', True)]</field>
         </record>
