@@ -28,7 +28,6 @@
     """,
     'depends': ['product_expiry', 'product_manufacturer', 'sale'],
     'init_xml': [
-        'product_remove_demo.xml',
         'security/ir.model.access.csv',
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
@@ -36,6 +35,9 @@
     ],
     'update_xml': [
         'product_attributes_view.xml',
+    ],
+    'demo_xml': [
+        'product_remove_demo.xml',
     ],
     'installable': True,
     'active': False,
