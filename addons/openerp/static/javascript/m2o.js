@@ -222,6 +222,10 @@ ManyToOne.prototype.on_reference_changed = function() {
 };
 
 ManyToOne.prototype.change_icon = function() {
+    // fucking bug on sale order line with product.nomenclature
+    // <page .. attrs={'invisible':[('product_id','=',False)]..
+    // postJson doesn't throw ajaxStop so form_hookAttrChange is not call
+    jQuery(this.field).trigger('onAttrChange');
     if(!this.field.value && this.open_img) {
         this.open_img.style.cursor = '';
     }
