@@ -152,6 +152,7 @@
   Creating a sale.order.line record
 - 
   !record {model: sale.order.line, id: sale_order_line_nomenclatureso0}:
+    product_id: product_product_producttest0
     company_id: base.main_company
     delay: 0.0
     name: nomenclature SO

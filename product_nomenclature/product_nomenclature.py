@@ -313,6 +313,77 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Product"
     
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
+        '''
+        the nomenclature selection search changes
+        '''
+        mandaName = 'nomen_manda_%s'
+        optName = 'nomen_sub_%s'
+        selected = eval('nomen_manda_%s'%position)
+        
+        values = {}
+        result = {'value': values}
+
+        init = False
+        # hack for populating first level with number of products as well
+        if position == 0 and not nomen_manda_0:
+            init = True
+            position = -1
+        
+        # clear upper levels mandatory
+        for i in range(position+1, _LEVELS):
+            values[mandaName%(i)] = [()]
+            
+        # clear all optional level
+        for i in range(_SUB_LEVELS):
+            values[optName%(i)] = [()]
+        
+        # nomenclature object
+        nomenObj = self.pool.get('product.nomenclature')
+        # product object
+        prodObj = self.pool.get('product.product')
+        
+        if selected or init:
+            # loop through children nomenclature of mandatory type
+            for id in nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context):
+                # get the name and product number
+                n = nomenObj.browse(cr, uid, id, context=context)
+                code = n.code
+                name = n.name
+                number = n.number_of_products
+                values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+            
+            # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
+            optionalList = []
+            if init:
+                optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
+                    
+            else:
+                for id in prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context):
+                    p = prodObj.browse(cr, uid, id, context)
+                    optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
+            
+            # sort the optional nomenclature according to their id
+            optionalList.sort()
+            for id in optionalList:
+                # get the name and product number
+                n = nomenObj.browse(cr, uid, id, context=context)
+                code = n.code
+                name = n.name
+                number = n.number_of_products
+                values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
+        
+        # hack for empty list bug, to be removed
+        for i in range(position+1, _LEVELS):
+            if len(values[mandaName%(i)]) > 1:
+                values[mandaName%(i)].remove(())
+            
+        for i in range(_SUB_LEVELS):
+            if len(values[optName%(i)]) > 1:
+                values[optName%(i)].remove(())
+        
+        return result
+    
     def _resetNomenclatureFields(self, values):
         '''
         reset all nomenclature's fields
