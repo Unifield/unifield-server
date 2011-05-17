@@ -83,8 +83,10 @@ class wizard_import_list(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Please save the Procurement Request before importing lines'))
 
             # We check if the Procurement List is in 'Draft' state
-            list_id = self.pool.get('procurement.request').browse(cr, uid, context.get('active_id', []))
-            if not list_id or list_id.state != 'draft':
+            list_id = self.pool.get('sale.order').browse(cr, uid, context.get('active_id', []))
+            if not list_id.procurement_request:
+                raise osv.except_osv(_('Error'), _('You cannot import lines in a Sale Order'))
+            elif not list_id or list_id.state != 'procurement':
                 raise osv.except_osv(_('Warning'), _('You cannot import lines in a confirmed Procurement Request'))
 
         return res

@@ -52,6 +52,8 @@
         "procurement_cycle",
         "procurement_auto",
         "product_attributes",
+        "procurement_report",
+        "procurement_request",
     ],
     "update_xml": [
     ],
