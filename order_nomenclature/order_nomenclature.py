@@ -183,10 +183,11 @@ class sale_order_line(osv.osv):
         # for now simply clear nomenclature if a product has been selected
         if product:
             result['value'].update({'nomenclature_description':False})
+        else:
+            result['value'].update({'name':False})
         
         return result
         
-    
     def create(self, cr, uid, vals, context=None):
         '''
         override create. don't save filtering data
@@ -202,8 +203,6 @@ class sale_order_line(osv.osv):
         
         return super(sale_order_line, self).create(cr, uid, vals, context=context)
     
-    
-    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override write. don't save filtering data
@@ -218,8 +217,6 @@ class sale_order_line(osv.osv):
         self.pool.get('product.product')._resetNomenclatureFields(vals)
             
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
-    
-    
     
     def _setNomenclatureInfo(self, cr, uid, values, context=None):
         '''
@@ -250,7 +247,6 @@ class sale_order_line(osv.osv):
 
         values.update({'nomenclature_description': ':'.join(description)})
     
-    
     def _productDomain(self, cr, uid, id, context=None):
         '''
         product the dynamic product's domain
@@ -278,8 +274,6 @@ class sale_order_line(osv.osv):
                 newRule = (k, '=', v)
                 productList.append(newRule)
     
-    
-    
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -291,15 +285,13 @@ class sale_order_line(osv.osv):
         product = self.pool.get('product.product')
         product.nomenChange(cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                             nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
-        self._productDomain(cr, uid, id, context)
+        #self._productDomain(cr, uid, id, context)
         self._setNomenclatureInfo(cr, uid, context['result']['value'], context)
         
         result = context['result']
         
         return result
         
-    
-    
     def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
                    nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -312,13 +304,12 @@ class sale_order_line(osv.osv):
         product = self.pool.get('product.product')
         product.codeChange(cr, uid, id, fieldNumber, code, nomenclatureType,
                            nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
-        self._productDomain(cr, uid, id, context)
+        #self._productDomain(cr, uid, id, context)
         self._setNomenclatureInfo(cr, uid, context['result']['value'], context)
         
         result = context['result']
         return result
         
-         
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=128),
@@ -359,7 +350,4 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
     
-
 sale_order_line()
-
-
