@@ -65,7 +65,9 @@
 	                        <field name="planned_amount" string="Budget Amount" select="1"/>
 	                    </form>
                     </form>
-                    <button string="Confirm" position="replace"/>
+                    <button name="confirm" position="replace"/>
+                    <button name="cancel" position="replace"/>
+                    <button name="draft" position="replace"/>
                     <button string="Approve" position="replace">
                         <button string="Approve" name="validate" states="draft" type="workflow" icon="gtk-ok"/>
                     </button>
