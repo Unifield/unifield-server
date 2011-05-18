@@ -222,7 +222,6 @@ class account_move_line(osv.osv):
         third_required = False
         third_selection = 'res.partner,0'
         domain = {'partner_type': []}
-        statement_id = self.pool.get('account.move.line').browse(cr, uid, ids[0]).statement_id.id
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id])[0]
@@ -238,7 +237,7 @@ class account_move_line(osv.osv):
                 third_type = [('account.bank.statement', 'Register')]
                 third_required = True
                 third_selection = 'account.bank.statement,0'
-                domain = {'partner_type': [('state', '=', 'open'), ('id', '!=', statement_id)]}
+                domain = {'partner_type': [('state', '=', 'open')]}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
