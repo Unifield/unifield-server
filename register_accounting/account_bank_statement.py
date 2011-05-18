@@ -723,53 +723,6 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
-    def do_direct_invoice(self, cr, uid, ids, context={}):
-        """
-        Make an invoice from the statement line that have a supplier and take back :
-        - amount for invoice
-        - supplier
-        - journal from register
-        - currency from register
-        - document_date (from invoice date), ifelse, we retrieve date
-        Then it give some values:
-        - type : in_invoice
-        """
-        for st_line in self.browse(cr, uid, ids, context=context):
-            # Do treatments only if supplier and direct_invoice are filled in
-            if st_line.direct_invoice:
-                # Case where user don't filled in Third Parties for a direct invoice
-                if not st_line.partner_id or not st_line.partner_id.supplier:
-                    raise osv.except_osv(_('Warning'), _('Please update Third Parties field with a Supplier in order to do a direct invoice.'))
-                # Prepare some values
-                date = st_line.document_date or st_line.date or False
-                inv_obj = self.pool.get('account.invoice')
-                st_line_obj = self.pool.get('account.bank.statement.line')
-                # on an invoice, amount is reversed
-                amount = -st_line.amount
-                vals = {
-                    'type': 'in_invoice',
-                    'state': 'draft',
-                    'date_invoice': date,
-                    'partner_id': st_line.partner_id.id,
-                    'period_id': st_line.statement_id.period_id.id,
-                    'currency_id': st_line.statement_id.currency.id,
-                    'journal_id': st_line.statement_id.journal_id.id,
-                    'check_total': amount,
-                    'register_line_ids': [(4, st_line.id)],
-                }
-                # Update val with some fields : address_contact_id, address_invoice_id, account_id, payment_term and fiscal_position
-                vals.update(inv_obj.onchange_partner_id(cr, uid, ids, 'in_invoice', st_line.partner_id.id, date).get('value', {}))
-                # Create an invoice
-                inv_id = inv_obj.create(cr, uid, vals, context=context)
-                # Verify that the invoice creation success
-                if not inv_id:
-                    raise osv.except_osv(_('Error'), _('The invoice creation failed!'))
-                # Link this invoice to the statement line. NB: from_cash_return is permits "Cash Return" button to be hidden
-                res = st_line_obj.write(cr, uid, [st_line.id], {'invoice_id': inv_id, 'from_cash_return': True}, context=context)
-                if not res:
-                    raise osv.except_osv(_('Error'), _('Link to invoice failed!'))
-        return True
-
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -833,9 +786,6 @@ class account_bank_statement_line(osv.osv):
                 acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                 # do a move that enable a complete supplier follow-up
                 self.do_direct_expense(cr, uid, [absl.id], context=context)
-                # do a direct expense if necessary
-                if absl.direct_invoice:
-                    self.do_direct_invoice(cr, uid, [absl.id], context=context)
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):
