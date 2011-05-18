@@ -22,7 +22,7 @@
 {
     "name": "MSF Printed Documents",
     "version": "1.0",
-    "depends": ["base"],
+    "depends": ["order_nomenclature", "order_line_number", "product_attributes", "msf_order_date"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Printed Documents",

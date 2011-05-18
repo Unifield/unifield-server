@@ -30,7 +30,7 @@ class order(report_sxw.rml_parse):
             'time': time,
         })
 
-report_sxw.report_sxw('report.msf.sale.order', 'sale.order', 'addons/msf_printed_documebts/report/sale_order.rml', parser=order, header="external")
+report_sxw.report_sxw('report.msf.sale.order', 'sale.order', 'addons/msf_printed_documents/report/sale_order.rml', parser=order, header="external")
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
