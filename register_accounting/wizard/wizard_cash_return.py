@@ -134,7 +134,7 @@ class wizard_cash_return(osv.osv_memory):
         return {'value': res}
 
     def create_move_line(self, cr, uid, ids, date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
-        debit=0.0, credit=0.0, move_id=None, context={}):
+        debit=0.0, credit=0.0, move_id=None, partner_mandatory=False, context={}):
         """
         Create a move line with some params:
         - description: description of our move line
@@ -198,6 +198,7 @@ class wizard_cash_return(osv.osv_memory):
             'currency_id': currency_id,
             'amount_currency': amount_currency,
             'analytic_account_id': analytic_account_id,
+            'partner_type_mandatory': partner_mandatory or False,
         }
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context=context)
 
@@ -455,7 +456,7 @@ class wizard_cash_return(osv.osv_memory):
         adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
         adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
-            0.0, wizard.initial_amount, move_id, context=context)
+            0.0, wizard.initial_amount, move_id, partner_mandatory=True, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
         if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
