@@ -319,16 +319,22 @@ class product_product(osv.osv):
         '''
         mandaName = 'nomen_manda_%s'
         optName = 'nomen_sub_%s'
+        # selected value
         selected = eval('nomen_manda_%s'%position)
+        # if selected value is False, the first False value -1 is used as selected
+        if not selected:
+            mandaVals = [i for i in range(_LEVELS) if not eval('nomen_manda_%s'%i)]
+            if mandaVals[0] == 0:
+                # first drop down, initialization 
+                selected = False
+                position = -1
+            else:
+                # the first drop down with False value -1
+                position = mandaVals[0]-1
+                selected = eval('nomen_manda_%s'%position)
         
         values = {}
         result = {'value': values}
-
-        init = False
-        # hack for populating first level with number of products as well
-        if position == 0 and not nomen_manda_0:
-            init = True
-            position = -1
         
         # clear upper levels mandatory
         for i in range(position+1, _LEVELS):
@@ -343,35 +349,33 @@ class product_product(osv.osv):
         # product object
         prodObj = self.pool.get('product.product')
         
-        if selected or init:
-            # loop through children nomenclature of mandatory type
-            for id in nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context):
-                # get the name and product number
-                n = nomenObj.browse(cr, uid, id, context=context)
-                code = n.code
-                name = n.name
-                number = n.number_of_products
-                values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
-            
-            # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
-            optionalList = []
-            if init:
-                optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
-                    
-            else:
-                for id in prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context):
-                    p = prodObj.browse(cr, uid, id, context)
-                    optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
-            
-            # sort the optional nomenclature according to their id
-            optionalList.sort()
-            for id in optionalList:
-                # get the name and product number
-                n = nomenObj.browse(cr, uid, id, context=context)
-                code = n.code
-                name = n.name
-                number = n.number_of_products
-                values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
+        # loop through children nomenclature of mandatory type
+        for id in nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context):
+            # get the name and product number
+            n = nomenObj.browse(cr, uid, id, context=context)
+            code = n.code
+            name = n.name
+            number = n.number_of_products
+            values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+        
+        # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
+        optionalList = []
+        if not selected:
+            optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
+        else:
+            for id in prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context):
+                p = prodObj.browse(cr, uid, id, context)
+                optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
+        
+        # sort the optional nomenclature according to their id
+        optionalList.sort()
+        for id in optionalList:
+            # get the name and product number
+            n = nomenObj.browse(cr, uid, id, context=context)
+            code = n.code
+            name = n.name
+            number = n.number_of_products
+            values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
         
         # hack for empty list bug, to be removed
         for i in range(position+1, _LEVELS):
