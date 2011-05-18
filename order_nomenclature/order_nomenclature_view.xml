@@ -17,14 +17,13 @@
 					<page string="Order Line" position="after">
 
 						<!-- EXACT COPY-PASTE FROM product_nomenclature_view.xml -->
-						<page string="Nomenclature Selection" attrs="{'invisible':[('product_id', '!=', False)]}">
+						<page string="Nomenclature Selection">
 						
 							<group colspan="4" col="2">
-								<separator string="Nomenclature Description and Comment" colspan="2" />
 								
-								<field name="nomenclature_code" colspan="4" invisible="True" />
-								<field name="nomenclature_description" colspan="4" readonly="True" />
-								<field name="name" colspan="4" string="Comment" attrs="{'invisible':[('product_id', '!=', False)]}" />
+								<field name="nomenclature_code" colspan="2" invisible="True" />
+								<field name="nomenclature_description" colspan="2" readonly="True" />
+								<field name="name" colspan="2" string="Comment" attrs="{'readonly':[('product_id', '!=', False)]}" />
 							
 							</group>
 							<newline />
@@ -36,16 +35,19 @@
 									<field name="nomen_manda_0"
 										domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
 										on_change="nomenChange(0, nomen_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
-										attrs="{'required':[('product_id', '=', False)]}" />
+										attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_manda_1"
 										domain="[('parent_id', '=', nomen_manda_0), ('level', '=', '1'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(1, nomen_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_manda_2"
 										domain="[('parent_id', '=', nomen_manda_1), ('level', '=', '2'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(2, nomen_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_manda_3"
 										domain="[('parent_id', '=', nomen_manda_2), ('level', '=', '3'), ('type', '=', 'mandatory')]"
-										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(3, nomen_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 								</group>
 
 								<group colspan="1" col="2">
@@ -72,22 +74,28 @@
 									-->
 									<field name="nomen_sub_0"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '0'),  ('id', 'not in', [nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(0, nomen_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_sub_1"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '1'), ('id', 'not in', [nomen_sub_0,nomen_sub_2,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(1, nomen_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_sub_2"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '2'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_3,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(2, nomen_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_sub_3"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '3'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_4,nomen_sub_5])]"
-										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(3, nomen_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_sub_4"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '4'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_5])]"
-										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(4, nomen_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 									<field name="nomen_sub_5"
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
-										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
+										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
+										attrs="{'readonly':[('product_id', '!=', False)]}" />
 								</group>
 
 								<group colspan="1" col="2">
@@ -116,7 +124,36 @@
 				</data>
 			</field>
 		</record>
-
+		
+		<record id="purchase_order_form" model="ir.ui.view">
+            <field name="name">purchase.order.form.inherit</field>
+            <field name="model">purchase.order</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="purchase.purchase_order_form" />
+			<field name="priority" eval="200" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="before">
+						<field name="product_ref" />
+					</xpath>
+					
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="after">
+						<field name="nomenclature_description" />
+					</xpath>
+					
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='date_planned']" position="replace">
+					</xpath>
+					
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='product_uom']" position="after">
+						<field name="date_planned" />
+					</xpath>
+					
+					
+					
+				</data>
+			</field>
+		</record>
 
 		<record id="purchase_order_line_form" model="ir.ui.view">
 			<field name="name">purchase.order.line.form</field>
