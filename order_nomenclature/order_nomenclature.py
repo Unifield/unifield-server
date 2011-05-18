@@ -62,14 +62,17 @@ class purchase_order_line(osv.osv):
             # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, product)
             result['value'].update({'name':productObj.name})
+            result['value'].update({'default_code':productObj.default_code})
+            
         else:
             result['value'].update({'name':False})
+            result['value'].update({'default_code':False})
         
         return result
     
-    def create(self, cr, uid, vals, context=None):
+    def _relatedFields(self, cr, uid, vals, context=None):
         '''
-        override create. don't save filtering data
+        related fields for create and write
         '''
         # recreate description because in readonly
         if ('product_id' in vals) and (vals['product_id']):
@@ -80,14 +83,22 @@ class purchase_order_line(osv.osv):
             # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
             vals.update({'name':productObj.name})
+            vals.update({'default_code':productObj.default_code})
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
-        else:
+        elif ('product_id' in vals) and (not vals['product_id']):
             sale = self.pool.get('sale.order.line')
             sale._setNomenclatureInfo(cr, uid, vals, context)
-        
+            # erase default code
+            vals.update({'default_code':False})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create. don't save filtering data
+        '''
+        self._relatedFields(cr, uid, vals, context)
         
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
     
@@ -95,15 +106,7 @@ class purchase_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
-        # recreate description because in readonly
-        if ('product_id' in vals) and (vals['product_id']):
-            vals.update({'nomenclature_description':False})
-        else:
-            sale = self.pool.get('sale.order.line')
-            sale._setNomenclatureInfo(cr, uid, vals, context)
-            
-        # clear nomenclature filter values
-        #self.pool.get('product.product')._resetNomenclatureFields(vals)
+        self._relatedFields(cr, uid, vals, context)
             
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
     
@@ -130,7 +133,7 @@ class purchase_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=128),
         'name': fields.char('Comment', size=256, required=True),
-        'product_ref': fields.char('Product Reference', size=256),
+        'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
@@ -201,14 +204,16 @@ class sale_order_line(osv.osv):
             # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, product)
             result['value'].update({'name':productObj.name})
+            result['value'].update({'default_code':productObj.default_code})
         else:
             result['value'].update({'name':False})
+            result['value'].update({'default_code':False})
         
         return result
-        
-    def create(self, cr, uid, vals, context=None):
+    
+    def _relatedFields(self, cr, uid, vals, context=None):
         '''
-        override create. don't save filtering data
+        related fields for create and write
         '''
         # recreate description because in readonly
         if ('product_id' in vals) and (vals['product_id']):
@@ -219,13 +224,21 @@ class sale_order_line(osv.osv):
             # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
             vals.update({'name':productObj.name})
+            vals.update({'default_code':productObj.default_code})
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
-        else:
+        elif ('product_id' in vals) and (not vals['product_id']):
             self._setNomenclatureInfo(cr, uid, vals, context)
-        
+            # erase default code
+            vals.update({'default_code':False})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
+        
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create. don't save filtering data
+        '''
+        self._relatedFields(cr, uid, vals, context)
         
         return super(sale_order_line, self).create(cr, uid, vals, context=context)
     
@@ -233,18 +246,7 @@ class sale_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
-        # recreate description because in readonly
-        if ('product_id' in vals) and (vals['product_id']):
-            vals.update({'nomenclature_description':False})
-            # update the name (comment) of order line - readonly...
-            vals.update({'name': self.pool.get('product.product').name_get(cr, uid, [vals['product_id']], context)[0][1]})
-            # erase the nomenclature - readonly...
-            self.pool.get('product.product')._resetNomenclatureFields(vals)
-        else:
-            self._setNomenclatureInfo(cr, uid, vals, context)
-            
-        # clear nomenclature filter values
-        #self.pool.get('product.product')._resetNomenclatureFields(vals)
+        self._relatedFields(cr, uid, vals, context)
             
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
     
@@ -344,7 +346,7 @@ class sale_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=128),
         'name': fields.char('Comment', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'product_ref': fields.char('Product Reference', size=256),
+        'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
