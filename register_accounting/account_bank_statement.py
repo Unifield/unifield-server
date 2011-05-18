@@ -654,7 +654,7 @@ class account_bank_statement_line(osv.osv):
             if st_line.third_parties:
                 partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # then prepare name
-            name = values.get('name', st_line.name) + '/' + str(st_line.sequence)
+            name = '/'
             # finally write move object
             self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type, 'name': name}, context=context)
         return True
@@ -825,8 +825,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
             if absl.state == "draft":
-                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, 
-                    absl.name+ '/' + str(absl.sequence), context=context)
+                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
