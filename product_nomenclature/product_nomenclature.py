@@ -236,29 +236,6 @@ class product_nomenclature(osv.osv):
         return [ids]
 
 product_nomenclature()
-    
-
-def filter_args(args):
-    newargs = []
-    if args:
-        for arg in args:
-            m = re.match('nomen_manda_fake_(\d)', arg[0])
-            if m:
-                # int() => bug openERP, size=-1 ignored ?
-                # TODO: need to be fixed: if arg[2] is list, str, bool ...
-                # i.e: [('nomen_manda_fake_0', 'in', [1, 2, 3])
-                newargs.append(('nomen_manda_%s'%m.group(1), arg[1], int(arg[2])))
-            else:
-                newargs.append(arg)
-    return newargs
-
-def _fake(cr, uid, ids, fields, *args, **kargs):
-    ret = {}
-    for id in ids:
-        ret[id] = {}
-        for field in fields:
-            ret[id][field]=False
-    return ret
 
 #----------------------------------------------------------
 # Products
@@ -267,17 +244,6 @@ class product_template(osv.osv):
     
     _inherit = "product.template"
     _description = "Product Template"
-
-    def __init__(self, cr, pool):
-        for x in xrange(0,4):
-            self._columns['nomen_manda_fake_%d'%x] = fields.function(_fake, type="selection", size=-1,  
-                    selection=[], string=self._columns['nomen_manda_%d'%x].string, multi="fake_nomen")
-        super(product_template, self).__init__(cr, pool)
-    
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        newargs = filter_args(args)
-        return super(product_template, self).search(cr, uid, newargs, offset=offset, limit=limit, order=order, context=context, count=count)
-     
 
     ### EXACT COPY-PASTE TO order_nomenclature
     _columns = {
@@ -348,10 +314,7 @@ class product_product(osv.osv):
     
     _inherit = "product.product"
     _description = "Product"
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        newargs = filter_args(args)
-        return super(product_product, self).search(cr, uid, newargs, offset=offset, limit=limit, order=order, context=context, count=count)
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         override to complete nomenclature_description
@@ -360,6 +323,15 @@ class product_product(osv.osv):
         sale._setNomenclatureInfo(cr, uid, vals, context)
         
         return super(product_product, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        override to complete nomenclature_description
+        '''
+        sale = self.pool.get('sale.order.line')
+        sale._setNomenclatureInfo(cr, uid, vals, context)
+        
+        return super(product_product, self).write(cr, uid, ids, vals, context)
     
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
         '''
@@ -424,27 +396,9 @@ class product_product(osv.osv):
             name = n.name
             number = n.number_of_products
             values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
-       
-        # TODO: fix this
-        newv = {}
-        for v in result['value']:
-            m = re.match('nomen_manda_(\d)', v)
-            if m:
-                newv['nomen_manda_fake_%s'%m.group(1)] = result['value'][v]
-            else:
-                newv[v] = result['value'][v]
-        result['value'] = newv
+
         return result
     
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        override to complete nomenclature_description
-        '''
-        sale = self.pool.get('sale.order.line')
-        sale._setNomenclatureInfo(cr, uid, vals, context)
-        
-        return super(product_product, self).write(cr, uid, ids, vals, context)
-        
     def _resetNomenclatureFields(self, values):
         '''
         reset all nomenclature's fields
@@ -459,14 +413,12 @@ class product_product(osv.osv):
             values.update({'nomen_sub_%s'%x:False})
             values.update({'nomen_c_sub_%s'%x:False})
     
-    
     def _generateValueDic(self, cr, uid, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, *optionalList):
         '''
         generate original dictionary
         all values are placed in the update dictionary
         to ease the generation of dynamic domain in order_nomenclature
         '''
-        
         result = {}
         
         # mandatory levels values
@@ -484,7 +436,6 @@ class product_product(osv.osv):
             result.update({name:value})
         
         return result
-    
     
     def _clearFieldsBelow(self, cr, uid, level, optionalList, result):
         '''
@@ -515,7 +466,6 @@ class product_product(osv.osv):
                     result['value'].update({'nomen_c_sub_%s'%x:False})
             
         return result
-    
     
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
@@ -630,8 +580,6 @@ class product_product(osv.osv):
     
         return result
 
-
-
     def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
             nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -701,8 +649,8 @@ class product_product(osv.osv):
         result = context['result']
         return result
         
-
 product_product()
+
 
 class act_window(osv.osv):
     _name = 'ir.actions.act_window'
