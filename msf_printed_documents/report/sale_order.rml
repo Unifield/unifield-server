@@ -60,6 +60,10 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="6,-1" stop="6,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="7,-1" stop="7,-1"/>
     </blockTableStyle>
+    <blockTableStyle id="Table5b">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
     <blockTableStyle id="Table5">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -71,6 +75,10 @@
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="6,-1" stop="6,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="7,-1" stop="7,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="TableDesc">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
     </blockTableStyle>
     <blockTableStyle id="Table6">
       <blockAlignment value="LEFT"/>
@@ -127,6 +135,7 @@
     <paraStyle name="terp_default_address" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Centre_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Right_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="terp_default_Left_9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_1" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Right_9_Bold" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="terp_default_Italic" rightIndent="0.0" leftIndent="20.0" fontName="Helvetica-Oblique" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -254,65 +263,45 @@
       </tr>
     </blockTable>
     <section>
-      <para style="terp_default_1">[[repeatIn(o.order_line,'line')]]</para>
-      <blockTable colWidths="22.0,57.0,89.0,143.0,62.0,60.0,44.0,59.0" style="Table5">
+      <para style="terp_default_1">[[repeatIn(enumerate(o.order_line),'line')]]</para>
+      <blockTable colWidths="22.0,57.0,89.0,143.0,62.0,60.0,44.0,59.0" style="Table5b" keepWithNext="1">
         <tr>
           <td>
-            <para style="P2">[[ line.line_number ]] </para>
+            <para style="P2">[[ line[1].line_number ]] </para>
           </td>
           <td>
-            <para style="P2">[[ formatLang(line.date_planned, date=True) ]]</para>
+            <para style="P2">[[ formatLang(line[1].date_planned, date=True) ]]</para>
           </td>
           <td>
-            <para style="P1">[[ line.product_id and line.product_id.default_code or '' ]]</para>
+            <para style="P1">[[ line[1].product_id and line[1].product_id.default_code or '' ]]</para>
           </td>
           <td>
-            <para style="P1">[[ line.product_id and line.product_id.name or '' ]]</para>
+            <para style="P1">[[ line[1].product_id and line[1].product_id.name or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(line.product_uos and line.product_uos_qty or line.product_uom_qty) ]] [[ line.product_uos and line.product_uos.name or line.product_uom.name ]] </para>
+            <para style="terp_default_Right_9">[[ formatLang(line[1].product_uos and line[1].product_uos_qty or line[1].product_uom_qty) ]] [[ line[1].product_uos and line[1].product_uos.name or line[1].product_uom.name ]] </para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(line.price_unit ) ]]</para>
+            <para style="terp_default_Right_9">[[ formatLang(line[1].price_unit ) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(line.discount, digits=get_digits(dp='Sale Price')) ]]</para>
+            <para style="terp_default_Right_9">[[ formatLang(line[1].discount, digits=get_digits(dp='Sale Price')) ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(line.price_subtotal, digits=get_digits(dp='Sale Price')) ]] [[ o.pricelist_id.currency_id.symbol ]]</para>
+            <para style="terp_default_Right_9">[[ formatLang(line[1].price_subtotal, digits=get_digits(dp='Sale Price')) ]] [[ o.pricelist_id.currency_id.symbol ]]</para>
           </td>
         </tr>
+    </blockTable>
+    <blockTable colWidths="22,461,50" style="TableDesc" keepWithNext="1">
+       [[ line[1].nomenclature_description or removeParentNode('blockTable') ]]
         <tr>
           <td>
-            <para style="terp_default_Italic">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Italic">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="P1">[[ line.nomenclature_description ]]</para>
-          </td>
-          <td>
-            <para style="P1">[[ line.name ]]</para>
-          </td>
-          <td>
             <para style="terp_default_Right_9">
               <font color="white"> </font>
             </para>
           </td>
           <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
+            <para style="terp_default_Left_9">[[ line[1].nomenclature_description ]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">
@@ -320,9 +309,37 @@
             </para>
           </td>
         </tr>
-      </blockTable>
+    </blockTable>
+    <blockTable colWidths="22,461,50" style="TableDesc" keepWithNext="1">
+       [[ line[1].name or removeParentNode('blockTable') ]]
+        <tr>
+          <td>
+            <para style="terp_default_Right_9">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="terp_default_Left_9">[[ line[1].name ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_Right_9">
+              <font color="white"> </font>
+            </para>
+          </td>
+        </tr>
+    </blockTable>
+    <blockTable colWidths="533" style="Table5">
+         [[ setTag('blockTable','blockTable',  (line[0]+1 == len(o.order_line)) and {'keepWithNext': '1'} or {}) ]]
+         <tr>
+          <td>
+            <para style="terp_default_1">
+              <font color="white"> </font>
+            </para>
+          </td>
+          </tr>
+    </blockTable>
     </section>
-    <blockTable colWidths="373.0,60.0,103.0" style="Table6">
+    <blockTable colWidths="373.0,60.0,103.0" style="Table6" keepWithNext="1">
       <tr>
         <td>
           <para style="terp_default_9">
