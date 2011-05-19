@@ -131,8 +131,8 @@ class purchase_order_line(osv.osv):
     
     # PO/SO - IDENTICAL
     _columns = {
-        'nomenclature_code': fields.char('Nomenclature code', size=128),
-        'name': fields.char('Comment', size=256, required=True),
+        'nomenclature_code': fields.char('Nomenclature code', size=1024),
+        'name': fields.char('Comment', size=1024, required=True),
         'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
@@ -161,7 +161,7 @@ class purchase_order_line(osv.osv):
         'nomen_c_sub_4': fields.char('C9', size=128),
         'nomen_c_sub_5': fields.char('C10', size=128),
         # concatenation of nomenclature in a visible way
-        'nomenclature_description': fields.char('Nomenclature', size=128),
+        'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
     ### END OF COPY
     
@@ -344,8 +344,8 @@ class sale_order_line(osv.osv):
         
     # PO/SO - IDENTICAL
     _columns = {
-        'nomenclature_code': fields.char('Nomenclature code', size=128),
-        'name': fields.char('Comment', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'nomenclature_code': fields.char('Nomenclature code', size=1024),
+        'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
@@ -374,7 +374,7 @@ class sale_order_line(osv.osv):
         'nomen_c_sub_4': fields.char('C9', size=128),
         'nomen_c_sub_5': fields.char('C10', size=128),
         # concatenation of nomenclature in a visible way
-        'nomenclature_description': fields.char('Nomenclature', size=128),
+        'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
     ### END OF COPY
     
