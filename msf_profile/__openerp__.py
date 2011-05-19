@@ -55,6 +55,7 @@
         "procurement_auto",
         "product_attributes",
         "procurement_report",
+        "msf_printed_documents",
     ],
     "update_xml": [
         "report.xml",

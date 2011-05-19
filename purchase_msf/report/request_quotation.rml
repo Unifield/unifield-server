@@ -22,6 +22,7 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="5,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table_Product_Line">
       <blockAlignment value="LEFT"/>
@@ -33,10 +34,22 @@
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="3,-1" stop="3,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
     </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -113,56 +126,84 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="93.0,93.0,186.0,98.0,61.0" repeatRows="1" style="Table_Product_Header_Title">
+    <blockTable colWidths="20.0,59.0,122.0,125.0,109.0,96.0" repeatRows="1" style="Table_Product_Header_Title">
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Internal Code</para>
+          <para style="terp_tblheader_Details">Nr.</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Internal Name</para>
+          <para style="terp_tblheader_Details">Requested Date</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Supplier Code</para>
+          <para style="P1">Reference</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Centre">Expected Date</para>
+          <para style="P1">Description</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Centre">Qty</para>
+          <para style="P1">Supplier Code</para>
+        </td>
+        <td>
+          <para style="P5">Quantity</para>
         </td>
       </tr>
     </blockTable>
     <section>
       <para style="terp_default_9">[[ repeatIn(order.order_line,'order_line') ]]</para>
-      <blockTable colWidths="93.0,93.0,185.0,100.0,39.0,20.0" style="Table_Product_Line">
+      <blockTable colWidths="20.0,59.0,122.0,125.0,109.0,95.0" style="Table_Product_Line">
         <tr>
           <td>
-            <para style="terp_default_9">[[ order_line.internal_code ]]</para>
+            <para style="P3">[[ order_line.line_number ]] </para>
           </td>
           <td>
-            <para style="terp_default_9">[[ order_line.internal_name ]]</para>
+            <para style="P3">[[ formatLang(order_line.date_planned, date=True) ]]</para>
           </td>
           <td>
-            <para style="terp_default_9">[[ order_line.supplier_code ]]</para>
+            <para style="P2">[[ order_line.internal_code ]]</para>
           </td>
           <td>
-            <para style="terp_default_Centre_9">[[ formatLang(order_line.date_planned, date_time = True) ]]</para>
+            <para style="P2">[[ order_line.internal_name ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(order_line.product_qty )]]</para>
+            <para style="P2">[[ order_line.supplier_code ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ (order_line.product_uom and order_line.product_uom.name) or '' ]]</para>
+            <para style="P7">[[ formatLang(order_line.product_qty )]]</para>
           </td>
         </tr>
         <tr>
           <td>
-            <para style="terp_default_8_italic">[[ format(order_line.notes or removeParentNode('tr')) ]]</para>
+            <para style="terp_default_8_italic">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="terp_default_8_italic">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="P2">[[ order_line.nomenclature_description ]]</para>
+          </td>
+          <td>
+            <para style="P2">[[ order_line.name ]]</para>
+          </td>
+          <td>
+            <para style="terp_default_8_italic">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <para style="terp_default_8_italic">
+              <font color="white"> </font>
+            </para>
           </td>
         </tr>
       </blockTable>
     </section>
-    <para style="terp_default_9"/>
+    <para style="terp_default_9">
+      <font color="white"> </font>
+    </para>
     <para style="terp_default_9">[[ format(order.notes or '') ]]</para>
     <para style="terp_default_9">
       <font color="white"> </font>
@@ -177,3 +218,4 @@
     <para style="terp_default_9">[[ user.signature or '' ]]</para>
   </story>
 </document>
+
