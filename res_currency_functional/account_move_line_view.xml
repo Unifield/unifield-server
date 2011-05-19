@@ -39,7 +39,9 @@
                     <group col="6" colspan="4">
                         <field name="name" select="1"/>
                         <field name="ref"/>
-                        <field name="partner_id" select="1" on_change="onchange_partner_id(False,partner_id,account_id,debit,credit,date)" string="Third Party"/>
+                        <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                        <field name="partner_type_mandatory" invisible="1"/>
 
                         <field name="journal_id"/>
                         <field name="period_id"/>
@@ -48,7 +50,7 @@
                     
                     <group col="2" colspan="2">
                         <separator colspan="2" string="Amount"/>
-                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" on_change="onchange_account_id(account_id)"/>
                         <field name="credit" string="Functional In" readonly="1"/>
                         <field name="debit" string="Functional Out" readonly="1"/>
                     </group>

@@ -119,16 +119,13 @@ class purchase_order_line(osv.osv):
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=128),
-        'nomenclature_description': fields.char('Nomenclature', size=128),
-        
-        
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Leaf'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         # codes
         'nomen_c_manda_0': fields.char('C1', size=32),
         'nomen_c_manda_1': fields.char('C2', size=32),
@@ -148,6 +145,8 @@ class purchase_order_line(osv.osv):
         'nomen_c_sub_3': fields.char('C8', size=128),
         'nomen_c_sub_4': fields.char('C9', size=128),
         'nomen_c_sub_5': fields.char('C10', size=128),
+        # concatenation of nomenclature in a visible way
+        'nomenclature_description': fields.char('Nomenclature', size=128),
     }
     ### END OF COPY
     
@@ -323,16 +322,13 @@ class sale_order_line(osv.osv):
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=128),
-        'nomenclature_description': fields.char('Nomenclature', size=128),
-        
-        
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Leaf'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         # codes
         'nomen_c_manda_0': fields.char('C1', size=32),
         'nomen_c_manda_1': fields.char('C2', size=32),
@@ -352,6 +348,8 @@ class sale_order_line(osv.osv):
         'nomen_c_sub_3': fields.char('C8', size=128),
         'nomen_c_sub_4': fields.char('C9', size=128),
         'nomen_c_sub_5': fields.char('C10', size=128),
+        # concatenation of nomenclature in a visible way
+        'nomenclature_description': fields.char('Nomenclature', size=128),
     }
     ### END OF COPY
     

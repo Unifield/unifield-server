@@ -171,8 +171,8 @@ def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment
     Common function when type of order is changing
     '''
     v = {}
-    if internal_type == 'international' and rts and not shipment_date:
-        v.update({'shipment_date': rts})
+#    if internal_type == 'international' and rts and not shipment_date:
+#        v.update({'shipment_date': rts})
         
     return v
 
@@ -192,14 +192,14 @@ def common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_d
                 'warning': message}
     
     # Set the message if the user enter a wrong requested date
-    if not check_delivery_requested(self, requested_date, context=context):
-        message = {'title': _('Warning'),
-                   'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
+#    if not check_delivery_requested(self, requested_date, context=context):
+#        message = {'title': _('Warning'),
+#                   'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
     
     # Set the message if the user enter a wrong confirmed date    
-    if not check_delivery_confirmed(self, confirmed_date, date_order, context):
-        message = {'title': _('Warning'),
-                   'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
+#    if not check_delivery_confirmed(self, confirmed_date, date_order, context):
+#        message = {'title': _('Warning'),
+#                   'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
     if requested_date:
         requested = datetime.strptime(requested_date, '%Y-%m-%d')
         ready_to_ship = requested - relativedelta(days=leadtime)
@@ -220,12 +220,14 @@ def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, s
         return {}
     
     # Set the message if the user enter a wrong ready to ship date
-    if not check_delivery_confirmed(self, ready_to_ship, date_order, context=context):
-        message = {'title': _('Warning'),
-                   'message': _('The Ready To Ship Date should be older than the Creation date !')}
-    else:
-        if not shipment:
-            v.update({'shipment_date': ready_to_ship})
+#    if not check_delivery_confirmed(self, ready_to_ship, date_order, context=context):
+#        message = {'title': _('Warning'),
+#                   'message': _('The Ready To Ship Date should be older than the Creation date !')}
+#    else:
+#        if not shipment:
+#            v.update({'shipment_date': ready_to_ship})
+    if not shipment:
+        v.update({'shipment_date': ready_to_ship})
         
     return {'warning': message, 'value': v}
 
@@ -234,14 +236,9 @@ def common_onchange_transport_leadtime(self, cr, uid, ids, requested_date=False,
     Common fonction when transport lead time is changing
     '''
     res = {}
-    if isinstance(leadtime, str):
-        try:
-            leadtime = int(leadtime)
-        except:
-            res = {}
-    if requested_date:
+    if requested_date and leadtime!=0.00:
         requested = datetime.strptime(requested_date, '%Y-%m-%d')
-        ready_to_ship = requested - relativedelta(days=leadtime)
+        ready_to_ship = requested - relativedelta(days=round(leadtime*7,0))
         res = {'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')}
     
     return {'value': res}
@@ -378,27 +375,28 @@ class purchase_order(osv.osv):
     _columns = {
         'date_order': fields.date('Creation Date', select=True, readonly=True, 
                                   required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True, 
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, 
                                             states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', required=True, 
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', 
                                                help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'est_transport_lead_time': fields.selection([('10', 'By Flight'), ('30', 'By Road'),
-                                                     ('60', 'By Boat')], string='Estimated Transport Lead-Time',
-                                                     help='Number of days this field has to be associated with a transport mode selection'),
+        'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
+                                            ('boat', 'By Boat')], string='Transport Type',
+                                            help='Number of days this field has to be associated with a transport mode selection'),
+        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                           help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'internal_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
+        'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
     }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'national',
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
@@ -413,6 +411,7 @@ class purchase_order(osv.osv):
         '''
         message = {}
         v = {}
+        line_obj = self.pool.get('purchase.order.line')
         if isinstance(leadtime, str):
             leadtime = int(leadtime)
         
@@ -435,6 +434,9 @@ class purchase_order(osv.osv):
             requested = datetime.strptime(requested_date, '%Y-%m-%d')
             ready_to_ship = requested - relativedelta(days=leadtime)
             v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
+            # Change the date on all lines
+            line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)])
+            line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, 'confirmed_delivery_date': confirmed_date})
             
         v.update({'delivery_confirmed_date': confirmed_date})
         
@@ -462,7 +464,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        #return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        return res
     
 purchase_order()
 
@@ -478,13 +481,13 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        for line in self.browse(cr, uid, ids):
-            if 'date_planned' in data:
-                if line.order_id.delivery_requested_date > data['date_planned']:
-                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-            if data.get('confirmed_delivery_date', False):
-                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
-                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
+#        for line in self.browse(cr, uid, ids):
+#            if 'date_planned' in data:
+#                if line.order_id.delivery_requested_date > data['date_planned']:
+#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
+#            if data.get('confirmed_delivery_date', False):
+#                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
+#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
         
         create_history(self, cr, uid, ids, data, 'purchase.order.line', 'purchase_line_id', fields_date_line, context=context)
                     
@@ -616,27 +619,28 @@ class sale_order(osv.osv):
     _columns = {
         'date_order': fields.date('Creation Date', select=True, readonly=True, 
                                   required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True, 
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, #required=True, 
                                             states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', required=True, 
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', #required=True, 
                                                help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'est_transport_lead_time': fields.selection([('10', 'By Flight'), ('30', 'By Road'),
-                                                     ('60', 'By Boat')], string='Estimated Transport Lead-Time',
-                                                     help='Number of days this field has to be associated with a transport mode selection'),
+        'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
+                                            ('boat', 'By Boat')], string='Transport Type',
+                                            help='Number of days this field has to be associated with a transport mode selection'),
+        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                           help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'internal_type': fields.selection([('national', 'National'), ('internal', 'Internal'),
+        'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),
         'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
     }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'internal',
+        'internal_type': lambda *a: 'national',
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
@@ -672,7 +676,8 @@ class sale_order(osv.osv):
             ids = [ids]
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        #return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        return res
     
 sale_order()
 

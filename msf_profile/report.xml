@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <report id="report_ir_model_overview_ods"
+            string="Model Overview (ODS)"
+            model="ir.model"
+            name="ir.model.overview_ods"
+            report_type="sxw"
+            file="addons/msf_profile/report/modeloverview.ods"
+            header="False"
+            />
+    </data>
+</openerp>
+

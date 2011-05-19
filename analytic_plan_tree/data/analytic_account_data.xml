@@ -3,8 +3,8 @@
     <data noupdate="1">
     
         <record id="analytic_account_project" model="account.analytic.account">
-            <field name="name">Project</field>
-            <field name="code">PROJECT</field>
+            <field name="name">OC</field>
+            <field name="code">OC</field>
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>

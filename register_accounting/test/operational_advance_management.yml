@@ -210,7 +210,7 @@
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
     name: 
-    period_id: period_000
+    period_id: period_0001
     user_id: base.user_root
     starting_details_ids:
       -  pieces: 100.0

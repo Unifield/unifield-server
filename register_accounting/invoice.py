@@ -23,6 +23,9 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
+
+import netsvc
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -53,36 +56,41 @@ class account_invoice(osv.osv):
             type='many2one', relation="res.partner", readonly=True),
     }
 
-    def action_move_create(self, cr, uid, ids, context={}):
+    def action_reconcile_direct_invoice(self, cr, uid, ids, context={}):
         """
         Reconcile move line if invoice is a Direct Invoice
         NB: In order to define that an invoice is a Direct Invoice, we need to have register_line_ids not null
         """
-        res = super(account_invoice, self).action_move_create(cr, uid, ids, context)
-        if res:
-            for inv in self.browse(cr, uid, ids):
-                # Verify that this invoice is linked to a register line and have a move
-                if inv.move_id and inv.register_line_ids:
-                    ml_obj = self.pool.get('account.move.line')
-                    # First search move line that becomes from invoice
-                    res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
-                    if len(res_ml_ids) > 1:
-                        raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
-                    invoice_move_line_id = res_ml_ids[0]
-                    # Then search move line that corresponds to the register line
-                    reg_line = inv.register_line_ids[0]
-                    reg_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('account_id', '=', reg_line.account_id.id)])
-                    if len(reg_ml_ids) > 1:
-                        raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
-                    register_move_line_id = reg_ml_ids[0]
-                    # Finally do reconciliation
-                    ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
+#        res = super(account_invoice, self).action_move_create(cr, uid, ids, context)
+#        if res:
+        for inv in self.browse(cr, uid, ids):
+            # Verify that this invoice is linked to a register line and have a move
+            if inv.move_id and inv.register_line_ids:
+                ml_obj = self.pool.get('account.move.line')
+                # First search move line that becomes from invoice
+                res_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', inv.move_id.id), ('account_id', '=', inv.account_id.id)])
+                if len(res_ml_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('More than one journal items found for this invoice.'))
+                invoice_move_line_id = res_ml_ids[0]
+                # Then search move line that corresponds to the register line
+                reg_line = inv.register_line_ids[0]
+                reg_ml_ids = ml_obj.search(cr, uid, [('move_id', '=', reg_line.move_ids[0].id), ('account_id', '=', reg_line.account_id.id)])
+                if len(reg_ml_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('More than one journal items found for this register line.'))
+                register_move_line_id = reg_ml_ids[0]
+                # Finally do reconciliation
+                ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
-
-    def refresh_wizard_direct_invoice(self, cr, uid, ids, context={}):
+    
+    def invoice_open(self, cr, uid, ids, context=None):
         """
-        Permit to refresh the wizard for direct invoice in order to compute the total of amount given by the invoices lines
+        No longer fills the date automatically, but requires it to be set
         """
+        wf_service = netsvc.LocalService("workflow")
+        for inv in self.browse(cr, uid, ids):
+            if not inv.date_invoice:
+                raise osv.except_osv(_('No invoice date !'), _('Please indicate an invoice date before approving the invoice!'))
+            wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         return True
 
 account_invoice()
