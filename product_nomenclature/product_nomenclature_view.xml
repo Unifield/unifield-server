@@ -12,13 +12,14 @@
 					<group string="Extended Filters..." position="after">
 						<newline />
 						<group expand="1" string="Nomenclature Filters...">
-							<field name="nomen_manda_fake_0" 
+							<field name="nomen_manda_fake_0"
 								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3, context)" />
-							<field name="nomen_manda_fake_1" 
-								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3)" />
-							<field name="nomen_manda_fake_2" 
-								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3)" />
-							<field name="nomen_manda_fake_3"  />
+							<field name="nomen_manda_fake_1"
+								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3, context)" />
+							<field name="nomen_manda_fake_2"
+								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3, context)" />
+							<field name="nomen_manda_fake_3"
+								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_fake_0, nomen_manda_fake_1, nomen_manda_fake_2, nomen_manda_fake_3, context)" />
 						</group>
 						<newline />
 						<group expand="1" string="Optional Nomenclature Filters...">

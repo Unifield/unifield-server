@@ -424,15 +424,6 @@ class product_product(osv.osv):
             name = n.name
             number = n.number_of_products
             values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
-        
-        # hack for empty list bug, to be removed
-        for i in range(position+1, _LEVELS):
-            if len(values[mandaName%(i)]) > 1:
-                values[mandaName%(i)].remove(())
-            
-        for i in range(_SUB_LEVELS):
-            if len(values[optName%(i)]) > 1:
-                values[optName%(i)].remove(())
        
         # TODO: fix this
         newv = {}
