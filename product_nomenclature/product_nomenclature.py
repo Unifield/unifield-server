@@ -218,7 +218,7 @@ class product_nomenclature(osv.osv):
                  'sequence': _getDefaultSequence,
     }
 
-    _order = "sequence"
+    _order = "sequence, id"
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
         while len(ids):
