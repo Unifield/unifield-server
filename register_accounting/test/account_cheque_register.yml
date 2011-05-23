@@ -44,4 +44,4 @@
       absl_obj = self.pool.get('account.bank.statement.line')
       absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("account_bank_statement_3"))])
       for id in absl_ids:
-          absl_obj.button_hard_posting(cr, uid, [id])
+          absl_obj.button_hard_posting(cr, uid, [id], context={})

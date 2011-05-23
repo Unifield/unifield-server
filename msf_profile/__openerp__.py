@@ -28,6 +28,7 @@
     """,
     "website": "http://unifield.msf.org",
     "init_xml": [
+        "data.xml",
     ],
     "depends" : [
         "msf_partner",
@@ -46,14 +47,18 @@
 	    "product_nomenclature",
         "order_types",
         "res_currency_functional",
+        "order_line_number",
 	    "sourcing",
         "stock_move_tracking",
         "stock_batch_recall",
         "procurement_cycle",
         "procurement_auto",
         "product_attributes",
+        "procurement_report",
+        "msf_printed_documents",
     ],
     "update_xml": [
+        "report.xml",
     ],
     "demo_xml": [
     ],

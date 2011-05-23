@@ -1,5 +1,5 @@
 <openerp>
-	<data>
+	<data noupdate="1">
 		<!-- MANDATORY -->
 		<!--FIRST LEVEL -->
 		<record model="product.nomenclature" id="nomen_med">
@@ -1244,7 +1244,7 @@
 
 		<record model="product.nomenclature" id="nomeno0_log_2">
 			<field name="code">5.15</field>
-			<field name="name">2</field>
+			<field name="name">2&apos;&apos;</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
 			<field name="level">1</field>
@@ -1253,7 +1253,7 @@
 
 		<record model="product.nomenclature" id="nomeno0_log_4">
 			<field name="code">5.16</field>
-			<field name="name">4</field>
+			<field name="name">4&apos;&apos;</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
 			<field name="level">1</field>
@@ -1623,10 +1623,6 @@
 			<field name="level">3</field>
 			<field name="sub_level">1</field>
 		</record>
-
-
-
-
 
 	</data>
 </openerp>

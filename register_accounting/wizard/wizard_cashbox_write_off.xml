@@ -24,7 +24,7 @@
 
           <!-- Actions -->
           <act_window id="action_write_off"
-            name="Cash Discrepancy Case"
+            name="Handle Cash Discrepancy"
             res_model="cashbox.write.off"
             src_model="account.bank.statement"
             key2="client_action_multi"

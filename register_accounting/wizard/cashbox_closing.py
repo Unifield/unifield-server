@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from datetime import datetime
 
 class wizard_closing_cashbox(osv.osv_memory):
     
@@ -91,7 +92,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                     # @@@end
                             if not st_line.amount:
                                  continue
-                        res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm'}, context=context)
+                        res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}, context=context)
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
             else:
                 raise osv.except_osv(_('Warning'), _("You don't have really confirm by ticking!"))

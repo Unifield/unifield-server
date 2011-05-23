@@ -170,6 +170,7 @@ class procurement_order(osv.osv):
         if product.id not in cache.get(location_id):
             newdate = datetime.today()
             quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values)
+                
             if quantity_to_order <= 0:
                 return False
             else:
@@ -210,9 +211,9 @@ class procurement_order(osv.osv):
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.procure_delay and product.procure_delay/30 or 1
+        delivery_leadtime = product.procure_delay and product.procure_delay/30.0 or 1
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
-            delivery_leadtime = d_values.get('leadtime')/30.0 # We divided by 30 because the leadtime should be in months
+            delivery_leadtime = d_values.get('leadtime')
         else:
             sequence = False
             for supplier_info in product.seller_ids:

@@ -7,6 +7,12 @@
             <field name="code">view</field>
             <field name="close_method">none</field>
         </record>
+        <record id="account.account_type_liability" model="account.account.type">
+            <field name="name">Liability</field>
+            <field name="code">liability</field>
+            <field name="report_type">liability</field>
+            <field name="close_method">balance</field>
+        </record>
         <record id="account.account_type_asset" model="account.account.type">
             <field name="name">Asset</field>
             <field name="code">asset</field>

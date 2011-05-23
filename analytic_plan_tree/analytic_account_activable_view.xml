@@ -15,6 +15,7 @@
                         <field name="code" select="1" required="1"/>
                     </field>
                     <field name="type" position="after">
+                        <newline/>
                         <field name="activation_date"/>
                         <field name="inactivation_date"/>
                     </field>

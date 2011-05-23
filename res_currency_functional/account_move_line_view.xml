@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Line">
                     <field name="journal_id" string="Journal Code"/>
-                    <field name="journal_sequence"/>
+                    <field name="move_id"/>
                     <field name="instance"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
@@ -18,12 +18,12 @@
                     <field name="name"/>
                     <field name="account_id"/>
                     <field name="partner_type"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
-                    <field name="functional_currency_id"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="currency_id" string="Booking Currency"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
+                    <field name="functional_currency_id"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -39,7 +39,9 @@
                     <group col="6" colspan="4">
                         <field name="name" select="1"/>
                         <field name="ref"/>
-                        <field name="partner_id" select="1" on_change="onchange_partner_id(False,partner_id,account_id,debit,credit,date)" string="Third Party"/>
+                        <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                        <field name="partner_type_mandatory" invisible="1"/>
 
                         <field name="journal_id"/>
                         <field name="period_id"/>
@@ -48,7 +50,7 @@
                     
                     <group col="2" colspan="2">
                         <separator colspan="2" string="Amount"/>
-                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                        <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" on_change="onchange_account_id(account_id)"/>
                         <field name="credit" string="Functional In" readonly="1"/>
                         <field name="debit" string="Functional Out" readonly="1"/>
                     </group>
@@ -81,7 +83,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom">
                     <field name="journal_id" string="Journal Code"/>
-                    <field name="journal_sequence"/>
+                    <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="instance"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
@@ -91,12 +93,12 @@
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In" readonly="1"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Out" readonly="1"/>
-                    <field name="functional_currency_id" readonly="1"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="currency_id" string="Booking Currency"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In" readonly="1"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Out" readonly="1"/>
+                    <field name="functional_currency_id" readonly="1"/>
                     <field name="state"/>
                 </tree>
             </field>

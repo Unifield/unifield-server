@@ -47,7 +47,7 @@ class sale_order(osv.osv):
         
         for sale in self.browse(cr, uid, ids):
             partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
-            if sale.order_type != 'regular' or (partner and partner.partner_type == 'internal'):
+            if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
                 res[sale.id] = True
             else:
                 res[sale.id] = True
@@ -70,22 +70,23 @@ class sale_order(osv.osv):
         for arg in args:
             if arg[1] == '=':
                 if arg[2]:
-                    clause += 'AND inv.state = \'paid\''
+                    clause += 'AND inv.state = \'paid\' OR (sale.state != \'draft\' AND (sale.order_type != \'regular\' OR part.partner_type = \'internal\'))'
                 else:
-                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state <> \'paid\'  AND rel.order_id = sale.id '
-                    sale_clause = ',  sale_order AS sale '
+                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state <> \'paid\' AND sale.order_type = \'regular\''
                     no_invoiced = True
 
         cursor.execute('SELECT rel.order_id ' \
-                'FROM sale_order_invoice_rel AS rel, account_invoice AS inv '+ sale_clause + \
-                'WHERE rel.invoice_id = inv.id ' + clause)
+                'FROM sale_order_invoice_rel AS rel, account_invoice AS inv, sale_order AS sale, res_partner AS part '+ sale_clause + \
+                'WHERE rel.invoice_id = inv.id AND rel.order_id = sale.id AND sale.partner_id = part.id ' + clause)
         res = cursor.fetchall()
         if no_invoiced:
             cursor.execute('SELECT sale.id ' \
-                    'FROM sale_order AS sale ' \
+                    'FROM sale_order AS sale, res_partner AS part ' \
                     'WHERE sale.id NOT IN ' \
                         '(SELECT rel.order_id ' \
-                        'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'')
+                        'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'' \
+                        'AND sale.partner_id = part.id ' \
+                        'AND sale.order_type = \'regular\' AND part.partner_type != \'internal\'')
             res.extend(cursor.fetchall())
         if not res:
             return [('id', '=', 0)]

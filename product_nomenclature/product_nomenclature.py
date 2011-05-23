@@ -172,6 +172,26 @@ class product_nomenclature(osv.osv):
 
         # save the data to db
         return super(product_nomenclature, self).create(cr, user, vals, context)
+    
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the number of products for the nomenclature
+        '''
+        res = {}
+        
+        for nomen in self.browse(cr, uid, ids, context=context):
+            name = ''
+            if nomen.type == 'mandatory':
+                name = 'nomen_manda_%s'%nomen.level
+            if nomen.type == 'optional':
+                name = 'nomen_sub_%s'%nomen.sub_level
+            products = self.pool.get('product.product').search(cr, uid, [(name, '=', nomen.id)], context=context)
+            if not products:
+                res[nomen.id] = 0
+            else:
+                res[nomen.id] = len(products)
+            
+        return res
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
@@ -188,6 +208,7 @@ class product_nomenclature(osv.osv):
         'type': fields.selection([('mandatory','Mandatory'), ('optional','Optional')], 'Nomenclature Type'),
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
+        'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
     }
 
     _defaults = {
@@ -197,7 +218,7 @@ class product_nomenclature(osv.osv):
                  'sequence': _getDefaultSequence,
     }
 
-    _order = "sequence"
+    _order = "sequence, id"
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
         while len(ids):
@@ -230,7 +251,7 @@ class product_template(osv.osv):
                 'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True),
                 'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True),
                 'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True),
-                'nomen_manda_3': fields.many2one('product.nomenclature', 'Leaf', required=True),
+                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True),
                 # codes
                 'nomen_c_manda_0': fields.char('C1', size=32),
                 'nomen_c_manda_1': fields.char('C2', size=32),
@@ -250,6 +271,8 @@ class product_template(osv.osv):
                 'nomen_c_sub_3': fields.char('C8', size=128),
                 'nomen_c_sub_4': fields.char('C9', size=128),
                 'nomen_c_sub_5': fields.char('C10', size=128),
+                # concatenation of nomenclature in a visible way
+                'nomenclature_description': fields.char('Nomenclature', size=128),
     }
     ### END OF COPY
 
@@ -292,6 +315,24 @@ class product_product(osv.osv):
     _inherit = "product.product"
     _description = "Product"
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override to complete nomenclature_description
+        '''
+        sale = self.pool.get('sale.order.line')
+        sale._setNomenclatureInfo(cr, uid, vals, context)
+        
+        return super(product_product, self).create(cr, uid, vals, context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        override to complete nomenclature_description
+        '''
+        sale = self.pool.get('sale.order.line')
+        sale._setNomenclatureInfo(cr, uid, vals, context)
+        
+        return super(product_product, self).write(cr, uid, ids, vals, context)
+        
     def _resetNomenclatureFields(self, values):
         '''
         reset all nomenclature's fields

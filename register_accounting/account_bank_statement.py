@@ -28,6 +28,8 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 import time
+from datetime import datetime
+import decimal_precision as dp
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
@@ -73,9 +75,12 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance based on Starting Balance and Cash Transactions"),
+            help="Closing balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
+        'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
+            help="Closing balance"),
+
     }
 
     _defaults = {
@@ -172,8 +177,36 @@ class account_bank_statement(osv.osv):
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm'}, context=context)
+        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
+
+    def button_create_invoice(self, cr, uid, ids, context={}):
+        """
+        Create a direct invoice
+        """
+        # Search the customized view we made for Supplier Invoice (for * Register's users)
+        currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
+        if isinstance(currency, tuple):
+            currency =currency[0]
+        id = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
+        if not id:
+            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, context={'journal_type': 'purchase', 'type': 'in_invoice'})
+        return {
+            'name': "Supplier Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.account.invoice',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': id,
+            'context':
+            {
+                'active_id': ids[0],
+                'type': 'in_invoice',
+                'journal_type': 'purchase',
+                'active_ids': ids,
+            }
+        }
 
 account_bank_statement()
 
@@ -383,7 +416,7 @@ class account_bank_statement_line(osv.osv):
             'name': st_line_number,
             'ref': st_line.ref or False,
             ## Add partner_type
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             # end of add
         }, context=context)
         self.write(cr, uid, [st_line.id], {
@@ -411,7 +444,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id, register_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': (st_line.account_id) and st_line.account_id.id,
@@ -454,7 +487,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id and register_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
-            'partner_type': partner_type or False,
+#            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
             'account_id': account_id,
@@ -501,6 +534,47 @@ class account_bank_statement_line(osv.osv):
         if amount:
             res.update({'amount': amount})
         return res
+
+    def _verify_dates(self, cr, uid, ids, context={}):
+        """
+        Verify that the given parameter contains date. Then validate date with regarding register period.
+        """
+        for st_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            register = st_line.statement_id
+            account_id = st_line.account_id.id
+            date = st_line.date
+            period_start = register.period_id.date_start
+            period_stop = register.period_id.date_stop
+            # Verify that the date is included between period_start and period_stop
+            if date < period_start or date > period_stop:
+                raise osv.except_osv(_('Error'), _('The date for "%s" is outside the register period!' % st_line.name))
+            # Verify that the date is useful with default debit or credit account activable date 
+            #+ (in fact the default debit and credit account have an activation date, and the given account_id too)
+            #+ That means default debit and credit account are required for registers !
+            register_debit_account_id = register.journal_id.default_debit_account_id.id
+            register_credit_account_id = register.journal_id.default_credit_account_id.id
+            amount = st_line.amount
+            acc_obj = self.pool.get('account.account')
+            register_account = None
+            if amount > 0:
+                register_account = acc_obj.browse(cr, uid, register_debit_account_id, context=context)
+            elif amount < 0:
+                register_account = acc_obj.browse(cr, uid, register_credit_account_id, context=context)
+            if register_account:
+                if date < register_account.activation_date or (register_account.inactivation_date and date > register_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the default account for this register!' % st_line.name))
+            if account_id:
+                account = acc_obj.browse(cr, uid, account_id, context=context)
+                if date < account.activation_date or (account.inactivation_date and date > account.inactivation_date):
+                    raise osv.except_osv(_('Error'), 
+                        _('Posting date for "%s" is outside the validity period of the selected account for this record!' % st_line.name))
+        return True
+
+    _constraints = [
+        (_verify_dates, "Date is not correct. Verify that it's in the register's period. ", ['date']),
+    ]
 
     def _update_move_from_st_line(self, cr, uid, st_line_id=None, values=None, context={}):
         """
@@ -580,7 +654,7 @@ class account_bank_statement_line(osv.osv):
             if st_line.third_parties:
                 partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # then prepare name
-            name = values.get('name', st_line.name) + '/' + str(st_line.sequence)
+            name = '/'
             # finally write move object
             self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type, 'name': name}, context=context)
         return True
@@ -649,53 +723,6 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
-    def do_direct_invoice(self, cr, uid, ids, context={}):
-        """
-        Make an invoice from the statement line that have a supplier and take back :
-        - amount for invoice
-        - supplier
-        - journal from register
-        - currency from register
-        - document_date (from invoice date), ifelse, we retrieve date
-        Then it give some values:
-        - type : in_invoice
-        """
-        for st_line in self.browse(cr, uid, ids, context=context):
-            # Do treatments only if supplier and direct_invoice are filled in
-            if st_line.direct_invoice:
-                # Case where user don't filled in Third Parties for a direct invoice
-                if not st_line.partner_id or not st_line.partner_id.supplier:
-                    raise osv.except_osv(_('Warning'), _('Please update Third Parties field with a Supplier in order to do a direct invoice.'))
-                # Prepare some values
-                date = st_line.document_date or st_line.date or False
-                inv_obj = self.pool.get('account.invoice')
-                st_line_obj = self.pool.get('account.bank.statement.line')
-                # on an invoice, amount is reversed
-                amount = -st_line.amount
-                vals = {
-                    'type': 'in_invoice',
-                    'state': 'draft',
-                    'date_invoice': date,
-                    'partner_id': st_line.partner_id.id,
-                    'period_id': st_line.statement_id.period_id.id,
-                    'currency_id': st_line.statement_id.currency.id,
-                    'journal_id': st_line.statement_id.journal_id.id,
-                    'check_total': amount,
-                    'register_line_ids': [(4, st_line.id)],
-                }
-                # Update val with some fields : address_contact_id, address_invoice_id, account_id, payment_term and fiscal_position
-                vals.update(inv_obj.onchange_partner_id(cr, uid, ids, 'in_invoice', st_line.partner_id.id, date).get('value', {}))
-                # Create an invoice
-                inv_id = inv_obj.create(cr, uid, vals, context=context)
-                # Verify that the invoice creation success
-                if not inv_id:
-                    raise osv.except_osv(_('Error'), _('The invoice creation failed!'))
-                # Link this invoice to the statement line. NB: from_cash_return is permits "Cash Return" button to be hidden
-                res = st_line_obj.write(cr, uid, [st_line.id], {'invoice_id': inv_id, 'from_cash_return': True}, context=context)
-                if not res:
-                    raise osv.except_osv(_('Error'), _('Link to invoice failed!'))
-        return True
-
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -751,8 +778,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You can\'t temp re-post a temp posted entry !'))
 
             if absl.state == "draft":
-                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, 
-                    absl.name+ '/' + str(absl.sequence), context=context)
+                self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
@@ -760,9 +786,6 @@ class account_bank_statement_line(osv.osv):
                 acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                 # do a move that enable a complete supplier follow-up
                 self.do_direct_expense(cr, uid, [absl.id], context=context)
-                # do a direct expense if necessary
-                if absl.direct_invoice:
-                    self.do_direct_invoice(cr, uid, [absl.id], context=context)
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):

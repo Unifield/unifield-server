@@ -50,8 +50,8 @@ class purchase_order(osv.osv):
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for purchase in self.browse(cursor, user, ids, context=context):
-            if (purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
-                purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
+            if purchase.state != 'draft' and ((purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+                purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = 100.0
             else:
                 tot = 0.0
@@ -102,9 +102,9 @@ class purchase_order(osv.osv):
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
-                
+
         if order_type == 'purchase_list':
-            # Search the local market partner id
+            # Searcht he local market partner id
             data_obj = self.pool.get('ir.model.data')
             data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
             if data_id:
@@ -116,7 +116,7 @@ class purchase_order(osv.osv):
                     v['partner_address_id'] = partner.address[0].id
                 if partner.property_product_pricelist_purchase:
                     v['pricelist_id'] = partner.property_product_pricelist_purchase.id
-                    
+        
         return {'value': v}
     
     def onchange_partner_id(self, cr, uid, ids, part):

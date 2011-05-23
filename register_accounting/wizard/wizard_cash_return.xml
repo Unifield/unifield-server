@@ -7,14 +7,15 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Cash Return- Wizard">
-                    <label string="Welcome to the Cash Return Wizard. This wizard help you to consider a cash return in the cashbox and link 
-                        it to some invoices." colspan="4"/>
+                    <label string="Cash Return Wizard will help you book advances return." colspan="4"/>
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <newline />
                     <field name='returned_amount' on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, 
                         display_invoice)"/>
                     <newline />
+                    <field name='date'/>
+                    <newline/>
                     <group colspan="4">
                         <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
                             ('currency_id', '=', currency_id), ('purchase_list', '=', True)]"/>
@@ -22,6 +23,11 @@
                     </group>
                     <newline />
                     <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />
+                    <newline />
+                    <group colspan="4">
+                        <label colspan="3"/>
+                        <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
+                    </group>
                     <newline />
                     <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount)"/>
                     <newline />

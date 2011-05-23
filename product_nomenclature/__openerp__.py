@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["product"],
+    "depends" : ["product", "stock", "purchase"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -34,10 +34,11 @@
     'update_xml': [
         'security/ir.model.access.csv',
         'product_nomenclature_view.xml',
-        'product_nomenclature_data.xml',
     ],
     "demo_xml": [
-    ],
+                 'product_nomenclature_data.xml',
+                 'product_nomenclature_demo.xml',
+        ],
     'test': [
              'test/product_nomenclature.yml',
              ],

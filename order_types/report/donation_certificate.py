@@ -31,7 +31,14 @@ class donation_certificate(report_sxw.rml_parse):
         super(donation_certificate, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'get_lines': self._get_lines,
         })
+        
+    def _get_lines(self, pick_id):
+        pick_obj = self.pool.get('stock.picking')
+        pick = pick_obj.browse(self.cr, self.uid, pick_id)
+            
+        return pick.move_lines
     
 report_sxw.report_sxw('report.order.type.donation.certificate', 
                       'stock.picking', 

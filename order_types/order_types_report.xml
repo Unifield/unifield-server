@@ -10,7 +10,8 @@
                 multi="False"
                 rml="order_types/report/donation_certificate.rml"
                 menu="False" />
-                
+
+
         <report id="gift_certificate"
                 string="Gift Certificate"
                 model="stock.picking"
