@@ -56,6 +56,7 @@
         "product_attributes",
         "procurement_report",
         "msf_printed_documents",
+        "import_data",
     ],
     "update_xml": [
         "report.xml",
