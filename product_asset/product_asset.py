@@ -76,9 +76,19 @@ class product_asset(osv.osv):
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
         })
-        
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        do not copy asset events
+        '''
+        if not default:
+            default = {}
+        default.update({
+            'event_ids': [],
+        })
+        return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
     def write(self, cr, user, ids, vals, context=None):
         '''
