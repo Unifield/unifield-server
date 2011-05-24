@@ -157,6 +157,13 @@ class product_attributes(osv.osv):
                 return False
         return True
     
+    def create(self, cr, uid, vals, context=None):
+        if 'batch_management' in vals:
+            vals['track_production'] = vals['batch_management']
+            vals['track_incoming'] = vals['batch_management']
+            vals['track_outgoing'] = vals['batch_management']
+        return super(product_attributes, self).create(cr, uid, vals, context=context)
+    
     def write(self, cr, uid, ids, vals, context=None):
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
