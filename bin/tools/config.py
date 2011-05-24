@@ -412,26 +412,30 @@ class configmanager(object):
             import stat
             os.chmod(filename, stat.S_IRUSR + stat.S_IWUSR)
 
-    def _check_addons_path(self, option, opt, value, parser):
-        res = os.path.abspath(os.path.expanduser(value))
-        if not os.path.exists(res):
-            raise optparse.OptionValueError("option %s: no such directory: %r" % (opt, value))
+    def _check_addons_path(self, option, opt, values, parser):
+        result = []
+        for value in values.split(','):
+            res = os.path.abspath(os.path.expanduser(value))
+            if not os.path.exists(res):
+                raise optparse.OptionValueError("option %s: no such directory: %r" % (opt, value))
+            result.append(res)
 
-        contains_addons = False
-        for f in os.listdir(res):
-            modpath = os.path.join(res, f)
-            if os.path.isdir(modpath) and \
-               os.path.exists(os.path.join(modpath, '__init__.py')) and \
-               (os.path.exists(os.path.join(modpath, '__openerp__.py')) or \
-                os.path.exists(os.path.join(modpath, '__terp__.py'))):
+        for res in result:
+            contains_addons = False
+            for f in os.listdir(res):
+                modpath = os.path.join(res, f)
+                if os.path.isdir(modpath) and \
+                   os.path.exists(os.path.join(modpath, '__init__.py')) and \
+                   (os.path.exists(os.path.join(modpath, '__openerp__.py')) or \
+                    os.path.exists(os.path.join(modpath, '__terp__.py'))):
 
-                contains_addons = True
-                break
+                    contains_addons = True
+                    break
 
-        if not contains_addons:
-            raise optparse.OptionValueError("option %s: The addons-path %r does not seem to a be a valid Addons Directory!" % (opt, value))
+            if not contains_addons:
+                raise optparse.OptionValueError("option %s: The addons-path %r does not seem to a be a valid Addons Directory!" % (opt, value))
 
-        setattr(parser.values, option.dest, res)
+        setattr(parser.values, option.dest, ','.join(result))
 
     def load(self):
         p = ConfigParser.ConfigParser()
