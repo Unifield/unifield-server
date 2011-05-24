@@ -67,6 +67,17 @@ class sourcing_line(osv.osv):
                                         ('exception', 'Exception'),
                                         ]
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        if unlink does not result of a call from sale_order_line, raise an exception
+        '''
+        if not context:
+            context = {}
+        if ('fromSaleOrderLine' not in context) and ('fromSaleOrder' not in context):
+            raise osv.except_osv(_('Invalid action !'), _('Cannot delete Sale Order Line(s) from the sourcing tool !'))
+        # delete the sourcing line
+        return super(sourcing_line, self).unlink(cr, uid, ids, context)
+    
     def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
         get virtual stock (virtual_available) for the product of the corresponding sourcing line
@@ -345,6 +356,9 @@ class sale_order(osv.osv):
         
         remove manually all linked sourcing_line
         '''
+        if not context:
+            context = {}
+        context.update({'fromSaleOrder': True})
         idsToDelete = []
         for order in self.browse(cr, uid, ids, context):
             for orderLine in order.order_line:
@@ -533,11 +547,14 @@ class sale_order_line(osv.osv):
         
         remove manually all linked sourcing_line
         '''
+        if not context:
+            context = {}
+        context.update({'fromSaleOrderLine': True})
         idsToDelete = []
         for orderLine in self.browse(cr, uid, ids, context):
             for sourcingLine in orderLine.sourcing_line_ids:
                     idsToDelete.append(sourcingLine.id)
-            
+        # delete sourcing lines
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
         return super(sale_order_line, self).unlink(cr, uid, ids, context)
