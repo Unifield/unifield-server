@@ -28,6 +28,34 @@ class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
     
+    def search_in_product(self, cr, uid, obj, name, args, context={}):
+        '''
+        Search function of related field 'in_product'
+        '''
+        if not len(args):
+            return []
+        
+        if not context.get('product_id', False) or 'choose_supplier' not in context:
+            return []
+        
+        request = 'SELECT p.id FROM res_partner p \
+                    WHERE p.id NOT IN \
+                    SELECT name FROM product_supplierinfo WHERE product_id = %s) \
+                    AND p.supplier = TRUE' %context.get('product_id')
+         
+        for arg in args:
+            if arg[1] == '=':
+                if arg[2]:
+                    request = 'SELECT name as id FROM product_supplierinfo WHERE product_id = %s ORDER BY sequence' %context.get('product_id')
+
+        cr.execute(request)
+        
+        res = cr.fetchall()
+        if not res:
+            return [('id', '=', 0)]
+        return [('id', 'in', [x[0] for x in res])]
+        
+    
     def _set_in_product(self, cr, uid, ids, field_name, arg, context={}):
         '''
         Returns according to the context if the partner is in product form
@@ -61,7 +89,7 @@ class res_partner(osv.osv):
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection([('internal', 'Internal'), ('section', 'Inter-section'),
                                           ('external', 'External')], string='Partner type', required=True),
-        'in_product': fields.function(_set_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
+        'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
     }
@@ -70,6 +98,37 @@ class res_partner(osv.osv):
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
     }
+    
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        Sort suppliers to have all suppliers in product form at the top of the list
+        '''
+        supinfo_obj = self.pool.get('product.supplierinfo')
+        
+        # Get all supplier
+        tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        if not context.get('product_id', False) or 'choose_supplier' not in context:
+            return tmp_res
+        else:
+            # Get all supplier in product form
+            args.append(('in_product', '=', True))
+            res_in_prod = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+            new_res = []
+            
+            # Sort suppliers by sequence in product form
+            if 'product_id' in context:
+                supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_id', '=', context.get('product_id'))], order='sequence')
+            
+                for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+                    try:
+                        tmp_res.remove(result['name'][0])
+                        new_res.append(result['name'][0])
+                    except:
+                        pass
+
+            new_res.extend(tmp_res)
+            
+            return new_res
 
 res_partner()
 
