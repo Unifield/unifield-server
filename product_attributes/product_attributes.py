@@ -157,6 +157,13 @@ class product_attributes(osv.osv):
                 return False
         return True
     
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'batch_management' in vals:
+            vals['track_production'] = vals['batch_management']
+            vals['track_incoming'] = vals['batch_management']
+            vals['track_outgoing'] = vals['batch_management']
+        return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+    
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
