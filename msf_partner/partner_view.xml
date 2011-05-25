@@ -10,6 +10,9 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='ref']" position="after">
                     <field name="partner_type" />
+                    <field name="in_product" invisible="1" />
+                    <field name="min_qty" invisible="not context.get('choose_supplier')" />
+                    <field name="delay" invisible="not context.get('choose_supplier')" />
                 </xpath>
             </field>
         </record>

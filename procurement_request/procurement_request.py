@@ -1,0 +1,241 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv, fields
+from tools.translate import _
+import decimal_precision as dp
+
+class procurement_request(osv.osv):
+    _name = 'sale.order'
+    _inherit = 'sale.order'
+    
+    def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Override the method to return 0.0 if the sale.order is a prcourement request
+        '''
+        res = {}
+        new_ids = []
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.procurement_request:
+                res[order.id] = {}
+                res[order.id]['amount_tax'] = 0.0
+                res[order.id]['amount_total'] = 0.0
+                res[order.id]['amount_untaxed'] = 0.0
+            else:
+                new_ids.append(order.id)
+                
+        res.update(super(procurement_request, self)._amount_all(cr, uid, new_ids, field_name, arg, context=context))
+        
+        return res
+    
+    #@@@ override sale.sale.orer._get_order
+    # Not modified method, but simply add here to fix an error on amount_total field
+    def _get_order(self, cr, uid, ids, context=None):
+        result = {}
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+            result[line.order_id.id] = True
+        return result.keys()
+    #@@@end override
+    
+    _columns = {
+        'requestor': fields.char(size=128, string='Requestor'),
+        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
+        'origin': fields.char(size=64, string='Origin'),
+        'notes': fields.text(string='Notes'),
+        'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
+                                      'request_id', 'order_id', string='Orders', readonly=True),
+        
+        # Remove readonly parameter from sale.order class
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=False, change_default=True, select=True),
+        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="Invoice address for current sales order."),
+        'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
+        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="Shipping address for current sales order."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=False, readonly=True, states={'draft': [('readonly', False)]}, help="Pricelist for current sales order."),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'procurement': [('readonly', False)], 'draft': [('readonly', False)]}),
+        'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The amount without tax."),
+        'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The tax amount."),
+        'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
+            store = {
+                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            },
+            multi='sums', help="The total amount."),
+        'state': fields.selection([
+            ('procurement', 'Internal Supply Requirement'),
+            ('proc_progress', 'Waiting Sourcing'),
+            ('proc_cancel', 'Cancelled'),
+            ('proc_done', 'Done'),
+            ('draft', 'Quotation'),
+            ('waiting_date', 'Waiting Schedule'),
+            ('manual', 'Manual In Progress'),
+            ('progress', 'In Progress'),
+            ('shipping_except', 'Shipping Exception'),
+            ('invoice_except', 'Invoice Exception'),
+            ('done', 'Done'),
+            ('cancel', 'Cancelled')
+            ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+    }
+    
+    _defaults = {
+        'name': lambda obj, cr, uid, context: context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request') or obj.pool.get('ir.sequence').get(cr, uid, 'sale.order'),
+        'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
+        'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
+    }
+    
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Changes the state of the order to allow the deletion
+        '''
+        line_obj = self.pool.get('sale.order.line')
+        
+        del_ids = []
+        normal_ids = []
+        
+        for request in self.browse(cr, uid, ids, context=context):
+            if request.procurement_request and request.state in ['procurement', 'proc_cancel']:
+                del_ids.append(request.id)
+            elif not request.procurement_request:
+                normal_ids.append(request.id)
+            else:
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Procurement Request(s) which are already confirmed !'))
+                
+        if del_ids:
+            osv.osv.unlink(self, cr, uid, del_ids, context=context)
+                
+        return super(procurement_request, self).unlink(cr, uid, normal_ids, context=context)
+    
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+        '''
+        Adds automatically a domain to search only True sale orders if no procurement_request in context
+        '''
+        test = True
+        for a in args:
+            if a[0] == 'procurement_request':
+                test = False
+        
+        if not context.get('procurement_request', False) and test:
+            args.append(('procurement_request', '=', False))
+            
+        return super(procurement_request, self).search(cr, uid, args, offset, limit, order, context, count)
+    
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+            
+        seq_obj = self.pool.get('ir.sequence')
+        order = self.browse(cr, uid, id)
+        name = (order.procurement_request or context.get('procurement_request', False)) and seq_obj.get(cr, uid, 'procurement.request') or seq_obj.get(cr, uid, 'sale.order')
+        proc = order.procurement_request or context.get('procurement_request', False)
+            
+        default.update({
+            'state': 'procurement',
+            'shipped': False,
+            'invoice_ids': [],
+            'picking_ids': [],
+            'date_confirm': False,
+            'name': name,
+            'procurement_request': proc,
+        })
+        
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+    
+    def confirm_procurement(self, cr, uid, ids, context={}):
+        '''
+        Confirmed the request
+        '''
+        self.write(cr, uid, ids, {'state': 'proc_progress'})
+        
+        return True
+    
+    def procurement_done(self, cr, uid, ids, context={}):
+        '''
+        Creates all procurement orders according to lines
+        '''
+        self.action_ship_create(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state': 'proc_done'})
+        
+        return True
+    
+procurement_request()
+
+class procurement_request_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit= 'sale.order.line'
+    
+    def _amount_line(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Override the method to return 0.0 if the line is a procurement request line
+        '''
+        res = {}
+        new_ids= []
+        for line in self.browse(cr, uid, ids):
+            if line.order_id.procurement_request:
+                res[line.id] = 0.0
+            else:
+                new_ids.append(line.id)
+                
+        res.update(super(procurement_request_line, self)._amount_line(cr, uid, new_ids, field_name, arg, context=context))
+        
+        return res
+    
+    _columns = {
+        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'supplier_id': fields.many2one('res.partner', string='Supplier'),
+        'latest': fields.char(size=64, string='Latest documents', readonly=True),
+        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
+    }
+    
+    _defaults = {
+        'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
+    }
+    
+    def requested_product_id_change(self, cr, uid, ids, product_id, context={}):
+        '''
+        Fills automatically the product_uom_id field on the line when the 
+        product was changed.
+        '''
+        product_obj = self.pool.get('product.product')
+
+        v = {}
+        if not product_id:
+            v.update({'product_uom': False, 'supplier_id': False, 'name': ''})
+        else:
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            v.update({'product_uom': product.uom_id.id, 'supplier_id': product.seller_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
+
+        return {'value': v}
+    
+procurement_request_line()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

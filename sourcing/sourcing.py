@@ -49,6 +49,10 @@ class sourcing_line(osv.osv):
                        ]
     
     _SELECTION_SALE_ORDER_STATE = [
+                                   ('procurement', 'Internal Supply Requirement'),
+                                   ('proc_progress', 'In Progress'),
+                                   ('proc_cancel', 'Cancelled'),
+                                   ('proc_done', 'Done'),
                                    ('draft', 'Quotation'),
                                    ('waiting_date', 'Waiting Schedule'),
                                    ('manual', 'Manual In Progress'),
@@ -425,7 +429,10 @@ class sale_order_line(osv.osv):
             sellerId = (seller and seller.id) or False
             if sellerId:
                 deliveryDate = int(template.seller_delay)
-        
+            if 'supplier_id' in vals:
+                for s in product.seller_ids:
+                    if s.name.id == vals['supplier_id']:
+                        sellerId = s.id
         # type
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
@@ -469,6 +476,7 @@ class sale_order_line(osv.osv):
                   'priority': orderPriority,
                   'categ': orderCategory,
                   'sale_order_state': orderState,
+                  'supplier': vals['supplier'],
                   }
         
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
@@ -526,6 +534,11 @@ class sale_order_line(osv.osv):
                     values.update({'po_cft': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
+                if 'supplier_id' in vals:
+                    product = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
+                    for s in product.seller_ids:
+                        if s.name.id == vals['supplier_id']:
+                            values.update({'supplier': s.id})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):

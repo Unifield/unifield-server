@@ -27,11 +27,43 @@ from osv import fields
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
+    
+    def _set_in_product(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns according to the context if the partner is in product form
+        '''
+        res = {}
+        
+        product_obj = self.pool.get('product.product')
+        
+        # If we aren't in the context of choose supplier on procurement list
+        if not context.get('product_id', False) or 'choose_supplier' not in context:
+            for i in ids:
+                res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+        else:
+            product = product_obj.browse(cr, uid, context.get('product_id'))
+            seller_ids = []
+            seller_info = {}
+            # Get all suppliers defined on product form
+            for s in product.seller_ids:
+                seller_ids.append(s.name.id)
+                seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
+            # Check if the partner is in product form
+            for i in ids:
+                if i in seller_ids:
+                    res[i] = {'in_product': True, 'min_qty': '%s' %seller_info[i]['min_qty'], 'delay': '%s' %seller_info[i]['delay']}
+                else:
+                    res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
+                    
+        return res
 
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection([('internal', 'Internal'), ('section', 'Inter-section'),
                                           ('external', 'External')], string='Partner type', required=True),
+        'in_product': fields.function(_set_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
+        'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
+        'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
     }
 
     _defaults = {

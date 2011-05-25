@@ -43,10 +43,12 @@ class sale_order(osv.osv):
         Return True is the sale order is an uninvoiced order
         '''
         partner_obj = self.pool.get('res.partner')
+        partner = False
         res = {}
         
         for sale in self.browse(cr, uid, ids):
-            partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
+            if sale.partner_id:
+                partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
             if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
                 res[sale.id] = True
             else:

@@ -32,7 +32,6 @@
     ],
     "depends" : [
         "msf_partner",
-        "procurement_list",
         "register_accounting",
         "stock_inventory_type",
         "analytic_plan_tree",
@@ -56,6 +55,7 @@
         "product_attributes",
         "procurement_report",
         "msf_printed_documents",
+        "procurement_request",
     ],
     "update_xml": [
         "report.xml",

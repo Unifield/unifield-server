@@ -57,7 +57,7 @@ class sale_order(osv.osv):
                 if line.state == 'done':
                     continue
                 move_id = False
-                if line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu'):
+                if line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu') and not line.order_id.procurement_request:
                     location_id = order.shop_id.warehouse_id.lot_stock_id.id
                     if not picking_id:
                         pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
@@ -137,6 +137,8 @@ class sale_order(osv.osv):
 
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                if order.state == 'proc_progress':
+                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
 
             if order.state == 'shipping_except':
                 val['state'] = 'progress'
