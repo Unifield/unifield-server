@@ -44,7 +44,7 @@
                         <page string="Products">
                             <field name="order_line" mode="tree" colspan="4" nolabel="1">
                                 <tree editable="top" string="Products">
-                                    <field name="product_id" on_change="requested_product_id_change(product_id)" required="1" />
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
                                     <field name="product_uom" />
                                     <field name="product_uom_qty" />
