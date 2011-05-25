@@ -18,7 +18,7 @@
                                 icon="terp-gtk-go-back-rtl"
                                 domain="[('state','in',('assigned','waiting','confirmed'))]"
                                 help = "Future Stock-Moves"/>
-                        <separator orientation="vertical"/>
+                            <!--<separator orientation="vertical"/>-->
                         <filter icon="terp-go-home" name="in" string="Incoming" domain="[('type','=','in')]"/>
                         <filter icon="terp-go-home" name="internal" string="Internal" domain="[('type','=','internal')]"/>
                         <filter icon="terp-go-home" name="out" string="Outgoing" domain="[('type','=','out')]"/>
@@ -48,6 +48,7 @@
                     <field name="product_id" />
                     <field name="prodlot_id" />
                     <field name="expired_date" />
+                    <field name="picking_id" />
                     <field name="origin" />
                     <field name="name" />
                     <field name="date" />

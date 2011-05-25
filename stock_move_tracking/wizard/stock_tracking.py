@@ -29,7 +29,8 @@ class stock_move_tracking(osv.osv_memory):
     
     _columns= {
         'product_id': fields.many2one('product.product', string='Product'),
-        'prodlot_id': fields.char(size=64, string='Batch number'),
+#        'prodlot_id': fields.char(size=64, string='Batch number'),
+        'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
         'expired_date': fields.date('Expired date'),
     }
     
@@ -53,9 +54,10 @@ class stock_move_tracking(osv.osv_memory):
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
-                # Search all batch begining with the string
-                lot_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=like', '%s%%' %track.prodlot_id)]) 
-                domain.append(('prodlot_id', 'in', lot_ids))
+                domain.append(('prodlot_id', '=', track.prodlot_id.id))
+#                # Search all batch begining with the string
+#                lot_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=like', '%s%%' %track.prodlot_id)]) 
+#                domain.append(('prodlot_id', 'in', lot_ids))
             
             res.extend(move_obj.search(cr, uid, domain, order='date'))
             
