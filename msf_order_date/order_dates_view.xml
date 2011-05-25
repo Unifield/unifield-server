@@ -33,18 +33,8 @@
                     </xpath>
                     
                     <!-- Give the context when create a new PO line -->
-                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" name="order_line" nolabel="1" mode="tree,form" wiget="one2many_list" context="{'purchase_id': active_id}">
-                                <tree string="Purchase Order Lines">
-                                    <field name="date_planned"/>
-                                    <field name="name"/>
-                                    <field name="product_qty"/>
-                                    <field name="product_uom"/>
-                                    <field name="price_unit"/>
-                                    <field name="price_subtotal"/>
-                                </tree>
-                                <!-- default form view -->
-                            </field>
+                    <xpath expr="/form//field[@name='order_line']" position="attributes">
+                        <attribute name="context">{'pruchase_id': active_id}</attribute>
                     </xpath>
                     
                     <!--  Add dates history tab -->
@@ -131,93 +121,12 @@
                     </xpath>
                     
                     <!-- Give the context when create a new PO line -->
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="replace">
-                        <field colspan="4" mode="tree,form,graph" name="order_line" nolabel="1" context="{'sale_id': active_id}" >
-                            <form string="Sales Order Lines">
-                                <notebook>
-                                    <page string="Order Line">
-                                        <field colspan="4"
-                                            context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
-                                            name="product_id"
-                                            on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False)"
-                                            />
-                                        <field
-                                            context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
-                                            name="product_uom_qty"
-                                            on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True)"
-                                            />
-                                            <field groups="product.group_uos" name="product_uos_qty"/>
-                                            <field groups="product.group_uos" name="product_uos"/>
-                                        <field name="product_uom"
-                                            on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order)"/>
-                                        <field
-                                            name="product_packaging"
-                                            context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
-                                            on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)"
-                                            domain="[('product_id','=',product_id)]"
-                                            groups="base.group_extended"/>
-
-                                        <field colspan="4" name="name"/>
-                                        <field name="price_unit"/>
-                                        <field name="discount"/>
-                                        <field name="type" groups="base.group_extended"/>
-                                        <field name="delay" groups="base.group_extended"/>
-                                        <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
-                                        <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
-                                        <newline/>
-                                        <separator colspan="5" string="Taxes"/>
-                                        <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
-                                        <group colspan="4" col="5" groups="base.group_extended">
-                                            <separator colspan="5" string="States"/>
-                                            <field name="state"/>
-                                            <field name="invoiced"/>
-                                            <group attrs="{'invisible':[('invoiced','=',True)]}">
-                                            <button colspan="1"
-                                                name="%(sale.action_view_sale_order_line_make_invoice)d"
-                                                states="confirmed"
-                                                string="Make Invoices"
-                                                type="action"
-                                                icon="terp-document-new" />
-                                             </group>
-                                        </group>
-                                    </page>
-                                    <page groups="base.group_extended" string="Extra Info">
-                                        <field name="th_weight"/>
-                                        <field name="address_allotment_id"/>
-                                        <field name="property_ids" colspan="4"/>
-                                    </page>
-                                    <page string="Notes">
-                                        <field colspan="4" name="notes" nolabel="1"/>
-                                    </page>
-                                    <!--  Add dates history tab -->
-			                        <page string="Dates history" groups="base.group_extended">
-				                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form">
-			                               <tree string="Modifications">
-			                                    <field name="name" />
-			                                    <field name="time" />
-			                                    <field name="old_value" />
-			                                    <field name="new_value" />
-			                                    <field name="user_id" />
-			                               </tree>
-			                            </field>
-			                        </page>
-                                    <page string="History" groups="base.group_extended">
-                                        <separator colspan="4" string="Invoice Lines"/>
-                                        <field colspan="4" name="invoice_lines" nolabel="1"/>
-                                        <separator colspan="4" string="Stock Moves"/>
-                                        <field colspan="4" name="move_ids" nolabel="1" widget="many2many"/>
-                                    </page>
-                                </notebook>
-                            </form>
-                            <tree string="Sales Order Lines">
-                                <field colspan="4" name="name"/>
-                                <field name="product_uom_qty" string="Qty"/>
-                                <field name="product_uom" string="UoM"/>
-                                <field name="discount"/>
-                                <field name="price_unit"/>
-                                <field name="price_subtotal"/>
-                            </tree>
-                        </field>
+                    <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
+                        <attribute name="context">{'sale_id': active_id}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="after">
+                        <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
+                        <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                     </xpath>
                     
                     <!--  Add dates history tab -->
