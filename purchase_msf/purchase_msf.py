@@ -85,6 +85,12 @@ class purchase_order_line(osv.osv):
         
         # when we erase the field, it is empty, so no product information but modified
         if not product:
+            # reset values
+            result['value'].update({'name': False,
+                          'internal_code': False,
+                          'internal_name': False,
+                          'supplier_code': False,
+                          'supplier_name': False})
             return result
         
         # 2. complete the new fields
@@ -105,8 +111,8 @@ class purchase_order_line(osv.osv):
         # new fields
         internal_code = prod.default_code
         internal_name = prod.name
-        supplier_code = '' 
-        supplier_name = ''
+        supplier_code = False
+        supplier_name = False
         
         # filter the seller list - only select the seller which corresponds
         # to the supplier selected during PO creation
@@ -119,15 +125,11 @@ class purchase_order_line(osv.osv):
                 supplier_name = seller.product_name
             
         # 3 .modify the description ('name' attribute)
-        # get the inner dictionary
-        innerDic = result['value']
-        updateDic = {'name': internal_name,
+        result['value'].update({'name': internal_name,
                       'internal_code': internal_code,
                       'internal_name': internal_name,
                       'supplier_code': supplier_code,
-                      'supplier_name': supplier_name}
-        
-        innerDic.update(updateDic)
+                      'supplier_name': supplier_name})
         
         # return the dictionary to update the view
         return result

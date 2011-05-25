@@ -14,13 +14,15 @@
 			<field name="arch" type="xml">
 				<data>
 				
+					<!--
 					<xpath expr="//tree/field[@name='name']" position="replace">
 						<field name="name" invisible="True" />
 					</xpath>
+					-->
 				
-					<field name="date_planned" position="after">
-						<field name="internal_code" />
-						<field name="internal_name" />
+					<field name="product_qty" position="before">
+						<field name="internal_code" invisible="True" />
+						<field name="internal_name" invisible="True" />
 						<field name="supplier_code" />
 						<field name="supplier_name" invisible="True" />
 					</field>

@@ -49,21 +49,9 @@
             <field name="inherit_id" ref="purchase.view_purchase_order_filter" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search/group/filter[@name='draft']" position="before">
-                    <group string="Type, Priority and Category" expand="1">
-                            <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
-                            <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
-                            <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
-                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
-                            <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>
-                            <separator orientation="vertical" />
-                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
-                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','medium')]"/>
-                            <filter icon="terp-emblem-important" string="Urgent" domain="[('priority','=','urgent')]"/>
-                            <newline />
+                    <xpath expr="/search/group/field[@name='create_uid']" position="after">
+                    <newline />
+                    <group string="Type" expand="0">
 	                        <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
 	                        <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
 	                        <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
@@ -71,6 +59,23 @@
 	                        <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
 	                        <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
 	                        <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
+	                    </group>
+	                    <newline />
+	                    <group string="Priority" expand="0">
+                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','medium')]"/>
+                            <filter icon="terp-emblem-important" string="Urgent" domain="[('priority','=','urgent')]"/>
+	                    </group>
+	                    <newline />
+	                    <group string="Category" expand="0">
+                            <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                            <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
+                            <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
+                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
+                            <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                    </group>
                         <newline />
                     </xpath>

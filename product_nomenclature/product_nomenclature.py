@@ -272,7 +272,7 @@ class product_template(osv.osv):
                 'nomen_c_sub_4': fields.char('C9', size=128),
                 'nomen_c_sub_5': fields.char('C10', size=128),
                 # concatenation of nomenclature in a visible way
-                'nomenclature_description': fields.char('Nomenclature', size=128),
+                'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
     ### END OF COPY
 
