@@ -244,7 +244,7 @@ class product_template(osv.osv):
     
     _inherit = "product.template"
     _description = "Product Template"
-        
+
     ### EXACT COPY-PASTE TO order_nomenclature
     _columns = {
                 # mandatory nomenclature levels
@@ -314,7 +314,7 @@ class product_product(osv.osv):
     
     _inherit = "product.product"
     _description = "Product"
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         override to complete nomenclature_description
@@ -332,7 +332,73 @@ class product_product(osv.osv):
         sale._setNomenclatureInfo(cr, uid, vals, context)
         
         return super(product_product, self).write(cr, uid, ids, vals, context)
+    
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
+        '''
+        the nomenclature selection search changes
+        '''
+        mandaName = 'nomen_manda_%s'
+        optName = 'nomen_sub_%s'
+        # selected value
+        selected = eval('nomen_manda_%s'%position)
+        # if selected value is False, the first False value -1 is used as selected
+        if not selected:
+            mandaVals = [i for i in range(_LEVELS) if not eval('nomen_manda_%s'%i)]
+            if mandaVals[0] == 0:
+                # first drop down, initialization 
+                selected = False
+                position = -1
+            else:
+                # the first drop down with False value -1
+                position = mandaVals[0]-1
+                selected = eval('nomen_manda_%s'%position)
         
+        values = {}
+        result = {'value': values}
+        
+        # clear upper levels mandatory
+        for i in range(position+1, _LEVELS):
+            values[mandaName%(i)] = [()]
+            
+        # clear all optional level
+        for i in range(_SUB_LEVELS):
+            values[optName%(i)] = [()]
+        
+        # nomenclature object
+        nomenObj = self.pool.get('product.nomenclature')
+        # product object
+        prodObj = self.pool.get('product.product')
+        
+        # loop through children nomenclature of mandatory type
+        for id in nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context):
+            # get the name and product number
+            n = nomenObj.browse(cr, uid, id, context=context)
+            code = n.code
+            name = n.name
+            number = n.number_of_products
+            values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+        
+        # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
+        optionalList = []
+        if not selected:
+            optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
+        else:
+            for id in prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context):
+                p = prodObj.browse(cr, uid, id, context)
+                optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
+        
+        # sort the optional nomenclature according to their id
+        optionalList.sort()
+        for id in optionalList:
+            # get the name and product number
+            n = nomenObj.browse(cr, uid, id, context=context)
+            code = n.code
+            name = n.name
+            number = n.number_of_products
+            values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
+
+        return result
+    
     def _resetNomenclatureFields(self, values):
         '''
         reset all nomenclature's fields
@@ -347,14 +413,12 @@ class product_product(osv.osv):
             values.update({'nomen_sub_%s'%x:False})
             values.update({'nomen_c_sub_%s'%x:False})
     
-    
     def _generateValueDic(self, cr, uid, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, *optionalList):
         '''
         generate original dictionary
         all values are placed in the update dictionary
         to ease the generation of dynamic domain in order_nomenclature
         '''
-        
         result = {}
         
         # mandatory levels values
@@ -372,7 +436,6 @@ class product_product(osv.osv):
             result.update({name:value})
         
         return result
-    
     
     def _clearFieldsBelow(self, cr, uid, level, optionalList, result):
         '''
@@ -403,7 +466,6 @@ class product_product(osv.osv):
                     result['value'].update({'nomen_c_sub_%s'%x:False})
             
         return result
-    
     
     def nomenChange(self, cr, uid, id, fieldNumber, nomenclatureId, nomenclatureType,
                     nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
@@ -518,8 +580,6 @@ class product_product(osv.osv):
     
         return result
 
-
-
     def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
             nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
         '''
@@ -589,8 +649,8 @@ class product_product(osv.osv):
         result = context['result']
         return result
         
-
 product_product()
+
 
 class act_window(osv.osv):
     _name = 'ir.actions.act_window'

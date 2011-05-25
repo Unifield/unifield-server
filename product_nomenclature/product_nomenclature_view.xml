@@ -11,15 +11,32 @@
 				<data>
 					<group string="Extended Filters..." position="after">
 						<newline />
-						<group expand="0" string="Nomenclature Filters...">
-							<field name="nomen_manda_0" widget="selection"
-								domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" />
-							<field name="nomen_manda_1" widget="selection"
-								domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" />
-							<field name="nomen_manda_2" widget="selection"
-								domain="[('level', '=', '2'), ('type', '=', 'mandatory')]" />
-							<field name="nomen_manda_3" widget="selection"
-								domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" />
+						<group expand="1" string="Nomenclature Filters...">
+							<field name="nomen_manda_0"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
+							<field name="nomen_manda_1"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
+							<field name="nomen_manda_2"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
+							<field name="nomen_manda_3"
+								domain="[('parent_id', '=', -1)]"
+								 widget="selection"
+								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)" />
+						</group>
+						<newline />
+						<group expand="1" string="Optional Nomenclature Filters...">
+							<field name="nomen_sub_0" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_1" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_2" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_3" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_4" domain="[('parent_id', '=', -1)]" widget="selection" />
+							<field name="nomen_sub_5" domain="[('parent_id', '=', -1)]" widget="selection" />
 						</group>
 
 					</group>
