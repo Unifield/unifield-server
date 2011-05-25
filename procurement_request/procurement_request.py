@@ -220,7 +220,7 @@ class procurement_request_line(osv.osv):
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
     }
     
-    def requested_product_id_change(self, cr, uid, ids, product_id, context={}):
+    def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):
         '''
         Fills automatically the product_uom_id field on the line when the 
         product was changed.
@@ -232,7 +232,9 @@ class procurement_request_line(osv.osv):
             v.update({'product_uom': False, 'supplier_id': False, 'name': ''})
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'supplier_id': product.seller_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
+            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
+            if type != 'make_to_stock':
+                v.update({'supplier_id': product.seller_id.id})
 
         return {'value': v}
     

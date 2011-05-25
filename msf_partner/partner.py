@@ -37,20 +37,23 @@ class res_partner(osv.osv):
         
         if not context.get('product_id', False) or 'choose_supplier' not in context:
             return []
+
+        supinfo_obj = self.pool.get('product.supplierinfo')
+        sup_obj = self.pool.get('res.partner')
+        res = []
+
+        info_ids = supinfo_obj.search(cr, uid, [('product_product_ids', '=', context.get('product_id'))])
+        info = supinfo_obj.read(cr, uid, info_ids, ['name'])
+
+        sup_in = [x['name'] for x in info]
         
-        request = 'SELECT p.id FROM res_partner p \
-                    WHERE p.id NOT IN \
-                    SELECT name FROM product_supplierinfo WHERE product_id = %s) \
-                    AND p.supplier = TRUE' %context.get('product_id')
-         
         for arg in args:
             if arg[1] == '=':
                 if arg[2]:
-                    request = 'SELECT name as id FROM product_supplierinfo WHERE product_id = %s ORDER BY sequence' %context.get('product_id')
-
-        cr.execute(request)
+                    res = sup_in
+            else:
+                    res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
         
-        res = cr.fetchall()
         if not res:
             return [('id', '=', 0)]
         return [('id', 'in', [x[0] for x in res])]
@@ -99,7 +102,7 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
     }
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''
@@ -114,10 +117,10 @@ class res_partner(osv.osv):
             args.append(('in_product', '=', True))
             res_in_prod = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
             new_res = []
-            
+
             # Sort suppliers by sequence in product form
             if 'product_id' in context:
-                supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_id', '=', context.get('product_id'))], order='sequence')
+                supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
             
                 for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
                     try:
@@ -125,6 +128,8 @@ class res_partner(osv.osv):
                         new_res.append(result['name'][0])
                     except:
                         pass
+
+            return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
             new_res.extend(tmp_res)
             
