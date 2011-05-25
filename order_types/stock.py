@@ -124,6 +124,32 @@ class stock_picking(osv.osv):
     _columns= {
         'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
     }
+
+    def print_certificate(self, cr, uid, ids, context={}):
+        '''
+        Launches the wizard to print the certificate
+        '''        
+        print_id = self.pool.get('stock.print.certificate').create(cr, uid, {'type': 'donation',
+                                                                             'picking_id': ids[0]})
+    
+        for picking in self.browse(cr, uid, ids):
+           for move in picking.move_lines:
+               self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
+                                                                             'product_id': move.product_id.id,
+                                                                             'qty': move.product_qty,
+                                                                             'print_id': print_id,
+                                                                             'move_id': move.id,
+                                                                             'prodlot_id': move.prodlot_id.id,
+                                                                             'unit_price': move.product_id.list_price})
+    
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.print.certificate',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'context': context,
+                'res_id': print_id,
+                'target': 'new'}
+
     
     def print_donation_certificate(self, cr, uid, ids, context={}):
         '''

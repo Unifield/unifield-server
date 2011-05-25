@@ -48,7 +48,9 @@
         'sale_workflow.xml',
         'order_types_report.xml',
         'wizard/stock_certificate_picking_view.xml',
+        'wizard/stock_print_certificate_view.xml',
         'stock_view.xml',
+        'order_types_data.xml',
     ],
     'demo_xml': [
     ],
