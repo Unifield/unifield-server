@@ -10,7 +10,7 @@
 <%def name="make_editors(data=None)">
     % if editable and editors:
         <tr class="grid-row editors" record="${(data and data['id']) or -1}">
-            % if selector:
+            % if selector and not hide_delete_button:
                 <td class="grid-cell selector">&nbsp;</td>
             % endif
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
@@ -57,7 +57,7 @@
     % else:
         <tr class="grid-row ${row_class}" record="${data['id']}">
     % endif
-    % if selector:
+    % if selector and not hide_delete_button:
         <td class="grid-cell selector">
             % if not m2m:
             <%
@@ -112,7 +112,7 @@
             </td>
         % endif
     % endfor
-    % if editable:
+    % if editable and not hide_delete_button:
         <td class="grid-cell selector">
             % if m2m:
                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage"
@@ -158,7 +158,7 @@
                                                     ${_('New')}
                                             </button>
                                         % else:
-                                            % if not dashboard:
+                                            % if not dashboard and not hide_new_button:
                                                 <button id="${name}_new" title="${_('Create new record.')}">${_('New')}</button>
                                                 % if editors:
                                                     <script type="text/javascript">
@@ -186,15 +186,17 @@
                                         % endif
                                     </td>
                                     <td class="pager-cell-button" style="display: none;">
-                                        % if m2m:
-                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}">
-                                                ${_('Delete')}
-                                            </button>
-                                        % else:
-                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}"
-                                                onclick="new ListView('${name}').remove(null,this); return false;">
-                                                    ${_('Delete')}
-                                            </button>
+                                        % if not hide_delete_button:
+	                                        % if m2m:
+	                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}">
+	                                                ${_('Delete')}
+	                                            </button>
+	                                        % else:
+	                                            <button id="${name}_delete_record" title="${_('Delete record(s).')}"
+	                                                onclick="new ListView('${name}').remove(null,this); return false;">
+	                                                    ${_('Delete')}
+	                                            </button>
+	                                        % endif
                                         % endif
                                     </td>
                                 % endif
@@ -211,7 +213,7 @@
                     <table id="${name}_grid" class="grid" width="100%" cellspacing="0" cellpadding="0" style="background: none;">
                         <thead>
                             <tr class="grid-header">
-                                % if selector:
+                                % if selector and not hide_delete_button:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox' and not m2m:
                                             <input type="checkbox" class="checkbox grid-record-selector" onclick="new ListView('${name}').checkAll(!this.checked)"/>
@@ -258,7 +260,7 @@
                                 % else:
                                     <tr class="grid-row">
                                 % endif
-                                % if selector:
+                                % if selector and not hide_delete_button:
                                     <td width="1%" class="grid-cell selector">&nbsp;</td>
                                 % endif
                                 % if editable:
