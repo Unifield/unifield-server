@@ -96,7 +96,7 @@ class import_data(osv.osv_memory):
         while reader and obj['ignore'] > i:
             i += 1
             r = reader.next()
-            if r and r[0] in fields_def:
+            if r and r[0].split('.')[0] in fields_def:
                 headers = r[:]
             writer.writerow(r)
 
@@ -237,7 +237,7 @@ Find in attachment the rejected lines'''%(nb_error)
         cr.commit()
         cr.close()
 
-    def import_csv(self, cr, uid, ids, context):
+    def import_csv(self, cr, uid, ids, context={}):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         return {'type': 'ir.actions.act_window_close'}
