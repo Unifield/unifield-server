@@ -423,7 +423,7 @@ ManyToOne.prototype.setReadonly = function(readonly) {
     jQuery([this.field, this.text])
             .attr({'readOnly': readonly,
                    'disabled': readonly})
-            .toggleClass('readonly', !!readonly);
+            .toggleClass('readonly', !!readonly).toggleClass('readonlyfield', !!readonly);
 };
 
 ManyToOne.prototype.clearResults = function() {
