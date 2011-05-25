@@ -126,6 +126,8 @@ class res_partner(osv.osv):
                     except:
                         pass
 
+            return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
+
             new_res.extend(tmp_res)
             
             return new_res
