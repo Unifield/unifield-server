@@ -99,7 +99,7 @@ class res_partner(osv.osv):
         'partner_type': lambda *a: 'external',
     }
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
         '''

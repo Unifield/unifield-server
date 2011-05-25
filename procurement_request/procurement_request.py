@@ -230,11 +230,11 @@ class procurement_request_line(osv.osv):
         v = {}
         if not product_id:
             v.update({'product_uom': False, 'supplier_id': False, 'name': ''})
-        elif type == 'make_to_stock':
-            v.update({'supplier_id': False})
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'supplier_id': product.seller_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
+            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
+            if type != 'make_to_stock':
+                v.update({'supplier_id': product.seller_id.id})
 
         return {'value': v}
     
