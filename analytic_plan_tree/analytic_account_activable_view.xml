@@ -14,11 +14,6 @@
                     <field name="code" position="replace">
                         <field name="code" select="1" required="1"/>
                     </field>
-                    <field name="type" position="after">
-                        <newline/>
-                        <field name="activation_date"/>
-                        <field name="inactivation_date"/>
-                    </field>
 	                <page string="Account Data" position="replace">
 	                    <page string="Account Data">
 	                        <field name="date_start"/>
@@ -37,10 +32,10 @@
             <field name="arch" type="xml">
                 <filter string="Pending" position="before">
                     <filter name="active" icon="terp-check" string="Active"
-                            domain="[('activation_date', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
+                            domain="[('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
                                      ('|'),
-                                     ('inactivation_date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                     ('inactivation_date', '=', False)]"/>
+                                     ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
+                                     ('date', '=', False)]"/>
                 </filter>
             </field>
         </record>
@@ -58,8 +53,8 @@
                         <field name="code"/>
                         <field name="description"/>
                         <field name="type"/>
-                        <field name="activation_date"/>
-                        <field name="inactivation_date"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
                     </tree>
                 </tree>
             </field>

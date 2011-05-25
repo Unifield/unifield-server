@@ -27,25 +27,21 @@ from tools.translate import _
 class analytic_account_activable(osv.osv):
     _inherit = "account.analytic.account"
     
-    '''
-        To create a activity period, 2 new fields are created, and are NOT linked to the
-        'active' field, since the behaviors are too different.
-    '''
     _columns = {
-        'activation_date': fields.date('Active from', required=True),
-        'inactivation_date': fields.date('Inactive from'),
+        'date_start': fields.date('Active from', required=True),
+        'date': fields.date('Inactive from', select=True),
     }
     
     _defaults ={
-        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
+        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
     
     def _check_date(self, vals):
-        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
-            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d'):
+        if 'date' in vals and vals['date'] is not False:
+            if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
                  # validate the date (must be > today)
                  raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+            elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
     
@@ -60,10 +56,10 @@ class analytic_account_activable(osv.osv):
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
             context=None, count=False):
         if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
-            args.append(('activation_date', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
             args.append('|')
-            args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append(('inactivation_date', '=', False))
+            args.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+            args.append(('date', '=', False))
             
         return super(analytic_account_activable, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
