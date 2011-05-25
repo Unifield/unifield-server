@@ -30,6 +30,7 @@
             <field name="name">procurement.request.form.view</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
+            <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Procurement Request">
                     <group col="6" colspan="4">
@@ -83,6 +84,7 @@
             <field name="name">procurement.request.tree.view</field>
             <field name="model">sale.order</field>
             <field name="type">tree</field>
+            <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <tree string="Procurement Requests">
                     <field name="name" />
@@ -98,6 +100,7 @@
             <field name="name">procurement.request.search.view</field>
             <field name="model">sale.order</field>
             <field name="type">search</field>
+            <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <search string="Procurment Requests">
                     <group string="Filters" expand="1">
