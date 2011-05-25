@@ -13,13 +13,6 @@
             <field name="priority">100</field>
 			<field name="arch" type="xml">
 				<data>
-				
-					<!--
-					<xpath expr="//tree/field[@name='name']" position="replace">
-						<field name="name" invisible="True" />
-					</xpath>
-					-->
-				
 					<field name="product_qty" position="before">
 						<field name="internal_code" invisible="True" />
 						<field name="internal_name" invisible="True" />
