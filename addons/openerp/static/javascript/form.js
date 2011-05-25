@@ -837,7 +837,16 @@ function makeContextMenu(id, kind, relation, val){
         prefix = (prefix.split('/')[1]);
     }
 
-    var model = prefix ? openobject.dom.get(prefix + '_terp_model').value : openobject.dom.get('_terp_model').value;
+    // waiting for OEB-29 ...
+    if (prefix) {
+       var obj = openobject.dom.get(prefix + '_terp_model');
+       if (!obj) {
+            obj = openobject.dom.get(prefix + '/_terp_model');
+        }   
+    } else {
+       var obj = openobject.dom.get('_terp_model');
+    }
+    var model = obj.value
 
     openobject.http.postJSON(act, {
         'model': model,
