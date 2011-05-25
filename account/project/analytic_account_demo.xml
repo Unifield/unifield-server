@@ -132,7 +132,7 @@
             <field name="name">Sednacom</field>
             <field name="code">2</field>
             <field eval="str(time.localtime()[0] - 1) + '-05-09'" name="date_start"/>
-            <field eval="time.strftime('%Y-05-08')" name="date"/>
+            <field eval="time.strftime('%Y-12-31')" name="date"/>
             <field name="parent_id" ref="analytic_partners"/>
             <field name="partner_id" ref="base.res_partner_sednacom"/>
             <field name="state">open</field>
@@ -141,7 +141,7 @@
             <field name="name">Thymbra</field>
             <field name="code">3</field>
             <field eval="time.strftime('%Y-02-01')" name="date_start"/>
-            <field eval="time.strftime('%Y-07-01')" name="date"/>
+            <field eval="time.strftime('%Y-12-31')" name="date"/>
             <field name="parent_id" ref="analytic_partners"/>
             <field name="partner_id" ref="base.res_partner_thymbra"/>
             <field name="state">open</field>
@@ -172,7 +172,7 @@
             <field name="name">Camp to Camp</field>
             <field name="code">21</field>
             <field eval="time.strftime('%Y-%m-%d', time.localtime(time.time() - 365 * 86400))" name="date_start"/>
-            <field eval="time.strftime('%Y-%m-%d')" name="date"/>
+            <field eval="time.strftime('%Y-12-31')" name="date"/>
             <field name="parent_id" ref="analytic_partners"/>
             <field name="partner_id" ref="base.res_partner_c2c"/>
             <field name="state">open</field>
