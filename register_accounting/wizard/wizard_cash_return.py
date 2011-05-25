@@ -391,6 +391,7 @@ class wizard_cash_return(osv.osv_memory):
         # All exceptions passed. So let's go doing treatments on data !
         # prepare some values
         move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
         curr_date = time.strftime('%Y-%m-%d')
         register = wizard.advance_st_line_id.statement_id
         journal = register.journal_id
@@ -461,7 +462,7 @@ class wizard_cash_return(osv.osv_memory):
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
         if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
             # change the amount_currency of the advance closing line in order to be negative (not done in create_move_line function)
-            res_adv_closing = self.pool.get('account.move.line').write(cr, uid, [adv_closing_id], {'amount_currency': -wizard.initial_amount}, context=context)
+            res_adv_closing = move_line_obj.write(cr, uid, [adv_closing_id], {'amount_currency': -wizard.initial_amount}, context=context)
         # make the move line in posted state
         #res_move_id = move_obj.write(cr, uid, [move_id], {'state': 'posted'}, context=context)
         res_move_id = move_obj.post(cr, uid, [move_id], context=context)
@@ -474,6 +475,16 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.display_invoice:
             for inv_move_line_data in inv_move_line_ids:
                 inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], context=context)
+                # search the invoice move line that come from invoice
+                invoice_move_id = self.pool.get('account.invoice').read(cr, uid, inv_move_line_data[1], ['move_id'], context=context).get('move_id', None)
+                inv_move_line_account_id = move_line_obj.read(cr, uid, inv_move_line_data[0], ['account_id'], context=context).get('account_id', None)
+                if invoice_move_id and inv_move_line_account_id:
+                    ml_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice_move_id[0]), ('account_id', '=', inv_move_line_account_id[0])], context=context)
+                if not ml_ids or len(ml_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('An error occured on invoice reconciliation: Invoice line not found.'))
+                inv_ml = move_line_obj.browse(cr, uid, ml_ids, context=context)[0]
+                # reconcile invoice line (from cash return) with specified invoice line (from invoice)
+                move_line_obj.reconcile_partial(cr, uid, [inv_ml.id, inv_move_line_data[0]])
         else:
             for adv_move_line_id in adv_move_line_ids:
                 adv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)
@@ -519,7 +530,6 @@ class wizard_cash_return(osv.osv_memory):
                         if supp_move_id == False:
                             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
                         # Do reconciliation
-                        move_line_obj = self.pool.get('account.move.line')
                         supp_reconcile_id = move_line_obj.reconcile_partial(cr, uid, [supp_move_line_debit_id, supp_move_line_credit_id])
         # create the statement line for the advance closing
         adv_closing_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
