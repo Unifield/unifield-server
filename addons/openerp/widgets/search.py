@@ -380,8 +380,8 @@ class Search(TinyInputWidget):
                     self.fields_type[name] = kind
 
                     field = WIDGETS[kind](**fields[name])
-                    field.onchange = None
-                    field.callback = None
+                    field.onchange = None #attrs.get('on_change')
+                    field.callback = attrs.get('on_change')
 
                     if kind == 'boolean':
                         # '0' in string because 0 is considering as No Value, and we need 0 as some value.
