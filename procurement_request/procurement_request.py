@@ -66,11 +66,6 @@ class procurement_request(osv.osv):
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=False, change_default=True, select=True),
-        'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="Invoice address for current sales order."),
-        'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
-        'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=False, states={'draft': [('readonly', False)]}, help="Shipping address for current sales order."),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=False, readonly=True, states={'draft': [('readonly', False)]}, help="Pricelist for current sales order."),
         'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'procurement': [('readonly', False)], 'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
@@ -107,11 +102,31 @@ class procurement_request(osv.osv):
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request') or obj.pool.get('ir.sequence').get(cr, uid, 'sale.order'),
+        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or '',
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
     }
-    
+
+    def create(self, cr, uid, vals, context={}):
+        if context.get('procurement_request'):
+            # Get the ISR number
+            if not vals.get('name', False):
+                vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
+
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company.partner_id.address:
+                address_id = company.partner_id.address[0].id
+            else:
+                address_id = self.pool.get('res.partner.address').search(cr, uid, [], limit=1)[0]
+            vals['partner_id'] = company.partner_id.id
+            vals['partner_order_id'] = address_id
+            vals['partner_invoice_id'] = address_id
+            vals['partner_shipping_id'] = address_id
+            pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
+            vals['pricelist_id'] = pl
+
+        return super(procurement_request, self).create(cr, uid, vals, context)
+
     def unlink(self, cr, uid, ids, context={}):
         '''
         Changes the state of the order to allow the deletion
