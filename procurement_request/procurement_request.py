@@ -102,13 +102,17 @@ class procurement_request(osv.osv):
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request') or obj.pool.get('ir.sequence').get(cr, uid, 'sale.order'),
+        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or '',
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
     }
 
     def create(self, cr, uid, vals, context={}):
         if context.get('procurement_request'):
+            # Get the ISR number
+            if not vals.get('name', False):
+                vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
+
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company.partner_id.address:
                 address_id = company.partner_id.address[0].id
