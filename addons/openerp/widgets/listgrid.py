@@ -98,14 +98,6 @@ class List(TinyWidget):
         self.concurrency_info = None
         self.selector = None
         
-        # Retrieve values from the arch defined in the xml file
-        dom = xml.dom.minidom.parseString(view['arch'].encode('utf-8'))
-        root = dom.childNodes[0]
-        attrs = node_attributes(root)
-        
-        # Get the hide status of some buttons - by default buttons are shown
-        self.hide_new_button = attrs.get('hide_new_button', False)
-        self.hide_delete_button = attrs.get('hide_delete_button', False)
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
@@ -128,6 +120,11 @@ class List(TinyWidget):
         root = dom.childNodes[0]
 
         attrs = node_attributes(root)
+        
+        # Get the hide status of some buttons - by default buttons are shown
+        self.hide_new_button = attrs.get('hide_new_button', False)
+        self.hide_delete_button = attrs.get('hide_delete_button', False)
+        
         self.string = attrs.get('string','')
 
         search_param = copy.deepcopy(domain) or []
