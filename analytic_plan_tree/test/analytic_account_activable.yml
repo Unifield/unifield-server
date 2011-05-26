@@ -4,15 +4,15 @@
 -
   !record {model: account.analytic.account, id: analytic_account_1}:
     name: "Test Account"
-    inactivation_date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
     
 -
-  I check that the activation date is today
+  I check that the activation date is 3 months ago
 -
   !python {model: account.analytic.account}: |
     ac = self.browse(cr, uid, ref("analytic_account_1"))
     from mx import DateTime
-    assert  ac.activation_date == (DateTime.now()+DateTime.RelativeDateTime(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
+    assert  ac.date_start == (DateTime.now()+DateTime.RelativeDateTime(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
     
 -
   I create Asset Account Type.
@@ -57,17 +57,17 @@
   !python {model: account.analytic.account}: |
     import datetime
     try:
-      self.write(cr, uid, ref('analytic_account_1'), vals={'inactivation_date': datetime.datetime.now().strftime('%Y-%m-%d')})
+      self.write(cr, uid, ref('analytic_account_1'), vals={'date': datetime.datetime.now().strftime('%Y-%m-%d')})
     except Exception as exception:
       assert exception.value == "You cannot set an inactivity date lower than tomorrow!", "Date inactivity lower"
      
 -
-  I change the dates so that activation_date > inactivation_date (forbidden)
+  I change the dates so that date_start > date (forbidden)
 -
   !python {model: account.analytic.account}: |
     import datetime
     try:
-      self.write(cr, uid, ref('analytic_account_1'), vals={'activation_date': '%s-03-12' %(datetime.datetime.now().year + 1), 'inactivation_date': '%s-03-01' %(datetime.datetime.now().year + 1)})
+      self.write(cr, uid, ref('analytic_account_1'), vals={'date_start': '%s-03-12' %(datetime.datetime.now().year + 1), 'date': '%s-03-01' %(datetime.datetime.now().year + 1)})
     except Exception as exception:
       assert exception.value == "Activation date must be lower than inactivation date!", "Activation date must be lower"
      

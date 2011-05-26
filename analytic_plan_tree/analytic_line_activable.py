@@ -30,9 +30,9 @@ class analytic_line_activable(osv.osv):
         if 'date' in vals and vals['date'] is not False:
             account_obj = self.pool.get('account.analytic.account')
             account = account_obj.browse(cr, uid, vals['account_id'])
-            if vals['date'] < account.activation_date \
-            or (account.inactivation_date != False and \
-                vals['date'] >= account.inactivation_date):
+            if vals['date'] < account.date_start \
+            or (account.date != False and \
+                vals['date'] >= account.date):
                 raise osv.except_osv(_('Error !'), _('The analytic account selected is not active.'))
 
     def create(self, cr, uid, vals, context=None):
