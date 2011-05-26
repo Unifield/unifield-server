@@ -44,10 +44,18 @@ class product_nomenclature(osv.osv):
         """
         if hasattr(super(product_nomenclature, self), 'init'):
             super(product_nomenclature, self).init(cr)
-        logging.getLogger('init').info('HOOK: module product_nomenclature: loading product_nomenclature_data.xml')
-        pathname = path.join('product_nomenclature', 'product_nomenclature_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
+
+        mod_obj = self.pool.get('ir.module.module')
+        demo = False
+        mod_id = mod_obj.search(cr, 1, [('name', '=', 'product_nomenclature')])
+        if mod_id:
+            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
+
+        if demo:
+            logging.getLogger('init').info('HOOK: module product_nomenclature: loading product_nomenclature_data.xml')
+            pathname = path.join('product_nomenclature', 'product_nomenclature_data.xml')
+            file = tools.file_open(pathname)
+            tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
