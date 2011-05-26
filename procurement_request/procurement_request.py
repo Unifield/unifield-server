@@ -108,6 +108,9 @@ class procurement_request(osv.osv):
     }
 
     def create(self, cr, uid, vals, context={}):
+        if not context:
+            context = {}
+
         if context.get('procurement_request'):
             # Get the ISR number
             if not vals.get('name', False):
