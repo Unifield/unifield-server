@@ -43,7 +43,9 @@ class stock_warehouse_order_cycle(osv.osv):
         Checks if a frequence was choosen for the cycle
         '''
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
-            raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !')) 
+            for proc in self.browse(cr, uid, ids):
+                if not proc.frequence_id:
+                    raise osv.except_osv(_('Error'), _('You should choose a frequence for this rule !')) 
         
         return super(stock_warehouse_order_cycle, self).write(cr, uid, ids, data, context=context)
         
