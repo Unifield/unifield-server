@@ -24,6 +24,15 @@ from osv import fields, osv
 
 class res_currency_functional(osv.osv):
     _inherit = 'res.currency'
+
+    def _verify_rate(self, cr, uid, ids, context={}):
+        """
+        Verify that a currency set to active has a non-zero rate.
+        """
+        for currency in self.browse(cr, uid, ids, context=context):
+            if not currency.rate_ids and currency.active:
+                return False
+        return True
     
     def _current_k_currency(self, cr, uid, ids, name, arg, context=None):
         if context is None:
@@ -47,6 +56,10 @@ class res_currency_functional(osv.osv):
         'currency_name': fields.char('Currency Name', size=64, required=True),
         'current_k_currency': fields.function(_current_k_currency, method=True, string='Current K-Currency')
     }
+    
+    _constraints = [
+        (_verify_rate, "No rate is set. Please set one before activating the currency. ", ['active', 'rate_ids']),
+    ]
 
     _defaults = {
         'accuracy': 4, 
@@ -58,6 +71,7 @@ class res_currency_functional(osv.osv):
         conversion_rate /= from_currency.current_k_currency 
         conversion_rate *= to_currency.current_k_currency
         return conversion_rate
+    
     
 res_currency_functional()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

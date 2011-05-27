@@ -34,7 +34,7 @@ class sale_order_line_compute_currency(osv.osv):
     
     _columns = {
         'currency_id': fields.related('order_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
-        'functional_subtotal': fields.function(_amount_currency_line, method=True, store=False, string='Functional Subtotal', readonly=True),
+        'functional_subtotal': fields.function(_amount_currency_line, method=True, store=True, string='Functional Subtotal', readonly=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
     
@@ -64,9 +64,9 @@ class sale_order_compute_currency(osv.osv):
     
     _columns = {
         'currency_id': fields.related('pricelist_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
-        'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Untaxed Amount', multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_amount_tax': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Taxes', multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_amount_total': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Total', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Untaxed Amount', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_tax': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Taxes', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_total': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Total', multi='amount_untaxed, amount_tax, amount_total'),
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
     
@@ -85,7 +85,7 @@ class purchase_order_line_compute_currency(osv.osv):
     
     _columns = {
         'currency_id': fields.related('order_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
-        'functional_subtotal': fields.function(_amount_currency_line, method=True, store=False, string='Functional Subtotal'),
+        'functional_subtotal': fields.function(_amount_currency_line, method=True, store=True, string='Functional Subtotal'),
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
     
@@ -115,9 +115,9 @@ class purchase_order_compute_currency(osv.osv):
     
     _columns = {
         'currency_id': fields.related('pricelist_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
-        'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Untaxed Amount', multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_amount_tax': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Taxes', multi='amount_untaxed, amount_tax, amount_total'),
-        'functional_amount_total': fields.function(_amount_currency, method=True, store=False, type='float', string='Functional Total', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_untaxed': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Untaxed Amount', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_tax': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Taxes', multi='amount_untaxed, amount_tax, amount_total'),
+        'functional_amount_total': fields.function(_amount_currency, method=True, store=True, type='float', string='Functional Total', multi='amount_untaxed, amount_tax, amount_total'),
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
     }
     
