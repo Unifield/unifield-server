@@ -68,12 +68,16 @@
             <field name="code">CHE-CHF-1</field>
             <field name="type">cheque</field>
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.5362" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.5362" />
         </record>
         <record id="cheque_euro_journal" model="account.journal">
             <field name="name">Cheque EUR</field>
             <field name="code">CHE-EUR-1</field>
             <field name="type">cheque</field>
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
+            <field name="default_debit_account_id" ref="msf_chart_of_account.5361" />
+            <field name="default_credit_account_id" ref="msf_chart_of_account.5361" />
         </record>
     </data>
 </openerp>
