@@ -47,13 +47,12 @@ class stock_batch_recall(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
             
             if track.expired_date:
-                domain.append(('expired_date', '>=', track.expired_date))
-                domain.append(('expired_date', '<=', track.expired_date))
+                domain.append(('expired_date', '>=', track.expired_date+' 00:00:00'))
+                domain.append(('expired_date', '<=', track.expired_date+' 23:59:00'))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
-            
         return domain
     
     def return_view(self, cr, uid, ids, context={}):
@@ -95,7 +94,7 @@ class report_batch_recall(osv.osv):
         'product_categ_id':fields.many2one('product.category', 'Product Category', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
-        'expired_date': fields.date('Expired Date', readonly=True),
+        'expired_date': fields.datetime('Expired Date', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True),
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'value' : fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
