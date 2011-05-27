@@ -38,3 +38,13 @@ class ir_model_data(osv.osv):
         return super(ir_model_data, self)._update(cr, uid, model, module, values, xml_id, store, noupdate, mode, res_id, ctx)
 
 ir_model_data()
+
+class account_installer(osv.osv_memory):
+    _inherit = 'account.installer'
+    _name = 'account.installer'
+
+    _defaults = {
+        'charts': 'msf_chart_of_account',
+    }
+
+account_installer()
