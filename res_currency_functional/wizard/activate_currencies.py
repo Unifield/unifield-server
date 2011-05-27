@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class activate_currencies(osv.osv_memory):
     _name = "activate.currencies"
@@ -37,7 +38,13 @@ class activate_currencies(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         data = self.read(cr, uid, ids, [], context=context)[0]
         for currency_id in context['active_ids']:
-            cr.execute('update res_currency set active=%s where id=%s',(data['active_status'],currency_id))
+            currency_obj = self.pool.get('res.currency').browse(cr, uid, currency_id)
+            # Don't activate currencies with no rates.
+            if not currency_obj.rate_ids and data['active_status']:
+                raise osv.except_osv(_('Error'), _('No rate is set for currency %s !' % currency_obj.name))
+                break
+            else:
+                cr.execute('update res_currency set active=%s where id=%s',(data['active_status'],currency_id))
         return {'type': 'ir.actions.act_window_close'}
     
 activate_currencies()
