@@ -512,7 +512,7 @@ class wizard_cash_return(osv.osv_memory):
                         }
                         # search account_id of the supplier
                         account_id = self.pool.get('res.partner').read(cr, uid, supplier_id, ['property_account_payable'], context=context)
-                        if 'property_account_payable' in account_id: 
+                        if 'property_account_payable' in account_id and account_id.get('property_account_payable', False):
                             account_id = account_id.get('property_account_payable')[0]
                         else:
                             raise osv.except_osv(_('Warning'), _('One supplier seems not to have a payable account. \
