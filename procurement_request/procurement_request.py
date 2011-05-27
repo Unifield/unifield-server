@@ -211,7 +211,12 @@ class procurement_request_line(osv.osv):
     
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
-        'supplier_id': fields.many2one('res.partner', string='Supplier', domain="[('supplier', '=', True)]"),
+        #################################################
+        #   This part should be removed for the sprint2
+        #################################################
+        'supplier_id': fields.many2one('product.supplierinfo', string='Supplier', domain="[('product_id', '=', product_id)]"),
+        # This line should be decommented for the sprint2
+        #'supplier_id': fields.many2one('res.partner', string='Supplier', domain="[('supplier', '=', True)]"),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
