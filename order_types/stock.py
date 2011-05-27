@@ -123,6 +123,11 @@ class stock_picking(osv.osv):
     
     _columns= {
         'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
+        'attach_cert': fields.boolean(string='Certificate attached ?', readonly=True),
+    }
+
+    _defaults = {
+        'attach_cert': lambda *a: False,
     }
 
     def print_certificate(self, cr, uid, ids, context={}):

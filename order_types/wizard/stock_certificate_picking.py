@@ -43,16 +43,18 @@ class stock_certificate_picking(osv.osv_memory):
         for cert in self.browse(cr, uid, ids, context=context):
             picking_ids.append(cert.picking_id.id)
             if cert.donation_ok:
-                # Make the attachment
-                import base64
-                data_attach = {
-                        'name': cert.att_fname,
-                        'datas': cert.attachment,
-                        'datas_fname': cert.att_fname,
-                        'description': 'Certificate of Donation',
-                        'res_model': 'stock.picking',
-                        'res_id': cert.picking_id.id,}
-                attachment.create(cr, uid, data_attach)
+                self.pool.get('stock.picking').write(cr, uid, [cert.picking_id.id], {'attach_cert': True})
+                if cert.att_fname and cert.attachment:
+                    # Make the attachment
+                    import base64
+                    data_attach = {
+                            'name': cert.att_fname,
+                            'datas': cert.attachment,
+                            'datas_fname': cert.att_fname,
+                            'description': 'Certificate of Donation',
+                            'res_model': 'stock.picking',
+                            'res_id': cert.picking_id.id,}
+                    attachment.create(cr, uid, data_attach)
                 
         context.update({'attach_ok': True})
                 

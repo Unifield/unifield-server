@@ -229,7 +229,12 @@ class procurement_request_line(osv.osv):
     
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
-        'supplier_id': fields.many2one('res.partner', string='Supplier', domain="[('supplier', '=', True)]"),
+        #################################################
+        #   This part should be removed for the sprint2
+        #################################################
+        'supplier_id': fields.many2one('product.supplierinfo', string='Supplier', domain="[('product_product_ids', '=', product_id)]"),
+        # This line should be decommented for the sprint2
+        #'supplier_id': fields.many2one('res.partner', string='Supplier', domain="[('supplier', '=', True)]"),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
@@ -252,7 +257,11 @@ class procurement_request_line(osv.osv):
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
             if type != 'make_to_stock':
-                v.update({'supplier_id': product.seller_id.id})
+                #################################################
+                #   This part should be removed for the sprint2
+                #################################################
+                #v.update({'supplier_id': product.seller_id.id})
+                v.update({'supplier_id': product.seller_ids and product.seller_ids[0].id})
 
         return {'value': v}
     

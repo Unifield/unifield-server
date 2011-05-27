@@ -51,7 +51,11 @@
                                     <field name="notes" />
                                     <field name="type" />
                                     <field name="latest" />
-                                    <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
+                                    <!-- The following line should be removed for the sprint 2 -->
+                                    <field name="supplier_id" context="{'sourcing-product_id': product_id}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
+                                    <!--
+                                         Should be decommented for Sprint 2
+                                         <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />-->
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
