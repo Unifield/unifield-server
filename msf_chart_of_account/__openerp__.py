@@ -31,7 +31,9 @@
     "init_xml" : [
         "data/account.xml",
     ],
-    "update_xml" : [],
+    "update_xml" : [
+        "msf_chart_of_account_installer.xml",
+    ],
     "demo_xml" : [],
     "test": [],
     "installable": True,
