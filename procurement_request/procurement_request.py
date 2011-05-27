@@ -214,7 +214,7 @@ class procurement_request_line(osv.osv):
         #################################################
         #   This part should be removed for the sprint2
         #################################################
-        'supplier_id': fields.many2one('product.supplierinfo', string='Supplier', domain="[('product_id', '=', product_id)]"),
+        'supplier_id': fields.many2one('product.supplierinfo', string='Supplier', domain="[('product_product_ids', '=', product_id)]"),
         # This line should be decommented for the sprint2
         #'supplier_id': fields.many2one('res.partner', string='Supplier', domain="[('supplier', '=', True)]"),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
