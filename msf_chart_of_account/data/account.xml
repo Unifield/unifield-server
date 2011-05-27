@@ -943,7 +943,7 @@
         <record model="account.account" id="msf_chart_of_account.5">
             <field name="code">5</field>
             <field name="type_for_register">none</field>
-            <field name="type">liquidity</field>
+            <field name="type">view</field>
             <field name="name">Financial Accounts</field>
             <field name="parent_id" ref="msf_chart_of_account.MSF" />
             <field name="reconcile" eval="False" />
@@ -2489,5 +2489,35 @@
             <field name="reconcile" eval="False" />
             <field name="user_type" ref="account.account_type_income" />
         </record>
+        
+        <!-- Properties -->
+        <record forcecreate="True" id="property_account_receivable" model="ir.property">
+            <field name="name">property_account_receivable</field>
+            <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_account_receivable')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.4307'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record forcecreate="True" id="property_account_payable" model="ir.property">
+            <field name="name">property_account_payable</field>
+            <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_account_payable')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.4309'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+        <record forcecreate="True" id="property_account_categ_receivable" model="ir.property">
+            <field name="name">property_account_income_categ</field>
+            <field name="fields_id" search="[('model','=','product.category'),('name','=','property_account_income_categ')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.7099'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record forcecreate="True" id="property_account_categ_expense" model="ir.property">
+            <field name="name">property_account_expense_categ</field>
+            <field name="fields_id" search="[('model','=','product.category'),('name','=','property_account_expense_categ')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.6309'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
     </data>
 </openerp>
