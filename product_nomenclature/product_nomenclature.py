@@ -396,8 +396,6 @@ class product_product(osv.osv):
             pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
             if pids:
                 for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
-                #for p in prodObj.browse(cr, uid, pids, context):
-                #    optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
                     optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
             
         # sort the optional nomenclature according to their id
@@ -411,15 +409,6 @@ class product_product(osv.osv):
                 number = n['number_of_products']
                 sublevel = n['sub_level']
                 values[optName%(sublevel)].append((id, name + ' (%s)'%number))
-        
-        # hack for empty list bug, to be removed
-        for i in range(position+1, _LEVELS):
-            if len(values[mandaName%(i)]) > 1:
-                values[mandaName%(i)].remove(())
-            
-        for i in range(_SUB_LEVELS):
-            if len(values[optName%(i)]) > 1:
-                values[optName%(i)].remove(())
         
         return result
     
