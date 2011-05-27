@@ -82,6 +82,13 @@ class import_data(osv.osv_memory):
         cr = pooler.get_db(dbname).cursor()
 
         obj = self.read(cr, uid, ids[0])
+        
+        objname = ""
+        for sel in self._columns['object'].selection:
+            if sel[0] == obj['object']:
+                objname = sel[1]
+                break
+        
         fileobj = TemporaryFile('w+')
         fileobj.write(base64.decodestring(obj['file']))
         fileobj.seek(0)
@@ -202,9 +209,9 @@ class import_data(osv.osv_memory):
 
         fileobj.close()
         summary = '''Datas Import Summary: 
-
+Object: %s
 Records created: %s
-'''%(nb_succes)
+'''%(objname, nb_succes)
 
         if nb_error:
             summary += '''Records rejected: %s
@@ -213,7 +220,7 @@ Find in attachment the rejected lines'''%(nb_error)
 
         request_obj = self.pool.get('res.request')
         req_id = request_obj.create(cr, uid,
-            {'name': "Procurement Processing Report.",
+            {'name': "Import %s"%(objname,),
             'act_from': uid,
             'act_to': uid,
             'body': summary,
