@@ -2,6 +2,11 @@
 <openerp>
     <data>
     
+        <record id="sale.act_draft" model="workflow.activity">
+            <field name="flow_start" eval="True" />
+            <field name="kind">dummy</field>
+        </record>
+        
         <record id="act_procurement" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale"/>
             <field name="flow_start" eval="False" />
@@ -9,6 +14,7 @@
             <field name="action">write({'state': 'procurement'})</field>
             <field name="name">procurement</field>
         </record>
+
         <record id="act_proc_confirm" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">procurement_confirm</field>
@@ -31,10 +37,11 @@
         </record>
         
         <record id="trans_proc_draft" model="workflow.transition">
-            <field name="act_to" ref="act_procurement"/>
             <field name="act_from" ref="sale.act_draft"/>
+            <field name="act_to" ref="act_procurement"/>
             <field name="condition">procurement_request</field>
         </record>
+
         <record id="trans_proc_confirm" model="workflow.transition">
             <field name="act_from" ref="act_procurement"/>
             <field name="act_to" ref="act_proc_confirm"/>

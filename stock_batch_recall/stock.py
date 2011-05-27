@@ -41,12 +41,11 @@ class stock_batch_recall(osv.osv_memory):
         '''
         move_obj = self.pool.get('stock.move')
         
-        res = []
+        domain = []
         for track in self.browse(cr, uid, ids):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
             
-            domain = []
             if track.expired_date:
                 domain.append(('expired_date', '>=', track.expired_date))
                 domain.append(('expired_date', '<=', track.expired_date))
@@ -55,9 +54,7 @@ class stock_batch_recall(osv.osv_memory):
             if track.prodlot_id:
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
             
-            res.extend(move_obj.search(cr, uid, domain, order='date'))
-            
-        return res
+        return domain
     
     def return_view(self, cr, uid, ids, context={}):
         '''
@@ -74,7 +71,7 @@ class stock_batch_recall(osv.osv_memory):
                    'search_default_group_expired': 1,
                    'search_default_group_product': 1}
         
-        domain = [('id', 'in', self.get_ids(cr, uid, ids))]
+        domain =self.get_ids(cr, uid, ids)
         
         result = mod_obj._get_id(cr, uid, 'stock_batch_recall', 'action_report_batch_recall')
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
@@ -128,6 +125,7 @@ CREATE OR REPLACE view report_batch_recall AS (
                 LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_id=l.id)
+    WHERE l.usage not in ('supplier', 'procurement', 'inventory')
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id
@@ -148,6 +146,7 @@ CREATE OR REPLACE view report_batch_recall AS (
                 LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
+    WHERE l.usage not in ('supplier', 'procurement', 'inventory')
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id
