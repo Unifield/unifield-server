@@ -21,7 +21,9 @@
 
 from osv import osv, fields
 from tools.translate import _
-
+import base64
+from os.path import join as opj
+import tools
 
 class ir_model_data(osv.osv):
     _inherit = 'ir.model.data'
@@ -48,3 +50,32 @@ class account_installer(osv.osv_memory):
     }
 
 account_installer()
+
+class res_config_view(osv.osv_memory):
+    _inherit = 'res.config.view'
+    _name = 'res.config.view'
+    _defaults={
+        'view': 'extended',
+    }
+res_config_view()
+
+class base_setup_company(osv.osv_memory):
+    _inherit = 'base.setup.company'
+    _name = 'base.setup.company'
+
+    def default_get(self, cr, uid, fields_list=None, context=None):
+        ret = super(base_setup_company, self).default_get(cr, uid, fields_list, context)
+        if not ret.get('name'):
+            ret.update({'name': 'MSF', 'street': 'Rue de Lausanne 78', 'street2': 'CP 116', 'city': 'Geneva', 'zip': '1211', 'phone': '+41 (22) 849.84.00'})
+            cur = self.pool.get('res.currency').search(cr, uid, [('name','=','EUR')])
+            if cur:
+                ret['currency'] = cur[0]
+            country = self.pool.get('res.country').search(cr, uid, [('name','=','Switzerland')])
+            if country:
+                ret['country_id'] = country[0]
+            fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'))
+            ret['logo'] = base64.encodestring(fp.read())
+            fp.close()
+        return ret
+
+base_setup_company()
