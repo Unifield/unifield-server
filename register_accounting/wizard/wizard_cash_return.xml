@@ -84,8 +84,8 @@
                 <tree editable="bottom" string="Advance Lines">
                     <field name="date" />
                     <field name="description" />
-                    <field name="account_id" />
-                    <field name="partner_id" />
+                    <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                    <field name="partner_id" domain="[('supplier', '=', 'True')]"/>
                     <field name="amount" />
                 </tree>
             </field>
