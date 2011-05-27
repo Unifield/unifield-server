@@ -640,6 +640,16 @@
             <field name="user_type" ref="account.account_type_receivable" />
         </record>
 
+        <record model="account.account" id="msf_chart_of_account.4307">
+            <field name="code">4307</field>
+            <field name="type_for_register">none</field>
+            <field name="type">receivable</field>
+            <field name="name">Customers</field>
+            <field name="parent_id" ref="msf_chart_of_account.430" />
+            <field name="reconcile" eval="True" />
+            <field name="user_type" ref="account.account_type_receivable" />
+        </record>
+
         <record model="account.account" id="msf_chart_of_account.4309">
             <field name="code">4309</field>
             <field name="type_for_register">none</field>
