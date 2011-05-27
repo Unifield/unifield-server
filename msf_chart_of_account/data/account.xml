@@ -1040,6 +1040,48 @@
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
+        <record model="account.account" id="msf_chart_of_account.536">
+            <field name="code">536</field>
+            <field name="type_for_register">none</field>
+            <field name="type">view</field>
+            <field name="name">Cheques to be drawn</field>
+            <field name="parent_id" ref="msf_chart_of_account.53" />
+            <field name="reconcile" eval="False" />
+            <field name="user_type" ref="account.account_type_cash_moves" />
+        </record>
+
+        <record model="account.account" id="msf_chart_of_account.5361">
+            <field name="code">5361</field>
+            <field name="type_for_register">none</field>
+            <field name="type">liquidity</field>
+            <field name="name">Cheques to be drawn in EUR</field>
+            <field name="parent_id" ref="msf_chart_of_account.536" />
+            <field name="reconcile" eval="True" />
+            <field name="user_type" ref="account.account_type_cash_moves" />
+        </record>
+
+        <record model="account.account" id="msf_chart_of_account.5362">
+            <field name="code">5362</field>
+            <field name="type_for_register">none</field>
+            <field name="type">liquidity</field>
+            <field name="name">Cheques to be drawn in CHF</field>
+            <field name="parent_id" ref="msf_chart_of_account.536" />
+            <field name="reconcile" eval="True" />
+            <field name="user_type" ref="account.account_type_cash_moves" />
+        </record>
+
+        <record model="account.account" id="msf_chart_of_account.5363">
+            <field name="code">5363</field>
+            <field name="type_for_register">none</field>
+            <field name="type">liquidity</field>
+            <field name="name">Cheques to be drawn in USD</field>
+            <field name="parent_id" ref="msf_chart_of_account.536" />
+            <field name="reconcile" eval="True" />
+            <field name="user_type" ref="account.account_type_cash_moves" />
+        </record>
+
+
+
         <record model="account.account" id="msf_chart_of_account.58">
             <field name="code">58</field>
             <field name="type_for_register">none</field>
