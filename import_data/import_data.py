@@ -56,9 +56,10 @@ class import_data(osv.osv_memory):
                     col[int(m.group(1))] = n
                     headers[n] = "nomen_manda_%s.complete_name"%(m.group(1), )
 
-        for manda in sorted(col.keys()):
-            if manda != 0:
-                row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
+        if row:
+            for manda in sorted(col.keys()):
+                if manda != 0:
+                    row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
         return col
 
     post_hook = {
@@ -124,7 +125,6 @@ class import_data(osv.osv_memory):
             r = reader.next()
             if r and r[0].split('.')[0] in fields_def:
                 headers = r[:]
-            writer.writerow(r)
 
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
@@ -167,6 +167,11 @@ class import_data(osv.osv_memory):
         nb_error = 0
         nb_succes = 0
         col_datas = {}
+        if self.pre_hook.get(impobj._name):
+            # for headers mod.
+            col_datas = self.pre_hook[impobj._name](impobj, cr, uid, headers, {}, col_datas)
+        writer.writerow(headers)
+
         for row in reader:
             newo2m = False
             delimiter = False
@@ -188,7 +193,8 @@ class import_data(osv.osv_memory):
             try:
                 n = 0
                 if self.pre_hook.get(impobj._name):
-                    col_datas = self.pre_hook[impobj._name](impobj, cr, uid, headers, row, col_datas)
+                    self.pre_hook[impobj._name](impobj, cr, uid, headers, row, col_datas)
+
                 for n,h in enumerate(headers):
                     row[n] = row[n].rstrip()
                     if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
