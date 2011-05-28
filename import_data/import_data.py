@@ -47,17 +47,35 @@ class import_data(osv.osv_memory):
             if v['value']['level']:
                 data['level'] = v['value']['level']
 
+    def _set_full_path_nomen(self, cr, uid, headers, row, col):
+        if not col:
+            # modify headers if needed
+            for n,h in enumerate(headers):
+                m = re.match("^nomen_manda_([0123]).name$", h)
+                if m:
+                    col[int(m.group(1))] = n
+                    headers[n] = "nomen_manda_%s.complete_name"%(m.group(1), )
+
+        for manda in sorted(col.keys()):
+            if manda != 0:
+                row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
+        return col
+
     post_hook = {
         'account.budget.post': _set_code_name,
         'product.nomenclature': _set_nomen_level, 
     }
 
+    pre_hook = {
+        'product.product': _set_full_path_nomen, 
+    }
     def _get_image(self, cr, uid, context=None):
         return self.pool.get('ir.wizard.screen')._get_image(cr, uid)
 
     _columns = {
         'ignore': fields.integer('Number of headers to ignore', required=True),
         'file': fields.binary('File', required=True),
+        'debug': fields.boolean('Debug to server log'),
         'object': fields.selection([
             ('product.nomenclature','Product Nomenclature'),
             ('product.category','Product Category'), 
@@ -75,7 +93,8 @@ class import_data(osv.osv_memory):
 
     _defaults = {
         'ignore': lambda *a : 1,
-        'config_logo': _get_image
+        'config_logo': _get_image,
+        'debug': False,
     }
 
     def _import(self, dbname, uid, ids, context=None):
@@ -147,11 +166,15 @@ class import_data(osv.osv_memory):
         i = 1
         nb_error = 0
         nb_succes = 0
+        col_datas = {}
         for row in reader:
             newo2m = False
             delimiter = False
             o2mdatas = {}
             i += 1
+            if i%101 == 0 and obj['debug']:
+                logging.getLogger('import data').info('Object: %s, Item: %s'%(obj['object'],i))
+
             if not row:
                 continue
             empty = True
@@ -163,6 +186,9 @@ class import_data(osv.osv_memory):
                 continue
             data = {}
             try:
+                n = 0
+                if self.pre_hook.get(impobj._name):
+                    col_datas = self.pre_hook[impobj._name](impobj, cr, uid, headers, row, col_datas)
                 for n,h in enumerate(headers):
                     row[n] = row[n].rstrip()
                     if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
