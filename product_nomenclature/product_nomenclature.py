@@ -200,12 +200,32 @@ class product_nomenclature(osv.osv):
                 res[nomen.id] = len(products)
             
         return res
+    
+    def _search_complete_name(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        if args[0][1] != "=":
+            raise osv.except_osv(_('Error !'), 'Filter not implemented on %s'%(name,))
+
+        parent_ids = None
+        for path in args[0][2].split('/'):
+            dom = [('name', '=ilike', path.strip())]
+            if parent_ids is None:
+                dom.append(('parent_id', '=', False))
+            else:
+                dom.append(('parent_id', 'in', parent_ids))
+            ids = self.search(cr, uid, dom)
+            if not ids:
+                return [('id', '=', 0)]
+            parent_ids = ids
+
+        return [('id', 'in', ids)]
 
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
-        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
+        'name': fields.char('Name', size=64, required=True, select=True),
+        'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
         'code': fields.char('Code', size=64, required=True),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature','Parent Nomenclature', select=True),
