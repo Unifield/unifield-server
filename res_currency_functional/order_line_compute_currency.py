@@ -31,7 +31,7 @@ class sale_order_line_compute_currency(osv.osv):
             try:
                 res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
                         line.functional_currency_id.id, line.price_subtotal, round=True)
-            except Exception:
+            except osv.except_osv:
                 res[line.id] = 0
         return res
     
@@ -64,7 +64,7 @@ class sale_order_compute_currency(osv.osv):
                                 'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
                                                                           order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
                                 }
-            except Exception:
+            except osv.except_osv:
                 res[order.id] = {
                                  'functional_amount_untaxed':0,
                                  'functional_amount_tax':0,
@@ -92,7 +92,7 @@ class purchase_order_line_compute_currency(osv.osv):
             try:
                 res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
                         line.functional_currency_id.id, line.price_subtotal, round=True)
-            except Exception:
+            except osv.except_osv:
                 res[line.id] = 0
         return res
     
@@ -125,7 +125,7 @@ class purchase_order_compute_currency(osv.osv):
                                 'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
                                                                           order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
                                 }
-            except Exception:
+            except osv.except_osv:
                 res[order.id] = {
                                  'functional_amount_untaxed':0,
                                  'functional_amount_tax':0,

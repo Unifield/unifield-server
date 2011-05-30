@@ -39,7 +39,7 @@ class account_bank_statement_line_compute_currency(osv.osv):
                     'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
                         statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
                 }
-            except Exception:
+            except osv.except_osv:
                 res[statement_line.id] = {
                     'functional_in': 0,
                     'functional_out': 0
