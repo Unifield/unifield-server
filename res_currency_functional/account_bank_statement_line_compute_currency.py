@@ -32,12 +32,18 @@ class account_bank_statement_line_compute_currency(osv.osv):
             ctx = {}
             if statement_line.date:
                 ctx['date'] = statement_line.date
-            res[statement_line.id] = {
-                'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                    statement_line.functional_currency_id.id, statement_line.amount_in, round=True, context=ctx),
-                'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
-                    statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
-            }
+            try:
+                res[statement_line.id] = {
+                    'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,
+                        statement_line.functional_currency_id.id, statement_line.amount_in, round=True, context=ctx),
+                    'functional_out': cur_obj.compute(cr, uid, statement_line.currency_id.id,
+                        statement_line.functional_currency_id.id, statement_line.amount_out, round=True, context=ctx),
+                }
+            except Exception:
+                res[statement_line.id] = {
+                    'functional_in': 0,
+                    'functional_out': 0
+                }
         return res
     
     _columns = {
