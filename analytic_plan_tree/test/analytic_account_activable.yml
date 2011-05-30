@@ -11,8 +11,9 @@
 -
   !python {model: account.analytic.account}: |
     ac = self.browse(cr, uid, ref("analytic_account_1"))
-    from mx import DateTime
-    assert  ac.date_start == (DateTime.now()+DateTime.RelativeDateTime(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
+    import datetime
+    from dateutil.relativedelta import relativedelta
+    assert  ac.date_start == (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
     
 -
   I create Asset Account Type.
