@@ -28,8 +28,11 @@ class sale_order_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
-                    line.functional_currency_id.id, line.price_subtotal, round=True)
+            try:
+                res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
+                        line.functional_currency_id.id, line.price_subtotal, round=True)
+            except Exception:
+                res[line.id] = 0
         return res
     
     _columns = {
@@ -52,14 +55,21 @@ class sale_order_compute_currency(osv.osv):
             ctx = {}
             if order.date_confirm:
                 ctx['date'] = order.date_confirm
-            res[order.id] = {
-                            'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
-                            'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                    order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
-                            'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                      order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
-                            }
+            try:
+                res[order.id] = {
+                                'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                            order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
+                                'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                        order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
+                                'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                          order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
+                                }
+            except Exception:
+                res[order.id] = {
+                                 'functional_amount_untaxed':0,
+                                 'functional_amount_tax':0,
+                                 'functional_amount_total':0
+                                }
         return res
     
     _columns = {
@@ -79,8 +89,11 @@ class purchase_order_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
-                    line.functional_currency_id.id, line.price_subtotal, round=True)
+            try:
+                res[line.id] = cur_obj.compute(cr, uid, line.currency_id.id,
+                        line.functional_currency_id.id, line.price_subtotal, round=True)
+            except Exception:
+                res[line.id] = 0
         return res
     
     _columns = {
@@ -103,14 +116,21 @@ class purchase_order_compute_currency(osv.osv):
             ctx = {}
             if order.date_approve:
                 ctx['date'] = order.date_approve
-            res[order.id] = {
-                            'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                        order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
-                            'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                    order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
-                            'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                      order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
-                            }
+            try:
+                res[order.id] = {
+                                'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                            order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
+                                'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                        order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
+                                'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
+                                                                          order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
+                                }
+            except Exception:
+                res[order.id] = {
+                                 'functional_amount_untaxed':0,
+                                 'functional_amount_tax':0,
+                                 'functional_amount_total':0
+                                }
         return res
     
     _columns = {
