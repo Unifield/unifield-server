@@ -23,8 +23,9 @@
 -
   !python {model: account.account}: |
     ac = self.browse(cr, uid, ref("account_1"))
-    from mx import DateTime
-    assert  ac.activation_date == (DateTime.now()+DateTime.RelativeDateTime(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
+    import datetime
+    from dateutil.relativedelta import relativedelta
+    assert  ac.activation_date == (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'), "Wrong activation date"
 
 -
   I create an analytical journal, ...
