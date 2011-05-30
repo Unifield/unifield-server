@@ -232,8 +232,8 @@ class product_nomenclature(osv.osv):
         # TODO try to display child_ids on screen. which result ?
         'child_id': fields.one2many('product.nomenclature', 'parent_id', string='Child Nomenclatures'),
         'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of product nomenclatures."),
-        'level': fields.integer('Level', size=256),
-        'type': fields.selection([('mandatory','Mandatory'), ('optional','Optional')], 'Nomenclature Type'),
+        'level': fields.integer('Level', size=256, select=1),
+        'type': fields.selection([('mandatory','Mandatory'), ('optional','Optional')], 'Nomenclature Type', select=1),
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
         'sub_level': fields.selection([('0', '1'), ('1', '2'), ('2', '3'), ('3', '4'), ('4', '5'), ('5', '6')], 'Sub-Level', size=256),
         'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
@@ -276,22 +276,22 @@ class product_template(osv.osv):
     ### EXACT COPY-PASTE TO order_nomenclature
     _columns = {
                 # mandatory nomenclature levels
-                'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True),
-                'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True),
-                'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True),
-                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True),
+                'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
+                'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
+                'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
+                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
                 # codes
                 'nomen_c_manda_0': fields.char('C1', size=32),
                 'nomen_c_manda_1': fields.char('C2', size=32),
                 'nomen_c_manda_2': fields.char('C3', size=32),
                 'nomen_c_manda_3': fields.char('C4', size=32),
                 # optional nomenclature levels
-                'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
-                'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
-                'nomen_sub_2': fields.many2one('product.nomenclature', 'Sub Class 3'),
-                'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
-                'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
-                'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
+                'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1', select=1),
+                'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2', select=1),
+                'nomen_sub_2': fields.many2one('product.nomenclature', 'Sub Class 3', select=1),
+                'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4', select=1),
+                'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5', select=1),
+                'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6', select=1),
                 # codes
                 'nomen_c_sub_0': fields.char('C5', size=128),
                 'nomen_c_sub_1': fields.char('C6', size=128),
@@ -398,33 +398,38 @@ class product_product(osv.osv):
         prodObj = self.pool.get('product.product')
         
         # loop through children nomenclature of mandatory type
-        for id in nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context):
-            # get the name and product number
-            n = nomenObj.browse(cr, uid, id, context=context)
-            code = n.code
-            name = n.name
-            number = n.number_of_products
-            values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+        nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+        if nomenids:
+            for n in nomenObj.read(cr, uid, nomenids, ['code', 'name', 'number_of_products'], context=context):
+                # get the name and product number
+                id = n['id']
+                code = n['code']
+                name = n['name']
+                number = n['number_of_products']
+                values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
         
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
         if not selected:
             optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
         else:
-            for id in prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context):
-                p = prodObj.browse(cr, uid, id, context)
-                optionalList.extend([eval('p.nomen_sub_%s.id'%x, {'p':p}) for x in range(_SUB_LEVELS) if eval('p.nomen_sub_%s.id'%x, {'p':p}) and eval('p.nomen_sub_%s.id'%x, {'p':p}) not in optionalList])
-        
+            pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
+            if pids:
+                for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
+                    optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
+            
         # sort the optional nomenclature according to their id
         optionalList.sort()
-        for id in optionalList:
-            # get the name and product number
-            n = nomenObj.browse(cr, uid, id, context=context)
-            code = n.code
-            name = n.name
-            number = n.number_of_products
-            values[optName%(n.sub_level)].append((id, name + ' (%s)'%number))
-
+        if optionalList:
+            for n in nomenObj.read(cr, uid, optionalList, ['code', 'name', 'number_of_products','sub_level'], context=context):
+                # get the name and product number
+                id = n['id']
+                code = n['code']
+                name = n['name']
+                number = n['number_of_products']
+                sublevel = n['sub_level']
+                values[optName%(sublevel)].append((id, name + ' (%s)'%number))
+        
         return result
     
     def _resetNomenclatureFields(self, values):
