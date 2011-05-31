@@ -2543,7 +2543,7 @@
         <record forcecreate="True" id="property_account_payable" model="ir.property">
             <field name="name">property_account_payable</field>
             <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_account_payable')]"/>
-            <field eval="'account.account,'+str(ref('msf_chart_of_account.4309'))" name="value"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.440'))" name="value"/>
             <field name="company_id" ref="base.main_company"/>
         </record>
         
