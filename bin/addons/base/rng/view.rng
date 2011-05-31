@@ -135,6 +135,8 @@
             <rng:optional><rng:attribute name="min_rows"/></rng:optional>
             <rng:optional><rng:attribute name="on_write"/></rng:optional>
             <rng:optional><rng:attribute name="expand_button"/></rng:optional>
+            <rng:optional><rng:attribute name="hide_new_button"/></rng:optional>
+            <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="field"/>
