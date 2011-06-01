@@ -70,6 +70,22 @@ class purchase_order_line(osv.osv):
         
         return result
     
+    def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        override product_uom_change to avoid the reset of Comment when the UOM is changed
+        '''
+        # call to super
+        result = super(purchase_order_line, self).product_uom_change(cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order, fiscal_position, date_planned,
+            name, price_unit, notes)
+        # drop modification to name attribute
+        if 'name' in result['value']:
+            del result['value']['name']
+            
+        return result
+    
     def _relatedFields(self, cr, uid, vals, context=None):
         '''
         related fields for create and write
@@ -209,6 +225,21 @@ class sale_order_line(osv.osv):
             result['value'].update({'name':False})
             result['value'].update({'default_code':False})
         
+        return result
+    
+    def product_uom_change(self, cr, uid, ids, pricelist, product, qty=0,
+            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+            lang=False, update_tax=True, date_order=False):
+        '''
+        override product_uom_change to avoid the reset of Comment when the UOM is changed
+        '''
+        # call to super
+        result = super(sale_order_line, self).product_uom_change(cr, uid, ids, pricelist, product, qty,
+            uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order)
+        # drop modification to name attribute
+        if 'name' in result['value']:
+            del result['value']['name']
+            
         return result
     
     def _relatedFields(self, cr, uid, vals, context=None):
