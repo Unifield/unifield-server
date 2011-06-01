@@ -660,6 +660,11 @@ function onChange(caller){
                                 }
                             }
                             MochiKit.DOM.replaceChildNodes(fld, opts);
+                            if (jQuery.browser.msie && $fld.attr('callback')) {
+                                jQuery(fld).live("change", function(){
+                                    onChange(this);
+                                });
+                            }
                         }
                         else {
                             fld.value = value;
