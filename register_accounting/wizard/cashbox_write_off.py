@@ -85,11 +85,8 @@ class cashbox_write_off(osv.osv_memory):
                         move_line_obj = self.pool.get('account.move.line')
                         journal_id = cashbox.journal_id.id
                         curr_date = time.strftime('%Y-%m-%d')
-                        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start','<=', curr_date), ('date_stop', '>=', curr_date)])
-                        if not period_ids:
-                            raise osv.except_osv(_('Error'), _('No accounting period for today !'))
-
-                        period_id = period_ids[0]
+                        date = cashbox.period_id.date_stop
+                        period_id = cashbox.period_id.id
                         # description = register period (YYYYMM) + "-" + register code + " " + "Write-off"
                         cash_period = cashbox.period_id.date_start
                         desc_period = time.strftime('%Y%m', time.strptime(cash_period, '%Y-%m-%d'))
@@ -103,7 +100,7 @@ class cashbox_write_off(osv.osv_memory):
                         move_vals = {
                             'journal_id': journal_id,
                             'period_id': period_id,
-                            'date': curr_date,
+                            'date': date,
                             'name': description,
                         }
                         move_id = acc_mov_obj.create(cr, uid, move_vals, context=context)
@@ -135,7 +132,7 @@ class cashbox_write_off(osv.osv_memory):
                         # create the bank account move line
                         bank_move_line_vals = {
                             'name': description,
-                            'date': curr_date,
+                            'date': date,
                             'move_id': move_id,
                             'account_id': bank_account_id,
                             'credit': bank_credit,
@@ -157,7 +154,7 @@ class cashbox_write_off(osv.osv_memory):
                         # then for the writeoff account
                         writeoff_move_line_vals = {
                             'name': description,
-                            'date': curr_date,
+                            'date': date,
                             'move_id': move_id,
                             'account_id': account_id,
                             'credit': writeoff_credit,
