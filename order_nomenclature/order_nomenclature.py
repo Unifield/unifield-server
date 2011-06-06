@@ -86,6 +86,21 @@ class purchase_order_line(osv.osv):
             
         return result
     
+    def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        interface product_id_change to avoid the reset of Comment field when the qty is changed
+        '''
+        result = self.product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order, fiscal_position, date_planned,
+            name, price_unit, notes)
+        # drop modification to name attribute
+        if 'name' in result['value']:
+            del result['value']['name']
+        
+        return result
+    
     def _relatedFields(self, cr, uid, vals, context=None):
         '''
         related fields for create and write
@@ -201,8 +216,8 @@ class sale_order_line(osv.osv):
        - nomenclature_description : contains the corresponding description
     ''' 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
         overriden on_change function
         '''
@@ -240,6 +255,33 @@ class sale_order_line(osv.osv):
         if 'name' in result['value']:
             del result['value']['name']
             
+        return result
+    
+    def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
+        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        '''
+        interface product_id_change to avoid the reset of Comment field when the qty is changed 
+        '''
+        result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
+                                        uom, qty_uos, uos, name, partner_id,
+                                        lang, update_tax, date_order, packaging, fiscal_position, flag)
+        # drop modification to name attribute
+        if 'name' in result['value']:
+            del result['value']['name']
+            
+        return result
+    
+    def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,
+        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+        '''
+        interface product_id_change to avoid the reset of Comment field when the qty is changed 
+        '''
+        result = self.product_qty_change(cr, uid, ids, pricelist, product, qty,
+                                        uom, qty_uos, uos, name, partner_id,
+                                        lang, update_tax, date_order, packaging, fiscal_position, flag)
+        
         return result
     
     def _relatedFields(self, cr, uid, vals, context=None):
