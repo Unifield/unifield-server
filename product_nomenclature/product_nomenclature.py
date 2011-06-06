@@ -398,15 +398,16 @@ class product_product(osv.osv):
         prodObj = self.pool.get('product.product')
         
         # loop through children nomenclature of mandatory type
-        nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
-        if nomenids:
-            for n in nomenObj.read(cr, uid, nomenids, ['code', 'name', 'number_of_products'], context=context):
-                # get the name and product number
-                id = n['id']
-                code = n['code']
-                name = n['name']
-                number = n['number_of_products']
-                values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+        if position < 3:
+            nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            if nomenids:
+                for n in nomenObj.read(cr, uid, nomenids, ['code', 'name', 'number_of_products'], context=context):
+                    # get the name and product number
+                    id = n['id']
+                    code = n['code']
+                    name = n['name']
+                    number = n['number_of_products']
+                    values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
         
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
