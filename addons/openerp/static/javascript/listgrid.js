@@ -792,7 +792,7 @@ MochiKit.Base.update(ListView.prototype, {
                 if(clear) {
                     jQuery('#view_form').replaceWith(obj.view);
                     initialize_search();
-                    var ELEMENTS_WITH_CALLBACK = '[callback]:enabled:not([type="hidden"]):not([value=""]):not([readonly])';
+                    var ELEMENTS_WITH_CALLBACK = '[callback]:enabled:not([type="hidden"]):not([value][value=""]):not([readonly])';
 
                      if (jQuery('#_terp_id').val() == 'False') {
                         jQuery(ELEMENTS_WITH_CALLBACK).each(function() {

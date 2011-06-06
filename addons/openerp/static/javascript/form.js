@@ -522,7 +522,6 @@ function onChange(caller){
                 jQuery(fld).attr('domain', domains[domain]);
             }
         }
-
         var flag;
         var value;
         for (var k in values) {
@@ -654,12 +653,17 @@ function onChange(caller){
                     case 'selection':
                         if (typeof(value)=='object') {
                             var opts = [OPTION({'value': ''})];
-                            for (var opt in value) {
+                            for (var opt = 0; opt < value.length; opt++) {
                                 if (value[opt].length > 0) {
                                     opts.push(OPTION({'value': value[opt][0]}, value[opt][1]));
-                                }
+                                } 
                             }
                             MochiKit.DOM.replaceChildNodes(fld, opts);
+                            if (jQuery.browser.msie && $fld.attr('callback')) {
+                                jQuery(fld).live("change", function(){
+                                    onChange(this);
+                                });
+                            }
                         }
                         else {
                             fld.value = value;
