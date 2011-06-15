@@ -177,7 +177,7 @@ class procurement_request(osv.osv):
         proc = order.procurement_request or context.get('procurement_request', False)
             
         default.update({
-            'state': 'procurement',
+            'state': (order.procurement_request or context.get('procurement_request', False)) and 'procurement' or 'draft',
             'shipped': False,
             'invoice_ids': [],
             'picking_ids': [],

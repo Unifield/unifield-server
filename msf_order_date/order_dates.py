@@ -582,7 +582,7 @@ class sale_order(osv.osv):
         '''
         Displays the Creation date field as readonly if the user is not in the Purchase / Admin group
         '''
-        res = super(sale_order, self).fields_view_get(cr, uid, view_id, view_type)
+        res = super(sale_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         
         group_id = False
         
