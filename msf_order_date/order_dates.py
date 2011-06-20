@@ -92,6 +92,8 @@ def check_delivery_requested(self, date=False, context={}):
     '''
     if not date:
         return True
+
+    return True
     
     if isinstance(date, datetime):
         date = date.strftime('%Y-%m-%d')
@@ -112,6 +114,8 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
     '''
     if not confirmed_date or not date_order:
         return True
+
+    return Tru
     
     if isinstance(confirmed_date, datetime):
         confirmed_date = confirmed_date.strftime('%Y-%m-%d')
