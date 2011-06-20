@@ -115,7 +115,7 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
     if not confirmed_date or not date_order:
         return True
 
-    return Tru
+    return True
     
     if isinstance(confirmed_date, datetime):
         confirmed_date = confirmed_date.strftime('%Y-%m-%d')
@@ -192,7 +192,8 @@ def common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_d
     if not confirmed_date:
         confirmed_date = requested_date
     if not date_order:
-        return {'value': {'delivery_confirmed_date': confirmed_date},
+#        return {'value': {'delivery_confirmed_date': confirmed_date},
+        return {'value': {},
                 'warning': message}
     
     # Set the message if the user enter a wrong requested date
@@ -204,12 +205,12 @@ def common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_d
 #    if not check_delivery_confirmed(self, confirmed_date, date_order, context):
 #        message = {'title': _('Warning'),
 #                   'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
-    if requested_date:
+    if requested_date and leadtime:
         requested = datetime.strptime(requested_date, '%Y-%m-%d')
         ready_to_ship = requested - relativedelta(days=leadtime)
         v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
         
-    v.update({'delivery_confirmed_date': confirmed_date})
+#    v.update({'delivery_confirmed_date': confirmed_date})
     
     return {'value': v,
             'warning': message}
@@ -261,9 +262,9 @@ def common_onchange_partner_id(self, cr, uid, ids, part, res={}):
         requested_date = requested_date.strftime('%Y-%m-%d')
     
     if check_delivery_requested(self, requested_date):
-        res['value'].update({'delivery_requested_date': requested_date,
-                             'ready_to_ship_date': requested_date,
-                             'delivery_confirmed_date': requested_date})
+        res['value'].update({'delivery_requested_date': requested_date,})
+#                             'ready_to_ship_date': requested_date,})
+#                             'delivery_confirmed_date': requested_date})
     else:
         res.update({'warning': {'title': _('Warning'), 
                                 'message': _('The Delivery Requested Date should be between today and today + 24 months !')}})
@@ -298,8 +299,8 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
             return {'warning': {'title': _('Warning'),
                                 'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
     
-    return {'value': {'date_planned': requested_date,
-                      'confirmed_delivery_date': confirmed_date}}
+    return {'value': {'date_planned': requested_date,}}
+#                      'confirmed_delivery_date': confirmed_date}}
         
 
 class purchase_order(osv.osv):
@@ -331,8 +332,8 @@ class purchase_order(osv.osv):
         
         if 'delivery_requested_date' not in data:
             data['delivery_requested_date'] = requested_date
-        if 'delivery_confirmed_date' not in data:
-            data['delivery_confirmed_date'] = requested_date
+#        if 'delivery_confirmed_date' not in data:
+#            data['delivery_confirmed_date'] = requested_date
             
         check_dates(self, cr, uid, data, context=context)
         
@@ -419,10 +420,11 @@ class purchase_order(osv.osv):
         if isinstance(leadtime, str):
             leadtime = int(leadtime)
         
-        if not confirmed_date:
-            confirmed_date = requested_date
+#        if not confirmed_date:
+#            confirmed_date = requested_date
         if not date_order:
-            return {'value': {'delivery_confirmed_date': confirmed_date},
+            #return {'value': {'delivery_confirmed_date': confirmed_date},
+            return {'value': {},
                     'warning': message}
         
         # Set the message if the user enter a wrong requested date
@@ -436,11 +438,12 @@ class purchase_order(osv.osv):
                        'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
         if requested_date:
             requested = datetime.strptime(requested_date, '%Y-%m-%d')
-            ready_to_ship = requested - relativedelta(days=leadtime)
-            v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
+#            ready_to_ship = requested - relativedelta(days=leadtime)
+#            v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
             # Change the date on all lines
             line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)])
-            line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, 'confirmed_delivery_date': confirmed_date})
+            #line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, 'confirmed_delivery_date': confirmed_date})
+            line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, })
             
         v.update({'delivery_confirmed_date': confirmed_date})
         
@@ -468,7 +471,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        #return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        return common_onchange_partner_id(self, cr, uid, ids, part, res)
         return res
     
 purchase_order()
@@ -575,8 +578,8 @@ class sale_order(osv.osv):
         requested_date = (datetime.today() + relativedelta(days=(partner and partner.leadtime) and partner.leadtime or 0)).strftime('%Y-%m-%d')
         if 'delivery_requested_date' not in data:
             data['delivery_requested_date'] = requested_date
-        if 'delivery_confirmed_date' not in data:
-            data['delivery_confirmed_date'] = requested_date
+#        if 'delivery_confirmed_date' not in data:
+#            data['delivery_confirmed_date'] = requested_date
         
         check_dates(self, cr, uid, data, context=context)
         
@@ -680,8 +683,7 @@ class sale_order(osv.osv):
             ids = [ids]
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        #return common_onchange_partner_id(self, cr, uid, ids, part, res)
-        return res
+        return common_onchange_partner_id(self, cr, uid, ids, part, res)
     
 sale_order()
 
@@ -697,13 +699,13 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        for line in self.browse(cr, uid, ids):
-            if 'date_planned' in data:
-                if line.order_id.delivery_requested_date > data['date_planned']:
-                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-            if data.get('confirmed_delivery_date', False):
-                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
-                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
+#        for line in self.browse(cr, uid, ids):
+#            if 'date_planned' in data:
+#                if line.order_id.delivery_requested_date > data['date_planned']:
+#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
+#            if data.get('confirmed_delivery_date', False):
+#                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
+#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
         
         create_history(self, cr, uid, ids, data, 'sale.order.line', 'sale_line_id', fields_date_line, context=context)
                     
