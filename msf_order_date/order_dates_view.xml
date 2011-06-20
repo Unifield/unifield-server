@@ -34,7 +34,7 @@
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'pruchase_id': active_id}</attribute>
+                        <attribute name="context">{'purchase_id': active_id}</attribute>
                     </xpath>
                     
                     <!--  Add dates history tab -->
