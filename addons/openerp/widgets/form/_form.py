@@ -492,7 +492,7 @@ class Selection(TinyInputWidget):
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
         # m2o as selection
-        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection':
+        if not self.options or (attrs.get('relation') and (attrs.get('widget') == 'selection')):
             proxy = rpc.RPCProxy(attrs['relation'])
             try:
                 domain = attrs.get('domain', [])
