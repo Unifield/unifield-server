@@ -836,21 +836,12 @@ function open_search_window(relation, domain, context, source, kind, text){
 function makeContextMenu(id, kind, relation, val){
     var act = get_form_action('get_context_menu');
 
-    var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) + '/' : '';
+    var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) : '';
     if ((prefix.split('/')[0])== '_terp_listfields') {
         prefix = (prefix.split('/')[1]);
     }
 
-    // waiting for OEB-29 ...
-    if (prefix) {
-       var obj = openobject.dom.get(prefix + '_terp_model');
-       if (!obj) {
-            obj = openobject.dom.get(prefix + '/_terp_model');
-        }   
-    } else {
-       var obj = openobject.dom.get('_terp_model');
-    }
-    var model = obj.value
+    var model = prefix ? openobject.dom.get(prefix + '/_terp_model').value : openobject.dom.get('_terp_model').value;
 
     openobject.http.postJSON(act, {
         'model': model,
