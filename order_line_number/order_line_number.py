@@ -70,8 +70,7 @@ class sale_order(osv.osv):
         create from sale_order
         create the sequence for the numbering of the lines
         '''
-        if not 'sequence_id' in vals or not vals['sequence_id']:
-            vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         
         return super(sale_order, self).create(cr, uid, vals, context)
 

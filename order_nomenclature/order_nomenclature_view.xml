@@ -12,14 +12,18 @@
 				<data>
 				
 					<!-- modification of the tree -->
-					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='name']" position="before">
+					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='name']" position="replace">
+						<field name="default_name" />
+						<field name="comment" />
+					</xpath>
+					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='default_name']" position="before">
 						<field name="default_code" />
 					</xpath>
 					
 					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='price_unit']" position="replace">
 					</xpath>
 					
-					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='name']" position="after">
+					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='comment']" position="after">
 						<field name="nomenclature_description" />
 					</xpath>
 					
@@ -58,7 +62,7 @@
 								
 								<field name="nomenclature_code" colspan="2" invisible="True" />
 								<field name="nomenclature_description" colspan="2" readonly="True" />
-								<field name="name" colspan="2" attrs="{'readonly':[('product_id', '!=', False)]}" />
+								<field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}" />
 							
 							</group>
 							<newline />
@@ -168,12 +172,16 @@
 			<field name="priority" eval="200" />
 			<field name="arch" type="xml">
 				<data>
-				
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="before">
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="replace">
+						<field name="default_name" />
+						<field name="comment" />
+					</xpath>
+					
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='default_name']" position="before">
 						<field name="default_code" />
 					</xpath>
 					
-					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='name']" position="after">
+					<xpath expr="//form[@string='Purchase Order']//tree[@string='Purchase Order Lines']/field[@name='comment']" position="after">
 						<field name="nomenclature_description" />
 					</xpath>
 					
@@ -220,7 +228,7 @@
 								
 								<field name="nomenclature_code" colspan="2" invisible="True" />
 								<field name="nomenclature_description" colspan="2" readonly="True" />
-								<field name="name" colspan="2" attrs="{'readonly':[('product_id', '!=', False)]}" />
+								<field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}" />
 							
 							</group>
 							<newline />
