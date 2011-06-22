@@ -82,7 +82,10 @@ class stock_certificate_valuation(osv.osv_memory):
         '''
         Forbid the deletion of a line
         '''
-        raise osv.except_osv(_('Errror'), _('You cannot remove this line !'))
+        if uid != 1:
+            raise osv.except_osv(_('Errror'), _('You cannot remove this line !'))
+        else:
+            return super(stock_certificate_valuation, self).unlink(cr, uid, ids, context)
     
     _columns = {
         'print_id': fields.many2one('stock.print.certificate', string='Print'),
