@@ -36,9 +36,17 @@
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="3,-1" stop="3,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table2">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
     </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
@@ -46,10 +54,10 @@
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -168,7 +176,7 @@
             <para style="P2">[[ order_line.supplier_code ]]</para>
           </td>
           <td>
-            <para style="P7">[[ formatLang(order_line.product_qty )]]</para>
+            <para style="P4">[[ formatLang(order_line.product_qty )]]</para>
           </td>
         </tr>
         <tr>
@@ -183,11 +191,19 @@
             </para>
           </td>
           <td>
-            <para style="P2">[[ order_line.nomenclature_description ]]</para>
+            <blockTable colWidths="451.0" style="Table1">
+              <tr>
+                <td>
+                  <para style="P7">[[ order_line.nomenclature_description ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="P6">
+              <font color="white"> </font>
+            </para>
           </td>
-          <td>
-            <para style="P2">[[ order_line.name ]]</para>
-          </td>
+        </tr>
+        <tr>
           <td>
             <para style="terp_default_8_italic">
               <font color="white"> </font>
@@ -195,6 +211,18 @@
           </td>
           <td>
             <para style="terp_default_8_italic">
+              <font color="white"> </font>
+            </para>
+          </td>
+          <td>
+            <blockTable colWidths="451.0" style="Table2">
+              <tr>
+                <td>
+                  <para style="P7">[[ order_line.comment ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="P6">
               <font color="white"> </font>
             </para>
           </td>
@@ -218,4 +246,3 @@
     <para style="terp_default_9">[[ user.signature or '' ]]</para>
   </story>
 </document>
-

@@ -78,11 +78,17 @@
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="3,-1" stop="3,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="4,-1" stop="4,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="6,-1" stop="6,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="7,-1" stop="7,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table1">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="Table2">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
     </blockTableStyle>
     <blockTableStyle id="Table_All_Total_Detail">
       <blockAlignment value="LEFT"/>
@@ -100,12 +106,11 @@
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
-    <paraStyle name="P1" rightIndent="0.0" leftIndent="20.0" fontName="Helvetica-Oblique" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -248,13 +253,13 @@
           <para style="terp_tblheader_Details">Requested Date</para>
         </td>
         <td>
-          <para style="P2">Reference</para>
+          <para style="P1">Reference</para>
         </td>
         <td>
-          <para style="P2">Description</para>
+          <para style="P1">Description</para>
         </td>
         <td>
-          <para style="P2">Supplier Code</para>
+          <para style="P1">Supplier Code</para>
         </td>
         <td>
           <para style="terp_tblheader_Details_Centre">Qty</para>
@@ -272,19 +277,19 @@
       <blockTable colWidths="20.0,61.0,89.0,109.0,79.0,61.0,49.0,66.0" style="Table_Order_Pur_line_Content">
         <tr>
           <td>
-            <para style="P4">[[ line.line_number ]] </para>
+            <para style="P3">[[ line.line_number ]] </para>
           </td>
           <td>
-            <para style="P4">[[ formatLang(line.date_planned, date=True) ]]</para>
+            <para style="P3">[[ formatLang(line.date_planned, date=True) ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.internal_code ]]</para>
+            <para style="P2">[[ line.internal_code ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.internal_name ]]</para>
+            <para style="P2">[[ line.internal_name ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.supplier_code ]]</para>
+            <para style="P2">[[ line.supplier_code ]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">[[ formatLang(line.product_qty ) ]] [[ line.product_uom.name ]] </para>
@@ -308,10 +313,23 @@
             </para>
           </td>
           <td>
-            <para style="P3">[[ line.nomenclature_description ]]</para>
+            <blockTable colWidths="452.0" style="Table1">
+              <tr>
+                <td>
+                  <para style="P5">[[ line.nomenclature_description ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="P4">
+              <font color="white"> </font>
+            </para>
           </td>
+        </tr>
+        <tr>
           <td>
-            <para style="P3">[[ line.name ]]</para>
+            <para style="terp_default_8_Italic">
+              <font color="white"> </font>
+            </para>
           </td>
           <td>
             <para style="terp_default_8_Italic">
@@ -319,17 +337,14 @@
             </para>
           </td>
           <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
+            <blockTable colWidths="452.0" style="Table2">
+              <tr>
+                <td>
+                  <para style="P5">[[ line.comment ]]</para>
+                </td>
+              </tr>
+            </blockTable>
+            <para style="P4">
               <font color="white"> </font>
             </para>
           </td>
@@ -392,4 +407,3 @@
     </para>
   </story>
 </document>
-
