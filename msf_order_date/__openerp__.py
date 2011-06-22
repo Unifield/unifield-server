@@ -27,6 +27,7 @@
                 "sale",
                 "purchase",
                 "account",
+                "stock_override",
                 ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
