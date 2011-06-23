@@ -43,8 +43,7 @@
     Print product labels with barcode.
     """,
     "depends" : ["product","stock_override", "sale", "purchase", "order_nomenclature"],
-    "init_xml" : [],
-    "demo_xml": [
+    "init_xml": [
         "asset_type_data.xml",
     ],
     'test': [

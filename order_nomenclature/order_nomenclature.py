@@ -52,21 +52,23 @@ class purchase_order_line(osv.osv):
             partner_id, date_order, fiscal_position, date_planned,
             name, price_unit, notes)
         
+        # comment is cleared
+        result['value'].update({'comment':False})
+        
         # change nomenclature_description to correspond to the product
         # for now simply clear nomenclature if a product has been selected
         if product:
             result['value'].update({'nomenclature_description':False})
             # product has been selected, nomenclatures are readonly and empty
             self.pool.get('product.product')._resetNomenclatureFields(result['value'])
-            # the 'name' is no more the get_name from product, but instead
-            # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, product)
+            # name is the name of the product
             result['value'].update({'name':productObj.name})
             result['value'].update({'default_code':productObj.default_code})
-            
+            result['value'].update({'default_name':productObj.name})
         else:
-            result['value'].update({'name':False})
             result['value'].update({'default_code':False})
+            result['value'].update({'default_name':False})
         
         return result
     
@@ -83,6 +85,9 @@ class purchase_order_line(osv.osv):
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
+        # drop modification to comment attribute
+        if 'comment' in result['value']:
+            del result['value']['comment']
             
         return result
     
@@ -98,6 +103,9 @@ class purchase_order_line(osv.osv):
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
+        # drop modification to comment attribute
+        if 'comment' in result['value']:
+            del result['value']['comment']
         
         return result
     
@@ -115,6 +123,7 @@ class purchase_order_line(osv.osv):
             productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
+            vals.update({'default_name':productObj.name})
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
@@ -122,6 +131,10 @@ class purchase_order_line(osv.osv):
             sale._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
             vals.update({'default_code':False})
+            vals.update({'default_name':False})
+            
+            if 'comment' in vals:
+                vals.update({'name':vals['comment']})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
     
@@ -163,8 +176,10 @@ class purchase_order_line(osv.osv):
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
+        'comment': fields.char('Comment', size=1024),
+        'default_code': fields.char('Product Reference', size=1024),
+        'default_name': fields.char('Product Name', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
-        'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
@@ -225,20 +240,23 @@ class sale_order_line(osv.osv):
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
         
+        # comment is cleared
+        result['value'].update({'comment':False})
+        
         # change nomenclature_description to correspond to the product
         # for now simply clear nomenclature if a product has been selected
         if product:
             result['value'].update({'nomenclature_description':False})
             # product has been selected, nomenclatures are readonly and empty
             self.pool.get('product.product')._resetNomenclatureFields(result['value'])
-            # the 'name' is no more the get_name from product, but instead
-            # the name of product
             productObj = self.pool.get('product.product').browse(cr, uid, product)
+            # name is the name of the product
             result['value'].update({'name':productObj.name})
             result['value'].update({'default_code':productObj.default_code})
+            result['value'].update({'default_name':productObj.name})
         else:
-            result['value'].update({'name':False})
             result['value'].update({'default_code':False})
+            result['value'].update({'default_name':False})
         
         return result
     
@@ -254,6 +272,9 @@ class sale_order_line(osv.osv):
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
+        # drop modification to comment attribute
+        if 'comment' in result['value']:
+            del result['value']['comment']
             
         return result
     
@@ -269,6 +290,9 @@ class sale_order_line(osv.osv):
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
+        # drop modification to comment attribute
+        if 'comment' in result['value']:
+            del result['value']['comment']
             
         return result
     
@@ -298,12 +322,17 @@ class sale_order_line(osv.osv):
             productObj = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
             vals.update({'name':productObj.name})
             vals.update({'default_code':productObj.default_code})
+            vals.update({'default_name':productObj.name})
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
             self._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
             vals.update({'default_code':False})
+            vals.update({'default_name':False})
+                        
+            if 'comment' in vals:
+                vals.update({'name':vals['comment']})
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
         
@@ -418,8 +447,10 @@ class sale_order_line(osv.osv):
     # PO/SO - IDENTICAL
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
+        'comment': fields.char('Comment', size=1024),
+        'default_code': fields.char('Product Reference', size=1024),
+        'default_name': fields.char('Product Name', size=1024),
         'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'default_code': fields.char('Product Reference', size=256),
         
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
