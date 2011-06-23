@@ -47,8 +47,8 @@ class stock_batch_recall(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
             
             if track.expired_date:
-                domain.append(('expired_date', '>=', track.expired_date+' 00:00:00'))
-                domain.append(('expired_date', '<=', track.expired_date+' 23:59:00'))
+                domain.append(('expired_date', '>=', track.expired_date))
+                domain.append(('expired_date', '<=', track.expired_date))
             if track.product_id:
                 domain.append(('product_id', '=', track.product_id.id))
             if track.prodlot_id:
@@ -62,13 +62,7 @@ class stock_batch_recall(osv.osv_memory):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         
-        context = {'group_by_no_leaf': 1,
-#                   'search_default_location_type_internal': 1,
-                   'search_default_internal': 1,
-                   'search_default_group_location': 1,
-                   'search_default_group_lot': 1,
-                   'search_default_group_expired': 1,
-                   'search_default_group_product': 1}
+        context = {'group_by': []}
         
         domain =self.get_ids(cr, uid, ids)
         
@@ -94,7 +88,7 @@ class report_batch_recall(osv.osv):
         'product_categ_id':fields.many2one('product.category', 'Product Category', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
-        'expired_date': fields.datetime('Expired Date', readonly=True),
+        'expired_date': fields.date('Expired Date', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True),
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'value' : fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
@@ -124,7 +118,7 @@ CREATE OR REPLACE view report_batch_recall AS (
                 LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_id=l.id)
-    WHERE l.usage not in ('supplier', 'procurement', 'inventory')
+    WHERE l.usage in ('internal', 'customer')
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id
@@ -145,7 +139,7 @@ CREATE OR REPLACE view report_batch_recall AS (
                 LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
-    WHERE l.usage not in ('supplier', 'procurement', 'inventory')
+    WHERE l.usage in ('internal', 'customer')
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id
