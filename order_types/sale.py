@@ -167,19 +167,6 @@ class sale_order(osv.osv):
             
         return super(sale_order, self).action_wait(cr, uid, ids, args)
 
-    def action_ship_create(self, cr, uid, ids, *args, **kwargs):
-        model_obj = self.pool.get('ir.model.data')
-        loss_ids = model_obj.search(cr, uid, [('module', '=', 'stock_inventory_type'),
-                                              ('model', '=', 'stock.adjustment.type'),
-                                              ('name', '=', 'adjustment_type_loss')])
-        kwargs['loss_id'] = model_obj.read(cr, uid, loss_ids, ['res_id'])[0]['res_id']
-        return super(sale_order, self).action_ship_create(cr, uid, ids, *args, **kwargs)
-
-    def _hook_ship_create_stock_move(self, cr, uid, ids, move_data, order_line, *args, **kwargs):
-        if order_line.order_id.order_type == 'donation_exp' and kwargs.get('loss_id'):
-            move_data['type_id'] = kwargs['loss_id']
-        return super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, move_data, order_line, *args, **kwargs)
-    
     def action_purchase_order_create(self, cr, uid, ids, context={}):
         '''
         Create a purchase order as counterpart for the loan.
