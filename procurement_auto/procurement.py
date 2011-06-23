@@ -131,6 +131,17 @@ class stock_warehouse_automatic_supply(osv.osv):
             v = {'location_id': w.lot_stock_id.id}
             return {'value': v}
         return {}
+    
+    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+        """ Finds uom for changed product.
+        @param product_id: Changed id of product.
+        @return: Dictionary of values.
+        """
+        if product_id:
+            w = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            v = {'product_uom_id': w.uom_id.id}
+            return {'value': v}
+        return {}
    
     def unlink(self, cr, uid, ids, context):
         if isinstance(ids, (int, long)):

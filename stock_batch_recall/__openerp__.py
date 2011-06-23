@@ -22,7 +22,7 @@
 {
     "name": "Batch Recall",
     "version": "1.0",
-    "depends": ["base", "stock_move_tracking"],
+    "depends": ["base", "stock_move_tracking", "product_expiry"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Warehouse",
