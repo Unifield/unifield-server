@@ -107,7 +107,7 @@ CREATE OR REPLACE view report_batch_recall AS (
         m.address_id as partner_id, m.location_id as location_id,
         m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
         m.company_id,
-        m.expired_date,
+        m.expired_date::date,
         m.state as state, m.prodlot_id as prodlot_id,
         coalesce(sum(-m.product_qty * u.factor)::decimal, 0.0) as product_qty,
         coalesce(sum(-pt.standard_price * m.product_qty * u.factor)::decimal, 0.0) as value
@@ -128,7 +128,7 @@ CREATE OR REPLACE view report_batch_recall AS (
         m.address_id as partner_id, m.location_dest_id as location_id,
         m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
         m.company_id,
-        m.expired_date,
+        m.expired_date::date,
         m.state as state, m.prodlot_id as prodlot_id,
         coalesce(sum(m.product_qty*u.factor)::decimal, 0.0) as product_qty,
         coalesce(sum(pt.standard_price * m.product_qty * u.factor)::decimal, 0.0) as value
