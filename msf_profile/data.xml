@@ -30,28 +30,16 @@
         <field name="name">Packing</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
-        <field name="chained_location_type">customer</field>
-        <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">out</field>
-        <field name="chained_journal_id" ref="stock.journal_delivery"/>
     </record>
     <record id="stock_location_dispatch" model="stock.location">
         <field name="name">Dispatch</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
-        <field name="chained_location_type">customer</field>
-        <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">out</field>
-        <field name="chained_journal_id" ref="stock.journal_delivery"/>
     </record>
     <record id="stock_location_distribution" model="stock.location">
         <field name="name">Distribution</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
-        <field name="chained_location_type">customer</field>
-        <field name="chained_auto_packing">transparent</field>
-        <field name="chained_picking_type">out</field>
-        <field name="chained_journal_id" ref="stock.journal_delivery"/>
     </record>
     <record id="stock_location_eprep" model="stock.location">
          <field name="name">Eprep</field>
