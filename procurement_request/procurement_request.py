@@ -62,7 +62,7 @@ class procurement_request(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
         'notes': fields.text(string='Notes'),
-        'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
+        'order_is': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class

@@ -62,7 +62,9 @@ class stock_batch_recall(osv.osv_memory):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
         
-        context = {'group_by': []}
+        context = {'group_by': [],
+                   'full':'1',
+                   'group_by_no_leaf': 1}
         
         domain =self.get_ids(cr, uid, ids)
         
@@ -70,6 +72,10 @@ class stock_batch_recall(osv.osv_memory):
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
         
         result = act_obj.read(cr, uid, [id], context=context)[0]
+        
+        for d in domain:
+            context.update({'search_default_%s' %d[0]: d[2]})
+
         result['domain'] = domain
         result['context'] = context
         
