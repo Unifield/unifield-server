@@ -22,3 +22,4 @@
 import create_picking
 import split_memory_move
 import stock_partial_move
+import validate_picking

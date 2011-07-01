@@ -74,8 +74,18 @@ class stock_picking(osv.osv):
             'nodestroy': True,
             'target': 'new',
             'domain': '[]',
-            'context': dict(context, active_ids=ids, create_wizard_ids=[create_id])
+            'context': dict(context,
+                            active_ids=ids,
+                            wizard_ids=[create_id],
+                            back_model='create.picking',
+                            wizard_name=_("Create Picking Ticket"))
         }
+        
+    def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
+        '''
+        create the picking ticket from selected stock moves
+        '''
+        
         
     def validate_picking(self, cr, uid, ids, context=None):
         '''
@@ -99,8 +109,27 @@ class stock_picking(osv.osv):
             'nodestroy': True,
             'target': 'new',
             'domain': '[]',
-            'context': dict(context, active_ids=ids, validate_wizard_ids=[validate_id])
+            'context': dict(context,
+                            active_ids=ids,
+                            wizard_ids=[validate_id],
+                            back_model='validate.picking',
+                            wizard_name=_("Validate Picking Ticket"))
         }
+        
+    def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
+        '''
+        validate the picking ticket from selected stock moves
+        '''
+        for pick in..
+        
+            ...
+        
+            self.action_move(cr, uid, [pick.id])
+            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+        
+        
+        
+        
     
 stock_picking()
 

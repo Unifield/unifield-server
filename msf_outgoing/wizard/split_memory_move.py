@@ -41,13 +41,17 @@ class split_memory_move(osv.osv_memory):
         '''
         return to picking creation wizard
         '''
+        assert context, 'No context, action call error'
+        assert 'back_model' in context, 'No back model defined'
+        assert 'wizard_name' in context, 'No wizard name defined'
+        
         return {
-            'name':_("Create Picking Ticket"),
+            'name': context['wizard_name'],
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'create.picking',
-            'res_id': context['create_wizard_ids'][0],
+            'res_model': context['back_model'],
+            'res_id': context['wizard_ids'][0],
             'type': 'ir.actions.act_window',
             'nodestroy': True,
             'target': 'new',
@@ -59,6 +63,9 @@ class split_memory_move(osv.osv_memory):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
         assert ids == context['split_wizard_ids'], 'No split wizard id in context, problem on action creation'
+        assert 'back_model' in context, 'No back model'
+        assert 'wizard_name' in context, 'No wizard name defined'
+        
         # memory moves selected
         memory_move_ids = context['memory_move_ids']
         memory_move_obj = self.pool.get('stock.move.memory.out')
@@ -66,7 +73,7 @@ class split_memory_move(osv.osv_memory):
         leave_qty = self.browse(cr, uid, ids[0], context=context).quantity
         for memory_move in memory_move_obj.browse(cr, uid, memory_move_ids, context=context):
             # integrity check on create picking wizard id
-            assert memory_move.wizard_id.id == context['create_wizard_ids'][0]
+            assert memory_move.wizard_id.id == context['wizard_ids'][0]
             
             # quantity from memory move
             available_qty = memory_move.quantity
@@ -106,12 +113,12 @@ class split_memory_move(osv.osv_memory):
                         
         # go back to previous wizard (create picking)
         return {
-            'name':_("Create Picking Ticket"),
+            'name': context['wizard_name'],
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'create.picking',
-            'res_id': context['create_wizard_ids'][0],
+            'res_model': context['back_model'],
+            'res_id': context['wizard_ids'][0],
             'type': 'ir.actions.act_window',
             'nodestroy': True,
             'target': 'new',
@@ -120,4 +127,3 @@ class split_memory_move(osv.osv_memory):
         }
     
 split_memory_move()
-

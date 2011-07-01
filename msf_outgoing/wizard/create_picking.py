@@ -148,6 +148,9 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         assert len(picking_ids) == 1, 'Number of picking ids is not valid (%i)' % len(picking_ids)
         picking_id = picking_ids[0]
+        # qty
+        if not all([move.quantity > 0 for move in partial.product_moves_out]):
+            raise osv.except_osv(_('Error!'),  _('Selected quantity must be positive or equal to zero.'))
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
@@ -177,6 +180,7 @@ class create_picking(osv.osv_memory):
         new_pick_id = pick_obj.copy(cr, uid, picking_id, {'move_lines': []}, context=context)
         pick_obj.write(cr, uid, [new_pick_id], {'origin': pick.origin, 'backorder_id': picking_id}, context=context)
         # create stock moves corresponding to partial datas
+        # browse returns a list of browse object in the same order as move_ids
         # for now, each new line from the wizard corresponds to a new stock.move
         # it could be interesting to regroup according to production lot/asset id
         move_ids = partial_datas.keys()
