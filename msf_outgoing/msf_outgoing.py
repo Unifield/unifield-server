@@ -76,6 +76,31 @@ class stock_picking(osv.osv):
             'domain': '[]',
             'context': dict(context, active_ids=ids, create_wizard_ids=[create_id])
         }
+        
+    def validate_picking(self, cr, uid, ids, context=None):
+        '''
+        validate the picking ticket
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        # create the memory object - passing the picking id to it through context
+        validate_id = self.pool.get("validate.picking").create(
+            cr, uid, {}, context=dict(context, active_ids=ids))
+        # call action to wizard view
+        return {
+            'name':_("Validate Picking Ticket"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'validate.picking',
+            'res_id': validate_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context, active_ids=ids, validate_wizard_ids=[validate_id])
+        }
     
 stock_picking()
 

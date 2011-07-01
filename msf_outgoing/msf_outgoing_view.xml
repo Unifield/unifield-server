@@ -43,6 +43,7 @@
         <!-- Remove 'New Pack' -->
         <!-- Remove 'tracking_id' -->
         <!-- Remove 'Split' -->
+        <!-- Remove 'Process' button -->
         <record id="view_picking_ticket_form" model="ir.ui.view">
             <field name="name">picking.ticket.form</field>
             <field name="model">stock.picking</field>
@@ -130,7 +131,7 @@
                                 <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
                                 <button name="create_picking" states="draft" string="Create Picking..." type="object" groups="base.group_extended" icon="gtk-add" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                                <button name="validate" states="assigned" string="Validate Picking..." type="object" icon="gtk-go-forward"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
