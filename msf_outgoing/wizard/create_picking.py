@@ -148,14 +148,15 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         assert len(picking_ids) == 1, 'Number of picking ids is not valid (%i)' % len(picking_ids)
         picking_id = picking_ids[0]
+        # partial data from wizard
+        partial = self.browse(cr, uid, ids[0], context=context)
         # qty
         if not all([move.quantity > 0 for move in partial.product_moves_out]):
             raise osv.except_osv(_('Error!'),  _('Selected quantity must be positive or equal to zero.'))
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        # partial data from wizard
-        partial = self.browse(cr, uid, ids[0], context=context)
+
         # date of the picking ticket creation, not used for now
         partial_datas = {}
 #        partial_datas = {
@@ -210,6 +211,8 @@ class create_picking(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
         
+        # TODO which behavior
+        return {'type': 'ir.actions.act_window_close'}
         # display newly created picking ticket
         return {
             'name':_("Picking Ticket"),
@@ -219,7 +222,7 @@ class create_picking(osv.osv_memory):
             'res_model': 'stock.picking',
             'res_id': new_pick_id,
             'type': 'ir.actions.act_window',
-            'target': 'current',
+            'target': 'crush',
         }
 
 create_picking()

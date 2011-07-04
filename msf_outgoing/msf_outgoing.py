@@ -26,6 +26,20 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
 
+class stock_warehouse(osv.osv):
+    '''
+    add new packing, dispatch and distribution locations for input
+    '''
+    _inherit = "stock.warehouse"
+    _name = "stock.warehouse"
+    _columns = {
+        'lot_packing_id': fields.many2one('stock.location', 'Location Packing', required=True, domain=[('usage','<>','view')]),
+        'lot_dispatch_id': fields.many2one('stock.location', 'Location Dispatch', required=True, domain=[('usage','<>','view')]),
+        'lot_distribution_id': fields.many2one('stock.location', 'Location Distribution', required=True, domain=[('usage','<>','view')]),
+    }
+
+stock_warehouse()
+
 class stock_picking(osv.osv):
     '''
     override stock picking to add new attributes
@@ -37,6 +51,7 @@ class stock_picking(osv.osv):
     _name = 'stock.picking'
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], string='Flow Type'),
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
+                'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 }
     
     #@@@override stock
@@ -84,7 +99,11 @@ class stock_picking(osv.osv):
     def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
         create the picking ticket from selected stock moves
+        
+        move here the logic of create picking
+        available for picking loop
         '''
+        pass
         
         
     def validate_picking(self, cr, uid, ids, context=None):
@@ -119,18 +138,19 @@ class stock_picking(osv.osv):
     def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
         validate the picking ticket from selected stock moves
+        
+        move here the logic of validate picking
+        available for picking loop
         '''
-        for pick in..
+        pass
+#        for pick in..
+#        
+#            ...
+#        
+#            self.action_move(cr, uid, [pick.id])
+#            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+#        
         
-            ...
-        
-            self.action_move(cr, uid, [pick.id])
-            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
-        
-        
-        
-        
-    
 stock_picking()
 
 
@@ -185,7 +205,7 @@ class sale_order(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         for order in self.browse(cr, uid, ids, context={}):
             proc_ids = []
-            output_id = order.shop_id.warehouse_id.lot_output_id.id
+            output_id = order.shop_id.warehouse_id.lot_packing_id.id
             picking_id = False
             for line in order.order_line:
                 proc_id = False
