@@ -23,11 +23,11 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
-
-class stock_partial_move_memory_out(osv.osv_memory):
+class stock_partial_move_memory_picking(osv.osv_memory):
     '''
     add the split method
     '''
+    _name = "stock.move.memory.picking"
     _inherit = "stock.move.memory.out"
     
     def split(self, cr, uid, ids, context=None):
@@ -54,7 +54,19 @@ class stock_partial_move_memory_out(osv.osv_memory):
             'domain': '[]',
             'context': dict(context, memory_move_ids=ids, split_wizard_ids=[split_id])
         }
-    
-    
-    
-stock_partial_move_memory_out()
+
+stock_partial_move_memory_picking()
+
+
+class stock_partial_move_memory_ppl(osv.osv_memory):
+    '''
+    memory move for ppl step
+    '''
+    _name = "stock.move.memory.ppl"
+    _inherit = "stock.move.memory.picking"
+    _columns = {'qty_per_pack': fields.integer(string='Qty p.p'),
+                'from_pack': fields.integer(string='From p.'),
+                'to_pack': fields.integer(string='To p.'),
+                }
+
+stock_partial_move_memory_ppl()

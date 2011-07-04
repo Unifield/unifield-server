@@ -2,29 +2,40 @@
 <openerp>
     <data>
 
-        <record id="stock_move_memory_tree_out" model="ir.ui.view">
-            <field name="name">stock.move.memory.tree</field>
-            <field name="model">stock.move.memory.out</field>
+        <record id="stock_move_memory_tree_picking" model="ir.ui.view">
+            <field name="name">stock.move.memory.picking.tree</field>
+            <field name="model">stock.move.memory.picking</field>
             <field name="type">tree</field>
-            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
-			<field name="arch" type="xml">
-				<data>
-				
-					<field name="product_id" position="replace">
-						<field name="product_id" readonly="True" />
-					</field>
-					
-					<field name="product_uom" position="replace">
-						<field name="product_uom" readonly="True" />
-					</field>
-				
-					<field name="prodlot_id" position="after">
-						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
-					</field>
-				
-				</data>
-			</field>
-		</record>
+            <field name="arch" type="xml">
+                <tree editable="bottom" string="Product Moves">
+                    <field name="product_id" readonly="True" />
+                    <field name="asset_id" />
+                    <field name="quantity" />
+                    <field name="product_uom" readonly="True" string="UOM" />
+                    <field name="prodlot_id" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+                </tree>
+            </field>
+        </record>
+		
+        <record id="stock_move_memory_tree_ppl" model="ir.ui.view">
+            <field name="name">stock.move.memory.ppl.tree</field>
+            <field name="model">stock.move.memory.ppl</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" string="Product Moves">
+                    <field name="product_id" readonly="True" />
+                    <field name="asset_id" />
+                    <field name="quantity" />
+                    <field name="product_uom" readonly="True" string="UOM" />
+                    <field name="prodlot_id" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="qty_per_pack" />
+					<field name="from_pack" />
+					<field name="to_pack" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+                </tree>
+            </field>
+        </record>
         
     </data>
 </openerp>

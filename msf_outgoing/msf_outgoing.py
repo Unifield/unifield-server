@@ -75,7 +75,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         # create the memory object - passing the picking id to it through context
-        create_id = self.pool.get("create.picking").create(
+        wizard_id = self.pool.get("create.picking").create(
             cr, uid, {}, context=dict(context, active_ids=ids))
         # call action to wizard view
         return {
@@ -84,14 +84,15 @@ class stock_picking(osv.osv):
             'view_id': False,
             'view_type': 'form',
             'res_model': 'create.picking',
-            'res_id': create_id,
+            'res_id': wizard_id,
             'type': 'ir.actions.act_window',
             'nodestroy': True,
             'target': 'new',
             'domain': '[]',
             'context': dict(context,
                             active_ids=ids,
-                            wizard_ids=[create_id],
+                            wizard_ids=[wizard_id],
+                            step='create',
                             back_model='create.picking',
                             wizard_name=_("Create Picking Ticket"))
         }
@@ -114,7 +115,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         # create the memory object - passing the picking id to it through context
-        validate_id = self.pool.get("validate.picking").create(
+        wizard_id = self.pool.get("create.picking").create(
             cr, uid, {}, context=dict(context, active_ids=ids))
         # call action to wizard view
         return {
@@ -122,16 +123,17 @@ class stock_picking(osv.osv):
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'validate.picking',
-            'res_id': validate_id,
+            'res_model': 'create.picking',
+            'res_id': wizard_id,
             'type': 'ir.actions.act_window',
             'nodestroy': True,
             'target': 'new',
             'domain': '[]',
             'context': dict(context,
                             active_ids=ids,
-                            wizard_ids=[validate_id],
-                            back_model='validate.picking',
+                            wizard_ids=[wizard_id],
+                            step='validate',
+                            back_model='create.picking',
                             wizard_name=_("Validate Picking Ticket"))
         }
         
@@ -150,6 +152,38 @@ class stock_picking(osv.osv):
 #            self.action_move(cr, uid, [pick.id])
 #            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
 #        
+    def ppl(self, cr, uid, ids, context=None):
+        '''
+        pack the ppl
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        # create the memory object - passing the picking id to it through context
+        wizard_id = self.pool.get("create.picking").create(
+            cr, uid, {}, context=dict(context, active_ids=ids))
+        # call action to wizard view
+        return {
+            'name':_("PPL information"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'create.picking',
+            'res_id': wizard_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context,
+                            active_ids=ids,
+                            wizard_ids=[wizard_id],
+                            step='moves',
+                            back_model='create.picking',
+                            wizard_name=_("PPL information"))
+        }
+        
+    def do_ppl1(self):
+        pass
         
 stock_picking()
 
@@ -178,6 +212,9 @@ class stock_move(osv.osv):
         return result
     
     _columns = {'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
+                'qty_per_pack': fields.integer(string='Qty p.p'),
+                'from_pack': fields.integer(string='From p.'),
+                'to_pack': fields.integer(string='To p.'),
                 }
 
 stock_move()
