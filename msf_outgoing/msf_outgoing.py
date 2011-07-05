@@ -74,16 +74,28 @@ class stock_picking(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+        
+        # data
+        name = _("Create Picking Ticket")
+        model = 'create.picking'
+        step = 'create'
+        
         # create the memory object - passing the picking id to it through context
         wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context, active_ids=ids))
+            cr, uid, {}, context=dict(context,
+                                      active_ids=ids,
+                                      step=step,
+                                      back_model=model,
+                                      back_wizard_ids=context.get('wizard_ids', False),
+                                      wizard_name=name))
+        
         # call action to wizard view
         return {
-            'name':_("Create Picking Ticket"),
+            'name':name,
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'create.picking',
+            'res_model': model,
             'res_id': wizard_id,
             'type': 'ir.actions.act_window',
             'nodestroy': True,
@@ -92,9 +104,10 @@ class stock_picking(osv.osv):
             'context': dict(context,
                             active_ids=ids,
                             wizard_ids=[wizard_id],
-                            step='create',
-                            back_model='create.picking',
-                            wizard_name=_("Create Picking Ticket"))
+                            step=step,
+                            back_model=model,
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            wizard_name=name)
         }
         
     def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
@@ -114,16 +127,28 @@ class stock_picking(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+            
+        # data
+        name = _("Validate Picking Ticket")
+        model = 'create.picking'
+        step = 'validate'
+            
         # create the memory object - passing the picking id to it through context
         wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context, active_ids=ids))
+            cr, uid, {}, context=dict(context,
+                                      active_ids=ids,
+                                      step=step,
+                                      back_model=model,
+                                      back_wizard_ids=context.get('wizard_ids', False),
+                                      wizard_name=name))
+        
         # call action to wizard view
         return {
-            'name':_("Validate Picking Ticket"),
+            'name':name,
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'create.picking',
+            'res_model': model,
             'res_id': wizard_id,
             'type': 'ir.actions.act_window',
             'nodestroy': True,
@@ -132,9 +157,10 @@ class stock_picking(osv.osv):
             'context': dict(context,
                             active_ids=ids,
                             wizard_ids=[wizard_id],
-                            step='validate',
-                            back_model='create.picking',
-                            wizard_name=_("Validate Picking Ticket"))
+                            step=step,
+                            back_model=model,
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            wizard_name=name)
         }
         
     def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
@@ -159,16 +185,27 @@ class stock_picking(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+            
+        # data
+        name = _("PPL Information - step1")
+        model = 'create.picking'
+        step = 'ppl1'
+        
         # create the memory object - passing the picking id to it through context
         wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context, active_ids=ids))
+            cr, uid, {}, context=dict(context,
+                                      active_ids=ids,
+                                      step=step,
+                                      back_model=model,
+                                      back_wizard_ids=context.get('wizard_ids', False),
+                                      wizard_name=name))
         # call action to wizard view
         return {
-            'name':_("PPL information"),
+            'name': name,
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
-            'res_model': 'create.picking',
+            'res_model': model,
             'res_id': wizard_id,
             'type': 'ir.actions.act_window',
             'nodestroy': True,
@@ -177,13 +214,55 @@ class stock_picking(osv.osv):
             'context': dict(context,
                             active_ids=ids,
                             wizard_ids=[wizard_id],
-                            step='moves',
-                            back_model='create.picking',
-                            wizard_name=_("PPL information"))
+                            step=step,
+                            back_model=model,
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            wizard_name=name)
         }
         
-    def do_ppl1(self):
-        pass
+    def do_ppl1(self, cr, uid, ids, partial_datas_ppl1, context=None):
+        '''
+        - receives generated data from ppl
+        - call action to ppl2 step with partial_datas_ppl1 in context
+        '''
+        # we need the context for the wizard switch
+        assert context, 'No context defined'
+            
+        # data
+        name = _("PPL Information - step2")
+        model = 'create.picking'
+        step = 'ppl2'
+        
+        # create the memory object - passing the picking id to it through context
+        wizard_id = self.pool.get("create.picking").create(
+            cr, uid, {}, context=dict(context,
+                                      active_ids=ids,
+                                      step=step,
+                                      back_model=model,
+                                      back_wizard_ids=context.get('wizard_ids', False),
+                                      wizard_name=name,
+                                      partial_datas_ppl1=partial_datas_ppl1))
+        # call action to wizard view
+        return {
+            'name': name,
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': model,
+            'res_id': wizard_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context,
+                            active_ids=ids,
+                            wizard_ids=[wizard_id],
+                            step=step,
+                            back_model=model,
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            wizard_name=name,
+                            partial_datas_ppl1=partial_datas_ppl1)
+        }
         
 stock_picking()
 
@@ -357,3 +436,18 @@ class sale_order(osv.osv):
         # @@@end
 
 sale_order()
+
+
+class pack_type(osv.osv):
+    '''
+    pack type corresponding to a type of pack (name, length, width, height)
+    '''
+    _name = 'pack.type'
+    _description = 'Pack Type'
+    _columns = {'name': fields.char(string='Name', size=1024),
+                'length': fields.float(digits=(16,2), string='Length [cm]'),
+                'width': fields.float(digits=(16,2), string='Width [cm]'),
+                'height': fields.float(digits=(16,2), string='Height [cm]'),
+                }
+    
+pack_type()

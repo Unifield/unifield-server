@@ -37,5 +37,22 @@
             </field>
         </record>
         
+		<record id="stock_move_memory_tree_families" model="ir.ui.view">
+            <field name="name">stock.move.memory.families.tree</field>
+            <field name="model">stock.move.memory.families</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" string="Pack Families">
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="pack_type" />
+                    <field name="length" />
+                    <field name="width" />
+                    <field name="height" />
+					<field name="weight" />
+                </tree>
+            </field>
+        </record>
+        
     </data>
 </openerp>

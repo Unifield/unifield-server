@@ -32,6 +32,7 @@ class create_picking(osv.osv_memory):
         'date': fields.datetime('Date', required=True),
         'product_moves_picking' : fields.one2many('stock.move.memory.picking', 'wizard_id', 'Moves'),
         'product_moves_ppl' : fields.one2many('stock.move.memory.ppl', 'wizard_id', 'Moves'),
+        'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Moves'),
      }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -45,6 +46,10 @@ class create_picking(osv.osv_memory):
         """
         if context is None:
             context = {}
+        
+        # we need the step info
+        assert 'step' in context, 'Step not defined in context'
+        step = context['step']
             
         pick_obj = self.pool.get('stock.picking')
         res = super(create_picking, self).default_get(cr, uid, fields, context=context)
@@ -53,65 +58,166 @@ class create_picking(osv.osv_memory):
             return res
 
         result = []
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            for m in pick.move_lines:
-                if m.state in ('done', 'cancel'):
-                    continue
-                result.append(self.__create_partial_picking_memory(m))
+        if step in ('create', 'validate', 'ppl1'):
+            # memory moves wizards
+            # data generated from stock.moves
+            for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+                result.extend(self.__create_partial_picking_memory(pick, context=context))
+        elif step in ('ppl2'):
+            # pack families wizard
+            # data generated from previous wizard data
+            for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+                result.extend(self.__create_pack_families_memory(pick, context=context))
 
-        if 'product_moves_picking' in fields:
+        if 'product_moves_picking' in fields and step in ('create', 'validate'):
             res.update({'product_moves_picking': result})
-        if 'product_moves_ppl' in fields:
+            
+        if 'product_moves_ppl' in fields and step in ('ppl1'):
             res.update({'product_moves_ppl': result})
+            
+        if 'product_moves_families' in fields and step in ('ppl2'):
+            res.update({'product_moves_families': result})
+            
         if 'date' in fields:
             res.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
+            
         return res
     
+    def __create_partial_picking_memory(self, pick, context=None):
+        '''
+        generates the memory objects data depending on wizard step
+        
+        - wizard_id seems to be filled automatically
+        '''
+        assert context, 'No context defined'
+        assert 'step' in context, 'No step defined in context'
+        step = context['step']
+        
+        # list for the current pick object
+        result = []
+        for move in pick.move_lines:
+            if move.state in ('done', 'cancel'):
+                continue
+            move_memory = {
+                'product_id' : move.product_id.id, 
+                'quantity' : move.product_qty,
+                'product_uom' : move.product_uom.id, 
+                'prodlot_id' : move.prodlot_id.id, 
+                'move_id' : move.id,
+                'asset_id': move.asset_id.id,
+            }
+            
+            # the first wizard of ppl, we set default values as everything is packed in one pack
+            if step == 'ppl1':
+                move_memory.update({'qty_per_pack': move.product_qty, 'from_pack': 1, 'to_pack': 1})
+            # append the created dict
+            result.append(move_memory)
+        
+        # return the list of dictionaries
+        return result
+    
+    def __create_pack_families_memory(self, pick, context=None):
+        '''
+        generates the memory objects data depending on wizard step
+        
+        - wizard_id seems to be filled automatically
+        '''
+        assert context, 'No context defined'
+        assert 'step' in context, 'No step defined in context'
+        step = context['step']
+        assert 'partial_datas_ppl1' in context, 'No partial data from step1'
+        partial_datas_ppl1 = context['partial_datas_ppl1']
+        
+        # list for the current pick object
+        result = []
+        from_packs = partial_datas_ppl1[pick.id].keys()
+        # we want the lines sorted in from_pack order
+        from_packs.sort()
+        for from_pack in from_packs:
+            for to_pack in partial_datas_ppl1[pick.id][from_pack]:
+                family_memory = {
+                                 'from_pack': from_pack,
+                                 'to_pack': to_pack,}
+            
+                # append the created dict
+                result.append(family_memory)
+        
+        # return the list of dictionaries
+        return result
+    
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        generates the xml view
+        '''
+        # integrity check
+        assert context, 'No context defined'
+        # call super
         result = super(create_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-       
+        # working objects
         pick_obj = self.pool.get('stock.picking')
         picking_ids = context.get('active_ids', False)
+        assert 'step' in context, 'No step defined in context'
+        step = context['step']
 
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
         
+        # get picking subtype
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
             picking_subtype = pick.subtype
+            
+        # select field to display
+        if picking_subtype == 'picking':
+            field = 'picking'
+        elif picking_subtype == 'ppl':
+            if step == 'ppl1':
+                field = 'ppl'
+            elif step == 'ppl2':
+                field = 'families'
         
         _moves_arch_lst = """<form string="%s">
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
-                        <field name="product_moves_%s" colspan="4" nolabel="1"></field>
-                        """ % (_('Process Document'), _('Products'), picking_subtype)
+                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
+                        """ % (_('Process Document'), _('Products'), field)
         _moves_fields = result['fields']
 
         # add field related to picking type only
         _moves_fields.update({
-                            'product_moves_' + picking_subtype: {'relation': 'stock.move.memory.' + picking_subtype, 'type' : 'one2many', 'string' : 'Product Moves'}, 
+                            'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'}, 
                             })
 
         # specify the button according to the screen
         # picking, two wizard steps
+        # refactoring is needed here !
         if picking_subtype == 'picking':
-            if context['step'] == 'create':
+            if step == 'create':
                 button = ('do_create_picking', 'Create Picking')
-            elif context['step'] == 'validate':
+            elif step == 'validate':
                 button = ('do_validate_picking', 'Validate Picking')
         # ppl, two wizard steps
         elif picking_subtype == 'ppl':
-            if context['step'] == 'moves':
+            if step == 'ppl1':
                 button = ('do_ppl1', 'Next')
-            if context['step'] == 'pack_families':
+            if step == 'ppl2':
                 button = ('do_ppl2', 'Validate PPL')
+        else:
+            button = ('undefined', 'Undefined')
                 
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
-                <group col="2" colspan="2">
+                <group col="3" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
-                    string="_Cancel" />
+                    string="_Cancel" />"""
+                    
+        if step == 'ppl2':
+            _moves_arch_lst += """
+                <button name="back_ppl1" string="previous"
+                    colspan="1" type="object" icon="gtk-go-back" />"""
+                    
+        _moves_arch_lst += """
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
             </group>
@@ -120,18 +226,51 @@ class create_picking(osv.osv_memory):
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
         return result
-
-    def __create_partial_picking_memory(self, move):
-        move_memory = {
-            'product_id' : move.product_id.id, 
-            'quantity' : move.product_qty, 
-            'product_uom' : move.product_uom.id, 
-            'prodlot_id' : move.prodlot_id.id, 
-            'move_id' : move.id,
-            'asset_id': move.asset_id.id,
-        }
     
-        return move_memory
+    def generate_move_as_key(self, cr, uid, ids, context=None):
+        '''
+        
+        '''
+        pass
+    
+    def generate_from_pack_as_key(self, cr, uid, ids, context=None):
+        '''
+        data is located in product_moves_ppl
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
+        
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        # partial data from wizard
+        partial = self.browse(cr, uid, ids[0], context=context)
+        # returned datas
+        partial_datas_ppl1 = {}
+        
+        # picking ids
+        picking_ids = context['active_ids']
+        for picking_id in picking_ids:
+            # for each picking
+            partial_datas_ppl1[picking_id] = {}
+            pick = pick_obj.browse(cr, uid, picking_id, context=context)
+            # ppl moves
+            memory_moves_list = partial.product_moves_ppl
+            # organize data according to from pack / to pack
+            for move in memory_moves_list:
+                partial_datas_ppl1[picking_id].setdefault(move.from_pack, {}).setdefault(move.to_pack, []).append({
+                                                                                                              'product_id': move.product_id.id,
+                                                                                                              'product_qty': move.quantity,
+                                                                                                              'product_uom': move.product_uom.id,
+                                                                                                              'prodlot_id': move.prodlot_id.id,
+                                                                                                              'asset_id': move.asset_id.id,
+                                                                                                              'move_id': move.move_id.id,
+                                                                                                              'qty_per_pack': move.qty_per_pack,
+                                                                                                              'from_pack': move.from_pack,
+                                                                                                              'to_pack': move.to_pack,
+                                                                                                              })
+                
+        return partial_datas_ppl1
         
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
@@ -332,12 +471,73 @@ class create_picking(osv.osv_memory):
         # close wizard
         return {'type': 'ir.actions.act_window_close'}
         
-    def do_ppl(self, cr, uid, ids, context=None):
+    def do_ppl1(self, cr, uid, ids, context=None):
         '''
+        - generate data
+        - call stock.picking>do_ppl1
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
         
+        pick_obj = self.pool.get('stock.picking')
+        # picking ids
+        picking_ids = context['active_ids']
+        # generate data structure
+        partial_datas_ppl1 = self.generate_from_pack_as_key(cr, uid, ids, context=context)
+        # call stock_picking method which returns action call
+        return pick_obj.do_ppl1(cr, uid, picking_ids, partial_datas_ppl1, context=context)
+    
+    def back_ppl1(self, cr, uid, ids, context=None):
         '''
-        stock_move_memory_ppl_tree_out
+        call back ppl1 step wizard
+        '''
+        # we need the context for the wizard switch
+        assert context, 'No context defined'
+        assert 'back_wizard_ids' in context, 'Previous wizard id not defined'
+            
+        # data
+        name = _("PPL Information - step1")
+        model = 'create.picking'
+        step = 'ppl1'
+        
+        # create the memory object - passing the picking id to it through context
+        wizard_id = context['back_wizard_ids'][0]
+        # call action to wizard view
+        return {
+            'name': name,
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': model,
+            'res_id': wizard_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context,
+                            wizard_ids=[wizard_id],
+                            step=step,
+                            back_model=model,
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            wizard_name=name)
+        }
+        
+    def do_ppl2(self, cr, uid, ids, context=None):
+        '''
+        - a lot of work
+        - call stock.picking>do_ppl2
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
+        
+        pick_obj = self.pool.get('stock.picking')
+        # picking ids
+        picking_ids = context['active_ids']
+        # generate data structure
+        partial_datas_ppl1 = self.generate_from_pack_as_key(cr, uid, ids, context=context)
+        # call stock_picking method which returns action call
+        return pick_obj.do_ppl1(cr, uid, picking_ids, partial_datas_ppl1, context=context)
 
 create_picking()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -22,6 +22,34 @@
                 </data>
             </field>
         </record>
+        
+  		<record id="view_pack_type_tree" model="ir.ui.view">
+            <field name="name">pack.type.tree</field>
+            <field name="model">pack.type</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Pack Types" editable="bottom">
+                    <field name="name" />
+                    <field name="length" />
+                    <field name="width" />
+                    <field name="height" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_pack_type_tree" model="ir.actions.act_window">
+            <field name="name">Pack Types</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">pack.type</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_pack_type_tree"/>
+            <field name="help">This is the list of all your pack types.</field>
+        </record>
+        
+        <menuitem action="action_pack_type_tree" id="menu_action_pack_type_tree"
+            groups="base.group_extended"
+            sequence="6"
+            parent="stock.menu_traceability"/>
     	
     	<!-- Changed name to 'Picking Tickets' -->
 		<record id="view_picking_ticket_tree" model="ir.ui.view">

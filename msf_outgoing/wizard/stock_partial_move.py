@@ -70,3 +70,23 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
                 }
 
 stock_partial_move_memory_ppl()
+
+
+class stock_partial_move_memory_families(osv.osv_memory):
+    '''
+    view corresponding to pack families
+    '''
+    _name = "stock.move.memory.families"
+    _rec_name = 'from_pack'
+    _columns = {
+        'from_pack' : fields.integer(string="From p.", required=True),
+        'to_pack' : fields.integer(string="To p.", required=True),
+        'pack_type': fields.many2one('pack.type', 'Pack Type'),
+        'length' : fields.float(digits=(16,2), string='Length [cm]'),
+        'width' : fields.float(digits=(16,2), string='Width [cm]'),
+        'height' : fields.float(digits=(16,2), string='Height [cm]'),
+        'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]', required=True),
+        'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
+    }
+    
+stock_partial_move_memory_families()
