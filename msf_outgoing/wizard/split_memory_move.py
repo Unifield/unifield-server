@@ -41,39 +41,28 @@ class split_memory_move(osv.osv_memory):
         '''
         return to picking creation wizard
         '''
-        assert context, 'No context, action call error'
-        assert 'back_model' in context, 'No back model defined'
-        assert 'wizard_name' in context, 'No wizard name defined'
+        # we need the context for the wizard switch
+        assert context, 'no context defined'
         
-        return {
-            'name': context['wizard_name'],
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': context['back_model'],
-            'res_id': context['wizard_ids'][0],
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': context
-        }
+        pick_obj = self.pool.get('stock.picking')
+        
+        # no data for type 'back'
+        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
 
     def split(self, cr, uid, ids, context=None):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        assert ids == context['split_wizard_ids'], 'No split wizard id in context, problem on action creation'
-        assert 'back_model' in context, 'No back model'
-        assert 'wizard_name' in context, 'No wizard name defined'
+        assert context['class_name'], 'No class name defined'
+        class_name = context['class_name']
+        
+        pick_obj = self.pool.get('stock.picking')
         
         # memory moves selected
         memory_move_ids = context['memory_move_ids']
-        memory_move_obj = self.pool.get('stock.move.memory.out')
+        memory_move_obj = self.pool.get(class_name)
         # quantity input
         leave_qty = self.browse(cr, uid, ids[0], context=context).quantity
         for memory_move in memory_move_obj.browse(cr, uid, memory_move_ids, context=context):
-            # integrity check on create picking wizard id
-            assert memory_move.wizard_id.id == context['wizard_ids'][0]
             
             # quantity from memory move
             available_qty = memory_move.quantity
@@ -94,9 +83,13 @@ class split_memory_move(osv.osv_memory):
             new_qty = available_qty - leave_qty
             
             # update the selected memory move
-            memory_move_obj.write(cr, uid, [memory_move.id], {
-                'quantity': leave_qty,
-            })
+            values = {'quantity': leave_qty}
+            # if the call is from ppl (class_name='stock.move.memory.ppl')
+            # disabled for now - see from user side if needed
+#            if class_name=='stock.move.memory.ppl':
+#                values.update(qty_per_pack=leave_qty)
+            # update the object    
+            memory_move_obj.write(cr, uid, [memory_move.id], values)
             
             # create new memory move
             default_val = {'product_id': memory_move.product_id.id,
@@ -110,20 +103,8 @@ class split_memory_move(osv.osv_memory):
                            'asset_id': memory_move.asset_id.id,
             }
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
-                        
-        # go back to previous wizard (create picking)
-        return {
-            'name': context['wizard_name'],
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': context['back_model'],
-            'res_id': context['wizard_ids'][0],
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': context
-        }
+        
+        # no data for type 'back'
+        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
     
 split_memory_move()

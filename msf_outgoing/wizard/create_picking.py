@@ -108,8 +108,8 @@ class create_picking(osv.osv_memory):
             }
             
             # the first wizard of ppl, we set default values as everything is packed in one pack
-            if step == 'ppl1':
-                move_memory.update({'qty_per_pack': move.product_qty, 'from_pack': 1, 'to_pack': 1})
+#            if step == 'ppl1':
+#                move_memory.update({'qty_per_pack': move.product_qty, 'from_pack': 1, 'to_pack': 1})
             # append the created dict
             result.append(move_memory)
         
@@ -242,7 +242,6 @@ class create_picking(osv.osv_memory):
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
         
         pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         # returned datas
@@ -271,6 +270,40 @@ class create_picking(osv.osv_memory):
                                                                                                               })
                 
         return partial_datas_ppl1
+    
+    def update_from_pack_as_key(self, cr, uid, ids, context=None):
+        '''
+        update the list corresponding to moves for each sequence with ppl2 information
+        '''
+        assert context, 'no context defined'
+        assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
+        
+        pick_obj = self.pool.get('stock.picking')
+        family_obj = self.pool.get('stock.move.memory.families')
+        # partial data from wizard
+        partial = self.browse(cr, uid, ids[0], context=context)
+        # ppl families
+        memory_families_list = partial.product_moves_families
+        for family in memory_families_list:
+            a=1
+        # returned datas
+        partial_datas_ppl1 = context['partial_datas_ppl1']
+        
+        # picking ids
+        picking_ids = context['active_ids']
+        for picking_id in picking_ids:
+            # for each picking
+            for from_pack in partial_datas_ppl1[picking_id]:
+                for to_pack in partial_datas_ppl1[picking_id][from_pack]:
+                    # find corresponding sequence info
+                    family_ids = family_obj.search(cr, uid, [('wizard_id', '=', ids[0]), ('from_pack', '=', from_pack), ('to_pack', '=', to_pack)], context=context)
+                    # only one line should match
+                    assert len(family_ids) == 1, 'No the good number of families : %i'%len(family_ids)
+                    family = family_obj.read(cr, uid, family_ids, ['pack_type', 'length', 'width', 'height', 'weight'], context=context)[0]
+                    # remove id key
+                    family.pop('id')
+                    for move in partial_datas_ppl1[picking_id][from_pack][to_pack]:
+                        move.update(family)
         
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
@@ -485,8 +518,10 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # generate data structure
         partial_datas_ppl1 = self.generate_from_pack_as_key(cr, uid, ids, context=context)
+        # update context
+        context.update(partial_datas_ppl1=partial_datas_ppl1)
         # call stock_picking method which returns action call
-        return pick_obj.do_ppl1(cr, uid, picking_ids, partial_datas_ppl1, context=context)
+        return pick_obj.do_ppl1(cr, uid, picking_ids, context=context)
     
     def back_ppl1(self, cr, uid, ids, context=None):
         '''
@@ -525,7 +560,7 @@ class create_picking(osv.osv_memory):
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
-        - a lot of work
+        - update partial_datas_ppl1
         - call stock.picking>do_ppl2
         '''
         # integrity check
@@ -535,9 +570,9 @@ class create_picking(osv.osv_memory):
         pick_obj = self.pool.get('stock.picking')
         # picking ids
         picking_ids = context['active_ids']
-        # generate data structure
-        partial_datas_ppl1 = self.generate_from_pack_as_key(cr, uid, ids, context=context)
+        # update data structure
+        self.update_from_pack_as_key(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
-        return pick_obj.do_ppl1(cr, uid, picking_ids, partial_datas_ppl1, context=context)
+        return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 
 create_picking()

@@ -67,31 +67,45 @@ class stock_picking(osv.osv):
         return True
     #@@@end
     
-    def create_picking(self, cr, uid, ids, context=None):
+    def open_wizard(self, cr, uid, ids, name=False, model=False, step='default', type='create', context=None):
         '''
-        open the wizard to create (partial) picking tickets
+        WARNING : IDS CORRESPOND TO ***PICKING IDS*** take care when calling the method
+        return the newly created wizard's id
+        name, model, step are mandatory only for type 'create'
         '''
-        # we need the context for the wizard switch
         if context is None:
             context = {}
         
-        # data
-        name = _("Create Picking Ticket")
-        model = 'create.picking'
-        step = 'create'
+        if type == 'create':
+            assert name, 'type "create" and no name defined'
+            assert model, 'type "create" and no model defined'
+            assert step, 'type "create" and no step defined'
+            # create the memory object - passing the picking id to it through context
+            wizard_id = self.pool.get(model).create(
+                cr, uid, {}, context=dict(context,
+                                          active_ids=ids,
+                                          model=model,
+                                          step=step,
+                                          back_model=context.get('model', False),
+                                          back_wizard_ids=context.get('wizard_ids', False),
+                                          back_wizard_name=context.get('wizard_name', False),
+                                          back_step=context.get('step', False),
+                                          wizard_name=name))
         
-        # create the memory object - passing the picking id to it through context
-        wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context,
-                                      active_ids=ids,
-                                      step=step,
-                                      back_model=model,
-                                      back_wizard_ids=context.get('wizard_ids', False),
-                                      wizard_name=name))
-        
+        elif type == 'back':
+            # open the previous wizard
+            assert context['back_wizard_ids'], 'no back_wizard_ids defined'
+            wizard_id = context['back_wizard_ids'][0]
+            assert context['back_wizard_name'], 'no back_wizard_name defined'
+            name = context['back_wizard_name']
+            assert context['back_model'], 'no back_model defined'
+            model = context['back_model']
+            assert context['back_step'], 'no back_step defined'
+            step = context['back_step']
+            
         # call action to wizard view
         return {
-            'name':name,
+            'name': name,
             'view_mode': 'form',
             'view_id': False,
             'view_type': 'form',
@@ -104,11 +118,29 @@ class stock_picking(osv.osv):
             'context': dict(context,
                             active_ids=ids,
                             wizard_ids=[wizard_id],
+                            model=model,
                             step=step,
-                            back_model=model,
+                            back_model=context.get('model', False),
                             back_wizard_ids=context.get('wizard_ids', False),
+                            back_wizard_name=context.get('wizard_name', False),
+                            back_step=context.get('step', False),
                             wizard_name=name)
         }
+    
+    def create_picking(self, cr, uid, ids, context=None):
+        '''
+        open the wizard to create (partial) picking tickets
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        
+        # data
+        name = _("Create Picking Ticket")
+        model = 'create.picking'
+        step = 'create'
+        # open the selected wizard
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
         
     def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -133,35 +165,8 @@ class stock_picking(osv.osv):
         model = 'create.picking'
         step = 'validate'
             
-        # create the memory object - passing the picking id to it through context
-        wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context,
-                                      active_ids=ids,
-                                      step=step,
-                                      back_model=model,
-                                      back_wizard_ids=context.get('wizard_ids', False),
-                                      wizard_name=name))
-        
-        # call action to wizard view
-        return {
-            'name':name,
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': model,
-            'res_id': wizard_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context,
-                            active_ids=ids,
-                            wizard_ids=[wizard_id],
-                            step=step,
-                            back_model=model,
-                            back_wizard_ids=context.get('wizard_ids', False),
-                            wizard_name=name)
-        }
+        # open the selected wizard
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
         
     def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -180,7 +185,7 @@ class stock_picking(osv.osv):
 #        
     def ppl(self, cr, uid, ids, context=None):
         '''
-        pack the ppl
+        pack the ppl - open the ppl step1 wizard
         '''
         # we need the context for the wizard switch
         if context is None:
@@ -191,39 +196,14 @@ class stock_picking(osv.osv):
         model = 'create.picking'
         step = 'ppl1'
         
-        # create the memory object - passing the picking id to it through context
-        wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context,
-                                      active_ids=ids,
-                                      step=step,
-                                      back_model=model,
-                                      back_wizard_ids=context.get('wizard_ids', False),
-                                      wizard_name=name))
-        # call action to wizard view
-        return {
-            'name': name,
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': model,
-            'res_id': wizard_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context,
-                            active_ids=ids,
-                            wizard_ids=[wizard_id],
-                            step=step,
-                            back_model=model,
-                            back_wizard_ids=context.get('wizard_ids', False),
-                            wizard_name=name)
-        }
+        # open the selected wizard
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
         
-    def do_ppl1(self, cr, uid, ids, partial_datas_ppl1, context=None):
+    def do_ppl1(self, cr, uid, ids, context=None):
         '''
-        - receives generated data from ppl
+        - receives generated data from ppl in context
         - call action to ppl2 step with partial_datas_ppl1 in context
+        - ids are the picking ids
         '''
         # we need the context for the wizard switch
         assert context, 'No context defined'
@@ -233,36 +213,39 @@ class stock_picking(osv.osv):
         model = 'create.picking'
         step = 'ppl2'
         
-        # create the memory object - passing the picking id to it through context
-        wizard_id = self.pool.get("create.picking").create(
-            cr, uid, {}, context=dict(context,
-                                      active_ids=ids,
-                                      step=step,
-                                      back_model=model,
-                                      back_wizard_ids=context.get('wizard_ids', False),
-                                      wizard_name=name,
-                                      partial_datas_ppl1=partial_datas_ppl1))
-        # call action to wizard view
-        return {
-            'name': name,
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': model,
-            'res_id': wizard_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context,
-                            active_ids=ids,
-                            wizard_ids=[wizard_id],
-                            step=step,
-                            back_model=model,
-                            back_wizard_ids=context.get('wizard_ids', False),
-                            wizard_name=name,
-                            partial_datas_ppl1=partial_datas_ppl1)
-        }
+        # open the selected wizard
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
+        
+    def do_ppl2(self, cr, uid, ids, context=None):
+        '''
+        finalize the ppl logic
+        '''
+        # integrity check
+        assert context, 'context not defined'
+        assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 no defined in context'
+        
+        move_obj = self.pool.get('stock.move')
+        # data from wizard
+        partial_datas_ppl = context['partial_datas_ppl1']
+        # picking ids from ids must be equal to picking ids from partial datas
+        assert set(ids) == set(partial_datas_ppl.keys()), 'picking ids from ids and partial do not match'
+        
+        # update existing stock moves
+        # for each pick
+        for pick in self.browse(cr, uid, ids, context=context):
+            # loop through data
+            for from_pack in partial_datas_ppl[pick.id]:
+                for to_pack in partial_datas_ppl[pick.id][from_pack]:
+                    for move in partial_datas_ppl[pick.id][from_pack][to_pack]:
+                        # {'asset_id': False, 'weight': False, 'product_id': 77, 'product_uom': 1, 'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 'qty_per_pack': 18.0, 'product_qty': 18.0, 'width': False, 'move_id': 179}
+                        # as for picking ticket validation, the first move is updated, the following created 
+                        move_obj.write(cr, uid, sfve['move_id'])
+            pass
+            
+        # copy to 'packing' stock.picking
+        # draft shipment is automatically created or updated if a shipment already
+        
+        pass
         
 stock_picking()
 
@@ -294,7 +277,17 @@ class stock_move(osv.osv):
                 'qty_per_pack': fields.integer(string='Qty p.p'),
                 'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
+                'pack_type': fields.many2one('pack.type', string='Pack Type'),
+                'length' : fields.float(digits=(16,2), string='Length [cm]'),
+                'width' : fields.float(digits=(16,2), string='Width [cm]'),
+                'height' : fields.float(digits=(16,2), string='Height [cm]'),
+                'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
                 }
+    
+#    _constraints = [
+#        (_check_weight,
+#            'You must assign an asset for this product',
+#            ['asset_id']),]
 
 stock_move()
 
