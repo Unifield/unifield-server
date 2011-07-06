@@ -25,6 +25,7 @@ import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
+import netsvc
 
 class stock_warehouse(osv.osv):
     '''
@@ -225,6 +226,7 @@ class stock_picking(osv.osv):
         assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 no defined in context'
         
         move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
         # data from wizard
         partial_datas_ppl = context['partial_datas_ppl1']
         # picking ids from ids must be equal to picking ids from partial datas
@@ -238,7 +240,7 @@ class stock_picking(osv.osv):
             from_partial = []
             # the list of updated stock.moves
             # if a stock.move is updated, the next time a new move is created
-            udpated = {}
+            updated = {}
             # load moves data
             # browse returns a list of browse object in the same order as from_partial
             browse_moves = move_obj.browse(cr, uid, from_pick, context=context)
@@ -260,7 +262,7 @@ class stock_picking(osv.osv):
                             fields = ['product_qty', 'qty_per_pack', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight']
                             values = dict(zip(fields, [eval('partial["%s"]'%x) for x in fields]))
                             
-                            if move in udpated:
+                            if move in updated:
                                 # if already updated, we create a new stock.move
                                 updated[move]['partial_qty'] += partial['product_qty']
                                 # force state to 'assigned'
@@ -277,10 +279,24 @@ class stock_picking(osv.osv):
             # quantities are right
             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
             # copy to 'packing' stock.picking
-            
             # draft shipment is automatically created or updated if a shipment already
+            new_packing_id = self.copy(cr, uid, pick.id, {'subtype': 'packing'}, context=context)
+            self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
+            # update locations of stock moves and state as the picking stay at 'draft' state
+            new_packing = self.browse(cr, uid, new_packing_id, context=context)
+            for move in new_packing.move_lines:
+                move.write({'state': 'assigned',
+                            'location_id': new_packing.sale_id.shop_id.warehouse_id.lot_dispatch_id.id,
+                            'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_distribution_id.id}, context=context)
             
+            # trigger standard workflow
+            self.action_move(cr, uid, [pick.id])
+            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
         
+        # close wizard
+        return {'type': 'ir.actions.act_window_close'}
+            
+
 stock_picking()
 
 

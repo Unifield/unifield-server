@@ -222,14 +222,13 @@ class validate_picking(osv.osv_memory):
                     move_obj.write(cr, uid, original_move[0], {'product_qty': backorder_qty}, context=context)
         
             # create the new ppl object
-            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'subtype': 'ppl'}, context=context)
+            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'subtype': 'ppl', 'previous_step_id': pick.id}, context=context)
             pick_obj.write(cr, uid, [new_ppl_id], {'origin': pick.origin, 'backorder_id': pick.id}, context=context)
             new_ppl = pick_obj.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves
             for move in pick_obj.browse(cr, uid, new_ppl_id, context=context).move_lines:
                 move.write({'location_id': new_ppl.sale_id.shop_id.warehouse_id.lot_packing_id.id,
-                            'location_dest_id': new_ppl.sale_id.shop_id.warehouse_id.lot_dispatch_id.id,
-                            'previous_step_id': pick.id}, context=context)
+                            'location_dest_id': new_ppl.sale_id.shop_id.warehouse_id.lot_dispatch_id.id}, context=context)
             
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
             # simulate check assign button, as stock move must be available
