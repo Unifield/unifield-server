@@ -471,6 +471,7 @@ class wizard_cash_return(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
         # create the statement line for the invoices
         absl_obj = self.pool.get('account.bank.statement.line')
+        curr_date = wizard.date
         if wizard.display_invoice:
             for inv_move_line_data in inv_move_line_ids:
                 inv_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], context=context)
