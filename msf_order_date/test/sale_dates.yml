@@ -42,6 +42,10 @@
       assert False, "Error when creation date is in a non opened accounting period"
     except Exception, e:
       pass
+-
+  Check Delivery Requested date default value
+-
+  !assert {model: sale.order, id: so1}:
     - delivery_requested_date == False, "Error on default value for Delivery Requested Date"
 -
   Check Estimated transport lead-time default value
@@ -85,7 +89,7 @@
       #assert False, "Error on writing Delivery Requested Date in past" 
     except osv.except_osv, e:
         res = self.requested_date_change(cr, uid, [ref('so1')], '2007-01-01', two_days, time.strftime('%Y-%m-%d'))
-    #    assert res.get('warning', False), "Error on selecting Delivery Requested Date in past" 
+        assert res.get('warning', False), "Error on selecting Delivery Requested Date in past" 
 -
   Overwrite the Delivery Requested Date with a date in future ( < today + 24 months)
 -
@@ -117,7 +121,7 @@
       #assert False, "Error on writing Delivery Requested Date in future ( > today + 24 months)" 
     except osv.except_osv, e:
         res = self.requested_date_change(cr, uid, [ref('so1')], three_years, two_days, time.strftime('%Y-%m-%d'))
-#        assert res.get('warning', False), "Error on selecting Delivery Requested Date in future ( > today + 24 months)"
+        assert res.get('warning', False), "Error on selecting Delivery Requested Date in future ( > today + 24 months)"
 -
   Overwrite the Delivery Confirmed Date with a date in past
 -
