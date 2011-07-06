@@ -49,7 +49,8 @@ class stock_partial_picking(osv.osv_memory):
         @return: A dictionary which of fields with values.
         """
         pick_obj = self.pool.get('stock.picking')
-        
+        uom_obj = self.pool.get('product.uom')
+
         picking_ids = context.get('active_ids', False)
         partial = self.browse(cr, uid, ids[0], context=context)
         partial_datas = {
@@ -61,10 +62,32 @@ class stock_partial_picking(osv.osv_memory):
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
 
             for move in moves_list:
+
+                #Adding a check whether any line has been added with new qty
+                if not move.move_id:
+                    raise osv.except_osv(_('Processing Error'),\
+                    _('You cannot add any new move while validating the picking, rather you can split the lines prior to validation!'))
+
+                calc_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, \
+                                    move.quantity, move.move_id.product_uom.id)
+
+                #Adding a check whether any move line contains exceeding qty to original moveline
+                if calc_qty > move.move_id.product_qty:
+                    raise osv.except_osv(_('Processing Error'),
+                    _('Processing quantity %d %s for %s is larger than the available quantity %d %s !')\
+                    %(move.quantity, move.product_uom.name, move.product_id.name,\
+                      move.move_id.product_qty, move.move_id.product_uom.name))
+
+                #Adding a check whether any move line contains qty less than zero
+                if calc_qty <= 0:
+                    raise osv.except_osv(_('Processing Error'), \
+                            _('Can not process quantity %d for Product %s !') \
+                            %(move.quantity, move.product_id.name))
+
                 partial_datas['move%s' % (move.move_id.id)] = {
-                    'product_id': move.id, 
-                    'product_qty': move.quantity, 
-                    'product_uom': move.product_uom.id, 
+                    'product_id': move.product_id.id, 
+                    'product_qty': calc_qty, 
+                    'product_uom': move.move_id.product_uom.id, 
                     'prodlot_id': move.prodlot_id.id, 
                 }
                 if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
@@ -75,7 +98,6 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context, move=move, partial_datas=partial_datas)
-            
             
         pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return {'type': 'ir.actions.act_window_close'}
