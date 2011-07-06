@@ -137,6 +137,13 @@ class product_attributes(osv.osv):
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
+        'life_time': fields.integer('Product Life Time',
+            help='The number of months before a production lot may become dangerous and should not be consumed.'),
+        'use_time': fields.integer('Product Use Time',
+            help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
+        'removal_time': fields.integer('Product Removal Time',
+            help='The number of months before a production lot should be removed.'),
+        'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot.")
     }
     
     _defaults = {
