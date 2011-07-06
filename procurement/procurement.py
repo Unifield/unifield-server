@@ -505,7 +505,7 @@ class stock_warehouse_orderpoint(osv.osv):
         result = {}
         procurement_obj = self.pool.get('procurement.order')
         for orderpoint in self.browse(cr, uid, ids, context=context):
-            procurement_ids = procurement_obj.search(cr, uid , [('state', '!=', 'done'), ('product_id', '=', orderpoint.product_id.id), ('location_id', '=', orderpoint.location_id.id)])
+            procurement_ids = procurement_obj.search(cr, uid , [('state', '=', 'draft'), ('product_id', '=', orderpoint.product_id.id), ('location_id', '=', orderpoint.location_id.id)])
             result[orderpoint.id] = procurement_ids
         return result
 
