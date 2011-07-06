@@ -71,6 +71,7 @@
                                 <field name="cold_chain" colspan="2" attrs="{'invisible': [('heat_sensitive_item','not in',['*','**','***'])]}"/>
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
+                                <field name="narcotic" colspan="2"/>
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>
                             </group>
@@ -91,8 +92,6 @@
                             <group colspan="2" col="2">
                                 <separator string="Information" colspan="2"/>
                                 <field name="criticism" colspan="2"/>
-                                <field name="narcotic" colspan="1"/>
-                                <field name="psychotropic" colspan="1"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
                             <separator string="Code remarks section" colspan="4"/>
