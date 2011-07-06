@@ -42,7 +42,7 @@ class report_stock_move(osv.osv):
             CREATE OR REPLACE view report_stock_move AS (
                 SELECT
                         min(sm_id) as id,
-                        sm_type_id as type_id,
+                        al.sm_type_id as type_id,
                         date_trunc('day',al.dp) as date,
                         al.curr_year as year,
                         al.curr_month as month,
