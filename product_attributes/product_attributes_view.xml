@@ -91,6 +91,8 @@
                             <group colspan="2" col="2">
                                 <separator string="Information" colspan="2"/>
                                 <field name="criticism" colspan="2"/>
+                                <field name="narcotic" colspan="1"/>
+                                <field name="psychotropic" colspan="1"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
                             <separator string="Code remarks section" colspan="4"/>
@@ -107,7 +109,7 @@
                                 <field name="supply_source_ids" colspan="2" nolabel="1"/>
                             </group>
                             <field name="library" colspan="2"/>
-                            <separator string="Optional products" colspan="4"/>
+                            <separator string="Associated Products" colspan="4"/>
                             <field name="options_ids" colspan="4" nolabel="1"/>
                         </page>
                         <page string="Suppliers">
