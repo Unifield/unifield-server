@@ -105,15 +105,13 @@
     <paraStyle name="P5" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P8" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT"/>
-    <paraStyle name="P9" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P10" fontName="Helvetica" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P14" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P15" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P16" fontName="Helvetica" fontSize="10.0" leading="13" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P12" fontName="Helvetica" fontSize="10.0" leading="13" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P13" fontName="Helvetica" fontSize="10.0" leading="13" spaceBefore="0.0" spaceAfter="6.0"/>
+    <paraStyle name="P14" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="8.0" leading="10" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -175,37 +173,41 @@
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table2">
       <tr>
         <td>
-          <para style="P15">Serial Number</para>
+          <para style="P11">Serial Number</para>
         </td>
         <td>
-          <para style="P15">Brand</para>
+          <para style="P11">Brand</para>
         </td>
         <td>
-          <para style="P15">Model</para>
+          <para style="P11">Model</para>
         </td>
         <td>
-          <para style="P15">Year</para>
+          <para style="P11">Year</para>
         </td>
       </tr>
       <tr>
         <td>
-          <para style="P16">[[ reportAsset.serial_nb ]]</para>
+          <para style="P12">[[ reportAsset.serial_nb ]]</para>
         </td>
         <td>
-          <para style="P16">[[ reportAsset.brand ]]</para>
+          <para style="P12">[[ reportAsset.brand ]]</para>
         </td>
         <td>
-          <para style="P16">[[ reportAsset.model ]]</para>
+          <para style="P12">[[ reportAsset.model ]]</para>
         </td>
         <td>
-          <para style="P16">[[ reportAsset.year ]]</para>
+          <para style="P12">[[ reportAsset.year ]]</para>
         </td>
       </tr>
     </blockTable>
+    <para style="Text body">
+      <font color="white"> </font>
+    </para>
     <blockTable colWidths="539.0" style="Table7">
       <tr>
         <td>
-          <para style="P10"><font face="Helvetica">Description:</font> [[ reportAsset.description ]]</para>
+          <para style="P13"><font face="Helvetica-Bold">Comment:</font> [[ reportAsset.comment ]]</para>
+          <para style="P13"><font face="Helvetica">Description:</font> [[ reportAsset.description ]]</para>
         </td>
       </tr>
     </blockTable>
@@ -213,13 +215,13 @@
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table3">
       <tr>
         <td>
-          <para style="P14">Donor</para>
+          <para style="P10">Donor</para>
         </td>
         <td>
           <para style="terp_default_8">[[ reportAsset.invo_donator_code ]]</para>
         </td>
         <td>
-          <para style="P14">Supplier</para>
+          <para style="P10">Supplier</para>
         </td>
         <td>
           <para style="terp_default_8">[[ reportAsset.invo_supplier ]]</para>
@@ -227,13 +229,13 @@
       </tr>
       <tr>
         <td>
-          <para style="P14">Order n°</para>
+          <para style="P10">Order n°</para>
         </td>
         <td>
           <para style="terp_default_8">[[ reportAsset.project_po ]]</para>
         </td>
         <td>
-          <para style="P14">Value</para>
+          <para style="P10">Value</para>
         </td>
         <td>
           <para style="terp_default_8">[[ str(reportAsset.invo_value) + ' ' + reportAsset.invo_currency ]]</para>
@@ -241,23 +243,23 @@
       </tr>
       <tr>
         <td>
-          <para style="P14">Invoice n°</para>
+          <para style="P10">Invoice n°</para>
         </td>
         <td>
           <para style="terp_default_8">[[ reportAsset.invo_num ]]</para>
         </td>
         <td>
-          <para style="P14">Arrival Date</para>
+          <para style="P10">Arrival Date</para>
         </td>
         <td>
           <para style="terp_default_8">[[ reportAsset.arrival_date ]]</para>
         </td>
       </tr>
     </blockTable>
-    <para style="P11">
+    <para style="P8">
       <font color="white"> </font>
     </para>
-    <para style="P12">Event History</para>
+    <para style="P9">Event History</para>
     <blockTable colWidths="140.0,253.0,144.0" repeatRows="1" style="Table4">
       <tr>
         <td>
@@ -287,12 +289,10 @@
         </tr>
       </blockTable>
     </section>
-    <para style="P13">
-      <font face="Helvetica"/>
+    <para style="P9">
+      <font color="white"> </font>
     </para>
-    <para style="P13">
-      <font face="Helvetica">Final Destination</font>
-    </para>
+    <para style="P9">Final Destination</para>
     <blockTable colWidths="56.0,210.0,34.0,235.0" style="Table8">
       <tr>
         <td>
@@ -314,3 +314,4 @@
     </para>
   </story>
 </document>
+
