@@ -236,6 +236,9 @@ class create_picking(osv.osv_memory):
     def generate_from_pack_as_key(self, cr, uid, ids, context=None):
         '''
         data is located in product_moves_ppl
+        
+        structure :
+        {pick_id: {from_pack: {to_pack: {move_id: [{partial},]}}}}
         '''
         # integrity check
         assert context, 'no context, method call is wrong'
@@ -257,7 +260,7 @@ class create_picking(osv.osv_memory):
             memory_moves_list = partial.product_moves_ppl
             # organize data according to from pack / to pack
             for move in memory_moves_list:
-                partial_datas_ppl1[picking_id].setdefault(move.from_pack, {}).setdefault(move.to_pack, []).append({
+                partial_datas_ppl1[picking_id].setdefault(move.from_pack, {}).setdefault(move.to_pack, {}).setdefault(move.move_id.id, []).append({
                                                                                                               'product_id': move.product_id.id,
                                                                                                               'product_qty': move.quantity,
                                                                                                               'product_uom': move.product_uom.id,
@@ -274,6 +277,9 @@ class create_picking(osv.osv_memory):
     def update_from_pack_as_key(self, cr, uid, ids, context=None):
         '''
         update the list corresponding to moves for each sequence with ppl2 information
+        
+        structure :
+        {pick_id: {from_pack: {to_pack: {move_id: [{partial},]}}}}
         '''
         assert context, 'no context defined'
         assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
@@ -303,7 +309,8 @@ class create_picking(osv.osv_memory):
                     # remove id key
                     family.pop('id')
                     for move in partial_datas_ppl1[picking_id][from_pack][to_pack]:
-                        move.update(family)
+                        for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
+                            partial.update(family)
         
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
@@ -518,45 +525,20 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # generate data structure
         partial_datas_ppl1 = self.generate_from_pack_as_key(cr, uid, ids, context=context)
-        # update context
-        context.update(partial_datas_ppl1=partial_datas_ppl1)
         # call stock_picking method which returns action call
-        return pick_obj.do_ppl1(cr, uid, picking_ids, context=context)
+        return pick_obj.do_ppl1(cr, uid, picking_ids, context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
     
     def back_ppl1(self, cr, uid, ids, context=None):
         '''
         call back ppl1 step wizard
         '''
         # we need the context for the wizard switch
-        assert context, 'No context defined'
-        assert 'back_wizard_ids' in context, 'Previous wizard id not defined'
-            
-        # data
-        name = _("PPL Information - step1")
-        model = 'create.picking'
-        step = 'ppl1'
+        assert context, 'no context defined'
         
-        # create the memory object - passing the picking id to it through context
-        wizard_id = context['back_wizard_ids'][0]
-        # call action to wizard view
-        return {
-            'name': name,
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': model,
-            'res_id': wizard_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context,
-                            wizard_ids=[wizard_id],
-                            step=step,
-                            back_model=model,
-                            back_wizard_ids=context.get('wizard_ids', False),
-                            wizard_name=name)
-        }
+        pick_obj = self.pool.get('stock.picking')
+        
+        # no data for type 'back'
+        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''

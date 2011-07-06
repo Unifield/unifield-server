@@ -140,7 +140,7 @@ class stock_picking(osv.osv):
         model = 'create.picking'
         step = 'create'
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -166,7 +166,7 @@ class stock_picking(osv.osv):
         step = 'validate'
             
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -197,7 +197,7 @@ class stock_picking(osv.osv):
         step = 'ppl1'
         
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_ppl1(self, cr, uid, ids, context=None):
         '''
@@ -214,7 +214,7 @@ class stock_picking(osv.osv):
         step = 'ppl2'
         
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=None)
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
@@ -230,22 +230,56 @@ class stock_picking(osv.osv):
         # picking ids from ids must be equal to picking ids from partial datas
         assert set(ids) == set(partial_datas_ppl.keys()), 'picking ids from ids and partial do not match'
         
-        # update existing stock moves
+        # update existing stock moves - create new one if split occurred
         # for each pick
         for pick in self.browse(cr, uid, ids, context=context):
+            # integrity check on move_ids - moves ids from picking and partial must be the same
+            from_pick = [move.id for move in pick.move_lines]
+            from_partial = []
+            # the list of updated stock.moves
+            # if a stock.move is updated, the next time a new move is created
+            udpated = {}
+            # load moves data
+            # browse returns a list of browse object in the same order as from_partial
+            browse_moves = move_obj.browse(cr, uid, from_pick, context=context)
+            moves = dict(zip(from_pick, browse_moves))
             # loop through data
             for from_pack in partial_datas_ppl[pick.id]:
                 for to_pack in partial_datas_ppl[pick.id][from_pack]:
                     for move in partial_datas_ppl[pick.id][from_pack][to_pack]:
-                        # {'asset_id': False, 'weight': False, 'product_id': 77, 'product_uom': 1, 'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 'qty_per_pack': 18.0, 'product_qty': 18.0, 'width': False, 'move_id': 179}
-                        # as for picking ticket validation, the first move is updated, the following created 
-                        move_obj.write(cr, uid, sfve['move_id'])
-            pass
-            
-        # copy to 'packing' stock.picking
-        # draft shipment is automatically created or updated if a shipment already
+                        # integrity check
+                        from_partial.append(move)
+                        for partial in partial_datas_ppl[pick.id][from_pack][to_pack][move]:
+                            # {'asset_id': False, 'weight': False, 'product_id': 77, 'product_uom': 1, 'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 'qty_per_pack': 18.0, 'product_qty': 18.0, 'width': False, 'move_id': 179}
+                            # integrity check
+                            partial['product_id'] == moves[move].product_id.id
+                            partial['asset_id'] == moves[move].asset_id.id
+                            partial['product_uom'] == moves[move].product_uom.id
+                            partial['prodlot_id'] == moves[move].prodlot_id.id
+                            # dictionary of new values, used for creation or update
+                            fields = ['product_qty', 'qty_per_pack', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight']
+                            values = dict(zip(fields, [eval('partial["%s"]'%x) for x in fields]))
+                            
+                            if move in udpated:
+                                # if already updated, we create a new stock.move
+                                updated[move]['partial_qty'] += partial['product_qty']
+                                # force state to 'assigned'
+                                values.update(state='assigned')
+                                # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
+                                move_obj.copy(cr, uid, move, values, context=context)
+                            else:
+                                # update the existing stock move
+                                updated[move] = {'initial': moves[move].product_qty, 'partial_qty': partial['product_qty']}
+                                move_obj.write(cr, uid, [move], values, context=context)
         
-        pass
+            # integrity check - all moves are treated and no more
+            assert set(from_pick) == set(from_partial), 'move_ids are not equal pick:%s - partial:%s'(set(from_pick), set(from_partial))
+            # quantities are right
+            assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
+            # copy to 'packing' stock.picking
+            
+            # draft shipment is automatically created or updated if a shipment already
+            
         
 stock_picking()
 
