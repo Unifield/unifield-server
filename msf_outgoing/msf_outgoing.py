@@ -492,5 +492,19 @@ class pack_type(osv.osv):
                 'width': fields.float(digits=(16,2), string='Width [cm]'),
                 'height': fields.float(digits=(16,2), string='Height [cm]'),
                 }
-    
+
 pack_type()
+
+
+class shipment(osv.osv):
+    '''
+    a shipment presents the data from grouped stock moves in a 'sequence' way
+    '''
+    pass
+
+
+class pack_family(osv.osv):
+    '''
+    a pack family represents a sequence of homogeneous packs
+    '''
+    pass
