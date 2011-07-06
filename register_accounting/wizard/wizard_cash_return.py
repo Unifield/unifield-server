@@ -392,7 +392,6 @@ class wizard_cash_return(osv.osv_memory):
         # prepare some values
         move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
-        curr_date = time.strftime('%Y-%m-%d')
         register = wizard.advance_st_line_id.statement_id
         journal = register.journal_id
         period_id = register.period_id.id
@@ -401,7 +400,7 @@ class wizard_cash_return(osv.osv_memory):
         move_vals = {
             'journal_id': journal.id,
             'period_id': period_id,
-            'date': curr_date,
+            'date': wizard.date,
             'name': move_name,
         }
         # create the move
@@ -410,7 +409,7 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.returned_amount > 0:
             return_name = "Cash return"
             return_acc_id = register.journal_id.default_credit_account_id.id
-            return_id = self.create_move_line(cr, uid, ids, curr_date, return_name, journal, register, False, False, return_acc_id, \
+            return_id = self.create_move_line(cr, uid, ids, wizard.date, return_name, journal, register, False, False, return_acc_id, \
                 wizard.returned_amount, 0.0, move_id, context=context)
         if wizard.display_invoice:
             # make treatment for invoice lines
