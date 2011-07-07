@@ -94,22 +94,30 @@ class purchase_order(osv.osv):
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
+        local_market = None
+        
+        # Search the local market partner id
+        data_obj = self.pool.get('ir.model.data')
+        data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
+        if data_id:
+            local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
         
         if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
 
-        if partner_id:
+        if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
-
+        elif partner_id and partner_id == local_market and order_type != 'purchase_list':
+            v['partner_id'] = None
+            v['dest_address_id'] = None
+            v['partner_address_id'] = None
+            v['pricelist_id'] = None
+            
         if order_type == 'purchase_list':
-            # Searcht he local market partner id
-            data_obj = self.pool.get('ir.model.data')
-            data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
-            if data_id:
-                partner_id = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
-                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if local_market:
+                partner = self.pool.get('res.partner').browse(cr, uid, local_market)
                 v['partner_id'] = partner.id
                 if partner.address:
                     v['dest_address_id'] = partner.address[0].id
