@@ -125,7 +125,7 @@
   !record {model: purchase.order, id: donation3}:
     order_type: donation_exp
     categ: food
-    priority: urgent
+    priority: priority
     name: Donation3
     partner_id: supplier1
     company_id: base.main_company
@@ -184,7 +184,7 @@
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('donation3_l1'), ref('donation3_l2')])])
     assert move_ids, ('No generated stock moves from Donation before expiry with internal supplier')
     for move in self.browse(cr, uid, move_ids):
-      assert move.order_priority == 'urgent', ('Generated move hasn\'t the good priority')
+      assert move.order_priority == 'priority', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'food', ('Generated move hasn\'t the good category')
       assert move.order_type == 'donation_exp', ('Generated move hasn\'t the good type')
 -
@@ -253,7 +253,7 @@
 -
   !record {model: purchase.order, id: loan5}:
     order_type: loan
-    priority: medium
+    priority: priority
     categ: asset
     name: Loan5
     loan_duration: 6
@@ -307,7 +307,7 @@
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('loan5_l1'), ref('loan5_l2')])])
     assert move_ids, ('No generated stock moves from loan')
     for move in self.browse(cr, uid, move_ids):
-      assert move.order_priority == 'medium', ('Generated move hasn\'t the good priority')
+      assert move.order_priority == 'priority', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'asset', ('Generated move hasn\'t the good category')
       assert move.order_type == 'loan', ('Generated move hasn\'t the good type')
 -

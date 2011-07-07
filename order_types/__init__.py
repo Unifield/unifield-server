@@ -21,8 +21,7 @@
 
 ORDER_PRIORITY = [('emergency', 'Emergency'), 
                   ('normal', 'Normal'), 
-                  ('medium', 'Medium'), 
-                  ('urgent', 'Urgent')]
+                  ('priority', 'Priority'),]
 
 ORDER_CATEGORY = [('medical', 'Medical'), 
                   ('log', 'Logistic'), 
