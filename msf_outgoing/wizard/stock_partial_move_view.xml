@@ -54,5 +54,24 @@
             </field>
         </record>
         
+		<record id="stock_move_memory_tree_shipment_create" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.create.tree</field>
+            <field name="model">stock.move.memory.shipment.create</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" string="Pack Families">
+                	<field name="sale_order_id" readonly="True" />
+                	<field name="ppl_id" readonly="True" />
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="pack_type" readonly="True" />
+					<field name="weight" />
+					<field name="num_of_packs" readonly="True" />
+					<field name="num_to_ship" readonly="True" />
+					<field name="weight_to_ship" readonly="True" />
+                </tree>
+            </field>
+        </record>
+        
     </data>
 </openerp>

@@ -41,6 +41,103 @@ class stock_warehouse(osv.osv):
 
 stock_warehouse()
 
+
+class pack_type(osv.osv):
+    '''
+    pack type corresponding to a type of pack (name, length, width, height)
+    '''
+    _name = 'pack.type'
+    _description = 'Pack Type'
+    _columns = {'name': fields.char(string='Name', size=1024),
+                'length': fields.float(digits=(16,2), string='Length [cm]'),
+                'width': fields.float(digits=(16,2), string='Width [cm]'),
+                'height': fields.float(digits=(16,2), string='Height [cm]'),
+                }
+
+pack_type()
+
+
+class shipment(osv.osv):
+    '''
+    a shipment presents the data from grouped stock moves in a 'sequence' way
+    '''
+    _name = 'shipment'
+    _description = 'represents a group of pack families'
+    _columns = {'name': fields.char(string='Reference', size=1024),
+                'date': fields.date(string='Date'),
+                'transport_type': fields.selection([('by_road', 'By road')],
+                                                   string="Transport Type", readonly=True),
+                'state': fields.selection([
+                                           ('draft', 'Draft'),
+                                           ('packed', 'Packed'),
+                                           ('shipped', 'Shipped'),
+                                           ('done', 'Done'),
+                                           ('cancel', 'Canceled')], string='State', readonly=True, select=True),
+                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
+                'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+                }
+    _defaults = {'state': 'draft'}
+    
+    def create_shipment(self, cr, uid, ids, context=None):
+        '''
+        open the wizard to create (partial) shipment
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        
+        # data
+        name = _("Create Shipment")
+        model = 'create.picking'
+        step = 'create'
+        # open the selected wizard
+        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+
+shipment()
+
+
+class pack_family(osv.osv):
+    '''
+    a pack family represents a sequence of homogeneous packs
+    '''
+    _name = 'pack.family'
+    _description = 'represents a pack family'
+    _columns = {'name': fields.char(string='Reference', size=1024),
+                'shipment_id': fields.many2one('shipment', string='Shipment'),
+                'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
+                'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
+                'from_pack': fields.integer(string='From p.'),
+                'to_pack': fields.integer(string='To p.'),
+                'pack_type': fields.many2one('pack.type', string='Pack Type'),
+                'length' : fields.float(digits=(16,2), string='Length [cm]'),
+                'width' : fields.float(digits=(16,2), string='Width [cm]'),
+                'height' : fields.float(digits=(16,2), string='Height [cm]'),
+                'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
+                'num_of_packs': fields.integer(string='#Packs'),
+                'total_weight' : fields.float(digits=(16,2), string='Total Weight [kg]'),
+                'move_lines': fields.one2many('stock.move', 'pack_family_id', string="Stock Moves"),
+                'state': fields.selection([
+                                           ('draft', 'Draft'),
+                                           ('packed', 'Packed'),
+                                           ('shipped', 'Shipped'),
+                                           ('done', 'Done'),
+                                           ('cancel', 'Canceled')], string='State', readonly=True, select=True),
+                }
+    _defaults = {'state': 'draft'}
+
+pack_family()
+
+
+class shipment(osv.osv):
+    '''
+    add pack_family_ids
+    '''
+    _inherit = 'shipment'
+    _columns = {'pack_family_ids': fields.one2many('pack.family', 'shipment_id', string='Pack Families')}
+
+shipment()
+
+
 class stock_picking(osv.osv):
     '''
     override stock picking to add new attributes
@@ -53,7 +150,122 @@ class stock_picking(osv.osv):
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], string='Flow Type'),
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
+                'shipment_id': fields.many2one('shipment', string='Shipment'),
                 }
+    
+    def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, context=None):
+        '''
+        generate the data structure from the stock.picking object
+        
+        one data for each move_id - here is the difference with data generated from partial
+        
+        structure:
+            {pick_id: {from_pack: {to_pack: {move_id: {data}}}}}
+            
+        if the move has a quantity equal to 0, it means that no pack are available,
+        these moves are therefore not taken into account for the pack families generation
+        
+        TODO: integrity constraints
+        
+        Note: why the same dictionary is repeated n times for n moves, because
+        it is directly used when we create the pack families. could be refactored
+        with one dic per from/to with a 'move_ids' entry
+        '''
+        result = {}
+        
+        for pick in self.browse(cr, uid, pick_ids, context=context):
+            result[pick.id] = {}
+            for move in pick.move_lines:
+                if move.product_qty > 0.0:
+                    result[pick.id] \
+                        .setdefault(move.from_pack, {}) \
+                        .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
+                                                                  'ppl_id': pick.previous_step_id.id,
+                                                                  'from_pack': move.from_pack,
+                                                                  'to_pack': move.to_pack,
+                                                                  'pack_type': move.pack_type.id,
+                                                                  'length': move.length,
+                                                                  'width': move.width,
+                                                                  'height': move.height,
+                                                                  'weight': move.weight,
+                                                                  }
+        
+        return result
+    
+    def create_pack_families_from_data(self, cr, uid, data, shipment_id, context=None):
+        '''
+        create pack families corresponding to data parameter
+        
+        - we can have the data from many picks, all corresponding pack families are
+          created in shipment_id
+        '''
+        # picking ids
+        picking_ids = data.keys()
+        pack_family_obj = self.pool.get('pack.family')
+        move_obj = self.pool.get('stock.move')
+        
+        for pick_id in picking_ids:
+            for from_pack in data[pick_id]:
+                for to_pack in data[pick_id][from_pack]:
+                    # create the pack family object
+                    pack_family_id = False
+                    for move in data[pick_id][from_pack][to_pack]:
+                        # create the pack family
+                        if not pack_family_id:
+                            move_data = data[pick_id][from_pack][to_pack][move]
+                            move_data.update({'name': 'PF/xxxx', 'shipment_id': shipment_id})
+                            pack_family_id = pack_family_obj.create(cr, uid, move_data, context=context)
+                            
+                        # update the moves concerned by the pack_family:
+                        values = {'pack_family_id': pack_family_id}
+                        move_obj.write(cr, uid, [move], values, context=context)
+        
+    def create(self, cr, uid, vals, context=None):
+        '''
+        creation of a stock.picking of subtype 'packing' triggers
+        special behavior :
+         - creation of corresponding shipment
+        '''
+        # shipment object
+        shipment_obj = self.pool.get('shipment')
+        
+        # create packing object
+        pick_id = super(stock_picking, self).create(cr, uid, vals, context=context)
+        
+        if 'subtype' in vals and vals['subtype'] == 'packing':
+            # creation of a new packing
+            assert 'state' in vals, 'State is missing'
+            
+            if vals['state'] == 'draft':
+                # creation of packing after ppl validation
+                # generate data from stock.picking object
+                data = self.generate_data_from_picking_for_pack_family(cr, uid, [pick_id], context=context)
+                
+                # find a existing shipment or create one - depends on new pick state
+                shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])])
+                # only one 'draft' shipment should be available
+                assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time'
+                
+                if not len(shipment_ids):
+                    # no shipment, create one
+                    values = {'name': 'SHIP/xxxx', 'state': 'draft', 'address_id': vals['address_id']}
+                    shipment_id = shipment_obj.create(cr, uid, values, context=context)
+                else:
+                    shipment_id = shipment_ids[0]
+                    
+                # update the new pick with shipment_id
+                self.write(cr, uid, pick_id, {'shipment_id': shipment_id}, context=context)
+                
+                # create the pack_familiy objects from stock.picking object
+                self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
+                
+            elif vals['state'] == 'assigned':
+                assert False, 'Not yet implemented'
+                
+            else:
+                assert False, 'Should not reach this line'
+            
+        return pick_id
     
     #@@@override stock
     def action_assign(self, cr, uid, ids, *args):
@@ -151,7 +363,6 @@ class stock_picking(osv.osv):
         available for picking loop
         '''
         pass
-        
         
     def validate_picking(self, cr, uid, ids, context=None):
         '''
@@ -280,7 +491,7 @@ class stock_picking(osv.osv):
             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
             # copy to 'packing' stock.picking
             # draft shipment is automatically created or updated if a shipment already
-            new_packing_id = self.copy(cr, uid, pick.id, {'subtype': 'packing'}, context=context)
+            new_packing_id = self.copy(cr, uid, pick.id, {'subtype': 'packing', 'previous_step_id': pick.id}, context=context)
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
@@ -302,7 +513,7 @@ stock_picking()
 
 class stock_move(osv.osv):
     '''
-    
+    stock move
     '''
     _inherit = 'stock.move'
     _name = 'stock.move'
@@ -332,6 +543,7 @@ class stock_move(osv.osv):
                 'width' : fields.float(digits=(16,2), string='Width [cm]'),
                 'height' : fields.float(digits=(16,2), string='Height [cm]'),
                 'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
+                'pack_family_id': fields.many2one('pack.family', string='Pack Family'),
                 }
     
 #    _constraints = [
@@ -479,32 +691,3 @@ class sale_order(osv.osv):
         # @@@end
 
 sale_order()
-
-
-class pack_type(osv.osv):
-    '''
-    pack type corresponding to a type of pack (name, length, width, height)
-    '''
-    _name = 'pack.type'
-    _description = 'Pack Type'
-    _columns = {'name': fields.char(string='Name', size=1024),
-                'length': fields.float(digits=(16,2), string='Length [cm]'),
-                'width': fields.float(digits=(16,2), string='Width [cm]'),
-                'height': fields.float(digits=(16,2), string='Height [cm]'),
-                }
-
-pack_type()
-
-
-class shipment(osv.osv):
-    '''
-    a shipment presents the data from grouped stock moves in a 'sequence' way
-    '''
-    pass
-
-
-class pack_family(osv.osv):
-    '''
-    a pack family represents a sequence of homogeneous packs
-    '''
-    pass

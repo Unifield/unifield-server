@@ -64,6 +64,9 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
         '''
         default value of qty_per_pack to quantity
         of from_pack and to_pack to 1
+        
+        those fields have a constraint assigned to them, and must
+        therefore be completed with default value at creation
         '''
         if 'qty_per_pack' not in vals:
             vals.update(qty_per_pack=vals['quantity'])
@@ -127,7 +130,7 @@ class stock_partial_move_memory_families(osv.osv_memory):
     '''
     view corresponding to pack families
     
-    integrity constrinat 
+    integrity constraint 
     '''
     _name = "stock.move.memory.families"
     _rec_name = 'from_pack'
@@ -143,3 +146,23 @@ class stock_partial_move_memory_families(osv.osv_memory):
     }
     
 stock_partial_move_memory_families()
+
+
+class stock_partial_move_memory_shipment_create(osv.osv_memory):
+    '''
+    view corresponding to pack families for shipment create
+    
+    integrity constraint 
+    '''
+    _name = "stock.move.memory.shipment.create"
+    _inherit = "stock.move.memory.families"
+    _rec_name = 'from_pack'
+    _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
+                'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
+                'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
+                'num_of_packs': fields.integer(string='#Packs'),
+                'num_to_ship': fields.integer(string='Number to ship'),
+                'weight_to_ship' : fields.float(digits=(16,2), string='Weight to ship [kg]'),
+    }
+    
+stock_partial_move_memory_shipment_create()

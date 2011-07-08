@@ -41,7 +41,7 @@
         'wizard/create_picking_view.xml',
         'wizard/stock_partial_move_view.xml',
         'wizard/split_memory_move_view.xml',
-        'wizard/validate_picking_view.xml',
+        'wizard/shipment_view.xml',
     ],
     'demo_xml': [
     ],
