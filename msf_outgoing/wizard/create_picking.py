@@ -482,7 +482,7 @@ class create_picking(osv.osv_memory):
                     if first:
                         first = False
                         # update existing move
-                        move_obj.write(cr, uid, move, {'product_qty': partial['product_qty'],
+                        move_obj.write(cr, uid, [move], {'product_qty': partial['product_qty'],
                                                        'prodlot_id': partial['prodlot_id'],
                                                        'asset_id': partial['asset_id']}, context=context)
                     else:
@@ -499,10 +499,10 @@ class create_picking(osv.osv_memory):
                     original_move = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
                                                               ('product_id', '=', moves[move].product_id.id),
                                                               ('product_uom', '=', moves[move].product_uom.id)])
-                    assert original_move, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
+                    assert len(original_move) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
                     backorder_qty = move_obj.read(cr, uid, original_move, ['product_qty'], context=context)[0]['product_qty']
                     backorder_qty = max(backorder_qty + diff_qty, 0)
-                    move_obj.write(cr, uid, original_move[0], {'product_qty': backorder_qty}, context=context)
+                    move_obj.write(cr, uid, original_move, {'product_qty': backorder_qty}, context=context)
         
             # create the new ppl object
             new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'subtype': 'ppl', 'previous_step_id': pick.id}, context=context)

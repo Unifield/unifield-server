@@ -108,8 +108,8 @@ class shipment(osv.osv):
         for from_pack in data:
             for to_pack in data[from_pack]:
                 moves = move_obj.search(cr, uid, [('picking_id', '=', picking_id),
-                                          ('from_pack', '=', from_pack),
-                                          ('to_pack', '=', to_pack)], context=context)
+                                                  ('from_pack', '=', from_pack),
+                                                  ('to_pack', '=', to_pack)], context=context)
                 result.extend(moves)
         
         return result
@@ -135,36 +135,19 @@ class shipment(osv.osv):
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas_shipment.keys()), 'shipment ids from ids and partial do not match'
         
-        for shipment_id in partial_datas_shipment:
+        for draft_shipment_id in partial_datas_shipment:
             # for each shipment
-            for picking_id in partial_datas_shipment[shipment_id]:
+            for draft_picking_id in partial_datas_shipment[draft_shipment_id]:
                 # copy the picking object without moves
-                # todo refactoring - creation of moves and update of initial in picking create method
-                new_packing_id = pick_obj.copy(cr, uid, picking_id, {'name': 'PACK/xxxx', 'backorder_id': picking_id, 'move_lines': []}, context=context)
-                
-                for from_pack in partial_datas_shipment[shipment_id][picking_id]:
-                    for to_pack in partial_datas_shipment[shipment_id][picking_id][from_pack]:
-                        # number of selected packs to ship
-                        num_to_ship = partial_datas_shipment[shipment_id][picking_id][from_pack][to_pack]['num_to_ship']
-                        # find the corresponding moves
-                        moves_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id),
-                                                              ('from_pack', '=', from_pack),
-                                                              ('to_pack', '=', to_pack)], context=context)
-                        
-                        for move in move_obj.browse(cr, uid, moves_ids, context=context):
-                            # we compute the selected quantity
-                            selected_qty = move.qty_per_pack * num_to_ship
-                            # create the new move
-                            new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
-                                                                        'product_qty': selected_qty}, context=context)
-                            
-                            # update corresponding initial move
-                            initial_qty = move.product_qty
-                            initial_qty = max(initial_qty - selected_qty, 0)
-                            # update the original move object - the corresponding original shipment (draft)
-                            # is automatically updated generically in the write method
-                            move_obj.write(cr, uid, move.id, {'product_qty': initial_qty}, context=context)
-        
+                # creation of moves and update of initial in picking create method
+                new_packing_id = pick_obj.copy(cr, uid, draft_picking_id,
+                                               {'name': 'PACK/xxxx',
+                                                'backorder_id': draft_picking_id,
+                                                'shipment_id': False,
+                                                'move_lines': []}, context=dict(context,
+                                                                                draft_shipment_id=draft_shipment_id,
+                                                                                draft_picking_id=draft_picking_id,
+                                                                                partial_datas_shipment=partial_datas_shipment))
         
         # confirm the new picking ticket
         wf_service = netsvc.LocalService("workflow")
@@ -294,19 +277,18 @@ class stock_picking(osv.osv):
             for from_pack in data[pick_id]:
                 for to_pack in data[pick_id][from_pack]:
                     # create the pack family object
-                    pack_family_id = False
-                    for move in data[pick_id][from_pack][to_pack]:
-                        # create the pack family
-                        if not pack_family_id:
-                            move_data = data[pick_id][from_pack][to_pack][move]
-                            move_data.update({'name': 'PF/xxxx',
-                                              'shipment_id': shipment_id,
-                                              'draft_packing_id': pick_id})
-                            pack_family_id = pack_family_obj.create(cr, uid, move_data, context=context)
-                            
-                        # update the moves concerned by the pack_family:
-                        values = {'pack_family_id': pack_family_id}
-                        move_obj.write(cr, uid, [move], values, context=context)
+                    moves = data[pick_id][from_pack][to_pack].keys()
+                    # create the pack family
+                    move = moves[0]
+                    move_data = data[pick_id][from_pack][to_pack][move]
+                    move_data.update({'name': 'PF/xxxx',
+                                      'shipment_id': shipment_id,
+                                      'draft_packing_id': pick_id})
+                    pack_family_id = pack_family_obj.create(cr, uid, move_data, context=context)
+                        
+                    # update the moves concerned by the pack_family:
+                    values = {'pack_family_id': pack_family_id}
+                    move_obj.write(cr, uid, moves, values, context=dict(context, skip_pf_update=True))
                         
         return True
         
@@ -320,14 +302,27 @@ class stock_picking(osv.osv):
         shipment_obj = self.pool.get('shipment')
         
         # create packing object
-        pick_id = super(stock_picking, self).create(cr, uid, vals, context=context)
+        new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
         
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing
             assert 'backorder_id' in vals, 'No backorder_id'
             assert 'shipment_id' in vals, 'No shipment_id'
             
+            if vals['backorder_id'] and vals['shipment_id']:
+                # ship of existing shipment
+                # no new shipment
+                # TODO
+                return new_packing_id
+            
             if vals['backorder_id'] and not vals['shipment_id']:
+                # data from do_create_shipment method
+                assert 'partial_datas_shipment' in context, 'Missing partial_datas_shipment'
+                assert 'draft_shipment_id' in context, 'Missing draft_shipment_id'
+                assert 'draft_packing_id' in context, 'Missing draft_packing_id'
+                draft_shipment_id = context['draft_shipment_id']
+                draft_packing_id = context['draft_packing_id']
+                data = context['partial_datas_shipment'][draft_shipment_id][draft_packing_id]
                 # We have a backorder_id, no shipment_id
                 # -> we have just created a shipment
                 # the created packing object has no stock_move
@@ -335,9 +330,36 @@ class stock_picking(osv.osv):
                 # - if no shipment in context, create a new shipment object
                 # - generate the data from the new picking object
                 # - create the pack families
+                for from_pack in data:
+                    for to_pack in data[from_pack]:
+                        # number of selected packs to ship
+                        num_to_ship = data[from_pack][to_pack]['num_to_ship']
+                        # find the corresponding moves
+                        moves_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_packing_id),
+                                                              ('from_pack', '=', from_pack),
+                                                              ('to_pack', '=', to_pack)], context=context)
+                        
+                        for move in move_obj.browse(cr, uid, moves_ids, context=context):
+                            # we compute the selected quantity
+                            selected_qty = move.qty_per_pack * num_to_ship
+                            # create the new move
+                            new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
+                                                                        'product_qty': selected_qty}, context=context)
+                            
+                            # update corresponding initial move
+                            initial_qty = move.product_qty
+                            initial_qty = max(initial_qty - selected_qty, 0)
+                            # update the original move object - the corresponding original shipment (draft)
+                            # is automatically updated generically in the write method
+                            move_obj.write(cr, uid, move.id, {'product_qty': initial_qty}, context=context)
                 
-                
-                pass
+                if 'new_shipment_id' in context:
+                    shipment_id = context['new_shipment_id']
+                else:
+                    # create a new shipment which will be used by the group of new packing objects
+                    values = {'name': 'SHIP/xxxx', 'state': 'packed', 'address_id': vals['address_id']}
+                    shipment_id = shipment_obj.create(cr, uid, values, context=context)
+                    context['new_shipment_id'] = shipment_id
             
             if not vals['backorder_id']:
                 # creation of packing after ppl validation
@@ -348,21 +370,19 @@ class stock_picking(osv.osv):
                 
                 if not len(shipment_ids):
                     # no shipment, create one
-                    values = {'name': 'SHIP/xxxx', 'state': 'draft', 'address_id': vals['address_id']}
+                    values = {'name': 'draft SHIP/xxxx', 'state': 'draft', 'address_id': vals['address_id']}
                     shipment_id = shipment_obj.create(cr, uid, values, context=context)
                 else:
                     shipment_id = shipment_ids[0]
-                
-                # generate data from stock.picking object
-                data = self.generate_data_from_picking_for_pack_family(cr, uid, [pick_id], context=context)
-                
-                # update the new pick with shipment_id
-                self.write(cr, uid, pick_id, {'shipment_id': shipment_id}, context=context)
-                
-                # create the pack_familiy objects from stock.picking object
-                self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
             
-        return pick_id
+            # update the new pick with shipment_id
+            self.write(cr, uid, new_packing_id, {'shipment_id': shipment_id}, context=context)
+            # generate data from stock.picking object
+            data = self.generate_data_from_picking_for_pack_family(cr, uid, [new_packing_id], context=context)
+            # create the pack_familiy objects from stock.picking object
+            self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
+            
+        return new_packing_id
     
     #@@@override stock
     def action_assign(self, cr, uid, ids, *args):
@@ -653,25 +673,29 @@ class stock_move(osv.osv):
         the write method is overridden to force the update of pack_type
         when the picking object is updated.
         '''
+        if context is None:
+            context = {}
         # picking object
         picking_obj = self.pool.get('stock.picking')
         # pack family
-        pf_obj = self.pool.get('pack_family')
+        pf_obj = self.pool.get('pack.family')
         # call to super
         result = super(stock_move, self).write(cr, uid, ids, vals, context=context)
         
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.picking_id.subtype == 'packing':
-                # corresponding pack family
-                pf_id = move.pack_family_id.id
-                # corresponding picking_id
-                picking_id = move.picking_id.id
-                # generate data
-                data = picking_obj.generate_data_from_picking_for_pack_family(cr, uid, [picking_id], move.from_pack, move.to_pack, context=context)
-                # create a new pf for the corresponding sequence and update all related stock moves
-                picking_obj.create_pack_families_from_data(cr, uid, data, move.shipment_id.id, context=context)
-                # delete old pf
-                pf_obj.unlink(cr, uid, [pf_id], context=context)
+        if 'skip_pf_update' not in context:
+            # skip_pf_update is typically used when the pf reference of stock move is updated 
+            for move in self.browse(cr, uid, ids, context=context):
+                if move.picking_id.subtype == 'packing':
+                    # corresponding pack family
+                    pf_id = move.pack_family_id.id
+                    # corresponding picking_id
+                    picking_id = move.picking_id.id
+                    # generate data - for this sequence only
+                    data = picking_obj.generate_data_from_picking_for_pack_family(cr, uid, [picking_id], move.from_pack, move.to_pack, context=context)
+                    # create a new pf for the corresponding sequence and update all related stock moves
+                    picking_obj.create_pack_families_from_data(cr, uid, data, move.picking_id.shipment_id.id, context=context)
+                    # delete old pf
+                    pf_obj.unlink(cr, uid, [pf_id], context=context)
             
         return result
 
