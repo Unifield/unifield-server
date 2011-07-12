@@ -85,13 +85,93 @@ class shipment(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
         
         # data
         name = _("Create Shipment")
-        model = 'create.picking'
+        model = 'shipment.wizard'
         step = 'create'
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return pick_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+    
+    def get_corresponding_moves(self, cr, uid, ids, picking_id, data, context=None):
+        '''
+        get the corresponding moves for the sequence
+        
+        return a list of dictionaries
+        '''
+        move_obj = self.pool.get('stock.move')
+        
+        result = []
+        
+        for from_pack in data:
+            for to_pack in data[from_pack]:
+                moves = move_obj.search(cr, uid, [('picking_id', '=', picking_id),
+                                          ('from_pack', '=', from_pack),
+                                          ('to_pack', '=', to_pack)], context=context)
+                result.extend(moves)
+        
+        return result
+    
+    def do_create_shipment(self, cr, uid, ids, context=None):
+        '''
+        for each original draft picking:
+         - creation of the new packing object with empty moves
+         - convert partial data to move related data
+         - create corresponding moves in new packing
+         - update initial packing object
+         - trigger workflow for new packing object
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'partial_datas_shipment' in context, 'partial_datas_shipment no defined in context'
+        
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        # data from wizard
+        partial_datas_shipment = context['partial_datas_shipment']
+        # shipment ids from ids must be equal to shipment ids from partial datas
+        assert set(ids) == set(partial_datas_shipment.keys()), 'shipment ids from ids and partial do not match'
+        
+        for shipment_id in partial_datas_shipment:
+            # for each shipment
+            for picking_id in partial_datas_shipment[shipment_id]:
+                # copy the picking object without moves
+                # todo refactoring - creation of moves and update of initial in picking create method
+                new_packing_id = pick_obj.copy(cr, uid, picking_id, {'name': 'PACK/xxxx', 'backorder_id': picking_id, 'move_lines': []}, context=context)
+                
+                for from_pack in partial_datas_shipment[shipment_id][picking_id]:
+                    for to_pack in partial_datas_shipment[shipment_id][picking_id][from_pack]:
+                        # number of selected packs to ship
+                        num_to_ship = partial_datas_shipment[shipment_id][picking_id][from_pack][to_pack]['num_to_ship']
+                        # find the corresponding moves
+                        moves_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id),
+                                                              ('from_pack', '=', from_pack),
+                                                              ('to_pack', '=', to_pack)], context=context)
+                        
+                        for move in move_obj.browse(cr, uid, moves_ids, context=context):
+                            # we compute the selected quantity
+                            selected_qty = move.qty_per_pack * num_to_ship
+                            # create the new move
+                            new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
+                                                                        'product_qty': selected_qty}, context=context)
+                            
+                            # update corresponding initial move
+                            initial_qty = move.product_qty
+                            initial_qty = max(initial_qty - selected_qty, 0)
+                            # update the original move object - the corresponding original shipment (draft)
+                            # is automatically updated generically in the write method
+                            move_obj.write(cr, uid, move.id, {'product_qty': initial_qty}, context=context)
+        
+        
+        # confirm the new picking ticket
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
+        # TODO which behavior
+        return {'type': 'ir.actions.act_window_close'}
+                
 
 shipment()
 
@@ -104,6 +184,7 @@ class pack_family(osv.osv):
     _description = 'represents a pack family'
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
+                'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
                 'from_pack': fields.integer(string='From p.'),
@@ -153,9 +234,11 @@ class stock_picking(osv.osv):
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 }
     
-    def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, context=None):
+    def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, from_pack=False, to_pack=False, context=None):
         '''
         generate the data structure from the stock.picking object
+        
+        we can limit the generation to certain from/to sequence
         
         one data for each move_id - here is the difference with data generated from partial
         
@@ -171,30 +254,33 @@ class stock_picking(osv.osv):
         it is directly used when we create the pack families. could be refactored
         with one dic per from/to with a 'move_ids' entry
         '''
+        assert bool(from_pack) == bool(to_pack), 'from_pack and to_pack must be either both filled or empty'
         result = {}
         
         for pick in self.browse(cr, uid, pick_ids, context=context):
             result[pick.id] = {}
             for move in pick.move_lines:
-                if move.product_qty > 0.0:
-                    result[pick.id] \
-                        .setdefault(move.from_pack, {}) \
-                        .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
-                                                                  'ppl_id': pick.previous_step_id.id,
-                                                                  'from_pack': move.from_pack,
-                                                                  'to_pack': move.to_pack,
-                                                                  'pack_type': move.pack_type.id,
-                                                                  'length': move.length,
-                                                                  'width': move.width,
-                                                                  'height': move.height,
-                                                                  'weight': move.weight,
-                                                                  }
+                if not from_pack or move.from_pack == from_pack:
+                    if not to_pack or move.to_pack == to_pack:
+                        if move.product_qty > 0.0:
+                            result[pick.id] \
+                                .setdefault(move.from_pack, {}) \
+                                .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
+                                                                          'ppl_id': pick.previous_step_id.id,
+                                                                          'from_pack': move.from_pack,
+                                                                          'to_pack': move.to_pack,
+                                                                          'pack_type': move.pack_type.id,
+                                                                          'length': move.length,
+                                                                          'width': move.width,
+                                                                          'height': move.height,
+                                                                          'weight': move.weight,
+                                                                          }
         
         return result
     
     def create_pack_families_from_data(self, cr, uid, data, shipment_id, context=None):
         '''
-        create pack families corresponding to data parameter
+        create pack families corresponding to data parameter and update corresponding move links to shipment_id
         
         - we can have the data from many picks, all corresponding pack families are
           created in shipment_id
@@ -213,12 +299,16 @@ class stock_picking(osv.osv):
                         # create the pack family
                         if not pack_family_id:
                             move_data = data[pick_id][from_pack][to_pack][move]
-                            move_data.update({'name': 'PF/xxxx', 'shipment_id': shipment_id})
+                            move_data.update({'name': 'PF/xxxx',
+                                              'shipment_id': shipment_id,
+                                              'draft_packing_id': pick_id})
                             pack_family_id = pack_family_obj.create(cr, uid, move_data, context=context)
                             
                         # update the moves concerned by the pack_family:
                         values = {'pack_family_id': pack_family_id}
                         move_obj.write(cr, uid, [move], values, context=context)
+                        
+        return True
         
     def create(self, cr, uid, vals, context=None):
         '''
@@ -234,13 +324,23 @@ class stock_picking(osv.osv):
         
         if 'subtype' in vals and vals['subtype'] == 'packing':
             # creation of a new packing
-            assert 'state' in vals, 'State is missing'
+            assert 'backorder_id' in vals, 'No backorder_id'
+            assert 'shipment_id' in vals, 'No shipment_id'
             
-            if vals['state'] == 'draft':
-                # creation of packing after ppl validation
-                # generate data from stock.picking object
-                data = self.generate_data_from_picking_for_pack_family(cr, uid, [pick_id], context=context)
+            if vals['backorder_id'] and not vals['shipment_id']:
+                # We have a backorder_id, no shipment_id
+                # -> we have just created a shipment
+                # the created packing object has no stock_move
+                # - we create the sock move from the data in context
+                # - if no shipment in context, create a new shipment object
+                # - generate the data from the new picking object
+                # - create the pack families
                 
+                
+                pass
+            
+            if not vals['backorder_id']:
+                # creation of packing after ppl validation
                 # find a existing shipment or create one - depends on new pick state
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])])
                 # only one 'draft' shipment should be available
@@ -252,18 +352,15 @@ class stock_picking(osv.osv):
                     shipment_id = shipment_obj.create(cr, uid, values, context=context)
                 else:
                     shipment_id = shipment_ids[0]
-                    
+                
+                # generate data from stock.picking object
+                data = self.generate_data_from_picking_for_pack_family(cr, uid, [pick_id], context=context)
+                
                 # update the new pick with shipment_id
                 self.write(cr, uid, pick_id, {'shipment_id': shipment_id}, context=context)
                 
                 # create the pack_familiy objects from stock.picking object
                 self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
-                
-            elif vals['state'] == 'assigned':
-                assert False, 'Not yet implemented'
-                
-            else:
-                assert False, 'Should not reach this line'
             
         return pick_id
     
@@ -471,7 +568,7 @@ class stock_picking(osv.osv):
                             partial['prodlot_id'] == moves[move].prodlot_id.id
                             # dictionary of new values, used for creation or update
                             fields = ['product_qty', 'qty_per_pack', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight']
-                            values = dict(zip(fields, [eval('partial["%s"]'%x) for x in fields]))
+                            values = dict(zip(fields, [partial["%s"%x] for x in fields]))
                             
                             if move in updated:
                                 # if already updated, we create a new stock.move
@@ -491,7 +588,7 @@ class stock_picking(osv.osv):
             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
             # copy to 'packing' stock.picking
             # draft shipment is automatically created or updated if a shipment already
-            new_packing_id = self.copy(cr, uid, pick.id, {'subtype': 'packing', 'previous_step_id': pick.id}, context=context)
+            new_packing_id = self.copy(cr, uid, pick.id, {'name': 'draft PACK/xxxx', 'subtype': 'packing', 'previous_step_id': pick.id, 'backorder_id': False, 'shipment_id': False}, context=context)
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
@@ -550,6 +647,34 @@ class stock_move(osv.osv):
 #        (_check_weight,
 #            'You must assign an asset for this product',
 #            ['asset_id']),]
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        the write method is overridden to force the update of pack_type
+        when the picking object is updated.
+        '''
+        # picking object
+        picking_obj = self.pool.get('stock.picking')
+        # pack family
+        pf_obj = self.pool.get('pack_family')
+        # call to super
+        result = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+        
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.picking_id.subtype == 'packing':
+                # corresponding pack family
+                pf_id = move.pack_family_id.id
+                # corresponding picking_id
+                picking_id = move.picking_id.id
+                # generate data
+                data = picking_obj.generate_data_from_picking_for_pack_family(cr, uid, [picking_id], move.from_pack, move.to_pack, context=context)
+                # create a new pf for the corresponding sequence and update all related stock moves
+                picking_obj.create_pack_families_from_data(cr, uid, data, move.shipment_id.id, context=context)
+                # delete old pf
+                pf_obj.unlink(cr, uid, [pf_id], context=context)
+            
+        return result
+
 
 stock_move()
 

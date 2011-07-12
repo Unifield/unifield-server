@@ -267,17 +267,20 @@ class create_picking(osv.osv_memory):
             memory_moves_list = partial.product_moves_ppl
             # organize data according to from pack / to pack
             for move in memory_moves_list:
-                partial_datas_ppl1[pick.id].setdefault(move.from_pack, {}).setdefault(move.to_pack, {}).setdefault(move.move_id.id, []).append({
-                                                                                                              'product_id': move.product_id.id,
-                                                                                                              'product_qty': move.quantity,
-                                                                                                              'product_uom': move.product_uom.id,
-                                                                                                              'prodlot_id': move.prodlot_id.id,
-                                                                                                              'asset_id': move.asset_id.id,
-                                                                                                              'move_id': move.move_id.id,
-                                                                                                              'qty_per_pack': move.qty_per_pack,
-                                                                                                              'from_pack': move.from_pack,
-                                                                                                              'to_pack': move.to_pack,
-                                                                                                              })
+                partial_datas_ppl1[pick.id] \
+                    .setdefault(move.from_pack, {}) \
+                    .setdefault(move.to_pack, {}) \
+                    .setdefault(move.move_id.id, []).append({
+                                                             'product_id': move.product_id.id,
+                                                             'product_qty': move.quantity,
+                                                             'product_uom': move.product_uom.id,
+                                                             'prodlot_id': move.prodlot_id.id,
+                                                             'asset_id': move.asset_id.id,
+                                                             'move_id': move.move_id.id,
+                                                             'qty_per_pack': move.qty_per_pack,
+                                                             'from_pack': move.from_pack,
+                                                             'to_pack': move.to_pack,
+                                                             })
                 
         return partial_datas_ppl1
     
@@ -372,6 +375,7 @@ class create_picking(osv.osv_memory):
         # browse returns a list of browse object in the same order as move_ids
         # for now, each new line from the wizard corresponds to a new stock.move
         # it could be interesting to regroup according to production lot/asset id
+        # TODO refactoring this load is useless -> load the move object in the first loop for in browse( keys() )
         move_ids = partial_datas.keys()
         browse_moves = move_obj.browse(cr, uid, move_ids, context=context)
         moves = dict(zip(move_ids, browse_moves))

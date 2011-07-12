@@ -74,10 +74,10 @@ class shipment_wizard(osv.osv_memory):
             for ship in shipments:
                 address_id = ship.address_id.id
                 # gather the picking sharing this draft shipment - the address_id is specified as integrity check
-                picking_ids = pick_obj.search(cr, uid, [('shipment_id', '=', ship), ('address_id', '=', address_id)], context=context)
+                picking_ids = pick_obj.search(cr, uid, [('shipment_id', '=', ship.id), ('address_id', '=', address_id)], context=context)
                 data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, picking_ids, context=None)
                 # structure the data to display
-                result.extend(self.__create_partial_picking_create_shipment(data, context=context))
+                result.extend(self.__create_pack_families_memory(data, context=context))
         else:
             # this line should never be reached
             assert False, 'should not reach this line'
@@ -96,7 +96,7 @@ class shipment_wizard(osv.osv_memory):
             
         return res
     
-    def __create_partial_picking_create_shipment(self, data, context=None):
+    def __create_pack_families_memory(self, data, context=None):
         '''
         generates the memory objects data depending on wizard step
         
@@ -112,50 +112,13 @@ class shipment_wizard(osv.osv_memory):
         for picking_id in data:
             for from_pack in data[picking_id]:
                 for to_pack in data[picking_id][from_pack]:
-                    
-            for move in pick.move_lines:
-                if move.state in ('done', 'cancel'):
-                    continue
-                move_memory = {
-                    'product_id' : move.product_id.id, 
-                    'quantity' : move.product_qty,
-                    'product_uom' : move.product_uom.id, 
-                    'prodlot_id' : move.prodlot_id.id, 
-                    'move_id' : move.id,
-                    'asset_id': move.asset_id.id,
-                }
-                
-                # append the created dict
-                result.append(move_memory)
-        
-        # return the list of dictionaries
-        return result
-    
-    def __create_pack_families_memory(self, pick, context=None):
-        '''
-        generates the memory objects data depending on wizard step
-        
-        - wizard_id seems to be filled automatically
-        '''
-        assert context, 'No context defined'
-        assert 'step' in context, 'No step defined in context'
-        step = context['step']
-        assert 'partial_datas_ppl1' in context, 'No partial data from step1'
-        partial_datas_ppl1 = context['partial_datas_ppl1']
-        
-        # list for the current pick object
-        result = []
-        from_packs = partial_datas_ppl1[pick.id].keys()
-        # we want the lines sorted in from_pack order
-        from_packs.sort()
-        for from_pack in from_packs:
-            for to_pack in partial_datas_ppl1[pick.id][from_pack]:
-                family_memory = {
-                                 'from_pack': from_pack,
-                                 'to_pack': to_pack,}
-            
-                # append the created dict
-                result.append(family_memory)
+                    # get a move_id no matter which from the sequence 
+                    move_id = data[picking_id][from_pack][to_pack].keys()[0]
+                    pack_family_memory = data[picking_id][from_pack][to_pack][move_id]
+                    # we add the reference to the draft packing object
+                    pack_family_memory.update({'draft_packing_id': picking_id})
+                    # create the memory pack_family
+                    result.append(pack_family_memory)
         
         # return the list of dictionaries
         return result
@@ -169,70 +132,35 @@ class shipment_wizard(osv.osv_memory):
         # call super
         result = super(shipment_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         # working objects
-        pick_obj = self.pool.get('stock.picking')
-        picking_ids = context.get('active_ids', False)
         assert 'step' in context, 'No step defined in context'
         step = context['step']
-
-        if not picking_ids:
-            # not called through an action (e.g. buildbot), return the default.
-            return result
-        
-        # get picking subtype
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            picking_subtype = pick.subtype
-            
-        # select field to display
-        if picking_subtype == 'picking':
-            field = 'picking'
-        elif picking_subtype == 'ppl':
-            if step == 'ppl1':
-                field = 'ppl'
-            elif step == 'ppl2':
-                field = 'families'
         
         _moves_arch_lst = """<form string="%s">
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
-                        <field name="product_moves_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                        """ % (_('Process Document'), _('Products'), field)
+                        <field name="product_moves_shipment_%s" colspan="4" nolabel="1" mode="tree,form"></field>
+                        """ % (_('Process Document'), _('Products'), step)
         _moves_fields = result['fields']
 
         # add field related to picking type only
         _moves_fields.update({
-                            'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'}, 
+                            'product_moves_shipment_' + step: {'relation': 'stock.move.memory.shipment.' + step, 'type' : 'one2many', 'string' : 'Product Moves'}, 
                             })
 
         # specify the button according to the screen
-        # picking, two wizard steps
-        # refactoring is needed here !
-        if picking_subtype == 'picking':
-            if step == 'create':
-                button = ('do_create_picking', 'Create Picking')
-            elif step == 'validate':
-                button = ('do_validate_picking', 'Validate Picking')
-        # ppl, two wizard steps
-        elif picking_subtype == 'ppl':
-            if step == 'ppl1':
-                button = ('do_ppl1', 'Next')
-            if step == 'ppl2':
-                button = ('do_ppl2', 'Validate PPL')
+        if step == 'create':
+            button = ('do_create_shipment', 'Create Shipment')
         else:
-            button = ('undefined', 'Undefined')
+            button = ('undefined', 'Undefined: %s'%step)
                 
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
                 <group col="3" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
-                    string="_Cancel" />"""
-                    
-        if step == 'ppl2':
-            _moves_arch_lst += """
-                <button name="back_ppl1" string="previous"
-                    colspan="1" type="object" icon="gtk-go-back" />"""
-                    
-        _moves_arch_lst += """
+                    string="_Cancel" />
+                <button name="select_all" string="Select All"
+                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
             </group>
@@ -242,342 +170,58 @@ class shipment_wizard(osv.osv_memory):
         result['fields'] = _moves_fields
         return result
     
-    def generate_move_as_key(self, cr, uid, ids, context=None):
-        '''
-        
-        '''
-        pass
-    
     def generate_data_from_partial(self, cr, uid, ids, context=None):
         '''
-        data is located in product_moves_ppl
+        data is located in product_moves_shipment_create
         
-        we generate the data structure from the first ppl wizard (ppl1)
+        we generate the data structure from the shipment wizard
         
         structure :
-        {pick_id: {from_pack: {to_pack: {move_id: [{partial},]}}}}
-        
-        data are indexed by pack_id, then by pack_family information (from_pack/to_pack)
-        and finally by move_id. Move_id indexing is added because within one
-        pack sequence we can find the same move_id multiple time thanks to split function.
-        
-        with partial beeing the info for one stock.move.memory.ppl
+        {shipment_id: {draft_packing_id: {from_pack: {to_pack: {partial}]}}}}
         '''
         # integrity check
         assert context, 'no context, method call is wrong'
-        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
+        assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         
-        pick_obj = self.pool.get('stock.picking')
+        shipment_obj = self.pool.get('stock.picking')
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         # returned datas
-        partial_datas_ppl1 = {}
+        partial_datas_shipment = {}
         
         # picking ids
-        picking_ids = context['active_ids']
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+        shipment_ids = context['active_ids']
+        for ship in shipment_obj.browse(cr, uid, shipment_ids, context=context):
             # for each picking
-            partial_datas_ppl1[pick.id] = {}
+            partial_datas_shipment[ship.id] = {}
             # ppl moves
-            memory_moves_list = partial.product_moves_ppl
+            pack_family_list = partial.product_moves_shipment_create
             # organize data according to from pack / to pack
-            for move in memory_moves_list:
-                partial_datas_ppl1[pick.id].setdefault(move.from_pack, {}).setdefault(move.to_pack, {}).setdefault(move.move_id.id, []).append({
-                                                                                                              'product_id': move.product_id.id,
-                                                                                                              'product_qty': move.quantity,
-                                                                                                              'product_uom': move.product_uom.id,
-                                                                                                              'prodlot_id': move.prodlot_id.id,
-                                                                                                              'asset_id': move.asset_id.id,
-                                                                                                              'move_id': move.move_id.id,
-                                                                                                              'qty_per_pack': move.qty_per_pack,
-                                                                                                              'from_pack': move.from_pack,
-                                                                                                              'to_pack': move.to_pack,
-                                                                                                              })
+            for pack_family in pack_family_list:
+                fields = ['from_pack', 'to_pack', 'length', 'width', 'height', 'weight', 'num_to_ship']
+                values = dict(zip(fields, [eval('pack_family.%s'%x) for x in fields]))
+                values.update({'pack_type': pack_family.pack_type.id, 'draft_packing_id': pack_family.draft_packing_id.id})
+                partial_datas_shipment[ship.id] \
+                    .setdefault(pack_family.draft_packing_id.id, {}) \
+                    .setdefault(pack_family.from_pack, {})[pack_family.to_pack] = values
                 
-        return partial_datas_ppl1
+        return partial_datas_shipment
     
-    def update_data_from_partial(self, cr, uid, ids, context=None):
+    def do_create_shipment(self, cr, uid, ids, context=None):
         '''
-        update the list corresponding to moves for each sequence with ppl2 information
-        
-        generated structure from step ppl1 wizard is updated with step ppl2 wizard,
-        the partial dictionaries are updated with pack_family related information
-        
-        structure :
-        {pick_id: {from_pack: {to_pack: {move_id: [{partial},]}}}}
-        '''
-        assert context, 'no context defined'
-        assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
-        
-        pick_obj = self.pool.get('stock.picking')
-        family_obj = self.pool.get('stock.move.memory.families')
-        # partial data from wizard
-        partial = self.browse(cr, uid, ids[0], context=context)
-        # ppl families
-        memory_families_list = partial.product_moves_families
-        for family in memory_families_list:
-            a=1
-        # returned datas
-        partial_datas_ppl1 = context['partial_datas_ppl1']
-        
-        # picking ids
-        picking_ids = context['active_ids']
-        for picking_id in picking_ids:
-            # for each picking
-            for from_pack in partial_datas_ppl1[picking_id]:
-                for to_pack in partial_datas_ppl1[picking_id][from_pack]:
-                    # find corresponding sequence info
-                    family_ids = family_obj.search(cr, uid, [('wizard_id', '=', ids[0]), ('from_pack', '=', from_pack), ('to_pack', '=', to_pack)], context=context)
-                    # only one line should match
-                    assert len(family_ids) == 1, 'No the good number of families : %i'%len(family_ids)
-                    family = family_obj.read(cr, uid, family_ids, ['pack_type', 'length', 'width', 'height', 'weight'], context=context)[0]
-                    # remove id key
-                    family.pop('id')
-                    for move in partial_datas_ppl1[picking_id][from_pack][to_pack]:
-                        for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
-                            partial.update(family)
-        
-    def do_create_picking(self, cr, uid, ids, context=None):
-        '''
-        create the picking ticket from selected stock moves
-        -> only related to 'out' type stock.picking
-        
-        - transform data from wizard
+        gather data from wizard pass it to do_create_shipment method of shipment class
         '''
         # integrity check
         assert context, 'no context, method call is wrong'
-        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        # picking ids
-        picking_ids = context['active_ids']
-        assert len(picking_ids) == 1, 'Number of picking ids is not valid (%i)' % len(picking_ids)
-        picking_id = picking_ids[0]
-        # partial data from wizard
-        partial = self.browse(cr, uid, ids[0], context=context)
-        # qty
-        if not all([move.quantity > 0 for move in partial.product_moves_picking]):
-            raise osv.except_osv(_('Error!'),  _('Selected quantity must be positive or equal to zero.'))
+        assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         
-        pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-
-        # date of the picking ticket creation, not used for now
-        partial_datas = {}
-#        partial_datas = {
-#            'delivery_date' : partial.date
-#        }
-        
-        pick = pick_obj.browse(cr, uid, picking_id, context=context)
-        # out moves for delivery
-        memory_moves_list = partial.product_moves_picking
-        # organize data according to move id
-        for move in memory_moves_list:
-            partial_datas.setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
-                                                                   'product_qty': move.quantity,
-                                                                   'product_uom': move.product_uom.id,
-                                                                   'prodlot_id': move.prodlot_id.id,
-                                                                   'asset_id': move.asset_id.id,
-                                                                   })
-    
-        # create the new picking object
-        # TODO origin is not copied if name is not supplied as default.
-        #      create a new sequence for each draft picking ticket, and bricoler with draft ref or something for traceability
-        new_pick_id = pick_obj.copy(cr, uid, picking_id, {'move_lines': []}, context=context)
-        pick_obj.write(cr, uid, [new_pick_id], {'origin': pick.origin, 'backorder_id': picking_id}, context=context)
-        # create stock moves corresponding to partial datas
-        # browse returns a list of browse object in the same order as move_ids
-        # for now, each new line from the wizard corresponds to a new stock.move
-        # it could be interesting to regroup according to production lot/asset id
-        move_ids = partial_datas.keys()
-        browse_moves = move_obj.browse(cr, uid, move_ids, context=context)
-        moves = dict(zip(move_ids, browse_moves))
-        for move in partial_datas:
-            # qty selected
-            count = 0
-            # initial qty
-            initial_qty = moves[move].product_qty
-            for partial in partial_datas[move]:
-                # integrity check
-                partial['product_id'] == moves[move].product_id.id
-                partial['product_uom'] == moves[move].product_uom.id
-                # the quantity
-                count = count + partial['product_qty']
-                # copy the stock move and set the quantity
-                new_move = move_obj.copy(cr, uid, move, {'picking_id': new_pick_id,
-                                                         'product_qty': partial['product_qty'],
-                                                         'prodlot_id': partial['prodlot_id'],
-                                                         'asset_id': partial['asset_id']}, context=context)
-            # decrement the initial move, cannot be less than zero
-            initial_qty = max(initial_qty - count, 0)
-            move_obj.write(cr, uid, [move], {'product_qty': initial_qty}, context=context)
-            
-        # confirm the new picking ticket
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
-        
-        # TODO which behavior
-        return {'type': 'ir.actions.act_window_close'}
-        # display newly created picking ticket
-        return {
-            'name':_("Picking Ticket"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': new_pick_id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-        }
-        
-    def do_validate_picking(self, cr, uid, ids, context=None):
-        '''
-        create the picking ticket from selected stock moves
-        -> only related to 'out' type stock.picking
-        
-        - transform data from wizard
-        '''
-        # integrity check
-        assert context, 'no context, method call is wrong'
-        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
-        pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-        wf_service = netsvc.LocalService("workflow")
-        # partial data from wizard
-        partial = self.browse(cr, uid, ids[0], context=context)
-        # quantity check
-        if not all([move.quantity >= 0 for move in partial.product_moves_picking]):
-            raise osv.except_osv(_('Error!'),  _('Selected quantity must be positive or equal to zero.'))
-        
-        # data container
-        # date of the picking ticket creation, not used for now
-            #partial_datas = {
-            #                 'delivery_date' : partial.date
-            #}
-        partial_datas = {}
-        
-        # picking ids
-        picking_ids = context['active_ids']
-        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-            # for each picking
-            partial_datas[pick.id] = {}
-            # out moves for delivery
-            memory_moves_list = partial.product_moves_picking
-            # organize data according to move id
-            for move in memory_moves_list:
-                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
-                                                                       'product_qty': move.quantity,
-                                                                       'product_uom': move.product_uom.id,
-                                                                       'prodlot_id': move.prodlot_id.id,
-                                                                       'asset_id': move.asset_id.id,
-                                                                       })
-            
-            # create stock moves corresponding to partial datas
-            # browse returns a list of browse object in the same order as move_ids
-            move_ids = partial_datas[pick.id].keys()
-            browse_moves = move_obj.browse(cr, uid, move_ids, context=context)
-            moves = dict(zip(move_ids, browse_moves))
-            
-            for move in partial_datas[pick.id]:
-                # qty selected
-                count = 0
-                # flag to update the first move
-                first = True
-                # initial qty
-                initial_qty = moves[move].product_qty
-                for partial in partial_datas[pick.id][move]:
-                    # integrity check
-                    partial['product_id'] == moves[move].product_id.id
-                    partial['product_uom'] == moves[move].product_uom.id
-                    # the quantity
-                    count = count + partial['product_qty']
-                    if first:
-                        first = False
-                        # update existing move
-                        move_obj.write(cr, uid, move, {'product_qty': partial['product_qty'],
-                                                       'prodlot_id': partial['prodlot_id'],
-                                                       'asset_id': partial['asset_id']}, context=context)
-                    else:
-                        # copy the stock move and set the quantity
-                        new_move = move_obj.copy(cr, uid, move, {'state': 'assigned',
-                                                                 'product_qty': partial['product_qty'],
-                                                                 'prodlot_id': partial['prodlot_id'],
-                                                                 'asset_id': partial['asset_id']}, context=context)
-                # decrement the initial move, cannot be less than zero
-                diff_qty = initial_qty - count
-                if diff_qty != 0:
-                    backorder_id = pick.backorder_id.id
-                    assert backorder_id, 'No backorder defined.'
-                    original_move = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
-                                                              ('product_id', '=', moves[move].product_id.id),
-                                                              ('product_uom', '=', moves[move].product_uom.id)])
-                    assert original_move, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
-                    backorder_qty = move_obj.read(cr, uid, original_move, ['product_qty'], context=context)[0]['product_qty']
-                    backorder_qty = max(backorder_qty + diff_qty, 0)
-                    move_obj.write(cr, uid, original_move[0], {'product_qty': backorder_qty}, context=context)
-        
-            # create the new ppl object
-            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'subtype': 'ppl', 'previous_step_id': pick.id}, context=context)
-            pick_obj.write(cr, uid, [new_ppl_id], {'origin': pick.origin}, context=context)
-            new_ppl = pick_obj.browse(cr, uid, new_ppl_id, context=context)
-            # update locations of stock moves
-            for move in new_ppl.move_lines:
-                move.write({'location_id': new_ppl.sale_id.shop_id.warehouse_id.lot_packing_id.id,
-                            'location_dest_id': new_ppl.sale_id.shop_id.warehouse_id.lot_dispatch_id.id}, context=context)
-            
-            wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
-            # simulate check assign button, as stock move must be available
-            new_ppl.action_assign()
-            # trigger standard workflow
-            pick_obj.action_move(cr, uid, [pick.id])
-            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
-        
-        # close wizard
-        return {'type': 'ir.actions.act_window_close'}
-        
-    def do_ppl1(self, cr, uid, ids, context=None):
-        '''
-        - generate data
-        - call stock.picking>do_ppl1
-        '''
-        # integrity check
-        assert context, 'no context, method call is wrong'
-        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
-        pick_obj = self.pool.get('stock.picking')
-        # picking ids
-        picking_ids = context['active_ids']
+        ship_obj = self.pool.get('shipment')
+        # shipment ids
+        shipment_ids = context['active_ids']
         # generate data structure
-        partial_datas_ppl1 = self.generate_data_from_partial(cr, uid, ids, context=context)
+        partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
-        return pick_obj.do_ppl1(cr, uid, picking_ids, context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
+        return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
     
-    def back_ppl1(self, cr, uid, ids, context=None):
-        '''
-        call back ppl1 step wizard
-        '''
-        # we need the context for the wizard switch
-        assert context, 'no context defined'
-        
-        pick_obj = self.pool.get('stock.picking')
-        
-        # no data for type 'back'
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
-        
-    def do_ppl2(self, cr, uid, ids, context=None):
-        '''
-        - update partial_datas_ppl1
-        - call stock.picking>do_ppl2
-        '''
-        # integrity check
-        assert context, 'no context, method call is wrong'
-        assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
-        pick_obj = self.pool.get('stock.picking')
-        # picking ids
-        picking_ids = context['active_ids']
-        # update data structure
-        self.update_data_from_partial(cr, uid, ids, context=context)
-        # call stock_picking method which returns action call
-        return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 
 shipment_wizard()

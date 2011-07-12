@@ -65,9 +65,9 @@
                     <field name="from_pack" readonly="True" />
                     <field name="to_pack" readonly="True" />
                     <field name="pack_type" readonly="True" />
-					<field name="weight" />
+					<field name="weight" readonly="True" />
 					<field name="num_of_packs" readonly="True" />
-					<field name="num_to_ship" readonly="True" />
+					<field name="num_to_ship" />
 					<field name="weight_to_ship" readonly="True" />
                 </tree>
             </field>
