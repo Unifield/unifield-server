@@ -14,6 +14,9 @@
         <record id="supply_source_local" model="product.supply.source">
             <field name="source">Local</field>
         </record>
+        <record id="supply_source_non_local" model="product.supply.source">
+            <field name="source">Non Local</field>
+        </record>
         
     </data>
 </openerp>
