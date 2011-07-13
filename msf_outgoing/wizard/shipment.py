@@ -198,12 +198,14 @@ class shipment_wizard(osv.osv_memory):
             pack_family_list = partial.product_moves_shipment_create
             # organize data according to from pack / to pack
             for pack_family in pack_family_list:
-                fields = ['from_pack', 'to_pack', 'length', 'width', 'height', 'weight', 'num_to_ship']
-                values = dict(zip(fields, [eval('pack_family.%s'%x) for x in fields]))
-                values.update({'pack_type': pack_family.pack_type.id, 'draft_packing_id': pack_family.draft_packing_id.id})
-                partial_datas_shipment[ship.id] \
-                    .setdefault(pack_family.draft_packing_id.id, {}) \
-                    .setdefault(pack_family.from_pack, {})[pack_family.to_pack] = values
+                if pack_family.num_to_ship:
+                    # only take into account if packs have been selected
+                    fields = ['from_pack', 'to_pack', 'length', 'width', 'height', 'weight', 'num_to_ship']
+                    values = dict(zip(fields, [eval('pack_family.%s'%x) for x in fields]))
+                    values.update({'pack_type': pack_family.pack_type.id, 'draft_packing_id': pack_family.draft_packing_id.id})
+                    partial_datas_shipment[ship.id] \
+                        .setdefault(pack_family.draft_packing_id.id, {}) \
+                        .setdefault(pack_family.from_pack, {})[pack_family.to_pack] = values
                 
         return partial_datas_shipment
     

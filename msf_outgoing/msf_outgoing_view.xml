@@ -857,6 +857,7 @@
                                 <field name="state" readonly="1"/>
                                 <button name="return_packs" states="draft" string="Return Packs..." type="object" icon="gtk-jump-to"/>
                                 <button name="create_shipment" states="draft" string="Create Shipment..." type="object" groups="base.group_extended" icon="gtk-add" />
+                                <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-add" />
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>

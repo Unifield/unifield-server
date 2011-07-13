@@ -402,6 +402,8 @@ class create_picking(osv.osv_memory):
         # confirm the new picking ticket
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
+        # we check availability - could be available or not
+        pick_obj.action_assign(cr, uid, [new_pick_id])
         
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
@@ -496,13 +498,13 @@ class create_picking(osv.osv_memory):
                 if diff_qty != 0:
                     backorder_id = pick.backorder_id.id
                     assert backorder_id, 'No backorder defined.'
-                    original_move = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
+                    original_moves = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
                                                               ('product_id', '=', moves[move].product_id.id),
                                                               ('product_uom', '=', moves[move].product_uom.id)])
-                    assert len(original_move) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
-                    backorder_qty = move_obj.read(cr, uid, original_move, ['product_qty'], context=context)[0]['product_qty']
+                    assert len(original_moves) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
+                    backorder_qty = move_obj.read(cr, uid, original_moves, ['product_qty'], context=context)[0]['product_qty']
                     backorder_qty = max(backorder_qty + diff_qty, 0)
-                    move_obj.write(cr, uid, original_move, {'product_qty': backorder_qty}, context=context)
+                    move_obj.write(cr, uid, original_moves, {'product_qty': backorder_qty}, context=context)
         
             # create the new ppl object
             new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'subtype': 'ppl', 'previous_step_id': pick.id}, context=context)
@@ -515,7 +517,7 @@ class create_picking(osv.osv_memory):
             
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
             # simulate check assign button, as stock move must be available
-            new_ppl.action_assign()
+            pick_obj.action_assign(cr, uid, [new_ppl_id])
             # trigger standard workflow
             pick_obj.action_move(cr, uid, [pick.id])
             wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
