@@ -49,6 +49,22 @@ class stock_partial_move_memory_picking(osv.osv_memory):
 stock_partial_move_memory_picking()
 
 
+class stock_partial_move_memory_returnproducts(osv.osv_memory):
+    '''
+    memory move for ppl return products step
+    '''
+    _name = "stock.move.memory.returnproducts"
+    _inherit = "stock.move.memory.picking"
+    _columns = {'qty_to_return': fields.integer(string='Qty to return'),
+                }
+    
+    _defaults = {
+        'qty_to_return': 0.0,
+    }
+
+stock_partial_move_memory_returnproducts()
+
+
 class stock_partial_move_memory_ppl(osv.osv_memory):
     '''
     memory move for ppl step
@@ -161,8 +177,20 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
                 'num_of_packs': fields.integer(string='#Packs'),
-                'num_to_ship': fields.integer(string='Number to ship'),
-                'weight_to_ship' : fields.float(digits=(16,2), string='Weight to ship [kg]'),
+                'selected_number': fields.integer(string='Selected Number'),
+                'selected_weight' : fields.float(digits=(16,2), string='Selected Weight [kg]'),
     }
     
 stock_partial_move_memory_shipment_create()
+
+
+class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
+    '''
+    view corresponding to pack families for packs return
+    
+    integrity constraint 
+    '''
+    _name = "stock.move.memory.shipment.returnpacks"
+    _inherit = "stock.move.memory.shipment.create"
+    
+stock_partial_move_memory_shipment_returnpacks()

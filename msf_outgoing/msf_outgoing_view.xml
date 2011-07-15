@@ -426,11 +426,10 @@
                             <group col="12" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="flow_type" />
-                                <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
+                                <button name="return_products" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-execute"/>
                                 <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="ppl" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
-                                <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
@@ -857,7 +856,9 @@
                                 <field name="state" readonly="1"/>
                                 <button name="return_packs" states="draft" string="Return Packs..." type="object" icon="gtk-jump-to"/>
                                 <button name="create_shipment" states="draft" string="Create Shipment..." type="object" groups="base.group_extended" icon="gtk-add" />
+                                <button name="action_cancel" states="packed" string="Cancel" type="object" groups="base.group_extended" icon="gtk-cancel" />
                                 <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-add" />
+                                <button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-add" />
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>

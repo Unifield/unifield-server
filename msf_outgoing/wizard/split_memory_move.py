@@ -91,7 +91,7 @@ class split_memory_move(osv.osv_memory):
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
-            # create new memory move
+            # create new memory move - copy for memory is not implemented
             default_val = {'product_id': memory_move.product_id.id,
                            'quantity': new_qty,
                            'product_uom': memory_move.product_uom.id,

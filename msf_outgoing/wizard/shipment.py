@@ -35,6 +35,7 @@ class shipment_wizard(osv.osv_memory):
         'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
         'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer'),
         'product_moves_shipment_create' : fields.one2many('stock.move.memory.shipment.create', 'wizard_id', 'Pack Families'),
+        'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
      }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -68,14 +69,14 @@ class shipment_wizard(osv.osv_memory):
             return res
 
         result = []
-        if step in ('create'):
+        if step in ('create', 'returnpacks'):
             # generate data from shipment
             shipments = shipment_obj.browse(cr, uid, shipment_ids, context=context)
             for ship in shipments:
                 address_id = ship.address_id.id
                 # gather the picking sharing this draft shipment - the address_id is specified as integrity check
                 picking_ids = pick_obj.search(cr, uid, [('shipment_id', '=', ship.id), ('address_id', '=', address_id)], context=context)
-                data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, picking_ids, context=None)
+                data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, picking_ids, object_type='memory', context=None)
                 # structure the data to display
                 result.extend(self.__create_pack_families_memory(data, context=context))
         else:
@@ -84,6 +85,9 @@ class shipment_wizard(osv.osv_memory):
 
         if 'product_moves_shipment_create' in fields and step in ('create'):
             res.update({'product_moves_shipment_create': result})
+            
+        if 'product_moves_shipment_returnpacks' in fields and step in ('returnpacks'):
+            res.update({'product_moves_shipment_returnpacks': result})
             
         if 'date' in fields:
             res.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
@@ -98,13 +102,11 @@ class shipment_wizard(osv.osv_memory):
     
     def __create_pack_families_memory(self, data, context=None):
         '''
-        generates the memory objects data depending on wizard step
+        generates the memory objects data
         
         - wizard_id seems to be filled automatically
         '''
         assert context, 'No context defined'
-        assert 'step' in context, 'No step defined in context'
-        step = context['step']
         
         # list for the current pick object
         result = []
@@ -150,6 +152,10 @@ class shipment_wizard(osv.osv_memory):
         # specify the button according to the screen
         if step == 'create':
             button = ('do_create_shipment', 'Create Shipment')
+            
+        elif step == 'returnpacks':
+            button = ('do_return_packs', 'Return Packs')
+            
         else:
             button = ('undefined', 'Undefined: %s'%step)
                 
@@ -182,6 +188,8 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
+        assert 'step' in context, 'No step defined in context'
+        step = context['step']
         
         shipment_obj = self.pool.get('stock.picking')
         # partial data from wizard
@@ -195,12 +203,12 @@ class shipment_wizard(osv.osv_memory):
             # for each picking
             partial_datas_shipment[ship.id] = {}
             # ppl moves
-            pack_family_list = partial.product_moves_shipment_create
+            pack_family_list = eval('partial.product_moves_shipment_%s'%step)
             # organize data according to from pack / to pack
             for pack_family in pack_family_list:
-                if pack_family.num_to_ship:
+                if pack_family.selected_number:
                     # only take into account if packs have been selected
-                    fields = ['from_pack', 'to_pack', 'length', 'width', 'height', 'weight', 'num_to_ship']
+                    fields = ['from_pack', 'to_pack', 'length', 'width', 'height', 'weight', 'selected_number']
                     values = dict(zip(fields, [eval('pack_family.%s'%x) for x in fields]))
                     values.update({'pack_type': pack_family.pack_type.id, 'draft_packing_id': pack_family.draft_packing_id.id})
                     partial_datas_shipment[ship.id] \
@@ -211,7 +219,7 @@ class shipment_wizard(osv.osv_memory):
     
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
-        gather data from wizard pass it to do_create_shipment method of shipment class
+        gather data from wizard pass it to the do_create_shipment method of shipment class
         '''
         # integrity check
         assert context, 'no context, method call is wrong'
@@ -224,6 +232,22 @@ class shipment_wizard(osv.osv_memory):
         partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
+    
+    def do_return_packs(self, cr, uid, ids, context=None):
+        '''
+        gather data from wizard pass it to the do_return_packs method of shipment class
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
+        
+        ship_obj = self.pool.get('shipment')
+        # shipment ids
+        shipment_ids = context['active_ids']
+        # generate data structure
+        partial_datas = self.generate_data_from_partial(cr, uid, ids, context=context)
+        # call stock_picking method which returns action call
+        return ship_obj.do_return_packs(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     
 
 shipment_wizard()
