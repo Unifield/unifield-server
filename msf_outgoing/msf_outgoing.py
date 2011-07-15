@@ -273,8 +273,18 @@ class shipment(osv.osv):
             picking_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
             
             for picking in pick_obj.browse(cr, uid, picking_ids, context=context):
+                # get draft_shipment reference
+                draft_shipment_id = picking.backorder_id.shipment_id.id
                 # we cancel each picking object
                 wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_cancel', cr)
+            
+            # redo pack families for canceled shipment
+            pick_obj.update_pack_families(cr, uid, shipment.id, context=context)
+            # redo pack families for draft shipment
+            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
+            
+        # cancel all shipments
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
                 
         return True
     
@@ -381,7 +391,10 @@ class pack_family(osv.osv):
                 'state': fields.selection([
                                            ('draft', 'Draft'),
                                            ('assigned', 'Available'),
-                                           ('done', 'Returned')], string='State', readonly=True, select=True),
+                                           ('stock_return', 'Returned to Stock'),
+                                           ('ship_return', 'Returned from Shipment'),
+                                           ('cancel', 'Canceled'),
+                                           ('done', 'Done'),], string='State', readonly=True, select=True),
                 }
     _defaults = {'state': 'draft'}
 
@@ -412,6 +425,18 @@ class stock_picking(osv.osv):
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 }
+    
+    def update_pack_families(self, cr, uid, shipment_id, object_type='shipment', from_pack=False, to_pack=False, context=None):
+        '''
+        update the pack families and delete them
+        '''
+        # get the pick_ids
+        pick_ids = self.search(cr, uid, [('shipment_id', '=', shipment_id)], context=context)
+        
+        # all moves have been created / updated. original shipment's pfs are updated
+        data = self.generate_data_from_picking_for_pack_family(cr, uid, pick_ids, object_type, from_pack, to_pack, context=context)
+        # create the pack_familiy objects from stock.picking object
+        self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
     
     def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, object_type='shipment', from_pack=False, to_pack=False, context=None):
         '''
@@ -938,9 +963,11 @@ class stock_picking(osv.osv):
           the behavior will be different
         
         Cancel button is active for the picking object:
-        - subtype: 'picking', 'state': 'confirmed' or 'assigned'
+        - subtype: 'picking'
         Cancel button is active for the shipment object:
-        - subtype: 'packing', 'state': 'assigned'
+        - subtype: 'packing'
+        
+        state is not taken into account as picking is canceled before
         '''
         move_obj = self.pool.get('stock.move')
         
@@ -949,7 +976,7 @@ class stock_picking(osv.osv):
         super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         
         for picking in self.browse(cr, uid, ids, context=context):
-            if picking.subtye == 'picking' and picking.state in ('confirmed', 'assigned'):
+            if picking.subtype == 'picking':
                 # for each picking
                 # get the draft picking
                 draft_picking_id = picking.backorder_id.id
@@ -967,7 +994,7 @@ class stock_picking(osv.osv):
                     initial_qty += move.product_qty
                     move_obj.write(cr, uid, draft_move_ids, {'product_qty': initial_qty}, context=context)
                     
-            if picking.subtype == 'packing' and picking.state in ('assigned'):
+            if picking.subtype == 'packing':
                 # for each packing we get the draft packing
                 draft_packing_id = picking.backorder_id.id
                 
@@ -979,18 +1006,21 @@ class stock_picking(osv.osv):
                     # if equal to draft to_pack = move from_pack - 1 (as we always take the pack with the highest number available)
                     # we can increase the qty and update draft to_pack
                     # otherwise we copy the draft packing move with udpated quantity and from/to
-                    draft_read = self.read(cr, uid, [draft_move_id], ['product_qty', 'to_pack'], context=context)[0]
+                    draft_read = move_obj.read(cr, uid, [draft_move_id], ['product_qty', 'to_pack'], context=context)[0]
                     draft_to_pack = draft_read['to_pack']
                     if draft_to_pack + 1 == move.from_pack:
                         # updated quantity
                         draft_qty = draft_read['product_qty'] + move.product_qty
                         # update the draft move
-                        self.write(cr, uid, [draft_move_id], {'product_qty': draft_qty, 'to_pack': move.to_pack}, context=context)
+                        move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_qty, 'to_pack': move.to_pack}, context=context)
                     else:
                         # copy draft move (to be sure not to miss original info) with move qty and from/to
                         move_obj.copy(cr, uid, draft_move_id, {'product_qty': move.product_qty,
                                                                'from_pack': move.from_pack,
-                                                               'to_pack': move.to_pack}, context=context)
+                                                               'to_pack': move.to_pack,
+                                                               'state': 'assigned'}, context=context)
+                        
+        return True
             
 
 stock_picking()
