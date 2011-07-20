@@ -347,7 +347,16 @@ class shipment(osv.osv):
                             # old one is always removed
                             stay.pop(i)
                         
-                        # we have the 
+                        # we have the information concerning movements to updated the packing and to update the draft packing
+                        
+                        # update the packing object, we update the existing move
+                        # if needed new moves are created
+                        # if packs are returned, the shipping is canceled
+                        # update the corresponding shipment object [one time for each shipment id]
+                        
+                        # update the draft packing object (adding returned pack moves)
+                        # update the corresponding shipment object [one time for each shipment id ??]
+                        
         
         return True
                             
