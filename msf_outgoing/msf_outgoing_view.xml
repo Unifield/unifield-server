@@ -858,7 +858,7 @@
                                 <button name="create_shipment" states="draft" string="Create Shipment..." type="object" groups="base.group_extended" icon="gtk-add" />
                                 <button name="action_cancel" states="packed" string="Cancel Shipment" type="object" groups="base.group_extended" icon="gtk-cancel" />
                                 <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-add" />
-                                <button name="return_packs" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-jump-to"/>
+                                <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-jump-to"/>
                                 <button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-add" />
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>

@@ -174,7 +174,6 @@ class shipment(osv.osv):
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        shipment_obj = self.pool.get('shipment')
         
         # data from wizard
         partial_datas = context['partial_datas']
@@ -190,7 +189,7 @@ class shipment(osv.osv):
                 for from_pack in partial_datas[draft_shipment_id][draft_packing.id]:
                     for to_pack in partial_datas[draft_shipment_id][draft_packing.id][from_pack]:
                         # partial data for one sequence of one draft packing
-                        data = partial_datas[draft_shipment_id][draft_packing.id][from_pack][to_pack]
+                        data = partial_datas[draft_shipment_id][draft_packing.id][from_pack][to_pack][0]
                         
                         # total number of packs
                         total_num = to_pack - from_pack + 1
@@ -256,6 +255,103 @@ class shipment(osv.osv):
                             
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
+    
+    def return_packs_from_shipment(self, cr, uid, ids, context=None):
+        '''
+        open the wizard to return packs from draft shipment
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+            
+        pick_obj = self.pool.get('stock.picking')
+        
+        # data
+        name = _("Return Packs from Shipment")
+        model = 'shipment.wizard'
+        step = 'returnpacksfromshipment'
+        # open the selected wizard
+        return pick_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+    
+    def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
+        '''
+        return the packs to the corresponding draft packing object
+        
+        for each corresponding draft packing
+        - 
+        '''
+        # integrity check
+        assert context, 'no context, method call is wrong'
+        assert 'partial_datas' in context, 'partial_datas no defined in context'
+        
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        # data from wizard
+        partial_datas = context['partial_datas']
+        # shipment ids from ids must be equal to shipment ids from partial datas
+        assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
+        
+        # for each shipment
+        for shipment_id in partial_datas:
+            # for each packing
+            for packing in pick_obj.browse(cr, uid, partial_datas[shipment_id].keys(), context=context):
+                # corresponding draft packing -> backorder
+                draft_packing_id = packing.backorder_id.id
+                # for each sequence
+                for from_pack in partial_datas[shipment_id][packing.id]:
+                    for to_pack in partial_datas[shipment_id][packing.id][from_pack]:
+                        # partial datas for one sequence of one packing
+                        # could have multiple data because of line split
+                        datas = partial_datas[shipment_id][packing.id][from_pack][to_pack]
+                        # the list of tuple representing the packing movements from/to - default to sequence value
+                        stay = [(from_pack, to_pack)]
+                        # the list of tuple representing the draft packing movements from/to
+                        back_to_draft = []
+                        
+                        # loop the partials
+                        for partial in datas:
+                            return_from = partial['return_from']
+                            return_to = partial['return_to']
+                            # create the corresponding tuple
+                            back_to_draft.append((return_from, return_to))
+                            # stay list must be ordered
+                            sorted(stay)
+                            # find the corresponding tuple in the stay list
+                            for i in range(len(stay)):
+                                # the tuple are ordered
+                                t = stay[i]
+                                if t[1] >= return_to:
+                                    # this is the good tuple
+                                    # stay tuple creation logic
+                                    if return_from == t[0]:
+                                        if return_to == t[1]:
+                                            # all packs for this sequence are sent back - simply remove it
+                                            break
+                                        else:
+                                            # to+1-t[1] in stay
+                                            stay.append((return_to+1, t[1]))
+                                            break
+                                    
+                                    elif return_to == t[1]:
+                                        # do not start at beginning, but same end
+                                        stay.append((t[0], return_from-1))
+                                        break
+                                    
+                                    else:
+                                        # in the middle, two new tuple in stay
+                                        stay.append((t[0], return_from-1))
+                                        stay.append((return_to+1, t[1]))
+                                        break
+                            
+                            # old one is always removed
+                            stay.pop(i)
+                        
+                        # we have the 
+        
+        return True
+                            
+                            
     
     def action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -583,7 +679,7 @@ class stock_picking(osv.osv):
                         # total number of packs
                         total_num = to_pack - from_pack + 1
                         # number of selected packs to ship
-                        selected_number = data[from_pack][to_pack]['selected_number']
+                        selected_number = data[from_pack][to_pack][0]['selected_number']
                         # we take the packs with the highest numbers
                         # new moves
                         selected_from_pack = to_pack - selected_number + 1
@@ -664,7 +760,7 @@ class stock_picking(osv.osv):
     
     def open_wizard(self, cr, uid, ids, name=False, model=False, step='default', type='create', context=None):
         '''
-        WARNING : IDS CORRESPOND TO ***PICKING IDS*** take care when calling the method
+        WARNING : IDS CORRESPOND TO ***MAIN OBJECT IDS*** (picking for example) take care when calling the method from wizards
         return the newly created wizard's id
         name, model, step are mandatory only for type 'create'
         '''
@@ -697,6 +793,17 @@ class stock_picking(osv.osv):
             model = context['back_model']
             assert context['back_step'], 'no back_step defined'
             step = context['back_step']
+            
+        elif type == 'update':
+            # refresh the same wizard
+            assert context['wizard_ids'], 'no wizard_ids defined'
+            wizard_id = context['wizard_ids'][0]
+            assert context['wizard_name'], 'no wizard_name defined'
+            name = context['wizard_name']
+            assert context['model'], 'no model defined'
+            model = context['model']
+            assert context['step'], 'no step defined'
+            step = context['step']
             
         # call action to wizard view
         return {

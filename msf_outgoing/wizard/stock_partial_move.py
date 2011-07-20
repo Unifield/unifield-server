@@ -194,3 +194,46 @@ class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
     _inherit = "stock.move.memory.shipment.create"
     
 stock_partial_move_memory_shipment_returnpacks()
+
+
+class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory):
+    '''
+    view corresponding to pack families for packs return from shipment
+    
+    integrity constraint 
+    '''
+    _name = "stock.move.memory.shipment.returnpacksfromshipment"
+    _inherit = "stock.move.memory.shipment.returnpacks"
+    _columns = {
+                'return_from' : fields.integer(string="Return From"),
+                'return_to' : fields.integer(string="Return To"),
+    }
+    
+    def split(self, cr, uid, ids, context=None):
+        # quick integrity check
+        assert context, 'No context defined, problem on method call'
+        
+        pick_obj = self.pool.get('stock.picking')
+
+        for memory_move in self.browse(cr, uid, ids, context=context):
+                        
+            # create new memory move - copy for memory is not implemented
+            fields = self.fields_get(cr, uid, context=context)
+            values = {}
+            for key in fields.keys():
+                type= fields[key]['type']
+                if type not in ('one2many', 'many2one', 'one2one'):
+                    values[key] = getattr(memory_move, key)
+                elif type in ('many2one'):
+                    tmp = getattr(memory_move, key)
+                    values[key] = getattr(tmp, "id")
+                else:
+                    assert False, 'copy of %s value is not implemented'%type
+
+            new_memory_move = self.create(cr, uid, values, context=context)
+        
+        # udpate the original wizard
+        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
+    
+    
+stock_partial_move_memory_shipment_returnpacksfromshipment()

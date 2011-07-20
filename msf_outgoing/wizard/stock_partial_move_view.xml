@@ -89,25 +89,6 @@
             </field>
         </record>
         
-   		<record id="stock_move_memory_tree_shipment_create" model="ir.ui.view">
-            <field name="name">stock.move.memory.shipment.create.tree</field>
-            <field name="model">stock.move.memory.shipment.create</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree editable="bottom" string="Pack Families">
-                	<field name="sale_order_id" readonly="True" />
-                	<field name="ppl_id" readonly="True" />
-                    <field name="from_pack" readonly="True" />
-                    <field name="to_pack" readonly="True" />
-                    <field name="pack_type" readonly="True" />
-					<field name="weight" readonly="True" />
-					<field name="num_of_packs" readonly="True" />
-					<field name="selected_number" string="Number to Ship" />
-					<field name="selected_weight" string="Weight to Ship" readonly="True" />
-                </tree>
-            </field>
-        </record>
-        
    		<record id="stock_move_memory_tree_shipment_returnpacks" model="ir.ui.view">
             <field name="name">stock.move.memory.shipment.returnpacks.tree</field>
             <field name="model">stock.move.memory.shipment.returnpacks</field>
@@ -123,6 +104,26 @@
 					<field name="num_of_packs" readonly="True" />
 					<field name="selected_number" string="Number to Return" />
 					<field name="selected_weight" string="Weight to Return" readonly="True" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock_move_memory_tree_shipment_returnpacksfromshipment" model="ir.ui.view">
+            <field name="name">stock.move.memory.shipment.returnpacksfromshipment.tree</field>
+            <field name="model">stock.move.memory.shipment.returnpacksfromshipment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom" string="Pack Families">
+                	<field name="sale_order_id" readonly="True" />
+                	<field name="ppl_id" readonly="True" />
+                    <field name="from_pack" readonly="True" />
+                    <field name="to_pack" readonly="True" />
+                    <field name="pack_type" readonly="True" />
+					<field name="weight" readonly="True" />
+					<field name="return_from" />
+					<field name="return_to" />
+					<field name="selected_weight" string="Weight to Return" readonly="True" />
+					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
                 </tree>
             </field>
         </record>
