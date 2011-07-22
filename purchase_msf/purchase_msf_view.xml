@@ -36,6 +36,9 @@
 			<field name="inherit_id" ref="purchase.purchase_order_line_form" /> <!-- should be _form2 ?? used in purchase_msf_view.xml/order_nomenclature_select_product_view.xml -->
 			<field name="arch" type="xml">
 				<field name="price_unit" position="after">
+                    <field name="manufacturer_id" readonly="1"/>
+                    <field name="second_manufacturer_id" readonly="1"/>
+                    <field name="third_manufacturer_id" readonly="1"/>
 					<field name="internal_name" invisible="True" />
 					<field name="internal_code" invisible="True" />
 					<field name="supplier_name" invisible="True" />

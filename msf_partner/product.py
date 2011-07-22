@@ -30,6 +30,8 @@ class product_supplierinfo(osv.osv):
 
     _columns = {
         'manufacturer_id': fields.many2one('res.partner', string='Manufacturer', domain=[('manufacturer', '=', 1)]),
+        'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
+        'third_manufacturer_id': fields.many2one('res.partner', string='Third Manufacturer', domain=[('manufacturer', '=', 1)]),
     }
 
 product_supplierinfo()
