@@ -382,7 +382,9 @@ class create_picking(osv.osv_memory):
         # create the new picking object
         # TODO origin is not copied if name is not supplied as default.
         #      create a new sequence for each draft picking ticket, and bricoler with draft ref or something for traceability
-        new_pick_id = pick_obj.copy(cr, uid, picking_id, {'name': 'PICK/xxxx',
+        sequence = pick.sequence_id
+        ticket_number = sequence.get_id(test='id', context=context)
+        new_pick_id = pick_obj.copy(cr, uid, picking_id, {'name': pick.name + '-' + ticket_number,
                                                           'backorder_id': picking_id,
                                                           'move_lines': []}, context=context)
         # create stock moves corresponding to partial datas
@@ -520,7 +522,8 @@ class create_picking(osv.osv_memory):
                     move_obj.write(cr, uid, original_moves, {'product_qty': backorder_qty}, context=context)
         
             # create the new ppl object
-            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'name': 'PPL/xxxx',
+            ppl_number = pick.name.split("/")[1]
+            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
                                                           'subtype': 'ppl',
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False}, context=context)

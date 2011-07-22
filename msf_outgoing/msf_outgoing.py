@@ -75,6 +75,7 @@ class shipment(osv.osv):
                                            ('cancel', 'Canceled')], string='State', readonly=True, select=True),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+                'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", required=True, ondelete='cascade'),
                 }
     _defaults = {'state': 'draft'}
     
@@ -117,19 +118,23 @@ class shipment(osv.osv):
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas_shipment.keys()), 'shipment ids from ids and partial do not match'
         
-        for draft_shipment_id in partial_datas_shipment:
+        for draft_shipment in self.browse(cr, uid, partial_datas_shipment.keys(), context=context):
             # for each shipment create a new shipment which will be used by the group of new packing objects
-            address_id = shipment_obj.read(cr, uid, [draft_shipment_id], ['address_id'], context=context)[0]['address_id'][0]
-            values = {'name': 'SHIP/xxxx', 'state': 'packed', 'address_id': address_id}
+            address_id = shipment_obj.read(cr, uid, [draft_shipment.id], ['address_id'], context=context)[0]['address_id'][0]
+            sequence = draft_shipment.sequence_id
+            shipment_number = sequence.get_id(test='id', context=context)
+            values = {'name': draft_shipment.name + '-' + shipment_number, 'state': 'packed', 'address_id': address_id}
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
-            for draft_packing_id in partial_datas_shipment[draft_shipment_id]:
+            for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):
                 # copy the picking object without moves
                 # creation of moves and update of initial in picking create method
-                context.update(draft_shipment_id=draft_shipment_id, draft_packing_id=draft_packing_id)
-                new_packing_id = pick_obj.copy(cr, uid, draft_packing_id,
-                                               {'name': 'PACK/xxxx',
-                                                'backorder_id': draft_packing_id,
+                context.update(draft_shipment_id=draft_shipment.id, draft_packing_id=draft_packing.id)
+                sequence = draft_packing.sequence_id
+                packing_number = sequence.get_id(test='id', context=context)
+                new_packing_id = pick_obj.copy(cr, uid, draft_packing.id,
+                                               {'name': draft_packing.name + '-' + packing_number,
+                                                'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
                                                 'move_lines': []}, context=context)
 
@@ -298,12 +303,18 @@ class shipment(osv.osv):
             for packing in pick_obj.browse(cr, uid, partial_datas[shipment_id].keys(), context=context):
                 # corresponding draft packing -> backorder
                 draft_packing_id = packing.backorder_id.id
+                # corresponding draft shipment (all packing for a shipment belong to the same draft_shipment)
+                draft_shipment_id = packing.backorder_id.shipment_id.id
                 # for each sequence
                 for from_pack in partial_datas[shipment_id][packing.id]:
                     for to_pack in partial_datas[shipment_id][packing.id][from_pack]:
                         # partial datas for one sequence of one packing
                         # could have multiple data because of line split
                         datas = partial_datas[shipment_id][packing.id][from_pack][to_pack]
+                        # the corresponding moves
+                        move_ids = move_obj.search(cr, uid, [('picking_id', '=', packing.id),
+                                                          ('from_pack', '=', from_pack),
+                                                          ('to_pack', '=', to_pack)], context=context)
                         # the list of tuple representing the packing movements from/to - default to sequence value
                         stay = [(from_pack, to_pack)]
                         # the list of tuple representing the draft packing movements from/to
@@ -320,28 +331,28 @@ class shipment(osv.osv):
                             # find the corresponding tuple in the stay list
                             for i in range(len(stay)):
                                 # the tuple are ordered
-                                t = stay[i]
-                                if t[1] >= return_to:
+                                seq = stay[i]
+                                if seq[1] >= return_to:
                                     # this is the good tuple
                                     # stay tuple creation logic
-                                    if return_from == t[0]:
-                                        if return_to == t[1]:
+                                    if return_from == seq[0]:
+                                        if return_to == seq[1]:
                                             # all packs for this sequence are sent back - simply remove it
                                             break
                                         else:
-                                            # to+1-t[1] in stay
-                                            stay.append((return_to+1, t[1]))
+                                            # to+1-seq[1] in stay
+                                            stay.append((return_to+1, seq[1]))
                                             break
                                     
-                                    elif return_to == t[1]:
+                                    elif return_to == seq[1]:
                                         # do not start at beginning, but same end
-                                        stay.append((t[0], return_from-1))
+                                        stay.append((seq[0], return_from-1))
                                         break
                                     
                                     else:
                                         # in the middle, two new tuple in stay
-                                        stay.append((t[0], return_from-1))
-                                        stay.append((return_to+1, t[1]))
+                                        stay.append((seq[0], return_from-1))
+                                        stay.append((return_to+1, seq[1]))
                                         break
                             
                             # old one is always removed
@@ -351,14 +362,72 @@ class shipment(osv.osv):
                         
                         # update the packing object, we update the existing move
                         # if needed new moves are created
-                        # if packs are returned, the shipping is canceled
-                        # update the corresponding shipment object [one time for each shipment id]
+                        updated = {}
+                        for move in move_obj.browse(cr, uid, move_ids, context=context):
+                            # update values
+                            updated[move.id] = {'initial': move.product_qty}
+                            # loop through stay sequences
+                            for seq in stay:
+                                # corresponding number of packs
+                                selected_number = seq[1] - seq[0] + 1
+                                # quantity to return
+                                new_qty = selected_number * move.qty_per_pack
+                                # for both cases, we udpate the from/to and compute the corresponding quantity
+                                # if the move has been updated already, we copy/update
+                                values = {'from_pack': seq[0],
+                                          'to_pack': seq[1],
+                                          'product_qty': new_qty}
+                                
+                                if 'partial_qty' in updated[move.id]:
+                                    updated[move.id]['partial_qty'] += new_qty
+                                    new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                    
+                                # if not updated yet, we update the original move
+                                else:
+                                    updated[move.id]['partial_qty'] = new_qty
+                                    move_obj.write(cr, uid, move.id, values, context=context)
+                                    
+                            # loop through back_to_draft sequences
+                            for seq in back_to_draft:
+                                # for each sequence we add the corresponding stock move to draft packing
+                                # corresponding number of packs
+                                selected_number = seq[1] - seq[0] + 1
+                                # quantity to return
+                                new_qty = selected_number * move.qty_per_pack
+                                # values
+                                location_dispatch = move.picking_id.sale_id.shop_id.warehouse_id.lot_dispatch_id.id
+                                location_distrib = move.picking_id.sale_id.shop_id.warehouse_id.lot_distribution_id.id
+                                values = {'from_pack': seq[0],
+                                          'to_pack': seq[1],
+                                          'product_qty': new_qty,
+                                          'location_id': location_distrib,
+                                          'location_dest_id': location_dispatch,
+                                          'state': 'done'}
+                                
+                                # create a back move in the packing object
+                                # distribution -> dispatch
+                                new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                updated[move.id]['partial_qty'] += new_qty
+                                
+                                # create the draft move
+                                # dispatch -> distribution
+                                # picking_id = draft_picking
+                                values.update(location_id=location_dispatch,
+                                              location_dest_id=location_distrib,
+                                              picking_id=draft_packing_id,
+                                              state='assigned')
+                                new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                
+                            
+                        # TODO open question: if packs are returned, the shipping/corresponding packing are canceled
                         
-                        # update the draft packing object (adding returned pack moves)
-                        # update the corresponding shipment object [one time for each shipment id ??]
-                        
+            # update the corresponding shipment object [one time for each shipment id]
+            pick_obj.update_pack_families(cr, uid, shipment_id, context=context)
+            # update the corresponding shipment object [one time for each shipment id ??]
+            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
         
-        return True
+        # TODO which behavior
+        return {'type': 'ir.actions.act_window_close'}
                             
                             
     
@@ -415,7 +484,7 @@ class shipment(osv.osv):
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
                 # copy each packing
-                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': 'Pack/xxxx'}, context=context)
+                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name}, context=context)
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update locations of stock moves
@@ -529,7 +598,50 @@ class stock_picking(osv.osv):
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
+                'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", required=True, ondelete='cascade'),
                 }
+    
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new picking
+        @param cr: cursor to database
+        @param user: id of current user
+        @param ids: list of record ids to be process
+        @param context: context arguments, like lang, time zone
+        @return: return a result
+        
+        example of name: 'PICK/xxxxx'
+        example of code: 'picking.xxxxx'
+        example of prefix: 'PICK'
+        example of padding: 5
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+        
+        assert vals, 'no vals dictionary'
+        assert 'name' in vals, 'Missing Name'
+        assert 'code' in vals, 'Missing Code'
+        assert 'prefix' in vals, 'Missing prefix'
+        assert 'padding' in vals, 'Missing padding'
+
+        name = vals['name']
+        code = vals['code']
+        prefix = vals['prefix']
+        padding = vals['padding']
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': prefix,
+            'padding': padding,
+        }
+        return seq_pool.create(cr, uid, seq)
     
     def update_pack_families(self, cr, uid, shipment_id, object_type='shipment', from_pack=False, to_pack=False, context=None):
         '''
@@ -651,6 +763,31 @@ class stock_picking(osv.osv):
         # move object
         move_obj = self.pool.get('stock.move')
         
+        # sequence creation
+        # if draft picking
+        if 'subtype' in vals and vals['subtype'] == 'picking':
+            # creation of a new picking ticket
+            assert 'backorder_id' in vals, 'No backorder_id'
+            
+            if not vals['backorder_id']:
+                # creation of *draft* picking ticket
+                vals.update(sequence_id=self.create_sequence(cr, uid, {'name':vals['name'],
+                                                                       'code':vals['name'],
+                                                                       'prefix':'',
+                                                                       'padding':2}, context=context))
+                
+        if 'subtype' in vals and vals['subtype'] == 'packing':
+            # creation of a new packing
+            assert 'backorder_id' in vals, 'No backorder_id'
+            assert 'shipment_id' in vals, 'No shipment_id'
+            
+            if not vals['backorder_id']:
+                # creation of *draft* picking ticket
+                vals.update(sequence_id=self.create_sequence(cr, uid, {'name':vals['name'],
+                                                                       'code':vals['name'],
+                                                                       'prefix':'',
+                                                                       'padding':2}, context=context))
+        
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
         
@@ -740,7 +877,15 @@ class stock_picking(osv.osv):
                 
                 if not len(shipment_ids):
                     # no shipment, create one
-                    values = {'name': 'draft SHIP/xxxx', 'state': 'draft', 'address_id': vals['address_id']}
+                    name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                    values = {'name': name,
+                              'state': 'draft',
+                              'address_id': vals['address_id'],
+                              'sequence_id': self.create_sequence(cr, uid, {'name':name,
+                                                                            'code':name,
+                                                                            'prefix':'',
+                                                                            'padding':2}, context=context)}
+                    
                     shipment_id = shipment_obj.create(cr, uid, values, context=context)
                 else:
                     shipment_id = shipment_ids[0]
@@ -989,7 +1134,12 @@ class stock_picking(osv.osv):
             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
             # copy to 'packing' stock.picking
             # draft shipment is automatically created or updated if a shipment already
-            new_packing_id = self.copy(cr, uid, pick.id, {'name': 'draft PACK/xxxx', 'subtype': 'packing', 'previous_step_id': pick.id, 'backorder_id': False, 'shipment_id': False}, context=context)
+            pack_number = pick.name.split("/")[1]
+            new_packing_id = self.copy(cr, uid, pick.id, {'name': 'PACK/' + pack_number,
+                                                          'subtype': 'packing',
+                                                          'previous_step_id': pick.id,
+                                                          'backorder_id': False,
+                                                          'shipment_id': False}, context=context)
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
@@ -1040,7 +1190,7 @@ class stock_picking(osv.osv):
             draft_picking_id = picking.previous_step_id.backorder_id.id
             
             for move in move_obj.browse(cr, uid, partial_datas[picking.id].keys(), context=context):
-                # we browse the udpated moves (return qty > 0 is checked during data generation)
+                # we browse the updated moves (return qty > 0 is checked during data generation)
                 # data from wizard
                 data = partial_datas[picking.id][move.id]
 
@@ -1121,7 +1271,7 @@ class stock_picking(osv.osv):
                     # check the to_pack of draft move
                     # if equal to draft to_pack = move from_pack - 1 (as we always take the pack with the highest number available)
                     # we can increase the qty and update draft to_pack
-                    # otherwise we copy the draft packing move with udpated quantity and from/to
+                    # otherwise we copy the draft packing move with updated quantity and from/to
                     draft_read = move_obj.read(cr, uid, [draft_move_id], ['product_qty', 'to_pack'], context=context)[0]
                     draft_to_pack = draft_read['to_pack']
                     if draft_to_pack + 1 == move.from_pack:
@@ -1224,7 +1374,7 @@ class sale_order(osv.osv):
                 if line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu') and not line.order_id.procurement_request:
                     location_id = order.shop_id.warehouse_id.lot_stock_id.id
                     if not picking_id:
-                        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+                        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
                         picking_id = self.pool.get('stock.picking').create(cr, uid, {
                             'name': pick_name,
                             'origin': order.name,
@@ -1241,6 +1391,7 @@ class sale_order(osv.osv):
                             'subtype': 'picking',
                             # flow type
                             'flow_type': 'full',
+                            'backorder_id': False,
                         })
                     move_data =  {
                         'name': line.name[:64],

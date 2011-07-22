@@ -60,6 +60,7 @@
                 <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking Tickets">
                     <field name="name"/>
                     <field name="partner_id"/>
+                    <field name="sale_id" invisible="True" />
                     <field name="origin"/>
                     <field name="date"/>
                     <field name="min_date"/>
@@ -178,7 +179,7 @@
                                 <field name="flow_type" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
                                 <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
-                                <button name="create_picking" states="draft" string="Create Picking..." type="object" groups="base.group_extended" icon="gtk-add" />
+                                <button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-go-forward"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
@@ -224,6 +225,7 @@
                    </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
+                    	<filter string="Sale Order" name="sale_id" icon="terp-partner" domain="[]" context="{'group_by':'sale_id'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
@@ -245,7 +247,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
-            <field name="context">{'contact_display': 'partner_address'}</field>
+            <field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'sale_id'}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of draft picking tickets.</field>
         </record>
@@ -266,7 +268,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_draft_picking_ticket"/>
         </record>
-        <menuitem action="action_draft_picking_ticket" id="menu_action_draft_picking_ticket" parent="stock.menu_stock_warehouse_mgmt" sequence="4"/>
+        <!-- <menuitem action="action_draft_picking_ticket" id="menu_action_draft_picking_ticket" parent="stock.menu_stock_warehouse_mgmt" sequence="4"/> -->
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_picking_ticket" model="ir.actions.act_window">
@@ -275,8 +277,8 @@
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '!=', 'draft')]</field>
-            <field name="context">{'contact_display': 'partner_address'}</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
+            <field name="context">{}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
