@@ -8,8 +8,13 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
-                <xpath expr="/form/field[@name='product_code']" position="after">
-                    <field name="manufacturer_id" />
+                <xpath expr="/form/field[@name='product_uom']" position="replace"/>
+                <xpath expr="/form/field[@name='min_qty']" position="replace">
+                    <field name="manufacturer_id"/>
+                    <field name="product_uom"/>
+                    <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
+                    <field name="min_qty"/>
+                    <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
                 </xpath>
             </field>
         </record>
@@ -22,6 +27,8 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/field[@name='min_qty']" position="after">
                     <field name="manufacturer_id" />
+                    <field name="second_manufacturer_id" />
+                    <field name="third_manufacturer_id" />
                 </xpath>
             </field>
         </record>

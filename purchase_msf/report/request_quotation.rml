@@ -54,10 +54,11 @@
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P4" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P7" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P6" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -152,7 +153,7 @@
           <para style="P1">Supplier Code</para>
         </td>
         <td>
-          <para style="P5">Quantity</para>
+          <para style="P7">Quantity</para>
         </td>
       </tr>
     </blockTable>
@@ -161,10 +162,10 @@
       <blockTable colWidths="20.0,59.0,122.0,125.0,109.0,95.0" style="Table_Product_Line">
         <tr>
           <td>
-            <para style="P3">[[ order_line.line_number ]] </para>
+            <para style="P5">[[ order_line.line_number ]] </para>
           </td>
           <td>
-            <para style="P3">[[ formatLang(order_line.date_planned, date=True) ]]</para>
+            <para style="P5">[[ formatLang(order_line.date_planned, date=True) ]]</para>
           </td>
           <td>
             <para style="P2">[[ order_line.internal_code ]]</para>
@@ -176,7 +177,7 @@
             <para style="P2">[[ order_line.supplier_code ]]</para>
           </td>
           <td>
-            <para style="P4">[[ formatLang(order_line.product_qty )]]</para>
+            <para style="P6">[[ formatLang(order_line.product_qty )]]</para>
           </td>
         </tr>
         <tr>
@@ -194,11 +195,11 @@
             <blockTable colWidths="451.0" style="Table1">
               <tr>
                 <td>
-                  <para style="P7">[[ order_line.nomenclature_description ]]</para>
+                  <para style="P4">[[ order_line.nomenclature_description ]]</para>
                 </td>
               </tr>
             </blockTable>
-            <para style="P6">
+            <para style="P3">
               <font color="white"> </font>
             </para>
           </td>
@@ -218,20 +219,26 @@
             <blockTable colWidths="451.0" style="Table2">
               <tr>
                 <td>
-                  <para style="P7">[[ order_line.comment ]]</para>
+                  <para style="P4">[[ order_line.comment ]]</para>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <para style="P4">Manufacturer: [[ (order_line.manufacturer_id and ' ') or removeParentNode('para') ]]</para>
+                  <para style="P4">- [[ (order_line.manufacturer_id and order_line.manufacturer_id.name) or removeParentNode('para') ]]</para>
+                  <para style="P4">- [[ (order_line.second_manufacturer_id and order_line.second_manufacturer_id.name) or removeParentNode('para') ]]</para>
+                  <para style="P4">- [[ (order_line.third_manufacturer_id and order_line.third_manufacturer_id.name) or removeParentNode('para') ]]</para>
                 </td>
               </tr>
             </blockTable>
-            <para style="P6">
+            <para style="P3">
               <font color="white"> </font>
             </para>
           </td>
         </tr>
       </blockTable>
     </section>
-    <para style="terp_default_9">
-      <font color="white"> </font>
-    </para>
+    <para style="terp_default_9"/>
     <para style="terp_default_9">[[ format(order.notes or '') ]]</para>
     <para style="terp_default_9">
       <font color="white"> </font>
@@ -246,3 +253,4 @@
     <para style="terp_default_9">[[ user.signature or '' ]]</para>
   </story>
 </document>
+

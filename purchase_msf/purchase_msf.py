@@ -40,6 +40,26 @@ class purchase_order_line(osv.osv):
     #_name = 'purchase.order.line'
     _description = 'Purchase Order Line modified for MSF'
     
+    def _get_manufacturers(self, cr, uid, ids, field_name, arg, context=None):
+        result = {}
+        for record in self.browse(cr, uid, ids, context=context):
+            result[record.id] = {
+                                 'manufacturer_id': False,
+                                 'second_manufacturer_id': False,
+                                 'third_manufacturer_id': False,
+                                }
+            po_supplier = record.order_id.partner_id
+            for seller_id in record.product_id.seller_ids:
+                if seller_id.name == po_supplier:
+                    result[record.id] = {
+                                         'manufacturer_id': seller_id.manufacturer_id.id,
+                                         'second_manufacturer_id': seller_id.second_manufacturer_id.id,
+                                         'third_manufacturer_id': seller_id.third_manufacturer_id.id,
+                                        }
+                    break
+
+        return result
+    
     def _getProductInfo(self, cr, uid, ids, field_name, arg, context):
         
         # ACCESS to product_id ??
@@ -66,6 +86,10 @@ class purchase_order_line(osv.osv):
         'supplier_code': fields.char('Supplier code', size=256),
         #new column supplier_name
         'supplier_name': fields.char('Supplier name', size=256),
+        # new colums to display product manufacturers linked to the purchase order supplier
+        'manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Manufacturer", store=False, multi="all"),
+        'second_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Second Manufacturer", store=False, multi="all"),
+        'third_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Third Manufacturer", store=False, multi="all"),
     }
     
     _defaults = {

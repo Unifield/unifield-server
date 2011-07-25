@@ -35,7 +35,7 @@
     """,
     'author': 'MSF pam',
     'website': 'unifield.org',
-    'depends': ['purchase'],
+    'depends': ['purchase','msf_partner'],
     'init_xml' : [ ],
     'demo_xml' : [ ],
     'test': [
