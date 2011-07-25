@@ -85,8 +85,8 @@ class product_attributes(osv.osv):
             ('end_alternative','End of Life (alternative available)'),
             ('end','End of Life (not supplied anymore)'),
             ('obsolete','Warning list')], 'Status', help="Tells the user if he can use the product or not."),
-        'perishable': fields.boolean('Perishable'),
-        'batch_management': fields.boolean('Batch Management'),
+        'perishable': fields.boolean('Expiry Date Mandatory'),
+        'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=64),
         'short_shelf_life': fields.boolean('Short Shelf Life'),
@@ -114,9 +114,9 @@ class product_attributes(osv.osv):
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
         'heat_sensitive_item': fields.selection([('',''),
             ('_','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
-            ('*','* Keep Cool'),
-            ('**','** Keep Cool, airfreight'),
-            ('***','*** Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
+            ('*','Keep Cool'),
+            ('**','Keep Cool, airfreight'),
+            ('***','Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
         'cold_chain': fields.selection([('',''),
             ('*0','*0 Problem if any window blue'),
             ('*0F','*0F Problem if any window blue or F'),
@@ -136,6 +136,14 @@ class product_attributes(osv.osv):
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'restricted_country': fields.boolean('Restricted in the Country'),
+        # TODO: add real country restrictions
+        'country_restriction': fields.selection([('',''),
+            ('A','A'),
+            ('B','B'),
+            ('C','C')], 'Country Restriction'),
+        # TODO: validation on 'un_code' field
+        'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',
@@ -157,6 +165,7 @@ class product_attributes(osv.osv):
         'single_use': False,
         'closed_article': False,
         'dangerous_goods': False,
+        'restricted_country': False,
     }
     
     def _check_gmdn_code(self, cr, uid, ids, context=None):
