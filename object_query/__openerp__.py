@@ -16,57 +16,27 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 {
-    "name" : "MSF Modules",
+    "name" : "MSF Partners",
     "version" : "1.0",
     "author" : "TeMPO Consulting, MSF",
     "category": "Others",
     "description": """
-        Modules for Unifield
+        This modules aims to differentiate Internal/External partners
+        It also aims to create a new type of partner: Manufacturer
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
-        "data.xml",
-    ],
     "depends" : [
-        "msf_partner",
-        "register_accounting",
-        "stock_inventory_type",
-        "analytic_plan_tree",
-        "account_period_closing_level",
-        "account_activable",  
-        "msf_order_date",
-        "purchase_compare_rfq",
-        "account_budget_definition",
-        "purchase_msf",
-	    "product_asset",
-	    "order_nomenclature",
-	    "product_nomenclature",
-        "order_types",
-        "res_currency_functional",
-        "order_line_number",
-	    "sourcing",
-        "stock_move_tracking",
-        "stock_batch_recall",
-        "procurement_cycle",
-        "procurement_auto",
-        "product_attributes",
-        "procurement_report",
-        "msf_printed_documents",
-        "procurement_request",
-        "import_data",
-        "object_query",
+        "base",
     ],
+    "init_xml": [],
     "update_xml": [
-        "report.xml",
+        'query_view.xml',
     ],
-    "demo_xml": [
-    ],
-    "test": [
-        'test/inherited_views.yml',
-    ],
+    "demo_xml": [],
+    "test": [],
     "installable": True,
     "active": False,
 }

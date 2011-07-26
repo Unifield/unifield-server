@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <menuitem id="main_menu_preferences" name="Preferences" 
+                  web_icon="images/prefs.png"
+                  web_icon_hover="images/prefs-hover.png" />
+        
+        <menuitem id="menu_preferences_conf" name="Configuration" parent="main_menu_preferences" />
+    
+        <record id="object_query_object_form_view" model="ir.ui.view">
+            <field name="name">object.query.object.form.view</field>
+            <field name="model">object.query.object</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Object for Queries">
+                    <field name="name" />
+                    <field name="model_id" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="object_query_object_tree_view" model="ir.ui.view">
+            <field name="name">object.query.object.tree.view</field>
+            <field name="model">object.query.object</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Objects for Queries">
+                    <field name="name" />
+                    <field name="model_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_object_query_object" model="ir.actions.act_window">
+            <field name="name">Objects for Queries</field>
+            <field name="res_model">object.query.object</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_object_query_object"
+                  action="action_object_query_object"
+                  parent="menu_preferences_conf" />
+    
+    </data>
+</openerp>
