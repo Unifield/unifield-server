@@ -51,13 +51,13 @@ class create_picking(osv.osv_memory):
         # we need the step info
         assert 'step' in context, 'Step not defined in context'
         step = context['step']
-            
+        
         pick_obj = self.pool.get('stock.picking')
         res = super(create_picking, self).default_get(cr, uid, fields, context=context)
         picking_ids = context.get('active_ids', [])
         if not picking_ids:
             return res
-
+        
         result = []
         if step in ('create', 'validate', 'ppl1', 'returnproducts'):
             # memory moves wizards
@@ -69,7 +69,7 @@ class create_picking(osv.osv_memory):
             # data generated from previous wizard data
             for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
                 result.extend(self.__create_pack_families_memory(pick, context=context))
-
+                
         if 'product_moves_picking' in fields and step in ('create', 'validate'):
             res.update({'product_moves_picking': result})
             
@@ -436,6 +436,36 @@ class create_picking(osv.osv_memory):
             'target': 'crush',
         }
         
+    def quick_mode(self, cr, uid, ppl, context=None):
+        '''
+        we do the quick mode, the ppl step is performed automatically
+        '''
+        assert context, 'missing Context'
+        
+        moves_ppl_obj = self.pool.get('stock.move.memory.ppl')
+        
+        # set the corresponding ppl object
+        context['active_ids'] = [ppl.id]
+        
+        # set the step
+        context['step'] = 'ppl1'
+        # create a create_picking object for ppl1
+        wizard_ppl1 = self.create(cr, uid, {'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+        # the default user values are used, they represent all packs in one pack sequence (pack family from:1, to:1)
+        # with a quantity per pack equal to the quantity
+        # these values are set in the create method of memory moves
+        
+        # ppl1
+        # the wizard for ppl2 step is created here, the step is updated there also
+        wizard_dic = self.do_ppl1(cr, uid, [wizard_ppl1], context=context)
+        partial_datas_ppl1 = wizard_dic['context']['partial_datas_ppl1']
+        wizard_ppl2 = wizard_dic['res_id']
+        # the default user values are used, all the pack families values are set to zero, False (weight, height, ...)
+        
+        # ppl2
+        self.do_ppl2(cr, uid, [wizard_ppl2], context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
+        
+        
     def do_validate_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
@@ -543,6 +573,10 @@ class create_picking(osv.osv_memory):
             # trigger standard workflow
             pick_obj.action_move(cr, uid, [pick.id])
             wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+            
+            # if the flow type is in quick mode, we perform the ppl steps automatically
+            if pick.flow_type == 'quick':
+                self.quick_mode(cr, uid, new_ppl, context=context)
         
         # close wizard
         return {'type': 'ir.actions.act_window_close'}

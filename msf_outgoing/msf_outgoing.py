@@ -75,8 +75,9 @@ class shipment(osv.osv):
                                            ('cancel', 'Canceled')], string='State', readonly=True, select=True),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
-                'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", required=True, ondelete='cascade'),
+                'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 }
+    _order = 'name'
     _defaults = {'state': 'draft'}
     
     def create_shipment(self, cr, uid, ids, context=None):
@@ -365,7 +366,7 @@ class shipment(osv.osv):
                         updated = {}
                         for move in move_obj.browse(cr, uid, move_ids, context=context):
                             # update values
-                            updated[move.id] = {'initial': move.product_qty}
+                            updated[move.id] = {'initial': move.product_qty, 'partial_qty': 0}
                             # loop through stay sequences
                             for seq in stay:
                                 # corresponding number of packs
@@ -378,14 +379,14 @@ class shipment(osv.osv):
                                           'to_pack': seq[1],
                                           'product_qty': new_qty}
                                 
-                                if 'partial_qty' in updated[move.id]:
-                                    updated[move.id]['partial_qty'] += new_qty
-                                    new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                # the original move is never modified, but canceled
+                                updated[move.id]['partial_qty'] += new_qty
+                                new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                                     
-                                # if not updated yet, we update the original move
-                                else:
-                                    updated[move.id]['partial_qty'] = new_qty
-                                    move_obj.write(cr, uid, move.id, values, context=context)
+                            
+                            # nothing stays
+                            if 'partial_qty' not in updated[move.id]:
+                                updated[move.id]['partial_qty'] = 0
                                     
                             # loop through back_to_draft sequences
                             for seq in back_to_draft:
@@ -408,7 +409,7 @@ class shipment(osv.osv):
                                 # distribution -> dispatch
                                 new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                                 updated[move.id]['partial_qty'] += new_qty
-                                
+
                                 # create the draft move
                                 # dispatch -> distribution
                                 # picking_id = draft_picking
@@ -419,8 +420,13 @@ class shipment(osv.osv):
                                 new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                                 
                             
-                        # TODO open question: if packs are returned, the shipping/corresponding packing are canceled
+                            # if packs are returned corresponding move is canceled
+                            move_obj.action_cancel(cr, uid, [move.id], context=context)
                         
+                # if all moves are done or canceled, the picking is canceled
+                if all([move.state in ('done', 'cancel') for move in packing.move_lines]):
+                    pick_obj.action_cancel(cr, uid, [packing.id], context=context)
+                
             # update the corresponding shipment object [one time for each shipment id]
             pick_obj.update_pack_families(cr, uid, shipment_id, context=context)
             # update the corresponding shipment object [one time for each shipment id ??]
@@ -598,8 +604,9 @@ class stock_picking(osv.osv):
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
-                'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", required=True, ondelete='cascade'),
+                'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 }
+    _order = 'name'
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -625,7 +632,11 @@ class stock_picking(osv.osv):
         assert 'padding' in vals, 'Missing padding'
 
         name = vals['name']
+        if not name:
+            name = 'default_name'
         code = vals['code']
+        if not code:
+            code = 'default_code'
         prefix = vals['prefix']
         padding = vals['padding']
 
@@ -1251,8 +1262,8 @@ class stock_picking(osv.osv):
                 for move in picking.move_lines:
                     # find the corresponding move in draft (identified by product_id and uom_id)
                     draft_move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_picking_id),
-                                                              ('product_id', '=', move.product_id.id),
-                                                              ('product_uom', '=', move.product_uom.id)], context=context)
+                                                               ('product_id', '=', move.product_id.id),
+                                                               ('product_uom', '=', move.product_uom.id)], context=context)
                     
                     assert len(draft_move_ids) == 1, 'the number of original stock moves from the draft picking ticket does not match %i'%len(draft_move_ids)
                     # increase the draft move with the move quantity
@@ -1272,9 +1283,10 @@ class stock_picking(osv.osv):
                     # if equal to draft to_pack = move from_pack - 1 (as we always take the pack with the highest number available)
                     # we can increase the qty and update draft to_pack
                     # otherwise we copy the draft packing move with updated quantity and from/to
+                    # we always create a new move
                     draft_read = move_obj.read(cr, uid, [draft_move_id], ['product_qty', 'to_pack'], context=context)[0]
                     draft_to_pack = draft_read['to_pack']
-                    if draft_to_pack + 1 == move.from_pack:
+                    if draft_to_pack + 1 == move.from_pack and False: # DEACTIVATED
                         # updated quantity
                         draft_qty = draft_read['product_qty'] + move.product_qty
                         # update the draft move

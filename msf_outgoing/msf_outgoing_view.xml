@@ -68,7 +68,8 @@
                     <field name="invoice_state"/>
                     <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                     <field name="state"/>
-                    <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                    <button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-go-forward"/>
+                    <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-go-forward"/>
                 </tree>
             </field>
         </record>
@@ -272,7 +273,7 @@
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_picking_ticket" model="ir.actions.act_window">
-            <field name="name">Picking Ticket</field>
+            <field name="name">Picking</field>
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -318,7 +319,7 @@
                     <field name="invoice_state"/>
                     <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                     <field name="state"/>
-                    <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                    <button name="ppl" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
                 </tree>
             </field>
         </record>
@@ -489,7 +490,7 @@
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_ppl" model="ir.actions.act_window">
-            <field name="name">PPL</field>
+            <field name="name">Pre-Packing</field>
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -748,6 +749,9 @@
                     <field name="partner_id"/>
                     <field name="address_id"/>
                     <field name="state"/>
+                    <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-go-forward"/>
+                    <button name="ship" states="packed" string="Ship" type="object" icon="gtk-go-forward"/>
+                    <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-go-forward"/>
                 </tree>
             </field>
         </record>
