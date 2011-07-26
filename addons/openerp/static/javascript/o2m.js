@@ -31,7 +31,7 @@ var One2Many = function(name, inline) {
     this.mode = openobject.dom.get(name + '/_terp_view_type').value;
 
     if (openobject.dom.get(name + '/_terp_default_get_ctx'))
-        this.default_get_ctx = openobject.dom.get(name + '/_terp_default_get_ctx').value;
+        this.default_get_ctx = openobject.dom.get(name + '/_terp_context').value;
 
     var parent_prefix = name.indexOf('/') > -1 ? name.slice(0, name.lastIndexOf('/') + 1) : '';
 
@@ -185,7 +185,7 @@ One2Many.prototype = {
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
-            MochiKit.Base.map(function (el) {el.style.display='none'},MochiKit.Selector.findChildElements(grid,['.selector']));
+            MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
             if (rows && rows.length) {
                 rows.each(function(index, row) {
@@ -194,7 +194,7 @@ One2Many.prototype = {
         }
         else{
             if(btn){btn.style.display='';}
-            MochiKit.Base.map(function (el) {el.style.display=''},MochiKit.Selector.findChildElements(grid,['.selector']));
+            MochiKit.Base.map(function (el) {el.style.visibility='';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value = 1;
         }
     },

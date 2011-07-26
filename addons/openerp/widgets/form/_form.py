@@ -492,7 +492,7 @@ class Selection(TinyInputWidget):
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
-        if (attrs.get('relation') and attrs.get('widget') == 'selection') or (not self.options and attrs.get('type','') != 'boolean'):
+        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection':
             proxy = rpc.RPCProxy(attrs['relation'])
             try:
                 domain = attrs.get('domain', [])
@@ -653,7 +653,7 @@ class Group(TinyWidget):
     params = ["expand_grp_id", "default", "view_type", "states"]
     member_widgets = ["frame"]
     valign = "top"
-    colspan = 4
+    colspan = 1
     col = 4
     states = None
     visible = True
@@ -768,6 +768,11 @@ class Form(TinyInputWidget):
                 if lval:
                     values = lval[0]
                     self.id = ids[0]
+                    
+                    for f in fields:
+                        if fields[f]['type'] == 'many2one' and isinstance(values[f], tuple):
+                            values[f] = values[f][0]
+                            
                     ConcurrencyInfo.update(self.model, [values])
 
             elif 'datas' in view: # wizard data

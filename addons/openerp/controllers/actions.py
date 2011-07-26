@@ -23,6 +23,7 @@
 """
 import base64
 import time
+import urlparse
 import zlib
 
 import cherrypy
@@ -341,6 +342,13 @@ def act_window_opener(action, data):
     # then used back as a URL
     action.pop('search_view', None)
 
+    # when perform any button action on unsaved-record which returns 'ir.action.act_window'
+    # which pop-up new window but 'appcontent' is not reloaded
+    # for that passing active_id in headers, to get it in openAction
+    if getattr(cherrypy.request, 'params', []):
+        if getattr(cherrypy.request.params, 'context', {}):
+            cherrypy.response.headers['active_id'] = cherrypy.request.params.context.get('active_id')
+
     # Add 'opened' mark to indicate we're now within the popup and can
     # continue on during the second round of execution
     payload = str({
@@ -358,7 +366,14 @@ def act_window_opener(action, data):
            urllib.urlencode({'payload': compressed_payload}))
 
     if open_new_tab:
-        url = '/?' + urllib.urlencode({'next': url})
+        parent_id = False
+        if data['context'] and data['context'].get('active_id') and not data.get('model'):
+            parent = rpc.RPCProxy('ir.ui.menu').read([int(data['context']['active_id'])],['complete_name'], rpc.session.context)[0]['complete_name'].split('/')[0]
+            parent_id = rpc.RPCProxy('ir.ui.menu').search([('name','=', parent),('parent_id','=',False)],0,0,0, rpc.session.context)
+        if parent_id:
+            url = '/openerp/?' + urllib.urlencode({'active': parent_id[0],'next': url})
+        else:
+            url = '/openerp/?' + urllib.urlencode({'next': url})
 
     cherrypy.response.headers['X-Target'] = action['target']
     cherrypy.response.headers['Location'] = url
@@ -387,22 +402,25 @@ def execute(action, **data):
 
 def execute_url(**data):
     url = data.get('url') or ''
-    if not ('://' in url or url.startswith('/')):
+    parsed = urlparse.urlsplit(url)
+    if not (parsed.netloc or parsed.path.startswith('/')):
         raise common.message(_('Relative URLs are not supported'))
-    
-    # Unknown URL required to open in new window/tab.
-    if data['target'] != 'self' or url.startswith('http://') or url.startswith('http://'):
-        cherrypy.response.headers['X-Target'] = 'popup'
-        cherrypy.response.headers['Location'] = url
+
+    if parsed.netloc:
+        # external URL
+
+        # determine target for openAction()
+        target = {'new': 'popup'}.get(data['target'], 'iframe')
+
         return """<script type="text/javascript">
-                        window.open('%s')
-                    </script>
-                """ % (url)
-    else:
-        return """<script type="text/javascript">
-                      openLink('%s')
+                      openAction('%s', '%s')
                   </script>
-                """ % (url)
+                """ % (url, target)
+
+    return """<script type="text/javascript">
+                  openLink('%s')
+              </script>
+            """ % url
     
 
 def get_action_type(act_id):
@@ -448,11 +466,12 @@ def execute_by_keyword(keyword, adds=None, **data):
     """
 
     actions = None
+    ctx = dict(data.get('context', {}), **rpc.session.context)
     if 'id' in data:
         try:
             id = data.get('id', False)
             if (id): id = int(id)
-            actions = rpc.session.execute('object', 'execute', 'ir.values', 'get', 'action', keyword, [(data['model'], id)], False, rpc.session.context)
+            actions = rpc.session.execute('object', 'execute', 'ir.values', 'get', 'action', keyword, [(data['model'], id)], False, ctx)
             actions = map(lambda x: x[2], actions)
         except rpc.RPCException, e:
             raise e
