@@ -6,6 +6,7 @@
                   web_icon="images/prefs.png"
                   web_icon_hover="images/prefs-hover.png" />
         
+        <menuitem id="menu_preferences" name="Preferences" parent="main_menu_preferences" />
         <menuitem id="menu_preferences_conf" name="Configuration" parent="main_menu_preferences" />
     
         <record id="object_query_object_form_view" model="ir.ui.view">
@@ -42,6 +43,67 @@
         <menuitem id="menu_object_query_object"
                   action="action_object_query_object"
                   parent="menu_preferences_conf" />
+                  
+        <record id="object_query_form_view" model="ir.ui.view">
+            <field name="name">object.query.form.view</field>
+            <field name="model">object.query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Object query">
+                    <field name="name" />
+                    <field name="user_id" />
+                    <field name="object_id" widget="selection" on_change="on_change_object(object_id)" />
+                    <field name="model_ids" invisible="1" />
+                    <notebook colspan="4">
+                        <page string="Selection fields">
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
+                                <tree string="Selected fields">
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Group by fields">
+                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
+                                <tree string="Group by fields">
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Result fields">
+                            <field name="result_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
+                                <tree string="Result fields">
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        
+        <record id="object_query_tree_view" model="ir.ui.view">
+            <field name="name">object.query.tree.view</field>
+            <field name="model">object.query</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Object queries">
+                    <field name="name" />
+                    <field name="user_id" />
+                    <field name="object_id" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="action_object_query" model="ir.actions.act_window">
+            <field name="name">Object Queries</field>
+            <field name="res_model">object.query</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_object_query"
+                  action="action_object_query"
+                  parent="menu_preferences" />
     
     </data>
 </openerp>
