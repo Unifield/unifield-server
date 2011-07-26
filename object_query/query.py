@@ -54,8 +54,8 @@ class object_query(osv.osv):
                                           'query_id', 'field_id', string='Selection fields'),
         'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group', 
                                           'query_id', 'field_id', string='Group by fields'),
-        'result_ids': fields.many2many('ir.model.fields', 'query_fields_result', 
-                                          'query_id', 'field_id', string='Result fields'),
+        'result_ids': fields.one2many('object.query.result.fields', 'object_id', 
+                                      string='Result fields'),
         'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
                                      relation='ir.model', string='Models'),
     }
@@ -104,6 +104,30 @@ class object_query(osv.osv):
         return {'value': res}
     
 object_query()
+
+
+class object_query_result_fields(osv.osv):
+    _name = 'object.query.result.fields'
+    _description = 'Result fields'
+    _rec_name = 'field_id'
+    
+    def _get_model_ids(self, cr, uid, ids, field, arg, context={}):
+        res = {}
+        
+        for result in self.browse(cr, uid, ids, context=context):
+            res[result.id] = result.object_id.model_ids
+            
+        return res
+    
+    _columns = {
+        'object_id': fields.many2one('object.query', string='Object', required=True),
+        'field_id': fields.many2one('ir.model.fields', string='Field', required=True),
+        'sequence': fields.integer(string='Sequence', required=True),
+        'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
+                                     relation='ir.model', string='Models'),
+    }
+    
+object_query_result_fields()
 
 
 class ir_fields(osv.osv):
