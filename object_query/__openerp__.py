@@ -30,8 +30,13 @@
     "website": "http://unifield.msf.org",
     "depends" : [
         "base",
+        "product",
+        "sale",
+        "purchase",
     ],
-    "init_xml": [],
+    "init_xml": [
+        'query_data.xml',
+    ],
     "update_xml": [
         'query_view.xml',
     ],
