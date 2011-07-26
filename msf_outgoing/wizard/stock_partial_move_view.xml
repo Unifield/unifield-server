@@ -41,10 +41,10 @@
             <field name="arch" type="xml">
                 <tree editable="bottom" string="Product Moves">
                     <field name="product_id" readonly="True" />
-                    <field name="asset_id" />
-                    <field name="quantity" />
+                    <field name="asset_id" readonly="True" />
+                    <field name="quantity" readonly="True" />
                     <field name="product_uom" readonly="True" string="UOM" />
-                    <field name="prodlot_id" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
                     <field name="qty_per_pack" />
 					<field name="from_pack" />
 					<field name="to_pack" />

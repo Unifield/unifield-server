@@ -556,7 +556,7 @@ class create_picking(osv.osv_memory):
             new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
                                                           'subtype': 'ppl',
                                                           'previous_step_id': pick.id,
-                                                          'backorder_id': False}, context=context)
+                                                          'backorder_id': False}, context=dict(context, keep_prodlot=True))
             new_ppl = pick_obj.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves - if the move quantity is equal to zero, the state is removed
             for move in new_ppl.move_lines:

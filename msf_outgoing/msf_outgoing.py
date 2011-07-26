@@ -77,7 +77,7 @@ class shipment(osv.osv):
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
                 }
-    _order = 'name'
+    _order = 'name desc'
     _defaults = {'state': 'draft'}
     
     def create_shipment(self, cr, uid, ids, context=None):
@@ -490,7 +490,7 @@ class shipment(osv.osv):
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
                 # copy each packing
-                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name}, context=context)
+                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name}, context=dict(context, keep_prodlot=True))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update locations of stock moves
@@ -606,7 +606,7 @@ class stock_picking(osv.osv):
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 }
-    _order = 'name'
+    _order = 'origin desc, name asc'
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -1101,7 +1101,8 @@ class stock_picking(osv.osv):
         # for each pick
         for pick in self.browse(cr, uid, ids, context=context):
             # integrity check on move_ids - moves ids from picking and partial must be the same
-            from_pick = [move.id for move in pick.move_lines]
+            # dont take into account done moves, which represents returned products
+            from_pick = [move.id for move in pick.move_lines if move.state in ('confirmed', 'assigned')]
             from_partial = []
             # the list of updated stock.moves
             # if a stock.move is updated, the next time a new move is created
@@ -1140,7 +1141,7 @@ class stock_picking(osv.osv):
                                 move_obj.write(cr, uid, [move], values, context=context)
         
             # integrity check - all moves are treated and no more
-            assert set(from_pick) == set(from_partial), 'move_ids are not equal pick:%s - partial:%s'(set(from_pick), set(from_partial))
+            assert set(from_pick) == set(from_partial), 'move_ids are not equal pick:%s - partial:%s'%(set(from_pick), set(from_partial))
             # quantities are right
             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
             # copy to 'packing' stock.picking
@@ -1150,14 +1151,19 @@ class stock_picking(osv.osv):
                                                           'subtype': 'packing',
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
-                                                          'shipment_id': False}, context=context)
+                                                          'shipment_id': False}, context=dict(context, keep_prodlot=True))
+
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
-            # update locations of stock moves and state as the picking stay at 'draft' state
+            # update locations of stock moves and state as the picking stay at 'draft' state.
+            # if return move have been done in previous ppl step, we remove the corresponding copied move (criteria: qty_per_pack == 0)
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
             for move in new_packing.move_lines:
-                move.write({'state': 'assigned',
-                            'location_id': new_packing.sale_id.shop_id.warehouse_id.lot_dispatch_id.id,
-                            'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_distribution_id.id}, context=context)
+                if move.qty_per_pack == 0:
+                    move_obj.unlink(cr, uid, [move.id], context=context)
+                else:
+                    move.write({'state': 'assigned',
+                                'location_id': new_packing.sale_id.shop_id.warehouse_id.lot_dispatch_id.id,
+                                'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_distribution_id.id}, context=context)
             
             # trigger standard workflow
             self.action_move(cr, uid, [pick.id])
