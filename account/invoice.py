@@ -265,7 +265,7 @@ class account_invoice(osv.osv):
         'move_lines':fields.function(_get_lines, method=True, type='many2many', relation='account.move.line', string='Entry Lines'),
         'residual': fields.function(_amount_residual, method=True, digits_compute=dp.get_precision('Account'), string='Residual',
             store={
-                'account.invoice': (lambda self, cr, uid, ids, c={}: ids, ['invoice_line'], 50),
+                'account.invoice': (lambda self, cr, uid, ids, c={}: ids, ['invoice_line','move_id'], 50),
                 'account.invoice.tax': (_get_invoice_tax, None, 50),
                 'account.invoice.line': (_get_invoice_line, ['price_unit','invoice_line_tax_id','quantity','discount','invoice_id'], 50),
                 'account.move.line': (_get_invoice_from_line, None, 50),
@@ -1258,7 +1258,7 @@ class account_invoice_line(osv.osv):
                     t = t - (p * l[2].get('quantity'))
                     taxes = l[2].get('invoice_line_tax_id')
                     if len(taxes[0]) >= 3 and taxes[0][2]:
-                        taxes = tax_obj.browse(cr, uid, taxes[0][2])
+                        taxes = tax_obj.browse(cr, uid, list(taxes[0][2]))
                         for tax in tax_obj.compute_all(cr, uid, taxes, p,l[2].get('quantity'), context.get('address_invoice_id', False), l[2].get('product_id', False), context.get('partner_id', False))['taxes']:
                             t = t - tax['amount']
             return t

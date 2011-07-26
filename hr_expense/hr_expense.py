@@ -21,7 +21,6 @@
 
 import time
 
-import netsvc
 from osv import fields, osv
 from tools.translate import _
 
@@ -89,7 +88,7 @@ class hr_expense_expense(osv.osv):
         'date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': 'draft',
         'employee_id': _employee_get,
-        'user_id': lambda cr, uid, id, c={}: id,
+        'user_id': lambda self, cr, uid, context: uid,
         'currency_id': _get_currency,
         'company_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
@@ -193,9 +192,7 @@ class hr_expense_expense(osv.osv):
                     account_journal.write(cr, uid, [journal.id],{'analytic_journal_id':analytic_journal_ids[0]})
             inv_id = invoice_obj.create(cr, uid, inv, {'type': 'in_invoice'})
             invoice_obj.button_compute(cr, uid, [inv_id], {'type': 'in_invoice'}, set_total=True)
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'account.invoice', inv_id, 'invoice_open', cr)
-
+            
             self.write(cr, uid, [exp.id], {'invoice_id': inv_id, 'state': 'invoiced'})
             res = inv_id
         return res

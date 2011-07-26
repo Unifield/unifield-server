@@ -6,15 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 6.0dev\n"
 "Report-Msgid-Bugs-To: support@openerp.com\n"
-"POT-Creation-Date: 2011-01-11 11:15+0000\n"
-"PO-Revision-Date: 2011-01-19 12:00+0000\n"
-"Last-Translator: Nicola Riolini - Micronaet <Unknown>\n"
+"POT-Creation-Date: 2011-05-09 10:18+0000\n"
+"PO-Revision-Date: 2011-07-11 16:29+0000\n"
+"Last-Translator: Leonardo Pistone - Agile BG - Domsense "
+"<leonardo.pistone@domsense.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-01-25 06:40+0000\n"
-"X-Generator: Launchpad (build 12177)\n"
+"X-Launchpad-Export-Date: 2011-07-12 05:23+0000\n"
+"X-Generator: Launchpad (build 13168)\n"
 
 #. module: hr
 #: model:process.node,name:hr.process_node_openerpuser0
@@ -40,7 +41,7 @@ msgstr "Collega il dipendente alle sue informazioni"
 #. module: hr
 #: field:hr.employee,sinid:0
 msgid "SIN No"
-msgstr "Numero di Assistenza Sociale"
+msgstr "Codice Fiscale"
 
 #. module: hr
 #: model:ir.module.module,shortdesc:hr.module_meta_information
@@ -133,7 +134,7 @@ msgstr "Tiene traccia delle vacanze dei dipendenti: richieste e pianificate."
 #. module: hr
 #: model:ir.model,name:hr.model_hr_employee_marital_status
 msgid "Employee Marital Status"
-msgstr "Stato coniugale del dipendente"
+msgstr "Stato Civile del dipendente"
 
 #. module: hr
 #: help:hr.employee,partner_id:0
@@ -147,7 +148,7 @@ msgstr ""
 #. module: hr
 #: model:process.transition,name:hr.process_transition_employeeuser0
 msgid "Link a user to an employee"
-msgstr "Collega un utente ad un dipendente"
+msgstr "Associa un utente a un dipendente"
 
 #. module: hr
 #: field:hr.installer,hr_contract:0
@@ -196,7 +197,7 @@ msgstr ""
 #. module: hr
 #: view:hr.employee:0
 msgid "Position"
-msgstr "Posizione"
+msgstr "Ruolo"
 
 #. module: hr
 #: model:ir.actions.act_window,name:hr.action2
@@ -209,7 +210,7 @@ msgid ""
 "The Related user field on the Employee form allows to link the OpenERP user "
 "(and her rights) to the employee."
 msgstr ""
-"Il campo dell'utente collegato permette di collegare un utente di OpenERP "
+"Il campo dell'utente associato permette di collegare un utente di OpenERP "
 "(ed i suoi diritti) al dipendente."
 
 #. module: hr
@@ -368,11 +369,6 @@ msgstr "Categorie"
 #: field:hr.job,expected_employees:0
 msgid "Expected Employees"
 msgstr "Dipendenti previsti"
-
-#. module: hr
-#: help:hr.employee,sinid:0
-msgid "Social Insurance Number"
-msgstr "Numero tessera sanitaria"
 
 #. module: hr
 #: model:hr.employee.marital.status,name:hr.hr_employee_marital_status_divorced
@@ -568,6 +564,11 @@ msgstr "Attivo"
 msgid "Error ! You cannot create recursive Hierarchy of Employees."
 msgstr ""
 "Errore ! Non è possibile creare una gerarchia ricorsiva di dipendenti"
+
+#. module: hr
+#: field:hr.employee,bank_account_id:0
+msgid "Bank Account Number"
+msgstr ""
 
 #. module: hr
 #: view:hr.department:0
@@ -805,9 +806,9 @@ msgid "Employees"
 msgstr "Dipendenti"
 
 #. module: hr
-#: field:hr.employee,bank_account_id:0
-msgid "Bank Account"
-msgstr "Conto bancario"
+#: help:hr.employee,sinid:0
+msgid "Social Insurance Number"
+msgstr "Numero tessera sanitaria"
 
 #. module: hr
 #: field:hr.department,name:0
@@ -872,3 +873,6 @@ msgstr "Generico sistema per le paghe integrato con la contabilità"
 #: field:hr.employee,child_ids:0
 msgid "Subordinates"
 msgstr "Subordinati"
+
+#~ msgid "Bank Account"
+#~ msgstr "Conto bancario"
