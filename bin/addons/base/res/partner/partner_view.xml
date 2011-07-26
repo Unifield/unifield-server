@@ -77,6 +77,7 @@
                 <form string="Address">
                     <group colspan="4" col="6">
                         <field name="partner_id" colspan="2"/>
+                        <field name="active"/>
                         <field name="company_id" groups="base.group_multi_company" widget="selection" colspan="2"/>
                         <newline/>
                         <field name="name"/>
@@ -583,7 +584,7 @@
 
         <menuitem action="action_partner_category_form" id="menu_partner_category_form" name="Partner Categories" sequence="4" parent="menu_config_address_book"/>
 
-        <act_window domain="[('partner_id', '=', active_id)]"
+        <act_window domain="[('partner_id', '=', active_id)]" context="{'default_partner_id':active_id}"
             id="act_res_partner_event" name="Events"
             res_model="res.partner.event"
             src_model="res.partner"
