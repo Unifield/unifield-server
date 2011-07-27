@@ -58,6 +58,9 @@ class object_query(osv.osv):
                                       string='Result fields'),
         'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
                                      relation='ir.model', string='Models'),
+        'search_view_id': fields.many2one('ir.ui.view', string='Search View'),
+        'tree_view_id': fields.many2one('ir.ui.view', string='Tree View'),
+        
     }
     
     _defaults = {
@@ -102,6 +105,78 @@ class object_query(osv.osv):
                 res['model_ids'].append(model.model_id.id)
             
         return {'value': res}
+    
+    def create_view(self, cr, uid, ids, context={}):
+        '''
+        Construct the view according to the user choices
+        '''
+        view_obj = self.pool.get('ir.ui.view')
+        
+        for query in self.browse(cr, uid, ids, context=context):
+            search_filters = ''
+            search_group = ''
+            tree_fields = ''
+            tree_field_ids = []
+            
+            for filter in query.selection_ids:
+                search_filters += "<field name='%s' />" % (filter.name)
+                search_filters += "\n"
+                
+            for result in query.result_ids:
+                tree_fields += "<field name='%s' />" % (result.field_id.name)
+                tree_fields += "\n"
+                tree_field_ids.append(result.field_id.id)
+            
+            for group in query.group_by_ids:
+                search_group += "<filter context=\"{'group_by': '%s'}\" string='%s' domain=\"[]\" />" % (group.name, group.field_description)
+                search_group += "\n"
+                if group not in tree_field_ids:
+                    tree_fields += "<field name='%s' invisible=\"1\" />" % (group.name)
+
+                
+            search_arch = '''<search string='%s'>
+            %s
+            <newline/>
+            <group expand="1" string="Group By..." groups="base.group_extended">
+            %s
+            </group>
+            </search>
+            ''' % (query.object_id.model_id.name, search_filters, search_group)
+            
+            tree_arch = '''<tree string='%s'>
+            %s
+            </tree>
+            ''' % (query.object_id.model_id.name, tree_fields)
+            
+            search_view_data = {'name': 'query.search.%s.%s' %(query.object_id.model_id.model, query.id),
+                                'model': query.object_id.model_id.model,
+                                'priority': 250,
+                                'type': 'search',
+                                'arch': search_arch,
+                                'xmd_id': 'object_query.query_search_%s_%s' %(query.object_id.model_id.model, query.id)}
+            
+            tree_view_data = {'name': 'query.tree.%s.%s' %(query.object_id.model_id.model, query.id),
+                              'model': query.object_id.model_id.model,
+                              'priority': 250,
+                              'type': 'tree',
+                              'arch': tree_arch,
+                              'xmd_id': 'object_query.query_tree_%s_%s' %(query.object_id.model_id.model, query.id)}
+            
+            # Create views
+            search_view_id = view_obj.create(cr, uid, search_view_data, context=context)
+            tree_view_id = view_obj.create(cr, uid, tree_view_data, context=context)
+            
+            self.write(cr, uid, query.id, {'search_view_id': search_view_id,
+                                           'tree_view_id': tree_view_id}, context=context)
+            
+            return {'type': 'ir.actions.act_window',
+                    'res_model': query.object_id.model_id.model,
+                    'search_view_id': [search_view_id],
+                    'view_id': [tree_view_id],
+                    'view_mode': 'tree,form',
+                    'view_type': 'form'}
+        
+        return {'type': 'ir.actions.act_window_close'}
     
 object_query()
 

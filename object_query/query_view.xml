@@ -58,14 +58,14 @@
                         <page string="Selection fields">
                             <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
                                 <tree string="Selected fields">
-                                    <field name="name" />
+                                    <field name="field_description" />
                                 </tree>
                             </field>
                         </page>
                         <page string="Group by fields">
-                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
+                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'function'))]" nolabel="1" mode="tree,search">
                                 <tree string="Group by fields">
-                                    <field name="name" />
+                                    <field name="field_description" />
                                 </tree>
                             </field>
                         </page>
@@ -78,6 +78,8 @@
                             </field>
                         </page>
                     </notebook>
+                    <label colspan="2" />
+                    <button name="create_view" string="Open the search view" type="object" icon="gtk-execute" colspan="2" />
                 </form>
             </field>
         </record>
