@@ -36,9 +36,9 @@
     'init_xml': [],
     "depends" : ["stock", "purchase", "sale", "product_asset"],
     'update_xml': [
+        'outgoing_sequence.xml',
         'security/ir.model.access.csv',
         'msf_outgoing_view.xml',
-        'outgoing_sequence.xml',
         'wizard/create_picking_view.xml',
         'wizard/stock_partial_move_view.xml',
         'wizard/split_memory_move_view.xml',

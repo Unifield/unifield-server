@@ -137,7 +137,7 @@ class shipment(osv.osv):
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
-                                                'move_lines': []}, context=context)
+                                                'move_lines': []}, context=dict(context, keep_prodlot=True))
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -541,6 +541,27 @@ class shipment(osv.osv):
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 
+                # we check if the coresponding draft packing can be moved to done.
+                # if all packing with backorder_id equal to draft are done or canceled
+                # and the quantity for each stock move of the draft packing is equal to zero
+                draft_packing = packing.backorder_id
+                
+                # we first check the stock moves quantities
+                treat_draft = True
+                for move in draft_packing.move_lines:
+                    if move.product_qty:
+                        treat_draft = False
+                    elif move.from_pack or move.to_pack:
+                        assert False, 'stock moves with 0 quantity but part of pack family sequence'
+                
+                if treat_draft:
+                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
+                    for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
+                        if linked_packing.state not in ('done'):
+                            pass
+                
+                
+                
         # TODO which behavior
         return True
                 
@@ -606,7 +627,8 @@ class stock_picking(osv.osv):
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 }
-    _order = 'origin desc, name asc'
+    #_order = 'origin desc, name asc'
+    _order = 'name desc'
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -863,7 +885,7 @@ class stock_picking(osv.osv):
                                                                         'product_qty': selected_qty,
                                                                         'from_pack': selected_from_pack,
                                                                         'to_pack': selected_to_pack,
-                                                                        'backmove_id': move.id}, context=context)
+                                                                        'backmove_id': move.id,}, context=context)
                             
                             # update corresponding initial move
                             initial_qty = move.product_qty
