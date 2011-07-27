@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -21,13 +21,19 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import cashbox_write_off
-import temp_posting
-import hard_posting
-import wizard_cash_return
-import direct_invoice
-import account_statement_from_invoice
+from osv import osv
 
+class account_statement_from_invoice_lines(osv.osv_memory):
+    _name = 'account.statement.from.invoice.lines'
+    _description = 'Generate Entries by Statement from Invoices'
+    _inherit = 'account.statement.from.invoice.lines'
+
+account_statement_from_invoice_lines()
+
+class account_statement_from_invoice(osv.osv_memory):
+    _name = 'account.statement.from.invoice'
+    _description = 'Generate Entries by Statement from Invoices'
+    _inherit = 'account.statement.from.invoice'
+
+account_statement_from_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

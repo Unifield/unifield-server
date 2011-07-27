@@ -31,10 +31,12 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable"],
+    # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans
+    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "account_analytic_plans"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
+        'wizard/account_statement_from_invoice_view.xml',
         'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
