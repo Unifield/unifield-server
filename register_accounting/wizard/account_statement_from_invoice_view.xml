@@ -43,6 +43,7 @@
                                 <field name="partner_id"/>
                                 <field name="ref"/>
                                 <field name="invoice"/>
+                                <field name="supplier_invoice_ref"/>
                                 <field name="account_id"/>
                                 <field name="date_maturity"/>
                                 <field name="date"/>
@@ -121,6 +122,7 @@
                     <field name="partner_id"/>
                     <field name="ref"/>
                     <field name="invoice"/>
+                    <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
                     <field name="date_maturity"/>
                     <field name="date"/>
