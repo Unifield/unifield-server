@@ -52,7 +52,7 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         if 'from' in context:
-            if context.get('from') == 'account_statement_from_invoice_lines':
+            if context.get('from') == 'wizard_import_invoice':
                 view_name = 'invoice_from_registers_tree'
                 if view_type == 'search':
                     view_name = 'invoice_from_registers_search'

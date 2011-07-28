@@ -208,6 +208,26 @@ class account_bank_statement(osv.osv):
             }
         }
 
+    def button_wiz_import_invoices(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
+        """
+        id = self.pool.get('wizard.import.invoice').create(cr, uid, {}, context=context)
+        return {
+            'name': "Import Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.invoice',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [id],
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+            }
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):

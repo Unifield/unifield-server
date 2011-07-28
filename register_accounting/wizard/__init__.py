@@ -27,7 +27,7 @@ import temp_posting
 import hard_posting
 import wizard_cash_return
 import direct_invoice
-import account_statement_from_invoice
+import import_invoice_on_registers
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

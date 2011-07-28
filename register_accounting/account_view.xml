@@ -21,9 +21,7 @@
                             <field name="balance_start"/>
                             <field name="balance_end_real"/>
                             <field name="currency" invisible="1"/>
-                            <button name="%(action_view_account_statement_from_invoice_lines)d"
-                                string="Import Invoices" type="action" icon="gtk-execute"
-                                attrs="{'invisible':['|', ('state','=','confirm'), ('state', '=', 'partial_close')]}"/>
+                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
@@ -118,9 +116,7 @@
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
                             <field name="currency" invisible="1"/>
-                            <button name="%(action_view_account_statement_from_invoice_lines)d"
-                                string="Import Invoices" type="action" icon="gtk-execute"
-                                attrs="{'invisible':['|', ('state','=','confirm'), ('state', '=', 'partial_close')]}"/>
+                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
                         <group col="3" colspan="4">
@@ -463,9 +459,7 @@
                         <field name="balance_start"/>
                         <field name="balance_end_real"/>
                         <field name="currency" invisible="1"/>
-                        <button name="%(action_view_account_statement_from_invoice_lines)d"
-                            string="Import Invoices" type="action" icon="gtk-execute"
-                            attrs="{'invisible':['|', ('state','=','confirm'), ('state', '=', 'partial_close')]}"/>
+                        <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                     </group>
