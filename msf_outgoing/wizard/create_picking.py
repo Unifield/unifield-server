@@ -419,7 +419,7 @@ class create_picking(osv.osv_memory):
         # confirm the new picking ticket
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
-        # we check availability - could be available or not
+        # we force availability
         pick_obj.force_assign(cr, uid, [new_pick_id])
         
         # TODO which behavior

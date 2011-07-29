@@ -310,12 +310,12 @@ class shipment(osv.osv):
                 for from_pack in partial_datas[shipment_id][packing.id]:
                     for to_pack in partial_datas[shipment_id][packing.id][from_pack]:
                         # partial datas for one sequence of one packing
-                        # could have multiple data because of line split
+                        # could have multiple data multiple products in the same pack family
                         datas = partial_datas[shipment_id][packing.id][from_pack][to_pack]
                         # the corresponding moves
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', packing.id),
-                                                          ('from_pack', '=', from_pack),
-                                                          ('to_pack', '=', to_pack)], context=context)
+                                                             ('from_pack', '=', from_pack),
+                                                             ('to_pack', '=', to_pack)], context=context)
                         # the list of tuple representing the packing movements from/to - default to sequence value
                         stay = [(from_pack, to_pack)]
                         # the list of tuple representing the draft packing movements from/to
@@ -377,7 +377,8 @@ class shipment(osv.osv):
                                 # if the move has been updated already, we copy/update
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
-                                          'product_qty': new_qty}
+                                          'product_qty': new_qty,
+                                          'state': 'assigned'}
                                 
                                 # the original move is never modified, but canceled
                                 updated[move.id]['partial_qty'] += new_qty
@@ -424,9 +425,11 @@ class shipment(osv.osv):
                             move_obj.action_cancel(cr, uid, [move.id], context=context)
                         
                 # if all moves are done or canceled, the picking is canceled
+                # we dont call the action_cancel method, because it cancel all the move lines,
+                # we dont want the back move (done) to be canceled
                 if all([move.state in ('done', 'cancel') for move in packing.move_lines]):
-                    pick_obj.action_cancel(cr, uid, [packing.id], context=context)
-                
+                    pick_obj.write(cr, uid, [packing.id], {'state': 'cancel'}, context=context)
+
             # update the corresponding shipment object [one time for each shipment id]
             pick_obj.update_pack_families(cr, uid, shipment_id, context=context)
             # update the corresponding shipment object [one time for each shipment id ??]
@@ -505,6 +508,9 @@ class shipment(osv.osv):
                 # update old moves - unlink so we don't see old moves when we open the pack families
                 for move in packing.move_lines:
                     move.write({'pack_family_id': False}, context=context)
+                    
+                # update the packing object for the same reason
+                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False}, context=context)
                 
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
@@ -530,8 +536,8 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             # for each shipment update shipment status
             self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
-            # correpsonding packing objects
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
+            # corresponding packing objects - only the distribution -> customer ones
+            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'assigned')], context=context)
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
@@ -557,10 +563,19 @@ class shipment(osv.osv):
                 if treat_draft:
                     linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
                     for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
-                        if linked_packing.state not in ('done'):
-                            pass
+                        if linked_packing.state not in ('done','cancel'):
+                            treat_draft = False
                 
-                
+                if treat_draft:
+                    # trigger the workflow for draft_picking
+                    # confirm the new picking ticket
+                    wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_confirm', cr)
+                    # we force availability
+                    pick_obj.force_assign(cr, uid, [draft_packing.id])
+                    # finish
+                    pick_obj.action_move(cr, uid, [draft_packing.id])
+                    wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_done', cr)
+
                 
         # TODO which behavior
         return True
@@ -681,7 +696,7 @@ class stock_picking(osv.osv):
         update the pack families and delete them
         '''
         # get the pick_ids
-        pick_ids = self.search(cr, uid, [('shipment_id', '=', shipment_id)], context=context)
+        pick_ids = self.search(cr, uid, [('shipment_id', '=', shipment_id), ('state', '=', 'assigned')], context=context)
         
         # all moves have been created / updated. original shipment's pfs are updated
         data = self.generate_data_from_picking_for_pack_family(cr, uid, pick_ids, object_type, from_pack, to_pack, context=context)
@@ -715,7 +730,7 @@ class stock_picking(osv.osv):
         if object_type == 'shipment':
             # all moves are taken into account, therefore the back moves are represented
             # by done pack families
-            states = ()
+            states = ('cancel')
         elif object_type == 'memory':
             # done moves are not displayed as pf as we cannot select these packs anymore (they are returned)
             states = ('done')
@@ -1241,8 +1256,8 @@ class stock_picking(osv.osv):
                 values = {'product_qty': initial_qty}
                 
                 if not initial_qty:
-                    # if all products are sent back to stock, the move state is done
-                    values.update({'state': 'done'})
+                    # if all products are sent back to stock, the move state is cancel
+                    values.update({'state': 'cancel'})
                 move_obj.write(cr, uid, [move.id], values, context=context)
                 
                 # create a back move with the quantity to return to the good location
@@ -1256,6 +1271,16 @@ class stock_picking(osv.osv):
                 draft_initial_qty = move_obj.read(cr, uid, [draft_move_id], ['product_qty'], context=context)[0]['product_qty']
                 draft_initial_qty += return_qty
                 move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_initial_qty}, context=context)
+                
+            # if all moves are done or canceled, the ppl is canceled
+            cancel_ppl = True
+            for move in picking.move_lines:
+                if move.state in ('assigned'):
+                    cancel_ppl = False
+            
+            if cancel_ppl:
+                # we dont want the back move (done) to be canceled
+                self.write(cr, uid, [picking.id], {'state': 'cancel'}, context=context)
                 
         # close wizard
         return {'type': 'ir.actions.act_window_close'}
