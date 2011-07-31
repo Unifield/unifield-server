@@ -56,14 +56,16 @@
                     <field name="model_ids" invisible="1" />
                     <notebook colspan="4">
                         <page string="Selection fields">
-                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree,search">
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree" 
+                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}">
                                 <tree string="Selected fields">
                                     <field name="field_description" />
                                 </tree>
                             </field>
                         </page>
                         <page string="Group by fields">
-                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'function'))]" nolabel="1" mode="tree,search">
+                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'one2many', 'many2many')), ('is_function', '=', False)]" 
+                                   nolabel="1" mode="tree,search" context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
                                 <tree string="Group by fields">
                                     <field name="field_description" />
                                 </tree>
@@ -73,7 +75,8 @@
                             <field name="result_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids}">
                                 <tree string="Result fields" editable="top">
                                     <field name="sequence" />
-                                    <field name="field_id" domain="[('model_search_id', 'in', context.get('model_ids'))]" />
+                                    <field name="field_id" domain="[('model_search_id', 'in', context.get('model_ids'))]"
+                                           context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" />
                                 </tree>
                             </field>
                         </page>
@@ -107,6 +110,28 @@
         <menuitem id="menu_object_query"
                   action="action_object_query"
                   parent="menu_preferences" />
+                  
+        <record id="object_query_ir_field_tree" model="ir.ui.view">
+        	<field name="name">object.query.ir.field.tree</field>
+        	<field name="model">ir.model.fields</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+        		<tree string="Fields">
+        			<field name="field_description" />
+        		</tree>
+        	</field>
+        </record>
+        
+        <record id="object_query_ir_field_search" model="ir.ui.view">
+        	<field name="name">object.query.ir.field.search</field>
+        	<field name="model">ir.model.fields</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+        		<search string="Fields">
+        			<field name="field_description" />
+        		</search>
+        	</field>
+        </record>
     
     </data>
 </openerp>

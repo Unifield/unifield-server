@@ -88,7 +88,8 @@ class object_query(osv.osv):
         '''
         Change the value of model_id when the object changes
         '''
-        res = {'model_ids': []}
+        res = {'model_ids': [], 'selection_ids': [(5,object_id)],
+               'group_by_ids': [],'result_ids': []}
         
         obj = self.pool.get('object.query.object')
         model_obj = self.pool.get('ir.model')
@@ -130,8 +131,9 @@ class object_query(osv.osv):
             for group in query.group_by_ids:
                 search_group += "<filter context=\"{'group_by': '%s'}\" string='%s' domain=\"[]\" />" % (group.name, group.field_description)
                 search_group += "\n"
-                if group not in tree_field_ids:
+                if group.id not in tree_field_ids:
                     tree_fields += "<field name='%s' invisible=\"1\" />" % (group.name)
+                    tree_fields += "\n"
 
                 
             search_arch = '''<search string='%s'>
@@ -222,6 +224,7 @@ class ir_fields(osv.osv):
     
     def _search_model_search(self, cr, uid, obj, name, args, context={}):
         '''
+        Return the domain according to the filter
         '''
         if not args:
             return []
@@ -240,13 +243,79 @@ class ir_fields(osv.osv):
         
         return [('id', 'in', res_ids)]
     
+    def _is_function(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Determines if the field is a function or not
+        '''
+        res = {}
+        
+        for field in self.browse(cr, uid, ids, context=context):
+            res[field.id] = False
+            if self.pool.get(field.model_id.model)._columns[field.name]._properties:
+                res[field.id] = True
+                
+        return res
+                
+        
+    def _search_function(self, cr, uid, obj, name, args, context={}):
+        '''
+        Return all fields which are a function field
+        '''
+        if not args:
+            return []
+        
+        for a in args:
+            if a[0] == 'is_function':
+                field_ids = []
+                all_fields_ids = []
+                model_ids = context.get('model_ids', [(6,0,[])])[0][2]
+                
+                if not model_ids:
+                    model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
+                    
+                for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
+                    for field in obj.field_id:
+                        all_fields_ids.append(field.id)
+                        if self.pool.get(obj.model)._columns[field.name]._properties:
+                            field_ids.append(field.id)
+                
+                if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
+                    return [('id', 'not in', field_ids)]
+                else:
+                    return [('id', 'in', field_ids)]
+            
+        
+        return []
+        
+    
     _columns = {
         'model_search_id': fields.function(_get_model_search,
                                            fnct_search=_search_model_search,
                                            method=True,
                                            type='many2one', relation='ir.model',
                                            string='Model'),
+        'is_function': fields.function(_is_function, 
+                                       fnct_search=_search_function, 
+                                       method=True,
+                                       type='boolean', string='Is function ?'),
     }
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+        '''
+        Call the view on context if there is.
+        '''
+        if view_type == 'tree' and context and 'special_tree_id' in context:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'object_query', context.get('special_tree_id'))[1]
+        if view_type == 'search' and context and 'special_search_id' in context:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'object_query', context.get('special_search_id'))[1]
+            
+        return super(ir_fields, self).fields_view_get(cr, uid, 
+                                                      view_id=view_id,
+                                                      view_type=view_type,
+                                                      context=context,
+                                                      toolbar=toolbar,
+                                                      submenu=submenu)
+        
     
 ir_fields()
 
