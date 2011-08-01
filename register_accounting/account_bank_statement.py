@@ -212,7 +212,7 @@ class account_bank_statement(osv.osv):
         """
         When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
-        id = self.pool.get('wizard.import.invoice').create(cr, uid, {}, context=context)
+        id = self.pool.get('wizard.import.invoice').create(cr, uid, {'statement_id': ids[0] or None}, context=context)
         return {
             'name': "Import Invoice",
             'type': 'ir.actions.act_window',
@@ -401,6 +401,7 @@ class account_bank_statement_line(osv.osv):
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
+        'from_import_invoice': fields.boolean(string='Come from an Import Invoices wizard'),
     }
 
     _defaults = {
