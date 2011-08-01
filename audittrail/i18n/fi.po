@@ -1,87 +1,88 @@
-# Translation of OpenERP Server.
-# This file contains the translation of the following modules:
-#	* audittrail
+# Finnish translation for openobject-addons
+# Copyright (c) 2011 Rosetta Contributors and Canonical Ltd 2011
+# This file is distributed under the same license as the openobject-addons package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: OpenERP Server 6.0dev\n"
-"Report-Msgid-Bugs-To: support@openerp.com\n"
+"Project-Id-Version: openobject-addons\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2011-01-11 11:14+0000\n"
-"PO-Revision-Date: 2011-07-29 15:47+0000\n"
-"Last-Translator: mgaja (GrupoIsep.com) <Unknown>\n"
-"Language-Team: \n"
+"PO-Revision-Date: 2011-07-27 10:47+0000\n"
+"Last-Translator: Juha Kotamäki <Unknown>\n"
+"Language-Team: Finnish <fi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-07-30 05:31+0000\n"
+"X-Launchpad-Export-Date: 2011-07-28 05:13+0000\n"
 "X-Generator: Launchpad (build 13405)\n"
 
 #. module: audittrail
 #: model:ir.module.module,shortdesc:audittrail.module_meta_information
 msgid "Audit Trail"
-msgstr "Auditoria"
+msgstr "Seuranta"
 
 #. module: audittrail
 #: code:addons/audittrail/audittrail.py:81
 #, python-format
 msgid "WARNING: audittrail is not part of the pool"
-msgstr "Avís: Auditoria no forma part del pool"
+msgstr ""
 
 #. module: audittrail
 #: field:audittrail.log.line,log_id:0
 msgid "Log"
-msgstr "Registre"
+msgstr "Loki"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 #: selection:audittrail.rule,state:0
 msgid "Subscribed"
-msgstr "Subscrit"
+msgstr "Tilatut"
 
 #. module: audittrail
 #: model:ir.model,name:audittrail.model_audittrail_rule
 msgid "Audittrail Rule"
-msgstr "Regla d'auditoria"
+msgstr "Seurantasääntö"
 
 #. module: audittrail
 #: view:audittrail.view.log:0
 #: model:ir.actions.act_window,name:audittrail.action_audittrail_log_tree
 #: model:ir.ui.menu,name:audittrail.menu_action_audittrail_log_tree
 msgid "Audit Logs"
-msgstr "Audita registres"
+msgstr "Auditointilokit"
 
 #. module: audittrail
 #: view:audittrail.log:0
 #: view:audittrail.rule:0
 msgid "Group By..."
-msgstr "Agrupa per..."
+msgstr "Ryhmittely.."
 
 #. module: audittrail
 #: view:audittrail.rule:0
 #: field:audittrail.rule,state:0
 msgid "State"
-msgstr "Estat"
+msgstr "Tila"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "_Subscribe"
-msgstr "_Subscriviu-vos"
+msgstr ""
 
 #. module: audittrail
 #: view:audittrail.rule:0
 #: selection:audittrail.rule,state:0
 msgid "Draft"
-msgstr "Esborrany"
+msgstr "Luonnos"
 
 #. module: audittrail
 #: field:audittrail.log.line,old_value:0
 msgid "Old Value"
-msgstr "Valor anterior"
+msgstr "Aikaisempi arvo"
 
 #. module: audittrail
 #: model:ir.actions.act_window,name:audittrail.action_audittrail_view_log
 msgid "View log"
-msgstr "Veure registre"
+msgstr "Katso lokia"
 
 #. module: audittrail
 #: help:audittrail.rule,log_read:0
@@ -89,33 +90,31 @@ msgid ""
 "Select this if you want to keep track of read/open on any record of the "
 "object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment de la "
-"lectura/obertura de qualsevol registre de l'objecte d'aquesta regla."
 
 #. module: audittrail
 #: field:audittrail.log,method:0
 msgid "Method"
-msgstr "Mètode"
+msgstr "Metodi"
 
 #. module: audittrail
 #: field:audittrail.view.log,from:0
 msgid "Log From"
-msgstr "Registra des de"
+msgstr "Loki alkaen"
 
 #. module: audittrail
 #: field:audittrail.log.line,log:0
 msgid "Log ID"
-msgstr "ID registre"
+msgstr "Login ID"
 
 #. module: audittrail
 #: field:audittrail.log,res_id:0
 msgid "Resource Id"
-msgstr "Id recurs"
+msgstr "Resurssi ID"
 
 #. module: audittrail
 #: help:audittrail.rule,user_id:0
 msgid "if  User is not added then it will applicable for all users"
-msgstr "Si no s'afegeix usuari llavors s'aplicarà a tots els usuaris."
+msgstr "Jos käyttäjää ei lisätä, koskee kaikkia käyttäjiä"
 
 #. module: audittrail
 #: help:audittrail.rule,log_workflow:0
@@ -123,67 +122,67 @@ msgid ""
 "Select this if you want to keep track of workflow on any record of the "
 "object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment del flux de "
-"treball de qualsevol registre de l'objecte d'aquesta regla."
+"Valitse tämä jos haluat seurata työnkulua millä tahansa tietueella jota tämä "
+"sääntö koskee"
 
 #. module: audittrail
 #: field:audittrail.rule,user_id:0
 msgid "Users"
-msgstr "Usuaris"
+msgstr "Käyttäjät"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "Log Lines"
-msgstr "Línies de registre"
+msgstr "Lokirivit"
 
 #. module: audittrail
 #: view:audittrail.log:0
 #: field:audittrail.log,object_id:0
 #: field:audittrail.rule,object_id:0
 msgid "Object"
-msgstr "Objecte"
+msgstr "Objekti"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "AuditTrail Rule"
-msgstr "Regla auditoria"
+msgstr "Seurantasääntö"
 
 #. module: audittrail
 #: field:audittrail.view.log,to:0
 msgid "Log To"
-msgstr "Registra fins"
+msgstr "Loki kohteeseen"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "New Value Text: "
-msgstr "Text valor nou: "
+msgstr "Uuden arvon teksti: "
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "Search Audittrail Rule"
-msgstr "Cerca regla d'auditoria"
+msgstr "Hae seurantasääntöä"
 
 #. module: audittrail
 #: model:ir.actions.act_window,name:audittrail.action_audittrail_rule_tree
 #: model:ir.ui.menu,name:audittrail.menu_action_audittrail_rule_tree
 msgid "Audit Rules"
-msgstr "Regles d'auditoria"
+msgstr "Seurantasäännöt"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "Old Value : "
-msgstr "Valor anterior : "
+msgstr "Aikaisempi arvo: "
 
 #. module: audittrail
 #: field:audittrail.log,name:0
 msgid "Resource Name"
-msgstr "Nom del recurs"
+msgstr "Resurssn nimi"
 
 #. module: audittrail
 #: view:audittrail.log:0
 #: field:audittrail.log,timestamp:0
 msgid "Date"
-msgstr "Data"
+msgstr "Päivämäärä"
 
 #. module: audittrail
 #: help:audittrail.rule,log_write:0
@@ -191,28 +190,26 @@ msgid ""
 "Select this if you want to keep track of modification on any record of the "
 "object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment de la "
-"modificació de qualsevol registre de l'objecte d'aquesta regla."
 
 #. module: audittrail
 #: field:audittrail.rule,log_create:0
 msgid "Log Creates"
-msgstr "Registres de creació"
+msgstr "Lokien luonnit"
 
 #. module: audittrail
 #: help:audittrail.rule,object_id:0
 msgid "Select object for which you want to generate log."
-msgstr "Seleccioneu l'objecte sobre el qual voleu generar l'historial."
+msgstr "Valitse objekti jolle haluat luoda lokin"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "Old Value Text : "
-msgstr "Text valor anterior: "
+msgstr "Aikaisempi arvo tekstinä : "
 
 #. module: audittrail
 #: field:audittrail.rule,log_workflow:0
 msgid "Log Workflow"
-msgstr "Registres flux de treball"
+msgstr "Kirjaa työnkulku"
 
 #. module: audittrail
 #: model:ir.module.module,description:audittrail.module_meta_information
@@ -226,40 +223,32 @@ msgid ""
 "    delete on objects and can check logs.\n"
 "    "
 msgstr ""
-"\n"
-"    Aquest mòdul permet a l'administrador realitzar\n"
-"    un seguiment de totes les operacions dels\n"
-"    usuaris de tots els objectes del sistema.\n"
-"\n"
-"    L'administrador pot definir regles per llegir, escriure\n"
-"    i eliminar objectes i comprovar els registres.\n"
-"    "
 
 #. module: audittrail
 #: field:audittrail.rule,log_read:0
 msgid "Log Reads"
-msgstr "Registres de lectures"
+msgstr "Lokin lukemiset"
 
 #. module: audittrail
 #: code:addons/audittrail/audittrail.py:82
 #, python-format
 msgid "Change audittrail depends -- Setting rule as DRAFT"
-msgstr "Canvi dependències auditoria - Regla configuració com ESBORRANY"
+msgstr ""
 
 #. module: audittrail
 #: field:audittrail.log,line_ids:0
 msgid "Log lines"
-msgstr "Línies de registre"
+msgstr "Lokirivit"
 
 #. module: audittrail
 #: field:audittrail.log.line,field_id:0
 msgid "Fields"
-msgstr "Camps"
+msgstr "Kentät"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "AuditTrail Rules"
-msgstr "Regles d'auditoria"
+msgstr "Seurantasäännöt"
 
 #. module: audittrail
 #: help:audittrail.rule,log_unlink:0
@@ -267,92 +256,91 @@ msgid ""
 "Select this if you want to keep track of deletion on any record of the "
 "object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment de l'eliminació "
-"de qualsevol registre de l'objecte d'aquesta regla."
+"Valitse tämä jos haluat seurata kaikkia poistotapahtumia joita tämä objektin "
+"sääntö koskee"
 
 #. module: audittrail
 #: view:audittrail.log:0
 #: field:audittrail.log,user_id:0
 msgid "User"
-msgstr "Usuari"
+msgstr "Käyttäjä"
 
 #. module: audittrail
 #: field:audittrail.rule,action_id:0
 msgid "Action ID"
-msgstr "ID de l'acció"
+msgstr "Toiminnon tunnus"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "Users (if User is not added then it will applicable for all users)"
-msgstr "Usuaris (si no s'afegeixen usuaris, s'aplicarà a tots els usuaris)"
+msgstr "Käyttäjtä (jos ei lisätty, koskee kaikkia käyttäjiä)"
 
 #. module: audittrail
 #: view:audittrail.rule:0
 msgid "UnSubscribe"
-msgstr "Des-subscriure"
+msgstr "Peruuta tilaus"
 
 #. module: audittrail
 #: field:audittrail.rule,log_unlink:0
 msgid "Log Deletes"
-msgstr "Registres d'eliminacions"
+msgstr "Loki poistot"
 
 #. module: audittrail
 #: field:audittrail.log.line,field_description:0
 msgid "Field Description"
-msgstr "Descripció camp"
+msgstr "Kentän kuvaus"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "Search Audittrail Log"
-msgstr "Cerca registre auditoria"
+msgstr "Hae seurantalokeista"
 
 #. module: audittrail
 #: field:audittrail.rule,log_write:0
 msgid "Log Writes"
-msgstr "Registres d'escriptures"
+msgstr "Lokin kirjoitukset"
 
 #. module: audittrail
 #: view:audittrail.view.log:0
 msgid "Open Logs"
-msgstr "Obre registres"
+msgstr "Avaa lokit"
 
 #. module: audittrail
 #: field:audittrail.log.line,new_value_text:0
 msgid "New value Text"
-msgstr "Text valor nou"
+msgstr "Uuden arvon teksti"
 
 #. module: audittrail
 #: field:audittrail.rule,name:0
 msgid "Rule Name"
-msgstr "Nom de regla"
+msgstr "Säännön nimi"
 
 #. module: audittrail
 #: field:audittrail.log.line,new_value:0
 msgid "New Value"
-msgstr "Valor nou"
+msgstr "Uusi arvo"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "AuditTrail Logs"
-msgstr "Registres auditoria"
+msgstr "Seuranalokit"
 
 #. module: audittrail
 #: model:ir.model,name:audittrail.model_audittrail_log
 msgid "Audittrail Log"
-msgstr "Historial d'auditoria"
+msgstr "Seurantaloki"
 
 #. module: audittrail
 #: help:audittrail.rule,log_action:0
 msgid ""
 "Select this if you want to keep track of actions on the object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment de les accions "
-"de l'objecte d'aquesta regla."
+"Valitse tämä jos haluat seurata toimintoja joihin tämä objekti liittyy"
 
 #. module: audittrail
 #: view:audittrail.log:0
 msgid "New Value : "
-msgstr "Valor nou : "
+msgstr "Uusi arvo : "
 
 #. module: audittrail
 #: sql_constraint:audittrail.rule:0
@@ -360,33 +348,31 @@ msgid ""
 "There is a rule defined on this object\n"
 " You can not define other on the same!"
 msgstr ""
-"Existeix una regla definida en aquest objecte.\n"
-" No podeu definir una altra en el mateix objecte!"
 
 #. module: audittrail
 #: field:audittrail.log.line,old_value_text:0
 msgid "Old value Text"
-msgstr "Text valor anterior"
+msgstr "Vanhan arvon teksti"
 
 #. module: audittrail
 #: view:audittrail.view.log:0
 msgid "Cancel"
-msgstr "Cancel·la"
+msgstr "Peruuta"
 
 #. module: audittrail
 #: model:ir.model,name:audittrail.model_audittrail_view_log
 msgid "View Log"
-msgstr "Visualitza el registre"
+msgstr "Näytä loki"
 
 #. module: audittrail
 #: model:ir.model,name:audittrail.model_audittrail_log_line
 msgid "Log Line"
-msgstr "Línia de registre"
+msgstr "Lokirivi"
 
 #. module: audittrail
 #: field:audittrail.rule,log_action:0
 msgid "Log Action"
-msgstr "Registres d'accions"
+msgstr "Lokitoiminto"
 
 #. module: audittrail
 #: help:audittrail.rule,log_create:0
@@ -394,5 +380,3 @@ msgid ""
 "Select this if you want to keep track of creation on any record of the "
 "object of this rule"
 msgstr ""
-"Seleccioneu aquesta opció si desitgeu realitzar el seguiment de la creació "
-"de qualsevol registre de l'objecte d'aquesta regla."
