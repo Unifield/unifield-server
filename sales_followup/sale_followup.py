@@ -1,0 +1,140 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 
+##############################################################################
+
+from osv import osv, fields
+
+class sale_order_followup(osv.osv_memory):
+    _name = 'sale.order.followup'
+    _description = 'Sales Order Followup'
+    
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal reference', readonly=True),
+        'cust_ref': fields.related('order_id', 'client_order_ref', string='Customer reference', readonly=True),
+        'creation_date': fields.related('order_id', 'create_date', string='Creation date', readonly=True),
+        'state': fields.related('order_id', 'state', string='State of the order', readonly=True),
+        'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested date', readonly=True),
+        'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed date', readonly=True),
+        'line_ids': fields.one2many('sale.order.line.followup', 'followup_id', string='Lines', readonly=True),
+    }
+    
+    def start_order_followup(self, cr, uid, ids, context={}):
+        order_obj = self.pool.get('sale.order')
+        order_line_obj = self.pool.get('sale.order.line')
+        line_obj = self.pool.get('sale.order.line.followup')
+        
+        # openERP BUG ?
+        ids = context.get('active_ids',[])
+        
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No order found !'))
+        if len(ids) != 1:
+            raise osv.except_osv(_('Error'), _('You should select one order to follow !'))
+        
+        followup_id = False
+        
+        for o in order_obj.browse(cr, uid, ids, context=context):
+            followup_id = self.create(cr, uid, {'order_id': o.id})
+            
+            for line in o.order_line:
+                order_line_obj.create(cr, uid, {'followup_id': followup_id,
+                                                'line_id': line.id,
+                                                'purchase_ids': self.get_purchase_ids(cr, uid, line.id, context=context),
+                                                'incoming_ids': self.get_incoming_ids(cr, uid, line.id, context=context),
+                                                'outgoing_ids': self.get_outgoing_ids(cr, uid, line.id, context=context),})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'sale.order.followup',
+                'res_id': followup_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new'}
+        
+    def get_purchase_ids(self, cr, uid, line_id, context={}):
+        '''
+        Returns a list of purchase orders related to the sale order line
+        '''
+        line_obj = self.pool.get('sale.order.line')
+        
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+        
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            pass
+        
+        return []
+        
+    def get_incoming_ids(self, cr, uid, line_id, context={}):
+        '''
+        Returns a list of incoming shipments related to the sale order line
+        '''
+        line_obj = self.pool.get('sale.order.line')
+                
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+        
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            pass
+        
+        return []
+        
+    def get_outgoing_ids(self, cr, uid, line_id, context={}):
+        '''
+        Returns a list of outgoing deliveries related to the sale order line
+        '''
+        line_obj = self.pool.get('sale.order.line')
+                
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+        
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            pass
+        
+        return []
+        
+    
+sale_order_followup()
+
+class sale_order_line_followup(osv.osv_memory):
+    _name = 'sale.order.line.followup'
+    _description = 'Sales Order Lines Followup'
+    
+    _columns = {
+        'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True),
+        'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
+        'line_number': fields.related('sale.order.line', string='Order line', readonly=True),
+        'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True),
+        'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
+        #TODO: Add call for tender when the feature of call for tender will be implemented
+#        'tender_ids': fields.many2many('call.tender', 'call_tender_follow_rel',
+#                                       'follow_line_id', 'tender_id', string='Call for tender'),
+#        'quotation_ids': fields.many2many('request.for.quotation', 'quotation_follow_rel', 'follow_line_id',
+#                                          'quotation_id', string='Requests for Quotation', readonly=True),
+        'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
+                                         'purchase_id', string='Purchase Orders', readonly=True),
+        'incoming_ids': fields.many2many('stock.picking', 'incoming_follow_rel', 'follow_line_id', 
+                                         'incoming_id', string='Incoming Shipment', readonly=True),
+        'outgoing_ids': fields.many2many('stock.picking', 'outgoing_follow_rel', 'follow_line_id',
+                                         'outgoing_id', string='Outgoing Deliveries', readonly=True),
+        
+        
+    }
+    
+sale_order_line_followup()

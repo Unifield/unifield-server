@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="action_sale_order_follow_up" model="ir.actions.server">
+            <field name="name">Order Follow Up</field>
+            <field name="model_id" ref="model_sale_order_followup"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_order_followup(context=context)</field>
+        </record>
+        
+        <record id="ir_open_sale_order_follow_up" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Order Follow Up</field>
+            <field eval="'ir.actions.server,%d'%action_sale_order_follow_up" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    
+        <record id="sale_order_followup_form_view" model="ir.ui.view">
+            <field name="name">sale.order.followup.form.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up">
+                    <field name="order_id" />
+                    <field name="cust_ref" />
+                    <field name="creation_date" />
+                    <field name="state" />
+                    <field name="requested_date" />
+                    <field name="confirmed_date" />
+                    <field name="line_ids" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="sale_order_line_followup_tree_view" model="ir.ui.view">
+            <field name="name">sale.order.line.followup.tree.view</field>
+            <field name="model">sale.order.line.followup</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order follow up lines">
+                    <field name="line_number" />
+                    <field name="product_id" />
+                    <field name="qty_ordered" />
+                    <!--<field name="tender_ids" />
+                    <field name="quotation_ids" />-->
+                    <field name="purchase_ids" />
+                    <field name="incoming_ids" />
+                    <field name="outgoing_ids" />
+                </tree>
+            </field>
+        </record>
+    
+    </data>
+</openerp>
