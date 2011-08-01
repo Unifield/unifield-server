@@ -60,6 +60,7 @@ class object_query(osv.osv):
                                      relation='ir.model', string='Models'),
         'search_view_id': fields.many2one('ir.ui.view', string='Search View'),
         'tree_view_id': fields.many2one('ir.ui.view', string='Tree View'),
+        'export_id': fields.many2one('ir.exports', string='Export')
         
     }
     
@@ -69,7 +70,7 @@ class object_query(osv.osv):
     
     def _get_inherits_model(self, cr, uid, model_name):
         '''
-        Get all inherited objects
+        Get all inherited ir.model of an object
         '''
         res = []
         
@@ -88,7 +89,7 @@ class object_query(osv.osv):
         '''
         Change the value of model_id when the object changes
         '''
-        res = {'model_ids': [], 'selection_ids': [(5,object_id)],
+        res = {'selection_ids': [], 'model_ids': [],
                'group_by_ids': [],'result_ids': []}
         
         obj = self.pool.get('object.query.object')
@@ -118,6 +119,10 @@ class object_query(osv.osv):
             search_group = ''
             tree_fields = ''
             tree_field_ids = []
+            export_line_obj = self.pool.get('ir.exports.line')
+            
+            export_id = self.pool.get('ir.exports').create(cr, uid, {'name': query.name,
+                                                                     'resource': query.object_id.model_id.model,})
             
             for filter in query.selection_ids:
                 search_filters += "<field name='%s' />" % (filter.name)
@@ -127,6 +132,7 @@ class object_query(osv.osv):
                 tree_fields += "<field name='%s' />" % (result.field_id.name)
                 tree_fields += "\n"
                 tree_field_ids.append(result.field_id.id)
+                export_line_obj.create(cr, uid, {'name': result.field_id.name, 'export_id': export_id})
             
             for group in query.group_by_ids:
                 search_group += "<filter context=\"{'group_by': '%s'}\" string='%s' domain=\"[]\" />" % (group.name, group.field_description)
