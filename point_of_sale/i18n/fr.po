@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 6.0dev\n"
 "Report-Msgid-Bugs-To: support@openerp.com\n"
-"POT-Creation-Date: 2011-01-03 16:58+0000\n"
-"PO-Revision-Date: 2011-01-19 12:00+0000\n"
-"Last-Translator: Fabien (Open ERP) <fp@tinyerp.com>\n"
+"POT-Creation-Date: 2011-05-09 10:19+0000\n"
+"PO-Revision-Date: 2011-07-29 15:29+0000\n"
+"Last-Translator: Quentin THEURET <Unknown>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-01-25 06:52+0000\n"
-"X-Generator: Launchpad (build 12177)\n"
+"X-Launchpad-Export-Date: 2011-07-30 05:31+0000\n"
+"X-Generator: Launchpad (build 13405)\n"
 
 #. module: point_of_sale
 #: field:pos.discount,discount_notes:0
@@ -35,7 +35,7 @@ msgstr "Confimer la vente"
 #: model:ir.actions.act_window,name:point_of_sale.action_pos_discount
 #: view:pos.discount:0
 msgid "Apply Discount"
-msgstr "Appliquer la remise"
+msgstr "Appliquer Remise"
 
 #. module: point_of_sale
 #: view:pos.order:0
@@ -188,10 +188,9 @@ msgid "Disc. (%)"
 msgstr "Rem. (%)"
 
 #. module: point_of_sale
-#: report:pos.details:0
-#: report:pos.details_summary:0
-msgid "Total discount"
-msgstr "Remise totale"
+#: model:ir.ui.menu,name:point_of_sale.menu_point_open_config
+msgid "Cash Register Management"
+msgstr "Gestion du registre de caisse"
 
 #. module: point_of_sale
 #: view:account.bank.statement:0
@@ -279,11 +278,6 @@ msgid "Max Discount(%)"
 msgstr "Remise max. (%)"
 
 #. module: point_of_sale
-#: model:ir.ui.menu,name:point_of_sale.menu_point_open_config
-msgid "Cash register management"
-msgstr "Gestion des caisses enregistreuses"
-
-#. module: point_of_sale
 #: code:addons/point_of_sale/point_of_sale.py:1056
 #: code:addons/point_of_sale/point_of_sale.py:1075
 #, python-format
@@ -309,7 +303,7 @@ msgstr "Marge"
 #. module: point_of_sale
 #: field:pos.order.line,discount:0
 msgid "Discount (%)"
-msgstr "Ristourne (%)"
+msgstr "Remise (%)"
 
 #. module: point_of_sale
 #: view:pos.order.line:0
@@ -383,7 +377,7 @@ msgstr "Ventes par magasin"
 #: field:pos.order,date_payment:0
 #: field:report.pos.order,date_payment:0
 msgid "Payment Date"
-msgstr "Date de paiement"
+msgstr "Date de règlement"
 
 #. module: point_of_sale
 #: report:account.statement:0
@@ -576,7 +570,7 @@ msgstr "Erreur: code EAN invalide"
 #: view:pos.confirm:0
 #: view:pos.open.statement:0
 msgid "Open Statements"
-msgstr "Ouvrir les caisses"
+msgstr "Ouvrir les caisses automatiques"
 
 #. module: point_of_sale
 #: view:pos.add.product:0
@@ -606,9 +600,14 @@ msgid "Qty of product"
 msgstr "Qté de Produits"
 
 #. module: point_of_sale
+#: model:ir.model,name:point_of_sale.model_report_transaction_pos
+msgid "transaction for the pos"
+msgstr "Transaction du Point de vente"
+
+#. module: point_of_sale
 #: field:pos.order,contract_number:0
 msgid "Contract Number"
-msgstr "Numéro de contrat"
+msgstr "N° de contrat"
 
 #. module: point_of_sale
 #: selection:report.cash.register,month:0
@@ -892,9 +891,10 @@ msgid "Companies"
 msgstr "Sociétés"
 
 #. module: point_of_sale
-#: model:ir.model,name:point_of_sale.model_report_transaction_pos
-msgid "transaction for the pos"
-msgstr "Transaction du Point de vente"
+#: report:pos.details:0
+#: report:pos.details_summary:0
+msgid "Total discount"
+msgstr "Remise totale"
 
 #. module: point_of_sale
 #: code:addons/point_of_sale/wizard/pos_get_sale.py:54
@@ -1039,7 +1039,7 @@ msgstr "Date de création"
 #. module: point_of_sale
 #: model:ir.ui.menu,name:point_of_sale.menu_wizard_enter_jrnl2
 msgid "Output Operations"
-msgstr "Opérations de sortie de caisse"
+msgstr "Sortie de caisse"
 
 #. module: point_of_sale
 #: report:pos.details:0
@@ -1129,7 +1129,7 @@ msgstr "Compte"
 #. module: point_of_sale
 #: field:pos.order,sale_manager:0
 msgid "Salesman Manager"
-msgstr "Responsable du vendeur"
+msgstr "Vendeur 2"
 
 #. module: point_of_sale
 #: view:pos.order:0
@@ -1360,7 +1360,7 @@ msgstr "Mois"
 #. module: point_of_sale
 #: view:pos.order:0
 msgid "Sales Order POS"
-msgstr "Commande de ventes PDV"
+msgstr "Ventes"
 
 #. module: point_of_sale
 #: report:account.statement:0
@@ -1478,7 +1478,7 @@ msgstr "Reçu"
 #. module: point_of_sale
 #: field:pos.order,invoice_wanted:0
 msgid "Create Invoice"
-msgstr "Créer une facture"
+msgstr "Créer Facture"
 
 #. module: point_of_sale
 #: selection:pos.order,state:0
@@ -1787,7 +1787,7 @@ msgstr "Magasin"
 #. module: point_of_sale
 #: field:pos.order,picking_id:0
 msgid "Last Output Picking"
-msgstr "Dernier colisage sortant"
+msgstr "Colisages"
 
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_account_bank_statement_line
@@ -2348,7 +2348,7 @@ msgstr "Paiements"
 #: report:pos.sales.user.today.current.user:0
 #: report:pos.user.product:0
 msgid "Print Date"
-msgstr "Date d'Impression"
+msgstr "Date d'impression"
 
 #. module: point_of_sale
 #: model:ir.actions.act_window,name:point_of_sale.action_report_sales_by_margin_pos_month
@@ -2363,7 +2363,7 @@ msgstr "Recherche de bon de commande"
 #. module: point_of_sale
 #: field:pos.order,account_move:0
 msgid "Account Entry"
-msgstr "Pièce comptable"
+msgstr "Écriture comptable"
 
 #. module: point_of_sale
 #: code:addons/point_of_sale/wizard/pos_add_product.py:84
@@ -2387,3 +2387,6 @@ msgstr "Ventes du jour par utilisateur"
 #: field:report.pos.order,year:0
 msgid "Year"
 msgstr "Année"
+
+#~ msgid "Cash register management"
+#~ msgstr "Gestion des caisses enregistreuses"

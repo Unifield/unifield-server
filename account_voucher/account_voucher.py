@@ -118,20 +118,23 @@ class account_voucher(osv.osv):
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         mod_obj = self.pool.get('ir.model.data')
         if context is None: context = {}
+        
+        def get_res_id(view_type, condition):
+            result = False
+            if view_type == 'tree':
+                result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_voucher_tree')
+            elif view_type == 'form':
+                if condition:
+                    result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_receipt_form')
+                else:
+                    result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_payment_form')
+            return result and result[1] or False
+
         if not view_id and context.get('invoice_type', False):
-            if context.get('invoice_type', False) in ('out_invoice', 'out_refund'):
-                result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_receipt_form')
-            else:
-                result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_payment_form')
-            result = result and result[1] or False
-            view_id = result
+            view_id = get_res_id(view_type,context.get('invoice_type', False) in ('out_invoice', 'out_refund'))
+
         if not view_id and context.get('line_type', False):
-            if context.get('line_type', False) == 'customer':
-                result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_receipt_form')
-            else:
-                result = mod_obj.get_object_reference(cr, uid, 'account_voucher', 'view_vendor_payment_form')
-            result = result and result[1] or False
-            view_id = result
+            view_id = get_res_id(view_type,context.get('line_type', False) == 'customer')
 
         res = super(account_voucher, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         doc = etree.XML(res['arch'])
@@ -460,7 +463,10 @@ class account_voucher(osv.osv):
             account_type = 'receivable'
 
         if not context.get('move_line_ids', False):
-            ids = move_line_pool.search(cr, uid, [('state','=','valid'), ('account_id.type', '=', account_type), ('reconcile_id', '=', False), ('partner_id', '=', partner_id)], context=context)
+            domain = [('state','=','valid'), ('account_id.type', '=', account_type), ('reconcile_id', '=', False), ('partner_id', '=', partner_id)]
+            if context.get('invoice_id', False):
+	            domain.append(('invoice', '=', context['invoice_id']))
+            ids = move_line_pool.search(cr, uid, domain, context=context)    
         else:
             ids = context['move_line_ids']
         ids.reverse()
@@ -495,7 +501,6 @@ class account_voucher(osv.osv):
                 'date_original':line.date,
                 'date_due':line.date_maturity,
                 'amount_unreconciled': amount_unreconciled,
-
             }
 
             if line.credit:
@@ -751,7 +756,8 @@ class account_voucher(osv.osv):
                     rec_ids = [voucher_line, line.move_line_id.id]
                     rec_list_ids.append(rec_ids)
 
-            if not currency_pool.is_zero(cr, uid, inv.currency_id, line_total):
+            inv_currency_id = inv.currency_id or inv.journal_id.currency_id or inv.journal_id.company_id.currency_id
+            if not currency_pool.is_zero(cr, uid, inv_currency_id, line_total):
                 diff = line_total
                 account_id = False
                 if inv.payment_option == 'with_writeoff':

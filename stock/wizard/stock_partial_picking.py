@@ -118,17 +118,17 @@ class stock_partial_picking(osv.osv_memory):
 
     def __create_partial_picking_memory(self, move, pick_type):
         move_memory = {
-            'product_id' : move.product_id.id, 
-            'quantity' : move.product_qty, 
-            'product_uom' : move.product_uom.id, 
-            'prodlot_id' : move.prodlot_id.id, 
-            'move_id' : move.id, 
+            'product_id' : move.product_id.id,
+            'quantity' : move.product_qty,
+            'product_uom' : move.product_uom.id,
+            'prodlot_id' : move.prodlot_id.id,
+            'move_id' : move.id,
         }
-    
+
         if pick_type == 'in':
             move_memory.update({
-                'cost' : move.product_id.standard_price, 
-                'currency' : move.product_id.company_id.currency_id.id, 
+                'cost' : move.product_id.standard_price,
+                'currency' : move.product_id.company_id and move.product_id.company_id.currency_id.id or False,
             })
         return move_memory
 

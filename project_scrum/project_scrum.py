@@ -212,9 +212,9 @@ class project_scrum_product_backlog(osv.osv):
                 if task.state != 'done':
                     tasks_id.append(task.id)
 
-            clone_id = self.copy(cr, uid, product.id, {
-                'name': 'PARTIAL:'+ product.name ,
-                'sprint_id':False,
+            self.copy(cr, uid, product.id, {
+                'name': 'PARTIAL:'+ product.name,
+                'sprint_id': False,
                 'tasks_id':[(6, 0, tasks_id)],
                                 })
         self.write(cr, uid, ids, {'state':'cancel'}, context=context)
@@ -290,7 +290,7 @@ class project_scrum_meeting(osv.osv):
     # TODO: Find the right sprint thanks to users and date
     #
     _defaults = {
-        'date' : time.strftime('%Y-%m-%d'),
+        'date' : lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def button_send_to_master(self, cr, uid, ids, context=None):

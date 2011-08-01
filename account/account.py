@@ -249,6 +249,7 @@ class account_account(osv.osv):
         children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
+        sums = {}
         if children_and_consolidated:
             aml_query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
 
@@ -284,7 +285,6 @@ class account_account(osv.osv):
             # consolidate accounts with direct children
             children_and_consolidated.reverse()
             brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
-            sums = {}
             currency_obj = self.pool.get('res.currency')
             while brs:
                 current = brs[0]
@@ -305,11 +305,11 @@ class account_account(osv.osv):
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
                             sums[current.id][fn] += currency_obj.compute(cr, uid, child.company_id.currency_id.id, current.company_id.currency_id.id, sums[child.id][fn], context=context)
-            res = {}
-            null_result = dict((fn, 0.0) for fn in field_names)
-            for id in ids:
-                res[id] = sums.get(id, null_result)
-            return res
+        res = {}
+        null_result = dict((fn, 0.0) for fn in field_names)
+        for id in ids:
+            res[id] = sums.get(id, null_result)
+        return res
 
     def _get_company_currency(self, cr, uid, ids, field_name, arg, context=None):
         result = {}
@@ -1322,6 +1322,8 @@ class account_move(osv.osv):
 
     def _centralise(self, cr, uid, move, mode, context=None):
         assert mode in ('debit', 'credit'), 'Invalid Mode' #to prevent sql injection
+        currency_obj = self.pool.get('res.currency')
+        move_line_obj = self.pool.get('account.move.line')
         if context is None:
             context = {}
 
@@ -1348,7 +1350,7 @@ class account_move(osv.osv):
             line_id = res[0]
         else:
             context.update({'journal_id': move.journal_id.id, 'period_id': move.period_id.id})
-            line_id = self.pool.get('account.move.line').create(cr, uid, {
+            line_id = move_line_obj.create(cr, uid, {
                 'name': _(mode.capitalize()+' Centralisation'),
                 'centralisation': mode,
                 'account_id': account_id,
@@ -1372,6 +1374,34 @@ class account_move(osv.osv):
         cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))
         result = cr.fetchone()[0] or 0.0
         cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))
+        
+        #adjust also the amount in currency if needed
+        cr.execute("select currency_id, sum(amount_currency) as amount_currency from account_move_line where move_id = %s and currency_id is not null group by currency_id", (move.id,))
+        for row in cr.dictfetchall():
+            currency_id = currency_obj.browse(cr, uid, row['currency_id'], context=context)
+            if not currency_obj.is_zero(cr, uid, currency_id, row['amount_currency']):
+                amount_currency = row['amount_currency'] * -1
+                account_id = amount_currency > 0 and move.journal_id.default_debit_account_id.id or move.journal_id.default_credit_account_id.id
+                cr.execute('select id from account_move_line where move_id=%s and centralisation=\'currency\' and currency_id = %s limit 1', (move.id, row['currency_id']))
+                res = cr.fetchone()
+                if res:
+                    cr.execute('update account_move_line set amount_currency=%s , account_id=%s where id=%s', (amount_currency, account_id, res[0]))
+                else:
+                    context.update({'journal_id': move.journal_id.id, 'period_id': move.period_id.id})
+                    line_id = move_line_obj.create(cr, uid, {
+                        'name': _('Currency Adjustment'),
+                        'centralisation': 'currency',
+                        'account_id': account_id,
+                        'move_id': move.id,
+                        'journal_id': move.journal_id.id,
+                        'period_id': move.period_id.id,
+                        'date': move.period_id.date_stop,
+                        'debit': 0.0,
+                        'credit': 0.0,
+                        'currency_id': row['currency_id'],
+                        'amount_currency': amount_currency,
+                    }, context)
+
         return True
 
     #
@@ -1554,7 +1584,8 @@ class account_tax_code(osv.osv):
                     AND move.id = line.move_id \
                     GROUP BY line.tax_code_id',
                        (parent_ids,) + where_params)
-        res=dict(cr.fetchall())
+        res = dict(cr.fetchall())
+        res2 = {}
         obj_precision = self.pool.get('decimal.precision')
         for record in self.browse(cr, uid, ids, context=context):
             def _rec_get(record):
@@ -1562,8 +1593,8 @@ class account_tax_code(osv.osv):
                 for rec in record.child_ids:
                     amount += _rec_get(rec) * rec.sign
                 return amount
-            res[record.id] = round(_rec_get(record), obj_precision.precision_get(cr, uid, 'Account'))
-        return res
+            res2[record.id] = round(_rec_get(record), obj_precision.precision_get(cr, uid, 'Account'))
+        return res2
 
     def _sum_year(self, cr, uid, ids, name, args, context=None):
         if context is None:
@@ -2463,7 +2494,7 @@ class account_tax_template(osv.osv):
         'name': fields.char('Tax Name', size=64, required=True),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the taxes lines from lower sequences to higher ones. The order is important if you have a tax that has several tax children. In this case, the evaluation order is important."),
         'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between 0-1."),
-        'type': fields.selection( [('percent','Percent'), ('fixed','Fixed'), ('none','None'), ('code','Python Code')], 'Tax Type', required=True),
+        'type': fields.selection( [('percent','Percent'), ('fixed','Fixed'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True),
         'applicable_type': fields.selection( [('true','True'), ('code','Python Code')], 'Applicable Type', required=True, help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
         'account_collected_id':fields.many2one('account.account.template', 'Invoice Tax Account'),
@@ -2946,6 +2977,7 @@ class wizard_multi_charts_accounts(osv.osv_memory):
             analitical_bank_ids = analytic_journal_obj.search(cr,uid,[('type','=','situation')])
             analitical_journal_bank = analitical_bank_ids and analitical_bank_ids[0] or False
 
+            vals_journal = {}
             vals_journal['name']= vals['name']
             vals_journal['code']= _('BNK') + str(current_num)
             vals_journal['sequence_id'] = seq_id

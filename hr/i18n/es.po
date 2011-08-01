@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenERP Server 6.0dev\n"
 "Report-Msgid-Bugs-To: support@openerp.com\n"
-"POT-Creation-Date: 2011-01-11 11:15+0000\n"
-"PO-Revision-Date: 2011-03-21 15:40+0000\n"
-"Last-Translator: jmartin (Zikzakmedia) <jmartin@zikzakmedia.com>\n"
+"POT-Creation-Date: 2011-05-09 10:18+0000\n"
+"PO-Revision-Date: 2011-06-21 07:57+0000\n"
+"Last-Translator: Amós Oviedo <Unknown>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-03-22 06:22+0000\n"
-"X-Generator: Launchpad (build 12559)\n"
+"X-Launchpad-Export-Date: 2011-06-23 05:57+0000\n"
+"X-Generator: Launchpad (build 13168)\n"
 
 #. module: hr
 #: model:process.node,name:hr.process_node_openerpuser0
@@ -371,11 +371,6 @@ msgid "Expected Employees"
 msgstr "Empleados previstos"
 
 #. module: hr
-#: help:hr.employee,sinid:0
-msgid "Social Insurance Number"
-msgstr "Número de la mutua laboral."
-
-#. module: hr
 #: model:hr.employee.marital.status,name:hr.hr_employee_marital_status_divorced
 msgid "Divorced"
 msgstr "Divorciado"
@@ -572,6 +567,11 @@ msgid "Error ! You cannot create recursive Hierarchy of Employees."
 msgstr "¡Error! No se puede crear una jerarquía recursiva de empleados."
 
 #. module: hr
+#: field:hr.employee,bank_account_id:0
+msgid "Bank Account Number"
+msgstr "Número de Cuenta Bancaria"
+
+#. module: hr
 #: view:hr.department:0
 msgid "Companies"
 msgstr "Compañías"
@@ -693,7 +693,7 @@ msgstr ""
 #. module: hr
 #: view:hr.job:0
 msgid "Current"
-msgstr "Actual"
+msgstr "Presente"
 
 #. module: hr
 #: field:hr.department,parent_id:0
@@ -809,9 +809,9 @@ msgid "Employees"
 msgstr "Empleados"
 
 #. module: hr
-#: field:hr.employee,bank_account_id:0
-msgid "Bank Account"
-msgstr "Cuenta bancaria"
+#: help:hr.employee,sinid:0
+msgid "Social Insurance Number"
+msgstr "Número de la mutua laboral."
 
 #. module: hr
 #: field:hr.department,name:0
@@ -876,3 +876,6 @@ msgstr "Sistema genérico de nóminas integrado con contabilidad."
 #: field:hr.employee,child_ids:0
 msgid "Subordinates"
 msgstr "Subordinados"
+
+#~ msgid "Bank Account"
+#~ msgstr "Cuenta bancaria"

@@ -421,7 +421,7 @@
                             <group col="2" colspan="2">
                                 <group colspan="2" col="2">
                                     <separator string="Accounts" colspan="4"/>
-                                    <field name="default_debit_account_id" attrs="{'required':[('type','in', ('cash', 'bank'))]}" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                                    <field name="default_debit_account_id" attrs="{'required':[('type','in',('cash', 'bank'))]}" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
                                     <field name="default_credit_account_id" attrs="{'required':[('type','in',('cash', 'bank'))]}" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
                                 </group>
                                 <group colspan="2" col="2">
@@ -590,7 +590,23 @@
                             </field>
                         </page>
                         <page string="Journal Entries" name="move_live_ids">
-                            <field colspan="4" name="move_line_ids" nolabel="1"/>
+                            <field colspan="4" name="move_line_ids" nolabel="1" mode="tree,form">
+                            	<tree string="Journal Items" editable="top" on_write="on_create_write">
+									<field name="move_id"/>
+									<field name="ref"/>
+									<field name="date"/>
+									<field name="period_id"/>
+									<field name="partner_id" on_change="onchange_partner_id(move_id, partner_id, account_id, debit, credit, date, journal_id)"/>
+									<field name="account_id"/>
+									<field name="name"/>
+									<field name="journal_id" invisible="1"/>
+									<field name="debit" sum="Total debit"/>
+									<field name="credit" sum="Total credit"/>
+									<field name="reconcile_partial_id" groups="base.group_extended"/>
+									<field name="reconcile_id"/>
+									<field name="state"/>
+								</tree>
+                            </field>
                         </page>
                     </notebook>
                     <group col="8" colspan="4">
@@ -1326,7 +1342,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Journal Items">
-                            <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines':line_id ,'journal':journal_id }">
+                            <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines':line_id , 'journal':journal_id, 'period_id':period_id}">
                                 <form string="Journal Item">
                                     <group col="6" colspan="4">
                                         <field name="name"/>

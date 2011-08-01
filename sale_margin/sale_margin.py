@@ -29,11 +29,15 @@ class sale_order_line(osv.osv):
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty=qty,
             uom=uom, qty_uos=qty_uos, uos=uos, name=name, partner_id=partner_id,
             lang=lang, update_tax=update_tax, date_order=date_order, packaging=packaging, fiscal_position=fiscal_position, flag=flag)
-        frm_cur = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        to_cur = self.pool.get('res.partner').browse(cr, uid, partner_id).property_product_pricelist.currency_id.id
         if product:
-            purchase_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
-            price = self.pool.get('res.currency').compute(cr, uid, frm_cur, to_cur, purchase_price, round=False)
+            price = self.pool.get('product.product').browse(cr, uid, product).standard_price
+            partner_pricelist = self.pool.get('res.partner').browse(cr, uid, partner_id).property_product_pricelist
+
+            if partner_pricelist:
+                to_cur = partner_pricelist.currency_id.id
+                frm_cur = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+                price = self.pool.get('res.currency').compute(cr, uid, frm_cur, to_cur, price, round=False)
+
             res['value'].update({'purchase_price': price})
         return res
 
@@ -82,10 +86,11 @@ class stock_picking(osv.osv):
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
             group=False, type='out_invoice', context=None):
         # need to carify with new requirement
-        invoice_ids = []
+        invoice_ids = []            
+        if context is None:
+            context = {}
         picking_obj = self.pool.get('stock.picking')
-        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id=False,
-            group=False, type='out_invoice', context=None)
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id=journal_id,group=group, type=type, context=context)        
         invoice_ids = res.values()
         picking_obj.write(cr, uid, ids, {'invoice_ids': [[6, 0, invoice_ids]]})
         return res
