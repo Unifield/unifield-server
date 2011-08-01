@@ -287,6 +287,7 @@ class Form(SecuredController):
                                        '_terp_notebook_tab': notebook_tab})
         params.o2m_edit = o2m_edit
         params.editable = editable
+        params.action_id = kw.get('action_id')
 
         if kw.get('default_date'):
             params.context.update({'default_date' : kw['default_date']})
@@ -404,10 +405,24 @@ class Form(SecuredController):
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
             else:
-                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
-                 if params.button and params.button.name:
+                ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
+                if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
-                 Model.write([params.id], data, ctx)
+                
+                #original_data = Model.read(params.id, data.keys())
+                #modified = {}
+                
+                #if original_data and isinstance(original_data, dict):
+                #    for field, original_value in original_data.iteritems():
+                #        if isinstance(original_value, tuple):
+                #            original_data[field] = original_value[0]
+                #        if field in data and data[field] != original_data[field]:
+                #            modified[field] = data[field]
+
+                #    Model.write([params.id], modified, ctx)
+                #else:
+                #    Model.write([params.id], data, ctx)
+                Model.write([params.id], data, ctx)
 
             tw.ConcurrencyInfo.update(
                 params.model, Model.read([params.id], ['__last_update'], ctx)

@@ -56,7 +56,8 @@ function openRecord(id, src, target, readonly){
         'search_domain': jQuery('#_terp_search_domain').val() || null,
         'search_data': jQuery('#_terp_search_data').val() || null,
         'filter_domain': jQuery('#_terp_filter_domain').val() || [],
-        'notebook_tab': jQuery('#_terp_notebook_tab').val() || 0
+        'notebook_tab': jQuery('#_terp_notebook_tab').val() || 0,
+        'action_id': jQuery('#_terp_action_id').val() || null
     };
 
     var action = readonly ? 'view' : 'edit';
@@ -837,7 +838,7 @@ function makeContextMenu(id, kind, relation, val){
     var act = get_form_action('get_context_menu');
 
     var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) : '';
-    if ((prefix.split('/')[0])== '_terp_listfields') {
+    if ((prefix.split('/')[0]) == '_terp_listfields') {
         prefix = (prefix.split('/')[1]);
     }
 
