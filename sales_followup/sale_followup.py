@@ -54,11 +54,15 @@ class sale_order_followup(osv.osv_memory):
             followup_id = self.create(cr, uid, {'order_id': o.id})
             
             for line in o.order_line:
-                order_line_obj.create(cr, uid, {'followup_id': followup_id,
-                                                'line_id': line.id,
-                                                'purchase_ids': self.get_purchase_ids(cr, uid, line.id, context=context),
-                                                'incoming_ids': self.get_incoming_ids(cr, uid, line.id, context=context),
-                                                'outgoing_ids': self.get_outgoing_ids(cr, uid, line.id, context=context),})
+                purchase_ids = self.get_purchase_ids(cr, uid, line.id, context=context)
+                incoming_ids = self.get_incoming_ids(cr, uid, line.id, purchase_ids, context=context)
+                outgoing_ids = self.get_outgoing_ids(cr, uid, line.id, context=context)
+                
+                line_obj.create(cr, uid, {'followup_id': followup_id,
+                                          'line_id': line.id,
+                                          'purchase_ids': [(6,0,purchase_ids)],
+                                          'incoming_ids': [(6,0,incoming_ids)],
+                                          'outgoing_ids': [(6,0,outgoing_ids)],})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
@@ -75,25 +79,39 @@ class sale_order_followup(osv.osv_memory):
         
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
+            
+        purchase_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            pass
+            if line.type == 'make_to_order' and line.procurement_id \
+                and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id:
+                purchase_ids.append(line.procurement_id.purchase_id.id)
         
-        return []
+        return purchase_ids
         
-    def get_incoming_ids(self, cr, uid, line_id, context={}):
+    def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context={}):
         '''
         Returns a list of incoming shipments related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
+        purchase_obj = self.pool.get('purchase.order')
                 
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
+            
+        if isinstance(purchase_ids, (int, long)):
+            purchase_ids= [purchase_ids]
+            
+        incoming_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            pass
+            for po in purchase_obj.browse(cr, uid, purchase_ids, context=context):
+                for po_line in po.order_line:
+                    if po_line.product_id.id == line.product_id.id:
+                        for move in po_line.move_ids:
+                            incoming_ids.append(mode.id)
         
-        return []
+        return incoming_ids
         
     def get_outgoing_ids(self, cr, uid, line_id, context={}):
         '''
@@ -103,11 +121,14 @@ class sale_order_followup(osv.osv_memory):
                 
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
+            
+        outgoing_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            pass
+            for move in line.move_ids:
+                outgoing_ids.append(move.id)
         
-        return []
+        return outgoing_ids
         
     
 sale_order_followup()
@@ -119,7 +140,7 @@ class sale_order_line_followup(osv.osv_memory):
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
-        'line_number': fields.related('sale.order.line', string='Order line', readonly=True),
+        'line_number': fields.related('sale.order.line', 'line_number', string='Order line', readonly=True),
         'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
         #TODO: Add call for tender when the feature of call for tender will be implemented
