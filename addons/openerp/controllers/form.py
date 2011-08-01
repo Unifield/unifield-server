@@ -409,19 +409,20 @@ class Form(SecuredController):
                 if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
                 
-                original_data = Model.read(params.id, data.keys())
-                modified = {}
+                #original_data = Model.read(params.id, data.keys())
+                #modified = {}
                 
-                if original_data and isinstance(original_data, dict):
-                    for field, original_value in original_data.iteritems():
-                        if isinstance(original_value, tuple):
-                            original_data[field] = original_value[0]
-                        if field in data and data[field] != original_data[field]:
-                            modified[field] = data[field]
+                #if original_data and isinstance(original_data, dict):
+                #    for field, original_value in original_data.iteritems():
+                #        if isinstance(original_value, tuple):
+                #            original_data[field] = original_value[0]
+                #        if field in data and data[field] != original_data[field]:
+                #            modified[field] = data[field]
 
-                    Model.write([params.id], modified, ctx)
-                else:
-                    Model.write([params.id], data, ctx)
+                #    Model.write([params.id], modified, ctx)
+                #else:
+                #    Model.write([params.id], data, ctx)
+                Model.write([params.id], data, ctx)
 
             tw.ConcurrencyInfo.update(
                 params.model, Model.read([params.id], ['__last_update'], ctx)
