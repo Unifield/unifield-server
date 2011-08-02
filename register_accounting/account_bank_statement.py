@@ -212,7 +212,13 @@ class account_bank_statement(osv.osv):
         """
         When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
+        # statement_id is useful for making some line's registration.
+        st = self.browse(cr, uid, ids[0], context=context)
         id = self.pool.get('wizard.import.invoice').create(cr, uid, {'statement_id': ids[0] or None}, context=context)
+        # Remember if we come from a cheque register (for adding some fields)
+        from_cheque = False
+        if st.journal_id.type == 'cheque':
+            from_cheque = True
         return {
             'name': "Import Invoice",
             'type': 'ir.actions.act_window',
@@ -225,6 +231,7 @@ class account_bank_statement(osv.osv):
             {
                 'active_id': ids[0],
                 'active_ids': ids,
+                'from_cheque': from_cheque,
             }
         }
 

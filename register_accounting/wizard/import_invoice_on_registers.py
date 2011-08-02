@@ -47,6 +47,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
         'line_id': fields.many2one('account.move.line', string="Invoice", required=True),
         'wizard_id': fields.many2one('wizard.import.invoice', string='wizard'),
+        'cheque_number': fields.char(string="Cheque Number", size=120, readonly=False, required=False),
     }
 
 wizard_import_invoice_lines()
@@ -64,6 +65,21 @@ class wizard_import_invoice(osv.osv_memory):
         'invoice_lines_ids': fields.one2many('wizard.import.invoice.lines', 'wizard_id', string='', required=True),
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Correct fields in order to have "cheque number" when we come from a cheque register.
+        """
+        if context is None:
+            context = {}
+        view_name = 'import_invoice_on_registers_lines'
+        if context.get('from_cheque', False):
+            view_name = 'import_invoice_on_registers_lines_cheque'
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', view_name)
+        if view:
+            view_id = view[1]
+        result = super(wizard_import_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return result
 
     def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         """
@@ -138,14 +154,6 @@ class wizard_import_invoice(osv.osv_memory):
         # FIXME:
         # - verify amount regarding foreign currency !!!
         wizard = self.browse(cr, uid, ids[0], context=context)
-        # Order lines by partner_id
-        ordered_lines = {}
-        for line in wizard.invoice_lines_ids:
-            # FIXME: Verify that all lines have positive amount AND an amount that doesn't be superior to amount_to_pay
-            if not line.partner_id.id in ordered_lines:
-                ordered_lines[line.partner_id.id] = [line.id]
-            elif line.id not in ordered_lines[line.partner_id.id]:
-                ordered_lines[line.partner_id.id].append(line.id)
 
         # Prepare some values
         move_obj = self.pool.get('account.move')
@@ -155,6 +163,18 @@ class wizard_import_invoice(osv.osv_memory):
         st_id = st.id
         journal_id = st.journal_id.id
         period_id = st.period_id.id
+
+        # Order lines by partner_id
+        ordered_lines = {}
+        for line in wizard.invoice_lines_ids:
+            # FIXME: Verify that all lines have positive amount AND an amount that doesn't be superior to amount_to_pay
+            if not line.partner_id.id in ordered_lines:
+                ordered_lines[line.partner_id.id] = [line.id]
+            elif line.id not in ordered_lines[line.partner_id.id]:
+                ordered_lines[line.partner_id.id].append(line.id)
+            # We come from a cheque register ? So what about cheque_number field ?
+            if st.journal_id.type == 'cheque' and line.cheque_number is False:
+                raise osv.except_osv(_('Warning'), _('Please complete "Cheque Number" field(s) before wizard validation.'))
 
         # For each partner, do an account_move with all lines => lines merge
         for partner in ordered_lines:
