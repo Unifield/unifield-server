@@ -21,16 +21,16 @@
                             <field name="balance_start"/>
                             <field name="balance_end_real"/>
                             <field name="currency" invisible="1"/>
-                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
-                        <group col="3" colspan="4">
+                        <group col="2" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-save"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
@@ -116,15 +116,15 @@
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
                             <field name="currency" invisible="1"/>
-                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
-                        <group col="3" colspan="4">
+                        <group col="2" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-save"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
@@ -459,7 +459,6 @@
                         <field name="balance_start"/>
                         <field name="balance_end_real"/>
                         <field name="currency" invisible="1"/>
-                        <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-execute"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                     </group>
@@ -469,6 +468,7 @@
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                             context="context"/>
                         <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                        <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-save"/>
                     </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>
