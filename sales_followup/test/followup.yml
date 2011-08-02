@@ -1,0 +1,158 @@
+-
+  I create a Sale Order to follow
+-
+  !record {model: sale.order, id: so1}:
+    name: Regular1
+    company_id: base.main_company
+    picking_policy: direct
+    order_policy: manual
+    invoice_quantity: order
+    partner_order_id: customer1_addr
+    partner_invoice_id: customer1_addr
+    partner_shipping_id: customer1_addr
+    partner_id: customer1
+    pricelist_id: product.list0
+    order_type: regular
+    order_line:
+      - name: P1
+        price_unit: 200
+        product_uom: product.product_uom_unit
+        product_uom_qty: 500.0
+        state: draft
+        delay: 7.0
+        product_id: product1
+        product_uos_qty: 500.0
+        th_weight: 0.0
+        type: make_to_order
+      - name: P2
+        price_unit: 200
+        product_uom: product.product_uom_unit
+        product_uom_qty: 225.0
+        state: draft
+        delay: 7.0
+        product_id: product2
+        product_uos_qty: 225.0
+        th_weight: 0.0
+        type: make_to_stock
+      - name: P3
+        price_unit: 100
+        product_uom: product.product_uom_unit
+        product_uom_qty: 125.0
+        state: draft
+        delay: 7.0
+        product_id: product2
+        product_uos_qty: 125.0
+        th_weight: 0.0
+        type: make_to_stock
+-
+  I create a follow-up
+-
+  !python {model: ir.actions.server}: |
+    context = {'active_id':  ref('sales_followup.so1'),
+               'active_ids': [ref('sales_followup.so1')]}
+    res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
+    assert res != False, "Error on ir.actions.server launching"
+-
+  I check the creation of the wizard
+-
+  !python {model: sale.order.followup}: |
+    assert len(self.search(cr, uid, [])) == 1, "Wrong number of created wizard"
+-
+  I check if the wizard is related to the sale order and if the information is ok
+-
+  !python {model: sale.order.followup}: |
+    wiz_ids = self.search(cr, uid, [])
+    for wiz in self.browse(cr, uid, wiz_ids):
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
+        assert wiz.state == 'Quotation', "The state on the wizard is different than the state of the Sale Order"
+        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+    self.unlink(cr, uid, wiz_ids)
+-
+  I confirm the sale order
+-
+  !workflow {model: sale.order, action: order_confirm, ref: so1}
+-
+  I create again a wizard
+-
+  !python {model: ir.actions.server}: |
+    context = {'active_id':  ref('sales_followup.so1'),
+               'active_ids': [ref('sales_followup.so1')]}
+    res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
+    assert res != False, "Error on ir.actions.server launching"
+-
+  I check if the wizard is related to the sale order and if the information is ok
+-
+  !python {model: sale.order.followup}: |
+    wiz_ids = self.search(cr, uid, [])
+    for wiz in self.browse(cr, uid, wiz_ids):
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
+        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        for line in wiz.line_ids:
+          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
+          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
+          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+    self.unlink(cr, uid, wiz_ids)
+-
+  I run the scheduler.
+-
+  !function {model: procurement.order, name: run_scheduler}:
+    - model: procurement.order
+      search: "[]"
+-
+  I create again a wizard
+-
+  !python {model: ir.actions.server}: |
+    context = {'active_id':  ref('sales_followup.so1'),
+               'active_ids': [ref('sales_followup.so1')]}
+    res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
+    assert res != False, "Error on ir.actions.server launching"
+-
+  I check if the wizard is related to the sale order and if the information is ok
+-
+  !python {model: sale.order.followup}: |
+    import netsvc
+    wiz_ids = self.search(cr, uid, [])
+    for wiz in self.browse(cr, uid, wiz_ids):
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
+        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        for line in wiz.line_ids:
+          if line.product_id.id == ref('product1'):
+              assert len(line.quotation_ids) == 1, "Number of the RfQ is different than 1"
+              for po in line.quotation_ids:
+                  wf_service = netsvc.LocalService("workflow")
+                  wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_confirm', cr)
+                  wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_approve', cr)
+          else:
+              assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
+          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
+          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+    self.unlink(cr, uid, wiz_ids)
+-
+  I create again a wizard
+-
+  !python {model: ir.actions.server}: |
+    context = {'active_id':  ref('sales_followup.so1'),
+               'active_ids': [ref('sales_followup.so1')]}
+    res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
+    assert res != False, "Error on ir.actions.server launching"
+-
+  I check if the wizard is related to the sale order and if the information is ok
+-
+  !python {model: sale.order.followup}: |
+    import netsvc
+    wiz_ids = self.search(cr, uid, [])
+    for wiz in self.browse(cr, uid, wiz_ids):
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
+        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        for line in wiz.line_ids:
+          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
+          if line.product_id.id == ref('product1'):
+              assert len(line.purchase_ids) == 1, "Number of the Purchase Order is different than 1"
+              assert len(line.incoming_ids) == 1, "Number of the Incoming Shipment is different than 1"
+          else:
+              assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
+              assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+    self.unlink(cr, uid, wiz_ids)

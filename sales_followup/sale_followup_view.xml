@@ -23,10 +23,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Order follow up">
+                    <separator colspan="4" string="General Information" />
                     <field name="order_id" />
                     <field name="cust_ref" />
                     <field name="creation_date" />
                     <field name="state" />
+                    <separator colspan="4" string="Associated documents" />
                     <field name="requested_date" />
                     <field name="confirmed_date" />
                     <field name="line_ids" colspan="4" nolabel="1" />
@@ -43,12 +45,34 @@
                     <field name="line_number" />
                     <field name="product_id" />
                     <field name="qty_ordered" />
-                    <!--<field name="tender_ids" />
-                    <field name="quotation_ids" />-->
+                    <!--<field name="tender_ids" />-->
+                    <field name="quotation_ids" />
                     <field name="purchase_ids" />
                     <field name="incoming_ids" />
                     <field name="outgoing_ids" />
                 </tree>
+            </field>
+        </record>
+        
+        <record id="sale_order_line_followup_form_view" model="ir.ui.view">
+            <field name="name">sale.order.line.followup.form.view</field>
+            <field name="model">sale.order.line.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up line">
+                    <separator colspan="4" string="General Information" />
+                    <field name="line_number" />
+                    <field name="line_id" />
+                    <field name="product_id" />
+                    <field name="qty_ordered" />
+                    <separator colspan="4" string="Associated documents" />
+                    <!--<field name="tender_ids" nolabel="1" />-->
+                    <field name="quotation_ids" nolabel="1" colspan="2" />
+                    <field name="purchase_ids" nolabel="1" colspan="2" />
+                    <newline />
+                    <field name="incoming_ids" nolabel="1" colspan="2" />
+                    <field name="outgoing_ids" nolabel="1" colspan="2" />
+                </form>
             </field>
         </record>
     

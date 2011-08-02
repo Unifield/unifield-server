@@ -25,13 +25,40 @@ class sale_order_followup(osv.osv_memory):
     _name = 'sale.order.followup'
     _description = 'Sales Order Followup'
     
+    def get_selection(self, cr, uid, o, field):
+        """
+        Retourne le libellé d'un champ sélection
+        """
+        sel = self.pool.get(o._name).fields_get(cr, uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        if tr_ids:
+            return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+        else:
+            return res
+    
+    def _get_order_state(self, cr, uid, ids, field_name, args, context={}):
+        if not context:
+            context = {}
+            
+        res = {}
+            
+        for follow in self.browse(cr, uid, ids, context=context):
+            res[follow.id] = None
+            
+            if follow.order_id:
+                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state')
+            
+        return res
+    
     _columns = {
         'order_id': fields.many2one('sale.order', string='Internal reference', readonly=True),
-        'cust_ref': fields.related('order_id', 'client_order_ref', string='Customer reference', readonly=True),
-        'creation_date': fields.related('order_id', 'create_date', string='Creation date', readonly=True),
-        'state': fields.related('order_id', 'state', string='State of the order', readonly=True),
-        'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested date', readonly=True),
-        'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed date', readonly=True),
+        'cust_ref': fields.related('order_id', 'client_order_ref', string='Customer reference', readonly=True, type='char'),
+        'creation_date': fields.related('order_id', 'create_date', string='Creation date', readonly=True, type='date'),
+        'state': fields.function(_get_order_state, method=True, type='char', string='Order state', readonly=True),
+        'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested date', readonly=True, type='date'),
+        'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed date', readonly=True, type='date'),
         'line_ids': fields.one2many('sale.order.line.followup', 'followup_id', string='Lines', readonly=True),
     }
     
@@ -57,9 +84,13 @@ class sale_order_followup(osv.osv_memory):
                 purchase_ids = self.get_purchase_ids(cr, uid, line.id, context=context)
                 incoming_ids = self.get_incoming_ids(cr, uid, line.id, purchase_ids, context=context)
                 outgoing_ids = self.get_outgoing_ids(cr, uid, line.id, context=context)
+                tender_ids = self.get_tender_ids(cr, uid, line.id, context=context)
+                quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
                 
                 line_obj.create(cr, uid, {'followup_id': followup_id,
                                           'line_id': line.id,
+#                                          'tender_ids': [(6,0,tender_ids)],
+                                          'quotation_ids': [(6,0,quotation_ids)],
                                           'purchase_ids': [(6,0,purchase_ids)],
                                           'incoming_ids': [(6,0,incoming_ids)],
                                           'outgoing_ids': [(6,0,outgoing_ids)],})
@@ -84,10 +115,30 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id \
-                and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id:
+            and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id \
+            and line.procurement_id.purchase_id.state != 'draft':
                 purchase_ids.append(line.procurement_id.purchase_id.id)
         
         return purchase_ids
+    
+    def get_quotation_ids(self, cr, uid, line_id, context={}):
+        '''
+        Returns a list of request for quotation related to the sale order line
+        '''
+        line_obj = self.pool.get('sale.order.line')
+        
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+            
+        quotation_ids = []
+        
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            if line.type == 'make_to_order' and line.procurement_id \
+            and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id \
+            and line.procurement_id.purchase_id.state == 'draft':
+                quotation_ids.append(line.procurement_id.purchase_id.id)
+        
+        return quotation_ids
         
     def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context={}):
         '''
@@ -109,7 +160,7 @@ class sale_order_followup(osv.osv_memory):
                 for po_line in po.order_line:
                     if po_line.product_id.id == line.product_id.id:
                         for move in po_line.move_ids:
-                            incoming_ids.append(mode.id)
+                            incoming_ids.append(move.id)
         
         return incoming_ids
         
@@ -129,6 +180,22 @@ class sale_order_followup(osv.osv_memory):
                 outgoing_ids.append(move.id)
         
         return outgoing_ids
+    
+    def get_tender_ids(self, cr, uid, line_id, context={}):
+        '''
+        Returns a list of call for tender related to the sale order line
+        '''
+        line_obj = self.pool.get('sale.order.line')
+                
+        if isinstance(line_id, (int, long)):
+            line_id = [line_id]
+            
+        tender_ids = []
+        
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            pass
+        
+        return tender_ids
         
     
 sale_order_followup()
@@ -140,14 +207,15 @@ class sale_order_line_followup(osv.osv_memory):
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
-        'line_number': fields.related('sale.order.line', 'line_number', string='Order line', readonly=True),
-        'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True),
+        'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
+        'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
+                                     type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
         #TODO: Add call for tender when the feature of call for tender will be implemented
 #        'tender_ids': fields.many2many('call.tender', 'call_tender_follow_rel',
 #                                       'follow_line_id', 'tender_id', string='Call for tender'),
-#        'quotation_ids': fields.many2many('request.for.quotation', 'quotation_follow_rel', 'follow_line_id',
-#                                          'quotation_id', string='Requests for Quotation', readonly=True),
+        'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
+                                          'quotation_id', string='Requests for Quotation', readonly=True),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
                                          'purchase_id', string='Purchase Orders', readonly=True),
         'incoming_ids': fields.many2many('stock.picking', 'incoming_follow_rel', 'follow_line_id', 

@@ -42,6 +42,8 @@
     "demo_xml": [
     ],
     "test": [
+        "test/data.yml",
+        "test/followup.yml",
     ],
     "installable": True,
     "active": False,
