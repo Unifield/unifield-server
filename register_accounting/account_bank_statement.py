@@ -190,7 +190,8 @@ class account_bank_statement(osv.osv):
             currency =currency[0]
         id = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
         if not id:
-            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, context={'journal_type': 'purchase', 'type': 'in_invoice'})
+            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, 
+                context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
             'name': "Supplier Invoice",
             'type': 'ir.actions.act_window',
@@ -408,7 +409,8 @@ class account_bank_statement_line(osv.osv):
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
-        'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", required=False, readonly=True),
+        'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
+            required=False, readonly=True),
     }
 
     _defaults = {
@@ -843,7 +845,8 @@ class account_bank_statement_line(osv.osv):
                     # In case of line that content some move_line that come from imported invoices
                     # delete link between account_move_line and register_line that will be unlinked
                     if st_line.imported_invoice_line_ids:
-                        self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
+                        self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
+                            {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 

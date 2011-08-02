@@ -24,7 +24,9 @@
                         <field name="date" select='1'/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
-                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
+                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" 
+                                context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" 
+                                domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
                         </field>
                     </group>
                     <newline/>
@@ -92,7 +94,9 @@
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
-                        <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False)]" context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
+                        <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
+                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False)]" 
+                            context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
                         <newline/>
                         <field height="300" width="700" name="invoice_lines_ids" colspan="4" nolabel="1">
                             <tree editable="bottom">
