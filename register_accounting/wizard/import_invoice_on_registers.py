@@ -164,6 +164,9 @@ class wizard_import_invoice(osv.osv_memory):
         st_id = st.id
         journal_id = st.journal_id.id
         period_id = st.period_id.id
+        cheque = False
+        if st.journal_id.type == 'cheque':
+            cheque = True
 
         # Order lines by partner_id
         ordered_lines = {}
@@ -174,7 +177,7 @@ class wizard_import_invoice(osv.osv_memory):
             elif line.id not in ordered_lines[line.partner_id.id]:
                 ordered_lines[line.partner_id.id].append(line.id)
             # We come from a cheque register ? So what about cheque_number field ?
-            if st.journal_id.type == 'cheque' and line.cheque_number is False:
+            if cheque and line.cheque_number is False:
                 raise osv.except_osv(_('Warning'), _('Please complete "Cheque Number" field(s) before wizard validation.'))
 
         # For each partner, do an account_move with all lines => lines merge
@@ -182,6 +185,7 @@ class wizard_import_invoice(osv.osv_memory):
             move_vals = {}
             move_line_vals = {}
             register_vals = {}
+            cheque_numbers = []
             # Lines for this partner
             lines = self.pool.get('wizard.import.invoice.lines').browse(cr, uid, ordered_lines[partner])
             first_line = move_line_obj.browse(cr, uid, [lines[0].line_id.id], context=context)[0] or None
@@ -215,6 +219,8 @@ class wizard_import_invoice(osv.osv_memory):
                     'period_id': period_id,
                     'currency_id': currency_id,
                 }
+                if cheque:
+                    cheque_numbers.append(line.cheque_number)
                 # Create move line
                 aml_id = move_line_obj.create(cr, uid, aml_vals, context=context)
                 # Inform system that invoices are linked to an import.
@@ -256,6 +262,8 @@ class wizard_import_invoice(osv.osv_memory):
                 'move_ids': [(4, move_id, False)], # create a link between the register line and the account_move_line
                 'imported_invoice_line_ids': [(4, x.line_id.id, False) for x in lines],
             }
+            if cheque:
+                register_vals.update({'cheque_number': '-'.join(cheque_numbers)[:120]})
             absl_id = absl_obj.create(cr, uid, register_vals, context=context)
             
             # Also add link (to the absl) to all move_line that come from an invoice
