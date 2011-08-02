@@ -64,6 +64,7 @@ class wizard_import_invoice(osv.osv_memory):
         'line_id': fields.many2one('account.move.line', string='Invoice', required=False),
         'invoice_lines_ids': fields.one2many('wizard.import.invoice.lines', 'wizard_id', string='', required=True),
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency.")
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

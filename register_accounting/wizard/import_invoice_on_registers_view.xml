@@ -95,7 +95,7 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
-                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False)]" 
+                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False), ('currency_id', '=', currency_id)]" 
                             context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
                         <newline/>
                         <field height="300" width="700" name="invoice_lines_ids" colspan="4" nolabel="1">
@@ -118,6 +118,7 @@
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button icon="gtk-execute" string="Ok" name="action_confirm" type="object"/>
                    </group>
+                   <field name="currency_id" invisible="1"/>
                </form>
             </field>
         </record>
@@ -131,7 +132,7 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
-                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False)]" 
+                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False), ('currency_id', '=', currency_id)]" 
                             context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
                         <newline/>
                         <field height="300" width="700" name="invoice_lines_ids" colspan="4" nolabel="1">
@@ -155,6 +156,7 @@
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button icon="gtk-execute" string="Ok" name="action_confirm" type="object"/>
                    </group>
+                   <field name="currency_id" invisible="1"/>
                </form>
             </field>
         </record>
