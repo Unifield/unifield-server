@@ -164,9 +164,7 @@ class wizard_import_invoice(osv.osv_memory):
             # Lines for this partner
             lines = self.pool.get('wizard.import.invoice.lines').browse(cr, uid, ordered_lines[partner])
             first_line = move_line_obj.browse(cr, uid, [lines[0].line_id.id], context=context)[0] or None
-            # Take some information about the first line
-#            journal_id = first_line.journal_id and first_line.journal_id.id or False
-#            period_id = first_line.period_id and first_line.period_id.id or False
+            # Prepare some values
             currency_id = first_line.currency_id and first_line.currency_id.id or False
             curr_date = strftime('%Y-%m-%d')
             # Create a move : begin
@@ -183,7 +181,6 @@ class wizard_import_invoice(osv.osv_memory):
             # create on move_line for each line for this partner
             for line in lines:
                 # Prepare some value
-                # FIXME: do debit or credit regarding payable/receivable
                 aml_vals = {
                     'name': line.number,
                     'date': self._get_date_in_period(cr, uid, line.date, period_id, context=context),
@@ -205,7 +202,6 @@ class wizard_import_invoice(osv.osv_memory):
                 
                 # FIXME: Change amount_to_pay of this invoice (amount_to_pay - amount)
             # Write compensation line
-            # FIXME: make a balance of account_move and do the compensation line with payable or receivable account
             compensation_amount = move_obj._compute_balance(cr, uid, move_id, context=context)
             compensation_debit = 0.0
             compensation_credit = compensation_amount
