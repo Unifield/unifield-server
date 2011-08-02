@@ -181,7 +181,6 @@ class wizard_import_invoice(osv.osv_memory):
             # create the move : end
             move_id = move_obj.create(cr, uid, move_vals, context=context)
             # create on move_line for each line for this partner
-            total = 0.0
             for line in lines:
                 # Prepare some value
                 # FIXME: do debit or credit regarding payable/receivable
@@ -197,9 +196,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'journal_id': line.line_id.journal_id.id,
                     'period_id': period_id,
                     'currency_id': currency_id,
-                    'from_import_invoice': True,
                 }
-                total += abs(line.amount)
                 # Create move line
                 aml_id = move_line_obj.create(cr, uid, aml_vals, context=context)
                 # Inform system that invoices are linked to an import.
@@ -209,21 +206,25 @@ class wizard_import_invoice(osv.osv_memory):
                 # FIXME: Change amount_to_pay of this invoice (amount_to_pay - amount)
             # Write compensation line
             # FIXME: make a balance of account_move and do the compensation line with payable or receivable account
+            compensation_amount = move_obj._compute_balance(cr, uid, move_id, context=context)
             compensation_debit = 0.0
-            compensation_credit = total
+            compensation_credit = compensation_amount
+            compensation_account_id = journal_id and st.journal_id.default_credit_account_id.id
+            if compensation_amount < 0:
+                compensation_debit = abs(compensation_amount)
+                compensation_account_id = journal_id and st.journal_id.default_debit_account_id.id
             compensation_vals = {
                     'name': 'Total of invoices',
                     'date': self._get_date_in_period(cr, uid, curr_date, period_id, context=context),
                     'move_id': move_id,
                     'partner_id': line.partner_id and line.partner_id.id or False,
-                    'account_id': journal_id and st.journal_id.default_credit_account_id.id,
+                    'account_id': compensation_account_id,
                     'credit': compensation_credit,
                     'debit': compensation_debit,
                     'statement_id': st_id,
                     'journal_id': journal_id,
                     'period_id': period_id,
                     'currency_id': currency_id,
-                    'from_import_invoice': True,
             }
             compensation_id = move_line_obj.create(cr, uid, compensation_vals, context=context)
             
