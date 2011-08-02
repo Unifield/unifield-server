@@ -95,7 +95,7 @@ class wizard_import_invoice(osv.osv_memory):
         period_id = wizard.statement_id.period_id.id
         if not wizard.line_id: 
             return False
-        if wizard.line_id.id in display_lines or wizard.line_id.from_import_invoice == True:
+        if wizard.line_id.id in display_lines:
             raise osv.except_osv(_('Warning'), _('This invoice has already been added. Please choose another invoice.'))
         line = wizard.line_id
         vals = {
@@ -237,10 +237,13 @@ class wizard_import_invoice(osv.osv_memory):
                 'partner_id': first_line.partner_id.id,
                 'amount': compensation_debit - compensation_credit or 0.0,
                 'move_ids': [(4, move_id, False)], # create a link between the register line and the account_move_line
-                'from_import_invoice': True,
+                'imported_invoice_line_ids': [(4, x.line_id.id, False) for x in lines],
             }
-            absl_obj.create(cr, uid, register_vals, context=context)
+            absl_id = absl_obj.create(cr, uid, register_vals, context=context)
             
+            # Also add link (to the absl) to all move_line that come from an invoice
+            for line in lines:
+                move_line_obj.write(cr, uid, line.line_id.id, {'move_ids': [(4, absl_id, False)]}, context=context)
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
