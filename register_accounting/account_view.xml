@@ -481,7 +481,7 @@
                                 <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
                                     <field name="date" groups="base.group_extended" string="Posting Date"/>
                                     <field name="document_date"/>
-                                    <field name="mandatory" required="1"/>
+                                    <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
                                     <field name="partner_type_mandatory" invisible="1"/>
@@ -509,7 +509,7 @@
                                 <form string="Statement lines">
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
-                                    <field name="mandatory" required="1"/>
+                                    <field name="cheque_number" required="1"/>
                                     <field name="sequence" invisible="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
