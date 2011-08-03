@@ -45,6 +45,8 @@ class account_move_line(osv.osv):
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
             string="Imported Invoices", required=False, readonly=True),
+        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
+            help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

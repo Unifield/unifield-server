@@ -167,6 +167,7 @@ class wizard_import_invoice(osv.osv_memory):
         cheque = False
         if st.journal_id.type == 'cheque':
             cheque = True
+        st_line_ids = []
 
         # Order lines by partner_id
         ordered_lines = {}
@@ -218,6 +219,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'journal_id': line.line_id.journal_id.id,
                     'period_id': period_id,
                     'currency_id': currency_id,
+                    'from_import_invoice_ml_id': line.line_id.id,
                 }
                 if cheque:
                     cheque_numbers.append(line.cheque_number)
@@ -261,17 +263,20 @@ class wizard_import_invoice(osv.osv_memory):
                 'amount': compensation_debit - compensation_credit or 0.0,
                 'move_ids': [(4, move_id, False)], # create a link between the register line and the account_move_line
                 'imported_invoice_line_ids': [(4, x.line_id.id, False) for x in lines],
+                'first_move_line_id': compensation_id, # this permit to find the compensation line again
             }
             if cheque:
                 register_vals.update({'cheque_number': '-'.join(cheque_numbers)[:120]})
             absl_id = absl_obj.create(cr, uid, register_vals, context=context)
+            st_line_ids.append(absl_id)
             
             # Also add link (to the absl) to all move_line that come from an invoice
             for line in lines:
                 move_line_obj.write(cr, uid, line.line_id.id, {'move_ids': [(4, absl_id, False)]}, context=context)
 
         # Close Wizard
-        return { 'type': 'ir.actions.act_window_close', }
+        # st_line_ids could be necessary for some tests
+        return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids}
 
 wizard_import_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
