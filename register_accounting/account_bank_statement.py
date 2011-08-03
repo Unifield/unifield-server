@@ -792,6 +792,7 @@ class account_bank_statement_line(osv.osv):
             if st_line.first_move_line_id.amount_currency > 0:
                 sign = -1
             res_ml_ids = []
+            process_invoice_move_line_ids = []
             for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
                 if abs(invoice_move_line.amount_currency) <= amount:
                     amount_to_write = sign * abs(invoice_move_line.amount_currency)
@@ -808,10 +809,15 @@ class account_bank_statement_line(osv.osv):
                     'currency_id': st_line.statement_id.currency.id,
                     'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
                 }
+                process_invoice_move_line_ids.append(invoice_move_line.id)
                 move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
                 res_ml_ids.append(move_line_id)
                 
                 amount -= abs(amount_to_write)
+                if not amount:
+                    todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
+                    absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
+                    break
             # STEP 2 : Post moves
             move_obj.post(cr, uid, move_ids, context=context)
             
