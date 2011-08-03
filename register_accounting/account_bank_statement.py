@@ -756,9 +756,11 @@ class account_bank_statement_line(osv.osv):
 
     def do_import_invoices_reconciliation(self, cr, uid, st_lines=None, context={}):
         """
-        Reconcile line that come from an import invoices wizard.
+        Reconcile line that come from an import invoices wizard in 3 steps :
+         - split line into the move
+         - post move
+         - reconcile lines from the move
         """
-        print "dedans"
         # Some verifications
         if not context:
             context={}
@@ -772,22 +774,51 @@ class account_bank_statement_line(osv.osv):
 
         # Parse register lines
         for st_line in absl_obj.browse(cr, uid, st_lines, context=context):
+            # Verification if st_line have some imported invoice lines
             if not st_line.imported_invoice_line_ids:
-                return False
+                continue
             
+            ## STEP 1 : Split lines
             # Prepate some values
             move_ids = [x.id for x in st_line.move_ids]
             # Search move lines that are attached to move_ids
             move_lines = move_line_obj.search(cr, uid, [('move_id', 'in', move_ids), 
                 ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
+            # Delete them
+            move_line_obj.unlink(cr, uid, move_lines, context=context)
+            # Add new lines
+            amount = abs(st_line.first_move_line_id.amount_currency)
+            sign = 1
+            if st_line.first_move_line_id.amount_currency > 0:
+                sign = -1
+            res_ml_ids = []
+            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                if abs(invoice_move_line.amount_currency) <= amount:
+                    amount_to_write = sign * abs(invoice_move_line.amount_currency)
+                else:
+                    amount_to_write = sign * amount
+                # create a new move_line corresponding to this invoice move line
+                aml_vals = {
+                    'name': invoice_move_line.invoice.number,
+                    'move_id': move_ids[0],
+                    'partner_id': invoice_move_line.partner_id.id,
+                    'account_id': st_line.account_id.id,
+                    'amount_currency': amount_to_write,
+                    'statement_id': st_line.statement_id.id,
+                    'currency_id': st_line.statement_id.currency.id,
+                    'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                }
+                move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
+                res_ml_ids.append(move_line_id)
+                
+                amount -= abs(amount_to_write)
+            # STEP 2 : Post moves
+            move_obj.post(cr, uid, move_ids, context=context)
             
-            # Browse all result move_lines
-            for ml in move_line_obj.browse(cr, uid, move_lines, context=context):
-                if not ml.from_import_invoice_ml_id:
-                    continue
-                # Do a reconciliation between the move line and his counterpart
-                print ml.id, ml.from_import_invoice_ml_id.id
-                move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id])
+            # STEP 3 : Reconcile
+            for ml in move_line_obj.browse(cr, uid, res_ml_ids, context=context):
+                # reconcile lines
+                move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
         return True
 
     def create(self, cr, uid, values, context={}):
@@ -850,10 +881,13 @@ class account_bank_statement_line(osv.osv):
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-                acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
-                # do a move that enable a complete supplier follow-up
-                self.do_direct_expense(cr, uid, [absl.id], context=context)
-                self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
+                # Case where this line come from an "Import Invoices" Wizard
+                if absl.imported_invoice_line_ids:
+                    self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
+                else:
+                    acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                    # do a move that enable a complete supplier follow-up
+                    self.do_direct_expense(cr, uid, [absl.id], context=context)
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):

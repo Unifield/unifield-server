@@ -115,6 +115,7 @@ class wizard_import_invoice(osv.osv_memory):
         if wizard.line_id.id in display_lines:
             raise osv.except_osv(_('Warning'), _('This invoice has already been added. Please choose another invoice.'))
         line = wizard.line_id
+        
         vals = {
             'line_id': line.id or None,
             'partner_id': line.partner_id.id or None,
@@ -124,7 +125,7 @@ class wizard_import_invoice(osv.osv_memory):
             'account_id': line.account_id.id or None,
             'date_maturity': line.date_maturity or None,
             'date': self._get_date_in_period(cr, uid, line.date, period_id, context=context),
-            'amount': line.amount_to_pay or None, # By default, amount_to_pay
+            'amount': line.amount_currency or None, # By default, amount_to_pay
             'amount_to_pay': line.amount_to_pay or None,
             'amount_currency': line.amount_currency or None,
             'currency_id': line.currency_id.id or None,
@@ -157,7 +158,6 @@ class wizard_import_invoice(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
 
         # Prepare some values
-        move_obj = self.pool.get('account.move')
         move_line_obj = self.pool.get('account.move.line')
         absl_obj = self.pool.get('account.bank.statement.line')
         st = wizard.statement_id
@@ -183,75 +183,24 @@ class wizard_import_invoice(osv.osv_memory):
 
         # For each partner, do an account_move with all lines => lines merge
         for partner in ordered_lines:
-            move_vals = {}
-            move_line_vals = {}
             register_vals = {}
             cheque_numbers = []
             # Lines for this partner
             lines = self.pool.get('wizard.import.invoice.lines').browse(cr, uid, ordered_lines[partner])
             first_line = move_line_obj.browse(cr, uid, [lines[0].line_id.id], context=context)[0] or None
+
             # Prepare some values
             currency_id = first_line.currency_id and first_line.currency_id.id or False
             curr_date = strftime('%Y-%m-%d')
-            # Create a move : begin
-            move_name = "Inv. Pay." # TODO: What should be displayed ?
-            # prepare a move
-            move_vals = {
-                'journal_id': journal_id, # invoice.journal_id.id
-                'period_id': period_id,
-                'date': self._get_date_in_period(cr, uid, curr_date, period_id, context=context),
-                'name': move_name,
-            }
-            # create the move : end
-            move_id = move_obj.create(cr, uid, move_vals, context=context)
-            # create on move_line for each line for this partner
+            
+            # Prepare some values
+            total = 0.0
             for line in lines:
-                # Prepare some value
-                aml_vals = {
-                    'name': line.number,
-                    'date': self._get_date_in_period(cr, uid, line.date, period_id, context=context),
-                    'move_id': move_id,
-                    'partner_id': line.partner_id and line.partner_id.id or False,
-                    'account_id': line.account_id and line.account_id.id,
-                    'credit': line.line_id.debit,
-                    'debit': line.line_id.credit,
-                    'statement_id': st_id,
-                    'journal_id': line.line_id.journal_id.id,
-                    'period_id': period_id,
-                    'currency_id': currency_id,
-                    'from_import_invoice_ml_id': line.line_id.id,
-                }
-                if cheque:
-                    cheque_numbers.append(line.cheque_number)
-                # Create move line
-                aml_id = move_line_obj.create(cr, uid, aml_vals, context=context)
-                # Inform system that invoices are linked to an import.
-                move_line_obj.browse(cr, uid, line.line_id.invoice)
-                move_line_obj.write(cr, uid, line.line_id.id, {'from_import_invoice': True}, context=context)
-                
-                # FIXME: Change amount_to_pay of this invoice (amount_to_pay - amount)
-            # Write compensation line
-            compensation_amount = move_obj._compute_balance(cr, uid, move_id, context=context)
-            compensation_debit = 0.0
-            compensation_credit = compensation_amount
-            compensation_account_id = journal_id and st.journal_id.default_credit_account_id.id
-            if compensation_amount < 0:
-                compensation_debit = abs(compensation_amount)
-                compensation_account_id = journal_id and st.journal_id.default_debit_account_id.id
-            compensation_vals = {
-                    'name': 'Total of invoices',
-                    'date': self._get_date_in_period(cr, uid, curr_date, period_id, context=context),
-                    'move_id': move_id,
-                    'partner_id': line.partner_id and line.partner_id.id or False,
-                    'account_id': compensation_account_id,
-                    'credit': compensation_credit,
-                    'debit': compensation_debit,
-                    'statement_id': st_id,
-                    'journal_id': journal_id,
-                    'period_id': period_id,
-                    'currency_id': currency_id,
-            }
-            compensation_id = move_line_obj.create(cr, uid, compensation_vals, context=context)
+                res = self.pool.get('wizard.import.invoice.lines').read(cr, uid, line.id, ['amount', 'cheque_number'])
+                if 'amount' in res:
+                    total += res.get('amount')
+                if cheque and 'cheque_number' in res:
+                    cheque_numbers.append(res.get('cheque_number'))
             
             # Create register line
             register_vals = {
@@ -260,20 +209,22 @@ class wizard_import_invoice(osv.osv_memory):
                 'statement_id': st_id,
                 'account_id': first_line.account_id.id,
                 'partner_id': first_line.partner_id.id,
-                'amount': compensation_debit - compensation_credit or 0.0,
-                'move_ids': [(4, move_id, False)], # create a link between the register line and the account_move_line
-                'imported_invoice_line_ids': [(4, x.line_id.id, False) for x in lines],
-                'first_move_line_id': compensation_id, # this permit to find the compensation line again
+                'amount': total,
             }
+            # if we come from cheque, add a column for that
             if cheque:
                 register_vals.update({'cheque_number': '-'.join(cheque_numbers)[:120]})
+            # add ids of imported_invoice_lines
+            register_vals.update({'imported_invoice_line_ids': [(4, x.line_id.id) for x in lines]})
+            # create the register line
             absl_id = absl_obj.create(cr, uid, register_vals, context=context)
-            st_line_ids.append(absl_id)
             
-            # Also add link (to the absl) to all move_line that come from an invoice
-            for line in lines:
-                move_line_obj.write(cr, uid, line.line_id.id, {'move_ids': [(4, absl_id, False)]}, context=context)
+            # Temp post the register line
+            res = absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
 
+            # Add id of register line in the exit of this function
+            st_line_ids.append(absl_id)
+        
         # Close Wizard
         # st_line_ids could be necessary for some tests
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids}
