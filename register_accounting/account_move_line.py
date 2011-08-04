@@ -78,7 +78,7 @@ class account_move_line(osv.osv):
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_is_cheque, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
-        'from_import_cheque_id': fields.many2one('account.bank.statement.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
+        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

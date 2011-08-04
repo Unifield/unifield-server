@@ -437,6 +437,7 @@ class account_bank_statement_line(osv.osv):
             help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
             required=False, readonly=True),
+        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
     }
 
     _defaults = {
@@ -852,6 +853,30 @@ class account_bank_statement_line(osv.osv):
                 move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
         return True
 
+    def do_import_cheque_reconciliation(self, cr, uid, st_lines=None, context={}):
+        """
+        Do a reconciliation of an imported cheque and the current register line
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if not st_lines or isinstance(st_lines, (int, long)):
+            st_lines = []
+        # Prepare some values
+        move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
+        # Parse register lines
+        for st_line in self.browse(cr, uid, st_lines, context=context):
+            # Verification if st_line have some imported invoice lines
+            if not st_line.from_import_cheque_id:
+                continue
+            move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context    )
+            # Search the line that would be reconcile after hard post
+            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], context=context)
+            # Do reconciliation
+            move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
+        return True
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -915,6 +940,8 @@ class account_bank_statement_line(osv.osv):
                 # Case where this line come from an "Import Invoices" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
+                elif absl.from_import_cheque_id:
+                    self.do_import_cheque_reconciliation(cr, uid, [absl.id], context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up

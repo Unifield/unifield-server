@@ -132,7 +132,7 @@ class wizard_import_cheque(osv.osv_memory):
         absl_lines = []
         for imported_line in wizard.imported_lines_ids:
             line = imported_line.line_id
-            total = -1 * line.amount_currency
+            total = line.amount_currency
             vals = {
                 'name': 'Imported Cheque: ' + (line.name or line.ref or line.cheque_number or ''),
                 'date': _get_date_in_period(self, cr, uid, curr_date, wizard.period_id.id, context=context),
@@ -140,17 +140,15 @@ class wizard_import_cheque(osv.osv_memory):
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
                 'amount': total,
+                'from_import_cheque_id': line.id,
             }
             # create the register line
             absl_id = absl_obj.create(cr, uid, vals, context=context)
             absl_lines.append(absl_id)
             # post the register line
             absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
-#            # Search the line that would be reconcile when hard post
-#            absl = absl_obj.browse(cr, uid, absl_id, context=context)
-#            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', absl.move_ids[0].id), ('id', '!=', absl.first_move_line_id.id)], context=context)
-            # link the move line with 
-            move_line_obj.write(cr, uid, line.id, {'from_import_cheque_id': absl_id}, context=context)
+#            # link the move line with 
+#            move_line_obj.write(cr, uid, line.id, {'from_import_cheque_id': absl_id}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines}
 
 wizard_import_cheque()
