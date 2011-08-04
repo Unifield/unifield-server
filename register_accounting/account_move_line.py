@@ -32,6 +32,35 @@ class account_move_line(osv.osv):
     _name = "account.move.line"
     _inherit = "account.move.line"
 
+    def _is_cheque(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Lines that have an account that come from a cheque register.
+        """
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_cheque(self, cr, uid, obj, name, args, context={}):
+        """
+        Search cheque move lines
+        """
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+        j_obj = self.pool.get('account.journal')
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+        if not j_ids:
+            return [('id', '=', 0)]
+        res = []
+        for j in j_obj.read(cr, uid, j_ids, ['default_debit_account_id', 'default_credit_account_id']):
+            if j['default_debit_account_id']:
+                res.append(j['default_debit_account_id'][0])
+            if j['default_credit_account_id']:
+                res.append(j['default_credit_account_id'][0])
+        return [('account_id', 'in', res)]
+
     _columns = {
         'register_id': fields.many2one("account.account", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
@@ -47,6 +76,8 @@ class account_move_line(osv.osv):
             string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
+        'is_cheque': fields.function(_is_cheque, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
+            help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -84,8 +84,8 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids"
-                            domain="[('journal_id.type', '=', 'cheque'), ('period_id', '=', period_id), ('currency_id', '=', currency_id), ('reconcile_id', '=', False)]" 
-                            context="{'from': 'wizard_import_cheque'}" nolabel="1"/>
+                            domain="[('journal_id.type', '=', 'cheque'), ('period_id', '=', period_id), ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True)]" 
+                            context="{'from': 'wizard_import_cheque'}" nolabel="1" colspan="4"/>
                         <newline/>
                     </group>
                     <group colspan="4" col="6">
@@ -93,7 +93,7 @@
                         <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
                     </group>
                     <separator string="" colspan="6"/>
-                    <field height="300" width="700" name="imported_lines_ids" colspan="4" nolabel="1" 
+                    <field name="imported_lines_ids" colspan="4" nolabel="1" 
                         attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                         <tree editable="bottom">
                             <field name="partner_id"/>
@@ -110,7 +110,7 @@
                     <group colspan="4" col="6">
                         <label string ="" colspan="2"/>
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                        <button icon="gtk-ok" string="Ok" name="action_confirm" type="object" states="open"/>
+                        <button icon="gtk-ok" string="Ok" name="action_confirm" type="object" attrs="{'readonly': [('state', '=', 'draft')]}"/>
                    </group>
                    <field name="currency_id" invisible="1"/>
                    <field name="period_id" invisible="1"/>
