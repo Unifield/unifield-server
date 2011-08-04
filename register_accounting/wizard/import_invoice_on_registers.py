@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from ..register_tools import _get_date_in_period
 
 class wizard_import_invoice_lines(osv.osv_memory):
     """
@@ -82,21 +83,6 @@ class wizard_import_invoice(osv.osv_memory):
         result = super(wizard_import_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
 
-    def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
-        """
-        Permit to return a date included in period :
-         - if given date is included in period, return the given date
-         - else return the date_stop of given period
-        """
-        if not context:
-            context={}
-        if not date or not period_id:
-            return False
-        period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-        if date < period.date_start or date > period.date_stop:
-            return period.date_stop
-        return date
-
     def action_add_invoice(self, cr, uid, ids, context={}):
         """
         Add selected invoice into invoice_lines_ids tree
@@ -124,7 +110,7 @@ class wizard_import_invoice(osv.osv_memory):
             'supplier_ref': line.invoice.name or None,
             'account_id': line.account_id.id or None,
             'date_maturity': line.date_maturity or None,
-            'date': self._get_date_in_period(cr, uid, line.date, period_id, context=context),
+            'date': _get_date_in_period(cr, uid, line.date, period_id, context=context),
             'amount': line.amount_currency or None, # By default, amount_to_pay
             'amount_to_pay': line.amount_to_pay or None,
             'amount_currency': line.amount_currency or None,
@@ -205,7 +191,7 @@ class wizard_import_invoice(osv.osv_memory):
             # Create register line
             register_vals = {
                 'name': 'Imported invoices',
-                'date': self._get_date_in_period(cr, uid, curr_date, period_id, context=context),
+                'date': _get_date_in_period(cr, uid, curr_date, period_id, context=context),
                 'statement_id': st_id,
                 'account_id': first_line.account_id.id,
                 'partner_id': first_line.partner_id.id,

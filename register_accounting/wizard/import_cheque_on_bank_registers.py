@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from ..register_tools import _get_date_in_period
 
 class wizard_import_cheque_lines(osv.osv_memory):
     """
