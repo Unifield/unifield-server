@@ -84,7 +84,8 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids"
-                            domain="[('journal_id.type', '=', 'cheque'), ('period_id', '=', period_id), ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True)]" 
+                            domain="[('journal_id.type', '=', 'cheque'), ('period_id', '=', period_id), 
+                            ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True), ('from_import_cheque_id', '=', False)]" 
                             context="{'from': 'wizard_import_cheque'}" nolabel="1" colspan="4"/>
                         <newline/>
                     </group>
