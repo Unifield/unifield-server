@@ -237,6 +237,31 @@ class account_bank_statement(osv.osv):
             }
         }
 
+    def button_wiz_import_cheques(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Import Cheques' button then opening a wizard to select some cheques from a register and add them into the present register 
+        in a temp post state.
+        """
+        # statement_id is useful for making some line's registration.
+        # currency_id is useful to filter cheques in the same currency
+        # period_id is useful to filter cheques drawn in the same period
+        st = self.browse(cr, uid, ids[0], context=context)
+        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 'period_id': st.period_id.id}, context=context)
+        return {
+            'name': "Import Cheque",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.cheque',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [id],
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+            }
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):

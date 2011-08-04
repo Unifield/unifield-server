@@ -24,13 +24,18 @@
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
-                        <group col="2" colspan="4">
+                        <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
+                            <label string="" colspan="2"/>
+                        </group>
+                        <group col="4" colspan="4">
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                             <button name="button_wiz_import_invoices" states="open,draft" string="Import Invoices" type="object" icon="gtk-save"/>
+                            <button name="button_wiz_import_cheques" states="open" string="Import Cheques" type="object" icon="gtk-dnd"/>
+                            <label string="" colspan="1"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">

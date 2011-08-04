@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="cheque_from_registers_search" model="ir.ui.view">
+            <field name="name">account.move.line.from.cheque.lines.search</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Account Entry Lines">
+                    <group col='10' colspan='4'>
+                        <filter icon="terp-document-new" string="Unbalanced" domain="[('state','=','draft')]" help="Unbalanced Journal Items"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                        <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                        <separator orientation="vertical"/>
+                        <filter
+                            icon="terp-dolar_ok!"
+                            string="Unreconciled"
+                            domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                            name="unreconciled"/>
+                        <separator orientation="vertical"/>
+                        <field name="move_id" select="1" string="Number (Move)"/>
+                        <field name="date" select='1'/>
+                        <field name="account_id" select='1'/>
+                        <field name="partner_id" select='1'>
+                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" 
+                                context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" 
+                                domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
+                        </field>
+                    </group>
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                        <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Extended Filters...">
+                        <field name="ref" select="1" string="Reference"/>
+                        <field name="name" select="1"/>
+                        <field name="narration" select="1"/>
+                        <field name="balance" string="Debit/Credit" select='1'/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <record id="cheque_from_registers_tree" model="ir.ui.view">
+            <field name="name">account.move.line.from.cheque.lines.tree</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account Entry Lines">
+                    <field name="partner_id"/>
+                    <field name="name"/>
+                    <field name="invoice"/>
+                    <field name="supplier_invoice_ref"/>
+                    <field name="account_id"/>
+                    <field name="date_maturity"/>
+                    <field name="date"/>
+                    <field name="amount_to_pay"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="import_cheque_on_registers_lines" model="ir.ui.view">
+            <field name="name">import.cheque.on.registers.lines.form</field>
+            <field name="model">wizard.import.cheque</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Entries">
+                    <group colspan="4" expand="1">
+                        <separator string="Payable and Receivables" colspan="4"/>
+                        <field name="line_ids"
+                            domain="[('journal_id.type', '=', 'cheque'), ('period_id', '=', period_id), ('currency_id', '=', currency_id), ('reconcile_id', '=', False)]" 
+                            context="{'from': 'wizard_import_cheque'}" nolabel="1"/>
+                        <newline/>
+                    </group>
+                    <group colspan="4" col="6">
+                        <label string="" colspan="3"/>
+                        <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
+                    </group>
+                    <separator string="" colspan="6"/>
+                    <field height="300" width="700" name="imported_lines_ids" colspan="4" nolabel="1" 
+                        attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
+                        <tree editable="bottom">
+                            <field name="partner_id"/>
+                            <field name="ref"/>
+                            <field name="supplier_ref"/>
+                            <field name="account_id"/>
+                            <field name="date_maturity"/>
+                            <field name="date"/>
+                            <field name="amount_to_pay"/>
+                            <field name="amount_currency"/>
+                            <field name="currency_id"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="6">
+                        <label string ="" colspan="2"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="gtk-ok" string="Ok" name="action_confirm" type="object" states="open"/>
+                   </group>
+                   <field name="currency_id" invisible="1"/>
+                   <field name="period_id" invisible="1"/>
+                   <field name="state" invisible="0"/>
+               </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

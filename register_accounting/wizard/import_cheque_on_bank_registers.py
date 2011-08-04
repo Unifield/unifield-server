@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv
+from osv import fields
+from tools.translate import _
+
+class wizard_import_cheque_lines(osv.osv_memory):
+    """
+    Content all lines that have been imported from a cheque register.
+    """
+    _name = 'wizard.import.cheque.lines'
+    _description = 'Cheque register lines'
+    _columns = {
+        'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
+        'ref': fields.char('Ref.', size=64, readonly=True),
+        'number': fields.char('Number', size=64, readonly=True),
+        'supplier_ref': fields.char('Supplier Inv. Ref.', size=64, readonly=True),
+        'account_id': fields.many2one('account.account', string="Account", readonly=True),
+        'date_maturity': fields.date('Due Date', readonly=True),
+        'date': fields.date('Effective Date', readonly=False, required=True),
+        'amount_to_pay': fields.integer('Amount to pay', readonly=True),
+        'amount_currency': fields.integer('Amount currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
+        'line_id': fields.many2one('account.move.line', string="Invoice", required=True),
+        'wizard_id': fields.many2one('wizard.import.cheque', string='wizard'),
+        'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
+    }
+
+wizard_import_cheque_lines()
+
+class wizard_import_cheque(osv.osv_memory):
+    """
+    Wizard to select some cheque register lines in order to import them into a bank register.
+    """
+    _name = 'wizard.import.cheque'
+    _description = 'Import cheque register from a bank register'
+    _columns = {
+        'line_ids': fields.many2many('account.move.line', 'imported_cheque', 'wizard_id', 'move_line_id', string="Imported Cheques"),
+        'imported_lines_ids': fields.one2many('wizard.import.cheque.lines', 'wizard_id', string=''),
+        'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter cheque regarding currency."),
+        'period_id': fields.many2one('account.period', string="Period", required=True, help="Useful for filtering account move line that are in the same period"),
+        'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'draft',
+    }
+
+    def action_import(self, cr, uid, ids, context={}):
+        """
+        Import some cheque statement line into wizard.import.cheque.lines before process.
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if not wizard.line_ids:
+            raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
+        for line in wizard.line_ids:
+            print line
+        # Refresh wizard to display changes
+        return {
+         'type': 'ir.actions.act_window',
+         'res_model': 'wizard.import.cheque',
+         'view_type': 'form',
+         'view_mode': 'form',
+         'res_id': ids[0],
+         'context': context,
+         'target': 'new',
+        }
+
+    def action_confirm(self, cr, uid, ids, context={}):
+        """
+        Import some cheque statement lines into the bank register and temp post them.
+        """
+        raise osv.except_osv('error', 'programmed error')
+
+wizard_import_cheque()
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

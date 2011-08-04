@@ -37,6 +37,7 @@
     "update_xml" : [
         'security/ir.model.access.csv',
         'wizard/import_invoice_on_registers_view.xml',
+        'wizard/import_cheque_on_bank_registers_view.xml',
         'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',

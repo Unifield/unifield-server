@@ -56,10 +56,15 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         if 'from' in context:
-            if context.get('from') == 'wizard_import_invoice':
+            c_from = context.get('from')
+            if c_from == 'wizard_import_invoice' or c_from == 'wizard_import_cheque':
                 view_name = 'invoice_from_registers_tree'
+                if c_from == 'wizard_import_cheque':
+                    view_name = 'cheque_from_registers_tree'
                 if view_type == 'search':
                     view_name = 'invoice_from_registers_search'
+                    if c_from == 'wizard_import_cheque':
+                        view_name = 'cheque_from_registers_search'
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', view_name)
                 if view:
                     view_id = view[1]
