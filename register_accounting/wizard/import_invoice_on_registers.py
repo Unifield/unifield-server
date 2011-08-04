@@ -110,7 +110,7 @@ class wizard_import_invoice(osv.osv_memory):
             'supplier_ref': line.invoice.name or None,
             'account_id': line.account_id.id or None,
             'date_maturity': line.date_maturity or None,
-            'date': _get_date_in_period(cr, uid, line.date, period_id, context=context),
+            'date': _get_date_in_period(cr, uid, line.date or strftime('%Y-%m-%d'), period_id, context=context),
             'amount': line.amount_currency or None, # By default, amount_to_pay
             'amount_to_pay': line.amount_to_pay or None,
             'amount_currency': line.amount_currency or None,

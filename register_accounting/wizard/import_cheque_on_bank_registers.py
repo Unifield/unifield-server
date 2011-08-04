@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from ..register_tools import _get_date_in_period
+from time import strftime
 
 class wizard_import_cheque_lines(osv.osv_memory):
     """
@@ -117,6 +118,7 @@ class wizard_import_cheque(osv.osv_memory):
         """
         Import some cheque statement lines into the bank register and temp post them.
         """
+        
         raise osv.except_osv('error', 'programmed error')
 
 wizard_import_cheque()
