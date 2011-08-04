@@ -80,8 +80,28 @@ class wizard_import_cheque(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
+        imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
+        new_lines = []
         for line in wizard.line_ids:
-            print line
+            if line.id not in imported_lines:
+                vals = {
+                    'line_id': line.id or None,
+                    'partner_id': line.partner_id.id or None,
+                    'ref': line.ref or None,
+                    'number': line.invoice.number or None,
+                    'supplier_ref': line.invoice.name or None,
+                    'account_id': line.account_id.id or None,
+                    'date_maturity': line.date_maturity or None,
+                    'date': _get_date_in_period(cr, uid, line.date, wizard.period_id.id, context=context),
+                    'amount_to_pay': line.amount_to_pay or None,
+                    'amount_currency': line.amount_currency or None,
+                    'currency_id': line.currency_id.id or None,
+                    'wizard_id': wizard.id or None,
+                }
+                new_lines.append((0, 0, vals))
+        
+        # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
+        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
