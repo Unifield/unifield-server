@@ -144,7 +144,6 @@ class wizard_import_cheque(osv.osv_memory):
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
                 'partner_type_mandatory': True, # if we come from another register, Third Parties is mandatory !
-                'register_id': line.statement_id.id, # register we come from
                 'amount': total,
                 'from_import_cheque_id': line.id,
             }

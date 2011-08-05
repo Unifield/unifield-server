@@ -62,7 +62,7 @@ class account_move_line(osv.osv):
         return [('account_id', 'in', res)]
 
     _columns = {
-        'register_id': fields.many2one("account.account", "Register"),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 

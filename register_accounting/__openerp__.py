@@ -59,6 +59,7 @@
         'test/cashbox_balance.yml',
         'test/direct_expense.yml',
         'test/direct_invoice.yml',
+        'test/import_cheque_from_bank.yml',
     ],
     "installable": True,
     "active": False
