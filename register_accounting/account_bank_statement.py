@@ -646,6 +646,9 @@ class account_bank_statement_line(osv.osv):
         st_line = self.browse(cr, uid, st_line_id, context=context)
         # Get first line (from Register account)
         register_line = st_line.first_move_line_id
+        # Delete 'from_import_cheque_id' field not to break the account move line write
+        if 'from_import_cheque_id' in values:
+            del(values['from_import_cheque_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
