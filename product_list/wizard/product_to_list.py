@@ -53,6 +53,9 @@ class product_to_list(osv.osv_memory):
         '''
         Import products in list
         '''
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        
         list_obj = self.pool.get('product.list')
         line_obj = self.pool.get('product.list.line')
         

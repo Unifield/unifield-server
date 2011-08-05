@@ -48,6 +48,17 @@ class product_list(osv.osv):
         
         return super(product_list, self).write(cr, uid, ids, vals=vals, context=context)
     
+        
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        '''
+        Remove the last update date and the reviewer on the new list
+        '''
+        if not context:
+            context = {}
+            
+        return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'reviewer_id': False}, context=context)
+    
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'ref': fields.char(size=128, string='Ref.'),
