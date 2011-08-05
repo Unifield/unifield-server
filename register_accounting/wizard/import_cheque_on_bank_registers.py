@@ -139,7 +139,7 @@ class wizard_import_cheque(osv.osv_memory):
             total = line.amount_currency
             vals = {
                 'name': 'Imported Cheque: ' + (line.name or line.ref or line.cheque_number or ''),
-                'date': _get_date_in_period(self, cr, uid, line.date or curr_date, wizard.period_id.id, context=context),
+                'date': _get_date_in_period(self, cr, uid, imported_line.date or curr_date, wizard.period_id.id, context=context),
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
