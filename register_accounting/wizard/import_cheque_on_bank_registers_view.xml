@@ -90,7 +90,8 @@
                         <newline/>
                     </group>
                     <group colspan="4" col="6">
-                        <label string="" colspan="3"/>
+                        <label string="" colspan="1"/>
+                        <field name="date"/>
                         <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
                     </group>
                     <separator string="" colspan="6"/>

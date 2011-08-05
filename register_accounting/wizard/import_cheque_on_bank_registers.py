@@ -64,6 +64,7 @@ class wizard_import_cheque(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter cheque regarding currency."),
         'period_id': fields.many2one('account.period', string="Period", required=True, help="Useful for filtering account move line that are in the same period"),
         'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
+        'date': fields.date('Date', required=False),
     }
 
     _defaults = {
@@ -83,8 +84,11 @@ class wizard_import_cheque(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No entries ! Please select some entries then click on Import button.'))
         imported_lines = [x.line_id.id for x in wizard.imported_lines_ids]
         new_lines = []
+        date = wizard.date or None
         for line in wizard.line_ids:
             if line.id not in imported_lines:
+                if not date:
+                    date = line.date
                 vals = {
                     'line_id': line.id or None,
                     'partner_id': line.partner_id.id or None,
@@ -93,7 +97,7 @@ class wizard_import_cheque(osv.osv_memory):
                     'supplier_ref': line.invoice.name or None,
                     'account_id': line.account_id.id or None,
                     'date_maturity': line.date_maturity or None,
-                    'date': _get_date_in_period(self, cr, uid, line.date, wizard.period_id.id, context=context),
+                    'date': _get_date_in_period(self, cr, uid, date, wizard.period_id.id, context=context),
                     'amount_to_pay': line.amount_to_pay or None,
                     'amount_currency': line.amount_currency or None,
                     'currency_id': line.currency_id.id or None,
@@ -102,7 +106,7 @@ class wizard_import_cheque(osv.osv_memory):
                 new_lines.append((0, 0, vals))
         
         # Add lines to the imported_lines, flush them from the first tree and change state of the wizard
-        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines}, context=context)
+        self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': ''}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
@@ -135,7 +139,7 @@ class wizard_import_cheque(osv.osv_memory):
             total = line.amount_currency
             vals = {
                 'name': 'Imported Cheque: ' + (line.name or line.ref or line.cheque_number or ''),
-                'date': _get_date_in_period(self, cr, uid, curr_date, wizard.period_id.id, context=context),
+                'date': _get_date_in_period(self, cr, uid, line.date or curr_date, wizard.period_id.id, context=context),
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
@@ -147,8 +151,6 @@ class wizard_import_cheque(osv.osv_memory):
             absl_lines.append(absl_id)
             # post the register line
             absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
-#            # link the move line with 
-#            move_line_obj.write(cr, uid, line.id, {'from_import_cheque_id': absl_id}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines}
 
 wizard_import_cheque()
