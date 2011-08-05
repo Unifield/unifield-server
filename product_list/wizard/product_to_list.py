@@ -61,6 +61,7 @@ class product_to_list(osv.osv_memory):
         
         list_id = False
         line_ids = []
+        product_ids = []
         
         for imp in self.browse(cr, uid, ids, context=context):
             if imp.type == 'new':
@@ -69,11 +70,15 @@ class product_to_list(osv.osv_memory):
                                                     context=context)
             else:
                 list_id = imp.list_id.id
+                for l in imp.list_id.product_ids:
+                    if l.name.id not in product_ids:
+                        product_ids.append(l.name.id)
                 
             for prod in imp.product_ids:
-                line_ids.append(line_obj.create(cr, uid, {'name': prod.id,
-                                                          'list_id': list_id},
-                                                          context=context))
+                if prod.id not in product_ids:
+                    line_ids.append(line_obj.create(cr, uid, {'name': prod.id,
+                                                              'list_id': list_id},
+                                                              context=context))
                 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.list',
