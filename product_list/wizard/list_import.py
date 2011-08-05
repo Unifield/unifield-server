@@ -28,7 +28,7 @@ from tempfile import TemporaryFile
 import base64
 import csv
 
-class product_list_import(osv.osv):
+class product_list_import(osv.osv_memory):
     _name = 'product.list.import'
     _description = 'Products list import'
     
