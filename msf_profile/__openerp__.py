@@ -52,6 +52,7 @@
         "stock_batch_recall",
         "procurement_cycle",
         "procurement_auto",
+        "product_list",
         "product_attributes",
         "procurement_report",
         "msf_printed_documents",

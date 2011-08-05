@@ -34,6 +34,9 @@
     ],
     'update_xml': [
         'product_list_view.xml',
+        'wizard/list_export_view.xml',
+        'wizard/list_import_view.xml',
+        'wizard/product_to_list_view.xml',
         'product_list_report.xml',
     ],
     'demo_xml': [

@@ -128,13 +128,13 @@
    <blockTable colWidths="100.0,185.0,280.0" style="ProductList">
         <tr>
             <td>
-                <para style="Information">[[ line.default_code ]]</para>
+                <para style="Information">[[ line.ref ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.name ]]</para>
+                <para style="Information">[[ line.name.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.description ]]</para>
+                <para style="Information">[[ line.comment ]]</para>
             </td>
         </tr>
    </blockTable>
