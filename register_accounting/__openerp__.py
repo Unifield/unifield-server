@@ -47,6 +47,7 @@
         'account_cash_statement_sequence.xml',
         'wizard/wizard_cash_return.xml',
         'account_invoice_view.xml',
+        'wizard/wizard_confirm_bank.xml',
     ],
     "demo_xml" : [],
     "test": [

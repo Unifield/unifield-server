@@ -29,6 +29,7 @@ import wizard_cash_return
 import direct_invoice
 import import_invoice_on_registers
 import import_cheque_on_bank_registers
+import wizard_confirm_bank
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

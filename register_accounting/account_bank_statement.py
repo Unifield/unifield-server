@@ -177,7 +177,21 @@ class account_bank_statement(osv.osv):
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
+        # Display the bank confirmation wizard
+        return {
+            'name': "Bank confirmation wizard",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.confirm.bank',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+                'statement_id': st.id,
+            }
+        }
         # @@@end
 
     def button_create_invoice(self, cr, uid, ids, context={}):
