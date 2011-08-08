@@ -320,6 +320,7 @@
     reconcile: False
     user_type : account_account_type_cash_0
     activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
 -
   I create a X11005-US Cheque USD Account
 -
@@ -333,6 +334,7 @@
     user_type : account_account_type_cash_0
     type_for_register: 'transfer'
     activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
 -
   I create a Journal View with some columns
 -

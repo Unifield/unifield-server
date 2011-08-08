@@ -73,4 +73,28 @@
 -
   !python {model: account.bank.statement.line}: |
       line_ids = self.search(cr, uid, [('statement_id', '=', ref("bank_register_0"))])
-      print line_ids
+      assert len(line_ids) == 2, "The bank register don't have 2 lines. Verify that we don't have import two cheques with the same partner!"
+-
+  In order to verify the line update, we Change date of a line and verify that the matching account move line have the new date
+-
+  !python {model: account.bank.statement.line}: |
+      import time
+      st_line_ids = self.search(cr, uid, [('statement_id', '=', ref("bank_register_0"))])
+      for st_line_id in st_line_ids:
+          st_line = self.browse(cr, uid, [st_line_id])
+          move_id = st_line[0].move_ids[0].id
+          aml_obj = self.pool.get('account.move.line')
+          line_ids = aml_obj.search(cr, uid, [('move_id', '=', move_id)])
+          old_date = st_line[0].first_move_line_id.date
+          new_date = time.strftime('%Y-%m-23')
+          self.write(cr, uid, [st_line_id], {'date': new_date})
+          for move_line_id in line_ids:
+              assert new_date == aml_obj.browse(cr, uid, move_line_id).date, "New date have not been correctly"
+-
+  In order to verify hard posting, we hard post all register lines
+-
+  !python {model: account.bank.statement.line}: |
+      st_line_ids = self.search(cr, uid, [('statement_id', '=', ref("bank_register_0"))])
+      self.posting(cr, uid, st_line_ids, 'hard')
+      for st_line in self.browse(cr, uid, st_line_ids):
+          assert st_line.state == 'hard', "Line '%s' is not hard posted !" % (st_line_id)
