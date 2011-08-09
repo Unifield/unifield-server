@@ -56,6 +56,22 @@ class register_creation(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
+    def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+        """
+        Give the previous register id regarding some criteria:
+         - period_id: the period of current register
+         - currency_id: currency of the current register
+         - register_type: type of register
+         - fiscalyear_id: current fiscalyear
+        """
+        #FIXME : change content of this function
+        # Take all journal from a type (journal_ids)
+        # Take the previous period
+        # Take all bank statement from this currencies and from these journal_ids and from the previous period
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
+        print journal_ids
+        return True
+
     def button_confirm_period(self, cr, uid, ids, context={}):
         """
         Update new_register_ids field by put in all register that could be created soon.
@@ -110,6 +126,16 @@ class register_creation(osv.osv_memory):
         """
         Create all selected registers.
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context:
+            context={}
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        if not wizard.new_register_ids:
+            raise osv.except_osv(_('Error'), _('There is no lines to create! Please choose another period.'))
+        for new_reg in wizard.new_register_ids:
+            print new_reg.currency_id.id, new_reg.register_type
+            print self.previous_register_id(cr, uid, wizard.period_id.id, new_reg.currency_id.id, new_reg.register_type, context=context)
         return True
 
 register_creation()
