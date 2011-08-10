@@ -49,7 +49,8 @@ class register_creation(osv.osv_memory):
     _columns = {
         'period_id': fields.many2one("account.period", string="Period", required=True, readonly=False),
         'new_register_ids': fields.one2many("wizard.register.creation.lines", 'wizard_id', string="", required=True, readonly=False),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State", help="Permits to display Create Register button and list of registers to be created when state is open.")
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State", 
+            help="Permits to display Create Register button and list of registers to be created when state is open.")
     }
 
     _defaults = {
@@ -64,13 +65,36 @@ class register_creation(osv.osv_memory):
          - register_type: type of register
          - fiscalyear_id: current fiscalyear
         """
-        #FIXME : change content of this function
-        # Take all journal from a type (journal_ids)
-        # Take the previous period
-        # Take all bank statement from this currencies and from these journal_ids and from the previous period
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
-        print journal_ids
-        return True
+        # TIP - Use this postgresql query to verify current registers:
+        # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+        # from account_bank_statement as s, account_journal as j, res_currency as c 
+        # where s.journal_id = j.id and j.currency = c.id;
+
+        # Prepare some values
+        p_obj = self.pool.get('account.period')
+        j_obj = self.pool.get('account.journal')
+        st_obj = self.pool.get('account.bank.statement')
+        # Search period and previous one
+        period = p_obj.browse(cr, uid, [period_id], context=context)[0]
+        first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
+        previous_period_ids = p_obj.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], 
+            order='date_start desc', limit=1, context=context)
+        if period_id == first_period_id: 
+            # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
+            previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
+                limit=1, order="date_start desc", context=context)
+            if not previous_fiscalyear:
+                raise osv.except_osv(_('Error'), 
+                    _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
+            previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
+                limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+                # and "Period 15"
+        # Search journal_ids that have the type we search
+        journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
+        previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+        if len(previous_reg_ids) != 1:
+            return False
+        return previous_reg_ids[0]
 
     def button_confirm_period(self, cr, uid, ids, context={}):
         """
@@ -105,7 +129,8 @@ class register_creation(osv.osv_memory):
                 journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', reg_type)])
                 if isinstance(journal_ids, (int, long)):
                     journal_ids = [journal_ids]
-                current_register_ids = abs_obj.search(cr, uid, [('currency', '=', currency_id), ('period_id', '=', period_id), ('journal_id', 'in', journal_ids)], context=context)
+                current_register_ids = abs_obj.search(cr, uid, [('currency', '=', currency_id), 
+                    ('period_id', '=', period_id), ('journal_id', 'in', journal_ids)], context=context)
                 if not current_register_ids:
                     reg_to_create_obj.create(cr, uid, {'currency_id': currency_id, 'register_type': reg_type, 'wizard_id': wizard.id}, context=context)
         
@@ -134,7 +159,7 @@ class register_creation(osv.osv_memory):
         if not wizard.new_register_ids:
             raise osv.except_osv(_('Error'), _('There is no lines to create! Please choose another period.'))
         for new_reg in wizard.new_register_ids:
-            print new_reg.currency_id.id, new_reg.register_type
+            print new_reg.currency_id.name, new_reg.register_type
             print self.previous_register_id(cr, uid, wizard.period_id.id, new_reg.currency_id.id, new_reg.register_type, context=context)
         return True
 
