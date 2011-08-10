@@ -191,27 +191,28 @@ class register_creation(osv.osv_memory):
         curr_time = strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
         for new_reg in wizard.new_register_ids:
-            # Shared values
-            reg_vals = {
-                'date': curr_time,
-                'period_id': new_reg.period_id.id,
-            }
-            if new_reg.prev_reg_id:
-                reg_vals.update({
-                    'journal_id': new_reg.prev_reg_id.journal_id.id,
-                })
-                # FIXME: search old caracteristics from previous register
-            else:
-                # Search journals that have same currency and type
-                j_ids = j_obj.search(cr, uid, [('currency', '=', new_reg.currency_id.id), ('type', '=', new_reg.register_type)], context=context)
-                reg_vals.update({
-                    'journal_id': j_ids[0],
-                })
-                # FIXME: what about old caracteristics ?
-            # Create the register
-            reg_id = self.pool.get('account.bank.statement').create(cr, uid, reg_vals, context=context)
-            if reg_id:
-                registers.append(reg_id)
+            if new_reg.to_create:
+                # Shared values
+                reg_vals = {
+                    'date': curr_time,
+                    'period_id': new_reg.period_id.id,
+                }
+                if new_reg.prev_reg_id:
+                    reg_vals.update({
+                        'journal_id': new_reg.prev_reg_id.journal_id.id,
+                    })
+                    # FIXME: search old caracteristics from previous register
+                else:
+                    # Search journals that have same currency and type
+                    j_ids = j_obj.search(cr, uid, [('currency', '=', new_reg.currency_id.id), ('type', '=', new_reg.register_type)], context=context)
+                    reg_vals.update({
+                        'journal_id': j_ids[0],
+                    })
+                    # FIXME: what about old caracteristics ?
+                # Create the register
+                reg_id = self.pool.get('account.bank.statement').create(cr, uid, reg_vals, context=context)
+                if reg_id:
+                    registers.append(reg_id)
         return { 'type': 'ir.actions.act_window_close', 'register_ids': registers}
 
 register_creation()
