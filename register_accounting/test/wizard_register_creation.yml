@@ -1,0 +1,28 @@
+-
+  In order to test that the register creation wizard works, I create a wizard "Register Creation" with the current period
+-
+  !record {model: wizard.register.creation, id: wiz_register_creation0}:
+    period_id: current_period
+-
+  I confirm the period with the "Confirm Period" button
+-
+  !python {model: wizard.register.creation}: |
+      self.button_confirm_period(cr, uid, [ref('wiz_register_creation0')], {"lang": "en_US", "tz": False})
+-
+  I press the "Create Registers" button and verify result
+-
+  !python {model: wizard.register.creation}: |
+      res = self.button_create_registers(cr, uid, [ref('wiz_register_creation0')], {"lang": "en_US", "tz": False})
+      
+      curr_obj = self.pool.get('res.currency')
+      st_obj = self.pool.get('account.bank.statement')
+      reg_types = ['bank', 'cash', 'cheque']
+      
+      curr_ids = curr_obj.search(cr, uid, [('active', '=', True)])
+      
+      for reg_type in reg_types:
+          for curr_id in curr_ids:
+            curr = curr_obj.browse(cr, uid, [curr_id])[0]
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', reg_type), ('currency', '=', curr_id)])
+            st_ids = st_obj.search(cr, uid, [('currency', '=', curr_id), ('period_id', '=', ref('current_period')), ('journal_id', 'in', journal_ids)])
+            assert len(st_ids) == 1, "An error occured, there is more than one register for the currency %s for the period " % (curr.name, ref('current_period'))
