@@ -93,6 +93,10 @@ class account_bank_statement(osv.osv):
         """
         if not context:
             context={}
+        # Disrupt cheque verification
+        if journal_type == 'cheque':
+            return True
+        # Add other verification for cash register
         if journal_type == 'cash':
             if not self._equal_balance(cr, uid, register_id, context):
                 raise osv.except_osv(_('Error !'), _('CashBox Balance is not matching with Calculated Balance !'))
