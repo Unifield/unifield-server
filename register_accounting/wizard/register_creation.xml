@@ -22,12 +22,14 @@
                         nolabel="1">
                         <tree editable="top">
                             <field name="to_create" />
+                            <field name="period_id"/>
                             <field name="register_type"/>
                             <field name="currency_id"/>
+                            <field name="prev_reg_id"/>
                         </tree>
                     </field>
                     <group col="6" colspan="4">
-                        <label string="" colspan="1"/>
+                        <button name="button_clear" type="object" string="Clear" icon="gtk-clear"/>
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button name="button_create_registers" type="object" string="Create Registers" icon="gtk-ok" attrs="{'readonly': [('state', '=', 'draft')]}"/>
                     </group>

@@ -24,15 +24,18 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 
 class register_creation_lines(osv.osv_memory):
     _name = 'wizard.register.creation.lines'
     _description = 'Registers to be created'
 
     _columns = {
+        'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type"),
         'to_create': fields.boolean("Create it?", help="Tick the box if this register have to be created."),
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
     }
 
@@ -96,6 +99,29 @@ class register_creation(osv.osv_memory):
             return False
         return previous_reg_ids[0]
 
+    def button_clear(self, cr, uid, ids, context={}):
+        """
+        Clear the list of registers to create
+        """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        lines_obj = self.pool.get('wizard.register.creation.lines')
+        lines_ids = lines_obj.search(cr, uid, [], context=context)
+        lines_obj.unlink(cr, uid, lines_ids)
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        # Refresh wizard to display changes
+        return {
+         'type': 'ir.actions.act_window',
+         'res_model': 'wizard.register.creation',
+         'view_type': 'form',
+         'view_mode': 'form',
+         'res_id': ids[0],
+         'context': context,
+         'target': 'new',
+        }
+
     def button_confirm_period(self, cr, uid, ids, context={}):
         """
         Update new_register_ids field by put in all register that could be created soon.
@@ -126,13 +152,16 @@ class register_creation(osv.osv_memory):
         for currency_id in register_list:
             for reg_type in register_list[currency_id]:
                 # Search journals that are in the same type
-                journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', reg_type)])
+                journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', reg_type)], 
+                    context=context)
                 if isinstance(journal_ids, (int, long)):
                     journal_ids = [journal_ids]
                 current_register_ids = abs_obj.search(cr, uid, [('currency', '=', currency_id), 
                     ('period_id', '=', period_id), ('journal_id', 'in', journal_ids)], context=context)
                 if not current_register_ids:
-                    reg_to_create_obj.create(cr, uid, {'currency_id': currency_id, 'register_type': reg_type, 'wizard_id': wizard.id}, context=context)
+                    prev_reg_id = self.previous_register_id(cr, uid, period_id, currency_id, reg_type, context=context)
+                    reg_to_create_obj.create(cr, uid, {'period_id': period_id, 'currency_id': currency_id, 'register_type': reg_type, 
+                        'prev_reg_id': prev_reg_id,'wizard_id': wizard.id}, context=context)
         
         # Change state to activate the "Create Registers" confirm button
         self.write(cr, uid, ids, {'state': 'open'}, context=context)
@@ -158,10 +187,32 @@ class register_creation(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.new_register_ids:
             raise osv.except_osv(_('Error'), _('There is no lines to create! Please choose another period.'))
+        registers =  []
+        curr_time = strftime('%Y-%m-%d')
+        j_obj = self.pool.get('account.journal')
         for new_reg in wizard.new_register_ids:
-            print new_reg.currency_id.name, new_reg.register_type
-            print self.previous_register_id(cr, uid, wizard.period_id.id, new_reg.currency_id.id, new_reg.register_type, context=context)
-        return True
+            # Shared values
+            reg_vals = {
+                'date': curr_time,
+                'period_id': new_reg.period_id.id,
+            }
+            if new_reg.prev_reg_id:
+                reg_vals.update({
+                    'journal_id': new_reg.prev_reg_id.journal_id.id,
+                })
+                # FIXME: search old caracteristics from previous register
+            else:
+                # Search journals that have same currency and type
+                j_ids = j_obj.search(cr, uid, [('currency', '=', new_reg.currency_id.id), ('type', '=', new_reg.register_type)], context=context)
+                reg_vals.update({
+                    'journal_id': j_ids[0],
+                })
+                # FIXME: what about old caracteristics ?
+            # Create the register
+            reg_id = self.pool.get('account.bank.statement').create(cr, uid, reg_vals, context=context)
+            if reg_id:
+                registers.append(reg_id)
+        return { 'type': 'ir.actions.act_window_close', 'register_ids': registers}
 
 register_creation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
