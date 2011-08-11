@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from register_tools import previous_register_is_closed
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -73,13 +74,7 @@ class account_cash_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Verify that the previous register is closed
-        for cash_reg in self.browse(cr, uid, ids, context=context):
-            # if no previous register (case where register is the first register) we don't need to close unexistent register
-            if cash_reg.prev_reg_id:
-                if cash_reg.prev_reg_id.state not in ['partial_close', 'confirm']:
-                    raise osv.except_osv(_('Error'), 
-                        _('The previous register "%s" for period "%s" has not been closed properly.') % 
-                            (cash_reg.prev_reg_id.name, cash_reg.prev_reg_id.period_id.name))
+        previous_register_is_closed(self, cr, uid, ids, context={})
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:

@@ -27,6 +27,7 @@ from osv import fields
 from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+from register_tools import previous_register_is_closed
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -119,6 +120,12 @@ class account_bank_statement(osv.osv):
         """
         when pressing 'Open Bank' button
         """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Verify that previous register is open, unless this register is the first register
+        previous_register_is_closed(self, cr, uid, ids, context=context)
         return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):

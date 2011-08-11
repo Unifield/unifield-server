@@ -21,6 +21,9 @@
 #
 ##############################################################################
 
+from osv import osv
+from tools.translate import _
+
 def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
     """
     Get "Third Parties" following other fields
@@ -160,4 +163,21 @@ def previous_register_id(self, cr, uid, period_id, currency_id, register_type, c
         return False
     return previous_reg_ids[0]
 
+def previous_register_is_closed(self, cr, uid, ids, context={}):
+    """
+    Return true if previous register is closed. Otherwise return an exception
+    """
+    if not context:
+        context={}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    # Verify that the previous register is closed
+    for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
+        # if no previous register (case where register is the first register) we don't need to close unexistent register
+        if reg.prev_reg_id:
+            if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
+                raise osv.except_osv(_('Error'), 
+                    _('The previous register "%s" for period "%s" has not been closed properly.') % 
+                        (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
+    return True
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
