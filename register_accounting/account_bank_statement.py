@@ -188,7 +188,12 @@ class account_bank_statement(osv.osv):
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
+            # Verify that another bank statement exists
+            st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', register.id)], context=context)
+            if len(st_prev_ids) > 1:
+                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+            if st_prev_ids:
+                self.write(cr, uid, st_prev_ids, {'balance_start': st.balance_end_real}, context=context)
 #            done.append(st.id)
         return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end

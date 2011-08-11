@@ -189,6 +189,10 @@ def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
         register_ids = [register_ids]
     st_obj = self.pool.get('account.bank.statement')
     for st in st_obj.browse(cr, uid, register_ids, context=context):
+        # Some verification
+        # Verify that the register is a cash register
+        if not st.journal_id.type == 'cash':
+            continue
         # Verify that another Cash Register exists
         next_reg_ids = st_obj.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
         if not next_reg_ids:

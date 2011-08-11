@@ -65,9 +65,12 @@ class account_cash_statement(osv.osv):
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         # Observe register state
         prev_reg_id = vals.get('prev_reg_id')
-        if self.browse(cr, uid, [prev_reg_id], context=context)[0].state in ['partial_close', 'confirm']:
+        prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
+        if prev_reg.state in ['partial_close', 'confirm']:
             # if state is partial_close of confirm, we could retrieve closing balance details
             create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
+            if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'bank':
+                self.write(cr, uid, [res_id], {'balance_start': prev_reg.balance_end_real}, context=context)
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
