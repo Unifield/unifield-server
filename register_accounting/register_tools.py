@@ -180,4 +180,34 @@ def previous_register_is_closed(self, cr, uid, ids, context={}):
                     _('The previous register "%s" for period "%s" has not been closed properly.') % 
                         (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
     return True
+
+def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
+    """
+    Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
+    """
+    if isinstance(register_ids, (int, long)):
+        register_ids = [register_ids]
+    st_obj = self.pool.get('account.bank.statement')
+    for st in st_obj.browse(cr, uid, register_ids, context=context):
+        # Verify that another Cash Register exists
+        next_reg_ids = st_obj.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
+        if not next_reg_ids:
+            return False
+        next_reg_id = next_reg_ids[0]
+        # if yes, put in the closing balance in opening balance
+        if next_reg_id:
+            cashbox_line_obj = self.pool.get('account.cashbox.line')
+            # Search lines from current register ending balance
+            cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
+            # Unlink all previously cashbox lines for the next register
+            old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', next_reg_id)], context=context)
+            cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
+            for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
+                new_vals = {
+                    'starting_id': next_reg_id,
+                    'pieces': line.pieces,
+                    'number': line.number,
+                }
+                cashbox_line_obj.create(cr, uid, new_vals, context=context)
+    return True
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

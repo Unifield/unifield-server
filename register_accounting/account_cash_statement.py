@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from register_tools import previous_register_is_closed
+from register_tools import create_starting_cashbox_lines
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -61,8 +62,12 @@ class account_cash_statement(osv.osv):
         if not 'prev_reg_id' in vals:
             if not 'from_journal_creation' in context:
                 raise osv.except_osv(_('Error'), _('This register is not linked with another one. Please use "Register Creation" wizard in the "Bank & Cash" menu.'))
-        # FIXME: Retrieve closing balance of previous register + launch balance calculation
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        # Observe register state
+        prev_reg_id = vals.get('prev_reg_id')
+        if self.browse(cr, uid, [prev_reg_id], context=context)[0].state in ['partial_close', 'confirm']:
+            # if state is partial_close of confirm, we could retrieve closing balance details
+            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
@@ -74,7 +79,7 @@ class account_cash_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Verify that the previous register is closed
-        previous_register_is_closed(self, cr, uid, ids, context={})
+        previous_register_is_closed(self, cr, uid, ids, context=context)
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
@@ -102,9 +107,8 @@ class account_cash_statement(osv.osv):
         # Then verify that another Cash Register exists
         for st in self.browse(cr, uid, ids, context=context):
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
-            if not len(st_prev_ids):
-                raise osv.except_osv(_('Error'), _('No register exists for the next period or more thant one register exist for this one. \
-                    Use "Register Creation" menu to add registers if needed.'))
+            if len(st_prev_ids) > 1:
+                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
