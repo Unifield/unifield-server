@@ -108,6 +108,9 @@ class account_journal(osv.osv):
         
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
+            # 'from_journal_creation' in context permits to pass register creation that have a
+            #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
+            context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_obj,
                                   'name': "REG1" + vals['code'],

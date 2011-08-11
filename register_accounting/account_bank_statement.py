@@ -80,6 +80,8 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
 
     }
 
@@ -250,7 +252,8 @@ class account_bank_statement(osv.osv):
         # currency_id is useful to filter cheques in the same currency
         # period_id is useful to filter cheques drawn in the same period
         st = self.browse(cr, uid, ids[0], context=context)
-        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 'period_id': st.period_id.id}, context=context)
+        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 
+            'period_id': st.period_id.id}, context=context)
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -441,7 +444,8 @@ class account_bank_statement_line(osv.osv):
             help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
             required=False, readonly=True),
-        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
+        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", 
+            help="This move line has been taken for create an Import Cheque in a bank register."),
     }
 
     _defaults = {

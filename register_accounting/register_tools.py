@@ -121,4 +121,43 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
+def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+    """
+    Give the previous register id regarding some criteria:
+     - period_id: the period of current register
+     - currency_id: currency of the current register
+     - register_type: type of register
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    p_obj = self.pool.get('account.period')
+    j_obj = self.pool.get('account.journal')
+    st_obj = self.pool.get('account.bank.statement')
+    # Search period and previous one
+    period = p_obj.browse(cr, uid, [period_id], context=context)[0]
+    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
+    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], 
+        order='date_start desc', limit=1, context=context)
+    if period_id == first_period_id: 
+        # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
+        previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
+            limit=1, order="date_start desc", context=context)
+        if not previous_fiscalyear:
+            raise osv.except_osv(_('Error'), 
+                _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
+        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
+            limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+            # and "Period 15"
+    # Search journal_ids that have the type we search
+    journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+    if len(previous_reg_ids) != 1:
+        return False
+    return previous_reg_ids[0]
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -57,6 +57,9 @@ class account_cash_statement(osv.osv):
                 'starting_details_ids': False
             })
         # @@@end
+        if not 'prev_reg_id' in vals:
+            if not 'from_journal_creation' in context:
+                raise osv.except_osv(_('Error'), _('This register is not linked with another one. Please use "Register Creation" wizard in the "Bank & Cash" menu.'))
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         return res_id
 
