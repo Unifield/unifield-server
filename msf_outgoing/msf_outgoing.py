@@ -1364,6 +1364,15 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _name = 'stock.move'
     
+    def _keep_prodlot_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to keep the production lot when a stock move is copied
+        '''
+        res = kwargs.get('res')
+        assert res is not None, 'missing res'
+        
+        return res and not context.get('keep_prodlot', False)
+    
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
         facade for product_available function from product (stock)
