@@ -102,6 +102,18 @@
             <field name="name">Stock</field>
             <field name="location_id" ref="stock_location_company"/>
         </record>
+        <record id="stock_location_packing" model="stock.location">
+            <field name="name">Packing</field>
+            <field name="location_id" ref="stock_location_company"/>
+        </record>
+        <record id="stock_location_dispatch" model="stock.location">
+            <field name="name">Dispatch</field>
+            <field name="location_id" ref="stock_location_company"/>
+        </record>
+        <record id="stock_location_distribution" model="stock.location">
+            <field name="name">Distribution</field>
+            <field name="location_id" ref="stock_location_company"/>
+        </record>
 
         <!--
     Properties
@@ -151,6 +163,9 @@
             <field name="lot_input_id" ref="stock_location_stock"/>
             <field name="lot_stock_id" ref="stock_location_stock"/>
             <field name="lot_output_id" ref="stock_location_output"/>
+            <field name="lot_packing_id" ref="stock_location_packing"/>
+            <field name="lot_dispatch_id" ref="stock_location_dispatch"/>
+            <field name="lot_distribution_id" ref="stock_location_distribution"/>
         </record>
     </data>
 </openerp>

@@ -248,6 +248,9 @@
             <field name="partner_address_id" ref="res_partner_address_fabien0"/>
             <field name="company_id" ref="res_company_shop0"/>
             <field name="lot_input_id" ref="stock_location_shop0"/>
+            <field name="lot_packing_id" ref="stock_location_packing"/>
+            <field name="lot_dispatch_id" ref="stock_location_dispatch"/>
+            <field name="lot_distribution_id" ref="stock_location_distribution"/>
         </record>
         <record id="stock_warehouse_shop1" model="stock.warehouse">
             <field name="lot_output_id" ref="stock.stock_location_output"/>
@@ -256,6 +259,9 @@
             <field name="partner_address_id" ref="res_partner_address_eric0"/>
             <field name="company_id" ref="res_company_tinyshop0"/>
             <field name="lot_input_id" ref="stock_location_shop1"/>
+            <field name="lot_packing_id" ref="stock_location_packing"/>
+            <field name="lot_dispatch_id" ref="stock_location_dispatch"/>
+            <field name="lot_distribution_id" ref="stock_location_distribution"/>
         </record>
 
         <record forcecreate="True" id="property_stock_variation" model="ir.property">
