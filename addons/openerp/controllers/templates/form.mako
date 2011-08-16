@@ -125,7 +125,7 @@
                             <a href="javascript: void(0);" onclick="submit_form('save_and_edit')" class="button-a">${_("Save & Edit")}</a>
                         </li>
                         % endif
-                        % if buttons.edit and form.screen.view_type== 'form':
+                        % if buttons.edit and form.screen.view_type== 'form' and buttons.duplicate:
                         <li title="${_('Duplicate this resource')}">
                             <a href="javascript: void(0);" onclick="submit_form('duplicate')" class="button-a">${_("Duplicate")}</a>
                         </li>

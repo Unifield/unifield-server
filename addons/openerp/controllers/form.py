@@ -23,12 +23,15 @@ import base64,os,re
 import cherrypy
 from openerp import utils, widgets as tw, validators
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval
+from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval, node_attributes
 from error_page import _ep
 from openobject.tools import expose, redirect, validate, error_handler, exception_handler
 import openobject
 import openobject.paths
 import simplejson
+
+import xml.dom.minidom
+
 
 def make_domain(name, value, kind='char'):
     """A helper function to generate domain for the given name, value pair.
@@ -207,6 +210,13 @@ class Form(SecuredController):
         buttons.new = (not editable or mode == 'tree') and mode != 'diagram'
         buttons.edit = not editable and (mode == 'form' or mode == 'diagram')
         buttons.save = editable and mode == 'form'
+
+
+        # UF-408: A quick&dirty fix to remove the button "duplicate" in the view Periods!
+        buttons.duplicate = True
+        if params.model == "account.period":
+            buttons.duplicate = False
+        
         buttons.cancel = editable and mode == 'form'
         buttons.delete = not editable and mode == 'form'
         buttons.pager =  mode == 'form' or mode == 'diagram'# Pager will visible in edit and non-edit mode in form view.
@@ -287,7 +297,6 @@ class Form(SecuredController):
                                        '_terp_notebook_tab': notebook_tab})
         params.o2m_edit = o2m_edit
         params.editable = editable
-        params.action_id = kw.get('action_id')
 
         if kw.get('default_date'):
             params.context.update({'default_date' : kw['default_date']})
@@ -405,24 +414,10 @@ class Form(SecuredController):
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
             else:
-                ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
-                if params.button and params.button.name:
+                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
+                 if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
-                
-                #original_data = Model.read(params.id, data.keys())
-                #modified = {}
-                
-                #if original_data and isinstance(original_data, dict):
-                #    for field, original_value in original_data.iteritems():
-                #        if isinstance(original_value, tuple):
-                #            original_data[field] = original_value[0]
-                #        if field in data and data[field] != original_data[field]:
-                #            modified[field] = data[field]
-
-                #    Model.write([params.id], modified, ctx)
-                #else:
-                #    Model.write([params.id], data, ctx)
-                Model.write([params.id], data, ctx)
+                 Model.write([params.id], data, ctx)
 
             tw.ConcurrencyInfo.update(
                 params.model, Model.read([params.id], ['__last_update'], ctx)
