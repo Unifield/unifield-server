@@ -59,6 +59,7 @@
         "procurement_request",
         "import_data",
         "object_query",
+        "account_msf",
     ],
     "update_xml": [
         "report.xml",
