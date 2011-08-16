@@ -21,6 +21,7 @@
 
 import time
 from osv import fields, osv
+from tools.translate import _
 
 class res_currency_functional(osv.osv):
     _inherit = 'res.currency'
@@ -33,28 +34,76 @@ class res_currency_functional(osv.osv):
             if not currency.rate_ids and currency.active:
                 return False
         return True
+
+    def _check_name_exists(self, cr, uid, name, ids = None, context={}):
+        """
+        Check if the given name exists already in the currency list with regard of the given ids:
+        - If no "id" is given --> create mode: if there exists a record with the same name: return True, otherwise return False
+        - If id is given --> edit mode: only return True if the given name does NOT belong to the editing object
+        """
+        
+        # use this direct "select" to avoid executing "read" methods
+        cr.execute("SELECT id, name FROM res_currency WHERE name = '" + name + "' LIMIT 1") 
+        if cr.rowcount:
+            id_db, text = cr.fetchall()[0]
+            if ids and ids[0] == id_db:
+                return False
+            return True
+
+        return False  
+
+    def write(self, cr, uid, ids, values, context={}):
+        # check if the given new_name exists already in other currency in the system
+        new_name = values.get('name', False)
+        if new_name:
+            if self._check_name_exists(cr, uid, new_name, ids, context):
+                raise osv.except_osv(_('Error !'), _('The currency name exists already in the system!'))
+        
+        return super(osv.osv, self).write(cr, uid, ids, values, context=context)
+
+    def create(self, cr, uid, vals, context={}):
+        # check if the given new_name exists already in the system
+        new_name = vals.get('name', False)
+        if new_name:
+            if self._check_name_exists(cr, uid, new_name, [],context):
+                raise osv.except_osv(_('Error !'), _('The currency name exists already in the system!'))
+            
+        return super(res_currency_functional, self).create(cr, uid, vals, context=context)
     
-    def _current_k_currency(self, cr, uid, ids, name, arg, context=None):
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        res=super(res_currency_functional, self).read(cr, uid, ids, fields, context, load)
+        
         if context is None:
             context = {}
-        res = {}
+            
         if 'date' in context:
             date = context['date']
         else:
             date = time.strftime('%Y-%m-%d')
         date = date or time.strftime('%Y-%m-%d')
-        for id in ids:
-            cr.execute("SELECT id, k_currency FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(id, date))
-            if cr.rowcount:
-                kid, k_currency = cr.fetchall()[0]
-                res[id] = k_currency
-            else:
-                res[id] = 1
+        
+        # The code below calculates the date of the valid rate of each currency and shows it in the list view
+        for r in res:
+            if r.__contains__('rate'):
+                rate=r['rate']
+                currency_id = r['id']
+                if rate and currency_id:
+                    currency_rate_obj=  self.pool.get('res.currency.rate')
+                    rate_ids = currency_rate_obj.search(cr, uid, [('currency_id','=', currency_id), ('rate','=', rate)])                    
+                    if rate_ids:
+                        currency_date = currency_rate_obj.browse(cr,uid,rate_ids[0],['name'])['name']
+                        r['date'] = currency_date
+                        
         return res
+    
+    def _current_rate(self, cr, uid, ids, name, arg, context=None):
+        return super(res_currency_functional, self)._current_rate(cr, uid, ids, name, arg, context)
     
     _columns = {
         'currency_name': fields.char('Currency Name', size=64, required=True),
-        'current_k_currency': fields.function(_current_k_currency, method=True, string='Current K-Currency')
+        'rate': fields.function(_current_rate, method=True, string='Current Rate', digits=(12,6),
+            help='The rate of the currency to the functional currency'),
+        'date': fields.date('Validity From'),
     }
     
     _constraints = [
@@ -62,16 +111,9 @@ class res_currency_functional(osv.osv):
     ]
 
     _defaults = {
+        'active': lambda *a: 0,
         'accuracy': 4, 
     }
 
-    def _get_conversion_rate(self, cr, uid, from_currency, to_currency, context=None):
-        conversion_rate = super(res_currency_functional, self)._get_conversion_rate(cr, uid, from_currency, to_currency, context)
-        # we add the k-currency
-        conversion_rate /= from_currency.current_k_currency 
-        conversion_rate *= to_currency.current_k_currency
-        return conversion_rate
-    
-    
 res_currency_functional()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
