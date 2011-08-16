@@ -19,20 +19,6 @@
 					<field name="parent_id" position="replace"></field>
 					<field name="date" position="replace"></field>
 					
-					<separator string="Inventory Properties" colspan="2" position="before">
-						<group colspan="2" col="2" groups="base.group_extended">
-			            	<separator string="Default Lead Times [days]" colspan="2"/>
-			            	<field name="customer_lt" />
-			            	<field name="procurement_lt" />
-			            	<field name="transport_by_air_lt" />
-			            	<field name="air_sequence" />
-			            	<field name="transport_by_sea_lt" />
-			            	<field name="sea_sequence" />
-			            	<field name="transport_by_road_lt" />
-			            	<field name="road_sequence" />
-			          	</group>
-					</separator>
-					<!-- 
 					<page string="Sales &amp; Purchases" position="inside">
 			          	<group colspan="2" col="2" groups="base.group_extended">
 			            	<separator string="Default Lead Times [days]" colspan="2"/>
@@ -46,7 +32,6 @@
 			            	<field name="road_sequence" />
 			          	</group>
 			        </page>
-			         -->
 
 				</data>
 			</field>

@@ -37,12 +37,18 @@ class res_partner(osv.osv):
         result = {}
         for partner in self.browse(cr, uid, ids, context=context):
             for field in fields:
-                result[partner.id] = {field:False}
+                result[partner.id] = {field:0}
                 
             # get the default transport, the smallest sequence
-            air_seq = partner.air_sequence
-            sea_seq = partner.sea_sequence
-            road_seq = partner.road_sequence
+            value_list = self.read(cr, uid, [partner.id], ['air_sequence', 'sea_sequence', 'road_sequence'], context=context)
+            if not value_list:
+                continue
+            
+            value = value_list[0]
+            
+            air_seq = value['air_sequence']
+            sea_seq = value['sea_sequence']
+            road_seq = value['road_sequence']
             # the default transport lead time
             default_lt = 0
             # select the smallest lead time

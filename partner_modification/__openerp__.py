@@ -31,7 +31,7 @@
     "description": """
     Modification of patner with new lead times
     """,
-    'test': [],
+    'test': ['test/partner_modification.yml'],
     'update_xml': [
         'security/ir.model.access.csv',
         'partner_modification_view.xml',
