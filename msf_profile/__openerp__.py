@@ -57,6 +57,7 @@
         "msf_printed_documents",
         "procurement_request",
         "import_data",
+        "partner_modification",
     ],
     "update_xml": [
         "report.xml",
