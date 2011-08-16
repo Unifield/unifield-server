@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +18,19 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    'name': 'MSF Product Attributes',
-    'version': '1.0',
-    'category': 'Generic Modules',
-    'author': 'MSF: Matthieu Dietrich',
-    'description': """
-        This module displays more fields for future sprints in the Products form view.
-    """,
-    'depends': ['product_expiry', 'product_manufacturer', 'sale', 'product_list'],
-    'init_xml': [
-        'security/ir.model.access.csv',
-        'data/product_section_code.xml',
-        'data/product_supply_source.xml',
-        'data/product_justification_code.xml',
-    ],
-    'update_xml': [
-        'product_attributes_view.xml',
-    ],
-    'demo_xml': [
-        'product_remove_demo.xml',
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import time
+
+from report import report_sxw
+
+class product_list(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(product_list, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+report_sxw.report_sxw('report.product.list', 'product.list', 'addons/product_list/report/product_list.rml', parser=product_list, header="external")
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

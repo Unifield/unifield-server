@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +18,37 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 {
-    'name': 'MSF Product Attributes',
-    'version': '1.0',
-    'category': 'Generic Modules',
-    'author': 'MSF: Matthieu Dietrich',
-    'description': """
-        This module displays more fields for future sprints in the Products form view.
+    "name": "Product Lists and Sub-Lists",
+    "version": "1.0",
+    "depends": ["base", "product", "stock", "purchase"],
+    "author": "TeMPO Consulting, MSF",
+    "website": "",
+    "category": "Stock & Warehouse",
+    "description": """
+    This module aims to add a feature to allow users to predefine
+    a list of products.
     """,
-    'depends': ['product_expiry', 'product_manufacturer', 'sale', 'product_list'],
-    'init_xml': [
-        'security/ir.model.access.csv',
-        'data/product_section_code.xml',
-        'data/product_supply_source.xml',
-        'data/product_justification_code.xml',
+    "init_xml": [
     ],
     'update_xml': [
-        'product_attributes_view.xml',
+        'product_list_view.xml',
+        'wizard/list_export_view.xml',
+        'wizard/list_import_view.xml',
+        'wizard/product_to_list_view.xml',
+        'product_list_report.xml',
+        'security/ir.model.access.csv',
     ],
     'demo_xml': [
-        'product_remove_demo.xml',
+    ],
+    'test': [
+        'test/data.yml',
+        'test/import_list.yml',
     ],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
