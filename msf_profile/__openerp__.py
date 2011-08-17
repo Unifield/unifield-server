@@ -59,6 +59,7 @@
         "procurement_request",
         "import_data",
         "object_query",
+        'account_invoice_split',
     ],
     "update_xml": [
         "report.xml",

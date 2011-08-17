@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Wizard that permit to split an invoice into 2 invoices -->
+        <record id="wizard_split_invoice_form" model="ir.ui.view">
+            <field name="name">wizard.split.invoice.form</field>
+            <field name="model">wizard.split.invoice</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <label string="These lines would be written in a new invoice. The wizard would correct the current invoice with the difference if exists." align="0,0"/>
+                <field name="invoice_line_ids" nolabel="1">
+                    <tree editable='bottom'>
+                        <field name="product_id"/>
+                        <field name="description"/>
+                        <field name='quantity'/>
+                        <field name='price_unit'/>
+                    </tree>
+                </field>
+                <group col="6" colspan="4">
+                    <label string="" colspan="2"/>
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button name="button_confirm" type="object" string="Confirm" icon='gtk-ok'/>
+                </group>
+            </field>
+        </record>
+
+    </data>
+</openerp>
