@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+    	<act_window name="Stock Level Forecast (List)"
+            res_model="stock.forecast"
+            src_model="product.product"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="act_stock_forecast"/>
+            
+   		<record id="stock_forecast_line_tree" model="ir.ui.view">
+            <field name="name">stock.forecast.line.tree</field>
+            <field name="model">stock.forecast.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Forecasts">
+                    <field name="date" />
+                    <field name="doc" />
+                    <field name="order_type" />
+                    <field name="reference" />
+                    <field name="state" />
+                    <field name="qty" />
+                    <field name="stock_situation" />
+                </tree>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

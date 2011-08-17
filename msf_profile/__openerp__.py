@@ -59,6 +59,7 @@
         "procurement_request",
         "import_data",
         "object_query",
+        "stock_forecast",
     ],
     "update_xml": [
         "report.xml",
