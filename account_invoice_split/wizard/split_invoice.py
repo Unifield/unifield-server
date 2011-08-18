@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class wizard_split_invoice_lines(osv.osv_memory):
     _name = 'wizard.split.invoice.lines'
@@ -52,11 +53,6 @@ class wizard_split_invoice(osv.osv_memory):
         """
         Validate changes and split invoice regarding given lines
         """
-        # FIXME: verify that all lines are completed (quantity required)
-        # FIXME:
-        # - VERIFY that quantity and price_unit are positive !
-        # - VERIFY that quantity is not superior to relative invoice_line quantity !
-
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         invoice_ids = [] # created invoices
@@ -64,6 +60,19 @@ class wizard_split_invoice(osv.osv_memory):
         inv_obj = self.pool.get('account.invoice')
         invl_obj = self.pool.get('account.invoice.line')
         wiz_lines_obj = self.pool.get('wizard.split.invoice.lines')
+        # Test lines
+        wiz_line_ids = wiz_lines_obj.search(cr, uid, [('wizard_id', '=', wizard.id)])
+        if not wiz_line_ids:
+            return { 'type' : 'ir.actions.act_window_close', 'active_id' : wizard.invoice_id.id, 'invoice_ids': invoice_ids}
+        for wiz_line in wiz_lines_obj.browse(cr, uid, wiz_line_ids, context=context):
+            # Quantity
+            if wiz_line.quantity <= 0:
+                raise osv.except_osv(_('Warning'), _('%s: Quantity should be positive!') % wiz_line.description)
+            if wiz_line.quantity > wiz_line.invoice_line_id.quantity:
+                raise osv.except_osv(_('Warning'), _('%s: Quantity should be inferior or equal to initial quantity!') % wiz_line.description)
+            # Price unit
+            if wiz_line.price_unit <= 0:
+                raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
         # Create a copy of invoice
         new_inv_id = inv_obj.copy(cr, uid, invoice_origin_id, {}, context=context)
         if not new_inv_id:
