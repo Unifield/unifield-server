@@ -62,6 +62,7 @@
     ],
     "update_xml": [
         "report.xml",
+        "purchase_double_validation_workflow.xml",
     ],
     "demo_xml": [
     ],
