@@ -31,10 +31,10 @@ class wizard_split_invoice_lines(osv.osv_memory):
 
     _columns = {
         'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice Line', readonly=True),
-        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True),
         'quantity': fields.float(string='Qty', required=True, readonly=False),
-        'price_unit': fields.float(string='Unit price', required=True),
-        'description': fields.char(string='Description', size=255),
+        'price_unit': fields.float(string='Unit price', required=True, readonly=True),
+        'description': fields.char(string='Description', size=255, readonly=True),
         'wizard_id': fields.many2one('wizard.split.invoice', string='Wizard', readonly=True, required=True),
     }
 
