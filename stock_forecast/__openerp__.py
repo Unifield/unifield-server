@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock"],
+    "depends" : ["sale", "purchase", "stock", "msf_order_date", "order_types"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -38,6 +38,7 @@
         'security/ir.model.access.csv',
         'stock_forecast_sequence.xml',
         'wizard/stock_forecast_view.xml',
+        'wizard/stock_forecast_export_view.xml'
     ],
     'installable': True,
 }
