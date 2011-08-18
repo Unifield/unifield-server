@@ -38,6 +38,7 @@
     ],
     "demo_xml" : [],
     "test": [
+        'test/split_invoice.yml',
     ],
     "installable": True,
     "active": False
