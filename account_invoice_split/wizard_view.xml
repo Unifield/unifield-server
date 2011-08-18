@@ -8,7 +8,7 @@
             <field name="model">wizard.split.invoice</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <label string="These lines would be written in a new invoice. The wizard would correct the current invoice with the difference if exists." align="0,0"/>
+                <label string="These lines would be written in a new invoice. The wizard would correct the current invoice with the difference if exists." align="0.0"/>
                 <field name="invoice_line_ids" nolabel="1">
                     <tree editable='bottom'>
                         <field name="product_id"/>
