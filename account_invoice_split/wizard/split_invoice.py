@@ -75,6 +75,7 @@ class wizard_split_invoice(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
         # Create a copy of invoice
         new_inv_id = inv_obj.copy(cr, uid, invoice_origin_id, {}, context=context)
+        invoice_ids.append(new_inv_id)
         if not new_inv_id:
             raise osv.except_osv(_('Error'), _('The creation of a new invoice failed.'))
         # Delete new lines
