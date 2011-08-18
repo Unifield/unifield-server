@@ -92,6 +92,7 @@
           assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
           assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
           assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+          assert line.sourced_ok == 'Done', "Sourced information is not correct on the line"
     self.unlink(cr, uid, wiz_ids)
 -
   I run the scheduler.

@@ -45,10 +45,14 @@
                     <field name="line_number" />
                     <field name="product_id" />
                     <field name="qty_ordered" />
+                    <field name="uom_id" />
+                    <field name="sourced_ok" />
                     <!--<field name="tender_ids" />-->
                     <field name="quotation_ids" />
+                    <field name="quotation_status" />
                     <field name="purchase_ids" />
                     <field name="incoming_ids" />
+                    <field name="product_available" />
                     <field name="outgoing_ids" />
                 </tree>
             </field>

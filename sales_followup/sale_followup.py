@@ -204,6 +204,36 @@ class sale_order_line_followup(osv.osv_memory):
     _name = 'sale.order.line.followup'
     _description = 'Sales Order Lines Followup'
     
+    def _get_status(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Get all status about the line
+        '''
+        move_obj = self.pool.get('stock.move')
+        
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'sourced_ok': 'Waiting',
+                            'quotation_status': 'N/A',
+                            'product_available': 'Waiting'}
+            if line.line_id.state == 'confirmed':
+                res[line.id]['sourced_ok'] = 'Done'
+                
+            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
+                if move.state in ('assigned', 'done'):
+                    res[line.id]['product_available'] = 'Done'
+                if move.state == 'confirmed':
+                    res[line.id]['product_available'] = 'In Progress'
+                
+            for quotation in line.quotation_ids:
+                if quotation.quotation_id.state != 'draft' and res[line.id]['quotation_status'] != 'Waiting':
+                    res[line.id]['quotation_status'] = 'Done'
+                else:
+                    res[line.id]['quotation_status'] = 'Waiting'
+        
+        return res
+    
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
@@ -211,15 +241,22 @@ class sale_order_line_followup(osv.osv_memory):
         'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
                                      type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
+        'uom_id': fields.related('line_id', 'product_uom', string='UoM', readonly=True),
+        'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
+                                   readonly=True, multi='status'),
         #TODO: Add call for tender when the feature of call for tender will be implemented
 #        'tender_ids': fields.many2many('call.tender', 'call_tender_follow_rel',
 #                                       'follow_line_id', 'tender_id', string='Call for tender'),
         'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
                                           'quotation_id', string='Requests for Quotation', readonly=True),
+        'quotation_status': fields.function(_get_status, method=True, string='Purchase Order',
+                                            type='char', readonly=True, multi='status'),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
                                          'purchase_id', string='Purchase Orders', readonly=True),
         'incoming_ids': fields.many2many('stock.picking', 'incoming_follow_rel', 'follow_line_id', 
                                          'incoming_id', string='Incoming Shipment', readonly=True),
+        'product_available': fields.function(_get_status, method=True, string='Product available',
+                                             type='char', readonly=True, multi='status'),
         'outgoing_ids': fields.many2many('stock.picking', 'outgoing_follow_rel', 'follow_line_id',
                                          'outgoing_id', string='Outgoing Deliveries', readonly=True),
         
