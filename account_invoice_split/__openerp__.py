@@ -30,7 +30,7 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account"],
+    "depends" : ["base", "account", "purchase"],
     "init_xml" : [],
     "update_xml" : [
         'account_invoice_view.xml',
