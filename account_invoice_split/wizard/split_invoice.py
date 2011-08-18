@@ -81,13 +81,12 @@ class wizard_split_invoice(osv.osv_memory):
         invl_ids = invl_obj.search(cr, uid, [('invoice_id', '=', new_inv_id)], context=context)
         invl_obj.unlink(cr, uid, invl_ids, context=context)
         # Create new ones
-        wiz_line_ids = wiz_lines_obj.search(cr, uid, [('wizard_id', '=', wizard.id)])
         for wiz_line in wiz_lines_obj.browse(cr, uid, wiz_line_ids, context=context):
             # create values for the new invoice line
             invl_vals = invl_obj.product_id_change(cr, uid, [], wiz_line.product_id.id, False, wiz_line.quantity, wiz_line.description, 
                 partner_id=wizard.invoice_id.partner_id.id, price_unit=wiz_line.price_unit, context=context).get('value')
             # attach this line to the new invoice
-            invl_vals.update({'invoice_id': new_inv_id})
+            invl_vals.update({'invoice_id': new_inv_id, 'price_unit': wiz_line.price_unit, 'quantity': wiz_line.quantity})
             # create the new invoice line
             invl_obj.create(cr, uid, invl_vals, context=context)
             # then update old line if exists
@@ -97,7 +96,7 @@ class wizard_split_invoice(osv.osv_memory):
         # attach new invoice to purchase order it come from
         for po in wizard.invoice_id.purchase_ids:
             inv_obj.write(cr, uid, [new_inv_id], {'purchase_ids': [(4, po.id)]}, context=context)
-        return { 'type' : 'ir.actions.act_window_close', 'active_id' : wizard.invoice_id.id, 'invoice_ids': invoice_ids}
+        return { 'type' : 'ir.actions.act_window_close', 'active_id' : new_inv_id, 'invoice_ids': invoice_ids}
 
 wizard_split_invoice()
 
