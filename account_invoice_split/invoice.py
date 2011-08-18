@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from osv import fields
 from tools.translate import _
 
 class account_invoice(osv.osv):
@@ -29,6 +30,11 @@ class account_invoice(osv.osv):
     _description = 'Account invoice'
 
     _inherit = 'account.invoice'
+
+    _columns = {
+        'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchases', 
+            help="Purchases that generate these invoices."),
+    }
 
     def button_split_invoice(self, cr, uid, ids, context={}):
         """

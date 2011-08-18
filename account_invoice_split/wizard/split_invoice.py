@@ -54,9 +54,8 @@ class wizard_split_invoice(osv.osv_memory):
         """
         # FIXME: verify that all lines are completed (quantity required)
         # FIXME:
-        # - create new lines for those which doesn't have any invoice_line_id (for the new invoice)
-        # - if line exists, then correct it with the difference in account_invoice_line
-        # - create a new invoice in draft, with copy ?
+        # - VERIFY that quantity and price_unit are positive !
+        # - VERIFY that quantity is not superior to relative invoice_line quantity !
 
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
@@ -75,8 +74,20 @@ class wizard_split_invoice(osv.osv_memory):
         # Create new ones
         wiz_line_ids = wiz_lines_obj.search(cr, uid, [('wizard_id', '=', wizard.id)])
         for wiz_line in wiz_lines_obj.browse(cr, uid, wiz_line_ids, context=context):
-            print wiz_line.product_id.name
-        raise osv.except_osv('error', 'programmed error')
+            # create values for the new invoice line
+            invl_vals = invl_obj.product_id_change(cr, uid, [], wiz_line.product_id.id, False, wiz_line.quantity, wiz_line.description, 
+                partner_id=wizard.invoice_id.partner_id.id, price_unit=wiz_line.price_unit, context=context).get('value')
+            # attach this line to the new invoice
+            invl_vals.update({'invoice_id': new_inv_id})
+            # create the new invoice line
+            invl_obj.create(cr, uid, invl_vals, context=context)
+            # then update old line if exists
+            if wiz_line.invoice_line_id:
+                qty = wiz_line.invoice_line_id.quantity - wiz_line.quantity
+                invl_obj.write(cr, uid, [wiz_line.invoice_line_id.id], {'quantity': qty}, context=context)
+        # attach new invoice to purchase order it come from
+        for po in wizard.invoice_id.purchase_ids:
+            inv_obj.write(cr, uid, [new_inv_id], {'purchase_ids': [(4, po.id)]}, context=context)
         return { 'type' : 'ir.actions.act_window_close', 'active_id' : wizard.invoice_id.id, 'invoice_ids': invoice_ids}
 
 wizard_split_invoice()
