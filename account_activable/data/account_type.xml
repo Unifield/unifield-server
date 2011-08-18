@@ -7,12 +7,6 @@
             <field name="code">view</field>
             <field name="close_method">none</field>
         </record>
-        <record id="account.account_type_liability" model="account.account.type">
-            <field name="name">Liability</field>
-            <field name="code">liability</field>
-            <field name="report_type">liability</field>
-            <field name="close_method">balance</field>
-        </record>
         <record id="account.account_type_asset" model="account.account.type">
             <field name="name">Asset</field>
             <field name="code">asset</field>
@@ -40,25 +34,25 @@
         <record id="account_type_capital" model="account.account.type">
             <field name="name">Capital</field>
             <field name="code">capital</field>
-            <field name="report_type">liability</field>
+            <field name="report_type">asset</field>
             <field name="close_method">none</field>
         </record>
         <record id="account.account_type_cash_equity" model="account.account.type">
             <field name="name">Equity</field>
             <field name="code">equity</field>
-            <field name="report_type">liability</field>
+            <field name="report_type">asset</field>
             <field name="close_method">none</field>
         </record>
         <record id="account_type_debt" model="account.account.type">
             <field name="name">Debt</field>
             <field name="code">debt</field>
-            <field name="report_type">liability</field>
+            <field name="report_type">asset</field>
             <field name="close_method">none</field>
         </record>
         <record id="account.account_type_payable" model="account.account.type">
             <field name="name">Payables</field>
             <field name="code">payables</field>
-            <field name="report_type">liability</field>
+            <field name="report_type">asset</field>
             <field name="close_method">none</field>
         </record>
         <record id="account.account_type_expense" model="account.account.type">
