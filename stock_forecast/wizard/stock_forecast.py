@@ -232,6 +232,23 @@ class stock_forecast(osv.osv_memory):
                 'context': context,
                 }
         
+    def void(self, cr, uid, ids, context=None):
+        '''
+        void
+        '''
+        return {
+                'name': 'Stock Level Forecast',
+                'view_mode': 'graph,tree',
+                'view_id': False,
+                'view_type': 'form',
+                'res_model': 'stock.forecast.line',
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': context,
+                }
+        
     def do_forecast(self, cr, uid, ids, context=None):
         '''
         generate the corresponding values
@@ -272,7 +289,7 @@ class stock_forecast(osv.osv_memory):
                           'uom': product_uom_id})
                 qty = product.get_product_available(context=c)[product.id]
                 
-                line_obj.create(cr, uid, {'date': today,
+                line_obj.create(cr, uid, {'date': today.split(' ')[0],
                                           'doc': False,
                                           'order_type': False,
                                           'reference': False,
@@ -290,7 +307,7 @@ class stock_forecast(osv.osv_memory):
                 
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):
                     # create lines corresponding to so
-                    values = {'date': sol.date_planned,
+                    values = {'date': sol.date_planned.split(' ')[0],
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
                               'reference': sol.order_id.name,
@@ -310,7 +327,7 @@ class stock_forecast(osv.osv_memory):
                 
                 for pol in pol_obj.browse(cr, uid, pol_list, context=context):
                     # create lines corresponding to po
-                    line_to_create.append({'date': pol.date_planned,
+                    line_to_create.append({'date': pol.date_planned.split(' ')[0],
                                            'doc': 'PO',
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
                                            'reference': pol.order_id.name,
@@ -326,7 +343,7 @@ class stock_forecast(osv.osv_memory):
                 
                 for pro in pro_obj.browse(cr, uid, pro_list, context=context):
                     # create lines corresponding to po
-                    line_to_create.append({'date': pro.date_planned,
+                    line_to_create.append({'date': pro.date_planned.split(' ')[0],
                                            'doc': 'PR',
                                            'order_type': False,
                                            'reference': pro.origin,
@@ -343,7 +360,7 @@ class stock_forecast(osv.osv_memory):
                 for move in move_obj.browse(cr, uid, moves_list, context=context):
                     if move.picking_id.type in ('in', 'out',):
                         # create lines corresponding to po
-                        values = {'date': move.date_expected,
+                        values = {'date': move.date_expected.split(' ')[0],
                                   'doc': 'IN',
                                   # to check - purchase order or sale order prefix ?
                                   'order_type': move.order_type and PREFIXES['purchase.order'] + move.order_type or False,
@@ -427,6 +444,7 @@ class stock_forecast(osv.osv_memory):
                                 <button name="do_print" string="Print" type="object" icon="gtk-print" />
                                 <button name="do_export" string="Export" type="object" icon="gtk-save" />
                                 <button name="graph" string="Graph" type="object" icon="gtk-stock_graph" />
+                                <button name="void" string="Void" type="object" icon="gtk-stock_graph" />
                             </group>
                         </form>
                         """

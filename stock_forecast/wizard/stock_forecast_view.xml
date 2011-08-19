@@ -26,6 +26,20 @@
                 </tree>
             </field>
         </record>
+        
+        <record model="ir.ui.view" id="view_order_line_graph">
+		   <field name="name">stock.forecast.line.graph</field>
+		   <field name="model">stock.forecast.line</field>
+		   <field name="type">graph</field>
+		   <field name="arch" type="xml">
+		         <graph string="Stock Forecast Lines" type="bar">
+		              <field name="date" />
+		              <field name="stock_situation" operator="max" />
+		        </graph>
+		    </field>
+		</record>
+
+        
     
     </data>
 </openerp>
