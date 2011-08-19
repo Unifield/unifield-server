@@ -147,7 +147,11 @@ class register_creation(osv.osv_memory):
                     reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
                     if reg_id and not reg.prev_reg_id:
                         reg_to_create_obj.write(cr, uid, [reg_id], {'to_create': False,}, context=context)
-        
+        # Delete lines that have no previous_register_id
+        line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
+        for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
+            if not line.prev_reg_id:
+                reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
         # Change state to activate the "Create Registers" confirm button
         self.write(cr, uid, ids, {'state': 'open'}, context=context)
         # Refresh wizard to display changes
