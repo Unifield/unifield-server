@@ -83,6 +83,7 @@ class account_bank_statement(osv.osv):
             help="Closing balance"),
         'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
             help="This fields give the previous register from which this one is linked."),
+        'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
 
     }
 
@@ -286,6 +287,22 @@ class account_bank_statement(osv.osv):
                 'active_ids': ids,
             }
         }
+
+    def button_confirm_closing_balance(self, cr, uid, ids, context={}):
+        """
+        Confirm that the closing balance could not be editable.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        for reg in self.browse(cr, uid, ids, context=context):
+            # Validate register only if this one is open
+            if reg.state == 'open':
+                res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
+                res.append(res_id)
+        return res
 
 account_bank_statement()
 

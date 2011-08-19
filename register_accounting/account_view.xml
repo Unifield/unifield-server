@@ -19,10 +19,16 @@
                             <newline/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
                             <field name="balance_start"/>
-                            <field name="balance_end_real"/>
+                            <group col="4" colspan="2">
+                                <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
+                                <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
+                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                    confirm="Are you sure?"/>
+                            </group>
                             <field name="currency" invisible="1"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
+                            <field name="closing_balance_frozen" invisible="1"/>
                         </group>
                         <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
