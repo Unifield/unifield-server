@@ -18,7 +18,8 @@
                             <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="balance_start"/>
+                            <field name="prev_reg_id" invisible="1"/>
+                            <field name="balance_start" attrs="{'readonly': [('prev_reg_id', '!=', False)]}"/>
                             <group col="4" colspan="2">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
