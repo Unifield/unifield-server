@@ -84,14 +84,14 @@ class stock_forecast(osv.osv_memory):
     _name = "stock.forecast"
     _description = "Stock Level Forecast"
     _columns = {
-        'product': fields.many2one('product.product', 'Product'),
-        'warehouse' : fields.many2one('stock.warehouse', 'Warehouse'),
-        'product_uom': fields.many2one('product.uom', 'Product UoM'),
+        'product_id': fields.many2one('product.product', 'Product'),
+        'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
+        'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
         'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
         'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
      }
     
-    def onchange(self, cr, uid, ids, product, warehouse, product_uom, context=None):
+    def onchange(self, cr, uid, ids, product_id, warehouse_id, product_uom_id, context=None):
         '''
         onchange function, trigger the value update of quantity
         '''
@@ -99,19 +99,78 @@ class stock_forecast(osv.osv_memory):
             context = {}
             
         qty = 0
-        if product:
-            product = self.pool.get('product.product').browse(cr, uid, product, context=context)
+        if product_id:
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             c = context.copy()
             # if you remove the coma after done, it will no longer work properly
             c.update({'states': ('done',),
                       'what': ('in', 'out'),
                       'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                      'warehouse': warehouse,
-                      'uom': product_uom})
+                      'warehouse': warehouse_id,
+                      'uom': product_uom_id})
             
             qty = product.get_product_available(context=c)[product.id]
         
         return {'value': {'qty': qty}}
+    
+    def do_print(self, cr, uid, ids, context=None):
+        '''
+        Print the report as PDF file
+        '''
+        if context is None:
+            context = {}
+        
+        # data gathered on screen made available for the report
+        product_name = False
+        product_code = False
+        warehouse_name = False
+        product_uom_name = False
+        qty = False
+        date = time.strftime('%Y-%m-%d')
+        
+        # gather the wizard data
+        for wizard in self.browse(cr, uid, ids, context=context):
+            # product
+            if wizard.product_id:
+                product_name = wizard.product_id.name or 'n/a'
+                product_code = wizard.product_id.default_code or 'n/a'
+                
+                c = context.copy()
+                # if you remove the coma after done, it will no longer work properly
+                c.update({'states': ('done',),
+                          'what': ('in', 'out'),
+                          'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                          'warehouse': wizard.warehouse_id.id,
+                          'uom': wizard.product_uom_id.id})
+                qty = wizard.product_id.get_product_available(context=c)[wizard.product_id.id]
+            # warehouse
+            if wizard.warehouse_id:
+                warehouse_name = wizard.warehouse_id.name or 'n/a'
+            # product uom
+            if wizard.product_uom_id:
+                product_uom_name = wizard.product_uom_id.name or 'n/a'
+            # qty
+            qty = wizard.qty
+        
+            data = {
+                    'product_name': product_name,
+                    'product_code': product_code,
+                    'warehouse_name': warehouse_name,
+                    'product_uom_name': product_uom_name,
+                    'qty': qty,
+                    'date': date,}
+           
+            line_ids = [x.id for x in wizard.stock_forecast_lines]
+            if not line_ids:
+                raise osv.except_osv(_('Warning !'), _('Your search did not match with any moves'))
+        
+            datas = {'ids': line_ids,
+                     'model': 'stock.forecast.line',
+                     'form': data}
+
+            return {'type': 'ir.actions.report.xml',
+                    'report_name': 'stock.forecast.report',
+                    'datas': datas}
     
     def do_export(self, cr, uid, ids, context=None):
         '''
@@ -151,9 +210,9 @@ class stock_forecast(osv.osv_memory):
         '''
         reset all fields and table
         '''
-        self.write(cr, uid, ids, {'product': False,
-                                  'warehouse': False,
-                                  'product_uom': False,}, context=context)
+        self.write(cr, uid, ids, {'product_id': False,
+                                  'warehouse_id': False,
+                                  'product_uom_id': False,}, context=context)
         
         line_obj = self.pool.get('stock.forecast.line')
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
@@ -194,9 +253,9 @@ class stock_forecast(osv.osv_memory):
         today = time.strftime('%Y-%m-%d %H:%M:%S')
         
         for wizard in self.browse(cr, uid, ids, context=context):
-            product = wizard.product
-            warehouse_id = wizard.warehouse.id
-            product_uom_id = wizard.product_uom.id
+            product = wizard.product_id
+            warehouse_id = wizard.warehouse_id.id
+            product_uom_id = wizard.product_uom_id.id
             
             # the list of lines which will be created according to date order - [{},]
             line_to_create = []
@@ -335,8 +394,8 @@ class stock_forecast(osv.osv_memory):
         if context.get('active_ids', []):
             active_id = context.get('active_ids')[0]
             
-            if 'product' in fields:
-                res.update(product=active_id)
+            if 'product_id' in fields:
+                res.update(product_id=active_id)
         
         return res
     
@@ -350,9 +409,9 @@ class stock_forecast(osv.osv_memory):
         _moves_arch_lst = """
                         <form string="Stock Forecast">
                             <group col="4" colspan="4">
-                                <field name="product" on_change="onchange(product, warehouse, product_uom)" />
-                                <field name="warehouse" on_change="onchange(product, warehouse, product_uom)" />
-                                <field name="product_uom" on_change="onchange(product, warehouse, product_uom)" />
+                                <field name="product_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
+                                <field name="warehouse_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
+                                <field name="product_uom_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
                                 <field name="qty" />
                             </group>
                             <newline />
@@ -365,7 +424,7 @@ class stock_forecast(osv.osv_memory):
                             <field name="stock_forecast_lines" colspan="4" nolabel="1" mode="tree,form"></field>
                             <group col="6" colspan="2"></group>
                             <group col="6" colspan="2">
-                                <button name="print" string="Print" type="object" icon="gtk-print" />
+                                <button name="do_print" string="Print" type="object" icon="gtk-print" />
                                 <button name="do_export" string="Export" type="object" icon="gtk-save" />
                                 <button name="graph" string="Graph" type="object" icon="gtk-stock_graph" />
                             </group>
