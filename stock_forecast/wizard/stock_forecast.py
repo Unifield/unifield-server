@@ -232,7 +232,7 @@ class stock_forecast(osv.osv_memory):
                 'context': context,
                 }
         
-    def void(self, cr, uid, ids, context=None):
+    def do_graph(self, cr, uid, ids, context=None):
         '''
         void
         '''
@@ -443,8 +443,7 @@ class stock_forecast(osv.osv_memory):
                             <group col="6" colspan="2">
                                 <button name="do_print" string="Print" type="object" icon="gtk-print" />
                                 <button name="do_export" string="Export" type="object" icon="gtk-save" />
-                                <button name="graph" string="Graph" type="object" icon="gtk-stock_graph" />
-                                <button name="void" string="Void" type="object" icon="gtk-stock_graph" />
+                                <button name="do_graph" string="Graph" type="object" icon="terp-account" />
                             </group>
                         </form>
                         """
