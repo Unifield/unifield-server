@@ -199,7 +199,7 @@ class account_bank_statement(osv.osv):
             if len(st_prev_ids) > 1:
                 raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
             if st_prev_ids:
-                self.write(cr, uid, st_prev_ids, {'balance_start': st.balance_end_real}, context=context)
+                self.write(cr, uid, st_prev_ids, {'balance_start': st.balance_end}, context=context)
 #            done.append(st.id)
         return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
