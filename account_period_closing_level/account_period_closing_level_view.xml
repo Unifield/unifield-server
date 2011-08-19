@@ -22,6 +22,9 @@
             <field name="inherit_id" ref="account.view_account_period_form"/>
             <field name="arch" type="xml">
                 <data>
+                    <form position="attributes">
+                       <attribute name="hide_duplicate_button">1</attribute>
+                    </form>
                     <field name="code" position="replace"/>
                     <field name="company_id" position="replace"/>
 	                <button name="action_draft" position="replace">
