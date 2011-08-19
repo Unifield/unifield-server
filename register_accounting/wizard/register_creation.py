@@ -48,7 +48,7 @@ class register_creation_lines(osv.osv_memory):
     _columns = {
         'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
-        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type"),
+        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
         'to_create': fields.boolean("Create it?", help="Tick the box if this register have to be created."),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement", 
             required=False, readonly=True, string="Previous register", store=False),
