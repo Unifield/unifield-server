@@ -152,8 +152,13 @@ class register_creation(osv.osv_memory):
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
             if not line.prev_reg_id:
                 reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
-        # Change state to activate the "Create Registers" confirm button
-        self.write(cr, uid, ids, {'state': 'open'}, context=context)
+        # Verify that there is some lines to treat
+        remaining_lines = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
+        if not len(remaining_lines):
+            raise osv.except_osv(_('Warning'), _('No register to create. Please verify that previous period have some open registers.'))
+        else:
+            # Change state to activate the "Create Registers" confirm button
+            self.write(cr, uid, ids, {'state': 'open'}, context=context)
         # Refresh wizard to display changes
         return {
          'type': 'ir.actions.act_window',
