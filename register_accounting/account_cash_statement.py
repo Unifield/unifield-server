@@ -87,6 +87,11 @@ class account_cash_statement(osv.osv):
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
             self.write(cr, uid, [rs], res.get(rs))
+            # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
+            register = self.browse(cr, uid, [rs], context=context)[0]
+            if register and not register.prev_reg_id:
+                if not register.balance_start > 0:
+                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
         st = self.browse(cr, uid, ids)[0]
