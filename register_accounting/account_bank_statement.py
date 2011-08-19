@@ -28,6 +28,7 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
+from register_tools import create_starting_cashbox_lines
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -304,6 +305,9 @@ class account_bank_statement(osv.osv):
             if reg.state == 'open':
                 res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
                 res.append(res_id)
+            # Create next starting balance for cash registers
+            if reg.journal_id.type == 'cash':
+                create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
         return res
 
 account_bank_statement()

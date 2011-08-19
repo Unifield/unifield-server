@@ -216,7 +216,8 @@
                                     </field>
                                 </group>
                                 <group col="2" colspan="2" expand="1">
-                                    <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':[('state','!=','open')]}">
+                                    <field name="closing_balance_frozen" invisible="1"/>
+                                    <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|', ('state','!=','open'), ('closing_balance_frozen', '=', True)]}">
                                         <tree string = "Closing Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
@@ -228,6 +229,9 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
+                                    <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
+                                        colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                        confirm="Are you sure?"/>
                                 </group>
                             </page>
                         </notebook>

@@ -53,7 +53,6 @@ class wizard_closing_cashbox(osv.osv_memory):
                 equivalent = balcal == bal
                 if not equivalent:
                     # verify that no other lines should be created
-                    create_starting_cashbox_lines(self, cr, uid, id, context=context)
                     res_id = st_obj.write(cr, uid, [id], {'state' : 'partial_close'})
                     return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
                 else:

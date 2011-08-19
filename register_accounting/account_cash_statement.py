@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from register_tools import previous_register_is_closed
-from register_tools import create_starting_cashbox_lines
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -81,8 +80,6 @@ class account_cash_statement(osv.osv):
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Verify that the previous register is closed
-        previous_register_is_closed(self, cr, uid, ids, context=context)
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
@@ -117,6 +114,9 @@ class account_cash_statement(osv.osv):
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
             if len(st_prev_ids) > 1:
                 raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+            # Verify that the closing balance have been freezed
+            if not st.closing_balance_frozen:
+                raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
