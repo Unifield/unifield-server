@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from ..register_tools import previous_register_id
+from ..register_tools import open_register_view
 
 class register_creation_lines(osv.osv_memory):
     _name = 'wizard.register.creation.lines'
@@ -174,6 +175,7 @@ class register_creation(osv.osv_memory):
         registers =  []
         curr_time = strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
+        abs_obj = self.pool.get('account.bank.statement')
         wiz_register_lines_obj = self.pool.get('wizard.register.creation.lines')
         for new_reg in wizard.new_register_ids:
             if new_reg.to_create:
@@ -189,21 +191,14 @@ class register_creation(osv.osv_memory):
                     })
                     # FIXME: search old caracteristics from previous register
                 # Create the register
-                reg_id = self.pool.get('account.bank.statement').create(cr, uid, reg_vals, context=context)
+                reg_id = abs_obj.create(cr, uid, reg_vals, context=context)
                 if reg_id:
                     registers.append(reg_id)
                     wiz_register_lines_obj.unlink(cr, uid, [new_reg.id], context=context)
-        # Refresh wizard to display changes
-        return {
-         'type': 'ir.actions.act_window',
-         'res_model': 'wizard.register.creation',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
-         'register_ids': registers,
-        }
+        if registers:
+            abs_obj.log(cr, uid, registers[0], '%s register(s) created for period %s' % (len(registers), wizard.period_id.name))
+            return open_register_view(self, cr, uid, registers[0])
+        raise osv.except_osv(_('Warning'), _('No registers created!'))
 
 register_creation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
