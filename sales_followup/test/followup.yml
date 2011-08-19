@@ -17,31 +17,41 @@
       - name: P1
         price_unit: 200
         product_uom: product.product_uom_unit
-        product_uom_qty: 500.0
+        product_uom_qty: 5.0
         state: draft
         delay: 7.0
         product_id: product1
-        product_uos_qty: 500.0
+        product_uos_qty: 5.0
+        th_weight: 0.0
+        type: make_to_order
+      - name: P4
+        price_unit: 200
+        product_uom: product.product_uom_unit
+        product_uom_qty: 2.0
+        state: draft
+        delay: 7.0
+        product_id: product4
+        product_uos_qty: 2.0
         th_weight: 0.0
         type: make_to_order
       - name: P2
         price_unit: 200
         product_uom: product.product_uom_unit
-        product_uom_qty: 225.0
+        product_uom_qty: 1.0
         state: draft
         delay: 7.0
         product_id: product2
-        product_uos_qty: 225.0
+        product_uos_qty: 1.0
         th_weight: 0.0
         type: make_to_stock
       - name: P3
         price_unit: 100
         product_uom: product.product_uom_unit
-        product_uom_qty: 125.0
+        product_uom_qty: 3.0
         state: draft
         delay: 7.0
-        product_id: product2
-        product_uos_qty: 125.0
+        product_id: product3
+        product_uos_qty: 3.0
         th_weight: 0.0
         type: make_to_stock
 -
@@ -63,9 +73,9 @@
   !python {model: sale.order.followup}: |
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
-        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
-        assert wiz.state == 'Quotation', "The state on the wizard is different than the state of the Sale Order"
-        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (1)"
+        assert wiz.state == 'Quotation', "The state on the wizard is different than the state of the Sale Order (1)"
+        assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (1)"
     self.unlink(cr, uid, wiz_ids)
 -
   I confirm the sale order
@@ -85,14 +95,14 @@
   !python {model: sale.order.followup}: |
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
-        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
-        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (2)"
+        assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (2)"
         for line in wiz.line_ids:
-          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
-          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
-          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
-          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
-          assert line.sourced_ok == 'Done', "Sourced information is not correct on the line"
+          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0 (2)"
+          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0 (2)"
+          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0 (2)"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1 (2)"
+          assert line.sourced_ok == 'Done', "Sourced information is not correct on the line (2)"
     self.unlink(cr, uid, wiz_ids)
 -
   I run the scheduler.
@@ -115,20 +125,20 @@
     import netsvc
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
-        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
-        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (3)"
+        assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (3)"
         for line in wiz.line_ids:
-          if line.product_id.id == ref('product1'):
-              assert len(line.quotation_ids) == 1, "Number of the RfQ is different than 1"
+          if line.product_id.id in (ref('product1'), ref('product4')):
+              assert len(line.quotation_ids) == 1, "Number of the RfQ is different than 1 (3)"
               for po in line.quotation_ids:
                   wf_service = netsvc.LocalService("workflow")
                   wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_confirm', cr)
                   wf_service.trg_validate(uid, 'purchase.order', po.id, 'purchase_approve', cr)
           else:
-              assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
-          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
-          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
-          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+              assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0 (3)"
+          assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0 (3)"
+          assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0 (3)"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1 (3)"
     self.unlink(cr, uid, wiz_ids)
 -
   I create again a wizard
@@ -145,15 +155,15 @@
     import netsvc
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
-        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order"
-        assert len(wiz.line_ids) == 3, "Number of lines in the follow-up not corresponding to the number of lines in the sale order"
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (4)"
+        assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (4)"
         for line in wiz.line_ids:
-          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0"
-          if line.product_id.id == ref('product1'):
-              assert len(line.purchase_ids) == 1, "Number of the Purchase Order is different than 1"
-              assert len(line.incoming_ids) == 1, "Number of the Incoming Shipment is different than 1"
+          assert len(line.quotation_ids) == 0, "Number of the RfQ is different than 0 (4)"
+          if line.product_id.id in (ref('product1'), ref('product4')):
+              assert len(line.purchase_ids) == 1, "Number of the Purchase Order is different than 1 (4)"
+              assert len(line.incoming_ids) == 1, "Number of the Incoming Shipment is different than 1 (4)"
           else:
-              assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0"
-              assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0"
-          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1"
+              assert len(line.purchase_ids) == 0, "Number of the Purchase Order is different than 0 (4)"
+              assert len(line.incoming_ids) == 0, "Number of the Incoming Shipment is different than 0 (4)"
+          assert len(line.outgoing_ids) == 1, "Number of the Outgoing Deliveries is different than 1 (4)"
     self.unlink(cr, uid, wiz_ids)

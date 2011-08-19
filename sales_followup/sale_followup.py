@@ -60,7 +60,46 @@ class sale_order_followup(osv.osv_memory):
         'requested_date': fields.related('order_id', 'delivery_requested_date', string='Requested date', readonly=True, type='date'),
         'confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Confirmed date', readonly=True, type='date'),
         'line_ids': fields.one2many('sale.order.line.followup', 'followup_id', string='Lines', readonly=True),
+        'choose_type': fields.selection([('documents', 'Documents view'), ('progress', 'Progress view')], string='Type of view'),
     }
+    
+    _defaults = {
+        'choose_type': lambda *a: 'documents',
+    }
+    
+    def go_to_view(self, cr, uid, ids, context={}):
+        '''
+        Launches the correct view according to the user's choice
+        '''
+        for followup in self.browse(cr, uid, ids, context=context):
+            if followup.choose_type == 'documents':
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
+            else:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'sale.order.followup',
+                'res_id': followup.id,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new'}
+        
+    def switch_documents(self, cr, uid, ids, context={}):
+        '''
+        Switch to documents view
+        '''
+        self.write(cr, uid, ids, {'choose_type': 'documents'})
+        
+        return self.go_to_view(cr, uid, ids, context=context)
+    
+    def switch_progress(self, cr, uid, ids, context={}):
+        '''
+        Switch to progress view
+        '''
+        self.write(cr, uid, ids, {'choose_type': 'progress'})
+        
+        return self.go_to_view(cr, uid, ids, context=context)
     
     def start_order_followup(self, cr, uid, ids, context={}):
         order_obj = self.pool.get('sale.order')
@@ -94,10 +133,13 @@ class sale_order_followup(osv.osv_memory):
                                           'purchase_ids': [(6,0,purchase_ids)],
                                           'incoming_ids': [(6,0,incoming_ids)],
                                           'outgoing_ids': [(6,0,outgoing_ids)],})
-        
+                    
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_line_follow_choose_view')[1]
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
                 'res_id': followup_id,
+                'view_id': [view_id],
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new'}
@@ -219,10 +261,11 @@ class sale_order_line_followup(osv.osv_memory):
                             'purchase_status': 'N/A',
                             'incoming_status': 'N/A',
                             'outgoing_status': 'No deliveries',
-                            'product_available': 'Waiting'}
+                            'product_available': 'Waiting',
+                            'available_qty': 0.00}
             
             if line.line_id.state == 'draft':
-                res[line.id]['sourced_ok'] = 'Draft'
+                res[line.id]['sourced_ok'] = 'No'
             if line.line_id.state in ('confirmed', 'done'):
                 res[line.id]['sourced_ok'] = 'Done'
             if line.line_id.state == 'cancel':
@@ -234,8 +277,10 @@ class sale_order_line_followup(osv.osv_memory):
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # Change the state to Done only when all stock moves are done
-                if move.state in ('assigned', 'done') and res[line.id]['product_available'] == 'Waiting':
-                    res[line.id]['product_available'] = 'Done'
+                if move.state in ('assigned', 'done'):
+                    res[line.id]['available_qty'] += move.product_qty
+                    if res[line.id]['product_available'] == 'Waiting':
+                        res[line.id]['product_available'] = 'Done'
                 # If at least one stock move is not done, change the state to 'In Progress'
                 if move.state == 'confirmed' and res[line.id]['product_available'] != 'Exception':
                     res[line.id]['product_available'] = 'In Progress'
@@ -261,8 +306,12 @@ class sale_order_line_followup(osv.osv_memory):
             
             # Get information about the state of all purchase order
             if line.line_id.type == 'make_to_order':
-                res[line.id]['purchase_status'] = 'No order'
-                res[line.id]['incoming_status'] = 'No shipment'
+                res[line.id]['purchase_status'] = 'N/A'
+                res[line.id]['incoming_status'] = 'N/A'
+                if line.line_id.product_id:
+                    context.update({'shop_id': line.line_id.order_id.shop_id.id,
+                                    'uom_id': line.line_id.product_uom.id})
+                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             for order in line.purchase_ids:
                 if order.state == 'confirmed':
@@ -327,6 +376,8 @@ class sale_order_line_followup(osv.osv_memory):
                                             type='char', readonly=True, multi='status'),
         'product_available': fields.function(_get_status, method=True, string='Product available',
                                              type='char', readonly=True, multi='status'),
+        'available_qty': fields.function(_get_status, method=True, string='Product available',
+                                            type='float', readonly=True, multi='status'),
         'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
                                          'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',

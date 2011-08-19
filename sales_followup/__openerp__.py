@@ -34,7 +34,8 @@
     "depends" : [
         "sale",
         "stock",
-        "purchase"
+        "purchase",
+        "msf_order_date",
     ],
     "update_xml": [
         "sale_followup_view.xml",
