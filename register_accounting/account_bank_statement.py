@@ -132,7 +132,6 @@ class account_bank_statement(osv.osv):
                 if not register.balance_start > 0:
                     raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
         # Verify that previous register is open, unless this register is the first register
-        previous_register_is_closed(self, cr, uid, ids, context=context)
         return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
@@ -195,7 +194,10 @@ class account_bank_statement(osv.osv):
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            # Verify that another bank statement exists
+            # First verify that the closing balance is freezed
+            if not st.closing_balance_frozen:
+                raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
+            # Then verify that another bank statement exists
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', register.id)], context=context)
             if len(st_prev_ids) > 1:
                 raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
