@@ -40,11 +40,14 @@ class stock_forecast_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
-    def get_selection_text(self, obj, field, id, context=None):
+    def get_selection_text(self, cr, uid, obj, field, id, context=None):
         '''
         get the text for selection id
         '''
         tuples = obj._columns[field].selection
+        if hasattr(tuples, '__call__'):
+            line_obj = self.pool.get('stock.forecast.line')
+            tuples = tuples(line_obj, cr, uid, context=context)
         
         result = [x[1] for x in tuples if x[0] == id]
         
@@ -72,9 +75,9 @@ class stock_forecast_export(osv.osv_memory):
         for line in list.stock_forecast_lines:
             export += '%s;%s;%s;%s;%s;%s;%s' % (line.date.split(' ')[0] or '',
                                                 line.doc or '',
-                                                self.get_selection_text(line_obj, 'order_type', line.order_type, context=context) or '',
+                                                self.get_selection_text(cr, uid, line_obj, 'order_type', line.order_type, context=context) or '',
                                                 line.reference or '',
-                                                self.get_selection_text(line_obj, 'state', line.state, context=context) or '',
+                                                self.get_selection_text(cr, uid, line_obj, 'state', line.state, context=context) or '',
                                                 line.qty or '0.0',
                                                 line.stock_situation or '0.0',)
             export += '\n'
@@ -83,7 +86,7 @@ class stock_forecast_export(osv.osv_memory):
         
         export_id = self.create(cr, uid, {'list_id': active_id,
                                           'file': file, 
-                                          'filename': 'list_%s.csv' % (time.strftime('%Y-%m-%d %H:%M:%S') + '_' + list.product.name.replace(' ', '_')),
+                                          'filename': 'list_%s.csv' % (time.strftime('%Y-%m-%d %H:%M:%S')),
                                           'message': 'The list has been exported. Please click on Save As button to download the file'})
         
         return {'type': 'ir.actions.act_window',

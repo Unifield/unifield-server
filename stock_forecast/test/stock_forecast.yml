@@ -58,29 +58,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
-    product_tmpl_id: product_template_p0
-    
-    
-- 
-  Creating a product.supplierinfo record
-- 
-  !record {model: product.supplierinfo, id: product_supplierinfo_0}:
-    delay: 1
-    min_qty: 0.0
-    name: res_partner_a0
-    product_id: product_template_p0
-    
-    
-- 
-  Creating a product.supplierinfo record
-- 
-  !record {model: product.supplierinfo, id: product_supplierinfo_1}:
-    delay: 1
-    min_qty: 0.0
-    name: res_partner_b0
-    product_id: product_template_p0
-    sequence: 10
-    
+    product_tmpl_id: product_template_p0 
     
 - 
   Creating a sale.order record
@@ -127,41 +105,20 @@
   I check the sourcing line
 
 -
-  !python {model: sale.order.line}: |
-    sol = self.browse(cr, uid, ref("sale_order_line_p0"))
-    
-    count = 0
-    
-    for sourcing in sol.sourcing_line_ids:
-      count = count + 1
-      assert sourcing.sale_order_id.id == ref("sale_order_so0"), 'sourcing line, sale order id is wrong (%i, %i)'%(sourcing.sale_order_id, ref("sale_order_so0"))
-      assert int(sourcing.sale_order_line_id) == ref("sale_order_line_p0"), 'sourcing line, sale order line id is wrong (%i, %i)'%(sourcing.sale_order_line_id, ref("sale_order_line_p0"))
-      assert sourcing.type == 'make_to_stock', 'sourcing type wrong'
-      assert sourcing.state == 'draft', 'sourcing state wrong'
-      assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
-      assert int(sourcing.supplier) == ref("product_supplierinfo_0"), 'sourcing supplier wrong'
-      
-      sourcing.write({'type':'make_to_order', 'supplier':ref("product_supplierinfo_1")})
-      
-      assert int(sol.supplier) == ref("product_supplierinfo_1"), 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, ref("product_supplierinfo_1"))
-      assert sol.type == 'make_to_order', 'sol type is wrong after update of sourcing line (%s, %s)'%(sol.type, 'make_to_order')
-      
-    assert count == 1, 'number of sourcing line wrong (%i)'%(count)
-    
-    import netsvc
-    wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'sale.order', ref("sale_order_so0"), 'order_confirm', cr)
-    
-    self.pool.get('procurement.order').run_scheduler(cr, uid)
-    
-    ids = self.pool.get('purchase.order').search(cr, uid, [('origin', '=', sol.order_id.name)])
-    
-    count = 0
-    for po in self.pool.get('purchase.order').browse(cr, uid, ids):
-      if po.partner_id.id == ref("res_partner_b0"):
-        count = count + 1
-    
-    assert count == 1, 'purchase order number does not match (%i, %i)'%(len(sol.order_id.order_line), count)
-    
-    #assert sol.procurement_id.purchase_id.partner_id.id == ref("res_partner_b0"), 'partner is wrong for purchase order (%i, %i)'%(sol.procurement_id.purchase_id.partner_id.id, ref("res_partner_b0"))
-     
+  !python {model: stock.forecast}: |
+    import time
+    sf = self.create(cr, uid, {'product_id': ref("product_product_p0"),}, context=None)
+    # test onchange
+    self.onchange(cr, uid, [sf], ref("product_product_p0"), False, False, False, context=None)
+    # update date planned of sol
+    date = time.strftime('%Y-%m-%d')
+    sol_obj = self.pool.get('sale.order.line')
+    sol_obj.write(cr, uid, [ref("sale_order_line_p0"),], {'date_planned':date,}, context=None)
+    # call forecast
+    self.do_forecast(cr, uid, [sf], context=None)
+    # call print
+    self.do_print(cr, uid, [sf], context=None)
+    # call export
+    self.do_export(cr, uid, [sf], context=None)
+    # call graph
+    self.do_graph(cr, uid, [sf], context=None)

@@ -88,30 +88,43 @@ class stock_forecast(osv.osv_memory):
         'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
         'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
         'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+        'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]),
         'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
-     }
+    }
     
-    def onchange(self, cr, uid, ids, product_id, warehouse_id, product_uom_id, context=None):
+    def onchange(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
         onchange function, trigger the value update of quantity
         '''
         if context is None:
             context = {}
             
-        qty = 0
-        if product_id:
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            c = context.copy()
-            # if you remove the coma after done, it will no longer work properly
-            c.update({'states': ('done',),
-                      'what': ('in', 'out'),
-                      'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                      'warehouse': warehouse_id,
-                      'uom': product_uom_id})
-            
-            qty = product.get_product_available(context=c)[product.id]
+        product_obj = self.pool.get('product.product')
         
-        return {'value': {'qty': qty}}
+        # get values from facade onchange functions
+        values = context.get('values', {})
+            
+        product_list = []
+        if product_id:
+            product_list.append(product_id)
+            
+        if product_family_id:
+            product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', product_family_id)], context=context)
+            product_list.extend(product_ids)
+            
+        c = context.copy()
+        # if you remove the coma after done, it will no longer work properly
+        c.update({'states': ('done',),
+                  'what': ('in', 'out'),
+                  'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                  'warehouse': warehouse_id,
+                  'uom': product_uom_id})
+        
+        qty = product_obj.get_product_available(cr, uid, product_list, context=c)
+        overall_qty = sum(qty.values())
+        values.update(qty=overall_qty)
+        
+        return {'value': values}
     
     def do_print(self, cr, uid, ids, context=None):
         '''
@@ -119,45 +132,57 @@ class stock_forecast(osv.osv_memory):
         '''
         if context is None:
             context = {}
+            
+        product_obj = self.pool.get('product.product')
         
         # data gathered on screen made available for the report
-        product_name = False
-        product_code = False
-        warehouse_name = False
-        product_uom_name = False
+        product_name = 'n/a'
+        product_code = 'n/a'
+        warehouse_name = 'n/a'
+        product_uom_name = 'n/a'
+        product_family_name = 'n/a'
         qty = False
         date = time.strftime('%Y-%m-%d')
         
         # gather the wizard data
         for wizard in self.browse(cr, uid, ids, context=context):
             # product
+            product_list = []
             if wizard.product_id:
-                product_name = wizard.product_id.name or 'n/a'
-                product_code = wizard.product_id.default_code or 'n/a'
+                product_list.append(wizard.product_id.id)
+                product_name = wizard.product_id.name
+                product_code = wizard.product_id.default_code
                 
-                c = context.copy()
-                # if you remove the coma after done, it will no longer work properly
-                c.update({'states': ('done',),
-                          'what': ('in', 'out'),
-                          'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                          'warehouse': wizard.warehouse_id.id,
-                          'uom': wizard.product_uom_id.id})
-                qty = wizard.product_id.get_product_available(context=c)[wizard.product_id.id]
+            if wizard.product_family_id:
+                product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', wizard.product_family_id.id)], context=context)
+                product_list.extend(product_ids)
+                product_family_name = wizard.product_family_id.name
+                
+            # compute the overall_qty
+            c = context.copy()
+            # if you remove the coma after done, it will no longer work properly
+            c.update({'states': ('done',),
+                      'what': ('in', 'out'),
+                      'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                      'warehouse': wizard.warehouse_id.id,
+                      'uom': wizard.product_uom_id.id})
+            qty = product_obj.get_product_available(cr, uid, product_list, context=c)
+            overall_qty = sum(qty.values())
+                
             # warehouse
             if wizard.warehouse_id:
-                warehouse_name = wizard.warehouse_id.name or 'n/a'
+                warehouse_name = wizard.warehouse_id.name
             # product uom
             if wizard.product_uom_id:
-                product_uom_name = wizard.product_uom_id.name or 'n/a'
-            # qty
-            qty = wizard.qty
+                product_uom_name = wizard.product_uom_id.name
         
             data = {
                     'product_name': product_name,
                     'product_code': product_code,
                     'warehouse_name': warehouse_name,
                     'product_uom_name': product_uom_name,
-                    'qty': qty,
+                    'product_family_name': product_family_name,
+                    'qty': overall_qty,
                     'date': date,}
            
             line_ids = [x.id for x in wizard.stock_forecast_lines]
@@ -245,7 +270,7 @@ class stock_forecast(osv.osv_memory):
                 'type': 'ir.actions.act_window',
                 'nodestroy': True,
                 'target': 'new',
-                'domain': '[]',
+                'domain': '[("wizard_id", "in", %s)]'%ids,
                 'context': context,
                 }
         
@@ -265,39 +290,45 @@ class stock_forecast(osv.osv_memory):
         pol_obj = self.pool.get('purchase.order.line')
         pro_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
+        product_obj = self.pool.get('product.product')
+        
+        # clear existing lines
+        line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
+        line_obj.unlink(cr, uid, line_ids, context=context)
         
         # current date
         today = time.strftime('%Y-%m-%d %H:%M:%S')
         
         for wizard in self.browse(cr, uid, ids, context=context):
-            product = wizard.product_id
+            prod = wizard.product_id
+            product_family = wizard.product_family_id
             warehouse_id = wizard.warehouse_id.id
             product_uom_id = wizard.product_uom_id.id
             
             # the list of lines which will be created according to date order - [{},]
             line_to_create = []
+            # list of product ids
+            product_list = []
             
-            if product:
-                # the first line represents the virual stock of the product at present time, without
-                # any other information
-                c = context.copy()
-                # if you remove the coma after done, it will no longer work properly
-                c.update({'states': ('done',),
-                          'what': ('in', 'out'),
-                          'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                          'warehouse': warehouse_id,
-                          'uom': product_uom_id})
-                qty = product.get_product_available(context=c)[product.id]
+            if prod:
+                product_list.append(prod.id)
                 
-                line_obj.create(cr, uid, {'date': today.split(' ')[0],
-                                          'doc': False,
-                                          'order_type': False,
-                                          'reference': False,
-                                          'state': False,
-                                          'qty': False,
-                                          'stock_situation': qty,
-                                          'wizard_id': wizard.id,}, context=context)
+            if product_family:
+                product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', product_family.id)], context=context)
+                product_list.extend(product_ids)
                 
+            # qty of all products
+            c = context.copy()
+            # if you remove the coma after done, it will no longer work properly
+            c.update({'states': ('done',),
+                      'what': ('in', 'out'),
+                      'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                      'warehouse': warehouse_id,
+                      'uom': product_uom_id})
+            qty = product_obj.get_product_available(cr, uid, product_list, context=c)
+            overall_qty = sum(qty.values())
+            
+            for product in product_obj.browse(cr, uid, product_list, context=context):
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
@@ -374,15 +405,25 @@ class stock_forecast(osv.osv_memory):
                         
                         line_to_create.append(values)
                 
-                # sort the lines according to date, and then doc
-                line_to_create = sorted(line_to_create, key=itemgetter('date', 'doc'))
-                
-                # create the lines
-                for line in line_to_create:
-                    # update the stock situation, cannot be done before the list is actually ordered
-                    qty += line['qty']
-                    line.update(stock_situation=qty)
-                    line_obj.create(cr, uid, line, context=context)
+            # sort the lines according to date, and then doc
+            line_to_create = sorted(line_to_create, key=itemgetter('date', 'doc'))
+            
+            # create the first line with overall qty
+            line_obj.create(cr, uid, {'date': today.split(' ')[0],
+                                      'doc': False,
+                                      'order_type': False,
+                                      'reference': False,
+                                      'state': False,
+                                      'qty': False,
+                                      'stock_situation': overall_qty,
+                                      'wizard_id': wizard.id,}, context=context)
+            
+            # create the lines
+            for line in line_to_create:
+                # update the stock situation, cannot be done before the list is actually ordered
+                overall_qty += line['qty']
+                line.update(stock_situation=overall_qty)
+                line_obj.create(cr, uid, line, context=context)
             
             return {
                     'name': 'Stock Level Forecast',
@@ -416,6 +457,50 @@ class stock_forecast(osv.osv_memory):
         
         return res
     
+    def onchange_product(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
+        '''
+        product changed
+        '''
+        if context is None:
+            context = {}
+            
+        values = {}
+        context.update(values=values)
+        # if product family is filled, we empty it
+        if product_family_id:
+            values.update(product_family_id=False)
+            return self.onchange(cr, uid, ids, product_id, False, warehouse_id, product_uom_id, context)
+        else:
+            return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
+        
+    def onchange_nomen(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
+        '''
+        product family changed
+        '''
+        if context is None:
+            context = {}
+        
+        values = {}
+        context.update(values=values)
+        # if product family is filled, we empty it
+        if product_id:
+            values.update(product_id=False)
+            return self.onchange(cr, uid, ids, False, product_family_id, warehouse_id, product_uom_id, context)
+        else:
+            return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
+        
+    def onchange_warehouse(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
+        '''
+        warehouse changed
+        '''
+        return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
+        
+    def onchange_uom(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
+        '''
+        uom changed
+        '''
+        return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
+    
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         generates the xml view
@@ -426,9 +511,10 @@ class stock_forecast(osv.osv_memory):
         _moves_arch_lst = """
                         <form string="Stock Forecast">
                             <group col="4" colspan="4">
-                                <field name="product_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
-                                <field name="warehouse_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
-                                <field name="product_uom_id" on_change="onchange(product_id, warehouse_id, product_uom_id)" />
+                                <field name="product_id" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <field name="product_family_id" on_change="onchange_nomen(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <field name="product_uom_id" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
                                 <field name="qty" />
                             </group>
                             <newline />
