@@ -215,23 +215,87 @@ class sale_order_line_followup(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'sourced_ok': 'Waiting',
                             'quotation_status': 'N/A',
+                            'tender_status': 'N/A',
+                            'purchase_status': 'N/A',
+                            'incoming_status': 'N/A',
+                            'outgoing_status': 'No deliveries',
                             'product_available': 'Waiting'}
-            if line.line_id.state == 'confirmed':
+            
+            if line.line_id.state == 'draft':
+                res[line.id]['sourced_ok'] = 'Draft'
+            if line.line_id.state in ('confirmed', 'done'):
                 res[line.id]['sourced_ok'] = 'Done'
-                
+            if line.line_id.state == 'cancel':
+                res[line.id]['sourced_ok'] = 'Cancelled'
+            if line.line_id.state == 'exception':
+                res[line.id]['sourced_ok'] = 'Exception'
+            
+            # Get information about the availability of the product
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-                if move.state in ('assigned', 'done'):
+                # Change the state to Done only when all stock moves are done
+                if move.state in ('assigned', 'done') and res[line.id]['product_available'] == 'Waiting':
                     res[line.id]['product_available'] = 'Done'
-                if move.state == 'confirmed':
+                # If at least one stock move is not done, change the state to 'In Progress'
+                if move.state == 'confirmed' and res[line.id]['product_available'] != 'Exception':
                     res[line.id]['product_available'] = 'In Progress'
-                
+                # If at least one stock move was cancelled, the state is Exception
+                # TODO : See with Magali if we need to take care about cancelled associated stock moves
+                if move.state == 'cancel':
+                    res[line.id]['product_available'] = 'Exception'
+            
+            # Get information about the status of the RfQ
             for quotation in line.quotation_ids:
-                if quotation.quotation_id.state != 'draft' and res[line.id]['quotation_status'] != 'Waiting':
+                if quotation.state != 'draft' and res[line.id]['quotation_status'] != 'Waiting':
                     res[line.id]['quotation_status'] = 'Done'
                 else:
                     res[line.id]['quotation_status'] = 'Waiting'
-        
+                    
+            # Get information about the state of all call for tender
+#            TODO: Add call for tender when the feature of call for tender will be implemented
+#            for tender in line.tender_ids:
+#                if tender.state == 'draft':
+#                    res[line.id]['tender_status'] = 'Waiting'
+#                else:
+#                    res[line.id]['tender_status'] = 'Done'
+            
+            # Get information about the state of all purchase order
+            if line.line_id.type == 'make_to_order':
+                res[line.id]['purchase_status'] = 'No order'
+                res[line.id]['incoming_status'] = 'No shipment'
+
+            for order in line.purchase_ids:
+                if order.state == 'confirmed':
+                    res[line.id]['purchase_status'] = 'Confirmed'
+                if order.state == 'approved' and res[line.id]['purchase_status'] not in ('Confirmed', 'Exception'):
+                    res[line.id]['purchase_status'] = 'Approved'
+                if order.state == 'done' and res[line.id]['purchase_status'] not in ('Confirmed', 'Approved', 'Exception'):
+                    res[line.id]['purchase_status'] = 'Done'
+                if order.state in ('cancel', 'except_picking', 'except_invoice'):
+                    res[line.id]['purchase_status'] = 'Exception'
+                    
+            # Get information about the state of all incoming shipments
+            for shipment in line.incoming_ids:
+                if shipment.state in ('draft', 'confirmed'):
+                    res[line.id]['incoming_status'] = 'Waiting'
+                if shipment.state in ('assigned') and res[line.id]['incoming_status'] not in ('Waiting'):
+                    res[line.id]['incoming_status'] = 'Assigned'
+                if shipment.state in ('done') and res[line.id]['incoming_status'] not in ('Waiting', 'Assigned'):
+                    res[line.id]['incoming_status'] = 'Done'
+                if shipment.state == 'cancel':
+                    res[line.id]['incoming_status'] = 'Exception' 
+            
+            # Get information about the state of all outgoing deliveries
+            for outgoing in line.outgoing_ids:
+                if outgoing.state in ('draft', 'confirmed'):
+                    res[line.id]['outgoing_status'] = 'Waiting'
+                if outgoing.state in ('assigned') and res[line.id]['outgoing_status'] not in ('Waiting'):
+                    res[line.id]['outgoing_status'] = 'Assigned'
+                if outgoing.state in ('done') and res[line.id]['outgoing_status'] not in ('Waiting', 'Assigned'):
+                    res[line.id]['outgoing_status'] = 'Done'
+                if outgoing.state == 'cancel':
+                    res[line.id]['outgoing_status'] = 'Exception'
+            
         return res
     
     _columns = {
@@ -247,20 +311,26 @@ class sale_order_line_followup(osv.osv_memory):
         #TODO: Add call for tender when the feature of call for tender will be implemented
 #        'tender_ids': fields.many2many('call.tender', 'call_tender_follow_rel',
 #                                       'follow_line_id', 'tender_id', string='Call for tender'),
+#        'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
+#                                         readonly=True, multi='status'),
         'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
                                           'quotation_id', string='Requests for Quotation', readonly=True),
-        'quotation_status': fields.function(_get_status, method=True, string='Purchase Order',
+        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
                                             type='char', readonly=True, multi='status'),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
                                          'purchase_id', string='Purchase Orders', readonly=True),
-        'incoming_ids': fields.many2many('stock.picking', 'incoming_follow_rel', 'follow_line_id', 
+        'purchase_status': fields.function(_get_status, method=True, string='Purchase Order',
+                                            type='char', readonly=True, multi='status'),
+        'incoming_ids': fields.many2many('stock.move', 'incoming_follow_rel', 'follow_line_id', 
                                          'incoming_id', string='Incoming Shipment', readonly=True),
+        'incoming_status': fields.function(_get_status, method=True, string='Incoming Shipment',
+                                            type='char', readonly=True, multi='status'),
         'product_available': fields.function(_get_status, method=True, string='Product available',
                                              type='char', readonly=True, multi='status'),
-        'outgoing_ids': fields.many2many('stock.picking', 'outgoing_follow_rel', 'follow_line_id',
-                                         'outgoing_id', string='Outgoing Deliveries', readonly=True),
-        
-        
+        'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
+                                         'follow_line_id', string='Outgoing Deliveries', readonly=True),
+        'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',
+                                            type='char', readonly=True, multi='status'),
     }
     
 sale_order_line_followup()

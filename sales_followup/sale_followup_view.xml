@@ -51,9 +51,12 @@
                     <field name="quotation_ids" />
                     <field name="quotation_status" />
                     <field name="purchase_ids" />
+                    <field name="purchase_status" />
                     <field name="incoming_ids" />
+                    <field name="incoming_status" />
                     <field name="product_available" />
                     <field name="outgoing_ids" />
+                    <field name="outgoing_status" />
                 </tree>
             </field>
         </record>
