@@ -105,6 +105,10 @@ class wizard_split_invoice(osv.osv_memory):
                     invl_obj.write(cr, uid, [wiz_line.invoice_line_id.id], {'quantity': qty}, context=context)
                 elif qty == 0:
                     invl_obj.unlink(cr, uid, [wiz_line.invoice_line_id.id], context=context)
+        # Calculate total for invoices
+        invoice_ids.append(wizard.invoice_id.id)
+        for invoice in inv_obj.browse(cr, uid, invoice_ids, context=context):
+            inv_obj.write(cr, uid, [invoice.id] + [invoice_origin_id], {'check_total': invoice.amount_total}, context=context)
         # attach new invoice to purchase order it come from
         for po in wizard.invoice_id.purchase_ids:
             inv_obj.write(cr, uid, [new_inv_id], {'purchase_ids': [(4, po.id)]}, context=context)
