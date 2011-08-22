@@ -137,16 +137,19 @@ class register_creation(osv.osv_memory):
                 current_register_ids = abs_obj.search(cr, uid, [('currency', '=', currency_id), 
                     ('period_id', '=', period_id), ('journal_id', 'in', journal_ids)], context=context)
                 if not current_register_ids:
-                    vals = {
-                        'period_id': period_id,
-                        'currency_id': currency_id,
-                        'register_type': reg_type,
-                        'wizard_id': wizard.id,
-                    }
-                    reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
-                    reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
-                    if reg_id and not reg.prev_reg_id:
-                        reg_to_create_obj.write(cr, uid, [reg_id], {'to_create': False,}, context=context)
+                    # verify that this register is not present in our wizard
+                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('currency_id', '=', currency_id), 
+                        ('register_type', '=', reg_type), ('wizard_id', '=', wizard.id)], context=context):
+                        vals = {
+                            'period_id': period_id,
+                            'currency_id': currency_id,
+                            'register_type': reg_type,
+                            'wizard_id': wizard.id,
+                        }
+                        reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
+                        reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
+                        if reg_id and not reg.prev_reg_id:
+                            reg_to_create_obj.write(cr, uid, [reg_id], {'to_create': False,}, context=context)
         # Delete lines that have no previous_register_id
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
