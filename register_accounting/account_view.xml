@@ -350,7 +350,7 @@
                     <field name="balance_end_real"/>
                     <field name="balance_end" invisible="1"/>
                     <field name="state"/>
-                    <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                    <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -372,8 +372,8 @@
                     <field name="balance_end_real"/>
                     <field name="balance_end"/>
                     <field name="state"/>
-                    <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-camera_test"/>
-                    <button type="object" string="Confirm" name="button_confirm_cash" states="open" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Confirm" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
         </record>
@@ -575,7 +575,7 @@
                     <field name="balance_end_real"/>
                     <field name="balance_end" invisible="1"/>
                     <field name="state"/>
-                    <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                    <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>
