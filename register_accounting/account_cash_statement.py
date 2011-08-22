@@ -58,18 +58,16 @@ class account_cash_statement(osv.osv):
                 'starting_details_ids': False
             })
         # @@@end
-        if not 'prev_reg_id' in vals:
-            if not 'from_journal_creation' in context:
-                raise osv.except_osv(_('Error'), _('This register is not linked with another one. Please use "Register Creation" wizard in the "Bank & Cash" menu.'))
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         # Observe register state
-        prev_reg_id = vals.get('prev_reg_id')
-        prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
-        if prev_reg.state in ['partial_close', 'confirm']:
-            # if state is partial_close of confirm, we could retrieve closing balance details
-            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
-            if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'bank':
-                self.write(cr, uid, [res_id], {'balance_start': prev_reg.balance_end_real}, context=context)
+        prev_reg_id = vals.get('prev_reg_id', False)
+        if prev_reg_id:
+            prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
+            if prev_reg.state in ['partial_close', 'confirm']:
+                # if state is partial_close of confirm, we could retrieve closing balance details
+                create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
+                if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'bank':
+                    self.write(cr, uid, [res_id], {'balance_start': prev_reg.balance_end_real}, context=context)
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
