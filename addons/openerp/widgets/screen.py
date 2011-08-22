@@ -133,6 +133,7 @@ class Screen(TinyInputWidget):
         self.string = (self.widget or '') and self.widget.string
         self.button_duplicate = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_duplicate
         self.button_new = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_new
+        self.button_delete = (self.widget or False) and view_type == 'form' and not self.widget.hide_button_delete
 
         toolbar = {}
         for item, value in view.get('toolbar', {}).items():

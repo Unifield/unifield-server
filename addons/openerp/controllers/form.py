@@ -209,7 +209,7 @@ class Form(SecuredController):
         buttons.save = editable and mode == 'form'
         buttons.duplicate = form.screen.button_duplicate
         buttons.cancel = editable and mode == 'form'
-        buttons.delete = not editable and mode == 'form'
+        buttons.delete = not editable and mode == 'form' and form.screen.button_delete
         buttons.pager =  mode == 'form' or mode == 'diagram'# Pager will visible in edit and non-edit mode in form view.
         buttons.can_attach = id and mode == 'form'
         buttons.i18n = not editable and mode == 'form'
