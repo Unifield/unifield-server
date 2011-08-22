@@ -291,6 +291,7 @@ class stock_forecast(osv.osv_memory):
         pro_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
         
         # clear existing lines
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
@@ -304,6 +305,9 @@ class stock_forecast(osv.osv_memory):
             product_family = wizard.product_family_id
             warehouse_id = wizard.warehouse_id.id
             product_uom_id = wizard.product_uom_id.id
+            
+            if not prod:
+                raise osv.except_osv(_('Warning !'), _('You must select a product'))
             
             # the list of lines which will be created according to date order - [{},]
             line_to_create = []
@@ -329,6 +333,11 @@ class stock_forecast(osv.osv_memory):
             overall_qty = sum(qty.values())
             
             for product in product_obj.browse(cr, uid, product_list, context=context):
+                # UOM to use - either selected one or product one
+                uom_to_use = product.uom_id
+                if  wizard.product_uom_id:
+                    uom_to_use = wizard.product_uom_id
+                
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
@@ -343,7 +352,7 @@ class stock_forecast(osv.osv_memory):
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
                               'reference': sol.order_id.name,
                               'state': PREFIXES['sale.order'] + sol.order_id.state,
-                              'qty': -sol.product_uom_qty,
+                              'qty': uom_obj._compute_qty_obj(cr, uid, sol.product_uom, -sol.product_uom_qty, uom_to_use, context=context),
                               'stock_situation': False,
                               'wizard_id': wizard.id,}
                     if sol.procurement_request:
@@ -363,7 +372,7 @@ class stock_forecast(osv.osv_memory):
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
                                            'reference': pol.order_id.name,
                                            'state': PREFIXES['purchase.order'] + pol.order_id.state,
-                                           'qty': pol.product_qty,
+                                           'qty':  uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,})
                 
@@ -379,7 +388,7 @@ class stock_forecast(osv.osv_memory):
                                            'order_type': False,
                                            'reference': pro.origin,
                                            'state': PREFIXES['procurement.order'] + pro.state,
-                                           'qty': pro.product_qty,
+                                           'qty': uom_obj._compute_qty_obj(cr, uid, pro.product_uom, pro.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,})
                     
@@ -397,11 +406,11 @@ class stock_forecast(osv.osv_memory):
                                   'order_type': move.order_type and PREFIXES['purchase.order'] + move.order_type or False,
                                   'reference': move.picking_id.name,
                                   'state': PREFIXES['stock.picking'] + move.picking_id.state,
-                                  'qty': move.product_qty,
+                                  'qty': uom_obj._compute_qty_obj(cr, uid, move.product_uom, move.product_qty, uom_to_use, context=context),
                                   'stock_situation': False,
                                   'wizard_id': wizard.id,}
                         if move.picking_id.type == 'out':
-                            values.update(doc='OUT', qty=-move.product_qty)
+                            values.update(doc='OUT', qty=uom_obj._compute_qty_obj(cr, uid, move.product_uom, -move.product_qty, uom_to_use, context=context))
                         
                         line_to_create.append(values)
                 
@@ -446,6 +455,8 @@ class stock_forecast(osv.osv_memory):
         """
         if context is None:
             context = {}
+            
+        product_obj = self.pool.get('product.product')
         
         res = super(stock_forecast, self).default_get(cr, uid, fields, context=context)
         
@@ -454,7 +465,22 @@ class stock_forecast(osv.osv_memory):
             
             if 'product_id' in fields:
                 res.update(product_id=active_id)
-        
+                # update quantity
+                if 'qty' in fields:
+                    c = context.copy()
+                    # if you remove the coma after done, it will no longer work properly
+                    c.update({'states': ('done',),
+                              'what': ('in', 'out'),
+                              'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                              'warehouse': False,
+                              'uom': False})
+                    
+                    qty = product_obj.get_product_available(cr, uid, [active_id], context=c)
+                    res.update(qty=qty[active_id])
+                    
+                if 'product_uom_id' in fields:
+                    res.update(product_uom_id=product_obj.browse(cr, uid, active_id, context=context).uom_id.id)
+                    
         return res
     
     def onchange_product(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
@@ -464,6 +490,8 @@ class stock_forecast(osv.osv_memory):
         if context is None:
             context = {}
             
+        product_obj = self.pool.get('product.product')
+            
         values = {}
         context.update(values=values)
         # if product family is filled, we empty it
@@ -471,6 +499,9 @@ class stock_forecast(osv.osv_memory):
             values.update(product_family_id=False)
             return self.onchange(cr, uid, ids, product_id, False, warehouse_id, product_uom_id, context)
         else:
+            # update the uom values
+            if product_id:
+                values.update(product_uom_id=product_obj.browse(cr, uid, product_id, context=context).uom_id.id)
             return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
         
     def onchange_nomen(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
@@ -512,9 +543,9 @@ class stock_forecast(osv.osv_memory):
                         <form string="Stock Forecast">
                             <group col="4" colspan="4">
                                 <field name="product_id" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
-                                <field name="product_family_id" on_change="onchange_nomen(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <!-- <field name="product_family_id" on_change="onchange_nomen(product_id, product_family_id, warehouse_id, product_uom_id)" /> -->
                                 <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
-                                <field name="product_uom_id" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <field name="product_uom_id" attrs="{'readonly':[('product_id', '=', False),],}" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
                                 <field name="qty" />
                             </group>
                             <newline />
