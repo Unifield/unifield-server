@@ -334,10 +334,11 @@
         </record>
 
     <!-- Bank Register Tree -->
-        <record id="view_bank_statement_tree" model="ir.ui.view">
+        <record id="account.view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="16"/>
             <field name="arch" type="xml">
                 <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' 
                 and (balance_end_real==balance_end);black:state=='confirm'" string="Register" hide_new_button="1">
