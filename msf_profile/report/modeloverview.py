@@ -177,6 +177,6 @@ class modeloverview(report_sxw.rml_parse):
     def getdb(self):
         return self.cr.dbname
 
-report_sxw.report_sxw('report.ir.model.overview_ods2','ir.model','addons/msf_profile/report/modeloverview.ods',parser=modeloverview,header=False)
+report_sxw.report_sxw('report.msf_profile.overview_ods2','ir.model','addons/msf_profile/report/modeloverview.ods',parser=modeloverview,header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
