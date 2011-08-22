@@ -64,6 +64,8 @@ class wizard_split_invoice(osv.osv_memory):
         wiz_line_ids = wiz_lines_obj.search(cr, uid, [('wizard_id', '=', wizard.id)])
         if not wiz_line_ids:
             return { 'type' : 'ir.actions.act_window_close', 'active_id' : wizard.invoice_id.id, 'invoice_ids': invoice_ids}
+        # Some verifications
+        line_to_modify = []
         for wiz_line in wiz_lines_obj.browse(cr, uid, wiz_line_ids, context=context):
             # Quantity
             if wiz_line.quantity <= 0:
@@ -73,6 +75,10 @@ class wizard_split_invoice(osv.osv_memory):
             # Price unit
             if wiz_line.price_unit <= 0:
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
+            if wiz_line.quantity != wiz_line.invoice_line_id.quantity:
+                line_to_modify.append(wiz_line.id)
+        if not len(line_to_modify):
+            raise osv.except_osv(_('Error'), _('No line were modified. No split done.'))
         # Create a copy of invoice
         new_inv_id = inv_obj.copy(cr, uid, invoice_origin_id, {}, context=context)
         invoice_ids.append(new_inv_id)
