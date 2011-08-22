@@ -24,7 +24,8 @@
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="Are you sure?"/>
+                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance.\n
+                                    Are you sure to freeze closing balance?"/>
                             </group>
                             <field name="currency" invisible="1"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
@@ -232,7 +233,8 @@
                                     </field>
                                     <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                         colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="Are you sure?"/>
+                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance.\n
+                                    Are you sure to freeze closing balance?"/>
                                 </group>
                             </page>
                         </notebook>
