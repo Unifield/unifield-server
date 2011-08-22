@@ -94,7 +94,11 @@ class wizard_split_invoice(osv.osv_memory):
             # then update old line if exists
             if wiz_line.invoice_line_id:
                 qty = wiz_line.invoice_line_id.quantity - wiz_line.quantity
-                invl_obj.write(cr, uid, [wiz_line.invoice_line_id.id], {'quantity': qty}, context=context)
+                # If quantity superior to 0, then write old line, if 0 then delete line
+                if qty > 0:
+                    invl_obj.write(cr, uid, [wiz_line.invoice_line_id.id], {'quantity': qty}, context=context)
+                elif qty == 0:
+                    invl_obj.unlink(cr, uid, [wiz_line.invoice_line_id.id], context=context)
         # attach new invoice to purchase order it come from
         for po in wizard.invoice_id.purchase_ids:
             inv_obj.write(cr, uid, [new_inv_id], {'purchase_ids': [(4, po.id)]}, context=context)
