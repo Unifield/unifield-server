@@ -118,6 +118,13 @@ class account_bank_statement(osv.osv):
         """
         return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete a bank statement is forbidden!
+        """
+        raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
+        return True
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
