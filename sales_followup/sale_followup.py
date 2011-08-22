@@ -256,10 +256,10 @@ class sale_order_line_followup(osv.osv_memory):
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'sourced_ok': 'Waiting',
-                            'quotation_status': 'N/A',
+                            'quotation_status': 'No quotation',
                             'tender_status': 'N/A',
-                            'purchase_status': 'N/A',
-                            'incoming_status': 'N/A',
+                            'purchase_status': 'No order',
+                            'incoming_status': 'No shipment',
                             'outgoing_status': 'No deliveries',
                             'product_available': 'Waiting',
                             'available_qty': 0.00}
@@ -305,7 +305,8 @@ class sale_order_line_followup(osv.osv_memory):
 #                    res[line.id]['tender_status'] = 'Done'
             
             # Get information about the state of all purchase order
-            if line.line_id.type == 'make_to_order':
+            if line.line_id.type == 'make_to_stock':
+                res[line.id]['quotation_status'] = 'N/A'
                 res[line.id]['purchase_status'] = 'N/A'
                 res[line.id]['incoming_status'] = 'N/A'
                 if line.line_id.product_id:
