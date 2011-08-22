@@ -751,6 +751,7 @@ class Form(TinyInputWidget):
         fields = view['fields']
         self.string = attrs.get('string', '')
         self.hide_button_duplicate = attrs.get('hide_duplicate_button', False)
+        self.hide_button_new = attrs.get('hide_new_button', False)
         self.link = attrs.get('link', nolinks)
         self.model = model
         self.id = None
