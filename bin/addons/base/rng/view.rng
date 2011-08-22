@@ -76,6 +76,7 @@
             <rng:optional><rng:attribute name="type"/></rng:optional>
             <rng:optional><rng:attribute name="link"/></rng:optional>
             <rng:optional><rng:attribute name="hide_duplicate_button"/></rng:optional>
+            <rng:optional><rng:attribute name="hide_new_button"/></rng:optional>
             <rng:ref name="container"/>
         </rng:element>
     </rng:define>
