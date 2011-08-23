@@ -124,7 +124,8 @@ class List(TinyWidget):
         # Get the hide status of some buttons - by default buttons are shown
         self.hide_new_button = attrs.get('hide_new_button', False)
         self.hide_delete_button = attrs.get('hide_delete_button', False)
-        
+        print "########################", self.hide_new_button, self.name
+
         self.string = attrs.get('string','')
 
         search_param = copy.deepcopy(domain) or []

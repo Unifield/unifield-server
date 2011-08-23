@@ -153,10 +153,12 @@
                                                     ${_('Add')}
                                             </button>
                                         % elif o2m:
+                                           % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
                                                 onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;">
                                                     ${_('New')}
                                             </button>
+                                           % endif
                                         % else:
                                             % if not dashboard and not hide_new_button:
                                                 <button id="${name}_new" title="${_('Create new record.')}">${_('New')}</button>

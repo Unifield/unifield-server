@@ -46,9 +46,11 @@ var One2Many = function(name, inline) {
     if (this.mode == 'tree' && this.inline) {
         var self = this;
         this.btn_new = openobject.dom.get(this.name + '_btn_');
-        MochiKit.Signal.connect(ListView(this.name), 'onreload', function(evt) {
-            self.btn_new.style.display = ListView(self.name).$getEditors().length > 0 ? 'none' : '';
-        });
+        if (this.btn_new) {
+            MochiKit.Signal.connect(ListView(this.name), 'onreload', function(evt) {
+                self.btn_new.style.display = ListView(self.name).$getEditors().length > 0 ? 'none' : '';
+            });
+        }
     }
 
     var $this = jQuery(idSelector('_o2m_' + name));
