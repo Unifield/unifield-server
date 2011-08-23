@@ -202,15 +202,9 @@ class account_bank_statement(osv.osv):
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            # First verify that the closing balance is freezed
+            # Verify that the closing balance is freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
-            # Then verify that another bank statement exists
-            st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', register.id)], context=context)
-            if len(st_prev_ids) > 1:
-                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
-            if st_prev_ids:
-                self.write(cr, uid, st_prev_ids, {'balance_start': st.balance_end}, context=context)
 #            done.append(st.id)
         return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
@@ -315,6 +309,14 @@ class account_bank_statement(osv.osv):
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
                 create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
+            # For bank register, give balance_end
+            elif reg.journal_id.type == 'bank':
+                # Verify that another bank statement exists
+                st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
+                if len(st_prev_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                if st_prev_ids:
+                    self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
 account_bank_statement()
