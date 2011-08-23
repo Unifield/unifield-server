@@ -1,0 +1,34 @@
+1) TEST Environment
+	- 1 server with sync_server installed
+	- 6 client on the same computer with server_client
+	- 1 computer to launch the test
+	
+2) How to deploy
+	a) install openerp on server with poc_addons and launch 
+	b) install openerp on client with poc_addons and launch
+	c) change test/config.py 
+		i) change client_host client_port
+		ii) change server_host server_port
+	d) run init.py
+		i) python init.py init  #to install all the db
+		ii) python init.py module #to install all the required module
+		
+	to delete all the db: 
+		
+		python init.py clean
+		
+		
+3) Registration 
+once all the db are install and deploy, launch registration test :
+This test registration and activation use case, mandatory to run other test
+
+	python registration.py 
+
+4) Data and message test
+Use case supply 1-5
+	
+	python data_test.py
+	
+Use case message sync
+	
+	python message_test.py
