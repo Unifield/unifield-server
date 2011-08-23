@@ -213,5 +213,9 @@ def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
                     'number': line.number,
                 }
                 cashbox_line_obj.create(cr, uid, new_vals, context=context)
+            # update new register balance_end
+            balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
+            if balance:
+                st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
     return True
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

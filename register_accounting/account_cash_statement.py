@@ -70,6 +70,8 @@ class account_cash_statement(osv.osv):
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        # update balance_end
+        self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
