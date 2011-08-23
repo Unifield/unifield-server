@@ -66,10 +66,12 @@ class account_cash_statement(osv.osv):
             prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
             # if previous register closing balance is freezed, then retrieving previous closing balance
             if prev_reg.closing_balance_frozen:
-                create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        # take on previous lines if exists
+        if prev_reg_id:
+            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
