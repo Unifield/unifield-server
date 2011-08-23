@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+<!-- =========================ENTITY=============================== -->
+
+        <record model="ir.ui.view" id="entity_tree_view">
+            <field name="name">entity.tree</field>
+            <field name="model">sync.server.entity</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Entity Tree">
+                    <field name="name"/>
+                    <field name="identifier"/>
+                    <field name="parent_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="entity_form_view">
+            <field name="name">entity.form</field>
+            <field name="model">sync.server.entity</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Entity Form">
+                    <field name="name"/>
+                    <field name="identifier" />
+                    <field name="email" />
+                    <field name="parent_id" />
+                    <field name="user_id" />
+                    <field name="state" />
+                    <separator string="Groups" colspan="4" />
+                    <field name="group_ids" colspan="4" nolabel="1" />
+                    <separator string="Children" colspan="4" />
+                    <field name="children_ids" colspan="4" nolabel="1" />
+                </form>
+            </field>
+        </record>
+
+<!-- =========================ENTITY GROUP======================= -->
+
+        <record model="ir.ui.view" id="group_tree_view">
+            <field name="name">group.tree</field>
+            <field name="model">sync.server.entity_group</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Entity Groups">
+                    <field name="name"/>
+                    <field name="type_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="group_form_view">
+            <field name="name">group.form</field>
+            <field name="model">sync.server.entity_group</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Entity Group">
+                    <field name="name"/>
+                    <field name="type_id"/>
+                    <field name="entity_ids" nolabel="1" colspan="4"/>
+                </form>
+            </field>
+        </record>
+
+<!-- =========================MENUS and ACTIONS=============================== -->
+
+		<record model="ir.actions.act_window" id="entity_action">
+            <field name="name">Entities</field>
+            <field name="res_model">sync.server.entity</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'update' : True}</field>
+        </record>
+
+		<record model="ir.actions.act_window" id="group_action">
+            <field name="name">Groups</field>
+            <field name="res_model">sync.server.entity_group</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="update_action">
+            <field name="name">Update</field>
+            <field name="res_model">sync.server.update</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="message_action">
+            <field name="name">Update</field>
+            <field name="res_model">sync.server.message</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+        
+        
+
+		<menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration"/>  	
+		<menuitem id="group_menu" name="Groups of Entities" parent="sync_menu"
+		        action="group_action" />  
+		<menuitem id="entity_menu" name="Entity" parent="sync_menu"
+		        action="entity_action" />   
+		        
+		<menuitem id="update_menu_id" name="Update" parent="sync_menu"
+		        action="update_action" />   
+		        
+		<menuitem id="update_menu_id" name="Message" parent="sync_menu"
+		        action="message_action" />  
+		        
+		        
+		
+	</data>
+</openerp>

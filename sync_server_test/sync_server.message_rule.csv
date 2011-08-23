@@ -1,0 +1,2 @@
+"id","name","model_id","sequence","destination_name","applies_to_type","group_id/id","type_id/id","domain","remote_call","arguments"
+"po_to_so_rule_id","po_to_so","purchase.order","0","partner_id","False","sync_server_test.i_id","","[('state', 'in', ['approved', 'confirmed' ]), ('partner_id', 'ilike', 'msf_')]","sale.order.create_so","[ 'partner_id/address/name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_qty', 'order_line/product_uom']"

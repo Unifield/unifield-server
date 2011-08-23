@@ -1,0 +1,13 @@
+=== modified file 'bin/osv/orm.py'
+--- bin/osv/orm.py	2011-06-20 11:12:35 +0000
++++ bin/osv/orm.py	2011-08-22 11:19:48 +0000
+@@ -557,7 +557,7 @@
+             elif field_type == 'integer':
+                 return 0
+             elif field_type == 'boolean':
+-                return False
++                return 'False'
+             return ''
+ 
+         def selection_field(in_field):
+

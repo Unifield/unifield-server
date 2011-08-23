@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv
+from osv import fields
+from osv import orm
+from tools.translate import _
+import tools
+import time
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
+import sync_server
+from tools.safe_eval import safe_eval as eval
+
+def log(model, cr, uid, message, ids=False, data=False, context=None):
+    #more complete log system
+    print("Error : " + message)
+    pp.pprint(data)
+
+
+class message(osv.osv):
+    _name = "sync.server.message"
+    _rec_name = 'identifier'
+    
+    _columns = {
+        'identifier' : fields.char('Identifier', size=128),
+        'sent' : fields.boolean('Sent to destination ?'),
+        'remote_call':fields.text('Method to call', required = True),
+        'arguments':fields.text('Arguments of the method', required = True), 
+        'destination': fields.many2one('sync.server.entity', string="Destination Entity"),
+        'source': fields.many2one('sync.server.entity', string="Source Entity"), 
+    }
+    
+    def unfold_package(self, cr, uid, entity, package, context=None):
+        for data in package:
+            
+            destination = self._get_destination(cr, uid, data['dest'], context=context)
+            if not destination:
+                log(self, cr, uid, 'destination %s does not exist' % data['dest'])
+                continue
+            ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
+            if ids: 
+                log(self, cr, uid, 'Message %s already in the server database' % data['id'])
+                continue
+            self.create(cr, uid, {
+                'identifier' : data['id'],
+                'remote_call' : data['call'],
+                'arguments' : data['args'],
+                'destination' : destination,
+                'source' : entity.id,
+                                  
+                                  }, context=context)
+        return (True, "Message received")
+    
+    def _get_destination(self, cr, uid, dest, context=None):
+        entity_obj = self.pool.get('sync.server.entity')
+        ids = entity_obj.get(cr, uid, name=dest, context=context)
+        if ids:
+            return ids[0]
+        else:
+            return False
+        
+    def get_message_packet(self, cr, uid, entity, size, context=None):
+        ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
+        if not ids:
+            return False
+        packet = []
+        for data in self.browse(cr, uid, ids, context=context):
+            message = {
+                'id' : data.identifier,
+                'call': data.remote_call,
+                'args': data.arguments, 
+                'source': data.source.name,
+            }
+            packet.append(message)
+             
+        return packet
+    
+    def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
+        ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
+        if ids:
+            self.write(cr, uid, ids, {'sent' : True}, context=context)
+        return True
+        
+        
+message()
+    
