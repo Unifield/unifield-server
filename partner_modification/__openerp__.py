@@ -21,24 +21,20 @@
 
 
 {
-    "name" : "Sourcing Tool",
+    "name" : "Partner Modification",
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification"],
+    "depends" : ["sale", "purchase"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
-    Add sourcing specification
+    Modification of patner with new lead times
     """,
-    'test': [
-             'test/sourcing.yml',
-             ],
+    'test': ['test/partner_modification.yml'],
     'update_xml': [
         'security/ir.model.access.csv',
-        'sourcing_sequence.xml',
-        'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
+        'partner_modification_view.xml',
     ],
     'installable': True,
 }

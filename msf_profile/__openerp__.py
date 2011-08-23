@@ -60,6 +60,7 @@
         "import_data",
         "object_query",
         "stock_forecast",
+        "partner_modification",
     ],
     "update_xml": [
         "report.xml",

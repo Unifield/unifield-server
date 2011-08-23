@@ -49,13 +49,9 @@
                                     <field name="product_uom" />
                                     <field name="product_uom_qty" />
                                     <field name="notes" />
-                                    <field name="type" />
+                                    <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />
-                                    <!-- The following line should be removed for the sprint 2 -->
-                                    <field name="supplier_id" context="{'sourcing-product_id': product_id}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
-                                    <!--
-                                         Should be decommented for Sprint 2
-                                         <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />-->
+                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True)]"/>
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
@@ -66,7 +62,7 @@
                                    <field name="type" />
                                    <newline />
                                    <field name="notes" colspan="4"/>
-                                   <field name="supplier_id" />
+                                   <field name="supplier" />
                                    <field name="latest" />
                                    
                                 </form>

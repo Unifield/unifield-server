@@ -154,9 +154,9 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
-	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']/field[@name='website']" position="after">
+	                <!-- <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']/field[@name='website']" position="after">
 	                    <field name="leadtime" />
-	                </xpath>
+	                </xpath> -->
                 </data>
             </field>
         </record>

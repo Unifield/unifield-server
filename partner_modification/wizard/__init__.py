@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#
+#    
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -15,31 +15,11 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+import picking_create_picking_ticket
 
 
-{
-    "name" : "Sourcing Tool",
-    "version" : "0.1",
-    "author" : "MSF pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification"],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Add sourcing specification
-    """,
-    'test': [
-             'test/sourcing.yml',
-             ],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'sourcing_sequence.xml',
-        'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
-    ],
-    'installable': True,
-}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
