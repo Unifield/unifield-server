@@ -59,6 +59,7 @@
         "procurement_request",
         "import_data",
         "object_query",
+        "specific_locations",
     ],
     "update_xml": [
         "report.xml",

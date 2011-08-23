@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<record id="view_location_form" model="ir.ui.view">
+            <field name="name">stock.location.form</field>
+            <field name="model">stock.location</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_location_form" />
+            <field name="arch" type="xml">
+            	
+            	<data>
+            	
+            		<!-- remove localization & accounting info -->
+            		<xpath expr="//separator[@string='Localization']/.." position="replace">
+	                </xpath>
+	                
+	                <field name="scrap_location" position="after">
+	                	<field name="quarantine_location" attrs="{'readonly':[('usage', 'not in', ('internal',)),],}" />
+	                	<field name="destruction_location" attrs="{'readonly':[('usage', 'not in', ('inventory',)),],}" />
+	                </field>
+	                
+	                <field name="location_id" position="after">
+	                	<field name="location_category" />
+	                </field>
+            	
+            	</data>
+            	
+            </field>
+		</record>
+
+	</data>
+</openerp>
