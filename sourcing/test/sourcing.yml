@@ -147,7 +147,7 @@
       assert sourcing.type == 'make_to_stock', 'sourcing type wrong'
       assert sourcing.state == 'draft', 'sourcing state wrong'
       assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
-      assert int(sourcing.supplier.id) == self.pool.get('product.supplierinfo').browse(cr, uid, ref("product_supplierinfo_0")).name.id, 'sourcing supplier wrong'
+      assert not sourcing.supplier.id, 'make_to_stock: sourcing has a supplier !'
       
       sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_b0")})
       
