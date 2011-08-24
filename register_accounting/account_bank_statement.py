@@ -144,8 +144,9 @@ class account_bank_statement(osv.osv):
             if not self.check_status_condition(cr, uid, st.state, journal_type=j_type):
                 continue
 
-
-            self.balance_check(cr, uid, st.id, journal_type=j_type, context=context)
+            # modification of balance_check for cheque registers
+            if st.journal_id.type in ['bank', 'cash']:
+                self.balance_check(cr, uid, st.id, journal_type=j_type, context=context)
             if (not st.journal_id.default_credit_account_id) \
                     or (not st.journal_id.default_debit_account_id):
                 raise osv.except_osv(_('Configuration Error !'),
@@ -190,7 +191,8 @@ class account_bank_statement(osv.osv):
             currency =currency[0]
         id = self.pool.get('wizard.account.invoice').search(cr, uid, [('currency_id','=',currency), ('register_id', '=', ids[0])])
         if not id:
-            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, context={'journal_type': 'purchase', 'type': 'in_invoice'})
+            id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, 
+                context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
             'name': "Supplier Invoice",
             'type': 'ir.actions.act_window',
@@ -204,6 +206,59 @@ class account_bank_statement(osv.osv):
                 'active_id': ids[0],
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
+                'active_ids': ids,
+            }
+        }
+
+    def button_wiz_import_invoices(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
+        """
+        # statement_id is useful for making some line's registration.
+        # currency_id is useful to filter invoices in the same currency
+        st = self.browse(cr, uid, ids[0], context=context)
+        id = self.pool.get('wizard.import.invoice').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None}, context=context)
+        # Remember if we come from a cheque register (for adding some fields)
+        from_cheque = False
+        if st.journal_id.type == 'cheque':
+            from_cheque = True
+        return {
+            'name': "Import Invoice",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.invoice',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [id],
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+                'from_cheque': from_cheque,
+            }
+        }
+
+    def button_wiz_import_cheques(self, cr, uid, ids, context={}):
+        """
+        When pressing 'Import Cheques' button then opening a wizard to select some cheques from a register and add them into the present register 
+        in a temp post state.
+        """
+        # statement_id is useful for making some line's registration.
+        # currency_id is useful to filter cheques in the same currency
+        # period_id is useful to filter cheques drawn in the same period
+        st = self.browse(cr, uid, ids[0], context=context)
+        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 'period_id': st.period_id.id}, context=context)
+        return {
+            'name': "Import Cheque",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.cheque',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [id],
+            'context':
+            {
+                'active_id': ids[0],
                 'active_ids': ids,
             }
         }
@@ -373,7 +428,7 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
-        'mandatory': fields.char(string="Cheque Number", size=120),
+        'cheque_number': fields.char(string="Cheque Number", size=120),
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
@@ -381,6 +436,9 @@ class account_bank_statement_line(osv.osv):
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
+        'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
+            required=False, readonly=True),
+        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
     }
 
     _defaults = {
@@ -589,6 +647,9 @@ class account_bank_statement_line(osv.osv):
         st_line = self.browse(cr, uid, st_line_id, context=context)
         # Get first line (from Register account)
         register_line = st_line.first_move_line_id
+        # Delete 'from_import_cheque_id' field not to break the account move line write
+        if 'from_import_cheque_id' in values:
+            del(values['from_import_cheque_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -611,7 +672,7 @@ class account_bank_statement_line(osv.osv):
             # What's about register currency ?
             register_amount_currency = False
             other_amount_currency = False
-            currency_id = False
+            currency_id = st_line.statement_id.currency.id
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
                 # Prepare value
                 res_currency_obj = self.pool.get('res.currency')
@@ -723,6 +784,103 @@ class account_bank_statement_line(osv.osv):
                 self.write(cr, uid, [st_line.id], {'from_cash_return': True}, context=context)
         return True
 
+    def do_import_invoices_reconciliation(self, cr, uid, st_lines=None, context={}):
+        """
+        Reconcile line that come from an import invoices wizard in 3 steps :
+         - split line into the move
+         - post move
+         - reconcile lines from the move
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if not st_lines or isinstance(st_lines, (int, long)):
+            st_lines = []
+
+        # Prepare some values
+        absl_obj = self.pool.get('account.bank.statement.line')
+        move_line_obj = self.pool.get('account.move.line')
+        move_obj = self.pool.get('account.move')
+
+        # Parse register lines
+        for st_line in absl_obj.browse(cr, uid, st_lines, context=context):
+            # Verification if st_line have some imported invoice lines
+            if not st_line.imported_invoice_line_ids:
+                continue
+            
+            ## STEP 1 : Split lines
+            # Prepate some values
+            move_ids = [x.id for x in st_line.move_ids]
+            # Search move lines that are attached to move_ids
+            move_lines = move_line_obj.search(cr, uid, [('move_id', 'in', move_ids), 
+                ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
+            # Delete them
+            move_line_obj.unlink(cr, uid, move_lines, context=context)
+            # Add new lines
+            amount = abs(st_line.first_move_line_id.amount_currency)
+            sign = 1
+            if st_line.first_move_line_id.amount_currency > 0:
+                sign = -1
+            res_ml_ids = []
+            process_invoice_move_line_ids = []
+            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                if abs(invoice_move_line.amount_currency) <= amount:
+                    amount_to_write = sign * abs(invoice_move_line.amount_currency)
+                else:
+                    amount_to_write = sign * amount
+                # create a new move_line corresponding to this invoice move line
+                aml_vals = {
+                    'name': invoice_move_line.invoice.number,
+                    'move_id': move_ids[0],
+                    'partner_id': invoice_move_line.partner_id.id,
+                    'account_id': st_line.account_id.id,
+                    'amount_currency': amount_to_write,
+                    'statement_id': st_line.statement_id.id,
+                    'currency_id': st_line.statement_id.currency.id,
+                    'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                }
+                process_invoice_move_line_ids.append(invoice_move_line.id)
+                move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)
+                res_ml_ids.append(move_line_id)
+                
+                amount -= abs(amount_to_write)
+                if not amount:
+                    todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
+                    absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
+                    break
+            # STEP 2 : Post moves
+            move_obj.post(cr, uid, move_ids, context=context)
+            
+            # STEP 3 : Reconcile
+            for ml in move_line_obj.browse(cr, uid, res_ml_ids, context=context):
+                # reconcile lines
+                move_line_obj.reconcile_partial(cr, uid, [ml.id, ml.from_import_invoice_ml_id.id], context=context)
+        return True
+
+    def do_import_cheque_reconciliation(self, cr, uid, st_lines=None, context={}):
+        """
+        Do a reconciliation of an imported cheque and the current register line
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if not st_lines or isinstance(st_lines, (int, long)):
+            st_lines = []
+        # Prepare some values
+        move_obj = self.pool.get('account.move')
+        move_line_obj = self.pool.get('account.move.line')
+        # Parse register lines
+        for st_line in self.browse(cr, uid, st_lines, context=context):
+            # Verification if st_line have some imported invoice lines
+            if not st_line.from_import_cheque_id:
+                continue
+            move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context    )
+            # Search the line that would be reconcile after hard post
+            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], context=context)
+            # Do reconciliation
+            move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
+        return True
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -736,6 +894,8 @@ class account_bank_statement_line(osv.osv):
         """
         Write some existing account bank statement lines with 'values'.
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
@@ -783,9 +943,15 @@ class account_bank_statement_line(osv.osv):
             if postype == "hard":
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-                acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
-                # do a move that enable a complete supplier follow-up
-                self.do_direct_expense(cr, uid, [absl.id], context=context)
+                # Case where this line come from an "Import Invoices" Wizard
+                if absl.imported_invoice_line_ids:
+                    self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
+                elif absl.from_import_cheque_id:
+                    self.do_import_cheque_reconciliation(cr, uid, [absl.id], context=context)
+                else:
+                    acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
+                    # do a move that enable a complete supplier follow-up
+                    self.do_direct_expense(cr, uid, [absl.id], context=context)
         return True
 
     def button_hard_posting(self, cr, uid, ids, context={}):
@@ -812,6 +978,11 @@ class account_bank_statement_line(osv.osv):
                 if st_line.state == "hard":
                     raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
                 else:
+                    # In case of line that content some move_line that come from imported invoices
+                    # delete link between account_move_line and register_line that will be unlinked
+                    if st_line.imported_invoice_line_ids:
+                        self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
+                            {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 

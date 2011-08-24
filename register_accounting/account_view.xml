@@ -8,6 +8,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form' />
+            <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Bank Register">
@@ -23,32 +24,37 @@
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
-                        <group col="3" colspan="4">
+                        <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
+                            <label string="" colspan="2"/>
+                        </group>
+                        <group col="4" colspan="4">
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_wiz_import_cheques" states="open" string="Import Cheques" type="object" icon="gtk-dnd"/>
+                            <label string="" colspan="1"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
-                                        <field name="date" groups="base.group_extended" string="Posting Date"/>
-                                        <field name="document_date"/>
-                                        <field name="sequence_for_reference"/>
+                                        <field name="date" string="Posting Date"/>
+                                        <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="sequence_for_reference" />
                                         <field name="name" string="Description"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="ref"/>
                                         <field domain="[('journal_id','=',parent.journal_id)]" name="account_id" 
-                                            on_change="onchange_account(account_id, parent.virtual_id)"/>
+                                            on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="partner_type"  
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'required': [('partner_type_mandatory', '=', True)]}"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="amount" invisible="1"/>
-                                        <field name="amount_in" readonly="0"/>
-                                        <field name="amount_out" readonly="0"/>
+                                        <field name="amount_in" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="amount_out" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="direct_invoice" invisible="1"/>
                                         <field name="invoice_id" invisible="1"/>
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
@@ -59,6 +65,7 @@
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                             context="context"/>
                                         <field name="state" readonly="True"/>
+                                        <field name="from_import_cheque_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="date" string="Posting Date"/>
@@ -103,6 +110,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form2' />
+            <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Statement">
@@ -115,7 +123,7 @@
                             <field name="currency" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
-                        <group col="3" colspan="4">
+                        <group col="2" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
@@ -476,7 +484,7 @@
                                 <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
                                     <field name="date" groups="base.group_extended" string="Posting Date"/>
                                     <field name="document_date"/>
-                                    <field name="mandatory" required="1"/>
+                                    <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
                                     <field name="partner_type_mandatory" invisible="1"/>
@@ -504,7 +512,7 @@
                                 <form string="Statement lines">
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
-                                    <field name="mandatory" required="1"/>
+                                    <field name="cheque_number" required="1"/>
                                     <field name="sequence" invisible="1"/>
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>

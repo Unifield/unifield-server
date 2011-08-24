@@ -32,8 +32,37 @@ class account_move_line(osv.osv):
     _name = "account.move.line"
     _inherit = "account.move.line"
 
+    def _is_cheque(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Lines that have an account that come from a cheque register.
+        """
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_cheque(self, cr, uid, obj, name, args, context={}):
+        """
+        Search cheque move lines
+        """
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+        j_obj = self.pool.get('account.journal')
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+        if not j_ids:
+            return [('id', '=', 0)]
+        res = []
+        for j in j_obj.read(cr, uid, j_ids, ['default_debit_account_id', 'default_credit_account_id']):
+            if j['default_debit_account_id']:
+                res.append(j['default_debit_account_id'][0])
+            if j['default_credit_account_id']:
+                res.append(j['default_credit_account_id'][0])
+        return [('account_id', 'in', res)]
+
     _columns = {
-        'register_id': fields.many2one("account.account", "Register"),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
@@ -42,149 +71,37 @@ class account_move_line(osv.osv):
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
+        'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
+        'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
+            string="Imported Invoices", required=False, readonly=True),
+        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
+            help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
+        'is_cheque': fields.function(_is_cheque, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
+            help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
+        'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Correct fields in order to have partner_type instead of partner_id
+        Correct fields in order to have those from account_statement_from_invoice_lines (in case where account_statement_from_invoice is used)
         """
-        # @@@override@ account.account_move_line.fields_view_get()
-        journal_pool = self.pool.get('account.journal')
         if context is None:
             context = {}
+        if 'from' in context:
+            c_from = context.get('from')
+            if c_from == 'wizard_import_invoice' or c_from == 'wizard_import_cheque':
+                view_name = 'invoice_from_registers_tree'
+                if c_from == 'wizard_import_cheque':
+                    view_name = 'cheque_from_registers_tree'
+                if view_type == 'search':
+                    view_name = 'invoice_from_registers_search'
+                    if c_from == 'wizard_import_cheque':
+                        view_name = 'cheque_from_registers_search'
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', view_name)
+                if view:
+                    view_id = view[1]
         result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type != 'tree':
-            #Remove the toolbar from the form view
-            if view_type == 'form':
-                if result.get('toolbar', False):
-                    result['toolbar']['action'] = []
-            #Restrict the list of journal view in search view
-            if view_type == 'search' and result['fields'].get('journal_id', False):
-                result['fields']['journal_id']['selection'] = journal_pool.name_search(cr, uid, '', [], context=context)
-                ctx = context.copy()
-                #we add the refunds journal in the selection field of journal
-                if context.get('journal_type', False) == 'sale':
-                    ctx.update({'journal_type': 'sale_refund'})
-                    result['fields']['journal_id']['selection'] += journal_pool.name_search(cr, uid, '', [], context=ctx)
-                elif context.get('journal_type', False) == 'purchase':
-                    ctx.update({'journal_type': 'purchase_refund'})
-                    result['fields']['journal_id']['selection'] += journal_pool.name_search(cr, uid, '', [], context=ctx)
-            return result
-        if context.get('view_mode', False):
-            return result
-        fld = []
-        fields = {}
-        flds = []
-        title = _("Accounting Entries") #self.view_header_get(cr, uid, view_id, view_type, context)
-        xml = '''<?xml version="1.0"?>\n<tree string="%s" editable="top" refresh="5" on_write="on_create_write" colors="red:state==\'draft\';black:state==\'valid\'">\n\t''' % (title)
-
-        ids = journal_pool.search(cr, uid, [])
-        journals = journal_pool.browse(cr, uid, ids, context=context)
-        all_journal = [None]
-        common_fields = {}
-        total = len(journals)
-        for journal in journals:
-            all_journal.append(journal.id)
-            for field in journal.view_id.columns_id:
-                if not field.field in fields:
-                    fields[field.field] = [journal.id]
-                    fld.append((field.field, field.sequence, field.name))
-                    flds.append(field.field)
-                    common_fields[field.field] = 1
-                else:
-                    fields.get(field.field).append(journal.id)
-                    common_fields[field.field] = common_fields[field.field] + 1
-        fld.append(('period_id', 3, _('Period')))
-        fld.append(('journal_id', 10, _('Journal')))
-        flds.append('period_id')
-        flds.append('journal_id')
-        # Add 2 fields : partner_type and partner_type_mandatory
-        fld.append(('partner_type', 4, _('Third Parties')))
-        fld.append(('partner_type_mandatory', 5, _('Third Parties Mandatory')))
-        flds.append('partner_type')
-        flds.append('partner_type_mandatory')
-        fields['partner_type'] = all_journal
-        fields['partner_type_mandatory'] = all_journal
-        # end of add
-        fields['period_id'] = all_journal
-        fields['journal_id'] = all_journal
-        fld = sorted(fld, key=itemgetter(1))
-        widths = {
-            'statement_id': 50,
-            'state': 60,
-            'tax_code_id': 50,
-            'move_id': 40,
-        }
-        for field_it in fld:
-            field = field_it[0]
-            if common_fields.get(field) == total:
-                fields.get(field).append(None)
-#            if field=='state':
-#                state = 'colors="red:state==\'draft\'"'
-            attrs = []
-            if field == 'debit':
-                attrs.append('sum = "%s"' % _("Total debit"))
-
-            elif field == 'credit':
-                attrs.append('sum = "%s"' % _("Total credit"))
-
-            elif field == 'move_id':
-                attrs.append('required = "False"')
-
-            elif field == 'account_tax_id':
-                attrs.append('domain="[(\'parent_id\', \'=\' ,False)]"')
-                attrs.append("context=\"{'journal_id': journal_id}\"")
-
-            elif field == 'account_id' and journal.id:
-                # Change the domain in order to have third parties fields instead of partner_id field
-#                attrs.append('domain="[(\'journal_id\', \'=\', '+str(journal.id)+'),(\'type\',\'&lt;&gt;\',\'view\'), (\'type\',\'&lt;&gt;\',\'closed\')]" on_change="onchange_account_id(account_id, partner_id)"')
-                attrs.append('domain="[(\'journal_id\', \'=\', '+str(journal.id)+'),(\'type\',\'&lt;&gt;\',\'view\'), (\'type\',\'&lt;&gt;\',\'closed\')]" on_change="onchange_account_id(account_id, partner_type)"')
-                # end of add
-
-            elif field == 'partner_id':
-                attrs.append('on_change="onchange_partner_id(move_id, partner_id, account_id, debit, credit, date, journal_id)"')
-
-            elif field == 'journal_id':
-                attrs.append("context=\"{'journal_id': journal_id}\"")
-
-            elif field == 'statement_id':
-                attrs.append("domain=\"[('state', '!=', 'confirm'),('journal_id.type', '=', 'bank')]\"")
-
-            elif field == 'date':
-                attrs.append('on_change="onchange_date(date)"')
-
-            elif field == 'analytic_account_id':
-                attrs.append('''groups="analytic.group_analytic_accounting"''') # Currently it is not working due to framework problem may be ..
-
-            if field in ('amount_currency', 'currency_id'):
-                attrs.append('on_change="onchange_currency(account_id, amount_currency, currency_id, date, journal_id)"')
-                attrs.append('''attrs="{'readonly': [('state', '=', 'valid')]}"''')
-
-            if field in widths:
-                attrs.append('width="'+str(widths[field])+'"')
-
-            if field in ('journal_id',):
-                attrs.append("invisible=\"context.get('journal_id', False)\"")
-            elif field in ('period_id',):
-                attrs.append("invisible=\"context.get('period_id', False)\"")
-            # Do partner_id field and partner_type_mandatory field to be invisible and partner_type to be visible
-            elif field in ('partner_id',):
-                attrs.append("invisible=\"1\"")
-            elif field in ('partner_type',):
-                attrs.append("on_change=\"onchange_partner_type(partner_type, credit, debit)\" invisible=\"0\" \
-                    attrs=\"{'required': [('partner_type_mandatory', '=', True)]}\"")
-            elif field in ('partner_type_mandatory',):
-                attrs.append("invisible=\"1\"")
-            # end of add
-            else:
-                attrs.append("invisible=\"context.get('visible_id') not in %s\"" % (fields.get(field)))
-            xml += '''<field name="%s" %s/>\n''' % (field,' '.join(attrs))
-
-        xml += '''</tree>'''
-        result['arch'] = xml
-        result['fields'] = self.fields_get(cr, uid, flds, context)
         return result
-        # @@@end
 
     def onchange_account_id(self, cr, uid, ids, account_id=False, third_party=False):
         """

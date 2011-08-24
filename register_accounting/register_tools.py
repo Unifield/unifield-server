@@ -106,4 +106,19 @@ def open_register_view(self, cr, uid, register_id, context={}):
     result['target'] = 'crush'
     return result
 
+def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
+    """
+    Permit to return a date included in period :
+     - if given date is included in period, return the given date
+     - else return the date_stop of given period
+    """
+    if not context:
+        context={}
+    if not date or not period_id:
+        return False
+    period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
+    if date < period.date_start or date > period.date_stop:
+        return period.date_stop
+    return date
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
