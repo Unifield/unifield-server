@@ -58,8 +58,23 @@ class account_account_activable(osv.osv):
         self._check_date(vals)
         return super(account_account_activable, self).write(cr, uid, ids, vals, context=context)
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False):
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        # UF-419: If the args contains journaltype value of Bank, Cheque, Cash, then add the search condition to show only accounts class 5 
+        if not args:
+            args = []
+        args = args[:]
+        
+        pos = 0
+        while pos < len(args):
+            if args[pos][0] == 'journaltype':
+                if args[pos][2] in ('cash', 'bank', 'cheque'):
+                    args[pos] = ('code', 'like', '5%') # add the search condition to show only accounts class 5
+                else:
+                    args.remove(args[pos]) # if not, then just remove this element, and add nothing
+                pos = len(args) # in both case, exit the loop
+            pos += 1
+        # End of UF-419
+        
         if not context:
             context = {}
         if context.get('filter_inactive_accounts'):

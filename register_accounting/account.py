@@ -40,13 +40,6 @@ class account_account(osv.osv):
         'type_for_register': lambda *a: 'none',
     }
 
-    def name_get(self, cr, uid, ids, context={}):
-        """
-        Give only code account for each id given by ids
-        """
-        res = self.pool.get('account.account').read(cr, uid, ids, ['code'], context=context)
-        return [(int(x['id']), x['code']) for x in res]
-
 account_account()
 
 class account_move(osv.osv):
@@ -75,9 +68,34 @@ class account_move(osv.osv):
                 res[move.id] = "%s,%s"%(prev._table_name, prev.id)
         return res
 
+    def _reconcile_compute(self, cr, uid, ids, name, args, context, where =''):
+        # UF-418: Add a new column to show the reconcile or partial reconcile value in the Journal Entries list
+        if not ids: 
+            return {}
+        # get the ids of the reconcile or partially reconcile lines
+        cr.execute( 'SELECT move_id, case when reconcile_partial_id is null then reconcile_id else reconcile_partial_id end '\
+                    'FROM account_move_line '\
+                    'WHERE move_id IN %s ', (tuple(ids),))
+        result = dict(cr.fetchall())
+        rec_pool = self.pool.get('account.move.reconcile')
+
+        for id in ids:
+            result.setdefault(id, None)
+            # from each reconcile or partially reconcile id, get the name and amount in case of partially reconcile
+            if result[id]:
+                # this logic is taken from account_move_reconcile.name_get        
+                r = rec_pool.browse(cr, uid, result[id], context=context)
+                total = reduce(lambda y,t: (t.debit or 0.0) - (t.credit or 0.0) + y, r.line_partial_ids, 0.0)
+                if total:
+                    result[id] = '%s (%.2f)' % (r.name, total)
+                else:
+                    result[id] = r.name
+        return result
+
     _columns = {
         'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
             ('res.partner', 'Partner')], size=128, readonly="1", type="reference", method=True),
+        'reconcile_id': fields.function(_reconcile_compute, method=True, string='Reconcile', type='char'),
     }
 
 account_move()
