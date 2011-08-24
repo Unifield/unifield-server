@@ -13,34 +13,41 @@
             <field name="name">IT Suppliers</field>
             <field name="location_id" ref="stock_location_suppliers"/>
             <field name="usage">supplier</field>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_4" model="stock.location">
             <field name="name">Maxtor Suppliers</field>
             <field name="location_id" ref="stock_location_3"/>
             <field name="usage">supplier</field>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_5" model="stock.location">
             <field name="name">Generic IT Suppliers</field>
             <field name="location_id" ref="stock_location_3"/>
             <field name="usage">supplier</field>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_7" model="stock.location">
             <field name="name">European Customers</field>
             <field name="location_id" ref="stock_location_customers"/>
             <field name="usage">customer</field>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_8" model="stock.location">
             <field name="name">Non European Customers</field>
             <field name="location_id" ref="stock_location_customers"/>
             <field name="usage">customer</field>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_14" model="stock.location">
             <field name="name">Shelf 2</field>
             <field name="location_id" ref="stock_location_stock"/>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_components" model="stock.location">
             <field name="name">Shelf 1</field>
             <field name="location_id" ref="stock_location_stock"/>
+            <field name="location_category">stock</field>
         </record>
 
         <!--
@@ -225,6 +232,7 @@
             <field eval="1" name="active"/>
             <field eval="&quot;&quot;&quot;Shop 1&quot;&quot;&quot;" name="name"/>
             <field eval="&quot;&quot;&quot;manual&quot;&quot;&quot;" name="chained_auto_packing"/>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_shop1" model="stock.location">
             <field model="res.partner.address" name="address_id" search="[('name','=','Eric')]"/>
@@ -233,12 +241,14 @@
             <field eval="&quot;&quot;&quot;internal&quot;&quot;&quot;" name="usage"/>
             <field eval="1" name="active"/>
             <field eval="&quot;&quot;&quot;Shop 2&quot;&quot;&quot;" name="name"/>
+            <field name="location_category">stock</field>
         </record>
         <record id="stock_location_intermediatelocation0" model="stock.location">
             <field name="address_id" ref="base.main_address"/>
             <field name="location_id" ref="stock.stock_location_locations_partner"/>
             <field eval="&quot;&quot;&quot;procurement&quot;&quot;&quot;" name="usage"/>
             <field eval="&quot;&quot;&quot;Internal Shippings&quot;&quot;&quot;" name="name"/>
+            <field name="location_category">stock</field>
         </record>
 
         <record id="stock_warehouse_shop0" model="stock.warehouse">

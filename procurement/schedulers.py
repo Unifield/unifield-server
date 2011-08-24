@@ -187,6 +187,29 @@ class procurement_order(osv.osv):
                     })
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+                
+    def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        op = kwargs.get('op', False)
+        qty = kwargs.get('qty', False)
+        newdate = kwargs.get('newdate', False)
+        assert op, 'missing op'
+        assert qty, 'missing qty'
+        assert newdate, 'missing newdate'
+        
+        values = {'name': op.name,
+                  'date_planned': newdate.strftime('%Y-%m-%d'),
+                  'product_id': op.product_id.id,
+                  'product_qty': qty,
+                  'product_uom': op.product_uom.id,
+                  'location_id': op.location_id.id,
+                  'procure_method': 'make_to_order',
+                  'origin': op.name,
+                  }
+        
+        return values
 
     def _procure_orderpoint_confirm(self, cr, uid, automatic=False,\
             use_new_cursor=False, context=None, user_id=False):
@@ -254,16 +277,8 @@ class procurement_order(osv.osv):
                             qty = to_generate
 
                     if qty:
-                        proc_id = procurement_obj.create(cr, uid, {
-                            'name': op.name,
-                            'date_planned': newdate.strftime('%Y-%m-%d'),
-                            'product_id': op.product_id.id,
-                            'product_qty': qty,
-                            'product_uom': op.product_uom.id,
-                            'location_id': op.location_id.id,
-                            'procure_method': 'make_to_order',
-                            'origin': op.name
-                        })
+                        values = self._do_create_proc_hook(cr, uid, ids, context=context, op=op, qty=qty, newdate=newdate)
+                        proc_id = procurement_obj.create(cr, uid, values, context=context)
                         wf_service.trg_validate(uid, 'procurement.order', proc_id,
                                 'button_confirm', cr)
                         wf_service.trg_validate(uid, 'procurement.order', proc_id,
