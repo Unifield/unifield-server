@@ -39,12 +39,70 @@ class account_period_closing_level(osv.osv):
                 ('done', 'HQ-Closed'))
     
     def action_set_state(self, cr, uid, ids, context):
+        """
+        Change period state
+        """
+        
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # Prepare some elements
+        reg_obj = self.pool.get('account.bank.statement')
+        curr_obj = self.pool.get('res.currency')
+        curr_rate_obj = self.pool.get('res.currency.rate')
+        inv_obj = self.pool.get('account.invoice')
+        
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')
         move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
         for move_line in move_line_obj.browse(cr, uid, move_lines):
             if move_line.state != 'valid':
                 raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
+        
+        # Do verifications for draft periods
+        for period in self.browse(cr, uid, ids, context=context):
+            if period.state == 'draft':
+                # first verify that all existent registers for this period are closed
+                reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
+                for register in reg_obj.browse(cr, uid, reg_ids, context=context):
+                    if register.state not in ['confirm']:
+                        raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period" % register.name))
+                # then verify that all currencies have a fx rate in this period
+                # retrieve currencies for this period (in account_move_lines)
+                sql = """SELECT DISTINCT currency_id
+                FROM account_move_line
+                WHERE period_id = %s""" % period.id
+                cr.execute(sql)
+                res = [x[0] for x in cr.fetchall()]
+                # for each currency do a verification about fx rate
+                registers = reg_obj.browse(cr, uid, reg_ids, context=context)
+                if not registers:
+                    raise osv.except_osv(_('Error'), _('No registers found for this period!'))
+                for id in res:
+                    # search for company currency_id if ID is None
+                    if id == None:
+                        id = registers[0].journal_id.company_id.currency_id.id
+                    rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', id), ('name', '>=', period.date_start), 
+                        ('name', '<=', period.date_stop)], context=context)
+                    # if no rate found
+                    if not rate_ids:
+                        curr_name = curr_obj.read(cr, uid, id, ['name']).get('name', False)
+                        raise osv.except_osv(_('Warning'), _("No FX rate found for currency '%s'") % curr_name)
+                # finally check supplier invoice for this period and display those of them that have due date to contened in this period
+                inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
+                    ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
+                inv_to_display = []
+                for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
+                    if not inv.date_due or inv.date_due <= period.date_stop:
+                        inv_to_display.append(inv.id)
+                if inv_to_display:
+                    raise osv.except_osv(_('Warning'), _('Some invoices are not paid and have an overdue date. Please verify this with \
+"Open overdue invoice" button and fix the problem.'))
+                raise osv.except_osv('error', 'programmed error')
+                
         
         # otherwise, change the period's and journal period's states
         if context['state']:
@@ -78,6 +136,37 @@ class account_period_closing_level(osv.osv):
     _defaults = {
         'state': 'created'
     }
+
+    def button_overdue_invoice(self, cr, uid, ids, context={}):
+        """
+        Open a view that display overdue invoices for this period
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # Prepare some values
+        inv_obj = self.pool.get('account.invoice')
+        
+        # Search invoices
+        for period in self.browse(cr, uid, ids, context=context):
+            inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
+                ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
+            inv_to_display = []
+            for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
+                if not inv.date_due or inv.date_due <= period.date_stop:
+                    inv_to_display.append(inv.id)
+            if inv_to_display:
+                domain = [('id', 'in', inv_to_display)]
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'account.invoice',
+                    'view_type': 'form',
+                    'view_mode': 'tree,form',
+                    'domain': domain,
+                }
 
 account_period_closing_level()
 
