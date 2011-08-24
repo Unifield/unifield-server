@@ -27,6 +27,7 @@ from osv import fields
 from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -174,6 +175,9 @@ class account_bank_statement(osv.osv):
                 # Lines are hard posted. That's why create move lines is useless
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
+            # Verify lines reconciliation status
+            if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
+                raise osv.except_osv(_('Warning'), _("Some lines don't be reconciled. Please verify that all lines are reconciled totally or partially."))
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
 #            done.append(st.id)
@@ -438,7 +442,7 @@ class account_bank_statement_line(osv.osv):
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
+        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
         'cheque_number': fields.char(string="Cheque Number", size=120),

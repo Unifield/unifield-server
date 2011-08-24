@@ -121,4 +121,28 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
+def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
+    """
+    Verify that all given statement lines are totally or partially reconciled.
+    To conclue first a statement line is reconciled these lines should be hard-posted.
+    Then move_lines that come from this statement lines should have all reconciled account with a reconciled_id or a reconcile_partial_id.
+    If ONE account_move_line is not reconciled totally or partially, the function return False
+    """
+    # Verifications
+    if not context:
+        context={}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    # Prepare some variables
+    absl_obj = self.pool.get('account.bank.statement.line')
+    aml_obj = self.pool.get('account.move.line')
+    # Process lines
+    for absl in absl_obj.browse(cr, uid, ids, context=context):
+        for move in absl.move_ids:
+            aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move.id)])
+            for aml in aml_obj.browse(cr, uid, aml_ids, context=context):
+                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                    return False
+    return True
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
