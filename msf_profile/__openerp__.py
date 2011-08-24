@@ -62,6 +62,7 @@
         "stock_forecast",
         "partner_modification",
         'account_invoice_split',
+        "account_msf",
     ],
     "update_xml": [
         "report.xml",
