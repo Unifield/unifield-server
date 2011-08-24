@@ -9,6 +9,7 @@
     name: some name
     period_id: period_5
     user_id: base.user_root
+    balance_start: 589.0
 -
   I check that the initially Cheque Register is in the "Draft" state
 -
