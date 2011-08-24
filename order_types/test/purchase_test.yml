@@ -487,7 +487,7 @@
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'purchase_list', ('Generated move hasn\'t the good type')
 -
-  We create a direct po with a internal partner
+  We create a direct po with a external partner
 -
   !record {model: purchase.order, id: direct8}:
     order_type: direct
@@ -497,7 +497,7 @@
     date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
     location_id: stock.stock_location_stock
-    partner_address_id: address1
+    partner_address_id: address2
     pricelist_id: purchase.list0
 -
   We create a line for this purchase order
@@ -530,14 +530,144 @@
 -
   !workflow {model: purchase.order, action: purchase_approve, ref: direct8}
 -
-  We check if no invoice has been created by the confirmation
+  We check if invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('name', '=', 'direct8')])
-    assert not invoice_ids, ('Invoice created from Direct Purchase Order')
+    invoice_ids = self.search(cr, uid, [('name', '=', 'Direct8')])
+    assert invoice_ids, ('No invoice created from Direct Purchase Order')
 -
   We check if stock moves has been generated with good data
 -
   !python {model: stock.move}: |
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('direct8_l1'), ref('direct8_l2')])])
+    assert not move_ids, ('Generated stock moves from Direct Purchase Order Direct8')
+-
+  We create a direct po with a inter-section partner
+-
+  !record {model: purchase.order, id: direct9}:
+    order_type: direct
+    name: Direct9
+    partner_id: section4
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    location_id: stock.stock_location_stock
+    partner_address_id: address4
+    pricelist_id: purchase.list0
+-
+  We create a line for this purchase order
+-
+  !record {model: purchase.order.line, id: direct9_l1}:
+    product_uom: product.product_uom_unit
+    product_id: product1
+    order_id: direct9
+    price_unit: 1.50
+    product_qty: 10
+    name: P1
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  We validate this Direct Purchase Order
+-
+  !workflow {model: purchase.order, action: purchase_confirm, ref: direct9}
+-
+  We validate the direct9
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: direct9}
+-
+  We check if invoice has been created by the confirmation
+-
+  !python {model: account.invoice}: |
+    invoice_ids = self.search(cr, uid, [('name', '=', 'Direct9')])
+    assert invoice_ids, ('No invoice created from Direct Purchase Order Direct9')
+-
+  We create a direct po with a internal partner
+-
+  !record {model: purchase.order, id: direct10}:
+    order_type: direct
+    name: Direct10
+    partner_id: supplier1
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    location_id: stock.stock_location_stock
+    partner_address_id: address1
+    pricelist_id: purchase.list0
+-
+  We create a line for this purchase order
+-
+  !record {model: purchase.order.line, id: direct10_l1}:
+    product_uom: product.product_uom_unit
+    product_id: product1
+    order_id: direct10
+    price_unit: 1.50
+    product_qty: 10
+    name: P1
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  We create a second line for this purchase order
+-
+  !record {model: purchase.order.line, id: direct10_l2}:
+    product_uom: product.product_uom_unit
+    product_id: product2
+    order_id: direct10
+    price_unit: 3.0
+    product_qty: 25
+    name: P2
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  We validate this Direct Purchase Order
+-
+  !workflow {model: purchase.order, action: purchase_confirm, ref: direct10}
+-
+  We validate the direct10
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: direct10}
+-
+  We check if no invoice has been created by the confirmation
+-
+  !python {model: account.invoice}: |
+    invoice_ids = self.search(cr, uid, [('name', '=', 'Direct10')])
+    assert not invoice_ids, ('Invoice created from Direct Purchase Order Direct10')
+-
+  We check if stock moves has been generated with good data
+-
+  !python {model: stock.move}: |
+    move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('direct10_l1'), ref('direct10_l2')])])
     assert not move_ids, ('Generated stock moves from Direct Purchase Order')
+-
+  We create a new regular purchase order with a inter-section partner
+-
+  !record {model: purchase.order, id: regular11}:
+    name: Regular11
+    partner_id: section4
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_method: order
+    location_id: stock.stock_location_stock
+    partner_address_id: address4
+    pricelist_id: purchase.list0
+-
+  We create a line for this purchase order
+-
+  !record {model: purchase.order.line, id: regular11_l1}:
+    product_uom: product.product_uom_unit
+    product_id: product1
+    order_id: regular11
+    price_unit: 1.50
+    product_qty: 10
+    name: P1
+    date_planned: !eval time.strftime('%Y-%m-%d')
+-
+  We confirm the regular11
+-
+  !workflow {model: purchase.order, action: purchase_confirm, ref: regular11}
+-
+  We validate the regular11
+-
+  !workflow {model: purchase.order, action: purchase_approve, ref: regular11}
+-
+  We check if invoices has been created by the confirmation of regular11
+-
+  !python {model: account.invoice}: |
+    invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular11')])
+    assert invoice_ids, ('No invoice created from Regular PO with internal supplier')
