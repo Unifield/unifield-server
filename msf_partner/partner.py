@@ -110,7 +110,7 @@ class res_partner(osv.osv):
         
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
-        if not context.get('product_id', False) or 'choose_supplier' not in context:
+        if not context.get('product_id', False) or 'choose_supplier' not in context or count:
             return tmp_res
         else:
             # Get all supplier in product form
