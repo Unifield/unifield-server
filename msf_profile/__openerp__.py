@@ -61,6 +61,7 @@
         "object_query",
         "stock_forecast",
         "partner_modification",
+        'account_invoice_split',
     ],
     "update_xml": [
         "report.xml",
