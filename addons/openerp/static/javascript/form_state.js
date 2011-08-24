@@ -258,6 +258,13 @@ function form_setReadonly(container, fieldName, readonly) {
     var kind = $field.attr('kind');
     var field_id = $field.attr('id');
     var field_name = $field.attr('name');
+    var type = $field.attr('type');
+    
+    if (type == 'hidden' && kind == 'reference') {
+        form_setReadonly(container, openobject.dom.get(field_id + '_text'), readonly);
+        form_setReadonly(container, openobject.dom.get(field_id + '_reference'), readonly);
+        return;
+    }
 
     if (kind == 'boolean') {
         var boolean_field = jQuery('input#'+field_id+'_checkbox_');
@@ -272,7 +279,6 @@ function form_setReadonly(container, fieldName, readonly) {
         return;
     }
 
-    var type = $field.attr('type');
 
     if (!type && ($field.hasClass('item-group'))) {
         jQuery($field).find(':input')
@@ -295,7 +301,6 @@ function form_setReadonly(container, fieldName, readonly) {
         $field.removeClass('readonlyfield');
         $field.css('color', '');
     }
-
     if (type == 'hidden' && kind == 'many2one') {
         ManyToOne(field_id).setReadonly(readonly);
     }
