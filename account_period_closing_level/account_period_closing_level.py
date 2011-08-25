@@ -159,13 +159,21 @@ class account_period_closing_level(osv.osv):
                 if not inv.date_due or inv.date_due <= period.date_stop:
                     inv_to_display.append(inv.id)
             if inv_to_display:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_tree')
+                view_id = view_id and view_id[1] or False
                 domain = [('id', 'in', inv_to_display)]
+                # this context cancel default context of account.action_account_period_tree given by account_period_closing_level_view.xml 
+                #+ @line 81 in action_account_period_closing_level_tree
+                context = {'search_default_draft': 0}
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'account.invoice',
                     'view_type': 'form',
                     'view_mode': 'tree,form',
+                    'view_id': [view_id],
+                    'target': 'new',
                     'domain': domain,
+                    'context': context,
                 }
 
 account_period_closing_level()
