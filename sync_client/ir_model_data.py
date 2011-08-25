@@ -390,12 +390,14 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
                 json_data[field[0]] = get_xml_id(row)
             elif field[0] == '.id':
                 json_data[field[0]] = row.id
-            else: #TODO manage more case maybe selection or wierd like reference
+            else: #TODO manage more case maybe selection or reference
                 r = row[field[0]]
                 if isinstance(r, (browse_record_list, list)):
                     json_data[field[0]] = export_list(field, r, json_data.get(field[0]))
                 elif isinstance(r, (browse_record)):
                     json_data[field[0]] = export_relation(field, r, json_data.get(field[0]))
+                elif not r:
+                    json_data[field[0]] = False
                 else:
                     if len(field) > 1:
                         raise ValueError('%s is not a relational field cannot use / to go deeper' % field[0])

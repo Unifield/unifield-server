@@ -129,11 +129,11 @@
             <field name="target">new</field>
         </record>
         
-        <menuitem name="Activate Entity" parent="sync_menu"
+        <menuitem name="Activate Entity" parent="reg_menu"
             id="activate_wiz_menu"
             action="activate_wizard_action"/>   
             
-		<menuitem name="Update Children" parent="sync_menu"
+		<menuitem name="Update Entity" parent="reg_menu"
             id="update_wiz_menu"
             action="update_wizard_action"/> 
 	   
@@ -196,7 +196,7 @@
             <field name="target">new</field>
         </record>
         
-        <menuitem name="Register" parent="sync_menu"
+        <menuitem name="Register" parent="reg_menu"
             id="reg_wiz_menu"
             action="register_wizard_action"/>   
             

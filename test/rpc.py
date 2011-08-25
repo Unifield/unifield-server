@@ -101,7 +101,10 @@ class NetRPC:
         if not port:
             protocol, buf = host.split('//')
             host, port = buf.split(':')
-        self.sock.connect((host, int(port)))
+        try:
+            self.sock.connect((host, int(port)))
+        except Exception, e:
+            raise NetRPC_Exception(str(e), "Could not connect to %s:%s" % (host, port))
 
     def disconnect(self):
         self.sock.shutdown(socket.SHUT_RDWR)
@@ -142,7 +145,7 @@ class NetRPC:
 
         if isinstance(res[0],Exception):
             if exception:
-                raise NetRPC_Exception(str(res[0]), str(res[1]))
+                raise NetRPC_Exception(unicode(res[0]), str(res[1]))
             raise res[0]
         else:
             return res[0]
@@ -182,6 +185,8 @@ class Common(object):
             self.__logger.debug('result: %r' % result)
             return result
         return proxy
+    
+
 
 class Database(object):
     __logger = logging.getLogger('connection.database')

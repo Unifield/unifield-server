@@ -38,11 +38,10 @@ class sale_order_sync(osv.osv):
     _inherit = "sale.order"
     
     _columns = {
-                'random_f' : fields.boolean("Random Field")
+                'received': fields.boolean('Received by Client', readonly=True),
     }
     
     def get_partner_id(self, cr, uid, partner_name, context=None):
-        print "get Partner"
         ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
         if ids:
             return ids[0]
@@ -60,14 +59,18 @@ class sale_order_sync(osv.osv):
     def get_lines(self, cr, uid, po_info, context=None):
         line_result = []
         for line in po_info.order_line:
-            #better to use the xml_id, and import_data
-            product_ids = self.pool.get('product.product').search(cr, uid, [('name', '=', line.product_id.name)], context=context)
-            if product_ids:
-                product_id = product_ids[0]
-            else:
-                product_id = self.pool.get('product.product').create(cr, uid, {'name' : line.product_id.name}, context=context)
-            line_result.append((0, 0, {'name' : line.product_id.name , 'product_id' : product_id, 'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), 'product_uom_qty' : line.product_qty}))
+            line_result.append((0, 0, {'name' : line.product_id.name ,
+                                       'product_id' : self.get_product_id(cr, uid, line.product_id), 
+                                       'product_uom' : self.get_uom_id(cr, uid, line.product_uom, context=context), 
+                                       'product_uom_qty' : line.product_qty, 
+                                      'price_unit' : line.price_unit}))
         return line_result 
+    
+    def get_product_id(self, cr, uid, product_id):
+        ids = self.pool.get('product.product').search(cr, uid, [('name', '=', product_id.name)])
+        if ids:
+            return ids[0]
+        return self.pool.get('product.product').create(cr, uid, {'name' : product_id.name})
     
     def get_uom_id(self, cr, uid, uom_name, context=None):
         ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', uom_name)], context=context)
@@ -76,12 +79,11 @@ class sale_order_sync(osv.osv):
         return self.pool.get('product.uom').create(cr, uid, {'name' : uom_name}, context=context)
         
     def create_so(self, cr, uid, source, po_info, context=None):
-        print "call sale order", source
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
         lines = self.get_lines(cr, uid, po_info, context)
         default = self.default_get(cr, uid, ['name'], context=context)
-        data = { 
+        data = {                        'client_order_ref' : source + "." + po_info.name,
                                         'partner_id' : partner_id,
                                         'partner_order_id' : address_id,
                                         'partner_shipping_id': address_id,
@@ -90,5 +92,11 @@ class sale_order_sync(osv.osv):
                                         'order_line' : lines}
         default.update(data)
         res_id = self.create(cr, uid, default , context=context)
+        return True
+    
+    def picking_received(self, cr, uid, source, picking_info, context=None):
+        name = picking_info.purchase_id.name
+        ids = self.search(cr, uid, [('client_order_ref', '=', source + "." + name)])
+        self.write(cr, uid, ids, {'received' : True}, context=context)
         return True
 sale_order_sync()

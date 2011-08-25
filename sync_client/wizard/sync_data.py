@@ -118,7 +118,7 @@ class update_to_send(osv.osv):
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
                 continue
             
-            print "create update for ", id, " model", rule.model.model
+            #print "create update for ", id, " model", rule.model.model
             values = obj.export_data(cr, uid, [id], included_fields, context=context)['datas'][0]
             data = {
                 'session_id' : session_id,

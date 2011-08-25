@@ -29,8 +29,9 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sale', 'sync_client'],
+    'depends': ['base', 'sale', 'sync_client', 'purchase'],
     'init_xml': [],
+    'update_xml' : ['view_inherit.xml'],
     'data': [],
     'demo_xml': [
     ],

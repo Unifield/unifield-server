@@ -16,13 +16,13 @@ from common import *
 
 class TestDataSyncBase(TestMSF):
     def setUp(self):
-        self.create_record(client_host, client_port, 'msf_c2', 'res.partner', {'name' : 'msf_c2'})
-        self.create_record(client_host, client_port, 'msf_p3', 'res.partner', {'name' : 'msf_p3'})
+        self.create_record(client_host, client_port, 'msf_c2', 'res.partner', {'name' : 'msf_test1'})
+        self.create_record(client_host, client_port, 'msf_p3', 'res.partner', {'name' : 'msf_test2'})
     def tearDown(self):
-        self.delete_record(client_host, client_port, 'msf_c2', 'res.partner', 'msf_c2')
-        self.delete_record(client_host, client_port, 'msf_c2', 'res.partner', 'msf_p3')
-        self.delete_record(client_host, client_port, 'msf_p3', 'res.partner', 'msf_c2')
-        self.delete_record(client_host, client_port, 'msf_p3', 'res.partner', 'msf_p3')
+        self.delete_record(client_host, client_port, 'msf_c2', 'res.partner', 'msf_test1')
+        self.delete_record(client_host, client_port, 'msf_c2', 'res.partner', 'msf_test2')
+        self.delete_record(client_host, client_port, 'msf_p3', 'res.partner', 'msf_test1')
+        self.delete_record(client_host, client_port, 'msf_p3', 'res.partner', 'msf_test2')
         
     
     """
@@ -33,8 +33,8 @@ class TestDataSyncBase(TestMSF):
         self.synchronize(client_host, client_port, 'msf_c2')
         self.synchronize(client_host, client_port, 'msf_p3')
         self.synchronize(client_host, client_port, 'msf_c2')
-        self.check_model_data(client_host, client_port, 'msf_c2', 'res.partner', {'name' : 'msf_p3'} )
-        self.check_model_data(client_host, client_port, 'msf_p3', 'res.partner', {'name' : 'msf_c2'} )
+        self.check_model_data(client_host, client_port, 'msf_c2', 'res.partner', {'name' : 'msf_test2'} )
+        self.check_model_data(client_host, client_port, 'msf_p3', 'res.partner', {'name' : 'msf_test1'} )
 
 class TestNoRuleChange(TestMSF):
     """

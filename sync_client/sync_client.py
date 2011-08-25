@@ -247,13 +247,13 @@ class entity(osv.osv):
         offset = entity.update_offset
         #Already up-to-date
         if last_seq >= max_seq:
-            print "already up-to-date"
+            #print "already up-to-date"
             last = True
         while not last:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, context)
             if res and res[0]:
-                print "retreive packet", res
+                #print "retreive packet", res
                 nb_upate = self.pool.get('sync.client.update_received').unfold_package(cr, uid, res[1], context=context)
                 #unfold packet with res[1]
                 last = res[2]
@@ -286,6 +286,7 @@ class entity(osv.osv):
             cr.commit()
             traceback.print_exc(file=sys.stdout)
             raise osv.except_osv(_('Connection error !'), str(e))
+        print "push message Finished"
         return True
         #init => init
         
@@ -294,7 +295,7 @@ class entity(osv.osv):
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
         res = proxy.get_message_rule(uuid)
         if res and not res[0]:
-            print 'create_message', res
+            #print 'create_message', res
             raise osv.except_osv(res[1],_('Error !'))
         self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
         
@@ -314,7 +315,7 @@ class entity(osv.osv):
             message_obj = self.pool.get('sync.client.message_to_send')
             packet = message_obj.get_message_packet(cr, uid, max_packet_size, context=context)
             if packet:
-                print 'send message packet'
+                #print 'send message packet'
                 
                 res = proxy.send_message(uuid, packet)
                 if res and not res[0]:
@@ -334,11 +335,19 @@ class entity(osv.osv):
         
         try:
             self.get_message(cr, uid, context)
-            self.execute_message(cr, uid, context)
+            
         except Exception, e:
             cr.commit()
             traceback.print_exc(file=sys.stdout)
             raise osv.except_osv(_('Connection error !'), str(e))
+        
+        try: 
+            self.execute_message(cr, uid, context)
+        except Exception, e:
+            cr.commit()
+            traceback.print_exc(file=sys.stdout)
+            raise osv.except_osv(_('Execution error !'), str(e))
+        print "pull message finished"
         return True
         #init => init
         

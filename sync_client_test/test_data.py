@@ -30,6 +30,7 @@ import tools
 import time
 import sys
 import traceback
+import netsvc
 
 import sync_client
 
@@ -101,8 +102,24 @@ class test(osv.osv_memory):
                     return False
         return True
     
+    def check_model_info_like(self, cr, uid, model, data, context=None):
+        """
+            check for all object with name like, if one of the data is the same in one object
+        """
+        ids = self.pool.get(model).search(cr, uid, [('name', 'like', data.get('name'))], context=context)
+        if not ids:
+            return False
+        for partner in self.pool.get(model).browse(cr, uid, ids, context=context):
+            res = True
+            for key, value in data.items():
+                if key != 'name' and not getattr(partner, key) == value:
+                    res = False
+            if res:
+                return True
+        return False
+    
+    
     def create_record(self, cr, uid, model, data, context=None):
-        print 'model', model
         res_id = self.pool.get(model).create(cr, uid, data, context=context)
         return res_id
     
@@ -126,6 +143,54 @@ class test(osv.osv_memory):
         
     def get_record_data(self, cr, uid, model, id, fields, context=None):
         return self.pool.get(model).read(cr, uid, id, fields, context=context)
+    
+    def confirm_so(self, cr, uid, ref, context=None):
+        ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', ref)])
+        if not ids:
+            return False
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, "sale.order", ids[0], 'order_confirm', cr)
+        return True
+    
+    def _confirm_ship(self, cr, uid, ship_ids, context=None):
+        self.pool.get('stock.picking').force_assign(cr, uid, ship_ids)
+        res = self.pool.get('stock.picking').action_process(cr, uid, ship_ids, context=context)
+        partial_id = res['res_id']
+        model = res['res_model']
+        context = res['context']
+        self.pool.get(model).do_partial(cr, uid, [partial_id], context=context)
+    
+    def confirm_shippements(self, cr, uid, ref, context=None):
+        ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', ref)])
+        if not ids:
+            print 'No sale order'
+            return False
+        for so in self.pool.get('sale.order').browse(cr, uid, ids):
+            ship_ids = [ship.id for ship in so.picking_ids]
+            self._confirm_ship(cr, uid, ship_ids, context)
+        return True
+    
+    def confirm_incoming_shippements(self, cr, uid, name, context=None):
+        ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', name)])
+        if not ids:
+            return False
+        self._confirm_ship(cr, uid, ids, context)
+        return True
+        
+    def exec_wkf(self, cr, uid, model, transition_name, id=0, name=None):
+        if not id and not name:
+            return False
+        if not id:
+            ids = self.pool.get(model).search(cr, uid, [('name', '=', name)])
+            if ids:
+                id = ids[0]
+            else: 
+                return False
+        
+        
+        wf_service = netsvc.LocalService("workflow")
+        return wf_service.trg_validate(uid, model, id, transition_name, cr)
+        
         
         
                                     

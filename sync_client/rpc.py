@@ -50,6 +50,8 @@ class SafeUnpickler(object):
         pickle_obj.find_global = cls.find_class
         return pickle_obj.load()
 
+
+
 class Connector(object):
     """
     Connector class
@@ -99,7 +101,10 @@ class NetRPC:
         if not port:
             protocol, buf = host.split('//')
             host, port = buf.split(':')
-        self.sock.connect((host, int(port)))
+        try:
+            self.sock.connect((host, int(port)))
+        except Exception, e:
+            raise NetRPC_Exception(str(e), "Could not connect to %s:%s" % (host, port))
 
     def disconnect(self):
         self.sock.shutdown(socket.SHUT_RDWR)
@@ -140,7 +145,7 @@ class NetRPC:
 
         if isinstance(res[0],Exception):
             if exception:
-                raise NetRPC_Exception(str(res[0]), str(res[1]))
+                raise NetRPC_Exception(unicode(res[0]), str(res[1]))
             raise res[0]
         else:
             return res[0]
@@ -280,6 +285,7 @@ class Object(object):
     def __send__(self, method, *args):
         self.__logger.debug('method: %r', method)
         self.__logger.debug('args: %r', args)
+        
         result = self.connection.connector.send('object', 'execute',
                                                 self.connection.database,
                                                 self.connection.user_id,

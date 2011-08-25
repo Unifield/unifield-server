@@ -120,8 +120,8 @@ class message_to_send(osv.osv):
         res = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
         if not res:
             self.create(cr, uid, data, context=context)
-        else:
-            sync_data.log(self, cr, uid, "Message %s already exist" % identifier, context=context)
+        #else:
+            #sync_data.log(self, cr, uid, "Message %s already exist" % identifier, context=context)
             
     
     
@@ -161,10 +161,10 @@ class message_received(osv.osv):
     _rec_name = 'identifier'
     
     _columns = {
-        'identifier' : fields.char('Identifier', size=128),
-        'remote_call':fields.text('Method to call', required = True),
-        'arguments':fields.text('Arguments of the method', required = True), 
-        'source':fields.char('Source Name', size=256, required = True), 
+        'identifier' : fields.char('Identifier', size=128, readonly=True),
+        'remote_call':fields.text('Method to call', required = True, readonly=True),
+        'arguments':fields.text('Arguments of the method', required = True, readonly=True), 
+        'source':fields.char('Source Name', size=256, required = True, readonly=True), 
         'run' : fields.boolean("Run", readonly=True),
         'log' : fields.text("Execution Messages"),
     }
@@ -195,22 +195,28 @@ class message_received(osv.osv):
         return res
     
     def execute(self, cr, uid, context=None):
+        debug = True
+        
         ids = self.search(cr, uid, [('run', '=', False)], context=context)
         if not ids:
             return True
         for message in self.browse(cr, uid, ids, context=context):
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)
-            try:
-                print 'execute message'
+            if debug:
                 fn = getattr(self.pool.get(model), method)
                 res = fn(cr, uid, message.source, *arg)
                 self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
-            except Exception, e:
-                log = "Something go wrong with the call %s \n" % message.remote_call
-                log += str(e)
-                print log
-                self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
+            else:
+                try:
+                    fn = getattr(self.pool.get(model), method)
+                    res = fn(cr, uid, message.source, *arg)
+                    self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
+                except Exception, e:
+                    log = "Something go wrong with the call %s \n" % message.remote_call
+                    log += tools.ustr(e)
+                    print log
+                    self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
                 
         return True
             

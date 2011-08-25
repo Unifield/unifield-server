@@ -90,7 +90,7 @@
         </record>
         
         <record model="ir.actions.act_window" id="message_action">
-            <field name="name">Update</field>
+            <field name="name">Message</field>
             <field name="res_model">sync.server.message</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -108,7 +108,7 @@
 		<menuitem id="update_menu_id" name="Update" parent="sync_menu"
 		        action="update_action" />   
 		        
-		<menuitem id="update_menu_id" name="Message" parent="sync_menu"
+		<menuitem id="message_menu_id" name="Message" parent="sync_menu"
 		        action="message_action" />  
 		        
 		        
