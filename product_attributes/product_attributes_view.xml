@@ -57,7 +57,7 @@
 	                        <group colspan="2" col="2" name="quality">
 	                            <separator string="Quality" colspan="2"/>
 	                            <field name="perishable"/>
-	                            <field name="batch_management"/>
+	                            <field name="batch_management" on_change="onchange_batch_management(batch_management)" />
 	                            <separator string="UOM" colspan="2"/>
 	                            <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)"/>
 	                            <field name="uom_po_id" string="Exchangeable Unit of Measure" groups="base.group_extended"/>

@@ -26,9 +26,26 @@ import time
 
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
+    
+    def _get_checks_asset(self, cr, uid, ids, name, arg, context=None):
+        '''
+        complete asset boolean
+        '''
+        result = {}
+        for id in ids:
+            result[id] = False
+            
+        for out in self.browse(cr, uid, ids, context=context):
+            result[out.id] = out.product_id.subtype == 'asset'
+            
+        return result
+    
     _columns = {
         'asset_id' : fields.many2one('product.asset', string="Asset"),
+        'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True),
     }
+    
+    
     
 stock_partial_move_memory_out()
     

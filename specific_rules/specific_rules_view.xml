@@ -18,6 +18,137 @@
             </data>
             </field>
         </record>
+            
+		<record id="view_order_form" model="ir.ui.view">
+			<field name="name">sale.order.form</field>
+			<field name="model">sale.order</field>
+			<field name="type">form</field>
+			<field name="priority" eval="250" />
+			<field name="inherit_id" ref="sale.view_order_form" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<!-- modification of the tree -->
+					<xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='currency_id']" position="after">
+						<field name="kc_dg" />
+					</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field eval="12" name="priority"/>
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']/field[@name='state']" position="after">
+						<field name="kc_dg" />
+					</xpath>
+            	
+            	</data>
+            </field>
+		</record>
+		
+		<record id="view_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']/field[@name='state']" position="after">
+						<field name="kc_dg" />
+					</xpath>
+            	
+            	</data>
+            </field>
+		</record>
+		
+		
+		<record id="view_picking_in_form" model="ir.ui.view">
+            <field name="name">stock.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']/field[@name='state']" position="after">
+						<field name="kc_dg" />
+					</xpath>
+            	
+            	</data>
+            </field>
+		</record>
+		
+		<record id="view_production_lot_tree" model="ir.ui.view">
+            <field name="name">stock.production.lot.tree</field>
+            <field name="model">stock.production.lot</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_production_lot_tree" />
+            <field name="arch" type="xml">
+                <data>
+            	
+            		<field name="ref" position="after">
+            			<field name="type" />
+            		</field>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_production_lot_form" model="ir.ui.view">
+            <field name="name">stock.production.lot.form</field>
+            <field name="model">stock.production.lot</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="product_id" position="replace">
+            			<field name="product_id" colspan="4" on_change="product_id_change(product_id)" />
+            		</field>
+            		
+            		<field name="ref" position="after">
+            			<field name="type" />
+            		</field>
+            		
+            		<field name="name" position="replace">
+            			<field name="name" colspan="4" />
+            		</field>
+            		
+            		<field name="date" position="replace">
+            			<field name="date" colspan="2" />
+            		</field>
+            		
+            		<field name="prefix" position="replace" />
+            		<field name="ref" position="replace" />
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="view_move_form_expiry">
+            <field name="name">stock.production.lot.form</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="product_expiry.view_move_form_expiry" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <data>
+            	
+            		<field name="use_date" position="replace" />
+            		<field name="removal_date" position="replace" />
+            		<field name="alert_date" position="replace" />
+            	
+            	</data>
+            </field>
+        </record>
 
 	</data>
 </openerp>

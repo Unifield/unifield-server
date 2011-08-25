@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock"],
+    "depends" : ["sale", "purchase", "stock", "procurement_cycle"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -35,6 +35,7 @@
              ],
     'update_xml': [
         'specific_rules_view.xml',
+        'wizard/stock_partial_move_view.xml',
     ],
     'installable': True,
 }
