@@ -98,6 +98,51 @@ class account_move_line(osv.osv):
             reg_ids = bst_obj.search(cr, uid, [('state', '=', 'temp'), ('imported_invoice_line_ids', 'in', ids2)])
         return [('id', 'in', ids)]
 
+    def _amount_residual_import_inv(self, cr, uid, ids, field_names, args, context=None):
+        res = {}
+        if context is None:
+            context = {}
+        cur_obj = self.pool.get('res.currency')
+        for move_line in self.browse(cr, uid, ids, context=context):
+            res[move_line.id] = 0.0
+
+            if move_line.reconcile_id:
+                continue
+            if not move_line.account_id.type in ('payable', 'receivable'):
+                #this function does not suport to be used on move lines not related to payable or receivable accounts
+                continue
+
+            move_line_total = move_line.amount_currency
+            sign = move_line.amount_currency < 0 and -1 or 1
+            
+            context_unreconciled = context.copy()
+            if move_line.reconcile_partial_id:
+                for payment_line in move_line.reconcile_partial_id.line_partial_ids:
+                    if payment_line.id == move_line.id:
+                        continue
+                    if payment_line.currency_id and move_line.currency_id and payment_line.currency_id.id == move_line.currency_id.id:
+                            move_line_total += payment_line.amount_currency
+                    else:
+                        raise osv.except_osv(_('No Currency'),_("Payment line without currency %s")%(payment_line.id,))
+                        if move_line.currency_id:
+                            context_unreconciled.update({'date': payment_line.date})
+                            amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)
+                            move_line_total += amount_in_foreign_currency
+                        else:
+                            raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
+            
+            for reg_line in move_line.imported_invoice_line_ids:
+                if reg_line.state == 'temp':
+                    if reg_line.currency_id.id != move_line.currency_id.id:
+                        raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
+                    amount_res = move_line_total
+                    amount_reg = reg_line.amount_currency
+
+                
+                            
+            result = move_line_total
+            res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
+        return res
 
 
 
@@ -120,7 +165,7 @@ class account_move_line(osv.osv):
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
         'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
         'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
-        'amount_residual'
+        'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
