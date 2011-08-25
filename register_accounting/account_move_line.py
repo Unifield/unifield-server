@@ -132,14 +132,26 @@ class account_move_line(osv.osv):
                             raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
             
             for reg_line in move_line.imported_invoice_line_ids:
+                if move_line_total == 0:
+                    break
                 if reg_line.state == 'temp':
                     if reg_line.currency_id.id != move_line.currency_id.id:
                         raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
-                    amount_res = move_line_total
-                    amount_reg = reg_line.amount_currency
+                    amount_reg = reg_line.amount
+                    ignore_id = reg_line.first_move_line_id.id
+                    for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                        if ml.id == ignore_id:
+                            continue
+                        if ml.id == move_line.id:
+                            if abs(move_line_total) < abs(amount_reg):
+                                move_line_total = 0
+                            else:
+                                move_line_total = move_line_total-amount_reg
+                            break
+                        if abs(amount_reg) > abs(ml.amount_currency):
+                            break
+                        amount_reg -= ml.amount_currency
 
-                
-                            
             result = move_line_total
             res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
         return res

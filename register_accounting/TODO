@@ -2,3 +2,4 @@
 - domain ready_for_import_in_register on view
 - def ready_for_import_in_register
 - check amount <= amount_to_pay and b st line
+- add sign in key fro grouping

@@ -69,6 +69,7 @@
                     <field name="date_maturity"/>
                     <field name="date"/>
                     <field name="amount_residual_currency"/>
+                    <field name="amount_residual_import_inv" />
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
                 </tree>
