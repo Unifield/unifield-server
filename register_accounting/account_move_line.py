@@ -32,7 +32,7 @@ class account_move_line(osv.osv):
     _name = "account.move.line"
     _inherit = "account.move.line"
 
-    def _is_cheque(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
         Lines that have an account that come from a cheque register.
         """
@@ -60,6 +60,46 @@ class account_move_line(osv.osv):
             if j['default_credit_account_id']:
                 res.append(j['default_credit_account_id'][0])
         return [('account_id', 'in', res)]
+    
+    def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        dom1 = [
+            ('account_id.type','in',['receivable','payable']),
+            ('reconcile_id','=',False), 
+            ('state', '=', 'valid'), 
+            ('journal_id.type', 'in', ['purchase', 'sale']) 
+        ]
+
+        bst_obj = self.pool.get('account.bank.statement.line')
+        # invoices move never imported
+        ids = self.search(cr, uid, dom1+[('imported_invoice_line_ids', '=', False)])
+
+        # invoices imported but not (yet?) reconcile
+        cr.execute("""select distinct m.id from
+                account_move_line m
+                inner join imported_invoice i on i.move_line_id = m.id
+                left join account_journal j on m.journal_id = j.id
+                where 
+                    m.reconcile_id is null 
+                    and m.state='valid'
+                    and j.type in ('purchase', 'sale')
+                """)
+        ids2 = [x[0] for x in cr.fetchall()]
+                
+#        ids2 = self.search(cr, uid, dom1+[('imported_invoice_line_ids', '=', True)])
+        if ids2:
+            # get associated register_line in hard state
+            reg_ids = bst_obj.search(cr, uid, [('state', '=', 'hard'), ('imported_invoice_line_ids', 'in', ids2)])
+            newids = self.search(cr, uid, [('id', 'in', ids2), ('imported_invoice_line_ids', 'in', reg_ids)])
+            ids += newids
+
+            # least but not last: account.line associated with temp register line but not reconcile
+            reg_ids = bst_obj.search(cr, uid, [('state', '=', 'temp'), ('imported_invoice_line_ids', 'in', ids2)])
+        return [('id', 'in', ids)]
+
+
+
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -76,9 +116,11 @@ class account_move_line(osv.osv):
             string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
-        'is_cheque': fields.function(_is_cheque, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
+        'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
         'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
+        'amount_residual'
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

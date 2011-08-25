@@ -340,6 +340,11 @@ class account_bank_statement_line(osv.osv):
             LEFT JOIN account_move m ON m.id = rel.statement_id 
             WHERE m.state = 'draft'
             """
+        sql_hard = """SELECT st.id FROM account_bank_statement_line st 
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
+            LEFT JOIN account_move m ON m.id = rel.statement_id 
+            WHERE m.state = 'posted'
+            """
         ids = []
         filterok = False
         if args[0][1] == '=' and args[0][2] == 'draft' or 'draft' in args[0][2]:
@@ -350,6 +355,11 @@ class account_bank_statement_line(osv.osv):
         # Case where we search temp lines
         if args[0][1] == '=' and args[0][2] == 'temp' or 'temp' in args[0][2]:
             sql = sql_temp
+            cr.execute(sql)
+            ids += [x[0] for x in cr.fetchall()]
+            filterok = True
+        if args[0][1] == '=' and args[0][2] == 'hard' or 'hard' in args[0][2]:
+            sql = sql_hard
             cr.execute(sql)
             ids += [x[0] for x in cr.fetchall()]
             filterok = True
@@ -413,6 +423,12 @@ class account_bank_statement_line(osv.osv):
             """
         cr.execute(sql_posted_moves)
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
+    
+    def _get_number_imported_invoice(self, cr, uid, ids, field_name=None, args=None, context={}):
+        ret = {}
+        for i in self.read(cr, uid, ids, ['imported_invoice_line_ids']):
+            ret[i['id']] = len(i['imported_invoice_line_ids'])
+        return ret
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -438,6 +454,7 @@ class account_bank_statement_line(osv.osv):
             help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
             required=False, readonly=True),
+        'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
     }
 
@@ -846,7 +863,9 @@ class account_bank_statement_line(osv.osv):
                 amount -= abs(amount_to_write)
                 if not amount:
                     todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
-                    absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
+                    # remove remaining invoice lines
+                    if todo:
+                        absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
                     break
             # STEP 2 : Post moves
             move_obj.post(cr, uid, move_ids, context=context)
@@ -1034,6 +1053,21 @@ class account_bank_statement_line(osv.osv):
             }
         else:
             return False
+
+    def button_open_invoices(self, cr, uid, ids, context={}):
+        l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
+        if not l['imported_invoice_line_ids']:
+            raise osv.except_osv(_('Error'), _("No related invoice line"))
+        return {
+            'name': "Invoice Lines",
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'target': 'new',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('id', 'in', l['imported_invoice_line_ids'])]
+        }
+        
 
     def button_open_invoice(self, cr, uid, ids, context={}):
         """

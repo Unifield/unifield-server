@@ -60,7 +60,7 @@
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account Entry Lines">
+                <tree string="Account Entry Lines" editable="top" noteditable="True">
                     <field name="partner_id"/>
                     <field name="ref"/>
                     <field name="invoice"/>
@@ -68,23 +68,12 @@
                     <field name="account_id"/>
                     <field name="date_maturity"/>
                     <field name="date"/>
-                    <field name="amount_to_pay"/>
+                    <field name="amount_residual_currency"/>
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
                 </tree>
             </field>
         </record>
-
-<!--        <record id="wizard_import_invoice_lines_tree" model="ir.ui.view">-->
-<!--            <field name="name">import.invoice.lines.tree</field>-->
-<!--            <field name="model">wizard.import.invoice.lines</field>-->
-<!--            <field name="type">tree</field>-->
-<!--            <field name="arch" type="xml">-->
-<!--                <tree editable="bottom">-->
-<!--                    <field name="invoice_id"/>-->
-<!--                </tree>-->
-<!--            </field>-->
-<!--        </record>-->
 
         <record id="import_invoice_on_registers_lines" model="ir.ui.view">
             <field name="name">import.invoice.on.registers.lines.form</field>
@@ -94,17 +83,22 @@
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
-                        <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
+                        <field name="line_ids" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
                             ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False), ('currency_id', '=', currency_id)]" 
-                            context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
+                            context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1"/>
+                        <group colspan="4" col="6">
+                            <button name="group_import" type="object" string="Import Group By partner" icon="gtk-add"/>
+                            <button name="single_import" type="object" string="Single Import" icon="gtk-add"/>
+                            <field name="date" />
+                        </group>
+                        <separator string="" colspan="4"/>
                         <newline/>
-                        <field height="300" width="700" name="invoice_lines_ids" colspan="4" nolabel="1">
-                            <tree editable="bottom">
+                        <field name="invoice_lines_ids" colspan="4" nolabel="1">
+                            <tree editable="bottom" hide_new_button="1">
                                 <field name="partner_id"/>
+                                <field name="line_ids" />
                                 <field name="ref"/>
-                                <field name="supplier_ref"/>
                                 <field name="account_id"/>
-                                <field name="date_maturity"/>
                                 <field name="date"/>
                                 <field name="amount"/>
                                 <field name="amount_to_pay"/>
@@ -131,18 +125,21 @@
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
-                        <field name="line_id" domain="[('account_id.type','in',['receivable','payable']),('reconcile_id','=',False), ('state', '=', 'valid'), 
-                            ('journal_id.type', 'in', ['purchase', 'sale']), ('imported_invoice_line_ids', '=', False), ('currency_id', '=', currency_id)]" 
-                            context="{'from': 'wizard_import_invoice'}"/><button icon="gtk-add" string="Add" name="action_add_invoice" type="object"/>
-                        <newline/>
-                        <field height="300" width="700" name="invoice_lines_ids" colspan="4" nolabel="1">
-                            <tree editable="bottom">
+                        <field name="line_ids" domain="[('ready_for_import_in_register','=',True), ('currency_id', '=', currency_id)]" 
+                            context="{'from': 'wizard_import_invoice'}" colspan="4" nolabel="1"/>
+                        <group colspan="4" col="6">
+                            <button name="group_import" type="object" string="Import Group By partner" icon="gtk-add"/>
+                            <button name="single_import" type="object" string="Single Import" icon="gtk-add"/>
+                            <field name="date" />
+                        </group>
+                        <separator string="" colspan="4"/>
+                        <field name="invoice_lines_ids" colspan="4" nolabel="1">
+                            <tree editable="bottom" colors="red:cheque_number==False" hide_new_button="1">
                                 <field name="partner_id"/>
+                                <field name="line_ids" />
                                 <field name="ref"/>
                                 <field name="cheque_number" required="1"/>
-                                <field name="supplier_ref"/>
                                 <field name="account_id"/>
-                                <field name="date_maturity"/>
                                 <field name="date"/>
                                 <field name="amount"/>
                                 <field name="amount_to_pay"/>
