@@ -22,6 +22,7 @@
 from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
+import netsvc
 
 from mx.DateTime import *
 
@@ -234,6 +235,82 @@ class purchase_order(osv.osv):
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
         
         return invoice_id
+    
+    # @@@override@purchase.purchase.order.action_picking_create
+    def action_picking_create(self,cr, uid, ids, *args):
+        picking_id = False
+        for order in self.browse(cr, uid, ids):
+            loc_id = order.partner_id.property_stock_supplier.id
+            istate = 'none'
+            reason_type_id = False
+            if order.invoice_method=='picking':
+                istate = '2binvoiced'
+                
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in')
+            picking_values = {
+                'name': pick_name,
+                'origin': order.name+((order.origin and (':'+order.origin)) or ''),
+                'type': 'in',
+                'address_id': order.dest_address_id.id or order.partner_address_id.id,
+                'invoice_state': istate,
+                'purchase_id': order.id,
+                'company_id': order.company_id.id,
+                'move_lines' : [],
+            }
+            
+            if order.order_type in ('regular', 'purchase_list', 'direct'):
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+            if order.order_type == 'loan':
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+            if order.order_type == 'donation_st':
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+            if order.order_type == 'donation_exp':
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+            if order.order_type == 'in_kind':
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1],
+                
+            if reason_type_id:
+                picking_values.update({'reason_type_id': reason_type_id})
+            
+            picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values)
+            todo_moves = []
+            for order_line in order.order_line:
+                if not order_line.product_id:
+                    continue
+                if order_line.product_id.product_tmpl_id.type in ('product', 'consu'):
+                    dest = order.location_id.id
+                    move_values = {
+                        'name': order.name + ': ' +(order_line.name or ''),
+                        'product_id': order_line.product_id.id,
+                        'product_qty': order_line.product_qty,
+                        'product_uos_qty': order_line.product_qty,
+                        'product_uom': order_line.product_uom.id,
+                        'product_uos': order_line.product_uom.id,
+                        'date': order_line.date_planned,
+                        'date_expected': order_line.date_planned,
+                        'location_id': loc_id,
+                        'location_dest_id': dest,
+                        'picking_id': picking_id,
+                        'move_dest_id': order_line.move_dest_id.id,
+                        'state': 'draft',
+                        'purchase_line_id': order_line.id,
+                        'company_id': order.company_id.id,
+                        'price_unit': order_line.price_unit
+                    }
+                    
+                    if reason_type_id:
+                        move_values.update({'reason_type_id': reason_type_id})
+                    
+                    move = self.pool.get('stock.move').create(cr, uid, move_values)
+                    if order_line.move_dest_id:
+                        self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
+                    todo_moves.append(move)
+            self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)
+            self.pool.get('stock.move').force_assign(cr, uid, todo_moves)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+        return picking_id
+        # @@@end
     
 purchase_order()
 

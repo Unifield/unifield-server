@@ -31,7 +31,8 @@
                 "product_expiry",
                 "stock_inventory_type",
                 "purchase_double_validation",
-                "sale_override"],
+                "sale_override",
+                "purchase_override"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchase",
@@ -42,10 +43,6 @@
     "init_xml": [
     ],
     'update_xml': [
-        'purchase_view.xml',
-        'sale_view.xml',
-        'purchase_workflow.xml',
-        'sale_workflow.xml',
         'order_types_report.xml',
         'wizard/stock_certificate_picking_view.xml',
         'wizard/stock_print_certificate_view.xml',
@@ -55,9 +52,6 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/purchase_test.yml',
-        'test/sale_test.yml',
     ],
     'installable': True,
     'active': False,

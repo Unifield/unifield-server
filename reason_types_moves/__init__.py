@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,23 +16,9 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# 
 ##############################################################################
 
-ORDER_PRIORITY = [('emergency', 'Emergency'), 
-                  ('normal', 'Normal'), 
-                  ('priority', 'Priority'),]
-
-ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'), 
-                  ('food', 'Food'),
-                  ('service', 'Service'), 
-                  ('asset', 'Asset'), 
-                  ('mixed', 'Mixed'),
-                  ('other', 'Other')]
-
-import stock
-import report
-import wizard
+import reason_type
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

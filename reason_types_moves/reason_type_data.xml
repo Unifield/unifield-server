@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="1">
+        
+        <record id="reason_type_internal_supply" model="stock.reason.type">
+            <field name="name">Internal Supply</field>
+        </record>
+        
+        <record id="reason_type_consumption" model="stock.reason.type">
+            <field name="name">Consumption</field>
+        </record>
+        
+        <record id="reason_type_consumption_report" model="stock.reason.type">
+            <field name="name">Consumption Report</field>
+        </record>
+        
+        <record id="reason_type_return_from_unit" model="stock.reason.type">
+            <field name="name">Return from unit</field>
+        </record>
+        
+        <record id="reason_type_external_supply" model="stock.reason.type">
+            <field name="name">External Supply</field>
+        </record>
+        
+        <record id="reason_type_deliver_partner" model="stock.reason.type">
+            <field name="name">Deliver Partner</field>
+        </record>
+        
+        <record id="reason_type_loan" model="stock.reason.type">
+            <field name="name">Loan</field>
+        </record>
+        
+        <record id="reason_type_donation" model="stock.reason.type">
+            <field name="name">Donation (standard)</field>
+        </record>
+        
+        <record id="reason_type_donation_expiry" model="stock.reason.type">
+            <field name="name">Donation before expiry</field>
+        </record>
+        
+        <record id="reason_type_loss" model="stock.reason.type">
+            <field name="name">Loss</field>
+        </record>
+        
+        <record id="reason_type_scrap" model="stock.reason.type">
+            <field name="name">Scrap</field>
+            <field name="parent_id" ref="reason_type_loss" />
+        </record>
+        
+        <record id="reason_type_sample" model="stock.reason.type">
+            <field name="name">Sample</field>
+            <field name="parent_id" ref="reason_type_loss" />
+        </record>
+        
+        <record id="reason_type_expiry" model="stock.reason.type">
+            <field name="name">Expiry</field>
+            <field name="parent_id" ref="reason_type_loss" />
+        </record>
+        
+        <record id="reason_type_damage" model="stock.reason.type">
+            <field name="name">Damage</field>
+            <field name="parent_id" ref="reason_type_loss" />
+        </record>
+        
+        <record id="reason_type_discrepancy" model="stock.reason.type">
+            <field name="name">Discrepancy</field>
+        </record>
+        
+        <record id="reason_type_other" model="stock.reason.type">
+            <field name="name">Other</field>
+        </record>
+        
+        <record id="reason_type_in_kind_donation" model="stock.reason.type">
+            <field name="name">In-Kind Donation</field>
+        </record>
+    
+    </data>
+</openerp>

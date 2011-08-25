@@ -65,68 +65,55 @@ stock_move()
 class stock_inventory(osv.osv):
     _name = 'stock.inventory'
     _inherit = 'stock.inventory'
-
-    def action_confirm(self, cr, uid, ids, context={}):
-        """ Confirm the inventory and writes its finished date
-        @return True
+    
+    # @@@override@ stock.stock_inventory._inventory_line_hook()
+    def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
+        """ Creates a stock move from an inventory line
+        @param inventory_line:
+        @param move_vals:
+        @return:
         """
-        # @@@override@ stock.stock_inventory.action_confirm()
-        # to perform the correct inventory corrections we need analyze stock location by
-        # location, never recursively, so we use a special context
-        product_context = dict(context, compute_child=False)
-
         location_obj = self.pool.get('stock.location')
-        for inv in self.browse(cr, uid, ids, context=context):
-            move_ids = []
-            for line in inv.inventory_line_id:
-                pid = line.product_id.id
-                product_context.update(uom=line.product_uom.id,date=inv.date)
-                amount = location_obj._product_get(cr, uid, line.location_id.id, [pid], product_context)[pid]
-         
-                change = line.product_qty - amount
-                lot_id = line.prod_lot_id.id
-                type_id = line.type_id.id
-                if change:
-                    location_id = line.product_id.product_tmpl_id.property_stock_inventory.id
-                    value = {
-                        'name': 'INV:' + str(line.inventory_id.id) + ':' + line.inventory_id.name,
-                        'product_id': line.product_id.id,
-                        'product_uom': line.product_uom.id,
-                        'prodlot_id': lot_id,
-                        'date': inv.date,
-                        # msf
-                        'comment': line.comment,
-                        # 
-                    }
-                    if change > 0:
-                        value.update( {
-                            'product_qty': change,
-                            'location_id': location_id,
-                            'location_dest_id': line.location_id.id,
-                        })
-                    else:
-                        value.update( {
-                            'product_qty': -change,
-                            'location_id': line.location_id.id,
-                            'location_dest_id': location_id,
-                        })
-                    if lot_id:
-                        value.update({
-                            'prodlot_id': lot_id,
-                            'product_qty': line.product_qty
-                        })
-                    # msf 
-                    if type_id:
-                        value.update({
-                            'type_id': type_id,
-                        })
-                    # 
-                    move_ids.append(self._inventory_line_hook(cr, uid, line, value))
-            message = _('Inventory') + " '" + inv.name + "' "+ _("is done.")
-            self.log(cr, uid, inv.id, message)
-            self.write(cr, uid, [inv.id], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
+        
+        type_id = inventory_line.type_id and inventory_line.type_id.id or False
+        
+        # Copy the comment
+        move_vals.update({
+            'comment': inventory_line.comment,
+        })
+        
+        location = location_obj.browse(cr, uid, move_vals['location_dest_id'])
+        
+        if type_id:
+            move_vals.update({
+                'type_id': type_id,
+            })
             
-        return True
+        if location.usage == 'inventory':
+            reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            move_vals.update({
+                'reason_type_id': reason_type_id,
+            })
+            
+        if location.scrap_location:
+            reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            move_vals.update({
+                'reason_type_id': reason_type_id,
+            })
+            
+        if inventory_line.type_id and type_id == self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_inventory_type', 'adjustment_type_expired')[1]:
+            reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
+            move_vals.update({
+                'reason_type_id': reason_type_id,
+            })
+            
+        if inventory_line.location_id.id == move_vals.get('location_dest_id'):
+            reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+            move_vals.update({
+                'reason_type_id': reason_type_id,
+            })
+        
+        return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
         # @@@end
 
 stock_inventory()

@@ -31,12 +31,17 @@
     ],
     "depends" : [
         "sale",
+        "reason_types_moves",
     ],
     "update_xml": [
+        "sale_view.xml",
+        "sale_workflow.xml",
     ],
     "demo_xml": [
     ],
     "test": [
+        "test/data.yml",
+        "test/sale_test.yml",
     ],
     "installable": True,
     "active": False,

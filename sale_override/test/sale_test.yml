@@ -9,7 +9,6 @@
     name: Regular1
     company_id: base.main_company
     picking_policy: direct
-    order_policy: manual
     invoice_quantity: order
     partner_order_id: address1
     partner_invoice_id: address1
@@ -57,6 +56,8 @@
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'regular', ('Generated move hasn\'t the good type')
+      reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+      assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
   We create a Regular sale order with external partner
 -
@@ -64,7 +65,6 @@
     name: Regular2
     company_id: base.main_company
     picking_policy: direct
-    order_policy: manual
     invoice_quantity: order
     partner_order_id: address2
     partner_invoice_id: address2
@@ -103,7 +103,7 @@
 -
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular2')])
-    assert invoice_ids, ('No invoice was generated on a Regular sale order with an external partner')
+    assert not invoice_ids, ('Invoice was generated on a Regular sale order with an external partner')
 -
   We check if stock moves was generated with good data
 -
@@ -114,6 +114,8 @@
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'regular', ('Generated move hasn\'t the good type')
+      reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+      assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
   We create a Donation before expiry
 -
@@ -171,6 +173,8 @@
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'donation_exp', ('Generated move hasn\'t the good type')
+      reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+      assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
   We create a Standard donation
 -
@@ -228,6 +232,8 @@
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'donation_st', ('Generated move hasn\'t the good type')
+      reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+      assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
   We create a Loan
 -
@@ -286,6 +292,8 @@
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
       assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
       assert move.order_type == 'loan', ('Generated move hasn\'t the good type')
+      reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+      assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
   We check if a purchase order for counterpart of the loan has been created
 -
