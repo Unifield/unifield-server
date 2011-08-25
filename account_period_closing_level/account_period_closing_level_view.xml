@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-    
+
         <record id="view_account_fiscalyear_level_form" model="ir.ui.view">
             <field name="name">account.fiscalyear_level.form</field>
             <field name="model">account.fiscalyear</field>
@@ -14,7 +14,7 @@
                 </data>
             </field>
         </record>
-        
+
         <record id="view_account_period_closing_level_form" model="ir.ui.view">
             <field name="name">account.period_closing_level.form</field>
             <field name="model">account.period</field>
@@ -27,9 +27,9 @@
                     </form>
                     <field name="code" position="replace"/>
                     <field name="company_id" position="replace"/>
-	                <button name="action_draft" position="replace">
-	                    <group>
-	                        <label string="" colspan="1"/>
+                    <button name="action_draft" position="replace">
+                        <group>
+                            <label string="" colspan="1"/>
                             <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
                             <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" context="{'state': 'field-closed'}" colspan="1"/>
                             <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
@@ -38,7 +38,7 @@
                             <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
                             <button name="button_overdue_invoice" type="object" string="Open overdue invoices" icon="gtk-open" colspan="1" states="draft"/>
                         </group>
-	                </button>
+                    </button>
                 </data>
             </field>
         </record>
@@ -54,7 +54,7 @@
                 </filter>
             </field>
         </record>
-        
+
         <record id="view_account_period_closing_level_tree" model="ir.ui.view">
             <field name="name">account.period_closing_level.tree</field>
             <field name="model">account.period</field>
@@ -62,17 +62,17 @@
             <field name="inherit_id" ref="account.view_account_period_tree"/>
             <field name="arch" type="xml">
                 <tree string="Period" position="replace">
-	                <tree colors="blue:state in ('created');gray:state in ('done') " string="Period">
-	                    <field name="name"/>
-	                    <field name="date_start"/>
-	                    <field name="date_stop"/>
-	                    <field name="special"/>
-	                    <field name="state"/>
+                    <tree colors="blue:state in ('created');gray:state in ('done') " string="Period">
+                        <field name="name"/>
+                        <field name="date_start"/>
+                        <field name="date_stop"/>
+                        <field name="special"/>
+                        <field name="state"/>
                     </tree>
                 </tree>
             </field>
         </record>
-        
+
         <record id="action_account_period_closing_level_tree" model="ir.actions.act_window">
             <field name="name">Close a Period</field>
             <field name="res_model">account.period</field>
@@ -81,12 +81,47 @@
             <field name="context">{'search_default_draft': 1}</field>
             <field name="help">A period is a fiscal period of time during which accounting entries should be recorded for accounting related activities. Monthly period is the norm but depending on your countries or company needs, you could also have quarterly periods. Closing a period will make it impossible to record new accounting entries, all new entries should then be made on the following open period. Close a period when you do not want to record new entries and want to lock this period for tax related calculation.</field>
         </record>
-        
+
         <menuitem action="action_account_period_closing_level_tree"
             id="account.menu_action_account_period_close_tree"
             parent="account.menu_account_end_year_treatments"
             sequence="0"/>
-        
-    
+
+    <!-- closing period confirmation wizard -->
+        <record model="ir.ui.view" id="wizard_confirm_closing_period_form">
+            <field name='name'>wizard.confirm.closing.period.form</field>
+            <field name='model'>wizard.confirm.closing.period</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Closing Period">
+                    <html>
+                        <head>
+                            <title>Some title</title>
+                        </head>
+                        <body style="border:0; margin: 0;">
+                            <p style="width: 700px; margin: 15px 0 25px 5px;">You have to verify manually:<br/>
+                            - Check that fx rates have been updated for the period to close<br/>
+                            - Check that HR entries from the Homere interface have been imported<br/>
+                            - Check list of monthly accruals (all records, by account)<br/>
+                            - Check list of recurring entries for the period (check that they have been generated)<br/>
+                            - P&amp;L in local currency and in functional currency<br/>
+                            - List of open supplier invoices with due date over<br/>
+                            - Balances and aged balances of all third party accounts, grouped by partners (ie check list of all open invoices)<br />
+                            - Calculation for unrealized gain / loss has run (see chapter 8)
+                            </p>
+                        </body>
+                    </html>
+
+                    <newline/>
+                    <label string="" colspan="4" align="0.0"/>
+                    <group col="4" colspan="4">
+                        <label string="" colspan="2"/>
+                        <button string='No' special='cancel' icon='gtk-cancel'/>
+                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok" confirm="Have you really do all verifications given at screen?"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

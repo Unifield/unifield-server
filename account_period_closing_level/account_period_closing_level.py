@@ -55,13 +55,6 @@ class account_period_closing_level(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
         inv_obj = self.pool.get('account.invoice')
         
-        # check if unposted move lines are linked to this period
-        move_line_obj = self.pool.get('account.move.line')
-        move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
-        for move_line in move_line_obj.browse(cr, uid, move_lines):
-            if move_line.state != 'valid':
-                raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
-        
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
             if period.state == 'draft':
@@ -101,8 +94,28 @@ class account_period_closing_level(osv.osv):
                 if inv_to_display:
                     raise osv.except_osv(_('Warning'), _('Some invoices are not paid and have an overdue date. Please verify this with \
 "Open overdue invoice" button and fix the problem.'))
-                raise osv.except_osv('error', 'programmed error')
-                
+                # Display a wizard to inform user all kind of verifications he have to verify in order to close period
+                return {
+                    'name': "Period closing confirmation wizard",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.confirm.closing.period',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'context':
+                    {
+                        'active_id': ids[0],
+                        'active_ids': ids,
+                        'period_id': period.id,
+                    }
+                }
+        
+        # check if unposted move lines are linked to this period
+        move_line_obj = self.pool.get('account.move.line')
+        move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
+        for move_line in move_line_obj.browse(cr, uid, move_lines):
+            if move_line.state != 'valid':
+                raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
         
         # otherwise, change the period's and journal period's states
         if context['state']:
