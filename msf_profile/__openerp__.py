@@ -63,6 +63,7 @@
         "partner_modification",
         'account_invoice_split',
         "account_msf",
+        "specific_locations",
     ],
     "update_xml": [
         "report.xml",
