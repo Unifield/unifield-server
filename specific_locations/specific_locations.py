@@ -38,12 +38,65 @@ class stock_location(osv.osv):
     '''
     _inherit = 'stock.location'
     
+    def remove_flag(self, flag, list):
+        '''
+        if we do not remove the flag, we fall into an infinite loop
+        '''
+        i = 0
+        to_del = []
+        for arg in list:
+            if arg[0] == flag:
+                to_del.append(i)
+            i+=1
+        for i in to_del:
+            list.pop(i)
+        
+        return True
+    
+    def search_check_quarantine(self, cr, uid, obj, name, args, context=None):
+        '''
+        modify the query to take the type of stock move into account
+        
+        if type is 'out', quarantine_location must be False
+        '''
+        move_obj = self.pool.get('stock.move')
+        move_id = context.get('move_id', False)
+        
+        # remove flag avoid infinite loop
+        self.remove_flag('check_quarantine', args)
+            
+        if not move_id:
+            return args
+        
+        # check the move
+        move = move_obj.browse(cr, uid, move_id, context=context)
+
+        if move.type == 'out':
+            # out -> not from quarantine
+            args.append(('quarantine_location', '=', False))
+            
+        return args
+    
+    def _get_false(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
+    
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),
                 'location_category': fields.selection([('stock', 'Stock'),
                                                        ('consumption_unit', 'Consumption Unit'),
                                                        ('transition', 'Transition'),
                                                        ('other', 'Other'),], string='Location Category', required=True),
+                # could be used after discussion with Magali
+                #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),
                 }
     
 stock_location()
