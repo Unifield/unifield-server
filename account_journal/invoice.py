@@ -49,6 +49,21 @@ class account_invoice(osv.osv):
         res = super(account_invoice, self).action_cancel(cr, uid, ids, context, args)
         return True
 
+    def action_cancel_draft(self, cr, uid, ids, context={}, *args):
+        """
+        Recreate engagement journal lines when resetting invoice to draft state
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).action_cancel_draft(cr, uid, ids, args)
+        # Recreate engagement journal lines
+        for inv in self.browse(cr, uid, ids, context=context):
+            self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [x.id for x in inv.invoice_line], context=context)
+        return res
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
