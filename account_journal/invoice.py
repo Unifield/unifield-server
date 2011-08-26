@@ -64,6 +64,24 @@ class account_invoice(osv.osv):
             self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [x.id for x in inv.invoice_line], context=context)
         return res
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete engagement journal lines before deleting invoice
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        analytic_line_obj = self.pool.get('account.analytic.line')
+        # Delete engagement journal lines
+        for inv in self.browse(cr, uid, ids, context=context):
+            analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', [x.id for x in inv.invoice_line])], context=context)
+            analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
+        res = super(account_invoice, self).unlink(cr, uid, ids, context=context)
+        return res
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
