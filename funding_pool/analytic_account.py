@@ -24,17 +24,29 @@ from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
 
-class analytic_account_activable(osv.osv):
+class analytic_account(osv.osv):
     _inherit = "account.analytic.account"
     
     _columns = {
         'date_start': fields.date('Active from', required=True),
         'date': fields.date('Inactive from', select=True),
+        'category': fields.selection([('OC','Cost Center'),
+            ('FUNDING','Funding Pool'),
+            ('FREE1','Free 1'),
+            ('FREE2','Free 2')], 'Category', select=1),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Funding Pools'),
+        'account_ids': fields.many2many('account.account', 'funding_pool_associated_accounts', 'funding_pool_id', 'account_id', string='Accounts'),
     }
     
     _defaults ={
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
+
+    def set_category(self, cr, uid, vals):
+        if 'parent_id' in vals and vals['parent_id']:
+            parent = self.read(cr, uid, [vals['parent_id']], ['category'])[0]
+            if parent['category']:
+                vals['category'] = parent['category']
     
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
@@ -47,11 +59,13 @@ class analytic_account_activable(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
-        return super(analytic_account_activable, self).create(cr, uid, vals, context=context)
+        self.set_category(cr, uid, vals)
+        return super(analytic_account, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         self._check_date(vals)
-        return super(analytic_account_activable, self).write(cr, uid, ids, vals, context=context)
+        self.set_category(cr, uid, vals)
+        return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
             context=None, count=False):
@@ -61,9 +75,17 @@ class analytic_account_activable(osv.osv):
             args.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
             args.append(('date', '=', False))
             
-        return super(analytic_account_activable, self).search(cr, uid, args, offset, limit,
+        if context and 'search_by_ids' in context and context['search_by_ids']:
+            args2 = args[-1][2]
+            del args[-1]
+            ids = []
+            for arg in args2:
+                ids.append(arg[1])
+            args.append(('id', 'in', ids))
+            
+        return super(analytic_account, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
     
-analytic_account_activable()
+analytic_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

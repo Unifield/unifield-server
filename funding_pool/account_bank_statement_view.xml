@@ -1,0 +1,45 @@
+<openerp>
+    <data>
+
+    <!-- Bank Register Form -->
+        <record id="view_account_bank_statement_distribution_form" model="ir.ui.view">
+            <field name="name">account.bank.statement.distribution.form</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='analytic_account_id']" position="replace">
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Cash Register Form -->
+        <record id="view_account_bank_statement_distribution_form2" model="ir.ui.view">
+            <field name="name">account.bank.statement.distribution.form2</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form2"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='analytic_account_id']" position="replace">
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Cheque Register Form -->
+        <record id="view_account_bank_statement_distribution_form3" model="ir.ui.view">
+            <field name="name">account.bank.statement.distribution.form3</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="register_accounting.view_cheque_register_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/tree/field[@name='analytic_account_id']" position="replace">
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
+                </xpath>
+            </field>
+        </record>
+    
+            
+    </data>
+</openerp>
