@@ -181,6 +181,30 @@ def previous_register_is_closed(self, cr, uid, ids, context={}):
                         (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
     return True
 
+def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
+    """
+    Verify that all given statement lines are totally or partially reconciled.
+    To conclue first a statement line is reconciled these lines should be hard-posted.
+    Then move_lines that come from this statement lines should have all reconciled account with a reconciled_id or a reconcile_partial_id.
+    If ONE account_move_line is not reconciled totally or partially, the function return False
+    """
+    # Verifications
+    if not context:
+        context={}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    # Prepare some variables
+    absl_obj = self.pool.get('account.bank.statement.line')
+    aml_obj = self.pool.get('account.move.line')
+    # Process lines
+    for absl in absl_obj.browse(cr, uid, ids, context=context):
+        for move in absl.move_ids:
+            aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move.id)])
+            for aml in aml_obj.browse(cr, uid, aml_ids, context=context):
+                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                    return False
+    return True
+
 def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
     """
     Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)

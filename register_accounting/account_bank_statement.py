@@ -29,6 +29,7 @@ from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
 from register_tools import create_starting_cashbox_lines
+from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -202,12 +203,29 @@ class account_bank_statement(osv.osv):
                 # Lines are hard posted. That's why create move lines is useless
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
+            # Verify lines reconciliation status
+            if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
+                raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             # Verify that the closing balance is freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
+        # Display the bank confirmation wizard
+        return {
+            'name': "Bank confirmation wizard",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.confirm.bank',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+                'statement_id': st.id,
+            }
+        }
         # @@@end
 
     def button_create_invoice(self, cr, uid, ids, context={}):
@@ -498,7 +516,7 @@ class account_bank_statement_line(osv.osv):
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
+        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
         'cheque_number': fields.char(string="Cheque Number", size=120),

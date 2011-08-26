@@ -48,6 +48,7 @@
         'wizard/wizard_cash_return.xml',
         'account_invoice_view.xml',
         'wizard/register_creation.xml',
+        'wizard/wizard_confirm_bank.xml',
     ],
     "demo_xml" : [],
     "test": [
