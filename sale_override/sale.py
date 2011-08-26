@@ -266,7 +266,7 @@ class sale_order(osv.osv):
         return procurement_data
 
     # @@@override@sale.sale.order.action_ship_create
-    def action_ship_create(self, cr, uid, ids, *args, **kwargs):
+    def action_ship_create(self, cr, uid, ids, context={}, *args, **kwargs):
         """
         Adds hooks
         """
@@ -317,7 +317,7 @@ class sale_order(osv.osv):
                         if reason_type_id:
                             picking_values.update({'reason_type_id': reason_type_id})
                             
-                        picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values)
+                        picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
                     move_data =  {
                         'name': line.name[:64],
                         'picking_id': picking_id,
@@ -345,7 +345,7 @@ class sale_order(osv.osv):
                         move_data.update({'reason_type_id': reason_type_id})
                         
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, move_data, line, *args, **kwargs)
-                    move_id = self.pool.get('stock.move').create(cr, uid, move_data)
+                    move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
 
                 if line.product_id:
                     proc_data = {

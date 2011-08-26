@@ -237,7 +237,7 @@ class purchase_order(osv.osv):
         return invoice_id
     
     # @@@override@purchase.purchase.order.action_picking_create
-    def action_picking_create(self,cr, uid, ids, *args):
+    def action_picking_create(self,cr, uid, ids, context={}, *args):
         picking_id = False
         for order in self.browse(cr, uid, ids):
             loc_id = order.partner_id.property_stock_supplier.id
@@ -272,7 +272,7 @@ class purchase_order(osv.osv):
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
             
-            picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values)
+            picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
                 if not order_line.product_id:
@@ -301,7 +301,7 @@ class purchase_order(osv.osv):
                     if reason_type_id:
                         move_values.update({'reason_type_id': reason_type_id})
                     
-                    move = self.pool.get('stock.move').create(cr, uid, move_values)
+                    move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
                     if order_line.move_dest_id:
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)

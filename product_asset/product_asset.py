@@ -429,7 +429,7 @@ class stock_move(osv.osv):
                         return False
         return True
     
-    def create(self, cr, uid, vals, context=None):
+    def create(self, cr, uid, vals, context={}):
         '''
         override for adding subtype on creation if product is specified
         '''
@@ -437,7 +437,7 @@ class stock_move(osv.osv):
             prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
             vals.update({'subtype': prod.product_tmpl_id.subtype})
             
-        result = super(stock_move, self).create(cr, uid, vals, context)
+        result = super(stock_move, self).create(cr, uid, vals, context=context)
         
         return result
     
