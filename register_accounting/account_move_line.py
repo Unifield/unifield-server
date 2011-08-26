@@ -32,7 +32,7 @@ class account_move_line(osv.osv):
     _name = "account.move.line"
     _inherit = "account.move.line"
 
-    def _is_cheque(self, cr, uid, ids, field_name=None, arg=None, context={}):
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context={}):
         """
         Lines that have an account that come from a cheque register.
         """
@@ -60,6 +60,97 @@ class account_move_line(osv.osv):
             if j['default_credit_account_id']:
                 res.append(j['default_credit_account_id'][0])
         return [('account_id', 'in', res)]
+    
+    def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        dom1 = [
+            ('account_id.type','in',['receivable','payable']),
+            ('reconcile_id','=',False), 
+            ('state', '=', 'valid'), 
+            ('journal_id.type', 'in', ['purchase', 'sale']) 
+        ]
+        return dom1+[('amount_residual_import_inv', '>', 0)]
+
+    # @@override account.account_move_line _amount_residual()
+    def _amount_residual_import_inv(self, cr, uid, ids, field_names, args, context=None):
+        res = {}
+        if context is None:
+            context = {}
+        cur_obj = self.pool.get('res.currency')
+        for move_line in self.browse(cr, uid, ids, context=context):
+            res[move_line.id] = 0.0
+
+            if move_line.reconcile_id:
+                continue
+            if not move_line.account_id.type in ('payable', 'receivable'):
+                #this function does not suport to be used on move lines not related to payable or receivable accounts
+                continue
+
+            move_line_total = move_line.amount_currency
+            sign = move_line.amount_currency < 0 and -1 or 1
+            
+            context_unreconciled = context.copy()
+            if move_line.reconcile_partial_id:
+                for payment_line in move_line.reconcile_partial_id.line_partial_ids:
+                    if payment_line.id == move_line.id:
+                        continue
+                    if payment_line.currency_id and move_line.currency_id and payment_line.currency_id.id == move_line.currency_id.id:
+                            move_line_total += payment_line.amount_currency
+                    else:
+                        raise osv.except_osv(_('No Currency'),_("Payment line without currency %s")%(payment_line.id,))
+                        if move_line.currency_id:
+                            context_unreconciled.update({'date': payment_line.date})
+                            amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)
+                            move_line_total += amount_in_foreign_currency
+                        else:
+                            raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
+            for reg_line in move_line.imported_invoice_line_ids:
+                if move_line_total == 0:
+                    break
+                if reg_line.state == 'temp':
+                    if reg_line.currency_id.id != move_line.currency_id.id:
+                        raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
+                    amount_reg = reg_line.amount
+                    ignore_id = reg_line.first_move_line_id.id
+                    for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                        if ml.id == ignore_id:
+                            continue
+                        if ml.id == move_line.id:
+                            if abs(move_line_total) < abs(amount_reg):
+                                move_line_total = 0
+                            else:
+                                move_line_total = move_line_total-amount_reg
+                            break
+                        if abs(ml.amount_currency) > abs(amount_reg):
+                            break
+                        amount_reg -= ml.amount_currency
+
+            result = move_line_total
+            res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
+        return res
+
+    def _get_reconciles(self, cr, uid, ids, context={}):
+        return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
+
+    def _get_linked_statement(self, cr, uid, ids, context={}):
+        new_move = True
+        r_move = {}
+        while new_move:
+            move = {}
+            for reg in  self.read(cr, uid, ids, ['imported_invoice_line_ids']):
+                for m in reg['imported_invoice_line_ids']:
+                    move[m] = True
+                    r_move[m] = True
+            new_move = False
+            if move:
+                reg_ids = self.search(cr, uid, [('imported_invoice_line_ids', 'in', move.keys())])
+                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', 'in', reg_ids), ('id', 'not in', r_move.keys())])
+                if ids:
+                    new_move = True
+                    for id in ids:
+                        r_move[id] = True
+        return r_move.keys()
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -76,9 +167,16 @@ class account_move_line(osv.osv):
             string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
             help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
-        'is_cheque': fields.function(_is_cheque, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
+        'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
         'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
+        'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
+                        store={
+                          'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                          'account.move.reconcile': (_get_reconciles, None, 10),
+                          'account.bank.statement.line': (_get_linked_statement, None, 10),
+                        }),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

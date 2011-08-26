@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from datetime import datetime
+from ..register_tools import create_starting_cashbox_lines
 
 class wizard_closing_cashbox(osv.osv_memory):
     
@@ -32,7 +33,7 @@ class wizard_closing_cashbox(osv.osv_memory):
     _columns = {
         'be_sure': fields.boolean( string="Are you sure ?", required=False ),
     }
-    
+
     def button_close_cashbox(self, cr, uid, ids, context={}):
         # retrieve context active id (verification)
         id = context.get('active_id', False)
@@ -51,6 +52,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                 # compare the selected balances
                 equivalent = balcal == bal
                 if not equivalent:
+                    # verify that no other lines should be created
                     res_id = st_obj.write(cr, uid, [id], {'state' : 'partial_close'})
                     return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
                 else:
@@ -92,6 +94,9 @@ class wizard_closing_cashbox(osv.osv_memory):
                     # @@@end
                             if not st_line.amount:
                                  continue
+                        # Create next register starting cashbox_lines if necessary
+                        create_starting_cashbox_lines(self, cr, uid, st.id, context=context)
+                        # Change cashbox state
                         res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}, context=context)
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
             else:

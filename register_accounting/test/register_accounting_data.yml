@@ -521,6 +521,7 @@
     name: REG-BNK-USD-1
     period_id: current_period
     user_id: base.user_root
+    balance_start: 100.0
 -
   I click on 'Open Bank' button to open the Bank Register
 -
