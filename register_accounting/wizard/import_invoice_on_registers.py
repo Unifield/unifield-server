@@ -126,7 +126,7 @@ class wizard_import_invoice(osv.osv_memory):
 
             for line in ordered_lines[key]:
                 total += line.amount_currency
-                amount_cur += line.amount_residual_currency
+                amount_cur += line.amount_residual_import_inv
             
             # Create register line
             new_lines.append({
