@@ -29,9 +29,9 @@ class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
 
     _columns = {
-        # FIXME: add reversal_origin field (many2one)
-        # FIXME: add a link between this line and invoice_line_id (many2one)
-        # FIXME: add date_origin field
+        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", help="Line that have been reversed."),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", help="Invoice line from which this line is linked."),
+        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
     }
 
 account_analytic_line()
