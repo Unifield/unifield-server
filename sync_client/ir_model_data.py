@@ -60,6 +60,8 @@ MODELS_TO_IGNORE=(
                     'sync.client.message_received',
                     'sync.client.message_sync',  
                     'sync.client.write_info',
+                    
+                    'res.currency'
                   )
 
 from osv import osv,orm
@@ -455,3 +457,4 @@ class dict_to_obj(object):
     
     def to_dict(self):
         return self.d
+

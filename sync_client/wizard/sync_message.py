@@ -89,7 +89,7 @@ class message_to_send(osv.osv):
     def create_from_rule(self, cr, uid, rule, context=None):
         obj = self.pool.get(rule.model.model)
         domain = rule.domain and eval(rule.domain) or []
-        obj_ids = obj.search(cr, uid, domain, context=context)
+        obj_ids = sync_data.eval_poc_domain(obj, cr, uid, domain, context=context)
         dest = self.pool.get(rule.model.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:

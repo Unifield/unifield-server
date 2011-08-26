@@ -7,7 +7,7 @@ import threading
 
 from config import *
 
-client_module = ['sync_client', 'sync_client_test', 'sync_so', 'purchase'] #add sync_so
+client_module = ['sync_client', 'sync_client_test', 'sync_so', 'purchase', 'point_of_sale'] #add sync_so
 server_module = ['sync_server', 'sync_server_test']
 
 def get_proxy(host, port, database, model):
@@ -26,7 +26,10 @@ def init():
     
 def init_client_module(host, port, list):
     for client in list:
-        module_install(host, port, client, client_module)
+        if client == 'msf_p2':
+            module_install(host, port, client, client_module + ['sync_client_test_financial'])
+        else:
+            module_install(host, port, client, client_module)
     
 def init_module():
     client_list = ['msf_c1', 'msf_c2', 'msf_c3', 'msf_p1', 'msf_p2', 'msf_p3']

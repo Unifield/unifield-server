@@ -33,6 +33,23 @@ pp = pprint.PrettyPrinter(indent=4)
 
 from tools.safe_eval import safe_eval as eval
 
+def eval_poc_domain(obj, cr, uid, domain, context=None):
+    domain_new = []
+    for tp in domain:
+        if isinstance(tp, tuple):
+            if len(tp) != 3:
+                raise osv.except_osv(_('Domain malformed : ' + tools.ustr(domain)), _('Error') )
+            if isinstance(tp[2], tuple) and len(tp[2]) == 2 and isinstance(tp[2][0], basestring) and isinstance(tp[2][1], list):
+                model  = tp[2][0]
+                sub_domain = tp[2][1]
+                sub_obj = obj.pool.get(model)
+                ids_list = eval_poc_domain(sub_obj, cr, uid, sub_domain)
+                domain_new.append((tp[0], tp[1], ids_list))
+            else:
+                domain_new.append(tp)
+        else:
+            domain_new.append(tp)
+    return obj.search(cr, uid, domain_new, context=context)
 
 def log(model, cr, uid, message, ids=False, data=False, context=None):
     #more complete log system
@@ -112,7 +129,9 @@ class update_to_send(osv.osv):
             domain = eval(rule.domain)
         else:
             domain = []
-        ids = obj.search(cr, uid, domain, context=context)
+            
+        ids = eval_poc_domain(obj, cr, uid, domain, context=context)
+        
         for id in ids:
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
