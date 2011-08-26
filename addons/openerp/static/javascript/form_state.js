@@ -236,15 +236,27 @@ function form_evalExpr(prefix, expr, ref_elem) {
                 break;
         }
     }
-
-    for (var j=stack.length-1; j>-1; j--) {
-        if(stack[j] == '|'){
-            var result = stack[j+1] || stack[j+2];
-            stack.splice(j, 3, result);
-        }
-    }
+    stack = eval_stack(stack, 0);
+    
     // shouldn't find any `false` left at this point
     return stack.indexOf(false) == -1;
+}
+
+function eval_stack(stack, i) {
+    for (var j=i; j<stack.length; j++) {
+        if (stack[j] == '|') {
+            stack = eval_stack(stack,j+1);
+            stack = eval_stack(stack,j+2);
+            stack.splice(j, 3, stack[j+1] || stack[j+2]);
+        } else if (stack[j] == '&') {
+            stack = eval_stack(stack,j+1);
+            stack = eval_stack(stack,j+2);
+            stack.splice(j, 3, stack[j+1] && stack[j+2]);
+        } else {
+            return stack;
+        }
+    }
+    return stack
 }
 
 function form_setReadonly(container, fieldName, readonly) {
