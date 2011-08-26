@@ -47,6 +47,7 @@
         'account_cash_statement_sequence.xml',
         'wizard/wizard_cash_return.xml',
         'account_invoice_view.xml',
+        'wizard/register_creation.xml',
     ],
     "demo_xml" : [],
     "test": [
@@ -60,6 +61,7 @@
         'test/direct_expense.yml',
         'test/direct_invoice.yml',
         'test/import_cheque_from_bank.yml',
+        'test/wizard_register_creation.yml',
     ],
     "installable": True,
     "active": False

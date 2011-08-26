@@ -27,6 +27,8 @@ from osv import fields
 from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+from register_tools import previous_register_is_closed
+from register_tools import create_starting_cashbox_lines
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -80,6 +82,9 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
+        'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
 
     }
 
@@ -93,6 +98,10 @@ class account_bank_statement(osv.osv):
         """
         if not context:
             context={}
+        # Disrupt cheque verification
+        if journal_type == 'cheque':
+            return True
+        # Add other verification for cash register
         if journal_type == 'cash':
             if not self._equal_balance(cr, uid, register_id, context):
                 raise osv.except_osv(_('Error !'), _('CashBox Balance is not matching with Calculated Balance !'))
@@ -109,10 +118,28 @@ class account_bank_statement(osv.osv):
         """
         return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete a bank statement is forbidden!
+        """
+        raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
+        return True
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
         """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Verify that a first register (register that doesn't have a prev_reg_id) has a starting balance not null
+        registers = self.browse(cr, uid, ids, context=context)
+        for register in registers:
+            if not register.prev_reg_id:
+                if not register.balance_start > 0:
+                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+        # Verify that previous register is open, unless this register is the first register
         return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
@@ -176,7 +203,9 @@ class account_bank_statement(osv.osv):
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
+            # Verify that the closing balance is freezed
+            if not st.closing_balance_frozen:
+                raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
         return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # @@@end
@@ -247,7 +276,8 @@ class account_bank_statement(osv.osv):
         # currency_id is useful to filter cheques in the same currency
         # period_id is useful to filter cheques drawn in the same period
         st = self.browse(cr, uid, ids[0], context=context)
-        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 'period_id': st.period_id.id}, context=context)
+        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 
+            'period_id': st.period_id.id}, context=context)
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -262,6 +292,33 @@ class account_bank_statement(osv.osv):
                 'active_ids': ids,
             }
         }
+
+    def button_confirm_closing_balance(self, cr, uid, ids, context={}):
+        """
+        Confirm that the closing balance could not be editable.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        for reg in self.browse(cr, uid, ids, context=context):
+            # Validate register only if this one is open
+            if reg.state == 'open':
+                res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
+                res.append(res_id)
+            # Create next starting balance for cash registers
+            if reg.journal_id.type == 'cash':
+                create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
+            # For bank register, give balance_end
+            elif reg.journal_id.type == 'bank':
+                # Verify that another bank statement exists
+                st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
+                if len(st_prev_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                if st_prev_ids:
+                    self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
+        return res
 
 account_bank_statement()
 

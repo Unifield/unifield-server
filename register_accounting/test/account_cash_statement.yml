@@ -78,6 +78,12 @@
         for id in absl_ids:
             absl_obj.button_hard_posting(cr, uid, [id], context={})
 -
+  I click on 'Confirm Closing Balance' button to confirm that I accept the closing balance
+-
+  !python {model: account.bank.statement}: |
+      self.button_confirm_closing_balance(cr, uid, [ref("account_bank_statement_1")], {"lang": "en_US", "tz": False, \
+        "active_model": "account.bank.statement", "active_ids": [ref("account_bank_statement_1")], "active_id": ref("account_bank_statement_1"), })
+-
   I clicked on Close CashBox button to close the cashbox
 -
  !python {model: account.bank.statement}: |
