@@ -178,12 +178,16 @@ class account_invoice_line(osv.osv):
         # Search analytic line to create
         to_create = []
         for inv_line in self.pool.get('account.invoice.line').browse(cr, uid, ids, context=context):
+            # Don't create any line if state not draft
+            if inv_line.invoice_id.state != 'draft':
+                continue
             if inv_line.analytics_id:
                 to_create.append(inv_line.id)
-        # Delete existing anaytic lines
-        analytic_line_obj.unlink(cr, uid, to_remove, context=context)
-        # Create new analytic lines
-        self.create_engagement_lines(cr, uid, to_create, context=context)
+        if to_create:
+            # Delete existing anaytic lines
+            analytic_line_obj.unlink(cr, uid, to_remove, context=context)
+            # Create new analytic lines
+            self.create_engagement_lines(cr, uid, to_create, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context={}):
