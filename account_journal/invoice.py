@@ -26,6 +26,31 @@ from osv import fields
 from tools.translate import _
 from datetime import datetime
 
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+
+    def action_cancel(self, cr, uid, ids, context={}, *args):
+        """
+        Delete engagement journal lines if exists
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        analytic_line_obj = self.pool.get('account.analytic.line')
+        # Unlink all engagement journal lines
+        for inv in self.browse(cr, uid, ids, context=context):
+            for invl_line in inv.invoice_line:
+                if invl_line.analytic_line_ids:
+                    analytic_line_obj.unlink(cr, uid, [x.id for x in invl_line.analytic_line_ids], context=context)
+        res = super(account_invoice, self).action_cancel(cr, uid, ids, context, args)
+        return True
+
+account_invoice()
+
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
