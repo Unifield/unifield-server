@@ -71,33 +71,8 @@ class account_move_line(osv.osv):
             ('journal_id.type', 'in', ['purchase', 'sale']) 
         ]
         return dom1+[('amount_residual_import_inv', '>', 0)]
-        bst_obj = self.pool.get('account.bank.statement.line')
-        # invoices move never imported
-        ids = self.search(cr, uid, dom1+[('imported_invoice_line_ids', '=', False)])
 
-        # invoices imported but not (yet?) reconcile
-        cr.execute("""select distinct m.id from
-                account_move_line m
-                inner join imported_invoice i on i.move_line_id = m.id
-                left join account_journal j on m.journal_id = j.id
-                where 
-                    m.reconcile_id is null 
-                    and m.state='valid'
-                    and j.type in ('purchase', 'sale')
-                """)
-        ids2 = [x[0] for x in cr.fetchall()]
-                
-#        ids2 = self.search(cr, uid, dom1+[('imported_invoice_line_ids', '=', True)])
-        if ids2:
-            # get associated register_line in hard state
-            reg_ids = bst_obj.search(cr, uid, [('state', '=', 'hard'), ('imported_invoice_line_ids', 'in', ids2)])
-            newids = self.search(cr, uid, [('id', 'in', ids2), ('imported_invoice_line_ids', 'in', reg_ids)])
-            ids += newids
-
-            # least but not last: account.line associated with temp register line but not reconcile
-            reg_ids = bst_obj.search(cr, uid, [('state', '=', 'temp'), ('imported_invoice_line_ids', 'in', ids2)])
-        return [('id', 'in', ids)]
-
+    # @@override account.account_move_line _amount_residual()
     def _amount_residual_import_inv(self, cr, uid, ids, field_names, args, context=None):
         res = {}
         if context is None:
