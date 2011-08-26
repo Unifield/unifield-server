@@ -36,6 +36,7 @@
     'update_xml': [
         'specific_rules_view.xml',
         'wizard/stock_partial_move_view.xml',
+        'stock_sequence.xml',
     ],
     'installable': True,
 }

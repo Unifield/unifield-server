@@ -85,5 +85,57 @@ class stock_partial_picking(osv.osv_memory):
         result['arch'] = arch
 
         return result
+    
+    def __create_partial_picking_memory(self, move, pick_type):
+        '''
+        add the asset_id
+        '''
+        move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(move, pick_type)
+        assert move_memory is not None
+        
+        move_memory.update({'expiry_date' : move.expired_date})
+        
+        return move_memory
+    
+    def do_partial_hook(self, cr, uid, context, *args, **kwargs):
+        '''
+        add hook to do_partial
+        '''
+        # call to super
+        partial_datas = super(stock_partial_picking, self).do_partial_hook(cr, uid, context, *args, **kwargs)
+        assert partial_datas, 'partial_datas missing'
+        prodlot_obj = self.pool.get('stock.production.lot')
+        
+        move = kwargs.get('move')
+        assert move, 'move is missing'
+        
+        # if only expiry date mandatory, and not batch management
+        if move.expiry_date_check and not move.batch_number_check:        
+            # if no production lot
+            if not move.prodlot_id:
+                if move.expiry_date:
+                    # if it's a incoming shipment
+                    if move.type_check == 'in':
+                        # double check to find the corresponding prodlot
+                        prodlot_ids = prodlot_obj.search(cr, uid, [('life_date', '=', move.expiry_date),
+                                                                    ('type', '=', 'internal'),
+                                                                    ('product_id', '=', move.product_id.id)], context=context)
+                        # no prodlot, create a new one
+                        if not prodlot_ids:
+                            vals = {'product_id': move.product_id.id,
+                                    'life_date': move.expiry_date,
+                                    'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
+                                    'type': 'internal',
+                                    }
+                            prodlot_id = prodlot_obj.create(cr, uid, vals, context)
+                        else:
+                            prodlot_id = prodlot_ids[0]
+                        # assign the prod lot to partial_datas
+                        partial_datas['move%s' % (move.move_id.id)].update({'prodlot_id': prodlot_id,})
+                    else:
+                        # should not be reached thanks to UI checks
+                        raise osv.except_osv(_('Error !'), _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...'))
+        
+        return partial_datas
 
 stock_partial_picking()

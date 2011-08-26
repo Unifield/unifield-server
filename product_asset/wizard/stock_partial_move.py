@@ -45,8 +45,6 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True),
     }
     
-    
-    
 stock_partial_move_memory_out()
     
 class stock_partial_move_memory_in(osv.osv_memory):
@@ -69,8 +67,6 @@ class stock_partial_move(osv.osv_memory):
         move_memory.update({'asset_id' : move.asset_id.id})
         
         return move_memory
-    
-    
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''

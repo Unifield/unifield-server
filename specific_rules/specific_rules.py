@@ -252,6 +252,31 @@ class stock_warehouse_order_cycle(osv.osv):
 stock_warehouse_order_cycle()
 
 
+class stock_picking(osv.osv):
+    '''
+    modify hook function
+    '''
+    _inherit = 'stock.picking'
+    
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
+        if assetId:
+            defaults.update({'asset_id': assetId})
+        
+        return defaults
+
+
 class stock_move(osv.osv):
     '''
     add kc/dg
@@ -274,8 +299,54 @@ class stock_move(osv.osv):
                     result[move.id] = 'DG'
         
         return result
+    
+    def _check_batch_management(self, cr, uid, ids, context=None):
+        """
+        check for batch management
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state == 'done':
+                if move.product_id.batch_management:
+                    if not move.prodlot_id:
+                        return False
+        return True
+    
+    def _check_perishable(self, cr, uid, ids, context=None):
+        """
+        check for perishable
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state == 'done':
+                if move.product_id.perishable:
+                    if not move.prodlot_id:
+                        return False
+        return True
+    
+    def _get_checks_batch(self, cr, uid, ids, name, arg, context=None):
+        '''
+        todo should be merged with 'multi'
+        '''
+        result = {}
+        for id in ids:
+            result[id] = False
+            
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.product_id:
+                result[move.id] = move.product_id.batch_management
+            
+        return result
         
-    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
+    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
+                'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True),}
+    _constraints = [
+                    (_check_batch_management,
+                     'You must assign a Batch Number for this product (Batch Number Mandatory)',
+                     ['prodlot_id']),
+                    (_check_perishable,
+                     'You must assign an Expiry Date for this product (Expiry Date Mandatory)',
+                     ['prodlot_id'])]
 
 stock_move()
 
@@ -285,6 +356,26 @@ class stock_production_lot(osv.osv):
     productin lot modifications
     '''
     _inherit = 'stock.production.lot'
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        increase the batch number
+        create a new sequence
+        '''
+        if default is None:
+            default = {}
+        
+        default.update(name='', date=time.strftime('%Y-%m-%d'))
+        return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        clear the revisions
+        '''
+        if default is None:
+            default = {}
+        default.update(revisions=[])
+        return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
     
     def product_id_change(self, cr, uid, ids, product_id, context=None):
         '''
@@ -333,7 +424,7 @@ class stock_production_lot(osv.osv):
         create the sequence for the version management
         '''
         sequence = self.create_sequence(cr, uid, vals, context=context)
-        vals.update({'sequence_id': sequence})
+        vals.update({'sequence_id': sequence,})
         
         return super(stock_production_lot, self).create(cr, uid, vals, context=context)
     
@@ -413,14 +504,64 @@ class stock_production_lot(osv.osv):
           result[id] = False
         return result
     
+    def _get_stock(self, cr, uid, ids, field_name, arg, context=None):
+        """ Gets stock of products for locations
+        @return: Dictionary of values
+        """
+        if context is None:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        product_obj = self.pool.get('product.product')
+            
+        result = {}
+        for id in ids:
+            result[id] = 0.0
+        
+        for lot in self.browse(cr, uid, ids, context=context):
+            # because the lot_id changes we have to loop one lot id at a time
+            c = context.copy()
+            # if you remove the coma after done, it will no longer work properly
+            c.update({'what': ('in', 'out'),
+                      'prodlot_id': lot.id,
+                      #'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                      #'warehouse': warehouse_id,
+                      #'uom': product_uom_id
+                      })
+            
+            if field_name == 'stock_available':
+                # available stock
+                c.update(states=('confirmed','waiting','assigned','done'))
+            elif field_name == 'stock_real':
+                # real stock
+                c.update(states=('done',))
+            else:
+                assert False, 'This line should not be reached: field_name: %s'%field_name
+            
+            qty = product_obj.get_product_available(cr, uid, [lot.product_id.id], context=c)
+            overall_qty = sum(qty.values())
+            result[lot.id] = overall_qty
+        
+        return result
+    
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
-                'type': fields.selection([('internal', 'Internal'), ('standard', 'Standard'),], string="Type"),
-                'expiry_date': fields.date('Expiry Date'),
+                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
+                #'expiry_date': fields.date('Expiry Date'),
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique production lot, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
-                'sequence_id': fields.many2one('ir.sequence', 'Lot Sequence', required=True,),}
+                'sequence_id': fields.many2one('ir.sequence', 'Lot Sequence', required=True,),
+                'stock_available': fields.function(_get_stock, method=True, type="float", string="Available", select=True,
+                                                   help="Current quantity of products with this Production Lot Number available in company warehouses",
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
+                                                   help="Current quantity of products with this Production Lot Number available in company warehouses",
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),}
     
-    _defaults = {'type': 'standard',}
+    _defaults = {'type': 'standard',
+                 'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
+                 'name': ''}
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
     ]
@@ -433,11 +574,20 @@ class stock_production_lot(osv.osv):
         
         return result
     
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref'], context)
+        res = []
+        for record in reads:
+            name = record['name']
+            res.append((record['id'], name))
+        return res
+    
 stock_production_lot()
 
 class stock_production_lot_revision(osv.osv):
     _inherit = 'stock.production.lot.revision'
-    
     _order = 'indice desc'
     
 stock_production_lot_revision()

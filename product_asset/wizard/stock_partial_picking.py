@@ -39,8 +39,6 @@ class stock_partial_picking(osv.osv_memory):
         
         return move_memory
     
-    
-    
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
         add hook to do_partial
@@ -56,7 +54,6 @@ class stock_partial_picking(osv.osv_memory):
         partial_datas['move%s' % (move.move_id.id)].update({'asset_id': move.asset_id.id,})
         
         return partial_datas
-
 
 stock_partial_picking()
 
