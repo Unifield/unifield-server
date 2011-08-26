@@ -113,6 +113,9 @@ class account_invoice_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No engagement journal found!'))
         engagement_line_ids = []
         for inv_line in self.browse(cr, uid, ids, context=context):
+            # Search old engagement journal lines to be deleted (to not have split invoice problem that delete not engagement journal lines)
+            analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], context=context)
+            analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
             if inv_line.analytics_id:
                 # inv_line.analytics_id.id --> account.analytic.plan.instance
                 # Search analytic plan line
