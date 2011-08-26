@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from time import strftime
+from datetime import datetime
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -53,6 +53,7 @@ class account_invoice_line(osv.osv):
         journal = journals and journals[0] or False
         if not journal:
             raise osv.except_osv(_('Error'), _('No engagement journal found!'))
+        engagement_line_ids = []
         for inv_line in self.browse(cr, uid, ids, context=context):
             if inv_line.analytics_id:
                 # inv_line.analytics_id.id --> account.analytic.plan.instance
@@ -61,9 +62,14 @@ class account_invoice_line(osv.osv):
                 for plan in plan_line_obj.browse(cr, uid, plan_ids, context=context):
                     val = inv_line.price_subtotal # (credit or  0.0) - (debit or 0.0)
                     amt = val * (plan.rate/100)
+                    date = inv_line.invoice_id.date_invoice
+                    if not date:
+                        perm = self.perm_read(cr, uid, [inv_line.id], context=context)
+                        if perm and 'create_date' in perm[0]:
+                            date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
                     al_vals = {
                         'name': inv_line.name,
-                        'date': strftime('%Y-%m-%d'),
+                        'date': date,
                         'account_id': plan.id,
                         'unit_amount': inv_line.quantity,
                         'product_id': inv_line.product_id and inv_line.product_id.id or False,
@@ -71,11 +77,12 @@ class account_invoice_line(osv.osv):
                         'amount': amt,
                         'general_account_id': inv_line.account_id.id,
                         'journal_id': journal,
-                        'source_date': strftime('%Y-%m-%d'),
+                        'source_date': date,
                         'invoice_line_id': inv_line.id,
                     }
-                    analytic_line_obj.create(cr, uid, al_vals, context=context)
-        return True
+                    res = analytic_line_obj.create(cr, uid, al_vals, context=context)
+                    engagement_line_ids.append(res)
+        return engagement_line_ids or False
 
     def create(self, cr, uid, vals, context={}):
         """
@@ -93,6 +100,32 @@ class account_invoice_line(osv.osv):
             # if invoice in draft state, do engagement journal lines
             if state and state == 'draft':
                 self.create_engagement_lines(cr, uid, [res], context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Update engagement journal lines
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        analytic_line_obj = self.pool.get('account.analytic.line')
+        # Write object
+        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
+        # Search analytic lines to remove
+        to_remove = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', ids)], context=context)
+        # Search analytic line to create
+        to_create = []
+        for inv_line in self.pool.get('account.invoice.line').browse(cr, uid, ids, context=context):
+            if inv_line.analytics_id:
+                to_create.append(inv_line.id)
+        # Delete existing anaytic lines
+        analytic_line_obj.unlink(cr, uid, to_remove, context=context)
+        # Create new analytic lines
+        self.create_engagement_lines(cr, uid, to_create, context=context)
         return res
 
 account_invoice_line()
