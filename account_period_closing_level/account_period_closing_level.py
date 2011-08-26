@@ -71,13 +71,10 @@ class account_period_closing_level(osv.osv):
                 cr.execute(sql)
                 res = [x[0] for x in cr.fetchall()]
                 # for each currency do a verification about fx rate
-                registers = reg_obj.browse(cr, uid, reg_ids, context=context)
-                if not registers:
-                    raise osv.except_osv(_('Error'), _('No registers found for this period!'))
                 for id in res:
                     # search for company currency_id if ID is None
                     if id == None:
-                        id = registers[0].journal_id.company_id.currency_id.id
+                        continue
                     rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', id), ('name', '>=', period.date_start), 
                         ('name', '<=', period.date_stop)], context=context)
                     # if no rate found
