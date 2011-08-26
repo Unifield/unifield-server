@@ -72,6 +72,7 @@
                     <field name="amount_residual_import_inv" />
                     <field name="amount_currency"/>
                     <field name="currency_id"/>
+                    <field name="reconcile_total_partial_id" />
                 </tree>
             </field>
         </record>

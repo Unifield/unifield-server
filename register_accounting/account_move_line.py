@@ -70,7 +70,7 @@ class account_move_line(osv.osv):
             ('state', '=', 'valid'), 
             ('journal_id.type', 'in', ['purchase', 'sale']) 
         ]
-
+        return dom1+[('amount_residual_import_inv', '>', 0)]
         bst_obj = self.pool.get('account.bank.statement.line')
         # invoices move never imported
         ids = self.search(cr, uid, dom1+[('imported_invoice_line_ids', '=', False)])
@@ -130,7 +130,6 @@ class account_move_line(osv.osv):
                             move_line_total += amount_in_foreign_currency
                         else:
                             raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
-            
             for reg_line in move_line.imported_invoice_line_ids:
                 if move_line_total == 0:
                     break
@@ -148,7 +147,7 @@ class account_move_line(osv.osv):
                             else:
                                 move_line_total = move_line_total-amount_reg
                             break
-                        if abs(amount_reg) > abs(ml.amount_currency):
+                        if abs(ml.amount_currency) > abs(amount_reg):
                             break
                         amount_reg -= ml.amount_currency
 
@@ -157,7 +156,7 @@ class account_move_line(osv.osv):
         return res
 
     def _get_reconciles(self, cr, uid, ids, context={}):
-        return self.pool.get('account.move.line').search(cr, uid, ids, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
+        return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
 
     def _get_linked_statement(self, cr, uid, ids, context={}):
         new_move = True
@@ -168,15 +167,14 @@ class account_move_line(osv.osv):
                 for m in reg['imported_invoice_line_ids']:
                     move[m] = True
                     r_move[m] = True
+            new_move = False
             if move:
                 reg_ids = self.search(cr, uid, [('imported_invoice_line_ids', 'in', move.keys())])
-                new_move = False
-                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', in reg_ids), ('id', 'not in', r_move.keys()]))
+                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', 'in', reg_ids), ('id', 'not in', r_move.keys())])
                 if ids:
                     new_move = True
                     for id in ids:
                         r_move[id] = True
-                    
         return r_move.keys()
 
     _columns = {
