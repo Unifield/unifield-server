@@ -1056,9 +1056,9 @@ class account_bank_statement_line(osv.osv):
                 else:
                     # In case of line that content some move_line that come from imported invoices
                     # delete link between account_move_line and register_line that will be unlinked
-                    if st_line.imported_invoice_line_ids:
-                        self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
-                            {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
+                    #if st_line.imported_invoice_line_ids:
+                    #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
+                    #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
