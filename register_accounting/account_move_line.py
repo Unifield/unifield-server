@@ -156,7 +156,28 @@ class account_move_line(osv.osv):
             res[move_line.id] =  sign * (move_line.currency_id and self.pool.get('res.currency').round(cr, uid, move_line.currency_id, result) or result)
         return res
 
+    def _get_reconciles(self, cr, uid, ids, context={}):
+        return self.pool.get('account.move.line').search(cr, uid, ids, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
 
+    def _get_linked_statement(self, cr, uid, ids, context={}):
+        new_move = True
+        r_move = {}
+        while new_move:
+            move = {}
+            for reg in  self.read(cr, uid, ids, ['imported_invoice_line_ids']):
+                for m in reg['imported_invoice_line_ids']:
+                    move[m] = True
+                    r_move[m] = True
+            if move:
+                reg_ids = self.search(cr, uid, [('imported_invoice_line_ids', 'in', move.keys())])
+                new_move = False
+                ids = self.pool.get('account.move.line').search(cr, uid, [('imported_invoice_line_ids', in reg_ids), ('id', 'not in', r_move.keys()]))
+                if ids:
+                    new_move = True
+                    for id in ids:
+                        r_move[id] = True
+                    
+        return r_move.keys()
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -177,7 +198,12 @@ class account_move_line(osv.osv):
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
         'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", method=True, string="Canbe imported as invoice in register ?",),
         'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported", help="This line has been created by a cheque import. This id is the move line imported."),
-        'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',),
+        'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
+                        store={
+                          'account.move.line': (lambda self, cr, uid, ids, c={}: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                          'account.move.reconcile': (_get_reconciles, None, 10),
+                          'account.bank.statement.line': (_get_linked_statement, None, 10),
+                        }),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
