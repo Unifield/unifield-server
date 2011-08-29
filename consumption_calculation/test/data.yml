@@ -1,0 +1,148 @@
+-
+  In order to test Consumption Calculation module, I create initial data
+-
+  I create a new UoM
+-
+  !record {model: product.uom, id: product_10_unit}:
+    category_id: product.product_uom_categ_unit
+    name: 10 PCE
+    factor: 0.1
+    uom_type: bigger
+-
+  I create a supplier
+-
+  !record {model: res.partner, id: supplier1}:
+    name: Supplier 1
+    supplier: True
+    partner_type: external
+-
+  I create an address for Supplier 1
+-
+  !record {model: res.partner.address, id: supplier1_addr}:
+    name: Supplier 1
+    partner_id: supplier1
+-
+  I create a customer
+-
+  !record {model: res.partner, id: customer1}:
+    name: Customer 1
+    customer: True
+    partner_type: internal
+-
+  I create an address for Customer 1
+-
+  !record {model: res.partner.address, id: customer1_addr}:
+    name: Customer 1
+    partner_id: customer1
+-
+  I create a product category
+-
+  !record {model: product.category, id: prod_cat1}:
+    name: Categ1
+-
+    I create the product P1
+-
+  !record {model: product.product, id: product1}:
+    categ_id: prod_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P1
+    price_margin: 2.0
+    procure_method: make_to_order
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier1
+-
+    I create a second product, P2
+-
+  !record {model: product.product, id: product2}:
+    categ_id: prod_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P2
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+    I create the product P3
+-
+  !record {model: product.product, id: product3}:
+    categ_id: prod_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P3
+    price_margin: 2.0
+    procure_method: make_to_stock
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 100.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit    
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+-
+    I create the product P4
+-
+  !record {model: product.product, id: product4}:
+    categ_id: prod_cat1
+    cost_method: standard
+    mes_type: fixed
+    name: P4
+    price_margin: 2.0
+    procure_method: make_to_order
+    property_stock_inventory: stock.location_inventory
+    property_stock_procurement: stock.location_procurement
+    property_stock_production: stock.location_production
+    seller_delay: '1'
+    standard_price: 120.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: supplier1
+-
+  I create an activity on customer location
+-
+  !record {model: stock.location, id: activity1}:
+    name: Activity 1
+    location_id: consumption_calculation.msf_customer_location
+    usage: customer

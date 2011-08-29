@@ -61,6 +61,7 @@
         "stock_forecast",
         "reason_types_moves",
         "stock_inventory_type",
+        "consumption_calculation",
     ],
     "update_xml": [
         "report.xml",
