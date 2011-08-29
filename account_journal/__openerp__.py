@@ -30,6 +30,7 @@
     "depends" : ["account", "analytic", "account_override"],
     'update_xml': [
         'account_journal_view.xml',
+        'project/project_view.xml',
     ],
     'demo_xml': [
     ],
