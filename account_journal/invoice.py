@@ -123,6 +123,9 @@ class account_invoice_line(osv.osv):
                 for plan in plan_line_obj.browse(cr, uid, plan_ids, context=context):
                     val = inv_line.price_subtotal # (credit or  0.0) - (debit or 0.0)
                     amt = val * (plan.rate/100)
+                    # Change amount if invoice are supplier invoice or customer refund
+                    if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
+                        amt = -1 * amt
                     date = inv_line.invoice_id.date_invoice
                     if not date:
                         perm = self.perm_read(cr, uid, [inv_line.id], context=context)
