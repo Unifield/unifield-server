@@ -30,7 +30,7 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
-        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", help="Invoice line from which this line is linked."),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", readonly=True, help="Invoice line from which this line is linked."),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
     }
 
