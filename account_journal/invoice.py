@@ -122,6 +122,11 @@ class account_invoice_line(osv.osv):
                 plan_ids = plan_line_obj.search(cr, uid, [('plan_id', '=', inv_line.analytics_id.id)], context=context)
                 for plan in plan_line_obj.browse(cr, uid, plan_ids, context=context):
                     val = inv_line.price_subtotal # (credit or  0.0) - (debit or 0.0)
+                    # In create function, price_subtotal is null, that's why we search real amount
+                    # So this fix an error of subtotal calculation during line creation
+                    if inv_line.price_subtotal == 0:
+                        new_val = self._amount_line(cr, uid, [inv_line.id], False, False, False)
+                        val = new_val.get(inv_line.id, 0.0)
                     amt = val * (plan.rate/100)
                     # Change amount if invoice are supplier invoice or customer refund
                     if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
