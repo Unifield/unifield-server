@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,26 +20,29 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Accounting Journal for MSF",
-    "version" : "1.0",
-    "author" : "MSF: Matthieu Dietrich, TeMPO Consulting: Olivier DOSSMANN",
-    "category": 'Generic Modules/Accounting',
-    "description": '''
-        Journals view and datas
-    ''',
-    'init_xml': [],
-    "depends" : ["account", "analytic", "account_override"],
-    'update_xml': [
-        'account_journal_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/account_journal.yml'
-    ],
-    'installable': True,
-    'active': False,
-    #'certificate': 'certificate',
-}
+
+
+from osv import osv
+from tools.translate import _
+
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Give function to use when changing invoice to open state
+        """
+        if not self.action_date_assign(cr, uid, ids, context, args):
+            return False
+        if not self.action_move_create(cr, uid, ids, context, args):
+            return False
+#        if not self.action_reverse_engagement_lines():
+#            return False
+        if not self.action_number(cr, uid, ids, context):
+            return False
+        return self.write(cr, uid, ids, {'state': 'open'}, context=context)
+
+account_invoice()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
