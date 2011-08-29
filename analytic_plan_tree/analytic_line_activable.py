@@ -19,30 +19,48 @@
 #
 ##############################################################################
 
-import datetime
 from osv import osv
 from tools.translate import _
 
 class analytic_line_activable(osv.osv):
     _inherit = "account.analytic.line"
-    
-    def _check_date(self, cr, uid, vals):
+
+    def _check_date(self, cr, uid, vals, context={}):
+        """
+        Check if given account_id is active for given date
+        """
+        if not context:
+            context={}
+        if not 'account_id' in vals:
+            raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
         if 'date' in vals and vals['date'] is not False:
             account_obj = self.pool.get('account.analytic.account')
-            account = account_obj.browse(cr, uid, vals['account_id'])
+            account = account_obj.browse(cr, uid, vals['account_id'], context=context)
             if vals['date'] < account.date_start \
             or (account.date != False and \
                 vals['date'] >= account.date):
                 raise osv.except_osv(_('Error !'), _('The analytic account selected is not active.'))
 
-    def create(self, cr, uid, vals, context=None):
+    def create(self, cr, uid, vals, context={}):
+        """
+        Check date for given date and given account_id
+        """
         self._check_date(cr, uid, vals)
         return super(analytic_line_activable, self).create(cr, uid, vals, context=context)
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        self._check_date(cr, uid, vals)
-        return super(analytic_line_activable, self).write(cr, uid, ids, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Verify date for all given ids with account
+        """
+        if not context:
+            context={}
+        for id in ids:
+            if not 'account_id' in vals:
+                line = self.browse(cr, uid, [id], context=context)
+                account_id = line and line[0] and line[0].account_id.id or False
+                vals.update({'account_id': account_id})
+            self._check_date(cr, uid, vals, context=context)
+        return super(analytic_line_activable, self).write(cr, uid, ids, vals, context=context)
 
 analytic_line_activable()
 
