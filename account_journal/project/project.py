@@ -36,22 +36,20 @@ class account_analytic_journal(osv.osv):
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
 
-    # FIXME : Constraint doesn't works! Try another method not to create 2 engagement journal
-    _sql_constraints = [
-        ('engagement_journal_uniq', "CHECK (COUNT (case when type = 'engagement' then 1 else NULL end) < 2)", 'You cannot have more than one engagement journal!'),
-    ]
-
-    def create(self, cr, uid, vals, context={}):
+    def _check_engagement_count(self, cr, uid, ids, context={}):
         """
-        Raise an exception if user attemp to create another engagement journal
+        Check that no more than one engagement journal exists
         """
         if not context:
             context={}
-        engagement_ids = self.search(cr, uid, [('type', '=', 'engagement')])
-        if len(engagement_ids) and len(engagement_ids) >= 1:
-            raise osv.except_osv(_('Error'), _('You cannot create a second engagement journal!'))
-        res = super(account_analytic_journal, self).create(cr, uid, vals, context=context)
-        return res
+        eng_ids = self.search(cr, uid, [('type', '=', 'engagement')])
+        if len(eng_ids) and len(eng_ids) >= 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_engagement_count, 'You cannot have more than one engagement journal!', ['type']),
+    ]
 
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
