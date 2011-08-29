@@ -561,7 +561,8 @@ class stock_production_lot(osv.osv):
     
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
-                 'name': ''}
+                 'name': '',
+                 'life_date':time.strftime('%Y-%m-%d')}
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
     ]

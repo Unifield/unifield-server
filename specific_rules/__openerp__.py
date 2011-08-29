@@ -31,8 +31,7 @@
     "description": """
     Specific Management Rules
     """,
-    'test': [
-             ],
+    'test': ['test/specific_rules.yml',],
     'update_xml': [
         'specific_rules_view.xml',
         'wizard/stock_partial_move_view.xml',
