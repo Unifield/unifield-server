@@ -112,6 +112,7 @@ class account_invoice_line(osv.osv):
         if not journal:
             raise osv.except_osv(_('Error'), _('No engagement journal found!'))
         engagement_line_ids = []
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for inv_line in self.browse(cr, uid, ids, context=context):
             # Search old engagement journal lines to be deleted (to not have split invoice problem that delete not engagement journal lines)
             analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], context=context)
@@ -136,6 +137,9 @@ class account_invoice_line(osv.osv):
                         perm = self.perm_read(cr, uid, [inv_line.id], context=context)
                         if perm and 'create_date' in perm[0]:
                             date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+                    # Prepare some values
+                    invoice_currency = inv_line.invoice_id.currency_id.id
+                    context.update({'date': date})
                     al_vals = {
                         'name': inv_line.name,
                         'date': date,
@@ -143,7 +147,9 @@ class account_invoice_line(osv.osv):
                         'unit_amount': inv_line.quantity,
                         'product_id': inv_line.product_id and inv_line.product_id.id or False,
                         'product_uom_id': inv_line.uos_id and inv_line.uos_id.id or False,
-                        'amount': amt,
+                        'amount': self.pool.get('res.currency').compute(cr, uid, invoice_currency, company_currency, amt, round=False, context=context),
+                        'amount_currency': amt,
+                        'currency_id': invoice_currency,
                         'general_account_id': inv_line.account_id.id,
                         'journal_id': journal,
                         'source_date': date,
