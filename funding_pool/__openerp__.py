@@ -23,7 +23,7 @@
     "version": "1.1",
     "author" : "MSF: Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_analytic_plans", "register_accounting"],
+    "depends" : ["analytic", "account", "account_analytic_plans", "register_accounting", "res_currency_functional"],
     "description": """Module for defining analytic accounting object.
     """,
     "init_xml" : [

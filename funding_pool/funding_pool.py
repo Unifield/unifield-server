@@ -27,10 +27,12 @@ class analytic_distribution(osv.osv):
     _name = "analytic.distribution"
     _columns = {
         'name': fields.char('Name', size=12, required=True),
+        'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
     }
     
     _defaults ={
         'name': 'Distribution',
+        'global_distribution': False,
     }
     
 analytic_distribution()
@@ -88,6 +90,67 @@ class analytic_distribution(osv.osv):
         'free_1_lines': fields.one2many('free_1_distribution_line', 'distribution_id', 'Free 1 Distribution'),
         'free_2_lines': fields.one2many('free_2_distribution_line', 'distribution_id', 'Free 2 Distribution'),
     }
+    
+    def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, context={}):
+        cc_distrib_line_obj = self.pool.get('cost_center_distribution_line')
+        fp_distrib_line_obj = self.pool.get('funding_pool_distribution_line')
+        f1_distrib_line_obj = self.pool.get('free_1_distribution_line')
+        f2_distrib_line_obj = self.pool.get('free_2_distribution_line')
+        source_obj = self.browse(cr, uid, source_id, context=context)
+        destination_obj = self.browse(cr, uid, destination_id, context=context)
+        # clean up
+        for cost_center_line in destination_obj.cost_center_lines:
+            cc_distrib_line_obj.unlink(cr, uid, cost_center_line.id)
+        for funding_pool_line in destination_obj.funding_pool_lines:
+            fp_distrib_line_obj.unlink(cr, uid, funding_pool_line.id)
+        for free_1_line in destination_obj.free_1_lines:
+            f1_distrib_line_obj.unlink(cr, uid, free_1_line.id)
+        for free_2_line in destination_obj.free_2_lines:
+            f2_distrib_line_obj.unlink(cr, uid, free_2_line.id)
+        # add values
+        vals = {}
+        vals['name'] = source_obj.name
+        vals['global_distribution'] = True
+        for source_cost_center_line in source_obj.cost_center_lines:
+            distrib_line_vals = {
+                'name': source_cost_center_line.name,
+                'analytic_id': source_cost_center_line.analytic_id.id,
+                'percentage': source_cost_center_line.percentage,
+                'amount': round(source_cost_center_line.percentage * destination_amount) / 100.0,
+                'distribution_id': destination_id
+            }
+            cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        for source_funding_pool_line in source_obj.funding_pool_lines:
+            distrib_line_vals = {
+                'name': source_funding_pool_line.name,
+                'analytic_id': source_funding_pool_line.analytic_id.id,
+                'cost_center_id': source_funding_pool_line.cost_center_id.id,
+                'percentage': source_funding_pool_line.percentage,
+                'amount': round(source_funding_pool_line.percentage * destination_amount) / 100.0,
+                'distribution_id': destination_id
+            }
+            fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        for source_free_1_line in source_obj.free_1_lines:
+            distrib_line_vals = {
+                'name': source_free_1_line.name,
+                'analytic_id': source_free_1_line.analytic_id.id,
+                'percentage': source_free_1_line.percentage,
+                'amount': round(source_free_1_line.percentage * destination_amount) / 100.0,
+                'distribution_id': destination_id
+            }
+            f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        for source_free_2_line in source_obj.free_2_lines:
+            distrib_line_vals = {
+                'name': source_free_2_line.name,
+                'analytic_id': source_free_2_line.analytic_id.id,
+                'percentage': source_free_2_line.percentage,
+                'amount': round(source_free_2_line.percentage * destination_amount) / 100.0,
+                'distribution_id': destination_id
+            }
+            f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
+        return
+        
     
 analytic_distribution()
     

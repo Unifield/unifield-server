@@ -104,7 +104,10 @@ class wizard_fundingpool_distribution(osv.osv_memory):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         fp_distrib_line_obj = self.pool.get('funding_pool_distribution_line')
         distrib_obj = self.pool.get('analytic.distribution')
-        distrib = distrib_obj.browse(cr, uid, wizard_obj.distribution_id.id)
+        # first, distribution is not derived from a global one; the flag is set
+        distrib_id = wizard_obj.distribution_id.id
+        distrib_obj.write(cr, uid, [distrib_id], vals={'global_distribution': False}, context=context)
+        distrib = distrib_obj.browse(cr, uid, distrib_id, context=context)
         # remove old lines
         for funding_pool_line in distrib.funding_pool_lines:
             fp_distrib_line_obj.unlink(cr, uid, funding_pool_line.id)
@@ -119,6 +122,15 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'distribution_id': wizard_obj.distribution_id.id
             }
             fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        # if there are child distributions, we refresh them
+        if 'child_distributions' in context and context['child_distributions']:
+            for child in context['child_distributions']:
+                distrib_obj.copy_from_global_distribution(cr,
+                                                          uid,
+                                                          distrib_id,
+                                                          child[0],
+                                                          child[1],
+                                                          context=context)
         return
     
     def _get_cost_centers(self, cr, uid, ids, name, arg, context={}):
@@ -224,6 +236,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'context': {
                     'active_id': context.get('active_id'),
                     'active_ids': context.get('active_ids'),
+                    'child_distributions': context.get('child_distributions'),
                }
         }
             
@@ -252,6 +265,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'context': {
                     'active_id': context.get('active_id'),
                     'active_ids': context.get('active_ids'),
+                    'child_distributions': context.get('child_distributions'),
                }
         }
             

@@ -84,7 +84,10 @@ class wizard_free1_distribution(osv.osv_memory):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         f1_distrib_line_obj = self.pool.get('free_1_distribution_line')
         distrib_obj = self.pool.get('analytic.distribution')
-        distrib = distrib_obj.browse(cr, uid, wizard_obj.distribution_id.id)
+        # first, distribution is not derived from a global one; the flag is set
+        distrib_id = wizard_obj.distribution_id.id
+        distrib_obj.write(cr, uid, [distrib_id], vals={'global_distribution': False}, context=context)
+        distrib = distrib_obj.browse(cr, uid, distrib_id, context=context)
         # remove old lines
         for free_1_line in distrib.free_1_lines:
             f1_distrib_line_obj.unlink(cr, uid, free_1_line.id)
@@ -98,6 +101,15 @@ class wizard_free1_distribution(osv.osv_memory):
                 'distribution_id': wizard_obj.distribution_id.id
             }
             f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        # if there are child distributions, we refresh them
+        if 'child_distributions' in context:
+            for child in context['child_distributions']:
+                distrib_obj.copy_from_global_distribution(cr,
+                                                          uid,
+                                                          distrib_id,
+                                                          child[0],
+                                                          child[1],
+                                                          context=context)
         return
     
     _columns = {
@@ -195,6 +207,7 @@ class wizard_free1_distribution(osv.osv_memory):
                 'context': {
                     'active_id': context.get('active_id'),
                     'active_ids': context.get('active_ids'),
+                    'child_distributions': context.get('child_distributions'),
                }
         }
             
@@ -222,6 +235,7 @@ class wizard_free1_distribution(osv.osv_memory):
                 'context': {
                     'active_id': context.get('active_id'),
                     'active_ids': context.get('active_ids'),
+                    'child_distributions': context.get('child_distributions'),
                }
         }
             
