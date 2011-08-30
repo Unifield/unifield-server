@@ -76,6 +76,22 @@ class account_bank_statement(osv.osv):
             res[st.id] = st.id
         return res
 
+    def _get_journal_name(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        res = {}
+        for st in self.browse(cr, uid, ids, context=context):
+            if st.journal_id:
+                res[st.id] = st.journal_id.name
+                
+        return res
+    
+    def _default_journal_name(self, cr, uid, context=None):
+        journal_id = super(account_bank_statement, self)._default_journal_id(cr, uid, context)
+        journal_name = None
+        if journal_id:
+            journal_name = self.pool.get('account.journal').read(cr, uid, journal_id, ['name'], context=context)['name']
+        
+        return journal_name
+    
     _columns = {
         'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
             help="Closing balance"),
@@ -84,14 +100,34 @@ class account_bank_statement(osv.osv):
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
         'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
-            help="This fields give the previous register from which this one is linked."),
+            help="This field gives the previous register from which this one is linked."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
-
+        'name': fields.char('Register Name', size=64, required=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself', states={'confirm': [('readonly', True)]}),
+        'code': fields.char('Register Code', size=10, ),
+        'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
     }
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
+        'journal_name': _default_journal_name,
     }
+
+    def onchange_journal_id(self, cr, uid, statement_id, journal_id, context=None):
+        res = super(account_bank_statement, self).onchange_journal_id(cr, uid, statement_id, journal_id, context)
+        if not res: # don't know if it is necessary to do this check, 'res' should never be None
+            return None
+        
+        # if this method get called, then the journal name must be updated, if journal id is empty, then empty also the name field
+        if not res.has_key('value'): # when journal_id is empty
+            res['value'] = {'journal_name': None}
+        else:
+            value = res['value']
+            if journal_id:
+                journal_name = self.pool.get('account.journal').read(cr, uid, journal_id, ['name'], context=context)['name']
+                value['journal_name'] = journal_name
+            
+        return res
 
     def balance_check(self, cr, uid, register_id, journal_type='bank', context=None):
         """
@@ -510,7 +546,7 @@ class account_bank_statement_line(osv.osv):
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
-        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Empty'), 
+        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Draft'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
