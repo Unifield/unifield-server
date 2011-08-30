@@ -40,7 +40,7 @@ class real_average_consumption(osv.osv):
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature_level'),
+        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
@@ -101,7 +101,15 @@ class real_average_consumption(osv.osv):
                 
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'target': 'new',
+                'res_id': ids[0],
+                }
+        
+        #return {'type': 'ir.actions.act_window_close'}
     
 real_average_consumption()
 
@@ -130,14 +138,129 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
+        'list_id': fields.many2one('product.list', string='List'),
+        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
+    }
+    
+    _defaults = {
+        'list_id': lambda obj, cr, uid, context={}: context.get('rac_id', False) and obj.pool.get('real.average.consumption').browse(cr, uid, context.get('rac_id')).sublist_id.id or False,
+        'nomen_id': lambda obj, cr, uid, context={}: context.get('rac_id', False) and obj.pool.get('real.average.consumption').browse(cr, uid, context.get('rac_id')).nomen_id.id or False,
     }
     
 real_average_consumption_line()
 
 
+class monthly_review_consumption(osv.osv):
+    _name = 'monthly.review.consumption'
+    _description = 'Monthly review consumption'
+    
+    _columns = {
+        'creation_date': fields.date(string='Creation date'),
+        'cons_location_id': fields.many2one('stock.location', string='Location', domain=[('usage', '=', 'internal')], required=True),
+        'period_from': fields.date(string='Period from', required=True),
+        'period_to': fields.date(string='Period to', required=True),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
+        'line_ids': fields.one2many('monthly.review.consumption.line', 'mrc_id', string='Lines'),
+    }
+    
+    _defaults = {
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'period_to': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+    
+monthly_review_consumption()
+
+
+class monthly_review_consumption_line(osv.osv):
+    _name = 'monthly.review.consumption.line'
+    _description = 'Monthly review consumption line'
+    
+    def _get_amc(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Calculate the product AMC for the period
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            context.update({'from_date': line.mrc_id.period_from, 'to_date': line.mrc_id.period_to})
+            res[line.id] = self.pool.get('product.product').compute_amc(cr, uid, ids, context=context)
+            
+        return res
+    
+    _columns = {
+        'name': fields.many2one('product.product', string='Product', required=True),
+        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
+        'fmc': fields.float(digits=(16,2), string='FMC'),
+        'last_reviewed': fields.related('name', 'last_fmc_reviewed', string='Last reviewed on', readonly=True),
+        'valid_until': fields.date(string='Valid until'),
+        'valid_ok': fields.boolean(string='OK'),
+        'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
+        'list_id': fields.many2one('product.list', string='List'),
+        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
+    }
+    
+    _defaults = {
+        'list_id': lambda obj, cr, uid, context={}: context.get('mrc_id', False) and obj.pool.get('monthly.review.consumption').browse(cr, uid, context.get('mrc_id')).sublist_id.id or False,
+        'nomen_id': lambda obj, cr, uid, context={}: context.get('mrc_id', False) and obj.pool.get('monthly.review.consumption').browse(cr, uid, context.get('mrc_id')).nomen_id.id or False,
+    }
+    
+    def valid_line(self, cr, uid, ids, context={}):
+        '''
+        Valid the line and enter data in product form
+        '''
+        product_obj = self.pool.get('product.product')
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            product_obj.write(cr, uid, [line.name.id], 
+                              {'last_fmc': line.fmc,
+                               'last_fmc_reviewed': time.strftime('%Y-%m-%d')},
+                               context=context)
+            
+            self.write(cr, uid, [line.id], {'valid_ok': True}, context=context)
+            
+        return True
+    
+    def display_graph(self, cr, uid, ids, context={}):
+        '''
+        Display the graph view of the line
+        '''
+        raise osv.except_osv('Error !', 'Not implemented')
+    
+    def product_onchange(self, cr, uid, ids, product_id, context={}):
+        '''
+        Fill data in the line
+        '''
+        product_obj = self.pool.get('product.product')
+        
+        if not product_id:
+            return {'value': {'amc': 0.00,
+                              'fmc': 0.00,
+                              'last_reviewed': False,
+                              'valid_until': False,
+                              'valid_ok': False}}
+            
+        product = product_obj.browse(cr, uid, product_id, context=context)
+        amc = product_obj.compute_amc(cr, uid, ids, context=context)
+        
+        return {'value': {'amc': amc,
+                          'fmc': amc,
+                          'last_reviewed': product.last_fmc_reviewed,
+                          'valid_until': False,
+                          'valid_ok': False}}
+        
+    
+monthly_review_consumption_line()
+
+
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
+    
+    _columns = {
+        'last_fmc_reviewed': fields.date(string='Last reviewed on', readonly=True),
+        'last_fmc': fields.float(string='Last FMC', readonly=True),
+    }
     
     def compute_mac(self, cr, uid, ids, context={}):
         '''
@@ -240,6 +363,9 @@ class product_product(osv.osv):
                 from_date = move.date_expected
             if not context.get('to_date') and (not to_date or move.date_expected > to_date):
                 to_date = move.date_expected
+                
+        if not to_date or not from_date:
+            return 0.00
             
         # We want the average for the entire period
         if to_date < from_date:
