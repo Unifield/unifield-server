@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from time import strftime
+import time 
 from ..register_tools import _get_date_in_period
 
 class wizard_import_invoice_lines(osv.osv_memory):
@@ -37,19 +37,25 @@ class wizard_import_invoice_lines(osv.osv_memory):
     _columns = {
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
         'ref': fields.char('Ref.', size=64, readonly=True),
-        'number': fields.char('Number', size=64, readonly=True),
-        'supplier_ref': fields.char('Supplier Inv. Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
-        'date_maturity': fields.date('Due Date', readonly=True),
         'date': fields.date('Effective Date', readonly=False, required=True),
         'amount': fields.integer('Amount', readonly=False, required=True),
         'amount_to_pay': fields.integer('Amount to pay', readonly=True),
         'amount_currency': fields.integer('Amount currency', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
-        'line_id': fields.many2one('account.move.line', string="Invoice", required=True),
+        'line_ids': fields.many2many('account.move.line', 'account_move_immport_rel', 'move_id', 'line_id', 'Invoices'),
         'wizard_id': fields.many2one('wizard.import.invoice', string='wizard'),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=False, required=False),
     }
+    def write(self, cr, uid, ids, vals, context={}):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        if 'amount' in vals:
+            for l in self.read(cr, uid, ids, ['amount_to_pay']):
+                if vals['amount'] > l['amount_to_pay']:
+                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s"%(vals['amount'], l['amount_to_pay'])))
+
+        return super(wizard_import_invoice_lines, self).write(cr, uid, ids, vals, context)
 
 wizard_import_invoice_lines()
 
@@ -62,10 +68,11 @@ class wizard_import_invoice(osv.osv_memory):
     _description = 'Invoices to be imported'
 
     _columns = {
-        'line_id': fields.many2one('account.move.line', string='Invoice', required=False),
+        'line_ids': fields.many2many('account.move.line', 'account_move_line_relation', 'move_id', 'line_id', 'Invoices'),
         'invoice_lines_ids': fields.one2many('wizard.import.invoice.lines', 'wizard_id', string='', required=True),
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
-        'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency.")
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency."),
+        'date': fields.date('Date'),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -83,47 +90,57 @@ class wizard_import_invoice(osv.osv_memory):
         result = super(wizard_import_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
 
-    def action_add_invoice(self, cr, uid, ids, context={}):
-        """
-        Add selected invoice into invoice_lines_ids tree
-        """
+    def single_import(self, cr, uid, ids, context={}):
+        return self.group_import(cr, uid, ids, context, group=False)
+
+    def group_import(self, cr, uid, ids, context={}, group=True):
         wizard = self.browse(cr, uid, ids[0], context=context)
-        vals = {}
-        new_lines = []
-        # Take all registered lines
-        display_lines = [x['line_id']['id'] for x in wizard.invoice_lines_ids]
-        if display_lines:
-            # Add these lines 
-            new_lines.append(wizard.invoice_lines_ids)
-        period_id = wizard.statement_id.period_id.id
-        if not wizard.line_id: 
-            return False
-        if wizard.line_id.id in display_lines:
-            raise osv.except_osv(_('Warning'), _('This invoice has already been added. Please choose another invoice.'))
-        line = wizard.line_id
+        if not wizard.line_ids:
+            raise osv.except_osv(_('Warning'), _('Please add invoice lines'))
         
-        vals = {
-            'line_id': line.id or None,
-            'partner_id': line.partner_id.id or None,
-            'ref': line.ref or None,
-            'number': line.invoice.number or None,
-            'supplier_ref': line.invoice.name or None,
-            'account_id': line.account_id.id or None,
-            'date_maturity': line.date_maturity or None,
-            'date': _get_date_in_period(self, cr, uid, line.date or strftime('%Y-%m-%d'), period_id, context=context),
-            'amount': line.amount_currency or None, # By default, amount_to_pay
-            'amount_to_pay': line.amount_to_pay or None,
-            'amount_currency': line.amount_currency or None,
-            'currency_id': line.currency_id.id or None,
-            'wizard_id': wizard.id or None,
-        }
-        new_line = (0, 0, vals)
-        new_lines.append(new_line)
-        # Write change on wizard in order to:
-        # - add new lines
-        # - clear invoice field
-        self.write(cr, uid, ids, {'invoice_lines_ids': new_lines, 'line_id': None}, context=context)
-        # Refresh wizard to display changes
+        already = []
+        for line in wizard.invoice_lines_ids:
+            for inv in line.line_ids:
+                already.append(inv.id)
+
+        ordered_lines = {}
+        for line in wizard.line_ids:
+            if line.id in already:
+                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.'%(line.name, line.amount_currency)))
+            if group:
+                key = "%s-%s-%s"%(line.amount_currency < 0 and "-" or "+", line.partner_id.id, line.account_id.id)
+            else:
+                key = line.id
+
+            if not key in ordered_lines:
+                ordered_lines[key] = [line]
+            elif line not in ordered_lines[key]:
+                ordered_lines[key].append(line)
+        
+        # For each partner, do an account_move with all lines => lines merge
+        new_lines = []
+        for key in ordered_lines:
+            # Prepare some values
+            total = 0.0
+            amount_cur = 0
+
+            for line in ordered_lines[key]:
+                total += line.amount_currency
+                amount_cur += line.amount_residual_import_inv
+            
+            # Create register line
+            new_lines.append({
+                'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
+                'partner_id': ordered_lines[key][0].partner_id.id or None,
+                'ref': 'Imported Invoice',
+                'account_id': ordered_lines[key][0].account_id.id or None,
+                'date': wizard.date or time.strftime('%Y-%m-%d'),
+                'amount': abs(amount_cur),
+                'amount_to_pay': amount_cur,
+                'amount_currency': total,
+                'currency_id': ordered_lines[key][0].currency_id.id,
+            })
+        self.write(cr, uid, [wizard.id], {'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]})
         return {
          'type': 'ir.actions.act_window',
          'res_model': 'wizard.import.invoice',
@@ -155,54 +172,25 @@ class wizard_import_invoice(osv.osv_memory):
             cheque = True
         st_line_ids = []
 
-        # Order lines by partner_id
-        ordered_lines = {}
-        for line in wizard.invoice_lines_ids:
-            # FIXME: Verify that all lines have positive amount AND an amount that doesn't be superior to amount_to_pay
-            if not line.partner_id.id in ordered_lines:
-                ordered_lines[line.partner_id.id] = [line.id]
-            elif line.id not in ordered_lines[line.partner_id.id]:
-                ordered_lines[line.partner_id.id].append(line.id)
-            # We come from a cheque register ? So what about cheque_number field ?
-            if cheque and line.cheque_number is False:
-                raise osv.except_osv(_('Warning'), _('Please complete "Cheque Number" field(s) before wizard validation.'))
-
         # For each partner, do an account_move with all lines => lines merge
-        for partner in ordered_lines:
-            register_vals = {}
-            cheque_numbers = []
-            # Lines for this partner
-            lines = self.pool.get('wizard.import.invoice.lines').browse(cr, uid, ordered_lines[partner])
-            first_line = move_line_obj.browse(cr, uid, [lines[0].line_id.id], context=context)[0] or None
+        for line in wizard.invoice_lines_ids:
+            if cheque and not line.cheque_number:
+                raise osv.except_osv(_('Warning'), _('Please add a cheque number to red lines.'))
 
-            # Prepare some values
-            currency_id = first_line.currency_id and first_line.currency_id.id or False
-            curr_date = strftime('%Y-%m-%d')
-            
-            # Prepare some values
-            total = 0.0
-            for line in lines:
-                res = self.pool.get('wizard.import.invoice.lines').read(cr, uid, line.id, ['amount', 'cheque_number'])
-                if 'amount' in res:
-                    total += res.get('amount')
-                if cheque and 'cheque_number' in res:
-                    cheque_numbers.append(res.get('cheque_number'))
-            
             # Create register line
             register_vals = {
-                'name': 'Imported invoices',
-                'date': _get_date_in_period(self, cr, uid, curr_date, period_id, context=context),
+                'name': line.ref,
+                'date': line.date,
                 'statement_id': st_id,
-                'account_id': first_line.account_id.id,
-                'partner_id': first_line.partner_id.id,
-                'amount': total,
+                'account_id': line.account_id.id,
+                'partner_id': line.partner_id.id,
+                'amount': line.amount_currency < 0 and -line.amount or line.amount,
+                'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
             }
             # if we come from cheque, add a column for that
             if cheque:
-                register_vals.update({'cheque_number': '-'.join(cheque_numbers)[:120]})
-            # add ids of imported_invoice_lines
-            register_vals.update({'imported_invoice_line_ids': [(4, x.line_id.id) for x in lines]})
-            # create the register line
+                register_vals.update({'cheque_number': line.cheque_number})
+            
             absl_id = absl_obj.create(cr, uid, register_vals, context=context)
             
             # Temp post the register line

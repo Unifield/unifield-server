@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from register_tools import create_starting_cashbox_lines
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -38,8 +39,10 @@ class account_cash_statement(osv.osv):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
         """
+        j_obj = self.pool.get('account.journal')
+        journal = j_obj.browse(cr, uid, vals['journal_id'], context=context)
         # @@@override@account.account_cash_statement.create()
-        if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'cash':
+        if journal.type == 'cash':
             open_close = self._get_cash_open_close_box_lines(cr, uid, context)
             if vals.get('starting_details_ids', False):
                 for start in vals.get('starting_details_ids'):
@@ -57,17 +60,39 @@ class account_cash_statement(osv.osv):
                 'starting_details_ids': False
             })
         # @@@end
+        # Observe register state
+        prev_reg_id = vals.get('prev_reg_id', False)
+        if prev_reg_id:
+            prev_reg = self.browse(cr, uid, [prev_reg_id], context=context)[0]
+            # if previous register closing balance is freezed, then retrieving previous closing balance
+            if prev_reg.closing_balance_frozen:
+                if journal.type == 'bank':
+                    vals.update({'balance_start': prev_reg.balance_end_real})
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
+        # take on previous lines if exists
+        if prev_reg_id:
+            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
+        # update balance_end
+        self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
 
     def button_open_cash(self, cr, uid, ids, context={}):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
             self.write(cr, uid, [rs], res.get(rs))
+            # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
+            register = self.browse(cr, uid, [rs], context=context)[0]
+            if register and not register.prev_reg_id:
+                if not register.balance_start > 0:
+                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
         st = self.browse(cr, uid, ids)[0]
@@ -88,6 +113,14 @@ class account_cash_statement(osv.osv):
             for line in st.line_ids:
                 if line.state != 'hard':
                     raise osv.except_osv(_('Warning'), _('All entries must be hard posted before closing CashBox!'))
+        # Then verify that another Cash Register exists
+        for st in self.browse(cr, uid, ids, context=context):
+            st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
+            if len(st_prev_ids) > 1:
+                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+            # Verify that the closing balance have been freezed
+            if not st.closing_balance_frozen:
+                raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
