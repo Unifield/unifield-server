@@ -58,7 +58,9 @@
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
-					<field name="supplier" colspan="2" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
+					<field name="supplier" colspan="2"
+						context="{'product_id': product_id, 'choose_supplier': True}"
+						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Confirm line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" />

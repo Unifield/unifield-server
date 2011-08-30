@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+        <record id="tender_form" model="ir.ui.view">
+            <field name="name">tender.form</field>
+            <field name="model">tender</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender">
+                    <group col="6" colspan="4">
+                        <field name="name"/>
+                        <field name="sale_order_id"/>
+                    </group>
+                    <notebook colspan="5">
+                        <page string="Tender Lines">
+                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Tender Lines">
+                                    <field name="product_id" />
+                                    <field name="qty" />
+                                    <field name="supplier_id" />
+                                    <field name="price_unit" />
+                                    <field name="total_price" />
+                                    <field name="purchase_order_id" />
+                                </tree>
+                            </field>
+                            <newline/>
+                            <group col="13" colspan="10">
+                            </group>
+                            <group col="13" colspan="4">
+                                <field name="state"/>
+                                <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
+                                <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
+                                <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
+                            </group>
+                        </page>
+                        <page string="Suppliers">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Suppliers">
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        
+        <record id="tender_tree" model="ir.ui.view">
+            <field name="name">tender.tree</field>
+            <field name="model">tender</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Tender">
+                    <field name="name" />
+                    <field name="sale_order_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+	
+		<record id="tender_search_form_view" model="ir.ui.view">
+			<field name="name">tender.search.form</field>
+			<field name="model">tender</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Tender">
+					<field name="name" />
+					<field name="sale_order_id" />
+					<field name="state" />
+					<newline />
+					<group expand="0" string="Group By..." colspan="11" col="11"
+						groups="base.group_extended">
+						<filter string="Sale Order" icon="terp-accessories-archiver" domain="[]"
+							context="{'group_by':'sale_order_id'}" />
+						<filter string="Tender State" icon="terp-rating-rated"
+							domain="[]" context="{'group_by':'state'}" />
+					</group>
+				</search>
+			</field>
+		</record>
+
+		<record id="tender_action" model="ir.actions.act_window">
+			<field name="name">Tenders</field>
+			<field name="res_model">tender</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[]</field>
+			<field name="search_view_id" ref="tender_search_form_view" />
+		</record>
+
+		<menuitem icon="STOCK_INDENT" action="tender_action"
+			id="menu_tender" parent="base.menu_sales" />
+
+	</data>
+</openerp>

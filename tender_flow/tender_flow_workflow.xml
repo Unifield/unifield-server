@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="wkf_tender" model="workflow">
+            <field name="name">tender.flow.basic</field>
+            <field name="osv">tender</field>
+            <field name="on_create">True</field>
+        </record>
+        <record id="act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_tender"/>
+            <field name="flow_start">True</field>
+            <field name="name">draft</field>
+        </record>
+        <record id="act_comparison" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_tender"/>
+            <field name="name">comparison</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_generate_rfq()</field>
+        </record>
+        <record id="act_done" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_tender"/>
+            <field name="name">done</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_action_done()</field>
+            <field name="flow_stop">True</field>
+            <field name="signal_send">subflow.tender_done</field>
+        </record>
+
+        <record id="trans_draft_comparison" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_comparison"/>
+            <field name="signal">button_generate</field>
+        </record>
+        <record id="trans_comparison_done" model="workflow.transition">
+            <field name="act_from" ref="act_comparison"/>
+            <field name="act_to" ref="act_done"/>
+            <field name="signal">button_done</field>
+        </record>
+        
+        <!-- PROCUREMENT WORKFLOW -->
+ 		<record id="procurement.act_tender" model="workflow.activity">
+            <field name="wkf_id" ref="procurement.wkf_procurement"/>
+            <field name="name">tender</field>
+            <field name="kind">subflow</field>
+            <field name="subflow_id" search="[('osv','=','tender')]"/>
+            <field name="action">wkf_action_tender_create()</field>
+        </record>
+        
+        <record id="procurement.act_tender_done" model="workflow.activity">
+            <field name="wkf_id" ref="procurement.wkf_procurement"/>
+            <field name="name">tender done</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_action_tender_done()</field>
+        </record>
+        
+        <record id="procurement.trans_confirm_mto_tender" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_confirm_mto"/>
+            <field name="act_to" ref="procurement.act_tender"/>
+            <field name="condition">is_tender and not is_tender_done</field>
+        </record>
+        
+        <record id="procurement.trans_tender_tender_done" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_tender"/>
+            <field name="act_to" ref="procurement.act_tender_done"/>
+            <field name="signal">subflow.tender_done</field>
+        </record>
+        
+        <record id="procurement.trans_tender_done_confirm_mto" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_tender_done"/>
+            <field name="act_to" ref="procurement.act_confirm_mto"/>
+        </record>
+        
+        <record id="procurement.trans_confirm_mto_purchase" model="workflow.transition">
+            <field name="act_from" ref="procurement.act_confirm_mto"/>
+            <field name="act_to" ref="purchase.act_buy"/>
+            <field name="condition">((is_tender and is_tender_done) or (not is_tender)) and check_buy()</field>
+        </record>
+
+    </data>
+</openerp>
