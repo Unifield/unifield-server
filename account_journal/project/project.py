@@ -43,7 +43,7 @@ class account_analytic_journal(osv.osv):
         if not context:
             context={}
         eng_ids = self.search(cr, uid, [('type', '=', 'engagement')])
-        if len(eng_ids) and len(eng_ids) >= 1:
+        if len(eng_ids) and len(eng_ids) > 1:
             return False
         return True
 
