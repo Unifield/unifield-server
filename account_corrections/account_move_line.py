@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 #-*- encoding:utf-8 -*-
-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -26,30 +25,37 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
-class account_analytic_journal(osv.osv):
-    _name = 'account.analytic.journal'
-    _description = 'Analytic Journal'
-    _inherit = 'account.analytic.journal'
-    _columns = {
-        'type': fields.selection([('sale','Sale'), ('purchase','Purchase'), ('cash','Cash'), ('general','General'), ('situation','Situation'), 
-            ('engagement', 'Engagement')], 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
-(eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
-    }
+class account_move_line(osv.osv):
+    _name = 'account.move.line'
+    _inherit = 'account.move.line'
 
-    def _check_engagement_count(self, cr, uid, ids, context={}):
+    def button_do_accounting_corrections(self, cr, uid, ids, context={}):
         """
-        Check that no more than one engagement journal exists
+        Launch accounting correction wizard to do reverse or correction on selected move line.
         """
         if not context:
             context={}
-        eng_ids = self.search(cr, uid, [('type', '=', 'engagement')])
-        if len(eng_ids) and len(eng_ids) > 1:
-            return False
+        wizard = self.pool.get('wizard.journal.items.corrections').create(cr, uid, {'move_line_id': ids[0]}, context=context)
+        return {
+            'name': "Accounting Corrections Wizard",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.journal.items.corrections',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wizard],
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+            }
+        }
+
+    def button_open_corrections(self, cr, uid, ids, context={}):
+        """
+        Open all corrections linked to the given one
+        """
         return True
 
-    _constraints = [
-        (_check_engagement_count, 'You cannot have more than one engagement journal!', ['type']),
-    ]
-
-account_analytic_journal()
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

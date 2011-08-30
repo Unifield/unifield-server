@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Journal Items -->
+        <record model="ir.ui.view" id="wizard_journal_items_corrections_form">
+            <field name="name">wizard.journal.items.corrections.form</field>
+            <field name="model">wizard.journal.items.corrections</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Journal items corrections Wizard">
+                    <field name="move_line_id" invisible="1" colspan="1"/>
+                    <field name="date"/>
+                    <newline/>
+                    <field name="to_be_corrected_ids" colspan="6">
+                        <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
+                            <field name="account_id"/>
+                            <field name="ref"/>
+                            <field name="journal_id"/>
+                            <field name="period_id"/>
+                            <field name="date"/>
+                            <field name="debit"/>
+                            <field name="credit"/>
+                            <field name="currency_id"/>
+                        </tree>
+                    </field>
+                    <newline/>
+                    <label string="" colspan="6"/>
+                    <group colspan="4" col="6">
+                        <label string ="" colspan="1"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="terp-gtk-jump-to-rtl" string="Reverse All" name="action_reverse" type="object"/>
+                        <button icon="terp-gtk-jump-to-ltr" string="Correct entry" name="action_confirm" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

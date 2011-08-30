@@ -64,6 +64,7 @@
         'account_invoice_split',
         "account_msf",
         "specific_locations",
+        "account_corrections",
     ],
     "update_xml": [
         "report.xml",
