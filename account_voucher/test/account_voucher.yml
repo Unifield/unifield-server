@@ -4,7 +4,7 @@
   !record {model: account.period, id: current_period}:
     company_id: base.main_company
     date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
     fiscalyear_id: account.data_fiscalyear
     name: Current Period
     special: 1
