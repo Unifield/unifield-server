@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from bsddb.dbtables import _columns
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -62,10 +61,6 @@ class account_invoice(osv.osv):
     _description = 'Account invoice'
 
     _inherit = 'account.invoice'
-
-    _columns = {
-            'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'close':[('readonly',True)], 'cancel':[('readonly',True)]}, required=True, select=True),
-    }
 
     def copy(self, cr, uid, id, default={}, context={}):
         if not context:
