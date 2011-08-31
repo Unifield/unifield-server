@@ -48,6 +48,14 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="RfQs">
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1">
+                                <tree string="RfQs">
+                                    <field name="name" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
                 </form>
             </field>

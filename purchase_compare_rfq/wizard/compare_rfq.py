@@ -51,7 +51,7 @@ class wizard_compare_rfq(osv.osv_memory):
         line_ids = []
         
         for o in order_obj.browse(cr, uid, ids, context=context):
-            if o.state != 'draft':
+            if o.state != 'draft' and o.state != 'rfq_done':
                 raise osv.except_osv(_('Error'), _('You cannot compare confirmed Quotations !'))
             for l in o.order_line:
                 if l.price_unit > 0.00:

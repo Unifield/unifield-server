@@ -44,6 +44,7 @@ class tender(osv.osv):
                                                  states={'draft':[('readonly',False)]}, readonly=True),
                 'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft':[('readonly',False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
                 'company_id': fields.many2one('res.company','Company',required=True, states={'draft':[('readonly',False)]}, readonly=True),
+                'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 }
     
     _defaults = {'state': 'draft',
@@ -116,7 +117,18 @@ class tender(osv.osv):
         '''
         compare rfqs button
         '''
-        return True
+        if len(ids) > 1:
+            raise osv.except_osv(_('Warning !'), _('Cannot compare rfqs of more than one tender at a time!'))
+        po_obj = self.pool.get('purchase.order')
+        wiz_obj = self.pool.get('wizard.compare.rfq')
+        for tender in self.browse(cr, uid, ids, context=context):
+            # rfq corresponding to this tender with done state (has been updated and not canceled)
+            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('state', '=', 'rfq_done'),], context=context)
+            # the list of rfq which will be compared
+            c = dict(context, active_ids=rfq_ids, tender=True)
+            # open the wizard
+            action = wiz_obj.start_compare_rfq(cr, uid, ids, context=c)
+        return action
 
 tender()
 
@@ -182,6 +194,20 @@ class tender(osv.osv):
     _inherit = 'tender'
     _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)]}, readonly=True),
                 }
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        reset the name to get new sequence number
+        
+        the copy method is here because upwards it goes in infinite loop
+        '''
+        if default is None:
+            default = {}
+        
+        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'tender'))
+            
+        result = super(tender_tender, self).copy(cr, uid, id, default, context)
+        return result
 
 tender()
 
@@ -290,7 +316,21 @@ class purchase_order(osv.osv):
     add link to tender
     '''
     _inherit = 'purchase.order'
+    
+    STATE_SELECTION = [
+                       ('draft', 'Request for Quotation'),
+                       ('wait', 'Waiting'),
+                       ('confirmed', 'Waiting Approval'),
+                       ('approved', 'Approved'),
+                       ('except_picking', 'Shipping Exception'),
+                       ('except_invoice', 'Invoice Exception'),
+                       ('done', 'Done'),
+                       ('cancel', 'Cancelled'),
+                       ('rfq_done', 'RfQ Done'),
+    ]
+    
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+                'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 }
     
 purchase_order()
