@@ -8,9 +8,12 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="Import FMC">
+					<separator colspan="4" string="File to import" />
 					<field name="file" />
-					<field name="message" />
-					<button name="import_file" string="Import file" type="object" />
+					<separator colspan="4" string="Information" />
+					<field name="message" colspan="4" nolabel="1" />
+					<button special="cancel" string="Cancel" icon="gtk-cancel" type="object" />
+					<button name="import_file" string="Import file" icon="gtk-go-forward" type="object" />
 				</form>
 			</field>
         </record>
@@ -22,8 +25,9 @@
 			<field name="priority" eval="99" />
 			<field name="arch" type="xml">
 				<form string="FMC Imported">
-					<field name="file" />
-					<field name="message" />
+					<separator colspan="4" string="Information" />
+					<field name="message" colspan="4" nolabel="1" />
+					<label colspan="2" />
 					<button name="close_import" string="Close window" type="object" />
 				</form>
 			</field>

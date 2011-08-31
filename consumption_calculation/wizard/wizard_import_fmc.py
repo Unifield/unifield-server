@@ -40,6 +40,8 @@ class wizard_import_fmc(osv.osv_memory):
     
     _defaults = {
         'message': lambda *a : """
+        IMPORTANT : The first line will be ignored by the system.
+        
         The file should be in CSV format (with ';' character as delimiter).
         The columns should be in this order :
           * Product code
@@ -86,6 +88,8 @@ class wizard_import_fmc(osv.osv_memory):
         error = ''
 
         line_num = 0
+        
+        reader.next()
 
         for line in reader:
             line_num += 1
@@ -127,7 +131,7 @@ class wizard_import_fmc(osv.osv_memory):
                                                 
                                                 Reported errors :
                                                 %s
-                                             ''' % (complete_lines, ignore_lines, error)}, context=context)
+                                             ''' % (complete_lines, ignore_lines, error or 'No error !')}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_fmc_end')[1],
         

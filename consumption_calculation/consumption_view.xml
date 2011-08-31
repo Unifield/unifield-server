@@ -133,7 +133,7 @@
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" />
-                    <button name="import_fmc" string="Import a file" type="object" colspan="2" />
+                    <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" />
                     <newline />
                     <field name="cons_location_id" />
