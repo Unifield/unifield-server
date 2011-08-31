@@ -20,18 +20,6 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-
-import sync_client.rpc
-import uuid
-import tools
-import time
-import sys
-import traceback
-
-import sync_client
 
 class test(osv.osv_memory):
     _name = "sync.server.test"
@@ -41,19 +29,14 @@ class test(osv.osv_memory):
             return true if the entity name exist and is in state pending
         """
         ids = self.pool.get('sync.server.entity').search(cr, uid, [('name', '=', name), ('state', '=', 'pending')], context=context)
-        if ids:
-            return True
-        else: 
-            return False
+        return bool(ids)
+
     def check_validated(self, cr, uid, name, context=None):
         """
             return true if the entity name exist and is in state validated
         """
         ids = self.pool.get('sync.server.entity').search(cr, uid, [('name', '=', name), ('state', '=', 'validated')], context=context)
-        if ids:
-            return True
-        else:
-            return False
+        return bool(ids)
         
     def change_rule_group(self, cr, uid, rule_name, group_name, context=None):
         rule_obj = self.pool.get('sync_server.sync_rule')
