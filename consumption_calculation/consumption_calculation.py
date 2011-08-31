@@ -192,9 +192,9 @@ class monthly_review_consumption_line(osv.osv):
         'name': fields.many2one('product.product', string='Product', required=True),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
         'fmc': fields.float(digits=(16,2), string='FMC'),
-        'last_reviewed': fields.related('name', 'last_fmc_reviewed', string='Last reviewed on', readonly=True),
+        'last_reviewed': fields.related('name', 'last_fmc_reviewed', type='date', string='Last reviewed on', readonly=True),
         'valid_until': fields.date(string='Valid until'),
-        'valid_ok': fields.boolean(string='OK'),
+        'valid_ok': fields.boolean(string='OK', readonly=True),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
         'list_id': fields.many2one('product.list', string='List'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
@@ -212,6 +212,9 @@ class monthly_review_consumption_line(osv.osv):
         product_obj = self.pool.get('product.product')
         
         for line in self.browse(cr, uid, ids, context=context):
+            if line.valid_ok:
+                raise osv.except_osv(_('Error'), _('The line is already validated !'))
+            
             product_obj.write(cr, uid, [line.name.id], 
                               {'last_fmc': line.fmc,
                                'last_fmc_reviewed': time.strftime('%Y-%m-%d')},
@@ -219,7 +222,7 @@ class monthly_review_consumption_line(osv.osv):
             
             self.write(cr, uid, [line.id], {'valid_ok': True}, context=context)
             
-        return True
+        return
     
     def display_graph(self, cr, uid, ids, context={}):
         '''
@@ -236,7 +239,7 @@ class monthly_review_consumption_line(osv.osv):
         if not product_id:
             return {'value': {'amc': 0.00,
                               'fmc': 0.00,
-                              'last_reviewed': False,
+                              'last_reviewed': 'N/A',
                               'valid_until': False,
                               'valid_ok': False}}
             

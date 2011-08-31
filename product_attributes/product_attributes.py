@@ -111,7 +111,7 @@ class product_attributes(osv.osv):
             
         return [('id', 'in', ids)]
     
-        def _get_nomen(self, cr, uid, ids, field_name, args, context={}):
+    def _get_nomen(self, cr, uid, ids, field_name, args, context={}):
         res = {}
         
         for product in self.browse(cr, uid, ids, context=context):
@@ -129,7 +129,7 @@ class product_attributes(osv.osv):
             
         return res
     
-    def _search_nomen(self, cr, uid, obj, name, args):
+    def _search_nomen(self, cr, uid, obj, name, args, context={}):
         '''
         Filter the search according to the args parameter
         '''

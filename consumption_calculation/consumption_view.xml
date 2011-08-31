@@ -152,7 +152,7 @@
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />
-                            <button name="valid_line" type="object" string="Valid line" icon="gtk-execute" />
+                            <button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
                             <field name="list_id" invisible="0" />
                             <field name="nomen_id" invisible="0" />
