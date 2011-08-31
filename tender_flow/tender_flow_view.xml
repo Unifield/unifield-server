@@ -11,13 +11,17 @@
                     <group col="6" colspan="4">
                         <field name="name"/>
                         <field name="sale_order_id"/>
+                        <field name="location_id" />
+                        <field name="company_id" />
                     </group>
                     <notebook colspan="5">
                         <page string="Tender Lines">
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
-                                <tree string="Tender Lines">
-                                    <field name="product_id" />
+                                <tree string="Tender Lines" editable="top">
+                                	<field name="date_planned" />
+                                    <field name="product_id" on_change="on_product_change(product_id)" />
                                     <field name="qty" />
+                                    <field name="product_uom" />
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
@@ -35,9 +39,12 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" widget="one2many_list">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1">
                                 <tree string="Suppliers">
                                     <field name="name" />
+                                    <field name="partner_type" />
+                                    <field name="city" />
+                                    <field name="country" />
                                 </tree>
                             </field>
                         </page>
@@ -91,6 +98,33 @@
 
 		<menuitem icon="STOCK_INDENT" action="tender_action"
 			id="menu_tender" parent="base.menu_sales" sequence="100" />
+			
+        <record id="purchase_order_form" model="ir.ui.view">
+            <field name="name">purchase.order.form</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+            	<data>
+            		
+            		<field name="details" position="after">
+            			<field name="tender_id" invisible="True" />
+            		</field>
+            		
+            		<button name="purchase_confirm" position="replace">
+            			<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': [('tender_id', '!=', False)],}" />
+            			<button name="rfq_done" states="draft" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', !=', 'draft')],}" />
+            		</button>
+            		
+            		<!-- <button name="purchase_cancel" position="replace">
+            			<button name="purchase_cancel" states="draft,confirmed,wait_auth" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('tender_id', '!=', False)],}" />
+            		</button>
+            		 -->
+            	
+            	</data>
+            </field>
+       	</record>
+            
 
 	</data>
 </openerp>
