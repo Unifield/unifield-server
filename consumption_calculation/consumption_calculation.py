@@ -23,9 +23,9 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from datetime import datetime, date
 
 import time
+import base64
 
 
 class real_average_consumption(osv.osv):
@@ -121,7 +121,46 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
-        #return {'type': 'ir.actions.act_window_close'}
+    def import_rac(self, cr, uid, ids, context={}):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        context.update({'active_id': ids[0]})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.rac',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                }
+        
+    def export_rac(self, cr, uid, ids, context={}):
+        '''
+        Creates a CSV file and launches the wizard to save it
+        '''
+        rac = self.browse(cr, uid, ids[0], context=context)
+        
+        export = 'Product reference;Product name;Product UoM;Consumed Qty;Remark'
+        export += '\n'
+        
+        for line in rac.line_ids:
+            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.uom_id.id, line.consumed_qty, line.remark)
+            export += '\n'
+            
+        file = base64.encodestring(export.encode("utf-8"))
+        
+        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 'file': file, 
+                                                                        'filename': 'rac_%s.csv' % (rac.cons_location_id.name.replace(' ', '_')), 
+                                                                        'message': 'The RAC lines has been exported. Please click on Save As button to download the file'})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.export.rac',
+                'res_id': export_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                }
     
 real_average_consumption()
 
@@ -205,6 +244,33 @@ class monthly_review_consumption(osv.osv):
                 'view_mode': 'form',
                 'target': 'new',
                 'context': context,
+                }
+        
+    def export_fmc(self, cr, uid, ids, context={}):
+        '''
+        Creates a CSV file and launches the wizard to save it
+        '''
+        fmc = self.browse(cr, uid, ids[0], context=context)
+        
+        export = 'Product reference;Product name;FMC;Valid until'
+        export += '\n'
+        
+        for line in fmc.line_ids:
+            export += '%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.fmc, line.valid_until or '')
+            export += '\n'
+            
+        file = base64.encodestring(export.encode("utf-8"))
+        
+        export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
+                                                                        'filename': 'fmc_%s.csv' % (fmc.cons_location_id.name.replace(' ', '_')), 
+                                                                        'message': 'The FMC lines has been exported. Please click on Save As button to download the file'})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.export.fmc',
+                'res_id': export_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
                 }
     
 monthly_review_consumption()
