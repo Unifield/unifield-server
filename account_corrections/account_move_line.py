@@ -31,6 +31,7 @@ class account_move_line(osv.osv):
 
     _columns = {
         'corrected': fields.boolean(string="Corrected", readonly=True, help="If true, this line has been corrected by an accounting correction wizard"),
+        'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True, help="Line that have been corrected by this line."),
     }
 
     _defaults = {
