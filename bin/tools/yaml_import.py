@@ -2,6 +2,7 @@
 import types
 import time # used to eval time.strftime expressions
 from datetime import datetime, timedelta
+from mx import DateTime
 import logging
 
 import pooler
@@ -138,6 +139,7 @@ class YamlInterpreter(object):
                              '_ref': self._ref(), # added '_ref' so that record['ref'] is possible
                              'time': time,
                              'datetime': datetime,
+                             'DateTime': DateTime,
                              'timedelta': timedelta}
 
     def _ref(self):
