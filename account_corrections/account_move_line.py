@@ -29,13 +29,27 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
+    _columns = {
+        'corrected': fields.boolean(string="Corrected", readonly=True, help="If true, this line has been corrected by an accounting correction wizard"),
+    }
+
+    _defaults = {
+        'corrected': lambda *a: False,
+    }
+
     def button_do_accounting_corrections(self, cr, uid, ids, context={}):
         """
         Launch accounting correction wizard to do reverse or correction on selected move line.
         """
+        # Verification
         if not context:
             context={}
-        wizard = self.pool.get('wizard.journal.items.corrections').create(cr, uid, {'move_line_id': ids[0]}, context=context)
+        # Retrieve some values
+        wiz_obj = self.pool.get('wizard.journal.items.corrections')
+        # Create wizard
+        wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0]}, context=context)
+        # Change wizard state in order to change date requirement on wizard
+        wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
         return {
             'name': "Accounting Corrections Wizard",
             'type': 'ir.actions.act_window',

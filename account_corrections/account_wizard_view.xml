@@ -32,6 +32,7 @@
                         <button icon="terp-gtk-jump-to-rtl" string="Reverse All" name="action_reverse" type="object"/>
                         <button icon="terp-gtk-jump-to-ltr" string="Correct entry" name="action_confirm" type="object"/>
                     </group>
+                    <field name="state" invisible="1"/>
                 </form>
             </field>
         </record>

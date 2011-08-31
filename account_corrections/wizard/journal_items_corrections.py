@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 
 class journal_items_corrections_lines(osv.osv_memory):
     _name = 'wizard.journal.items.corrections.lines'
@@ -52,9 +53,14 @@ class journal_items_corrections(osv.osv_memory):
     _description = 'Journal items corrections wizard'
 
     _columns = {
-        'date': fields.date(string="Correction date"),
+        'date': fields.date(string="Correction date", states={'open':[('required', True)]}),
         'move_line_id': fields.many2one('account.move.line', string="Move Line", required=True, readonly=True),
         'to_be_corrected_ids': fields.one2many('wizard.journal.items.corrections.lines', 'wizard_id', string='', help='Line to be corrected'),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'draft',
     }
 
     def create(self, cr, uid, vals, context={}):
@@ -89,9 +95,48 @@ class journal_items_corrections(osv.osv_memory):
 
     def action_reverse(self, cr, uid, ids, context={}):
         """
-        Do a reverse from the given line
+        Do a reverse from the lines attached to this wizard
+        NB: The reverse is done on the first correction journal found (type = 'correction')
         """
-        return True
+        # Verifications
+        if not context:
+            context= {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Retrieve values
+        move_obj = self.pool.get('account.move')
+        aml_obj = self.pool.get('account.move.line')
+        j_obj = self.pool.get('account.journal')
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        # Search correction journal
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        if not j_corr_ids:
+            raise osv.except_osv(_('Error'), ('No correction journal found!'))
+        # Date to use
+        if not wizard.date:
+            raise osv.except_osv(_('Warning'), _('No date for correction. Please give a date!'))
+        # Begin reversal
+        line = wizard.move_line_id
+        # create a new move
+        name = 'REV' + ' ' + line.move_id.name
+        move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': line.period_id.id, 'date': wizard.date, 
+            'name': name, 'ref': line.move_id.ref}, context=context)
+        if not move_id:
+            raise osv.except_osv(_('Warning'), _('An error has occured. No move created.'))
+        vals = {
+            'debit': line.credit,
+            'credit': line.debit,
+            'amount_currency': -1 * ((line.credit or 0.0) - (line.debit or 0.0)),
+            'name': 'REV' + ' ' + line.name,
+            'journal_id': j_corr_ids[0],
+            'move_id': move_id,
+            'date': wizard.date,
+        }
+        # Do the reverse
+        new_line_id = aml_obj.copy(cr, uid, line.id, vals, context=context)
+        # Inform system that the line have been corrected/reversed
+        aml_obj.write(cr, uid, [line.id], {'corrected': True}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_confirm(self, cr, uid, ids, context={}):
         """

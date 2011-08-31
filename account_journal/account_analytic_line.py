@@ -66,12 +66,12 @@ class account_analytic_line(osv.osv):
         'amount_currency': fields.function(_get_amount_currency, fnct_inv=_set_amount_currency, method=True, store=True, string="Amount currency", type="float", readonly="True", help="")
     }
 
-    def copy(self, cr, uid, defaults, context={}):
+    def copy(self, cr, uid, id, defaults, context={}):
         """
         Update amount_currency from previous element
         """
-        amt = self.read(cr, uid, defaults, ['amount_currency'], context=context).get('amount_currency', False)
-        res = super(account_analytic_line, self).copy(cr, uid, defaults, context=context)
+        amt = self.read(cr, uid, id, ['amount_currency'], context=context).get('amount_currency', False)
+        res = super(account_analytic_line, self).copy(cr, uid, id, defaults, context=context)
         self.write(cr, uid, [res], {'amount_currency': amt}, context=context)
         return res
 
