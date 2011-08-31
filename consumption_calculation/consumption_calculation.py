@@ -33,6 +33,17 @@ class real_average_consumption(osv.osv):
     _description = 'Real Average Consumption'
     _rec_name = 'period_from'
     
+    def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns the # of lines on the real average consumption
+        '''
+        res = {}
+        
+        for mrc in self.browse(cr, uid, ids, context=context):
+            res[mrc.id] = len(mrc.line_ids)
+            
+        return res
+    
     _columns = {
         'creation_date': fields.date(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
@@ -44,6 +55,7 @@ class real_average_consumption(osv.osv):
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
+        'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
     }
     
     _defaults = {
@@ -154,6 +166,17 @@ class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
     _description = 'Monthly review consumption'
     
+    def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns the # of lines on the monthly review consumption
+        '''
+        res = {}
+        
+        for mrc in self.browse(cr, uid, ids, context=context):
+            res[mrc.id] = len(mrc.line_ids)
+            
+        return res
+    
     _columns = {
         'creation_date': fields.date(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Location', domain=[('usage', '=', 'internal')], required=True),
@@ -162,6 +185,7 @@ class monthly_review_consumption(osv.osv):
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('monthly.review.consumption.line', 'mrc_id', string='Lines'),
+        'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
     }
     
     _defaults = {

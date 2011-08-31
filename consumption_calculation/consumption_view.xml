@@ -62,7 +62,7 @@
                     <field name="activity_id" />
                     <field name="period_from" />
                     <field name="period_to" />
-                    <field name="line_ids" />
+                    <field name="nb_lines" />
                     <field name="created_ok" />
                 </tree>
             </field>
@@ -171,7 +171,7 @@
                     <field name="cons_location_id" />
                     <field name="period_from" />
                     <field name="period_to" />
-                    <field name="line_ids" />
+                    <field name="nb_lines" />
                 </tree>
             </field>
         </record>
