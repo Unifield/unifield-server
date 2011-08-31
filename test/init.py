@@ -16,13 +16,13 @@ def get_proxy(host, port, database, model):
     return rpc.Object(cnx, model)
 
 def init():
-    #create_database(client_host, client_port, 'msf_c1')
+    create_database(client_host, client_port, 'msf_c1')
     create_database(client_host, client_port, 'msf_c2')
-    #create_database(client_host, client_port, 'msf_c3')
-    #create_database(client_host, client_port, 'msf_p1')
+    create_database(client_host, client_port, 'msf_c3')
+    create_database(client_host, client_port, 'msf_p1')
     create_database(client_host, client_port, 'msf_p2')
-    #create_database(client_host, client_port, 'msf_p3')
-    #create_database(server_host, server_port, server_db)
+    create_database(client_host, client_port, 'msf_p3')
+    create_database(server_host, server_port, server_db)
     
 def init_client_module(host, port, list):
     for client in list:
@@ -32,28 +32,28 @@ def init_client_module(host, port, list):
         module_install(host, port, client, client_module)
     
 def init_module():
-    #client_list = ['msf_c1', 'msf_c2', 'msf_c3', 'msf_p1', 'msf_p2', 'msf_p3']
-    client_list = ['msf_c2', 'msf_p2']
+    client_list = ['msf_c1', 'msf_c2', 'msf_c3', 'msf_p1', 'msf_p2', 'msf_p3']
+    #client_list = ['msf_c2', 'msf_p2']
     thread_list = []
 
     t = threading.Thread(None, init_client_module, None, (client_host, client_port, client_list), {})
     t.start()
     
-    #st = threading.Thread(None, module_install, None, (server_host, server_port, 'server_test', server_module,), {})
-    #st.start()
-    #thread_list.append(st)
+    st = threading.Thread(None, module_install, None, (server_host, server_port, 'server_test', server_module,), {})
+    st.start()
+    thread_list.append(st)
 
     for t in thread_list:
         t.join()
         
 def clean():
-    #drop_database(client_host, client_port, 'msf_c1')
+    drop_database(client_host, client_port, 'msf_c1')
     drop_database(client_host, client_port, 'msf_c2') 
-    #drop_database(client_host, client_port, 'msf_c3')
-    #drop_database(client_host, client_port, 'msf_p1')
+    drop_database(client_host, client_port, 'msf_c3')
+    drop_database(client_host, client_port, 'msf_p1')
     drop_database(client_host, client_port, 'msf_p2')
-    #drop_database(client_host, client_port, 'msf_p3')
-    #drop_database(server_host, server_port, 'server_test')
+    drop_database(client_host, client_port, 'msf_p3')
+    drop_database(server_host, server_port, 'server_test')
     
 def module_install(host, port, db, module_list):
     print "install module at ", host, port, db, module_list
