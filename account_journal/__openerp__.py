@@ -21,7 +21,7 @@
 {
     "name" : "Accounting Journal for MSF",
     "version" : "1.0",
-    "author" : "MSF: Matthieu Dietrich, TeMPO Consulting: Olivier DOSSMANN",
+    "author" : "MSF - TeMPO Consulting",
     "category": 'Generic Modules/Accounting',
     "description": '''
         Journals view and datas
