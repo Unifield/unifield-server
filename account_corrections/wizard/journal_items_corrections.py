@@ -100,49 +100,52 @@ class journal_items_corrections(osv.osv_memory):
         """
         # Verifications
         if not context:
-            context= {}
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Retrieve values
+        wizard = self.browse(cr, uid, ids[0], context=context)
         move_obj = self.pool.get('account.move')
         aml_obj = self.pool.get('account.move.line')
         j_obj = self.pool.get('account.journal')
-        wizard = self.browse(cr, uid, ids[0], context=context)
-        # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
-        if not j_corr_ids:
-            raise osv.except_osv(_('Error'), ('No correction journal found!'))
-        # Date to use
-        if not wizard.date:
-            raise osv.except_osv(_('Warning'), _('No date for correction. Please give a date!'))
-        # Begin reversal
-        line = wizard.move_line_id
-        # create a new move
-        name = 'REV' + ' ' + line.move_id.name
-        move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': line.period_id.id, 'date': wizard.date, 
-            'name': name, 'ref': line.move_id.ref}, context=context)
-        if not move_id:
-            raise osv.except_osv(_('Warning'), _('An error has occured. No move created.'))
-        vals = {
-            'debit': line.credit,
-            'credit': line.debit,
-            'amount_currency': -1 * ((line.credit or 0.0) - (line.debit or 0.0)),
-            'name': 'REV' + ' ' + line.name,
-            'journal_id': j_corr_ids[0],
-            'move_id': move_id,
-            'date': wizard.date,
-        }
-        # Do the reverse
-        new_line_id = aml_obj.copy(cr, uid, line.id, vals, context=context)
-        # Inform system that the line have been corrected/reversed
-        aml_obj.write(cr, uid, [line.id], {'corrected': True}, context=context)
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        old_move = wizard.move_line_id.move_id
+        # Update register
+        # FIXME
+        if wizard.move_line_id.statement_id:
+            raise osv.except_osv(_('Error'), _('This line have come from a register. So it demand register line to be updated. This fonctionality will \
+ be available soon.'))
+        # Copy old move to a new one
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', wizard.date), ('date_stop', '>=', wizard.date)], 
+            context=context, limit=1, order='date_start, name')
+        new_move_id = move_obj.copy(cr, uid, old_move.id, {'date': wizard.date, 'period_id': period_ids[0], 'journal_id': j_ids[0]}, context=context)
+        # Change debit/credit columns and amount_currency
+        new_line_ids = aml_obj.search(cr, uid, [('move_id', '=', new_move_id)], context=context)
+        for ml in aml_obj.browse(cr, uid, new_line_ids, context=context):
+            amt = -1 * ml.amount_currency
+            name = 'REV' + ' ' + ml.name
+            aml_obj.write(cr, uid, [ml.id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 'corrected_line_id': ml.id}, context=context)
+        # Flag all initial move line as corrected
+        for old_ml in old_move.line_id:
+            aml_obj.write(cr, uid, [old_ml.id], {'corrected': True}, context=context)
+        # Hard post the move
+        move_obj.post(cr, uid, [new_move_id], context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def action_confirm(self, cr, uid, ids, context={}):
         """
         Do a correction from the given line
         """
-        return True
+        # Verification
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Retrieve values
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        move_obj = self.pool.get('account.move')
+        aml_obj = self.pool.get('account.move.line')
+        return {'type': 'ir.actions.act_window_close'}
 
 journal_items_corrections()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
