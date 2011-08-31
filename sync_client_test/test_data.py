@@ -191,8 +191,365 @@ class test(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
         return wf_service.trg_validate(uid, model, id, transition_name, cr)
         
+    def create_data_ucf1(self, cr, uid, context=None):
+        res_id = self.pool.get('account.account').create(cr, uid, {'code' : "M21", 
+                                                          "name" : "MSF Cash Account 1 UCF1", 
+                                                          "type" : "liquidity",
+                                                          'currency_id' : 38,
+                                                          'user_type' : 11 }, context=None)
+        self.pool.get('account.account').create(cr, uid, {'code' : "M22", 
+                                                          "name" : "MSF Cash Account 2 UCF1", 
+                                                          "type" : "liquidity",
+                                                          'currency_id' : 38,
+                                                          'user_type' : 11 }, context=None)
         
+        j_id = self.pool.get('account.journal').create(cr, uid, {'code' : 'M2', 
+                                                          'currency' : 38,
+                                                          'type' : 'cash',
+                                                          'default_credit_account_id' : res_id,
+                                                          'default_debit_account_id' : res_id,
+                                                          'name' : 'MSF Cash Journal UCF1',
+                                                          'view_id' : 1}, context=None)
+        st_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2_UCF1_CASH_REGISTER",
+                                                                         'journal_id' : j_id, 
+                                                                         'date' : "2011-08-29",
+                                                                         }, context=None)
+        self.pool.get('account.bank.statement').button_open(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 1",
+                                                                      "type" : "general",
+                                                                      "account_id": res_id,
+                                                                      "amount" : 40.0 }, context=context)
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 2",
+                                                                      "type" : "general",
+                                                                      "account_id": res_id,
+                                                                      "amount" : 30.0 }, context=context)
+        return True
         
-                                    
+    def modify_data_ucf1(self, cr, uid, context=None):
+        account_ids = self.pool.get('account.account').search(cr, uid, [('name', '=', 'MSF Cash Account 2 UCF1')], context=context)
+        st_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', 'M2_UCF1_CASH_REGISTER')], context=context)
+        line_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('name', '=', 'Move 2')], context=context)
+        j_ids = self.pool.get('account.journal').search(cr, uid, [('name', '=', 'MSF Cash Journal UCF1')], context=context)
+        if not account_ids or not st_ids or not line_ids or not j_ids:
+            return False
+        
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-30",
+                                                                      "statement_id" : st_ids[0],
+                                                                      "name" : "Move 3",
+                                                                      "type" : "general",
+                                                                      "account_id": account_ids[0],
+                                                                      "amount" : 25.0 }, context=context)
+        self.pool.get('account.bank.statement.line').write(cr, uid, line_ids, {'account_id' : account_ids[0]}, context=context)
+        return True
+    
+    def check_final_data_ucf1(self, cr, uid):
+        ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('account_id', '=', 'MSF Cash Account 2 UCF1')], context=None)
+        return len(ids) == 2
+    
+    def create_data_ucf2(self, cr, uid, context=None):
+        a1_id = self.pool.get('account.account').create(cr, uid, {'code' : "M23", 
+                                                          "name" : "MSF Bank Account 1 UCF2", 
+                                                          "type" : "other",
+                                                          'currency_id' : 2,
+                                                          'user_type' : 15 }, context=None)
+        a2_id = self.pool.get('account.account').create(cr, uid, {'code' : "M24", 
+                                                          "name" : "MSF Transfert Account 1 UCF2", 
+                                                          "type" : "other",
+                                                          'currency_id' : 2,
+                                                          'reconcile' : True,
+                                                          'user_type' : 15 }, context=None)
+        
+        a3_id = self.pool.get('account.account').create(cr, uid, {'code' : "M25", 
+                                                          "name" : "MSF Cash Account 3 UCF2", 
+                                                          "type" : "liquidity",
+                                                          'currency_id' : 2,
+                                                          'user_type' : 11 }, context=None)
+        
+        j1_id = self.pool.get('account.journal').create(cr, uid, {'code' : 'M21', 
+                                                          'currency' : 2,
+                                                          'type' : 'bank',
+                                                          'default_credit_account_id' : a1_id,
+                                                          'default_debit_account_id' : a1_id,
+                                                          'name' : 'MSF Bank journal UCF2',
+                                                          'view_id' : 1}, context=None)
+
+        j3_id = self.pool.get('account.journal').create(cr, uid, {'code' : 'M23', 
+                                                          'currency' : 2,
+                                                          'type' : 'cash',
+                                                          'default_credit_account_id' : a3_id,
+                                                          'default_debit_account_id' : a3_id,
+                                                          'name' : 'MSF Cash Journal UCF2',
+                                                          'view_id' : 1}, context=None)
+        st_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2 Bank statement UCF2",
+                                                                         'journal_id' : j1_id, 
+                                                                         'date' : "2011-08-29",
+                                                                         'balance_end_real' : -2000.0,
+                                                                         }, context=None)
+        
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 21",
+                                                                      "type" : "general",
+                                                                      "account_id": a2_id,
+                                                                      "amount" : -2000.0 }, context=context)
+        
+        self.pool.get('account.bank.statement').button_dummy(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement').button_confirm_bank(cr, uid, [st_id], context=context)
+       
+        return True
+    
+    def create_cash_statement_ufc2(self, cr, uid, context=None):
+        j_ids = self.pool.get('account.journal').search(cr, uid, [('name', '=', 'MSF Cash Journal UCF2')], context=context)
+        account_ids = self.pool.get('account.account').search(cr, uid, [('name', '=', 'MSF Transfert Account 1 UCF2')], context=context)
+        print j_ids, account_ids
+        if not j_ids or not account_ids:
+            return False
+        st_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2 Bank statement UCF2",
+                                                                         'journal_id' : j_ids[0], 
+                                                                         'date' : "2011-08-29",
+                                                                         }, context=None)
+        self.pool.get('account.bank.statement').button_open(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 22",
+                                                                      "type" : "general",
+                                                                      "account_id": account_ids[0],
+                                                                      "amount" : 2000.0 }, context=context)
+        res_id = self.pool.get('account.cashbox.line').create(cr, uid, {"pieces" : 100.0,
+                                                                      "number" : 20,
+                                                                      "ending_id" : st_id}, context=context)
+        self.pool.get('account.bank.statement').button_dummy(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement').button_confirm_cash(cr, uid, [st_id], context=context)
+        return True
+        
+    def reconcile_ucf2(self, cr, uid, context=None):
+        ids = self.pool.get('account.move.line').search(cr, uid, [('name', 'ilike', 'Move'), ('account_id', '=', 'M24 MSF Transfert Account 1 UCF2')], context=context)
+        if not ids:
+            return False
+        
+        if not context:
+            context = {}
+        context['active_ids'] = ids
+        wiz_id = self.pool.get('account.move.line.reconcile').create(cr, uid, {}, context=context)
+        self.pool.get('account.move.line.reconcile').trans_rec_reconcile_full(cr, uid, [wiz_id], context=context)
+        return True
+
+    def init_data_ucf3(self, cr, uid, context=None):
+        supplier_S2_id = self.pool.get('res.partner').create(cr, uid, {
+            'name': 'test_supplier_S2',
+            'supplier': True,
+        })
+        purchase_account_id = self.pool.get('account.account').create(cr, uid, {
+            'code': "M2PC", 
+            "name": "Creditors", 
+            "type": "other",
+            'currency_id': 2,
+            'reconcile': True,
+            'user_type': 15,
+        })
+        purchase_journal_id = self.pool.get('account.journal').create(cr, uid, {
+            'code': 'M21', 
+            'currency': 2,
+            'type': 'bank',
+            'default_credit_account_id': purchase_account_id,
+            'default_debit_account_id': purchase_account_id,
+            'name': 'MSF Bank journal UCF3',
+            'view_id': 1,
+        })
+        invoice_id = self.pool.get('account.invoice').create(cr, uid, {
+            'type': 'in_invoice',
+            'journal_id': purchase_journal_id,
+            'partner_id': supplier_S2_id,
+            'address_invoice_id': 1, # TODO get supplier res.partner.address
+            'account_id': 13, # TODO get supplier account.account
+            'check_total': 2000.0, # shortcut
+        })
+        invoice_line_id = self.pool.get('account.invoice.line').create(cr, uid, {
+            'name': 'test_invoice_line_S2',
+            'invoice_id': invoice_id,
+            'account_id': 13, # TODO get appropriate account
+            'price_unit': 1000.0,
+            'quantity': 2,
+        })
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'account.invoice', invoice_id, 'invoice_open', cr)
+        return True
+
+    def register_invoice_payment_ucf3(self, cr, uid, context=None):
+        creditors_account_id = self.pool.get('account.account').create(cr, uid, {
+            'code': "M2CR", 
+            "name": "Creditors", 
+            "type": "other",
+            'currency_id': 2,
+            'reconcile': True,
+            'user_type': 15,
+        })
+        bank_account_id = self.pool.get('account.account').create(cr, uid, {
+            'code': "M2BK", 
+            "name": "MSF Bank Account 1 UCF3", 
+            "type": "other",
+            'currency_id': 2,
+            'user_type': 15,
+        })
+        journal_id = self.pool.get('account.journal').create(cr, uid, {
+            'code': 'M2JN', 
+            'currency': 2,
+            'type': 'bank',
+            'default_credit_account_id': bank_account_id,
+            'default_debit_account_id': bank_account_id,
+            'name': 'MSF Bank Journal UCF3',
+            'view_id': 1,
+        })
+        statement_id = self.pool.get('account.bank.statement').create(cr, uid, {
+            'name': "Invoice S2 Bank statement UCF3",
+            'journal_id': journal_id, 
+            'date': "2011-08-29",
+            'balance_end_real': 2000.0,
+        })
+        self.pool.get('account.bank.statement.line').create(cr, uid, {
+            "date": "2011-08-29",
+            "statement_id": statement_id,
+            "name":  "Move 21",
+            "type": "general",
+            "account_id": creditors_account_id,
+            "amount": 2000.0,
+        })
+        return True
+
+    def check_final_data_ucf3(self, cr, uid, context=None):
+        supplier_S2_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', 'test_supplier_S2')])
+        if supplier_S2_ids:
+            supplier_S2_id = supplier_S2_ids[0]
+            invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('partner_id', '=', supplier_S2_id), ('check_total', '=', 2000)])
+            return len(invoice_ids)
+        return False
+
+    def create_data_ucf4(self, cr, uid, context=None):
+    
+        a1_id = self.pool.get('account.analytic.account').create(cr, uid, {"name" : 'Analytic Account MSF 1',
+                                                                   "code" :  'M2A1',
+                                                                   "currency_id" : 2}, context=context)
+        a2_id = self.pool.get('account.analytic.account').create(cr, uid, {"name" : 'Analytic Account MSF 2',
+                                                                   "code" :  'M2A2',
+                                                                   "currency_id" : 2}, context=context)
+        j1_id = self.pool.get('account.analytic.journal').create(cr, uid, {"code" : 'M2J1', 
+                                                                           'name' : 'MSF Analytic Journal 1',
+                                                                           'type' : 'general'}, context=context)
+        """
+        j2_id = self.pool.get('account.analytic.journal').create(cr, uid, {"code" : 'M2J2', 
+                                                                           'name' : 'MSF Analytic Journal 2',
+                                                                           'type' : 'general'}, context=context)
+        """
+        
+        p1_id = self.pool.get('account.analytic.plan').create(cr, uid, {"name" : "M2 Analytic Plan"}, context=context)
+        
+        i1_id = self.pool.get('account.analytic.plan.instance').create(cr, uid, {"name" : "M2 Analytic Distribution 50 - 50", 
+                                                                                 "code" : "M2D1",
+                                                                                 "plan_id" : p1_id}, context=context)
+        il1_id = self.pool.get('account.analytic.plan.instance.line').create(cr, uid, {'plan_id' : i1_id,
+                                                                                      'rate' : 50.00,
+                                                                                      'analytic_account_id' : a1_id}, context=context)
+        
+        il2_id = self.pool.get('account.analytic.plan.instance.line').create(cr, uid, {'plan_id' : i1_id,
+                                                                                      'rate' : 50.00,
+                                                                                      'analytic_account_id' : a2_id}, context=context)
+        
+        fa1_id = self.pool.get('account.account').create(cr, uid, {'code' : "M214", 
+                                                          "name" : "MSF Bank Account 10 UCF4", 
+                                                          "type" : "other",
+                                                          'currency_id' : 2,
+                                                          'user_type' : 15 }, context=None)
+        
+        fa2_id = self.pool.get('account.account').create(cr, uid, {'code' : "M215", 
+                                                          "name" : "MSF Bank Account 11 UCF4", 
+                                                          "type" : "other",
+                                                          'currency_id' : 2,
+                                                          'user_type' : 15 }, context=None)
+        fj1_id = self.pool.get('account.journal').create(cr, uid, {'code' : 'M214', 
+                                                          'currency' : 2,
+                                                          'type' : 'bank',
+                                                          'default_credit_account_id' : fa1_id,
+                                                          'default_debit_account_id' : fa1_id,
+                                                          'name' : 'MSF Bank journal UCF4',
+                                                          'view_id' : 1,
+                                                          'analytic_journal_id' : j1_id}, context=None)
+        
+        st_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2 Bank statement UCF4",
+                                                                         'journal_id' : fj1_id, 
+                                                                         'date' : "2011-08-29",
+                                                                         'balance_end_real' : 2000.0,
+                                                                         }, context=None)
+        
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 41",
+                                                                      "type" : "general",
+                                                                      "account_id": fa2_id,
+                                                                      'analytics_id' : i1_id,
+                                                                      "amount" : 2000.0 }, context=context)
+        self.pool.get('account.bank.statement').button_dummy(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement').button_confirm_bank(cr, uid, [st_id], context=context)
+        
+        return True
+    
+    def change_distribution_ucf4(self, cr, uid, context=None):
+        a_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'M2A1')], context=context)
+        fj_ids = self.pool.get('account.journal').search(cr, uid, [('name', '=', 'MSF Bank journal UCF4')], context=context)
+        i_ids = self.pool.get('account.analytic.plan.instance').search(cr, uid, [("name", '=', "M2 Analytic Distribution 50 - 50")], context=context)
+        fa_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', "M215")], context=None)
+        if not fj_ids or not i_ids or not fa_ids or not a_ids:
+            return False
+        
+        a1_id = a_ids[0]
+        fj1_id = fj_ids[0]
+        i1_id = i_ids[0]
+        fa2_id = fa_ids[0]
+        st_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2 Bank statement UCF4 revert",
+                                                                         'journal_id' : fj1_id, 
+                                                                         'date' : "2011-08-29",
+                                                                         'balance_end_real' : -2000.0,
+                                                                         }, context=None)
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st_id,
+                                                                      "name" : "Move 41",
+                                                                      "type" : "general",
+                                                                      "account_id": fa2_id,
+                                                                      'analytics_id' : i1_id,
+                                                                      "amount" : -2000.0 }, context=context)
+        self.pool.get('account.bank.statement').button_dummy(cr, uid, [st_id], context=context)
+        self.pool.get('account.bank.statement').button_confirm_bank(cr, uid, [st_id], context=context)
+        
+        p1_id = self.pool.get('account.analytic.plan').create(cr, uid, {"name" : "M2 Analytic Plan 2"}, context=context)
+        
+        i2_id = self.pool.get('account.analytic.plan.instance').create(cr, uid, {"name" : "M2 Analytic Distribution 100", 
+                                                                                 "code" : "M2D2",
+                                                                                 "plan_id" : p1_id}, context=context)
+        self.pool.get('account.analytic.plan.instance.line').create(cr, uid, {'plan_id' : i2_id,
+                                                                                      'rate' : 100.00,
+                                                                                      'analytic_account_id' : a1_id}, context=context)
+        st2_id = self.pool.get('account.bank.statement').create(cr, uid, {'name' : "M2 Bank statement UCF4 Correction",
+                                                                         'journal_id' : fj1_id, 
+                                                                         'date' : "2011-08-29",
+                                                                         'balance_end_real' : 2000.0,
+                                                                         }, context=None)
+        
+        self.pool.get('account.bank.statement.line').create(cr, uid, {"date" : "2011-08-29",
+                                                                      "statement_id" : st2_id,
+                                                                      "name" : "Move 41",
+                                                                      "type" : "general",
+                                                                      "account_id": fa2_id,
+                                                                      'analytics_id' : i2_id,
+                                                                      "amount" : 2000.0 }, context=context)
+        
+        self.pool.get('account.bank.statement').button_dummy(cr, uid, [st2_id], context=context)
+        self.pool.get('account.bank.statement').button_confirm_bank(cr, uid, [st2_id], context=context)
+        return True
+    
+    #check que a1 a 2000 de balance et a2 a 1000
+        
 test()
 

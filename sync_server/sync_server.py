@@ -369,6 +369,9 @@ class entity(osv.osv):
         for child in self.browse(cr, uid, ids_validated, context=None):
             email_to.extend(child.email.split(','))
         
+        if not email_from or not email_to:
+            return
+        
         tools.email_send(
                 email_from,
                 email_to,

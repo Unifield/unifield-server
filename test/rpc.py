@@ -21,6 +21,7 @@ try:
 except:
     import StringIO
 
+TIMEOUT = 250
 
 # Safer Unpickler, in case the server is untrusted, from Nadia Alramli
 # http://nadiana.com/python-pickle-insecure#How_to_Make_Unpickling_Safer
@@ -96,7 +97,7 @@ class NetRPC:
             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
-        self.sock.settimeout(120)
+        self.sock.settimeout(TIMEOUT)
     def connect(self, host, port=False):
         if not port:
             protocol, buf = host.split('//')

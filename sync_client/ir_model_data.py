@@ -169,15 +169,17 @@ class ir_model_data_sync(osv.osv):
         if not ir_model.last_modification:
             return False
         
-        if ir_model.last_modification > ir_model.sync_date:
+        if ir_model.last_modification >= ir_model.sync_date:
             modif_field = self.pool.get('sync.client.write_info').get_last_modification(cr, uid, ir_model.model, ir_model.res_id, ir_model.sync_date, context=context)
-            res = set(included_fields) & modif_field
+            res = set(self._clean_included_fields(included_fields)) & modif_field
             if res:
                 return True
             else:
                 return False
             
-    
+    def _clean_included_fields(self, included_fields):
+        return [field.split('/')[0] for field in included_fields]
+        
     def sync(self, cr, uid, xml_id, date=False, version=False, context=None):
         ir_data = self.get_ir_record(cr, uid, xml_id, context=context)
         if not ir_data:
@@ -232,6 +234,7 @@ def create(model,cr,uid,values,context=None):
     res_id = old_create(model,cr,uid,values,context=context)
     if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(context.get('no_model_data_line'))):
         link_with_ir_model(model, cr, uid, res_id, context=context)
+        modif_o2m(model,cr,uid,res_id,values,context=context)
     
     return res_id
     
@@ -251,12 +254,31 @@ def write(model,cr,uid,ids,values,context=None):
             ir_id = link_with_ir_model(model, cr, uid, id, context=context)
             model.pool.get('ir.model.data').write(cr, uid, ir_id, {'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
             model.pool.get('sync.client.write_info').log_write(cr, uid, model._name, id, values, context=context)
-    
+            modif_o2m(model, cr, uid, id, values, context=context)
     res = old_write(model, cr, uid, ids, values,context=context)
     return res
     
 osv.osv.write=write
 
+#record modification of m2o if the corresponding o2m is modified
+def modif_o2m(model,cr,uid,id,values,context=None):
+    fields_ref = model.fields_get(cr, uid, context=context)
+    for key in values.keys():
+        if fields_ref.get(key) and fields_ref[key]['type'] == 'one2many' and values[key]:
+            sub_model = fields_ref[key]['relation']
+            o = model.browse(cr, uid, id, context=context)
+            sub_ids= [obj.id for obj in getattr(o, key)]
+            for sub_id in sub_ids:
+                ir_id = link_with_ir_model(model.pool.get(sub_model), cr, uid, sub_id, context=context)
+                model.pool.get('ir.model.data').write(cr, uid, ir_id, {'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
+                log_o2m_write(model.pool.get(sub_model), cr, uid, sub_id, model._name, id, context=context)
+                
+def log_o2m_write(model, cr, uid, id, relation, parent_id, context=None):   
+    fields_ref = model.fields_get(cr, uid, context=context)  
+    for key, val in fields_ref.items():
+        if val['type'] == "many2one" and val['relation'] == relation:
+            model.pool.get('sync.client.write_info').log_write(cr, uid, model._name, id, {key : parent_id}, context=context)
+    
 def link_with_ir_model(model, cr, uid, id, context=None):
     model_data_pool = model.pool.get('ir.model.data')
     res_id = model_data_pool.get(cr, uid, model, id, context=context)

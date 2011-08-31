@@ -222,6 +222,7 @@ class entity(osv.osv):
             if entity.state == 'init':
                 self.set_last_sequence(cr, uid, context)
             self.retreive_update(cr, uid, context)
+            cr.commit()
             self.execute_update(cr, uid, context)
         except Exception, e:
             cr.commit()

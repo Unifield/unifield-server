@@ -237,6 +237,19 @@
 		        action="message_received_action" />  
 		        
 		       
+		       
+		<record model="ir.ui.view" id="ir_model_data_inherit">
+            <field name="name">ir.model.data.inherit</field>
+            <field name="model">ir.model.data</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_model_data_form"/>
+            <field name="arch" type="xml">
+                <field name="date_init" position="after">
+                	 <field name="last_modification" />
+                  <field name="sync_date" />
+                </field>
+            </field>
+        </record>
 		  
 		        
 	</data>

@@ -39,11 +39,23 @@ def eval_poc_domain(obj, cr, uid, domain, context=None):
         if isinstance(tp, tuple):
             if len(tp) != 3:
                 raise osv.except_osv(_('Domain malformed : ' + tools.ustr(domain)), _('Error') )
-            if isinstance(tp[2], tuple) and len(tp[2]) == 2 and isinstance(tp[2][0], basestring) and isinstance(tp[2][1], list):
+            if isinstance(tp[2], tuple) and len(tp[2]) == 3 and isinstance(tp[2][0], basestring) and isinstance(tp[2][1], basestring) and isinstance(tp[2][2], list):
                 model  = tp[2][0]
-                sub_domain = tp[2][1]
+                sub_domain = tp[2][2]
+                field = tp[2][1]
                 sub_obj = obj.pool.get(model)
                 ids_list = eval_poc_domain(sub_obj, cr, uid, sub_domain)
+                if ids_list:
+                    new_ids = []
+                    data = sub_obj.read(cr, uid, ids_list, [field], context=context)
+                    for d in data:
+                        if isinstance(d[field], list):
+                            new_ids.extend(d[field])
+                        elif isinstance(d[field], tuple):
+                            new_ids.append(d[field][0])
+                        else:
+                            new_ids.append(d[field])
+                    ids_list = new_ids
                 domain_new.append((tp[0], tp[1], ids_list))
             else:
                 domain_new.append(tp)
@@ -131,7 +143,7 @@ class update_to_send(osv.osv):
             domain = []
             
         ids = eval_poc_domain(obj, cr, uid, domain, context=context)
-        
+        print 'id found with domain', rule.name, ids
         for id in ids:
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
@@ -229,8 +241,13 @@ class update_received(osv.osv):
     
     def execute_update(self, cr, uid, context=None):
         update_ids = self.search(cr, uid, [('run', '=', False)], context=context)
+        print "update_ids", update_ids
         for update in self.browse(cr, uid, update_ids, context=context):
-            self.single_update_execution(cr, uid, update, context)
+            try:
+                self.single_update_execution(cr, uid, update, context)
+                cr.commit()
+            except Exception, e:
+                pass
             
     def single_update_execution(self, cr, uid, update, context=None):
         message = []
@@ -272,6 +289,7 @@ class update_received(osv.osv):
             message.append(str(e))
                 
         message_str = "\n".join(message)
+        print update.id
         self.write(cr, uid, update.id, {'run' : run, 'log' : message_str}, context=context)
     
     def run(self, cr, uid, ids, context=None):
