@@ -133,7 +133,7 @@
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" />
-                    <newline />
+                    <button name="import_fmc" string="Import a file" type="object" colspan="2" />
                     <field name="period_to" />
                     <newline />
                     <field name="cons_location_id" />
@@ -143,6 +143,7 @@
                     <field name="sublist_id" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" context="{'mrc_id': active_id,
+                    																	 'sloc_id': cons_location_id,
                                                                                          'from_date': period_from,
                                                                                          'to_date': period_to}">
                         <tree string="Products" editable="top">

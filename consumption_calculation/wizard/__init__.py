@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,34 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name": "Consumption Calculation",
-    "version": "1.0",
-    "depends": ["product", "stock", "product_nomenclature",
-                "product_list", "reason_types_moves",],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        This module aims at defining different kind of consumption calculation.
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'consumption_data.xml',
-        'consumption_view.xml',
-        'wizard/wizard_import_fmc_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/data.yml',
-        'test/rac_report.yml',
-        'test/amc_review.yml',
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import wizard_import_fmc
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

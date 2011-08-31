@@ -193,6 +193,20 @@ class monthly_review_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
     }
     
+    def import_fmc(self, cr, uid, ids, context={}):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        context.update({'active_id': ids[0]})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.fmc',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                }
+    
 monthly_review_consumption()
 
 
@@ -212,11 +226,23 @@ class monthly_review_consumption_line(osv.osv):
             
         return res
     
+    def _get_last_fmc(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns the last fmc date
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            context.update({'sloc_id': line.mrc_id.cons_location_id.id})
+            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, context=context).get('value', None).get('last_reviewed', None)
+            
+        return res
+    
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
         'fmc': fields.float(digits=(16,2), string='FMC'),
-        'last_reviewed': fields.related('name', 'last_fmc_reviewed', type='date', string='Last reviewed on', readonly=True),
+        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True),
         'valid_until': fields.date(string='Valid until'),
         'valid_ok': fields.boolean(string='OK', readonly=True),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
@@ -258,21 +284,34 @@ class monthly_review_consumption_line(osv.osv):
         '''
         Fill data in the line
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         product_obj = self.pool.get('product.product')
+        line_obj = self.pool.get('monthly.review.consumption.line')
+        
+        last_fmc_reviewed = None
         
         if not product_id:
             return {'value': {'amc': 0.00,
                               'fmc': 0.00,
-                              'last_reviewed': 'N/A',
+                              'last_reviewed': None,
                               'valid_until': False,
                               'valid_ok': False}}
+        
+        if context.get('sloc_id', False):
+            mrc_ids = self.pool.get('monthly.review.consumption').search(cr, uid, [('cons_location_id', '=', context.get('sloc_id'))], context=context)
+            line_ids = line_obj.search(cr, uid, [('name', '=', product_id), ('mrc_id', 'in', mrc_ids)], order='valid_until desc', context=context)
             
-        product = product_obj.browse(cr, uid, product_id, context=context)
+            for line in self.browse(cr, uid, [line_ids[0]], context=context):
+                last_fmc_reviewed = line.mrc_id.creation_date
+                
+                    
         amc = product_obj.compute_amc(cr, uid, ids, context=context)
         
         return {'value': {'amc': amc,
                           'fmc': amc,
-                          'last_reviewed': product.last_fmc_reviewed,
+                          'last_reviewed': last_fmc_reviewed,
                           'valid_until': False,
                           'valid_ok': False}}
         
@@ -283,11 +322,6 @@ monthly_review_consumption_line()
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
-    
-    _columns = {
-        'last_fmc_reviewed': fields.date(string='Last reviewed on', readonly=True),
-        'last_fmc': fields.float(string='Last FMC', readonly=True),
-    }
     
     def compute_mac(self, cr, uid, ids, context={}):
         '''

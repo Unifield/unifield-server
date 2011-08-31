@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+    	<record id="wizard_to_import_fmc_begin" model="ir.ui.view">
+			<field name="name">wizard.to.import.fmc.begin</field>
+			<field name="model">wizard.import.fmc</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Import FMC">
+					<field name="file" />
+					<field name="message" />
+					<button name="import_file" string="Import file" type="object" />
+				</form>
+			</field>
+        </record>
+        
+        <record id="wizard_to_import_fmc_end" model="ir.ui.view">
+			<field name="name">wizard.to.import.fmc.end</field>
+			<field name="model">wizard.import.fmc</field>
+			<field name="type">form</field>
+			<field name="priority" eval="99" />
+			<field name="arch" type="xml">
+				<form string="FMC Imported">
+					<field name="file" />
+					<field name="message" />
+					<button name="close_import" string="Close window" type="object" />
+				</form>
+			</field>
+        </record>
+    
+    </data>
+</openerp>
