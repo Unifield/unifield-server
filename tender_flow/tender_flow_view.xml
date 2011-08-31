@@ -90,7 +90,7 @@
 		</record>
 
 		<menuitem icon="STOCK_INDENT" action="tender_action"
-			id="menu_tender" parent="base.menu_sales" />
+			id="menu_tender" parent="base.menu_sales" sequence="100" />
 
 	</data>
 </openerp>
