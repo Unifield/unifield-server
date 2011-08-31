@@ -38,6 +38,15 @@ class account_move_line(osv.osv):
         'corrected': lambda *a: False,
     }
 
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy a move line
+        """
+        defaults.update({
+            'state': 'draft',
+        })
+        return super(account_move_line, self).copy(cr, uid, id, defaults, context=context)
+
     def button_do_accounting_corrections(self, cr, uid, ids, context={}):
         """
         Launch accounting correction wizard to do reverse or correction on selected move line.
@@ -70,6 +79,67 @@ class account_move_line(osv.osv):
         """
         Open all corrections linked to the given one
         """
+        return True
+
+    def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
+        """
+        Correct given account_move_line by only changin account
+        """
+        # Verification
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not date:
+            date = strftime('%Y-%d-%m')
+        if not new_account_id:
+            raise osv.except_osv(_('Error'), _('No new account_id given!'))
+        # Prepare some values
+        move_obj = self.pool.get('account.move')
+        aml_obj = self.pool.get('account.move.line')
+        j_obj = self.pool.get('account.journal')
+        # Search correction journal
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        if not j_corr_ids:
+            raise osv.except_osv(_('Error'), ('No correction journal found!'))
+        # Search attached period
+        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 
+            context=context, limit=1, order='date_start, name')
+        # Browse all given move line for correct them
+        for ml in self.browse(cr, uid, ids, context=context):
+            # Create a new move
+            move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
+            # Prepare default value for new line
+            vals = {
+                'move_id': move_id,
+                'date': date,
+                'journal_id': j_corr_ids[0],
+                'period_id': period_ids[0],
+            }
+            # Copy the line
+            rev_line_id = aml_obj.copy(cr, uid, ml.id, vals, context=context)
+            correction_line_id = aml_obj.copy(cr, uid, ml.id, vals, context=context)
+            # Do the reverse
+            name = 'REV' + ' ' + ml.name
+            amt = -1 * ml.amount_currency
+            vals.update({
+                'debit': ml.credit,
+                'credit': ml.debit,
+                'amount_currency': amt,
+                'journal_id': j_corr_ids[0],
+                'name': name,
+                'corrected_line_id': ml.id,
+                'account_id': ml.account_id.id,
+            })
+            aml_obj.write(cr, uid, [rev_line_id], vals, context=context)
+            # Do the correction line
+            name = 'COR' + ' ' + ml.name
+            aml_obj.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': ml.id,
+                'account_id': new_account_id,}, context=context)
+            # Inform old line that it have been corrected
+            aml_obj.write(cr, uid, [ml.id], {'corrected': True}, context=context)
+            # Post the move
+            move_obj.post(cr, uid, [move_id], context=context)
         return True
 
 account_move_line()

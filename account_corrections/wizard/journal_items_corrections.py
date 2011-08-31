@@ -143,8 +143,17 @@ class journal_items_corrections(osv.osv_memory):
             ids = [ids]
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
-        move_obj = self.pool.get('account.move')
+        wiz_line_obj = self.pool.get('wizard.journal.items.corrections.lines')
         aml_obj = self.pool.get('account.move.line')
+        # Fetch old line
+        old_line = wizard.move_line_id
+        # Verify what have changed between old line and new one
+        new_lines = wizard.to_be_corrected_ids
+        # compare account_id
+        if old_line.account_id.id != new_lines[0].account_id.id:
+            aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+        else:
+            raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close'}
 
 journal_items_corrections()
