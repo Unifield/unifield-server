@@ -115,7 +115,7 @@ class account_invoice_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         res_id = False
         analytic_obj = self.pool.get('analytic.distribution')
-        if 'invoice_id' in vals:
+        if 'invoice_id' in vals and vals['invoice_id']:
             #new line, we add the global distribution
             invoice_obj = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], context=context)
             if invoice_obj.analytic_distribution_id:
