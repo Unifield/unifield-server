@@ -242,12 +242,7 @@ class update_received(osv.osv):
     def execute_update(self, cr, uid, context=None):
         update_ids = self.search(cr, uid, [('run', '=', False)], context=context)
         print "update_ids", update_ids
-        for update in self.browse(cr, uid, update_ids, context=context):
-            try:
-                self.single_update_execution(cr, uid, update, context)
-                cr.commit()
-            except Exception, e:
-                pass
+        self.run(cr, uid, update_ids, context)
             
     def single_update_execution(self, cr, uid, update, context=None):
         message = []
@@ -294,8 +289,13 @@ class update_received(osv.osv):
     
     def run(self, cr, uid, ids, context=None):
         for update in self.browse(cr, uid, ids, context=context):
-            self.single_update_execution(cr, uid, update, context)
-            
+            try:
+                cr.execute("SAVEPOINT exec_update")
+                self.single_update_execution(cr, uid, update, context)
+                cr.execute("RELEASE SAVEPOINT exec_update")
+            except Exception, e:
+                cr.execute("ROLLBACK TO SAVEPOINT exec_update")
+                
     def _check_fields(self, cr, uid, model, fields, context=None):
         """
             @return  : the list of unknown fields or unautorized field

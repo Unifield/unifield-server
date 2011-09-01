@@ -195,28 +195,24 @@ class message_received(osv.osv):
         return res
     
     def execute(self, cr, uid, context=None):
-        debug = True
-        
         ids = self.search(cr, uid, [('run', '=', False)], context=context)
         if not ids:
             return True
         for message in self.browse(cr, uid, ids, context=context):
+            cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)
-            if debug:
+            try:
                 fn = getattr(self.pool.get(model), method)
                 res = fn(cr, uid, message.source, *arg)
                 self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
-            else:
-                try:
-                    fn = getattr(self.pool.get(model), method)
-                    res = fn(cr, uid, message.source, *arg)
-                    self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
-                except Exception, e:
-                    log = "Something go wrong with the call %s \n" % message.remote_call
-                    log += tools.ustr(e)
-                    print log
-                    self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
+                cr.execute("RELEASE SAVEPOINT exec_message")
+            except Exception, e:
+                cr.execute("ROLLBACK TO SAVEPOINT exec_message")
+                log = "Something go wrong with the call %s \n" % message.remote_call
+                log += tools.ustr(e)
+                print log
+                self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
                 
         return True
             

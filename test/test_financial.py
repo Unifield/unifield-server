@@ -88,23 +88,23 @@ class TestUCF2(TestMSFFinancial):
         
 class TestUCF3(TestMSFFinancial):
     """Short description:
-    P1 creates a local supplier S2 and registers an expense with this partner in P1 bank register.
+    P2 creates a local supplier S2 and registers an expense with this partner in P1 bank register.
     Then synchronisation takes place.
 
-    - P1 creates supplier S2
-    - P1 creates and validates a supplier invoice with S2 
-    - P1 registers invoice payment in “P1 Bank register in USD / 001”
+    - P2 creates supplier S2
+    - P2 creates and validates a supplier invoice with S2 
+    - P2 registers invoice payment in “P1 Bank register in USD / 001”
     - When synchronisation takes place, the new partner S2 must be created first
       in C1 database so that the supplier invoice created can be replicated in
       turn.
     """
 
     def runTest(self):
-        self.init_data_ucf3(client_host, client_port, 'msf_p1')
-        self.register_invoice_payment_ucf3(client_host, client_port, 'msf_p1')
-        self.synchronize(client_host, client_port, 'msf_p1')
-        self.synchronize(client_host, client_port, 'msf_c1')
-        self.check_final_data_ucf3(client_host, client_port, 'msf_c1')
+        self.init_data_ucf3(client_host, client_port, 'msf_p2')
+        self.register_invoice_payment_ucf3(client_host, client_port, 'msf_p2')
+        self.synchronize(client_host, client_port, 'msf_p2')
+        self.synchronize(client_host, client_port, 'msf_c2')
+        self.check_final_data_ucf3(client_host, client_port, 'msf_c2')
 
 class TestUCF4(TestMSFFinancial):
     def runTest(self):

@@ -340,7 +340,7 @@ class test(osv.osv_memory):
 
     def init_data_ucf3(self, cr, uid, context=None):
         supplier_S2_id = self.pool.get('res.partner').create(cr, uid, {
-            'name': 'test_supplier_S2',
+            'name': 'msf_supplier_UCF3',
             'supplier': True,
         })
         purchase_account_id = self.pool.get('account.account').create(cr, uid, {
@@ -352,7 +352,7 @@ class test(osv.osv_memory):
             'user_type': 15,
         })
         purchase_journal_id = self.pool.get('account.journal').create(cr, uid, {
-            'code': 'M21', 
+            'code': 'M2J1', 
             'currency': 2,
             'type': 'bank',
             'default_credit_account_id': purchase_account_id,
@@ -421,7 +421,7 @@ class test(osv.osv_memory):
         return True
 
     def check_final_data_ucf3(self, cr, uid, context=None):
-        supplier_S2_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', 'test_supplier_S2')])
+        supplier_S2_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', 'msf_supplier_UCF3')])
         if supplier_S2_ids:
             supplier_S2_id = supplier_S2_ids[0]
             invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('partner_id', '=', supplier_S2_id), ('check_total', '=', 2000)])
