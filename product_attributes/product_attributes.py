@@ -104,10 +104,16 @@ class product_attributes(osv.osv):
         ids = []
             
         for arg in args:
-            if arg[0] == 'list_ids' and arg[1] == '=':
+            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
                 list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
                 for line in list.product_ids:
                     ids.append(line.name.id)
+            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
+                for list in self.pool.get('product.list').browse(cr, uid, arg[2], context=context):
+                    for line in list.product_ids:
+                        ids.append(line.name.id)
+            else:
+                return []
             
         return [('id', 'in', ids)]
     
@@ -140,10 +146,17 @@ class product_attributes(osv.osv):
             
         for arg in args:
             if arg[0] == 'nomen_ids' and arg[1] == '=' and arg[2]:
-                arg[1] = 'in'
-                arg[2] = [arg[2]]
-                
-            if arg[0] == 'nomen_ids' and arg[1] == 'in' and arg[2]:
+                nomen = self.pool.get('product.nomenclature').browse(cr, uid, arg[2], context=context)
+                if nomen.type == 'mandatory':
+                    ids = self.search(cr, uid, [('nomen_manda_%s' % nomen.level, '=', nomen.id)], context=context)
+                else:
+                    ids = self.search(cr, uid, [('nomen_sub_0', '=', nomen.id)], context=context)
+                    ids.append(self.search(cr, uid, [('nomen_sub_1', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_2', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_3', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_4', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_5', '=', nomen.id)], context=context))
+            elif arg[0] == 'nomen_ids' and arg[1] == 'in' and arg[2]:
                 for nomen in self.pool.get('product.nomenclature').browse(cr, uid, arg[2], context=context):
                     if nomen.type == 'mandatory':
                         ids = self.search(cr, uid, [('nomen_manda_%s' % nomen.level, '=', nomen.id)], context=context)
@@ -154,6 +167,8 @@ class product_attributes(osv.osv):
                         ids.append(self.search(cr, uid, [('nomen_sub_3', '=', nomen.id)], context=context))
                         ids.append(self.search(cr, uid, [('nomen_sub_4', '=', nomen.id)], context=context))
                         ids.append(self.search(cr, uid, [('nomen_sub_5', '=', nomen.id)], context=context))
+            else:
+                return []
             
         return [('id', 'in', ids)] 
     

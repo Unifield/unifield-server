@@ -391,7 +391,7 @@ class product_product(osv.osv):
     
     def compute_mac(self, cr, uid, ids, context={}):
         '''
-        Compute the Monthly Average Consumption
+        Compute the Monthly Real Average Consumption
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]

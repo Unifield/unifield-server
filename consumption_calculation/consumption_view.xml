@@ -113,7 +113,7 @@
         <menuitem
              id="warehouse_consumption_menu"
              name="Consumption"
-             parent="stock.menu_stock_root" />
+             parent="stock.next_id_61" />
              
         <menuitem
             id="consumption_reports_menu"
@@ -148,7 +148,7 @@
                                                                                          'from_date': period_from,
                                                                                          'to_date': period_to}">
                         <tree string="Products" editable="top">
-                            <field name="name" on_change="product_onchange(name)" /><!-- domain="[('list_ids', '=', list_id), ('nomen_ids', '=', nomen_id)]"-->
+                            <field name="name" on_change="product_onchange(name)" domain="[('list_ids', '=', list_id), ('nomen_ids', '=', nomen_id)]" />
                             <field name="amc" />
                             <field name="fmc" />
                             <field name="last_reviewed" />
