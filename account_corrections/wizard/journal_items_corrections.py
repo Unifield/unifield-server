@@ -112,9 +112,9 @@ class journal_items_corrections(osv.osv_memory):
         old_move = wizard.move_line_id.move_id
         # Update register
         # FIXME
-        if wizard.move_line_id.statement_id:
-            raise osv.except_osv(_('Error'), _('This line have come from a register. So it demand register line to be updated. This fonctionality will \
- be available soon.'))
+#        if wizard.move_line_id.statement_id:
+#            raise osv.except_osv(_('Error'), _('This line have come from a register. So it demand register line to be updated. This fonctionality will \
+# be available soon.'))
         # Copy old move to a new one
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', wizard.date), ('date_stop', '>=', wizard.date)], 
             context=context, limit=1, order='date_start, name')
