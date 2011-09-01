@@ -108,8 +108,20 @@ class tender(osv.osv):
     
     def wkf_action_done(self, cr, uid, ids, context=None):
         '''
-        generate the 
+        tender is done
         '''
+        # done all related rfqs
+        wf_service = netsvc.LocalService("workflow")
+        for tender in self.browse(cr, uid, ids, context=context):
+            rfq_list = []
+            for rfq in tender.rfq_ids:
+                if rfq.state not in ('rfq_done', 'cancel',):
+                    rfq_list.append(rfq.id)
+                
+            # if some rfq have wrong state, we display a message
+            if rfq_list:
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Done or Canceled."))
+            
         self.write(cr, uid, ids, {'state':'done'}, context=context)
         return True
     
@@ -122,10 +134,14 @@ class tender(osv.osv):
         po_obj = self.pool.get('purchase.order')
         wiz_obj = self.pool.get('wizard.compare.rfq')
         for tender in self.browse(cr, uid, ids, context=context):
+            # all rfqs must have been treated
+            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('state', '=', 'draft'),], context=context)
+            if rfq_ids:
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Done or Canceled."))
             # rfq corresponding to this tender with done state (has been updated and not canceled)
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('state', '=', 'rfq_done'),], context=context)
             # the list of rfq which will be compared
-            c = dict(context, active_ids=rfq_ids, tender=True)
+            c = dict(context, active_ids=rfq_ids, tender_id=tender.id)
             # open the wizard
             action = wiz_obj.start_compare_rfq(cr, uid, ids, context=c)
         return action
@@ -174,11 +190,13 @@ class tender_line(osv.osv):
     
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
                 'qty': fields.float(string="Qty", required=True),
-                'supplier_id': fields.many2one('res.partner', string="Supplier", domain=[('supplier', '=', True)], readonly=True),
-                'price_unit': fields.float(string="Price Unit", readonly=True),
+                'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
+                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
                 'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
                 'tender_id': fields.many2one('tender', string="Tender", required=True),
-                'purchase_order_id': fields.many2one('purchase.order', string="Related RfQ", readonly=True),
+                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
+                'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
+                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
                 'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
                 'date_planned': fields.datetime('Scheduled date', required=True),
@@ -204,9 +222,9 @@ class tender(osv.osv):
         if default is None:
             default = {}
         
-        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'tender'))
+        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'tender'), rfq_ids=[])
             
-        result = super(tender_tender, self).copy(cr, uid, id, default, context)
+        result = super(tender, self).copy(cr, uid, id, default, context)
         return result
 
 tender()
@@ -331,7 +349,19 @@ class purchase_order(osv.osv):
     
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
+                'valid_till': fields.date(string='Valid Till', states={'draft':[('readonly',False)]}, readonly=True,),
                 }
     
 purchase_order()
+
+
+class sale_order_line(osv.osv):
+    '''
+    add link one2many to tender.line
+    '''
+    _inherit = 'sale.order.line'
+    
+    _columns = {'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),}
+    
+sale_order_line()
 

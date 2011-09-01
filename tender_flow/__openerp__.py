@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", "partner_modification"],
+    "depends" : ["sale", "purchase", "stock", "partner_modification", "sourcing"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """

@@ -26,16 +26,11 @@
                                     <field name="price_unit" />
                                     <field name="total_price" />
                                     <field name="purchase_order_id" />
+                                    <field name="purchase_order_line_number" />
                                 </tree>
                             </field>
                             <newline/>
                             <group col="13" colspan="10">
-                            </group>
-                            <group col="13" colspan="4">
-                                <field name="state"/>
-                                <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
-                                <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
-                                <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
                             </group>
                         </page>
                         <page string="Suppliers">
@@ -57,6 +52,12 @@
                             </field>
                         </page>
                     </notebook>
+                    <group col="13" colspan="4">
+                        <field name="state"/>
+                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
+                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
+                        <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -117,6 +118,7 @@
             		
             		<field name="details" position="after">
             			<field name="tender_id" invisible="True" />
+            			<field name="valid_till" />
             		</field>
             		
             		<button name="purchase_confirm" position="replace">
