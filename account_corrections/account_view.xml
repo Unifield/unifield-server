@@ -14,7 +14,7 @@
                         <field name="corrected" invisible="1"/>
                         <field name="corrected_line_id" invisible="1"/>
                         <button name="button_do_accounting_corrections" type="object" string='Open Accounting Correction Wizard' 
-                            attrs="{'invisible': ['|', ('corrected', '=', True), ('corrected_line_id', '!=', False)]}" icon='terp-mail-message-new'/>
+                            attrs="{'invisible': ['|', ('corrected', '=', True), ('corrected_line_id', '!=', False)]}" icon='terp-mail-message-new'/>   
                         <button name="button_open_corrections" type='object' string="Open corrections history" 
                             attrs="{'invisible': [('corrected', '=', False)]}" icon="terp-mail-"/>
                     </xpath>

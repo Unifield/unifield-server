@@ -14,11 +14,13 @@
                     <newline/>
                     <field name="to_be_corrected_ids" colspan="6">
                         <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
-                            <field name="account_id"/>
-                            <field name="ref"/>
                             <field name="journal_id"/>
-                            <field name="period_id"/>
+                            <field name="ref"/>
                             <field name="date"/>
+                            <field name="period_id"/>
+                            <field name="account_id"/>
+                            <field name="partner_type" attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                            <field name="partner_type_mandatory" invisible="1"/>
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="currency_id"/>

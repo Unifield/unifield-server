@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from register_accounting.register_tools import _get_third_parties, _set_third_parties
 
 class journal_items_corrections_lines(osv.osv_memory):
     _name = 'wizard.journal.items.corrections.lines'
@@ -39,7 +40,18 @@ class journal_items_corrections_lines(osv.osv_memory):
         'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
-        # FIXME: add partner_type
+        # Third Parties Fields - BEGIN
+        'partner_id': fields.many2one('res.partner', 'Partner'),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
+        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            multi="third_parties_key"),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
+        'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            help="To use for python code when registering", multi="third_parties_key"),
+        # Third Parties fields - END
         'debit': fields.float('Func. Out', readonly=True),
         'credit': fields.float('Func. In', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Func. currency", readonly=True),
@@ -88,6 +100,10 @@ class journal_items_corrections(osv.osv_memory):
                 'credit': move_line.credit,
                 'period_id': move_line.period_id.id,
                 'currency_id': move_line.functional_currency_id.id,
+                'partner_id': move_line.partner_id and move_line.partner_id.id or None,
+                'employee_id': move_line.employee_id and move_line.employee_id.id or None,
+                'register_id': move_line.register_id and move_line.register_id.id or None,
+                'partner_type_mandatory': move_line.partner_type_mandatory or None,
 #                FIXME: add this line: 'analytic_distribution_id': move_line.analytic_distribution_id,
             }
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
