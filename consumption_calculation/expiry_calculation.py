@@ -119,5 +119,29 @@ class expiry_quantity_report_line(osv.osv_memory):
     
 expiry_quantity_report_line()
 
+
+class product_likely_expire_report(osv.osv_memory):
+    _name = 'product.likely.expire.report'
+    _description = 'Products list likely to expire'
+    
+    _columns = {
+        'location_id': fields.many2one('stock.location', string='Location'),
+        'date_from': fields.date(string='From', required=True),
+        'date_to': fields.date(string='To', required=True),
+        'line_ids': fields.one2many('product.likely.expire.report.line', 'report_id', string='Lines', readonly=True),
+    }
+    
+product_likely_expire_report()
+
+
+class product_likely_expire_report_line(osv.osv_memory):
+    _name = 'product.likely.expire.report.line'
+    _description = 'Products line likely to expire'
+    
+    _columns = {
+        'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True),
+    }
+    
+product_likely_expire_report_line()
     
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
