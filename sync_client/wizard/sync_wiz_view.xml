@@ -37,7 +37,7 @@
 	                	<button type="special" special="cancel" string="Cancel" colspan="1"/>
 	                	<label colspan="2" />
 	                	<button type="object" string="Previous" name="previous" colspan="1"/>       
-	                	<button type="object" string="Register" name="validate" colspan="1" confirm="Are you sure?"/>       
+	                	<button type="object" string="Register" name="validate" colspan="1"/>       
 	                </group>
 	                <group colspan="4" col="5" states="message" width="450" height="200">
 	            		<separator string="Message" colspan="5" />

@@ -322,8 +322,21 @@ class entity(osv.osv):
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
         
+    def validate_action(self, cr, uid, ids, context=None):
+        if not context:
+            context={}
+            
+        context['update'] = False
+        self.write(cr, uid, ids, {'state' : 'validated'}, context)  
+        return True
         
-    
+    def invalidate_action(self, cr, uid, ids, context=None):
+        if not context:
+            context={}
+            
+        context['update'] = False
+        self.write(cr, uid, ids, {'state' : 'invalidated'}, context)  
+        return True
       
     def _send_registration_email(self, cr, uid, data, groups_name, context=None):
         parent_id = data.get('parent_id')
@@ -352,7 +365,9 @@ class entity(osv.osv):
         email_to = []
         for child in self.browse(cr, uid, ids_validated, context=None):
             if child.email:
-                email_to.extend(child.email.split(','))
+                email_list = child.email and child.email.split(',') or []
+                email_to.extend(email_list)
+                
         if not email_from or not email_to:
             return
         
@@ -367,7 +382,8 @@ class entity(osv.osv):
         email_from = entity.email
         email_to = []
         for child in self.browse(cr, uid, ids_validated, context=None):
-            email_to.extend(child.email.split(','))
+            email_list = child.email and child.email.split(',') or []
+            email_to.extend(email_list)
         
         if not email_from or not email_to:
             return

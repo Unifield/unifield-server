@@ -32,6 +32,9 @@
                     <field name="group_ids" colspan="4" nolabel="1" />
                     <separator string="Children" colspan="4" />
                     <field name="children_ids" colspan="4" nolabel="1" />
+                    <newline />
+                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated" />
+                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated" />
                 </form>
             </field>
         </record>
