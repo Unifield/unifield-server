@@ -447,7 +447,7 @@ class product_product(osv.osv):
     def compute_amc(self, cr, uid, ids, context={}):
         '''
         Compute the Average Monthly Consumption with this formula :
-            AMC = (sum(OUTGOING (except reason types Lobn, Donation, Loss, Discrepancy))
+            AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
                   -
                   sum(INCOMING with reason type Return from unit)) / Number of period's months
         '''
@@ -511,5 +511,19 @@ class product_product(osv.osv):
         res = round(res/nb_months, 2)
             
         return res
+    
+    
+    _columns = {
+        'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
+                                        help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
+        'monthly_consumption': fields.function(compute_mac, method=True, string='Monthly consumption', readonly=True),
+        'reviewed_consumption': fields.float(digits=(16,2), string='Reviewed monthly consumption'),
+    }
+    
+    _defaults = {
+        'reviewed_consumption': lambda *a: 0.00,
+        'procure_delay': lambda *a: 1,
+    }
+
     
 product_product()
