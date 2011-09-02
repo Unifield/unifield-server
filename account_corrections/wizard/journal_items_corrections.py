@@ -109,6 +109,32 @@ class journal_items_corrections(osv.osv_memory):
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
         return res
 
+    def compare_lines(self, cr, uid, old_line_id=None, new_line_id=None, context={}):
+        """
+        Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
+         - account_id (1)
+         - partner_type (partner_id, employee_id or register_id) (2)
+         - analytic_distribution_id (4)
+        Then return the sum.
+        """
+        # Verifications
+        if not context:
+            context = {}
+        if not old_line_id or not new_line_id:
+            raise osv.except_osv(_('Error'), _('An ID is missing!'))
+        # Prepare some values
+        res = 0
+        old_line = self.pool.get('account.move.line').browse(cr, uid, [old_line_id], context=context)[0]
+        new_line = self.pool.get('wizard.journal.items.corrections.lines').browse(cr, uid, [new_line_id], context=context)[0]
+        if cmp(old_line.account_id, new_line.account_id):
+            res += 1
+        if cmp(old_line.partner_id, new_line.partner_id): # or cmp(old_line.employee_id, new_line.employee_id) or cmp(old_line.register_id, new_line.register_id):
+            res += 2
+#        FIXME: uncomment this when analytical distribution is done
+#        if cmp(old_line.analytic_distribution_id, new_line.analytic_distribution_id):
+#            res += 4
+        return res
+
     def action_reverse(self, cr, uid, ids, context={}):
         """
         Do a reverse from the lines attached to this wizard
@@ -165,9 +191,17 @@ class journal_items_corrections(osv.osv_memory):
         old_line = wizard.move_line_id
         # Verify what have changed between old line and new one
         new_lines = wizard.to_be_corrected_ids
-        # compare account_id
-        if old_line.account_id.id != new_lines[0].account_id.id:
+        # compare lines
+        comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
+        # Correct account
+        if comparison == 1:
             aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+        # Correct third parties
+        elif comparison == 2:
+            if not old_line.statement_id:
+                aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
+#        elif old_line.partner_id and old_line.partner_id.id != new_lines[0].partner_id.id:
+#            raise osv.except_osv('Information', 'Entering third parties change')
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
         return {'type': 'ir.actions.act_window_close'}
