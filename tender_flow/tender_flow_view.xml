@@ -9,10 +9,17 @@
             <field name="arch" type="xml">
                 <form string="Tender">
                     <group col="6" colspan="4">
+                    	<field name="creator" />
+                    	<field name="creation_date" />
+                    	<field name="requested_date" />
                         <field name="name"/>
                         <field name="sale_order_id"/>
+                        <field name="warehouse_id" />
                         <field name="location_id" />
                         <field name="company_id" />
+                        <field name="categ" />
+                        <field name="priority" />
+                        <field name="details" />
                     </group>
                     <notebook colspan="5">
                         <page string="Tender Lines">
@@ -51,11 +58,15 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Notes">
+                        	<field name="notes" nolabel="1" />
+                        </page>
                     </notebook>
                     <group col="13" colspan="4">
                         <field name="state"/>
                         <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
+                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-execute"/>
                         <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
                     </group>
                 </form>
@@ -122,8 +133,8 @@
             		</field>
             		
             		<button name="purchase_confirm" position="replace">
-            			<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': [('tender_id', '!=', False)],}" />
-            			<button name="rfq_done" states="draft" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', !=', 'draft')],}" />
+            			<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'draft'),],}" />
+            			<button name="rfq_done" states="draft" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', '!=', 'draft'),],}" />
             		</button>
             		
             		<!-- <button name="purchase_cancel" position="replace">

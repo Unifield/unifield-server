@@ -58,6 +58,7 @@
 					<field name="real_stock" />
 					<field name="available_stock" />
 					<field name="virtual_stock" />
+					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="supplier" colspan="2"
 						context="{'product_id': product_id, 'choose_supplier': True}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
