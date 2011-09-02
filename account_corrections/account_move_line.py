@@ -97,7 +97,6 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No new account_id given!'))
         # Prepare some values
         move_obj = self.pool.get('account.move')
-        aml_obj = self.pool.get('account.move.line')
         j_obj = self.pool.get('account.journal')
         success_move_line_ids = []
         # Search correction journal
@@ -122,8 +121,8 @@ class account_move_line(osv.osv):
                 'period_id': period_ids[0],
             }
             # Copy the line
-            rev_line_id = aml_obj.copy(cr, uid, ml.id, vals, context=context)
-            correction_line_id = aml_obj.copy(cr, uid, ml.id, vals, context=context)
+            rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
+            correction_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             # Do the reverse
             name = 'REV' + ' ' + ml.name
             amt = -1 * ml.amount_currency
@@ -136,13 +135,13 @@ class account_move_line(osv.osv):
                 'corrected_line_id': ml.id,
                 'account_id': ml.account_id.id,
             })
-            aml_obj.write(cr, uid, [rev_line_id], vals, context=context)
+            self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
             name = 'COR' + ' ' + ml.name
-            aml_obj.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': ml.id,
+            self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': ml.id,
                 'account_id': new_account_id,}, context=context)
             # Inform old line that it have been corrected
-            aml_obj.write(cr, uid, [ml.id], {'corrected': True}, context=context)
+            self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
             # Add this line to succeded lines
