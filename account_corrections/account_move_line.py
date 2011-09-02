@@ -225,6 +225,8 @@ class account_move_line(osv.osv):
             self.write(cr, uid, [move_line.id], {'corrected': True}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
+            # Reconcile the line with its reversal
+            self.reconcile_partial(cr, uid, [line.id, rev_line_id], context=context)
             # Add this line to succeded lines
             success_move_line_ids.append(move_line.id)
         return success_move_line_ids
