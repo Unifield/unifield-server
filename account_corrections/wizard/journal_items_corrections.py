@@ -148,33 +148,10 @@ class journal_items_corrections(osv.osv_memory):
             ids = [ids]
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
-        move_obj = self.pool.get('account.move')
         aml_obj = self.pool.get('account.move.line')
-        j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
-        old_move = wizard.move_line_id.move_id
-        # Update register
-        # FIXME
-#        if wizard.move_line_id.statement_id:
-#            raise osv.except_osv(_('Error'), _('This line have come from a register. So it demand register line to be updated. This fonctionality will \
-# be available soon.'))
-        # Copy old move to a new one
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', wizard.date), ('date_stop', '>=', wizard.date)], 
-            context=context, limit=1, order='date_start, name')
-        new_move_id = move_obj.copy(cr, uid, old_move.id, {'date': wizard.date, 'period_id': period_ids[0], 'journal_id': j_ids[0]}, context=context)
-        # Change debit/credit columns and amount_currency
-        new_line_ids = aml_obj.search(cr, uid, [('move_id', '=', new_move_id)], context=context)
-        for ml in aml_obj.browse(cr, uid, new_line_ids, context=context):
-            amt = -1 * ml.amount_currency
-            name = 'REV' + ' ' + ml.name
-            aml_obj.write(cr, uid, [ml.id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 
-                'corrected_line_id': ml.id}, context=context)
-        # Flag all initial move line as corrected
-        for old_ml in old_move.line_id:
-            aml_obj.write(cr, uid, [old_ml.id], {'corrected': True}, context=context)
-        # Hard post the move
-        move_obj.post(cr, uid, [new_move_id], context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        # Do reverse
+        res = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
+        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
     def action_confirm(self, cr, uid, ids, context={}):
         """
