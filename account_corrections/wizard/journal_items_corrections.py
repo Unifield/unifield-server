@@ -128,7 +128,8 @@ class journal_items_corrections(osv.osv_memory):
         new_line = self.pool.get('wizard.journal.items.corrections.lines').browse(cr, uid, [new_line_id], context=context)[0]
         if cmp(old_line.account_id, new_line.account_id):
             res += 1
-        if cmp(old_line.partner_id, new_line.partner_id): # or cmp(old_line.employee_id, new_line.employee_id) or cmp(old_line.register_id, new_line.register_id):
+        if cmp(old_line.partner_id, new_line.partner_id): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or 
+            # cmp(old_line.register_id, new_line.register_id):
             res += 2
 #        FIXME: uncomment this when analytical distribution is done
 #        if cmp(old_line.analytic_distribution_id, new_line.analytic_distribution_id):
@@ -166,7 +167,8 @@ class journal_items_corrections(osv.osv_memory):
         for ml in aml_obj.browse(cr, uid, new_line_ids, context=context):
             amt = -1 * ml.amount_currency
             name = 'REV' + ' ' + ml.name
-            aml_obj.write(cr, uid, [ml.id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 'corrected_line_id': ml.id}, context=context)
+            aml_obj.write(cr, uid, [ml.id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 
+                'corrected_line_id': ml.id}, context=context)
         # Flag all initial move line as corrected
         for old_ml in old_move.line_id:
             aml_obj.write(cr, uid, [old_ml.id], {'corrected': True}, context=context)
@@ -193,18 +195,27 @@ class journal_items_corrections(osv.osv_memory):
         new_lines = wizard.to_be_corrected_ids
         # compare lines
         comparison = self.compare_lines(cr, uid, old_line.id, new_lines[0].id, context=context)
+        # Result
+        res = [] # no result yet
         # Correct account
         if comparison == 1:
-            aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+            res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, context=context)
+            if not res:
+                raise osv.except_osv(_('Error'), _('No account changed!'))
         # Correct third parties
         elif comparison == 2:
             if not old_line.statement_id:
-                aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
+                res = aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
+                if not res:
+                    raise osv.except_osv(_('Error'), 
+                        _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
 #        elif old_line.partner_id and old_line.partner_id.id != new_lines[0].partner_id.id:
 #            raise osv.except_osv('Information', 'Entering third parties change')
+        elif comparison in [3, 5, 7]:
+            raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"))
         else:
             raise osv.except_osv(_('Warning'), _('No modifications seen!'))
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
 journal_items_corrections()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
