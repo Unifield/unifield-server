@@ -18,18 +18,14 @@
                             <field name="ref"/>
                             <field name="date"/>
                             <field name="period_id"/>
-                            <field name="account_block" invisible="1"/>
-                            <field name="account_id" on_change="onchange_block()" attrs="{'readonly': [('account_block', '=', True)]}"/>
-                            <field name="partner_type_block" invisible="1"/>
+                            <field name="account_id"/>
                             <field name="partner_type" on_change="onchange_block()" 
-                                attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('partner_type_block', '=', True)]}"/>
+                                attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                             <field name="partner_type_mandatory" invisible="1"/>
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="currency_id"/>
-                            <field name="analytic_distribution_block" invisible="1"/>
-                            <!-- FIXME: add field analytic_distribution_id with a on_change on 'account_id' and 'partner_type' with a readonly when 
-                                field analytic_distribution_block is True-->
+                            <!-- FIXME: add field analytic_distribution_id -->
                         </tree>
                     </field>
                     <newline/>

@@ -31,40 +31,6 @@ class journal_items_corrections_lines(osv.osv_memory):
     _name = 'wizard.journal.items.corrections.lines'
     _description = 'Journal items corrections lines'
 
-    def onchange_block(self, cr, uid, ids, context={}):
-        """
-        Block field by changing fieldname_block field to True
-        """
-        if not context:
-            context = {}
-        vals = {}
-        # Search wizard lines
-        ids = self.search(cr, uid, [], context=context)
-        for line in self.browse(cr, uid, ids, context=context):
-            # block all except account
-            account_similar = cmp(line.account_id, line.move_line_id.account_id) or None
-            if line.account_id and account_similar:
-                vals.update({'partner_type_block': True, 'analytic_distribution_block': True})
-            elif line.account_id and not account_similar:
-                vals.update({'partner_type_block': False, 'analytic_distribution_block': False})
-            # block all except partner_type
-            partner_type_similar = cmp(line.partner_id, line.move_line_id.partner_id)
-            if line.partner_type and partner_type_similar:
-                vals.update({'account_block': True, 'analytic_distribution_block': True})
-            elif line.partner_type and not partner_type_similar:
-                vals.update({'account_block': False, 'analytic_distribution_block': False})
-    #            FIXME: Uncomment this when analytic distribution is OK.
-    #            # block all except analytic_distribution
-    #            analytic_distribution_similar = cmp(line.analytic_distribution_id, line.move_line_id.analytic_distribution_id)
-    #            if line.analytic_distribution_id and analytic_distribution_similar:
-    #                vals.update({'account_block': True, 'partner_type_block': True})
-    #            elif line.analytic_distribution_id and not analytic_distribution_similar:
-    #                vals.update({'account_block': False, 'partner_type_block': False})
-            # Write changes if exists
-            if vals:
-                self.write(cr, uid, [line.id], vals, context=context)
-        return True
-
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
         'wizard_id': fields.many2one('wizard.journal.items.corrections', string="wizard"),
@@ -90,11 +56,6 @@ class journal_items_corrections_lines(osv.osv_memory):
         'credit': fields.float('Func. In', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Func. currency", readonly=True),
 #        FIXME: add this field: 'analytic_distribution_id'
-        'account_block': fields.boolean('Block account field', readonly=True, help="This permits to know if account field should be blocked."),
-        'partner_type_block': fields.boolean('Block Third Parties field', readonly=True, 
-            help="This permits to know if third parties field should be blocked."),
-        'analytic_distribution_block': fields.boolean('Block analytic distribution field', readonly=True, 
-            help="This permits to know if analytic distribution field should be blocked."),
     }
 
 journal_items_corrections_lines()
