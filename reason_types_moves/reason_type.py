@@ -169,6 +169,10 @@ class stock_move(osv.osv):
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
     }
     
+    _defaults = {
+        'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
+    }
+    
 stock_move()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

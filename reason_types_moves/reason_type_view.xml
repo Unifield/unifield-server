@@ -50,21 +50,41 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                    <field name="reason_type_id" />
-               </xpath>
+            	<data>
+            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
+                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                    </xpath>
+            		
+	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
+	                    <field name="reason_type_id" />
+	               </xpath>
+	               
+	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
+	               		<field name="reason_type_id" />
+	               </xpath>
+               </data>
             </field>
         </record>
         
-        <record id="inherit_view_picking_form" model="ir.ui.view">
+        <record id="inherit_view_picking_out_form" model="ir.ui.view">
             <field name="name">inherit.view.picking.out.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_out_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                    <field name="reason_type_id" />
-               </xpath>
+            	<data>
+            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
+                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                    </xpath>
+            		
+	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
+	                    <field name="reason_type_id" />
+	               </xpath>
+	               
+	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
+	               		<field name="reason_type_id" />
+	               </xpath>
+               </data>
             </field>
         </record>
         
@@ -74,10 +94,48 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_in_form" />
             <field name="arch" type="xml">
-                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-                    <field name="reason_type_id" />
-               </xpath>
+            	<data>
+            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
+                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                    </xpath>
+            		
+	            	<xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
+	                	<field name="reason_type_id" />
+	                </xpath>
+	                
+	                <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
+	               		<field name="reason_type_id" />
+	               	</xpath>               
+            	</data>
             </field>
+        </record>
+        
+        <record id="inherit_view_move_form" model="ir.ui.view">
+        	<field name="name">inherit.view.move.form</field>
+        	<field name="model">stock.move</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="stock.view_move_form" />
+        	<field name="arch" type="xml">
+        		<data>
+        			<xpath expr="/form//field[@name='tracking_id']" position="before">
+        				<field name="reason_type_id" />
+        			</xpath>
+        		</data>
+        	</field>
+        </record>
+        
+        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
+        	<field name="name">inherit.view.move.form.reception.picking</field>
+        	<field name="model">stock.move</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="stock.view_move_form_reception_picking" />
+        	<field name="arch" type="xml">
+        		<data>
+        			<xpath expr="/form//field[@name='tracking_id']" position="before">
+        				<field name="reason_type_id" />
+        			</xpath>
+        		</data>
+        	</field>
         </record>
     
     </data>
