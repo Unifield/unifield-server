@@ -124,6 +124,38 @@ class account_move_line(osv.osv):
         """
         Open all corrections linked to the given one
         """
+        # Verification
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain_ids = []
+        # Search ids to be open
+        res_ids = self.get_corrections_history(cr, uid, ids, context=context)
+        # For each ids, add elements to the domain
+        for el in res_ids:
+            domain_ids.append(res_ids[el])
+        # If no result, just display selected ids
+        if not domain_ids:
+            domain_ids = ids
+        # Create domain
+        domain = [('id', 'in', flatten(domain_ids))]
+        # Display the result
+        return {
+            'name': "History Move Line",
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'tree',
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+            },
+            'domain': domain,
+        }
         return True
 
     def reverse(self, cr, uid, ids, date=None, context={}):
