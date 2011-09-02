@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from tools.misc import flatten
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -48,6 +49,48 @@ class account_move_line(osv.osv):
             'state': 'draft',
         })
         return super(account_move_line, self).copy(cr, uid, id, defaults, context=context)
+
+    def get_corrections_history(self, cr, uid, ids, context={}):
+        """
+        Give for each line their history by using "corrected_line_id" field to browse lines
+        Return something like that: 
+            {id1: [line_id, another_line_id], id2: [a_line_id, other_line_id]}
+        """
+        # Verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for ml in self.browse(cr, uid, ids, context=context):
+            upstream_line_ids = []
+            downstream_line_ids = []
+            # Get upstream move lines
+            line = ml
+            while line != None:
+                if line:
+                    upstream_line_ids.append(line.id)
+                if line.corrected_line_id:
+                    line = line.corrected_line_id
+                else:
+                    line = None
+            # Get downstream move lines
+            sline_ids = [ml.id]
+            while sline_ids != None:
+                operator = 'in'
+                if len(sline_ids) == 1:
+                    operator = '='
+                search_ids = self.search(cr, uid, [('corrected_line_id', operator, sline_ids)], context=context)
+                if search_ids:
+                    downstream_line_ids.append(search_ids)
+                    sline_ids = search_ids
+                else:
+                    sline_ids = None
+            # Add search result to res
+            res[str(ml.id)] = list(set(upstream_line_ids + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
+        return res
 
     def button_do_accounting_corrections(self, cr, uid, ids, context={}):
         """
