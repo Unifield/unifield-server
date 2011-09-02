@@ -19,8 +19,7 @@
                             <field name="date"/>
                             <field name="period_id"/>
                             <field name="account_id"/>
-                            <field name="partner_type" on_change="onchange_block()" 
-                                attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                            <field name="partner_type" attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                             <field name="partner_type_mandatory" invisible="1"/>
                             <field name="debit"/>
                             <field name="credit"/>
