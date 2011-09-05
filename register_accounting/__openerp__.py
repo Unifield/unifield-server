@@ -31,10 +31,13 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable"],
+    # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
+    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "account_analytic_plans"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
+        'wizard/import_invoice_on_registers_view.xml',
+        'wizard/import_cheque_on_bank_registers_view.xml',
         'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
@@ -44,6 +47,8 @@
         'account_cash_statement_sequence.xml',
         'wizard/wizard_cash_return.xml',
         'account_invoice_view.xml',
+        'wizard/register_creation.xml',
+        'wizard/wizard_confirm_bank.xml',
     ],
     "demo_xml" : [],
     "test": [
@@ -56,6 +61,8 @@
         'test/cashbox_balance.yml',
         'test/direct_expense.yml',
         'test/direct_invoice.yml',
+        'test/import_cheque_from_bank.yml',
+        'test/wizard_register_creation.yml',
     ],
     "installable": True,
     "active": False

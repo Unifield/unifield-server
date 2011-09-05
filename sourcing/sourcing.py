@@ -127,7 +127,7 @@ class sourcing_line(osv.osv):
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
         'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'supplier': fields.many2one('product.supplierinfo', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}),
+        'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
     }
     _order = 'sale_order_id desc, line_number'
@@ -135,13 +135,27 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
     }
     
+    def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
+        '''
+        return the value of delay if the corresponding supplier is in supplier info the product
+        
+        designed for one unique sourcing line as parameter (ids)
+        '''
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            delay = -1
+            for suppinfo in sourcing_line.product_id.seller_ids:
+                if suppinfo.name.id == partner_id:
+                    delay = suppinfo.delay
+                    
+            return delay
+    
     def write(self, cr, uid, ids, values, context=None):
         '''
         _name = 'sourcing.line'
         
         override write method to write back
          - po_cft
-         - supplier
+         - partner
          - type
         to sale order line
         '''
@@ -172,22 +186,28 @@ class sourcing_line(osv.osv):
                     pocft = False
                     vals.update({'po_cft': pocft})
                 
-                # supplier
+                # partner_id
                 if 'supplier' in values:
-                    supplier = values['supplier']
-                    vals.update({'supplier': supplier})
-                    # update the delivery date according to supplier, only update from the sourcing tool
+                    partner_id = values['supplier']
+                    vals.update({'supplier': partner_id})
+                    # update the delivery date according to partner_id, only update from the sourcing tool
                     # not from order line as we dont want the date is udpated when the line's state changes for example
-                    if supplier:
-                        # if a new supplier has been selected update the *sourcing_line* -> values
-                        supplierInfo= self.pool.get('product.supplierinfo').browse(cr, uid, supplier, context)
+                    if partner_id:
+                        # if a new partner_id has been selected update the *sourcing_line* -> values
+                        partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context)
                         
-                        daysToAdd = supplierInfo.delay or 0
+                        # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
+                        delay = self.check_supplierinfo(cr, uid, [sourcingLine.id], partner_id, context=context)
+                        # otherwise we take the default value from product form
+                        if delay < 0:
+                            delay = partner.default_delay
+                            
+                        daysToAdd = delay
                         estDeliveryDate = date.today()
-                        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+                        estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
                         values.update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
                     else:
-                        # no supplier is selected, erase the date
+                        # no partner is selected, erase the date
                         values.update({'estimated_delivery_date': False})
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
@@ -213,11 +233,16 @@ class sourcing_line(osv.osv):
         if not supplier:
             return result
         
-        supplierInfo= self.pool.get('product.supplierinfo').browse(cr, uid, supplier, context)
+        partner = self.pool.get('res.partner').browse(cr, uid, supplier, context)
+        # if the selected partner belongs to product->suppliers, we take that delay (from supplierinfo)
+        delay = self.check_supplierinfo(cr, uid, id, partner.id, context=context)
+        # otherwise we take the default value from product form
+        if delay < 0:
+            delay = partner.default_delay
         
-        daysToAdd = supplierInfo.delay or 0
+        daysToAdd = delay
         estDeliveryDate = date.today()
-        estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+        estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
         
         result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
         
@@ -389,7 +414,7 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
     _columns = {
                 'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
-                'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
+                'supplier': fields.many2one('res.partner', 'Supplier'),
                 'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_line_id', 'Sourcing Lines'),
                 }
     
@@ -419,20 +444,27 @@ class sale_order_line(osv.osv):
         'address_allotment_id': False
         }
         '''
+        if not context:
+            context = {}
         # if a product has been selected, get supplier default value
-        sellerId = False
+        sellerId = vals.get('supplier')
         deliveryDate = False
-        if 'product_id' in vals and vals['product_id']:
-            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context)
-            template = product.product_tmpl_id
-            seller = template.seller_info_id
-            sellerId = (seller and seller.id) or False
+        if vals.get('type') == 'make_to_order' and vals.get('product_id'):
+            ctx = context.copy()
             if sellerId:
-                deliveryDate = int(template.seller_delay)
-            if 'supplier_id' in vals:
-                for s in product.seller_ids:
-                    if s.name.id == vals['supplier_id']:
-                        sellerId = s.id
+                ctx['delay_supplier_id'] = sellerId
+            
+            product = self.pool.get('product.product').browse(cr, uid, vals['product_id'], ctx)
+
+            if not sellerId:
+                seller = product.seller_id
+                sellerId = (seller and seller.id) or False
+
+                if sellerId:
+                    deliveryDate = int(product.seller_delay)
+            else:
+                deliveryDate = product.delay_for_supplier 
+
         # type
         if not vals.get('type'):
             vals['type'] = 'make_to_stock'
@@ -476,7 +508,6 @@ class sale_order_line(osv.osv):
                   'priority': orderPriority,
                   'categ': orderCategory,
                   'sale_order_state': orderState,
-                  'supplier': vals['supplier'],
                   }
         
         self.pool.get('sourcing.line').create(cr, uid, values, context=context)
@@ -532,13 +563,9 @@ class sale_order_line(osv.osv):
                 values.update({'type': vals['type']})
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
+                    values.update({'supplier': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
-                if 'supplier_id' in vals:
-                    product = self.pool.get('product.product').browse(cr, uid, vals['product_id'])
-                    for s in product.seller_ids:
-                        if s.name.id == vals['supplier_id']:
-                            values.update({'supplier': s.id})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):
@@ -591,8 +618,7 @@ class sale_order_line(osv.osv):
         type = 'type' in result['value'] and result['value']['type']
         if product and type:
             productObj = self.pool.get('product.product').browse(cr, uid, product)
-            template = productObj.product_tmpl_id
-            seller = template.seller_info_id
+            seller = productObj.seller_id
             sellerId = (seller and seller.id) or False
             
             if type == 'make_to_order':
@@ -614,7 +640,7 @@ class procurement_order(osv.osv):
     _inherit = "procurement.order"
     _description = "Procurement"
     _columns = {
-        'supplier': fields.many2one('product.supplierinfo', 'Supplier'),
+        'supplier': fields.many2one('res.partner', 'Supplier'),
     }
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -645,7 +671,7 @@ class procurement_order(osv.osv):
             # the new selection field does not exist when the procurement has been produced by
             # an order_point (minimum stock rules). in this case we take the default supplier from product
             #partner = procurement.product_id.seller_id #Taken Main Supplier of Product of Procurement.
-            partner = procurement.supplier.name or procurement.product_id.seller_id
+            partner = procurement.supplier or procurement.product_id.seller_id
 
             if user.company_id and user.company_id.partner_id:
                 if partner.id == user.company_id.partner_id.id:
@@ -679,9 +705,22 @@ class procurement_order(osv.osv):
             # the new selection field does not exist when the procurement has been produced by
             # an order_point (minimum stock rules). in this case we take the default supplier from product
             if procurement.supplier:
-                partner = procurement.supplier.name
-                seller_qty = procurement.supplier.qty
-                seller_delay = int(procurement.supplier.delay)
+                partner = procurement.supplier
+                # if the supplier is present in product seller_ids, we take that quantity from supplierinfo
+                # otherwise 1
+                seller_qty = -1
+                seller_delay = -1
+                for suppinfo in procurement.product_id.seller_ids:
+                    if suppinfo.name.id == partner.id:
+                        seller_qty = suppinfo.qty
+                        seller_delay = int(suppinfo.delay)
+                
+                if seller_qty < 0:
+                    seller_qty = 1
+                
+                # if not, default delay from supplier (partner.default_delay)
+                if seller_delay < 0:
+                    seller_delay = partner.default_delay
                 
             else:
                 partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
@@ -701,7 +740,7 @@ class procurement_order(osv.osv):
             price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
 
             newdate = datetime.strptime(procurement.date_planned, '%Y-%m-%d %H:%M:%S')
-            newdate = (newdate - relativedelta(days=company.po_lead)) - relativedelta(days=seller_delay)
+            newdate = (newdate - relativedelta(days=company.po_lead)) - relativedelta(days=int(seller_delay))
 
             #Passing partner_id to context for purchase order line integrity of Line name
             context.update({'lang': partner.lang, 'partner_id': partner_id})

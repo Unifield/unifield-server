@@ -71,8 +71,10 @@
                                 <field name="cold_chain" colspan="2" attrs="{'invisible': [('heat_sensitive_item','not in',['*','**','***'])]}"/>
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
+                                <field name="narcotic" colspan="2"/>
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>
+                                <field name="un_code" colspan="2"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
@@ -93,6 +95,9 @@
                                 <field name="criticism" colspan="2"/>
                                 <field name="abc_class" colspan="2"/>
                             </group>
+                            <separator string="Import restrictions" colspan="4"/>
+                            <field name="restricted_country" colspan="2"/>
+                            <field name="country_restriction" colspan="2" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             <separator string="Code remarks section" colspan="4"/>
                             <group colspan="2" col="2">
                                 <field name="section_code_ids" colspan="2" nolabel="1">
@@ -107,8 +112,15 @@
                                 <field name="supply_source_ids" colspan="2" nolabel="1"/>
                             </group>
                             <field name="library" colspan="2"/>
-                            <separator string="Optional products" colspan="4"/>
+                            <separator string="Associated Products" colspan="4"/>
                             <field name="options_ids" colspan="4" nolabel="1"/>
+                            <separator string="Lists/Sublists" colspan="4"/>
+                            <field name="list_ids" colspan="4" nolabel="1" mode="tree">
+                                <tree string="Lists/Sublists">
+                                    <field name="type" />
+                                    <field name="name" />
+                                </tree>
+                            </field>
                         </page>
                         <page string="Suppliers">
                             <field colspan="4" name="seller_ids" nolabel="1"/>
@@ -319,6 +331,7 @@
                    <newline/>
                    <group expand="0" string="Extended Filters..." groups="base.group_extended">
                        <field name="pricelist_id" widget="selection" context="{'pricelist': self}" />
+                       <field name="list_ids" widget="many2one" context="{'list': self}" />
                    </group>
                    <newline/>
                    <group  expand='0' string='Group by...' groups="base.group_extended">

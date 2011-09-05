@@ -1107,6 +1107,6 @@
             <field name="active" eval="False"/>
             <field name="currency_name">ZIMBABWE DOLLAR</field>
         </record>
-        <!-- <function model="res.currency" name="unlink" eval="[ref('base.VEB')]"/> --> 
+        <!-- <function model="res.currency" name="unlink" eval="[ref('base.VEB')]"/> -->
     </data>
 </openerp>

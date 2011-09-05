@@ -25,13 +25,10 @@ class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
     
     _columns = {
-        'k_currency': fields.selection([(1,'1'),(1000,'1000'),(1000000,'1000000')],'K-currency', required=True),
+        'rate': fields.float('Rate', digits=(12,6), required=True,
+            help='The rate of the currency to the functional currency'),
     }
 
-    _defaults = {
-        'k_currency': 1,
-    }
-    
     def refresh_move_lines(self, cr, uid, ids, date=None, currency=None):
         cur_obj = self.pool.get('res.currency')
         account_obj = self.pool.get('account.account')

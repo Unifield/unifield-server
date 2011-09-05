@@ -42,23 +42,30 @@
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
-                            <field name="order_line" mode="tree" colspan="4" nolabel="1">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1">
                                 <tree editable="top" string="Products">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
                                     <field name="product_uom" />
                                     <field name="product_uom_qty" />
                                     <field name="notes" />
-                                    <field name="type" />
+                                    <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />
-                                    <!-- The following line should be removed for the sprint 2 -->
-                                    <field name="supplier_id" context="{'sourcing-product_id': product_id}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />
-                                    <!--
-                                         Should be decommented for Sprint 2
-                                         <field name="supplier_id" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" />-->
+                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True)]"/>
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
+                                <form>
+                                   <field name="product_id" colspan="4" />
+                                   <field name="product_uom_qty" />
+                                   <field name="product_uom" />
+                                   <field name="type" />
+                                   <newline />
+                                   <field name="notes" colspan="4"/>
+                                   <field name="supplier" />
+                                   <field name="latest" />
+                                   
+                                </form>
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />

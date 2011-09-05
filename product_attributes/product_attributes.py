@@ -73,6 +73,44 @@ product_attributes_template()
 class product_attributes(osv.osv):
     _inherit = "product.product"
     
+    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns all lists/sublists where the product is in
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (long,int)):
+            ids = [ids]
+            
+        res = {}
+            
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = []
+            line_ids = self.pool.get('product.list.line').search(cr, uid, [('name', '=', product.id)], context=context)
+            for line in self.pool.get('product.list.line').browse(cr, uid, line_ids, context=context):
+                if line.list_id and line.list_id.id not in res[product.id]:
+                    res[product.id].append(line.list_id.id)
+                    
+        return res
+    
+    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if not context:
+            context = {}
+            
+        ids = []
+            
+        for arg in args:
+            if arg[0] == 'list_ids' and arg[1] == '=':
+                list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
+                for line in list.product_ids:
+                    ids.append(line.name.id)
+            
+        return [('id', 'in', ids)] 
+    
     _columns = {
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
@@ -85,18 +123,19 @@ class product_attributes(osv.osv):
             ('end_alternative','End of Life (alternative available)'),
             ('end','End of Life (not supplied anymore)'),
             ('obsolete','Warning list')], 'Status', help="Tells the user if he can use the product or not."),
-        'perishable': fields.boolean('Perishable'),
-        'batch_management': fields.boolean('Batch Management'),
+        'perishable': fields.boolean('Expiry Date Mandatory'),
+        'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=64),
         'short_shelf_life': fields.boolean('Short Shelf Life'),
         'criticism': fields.selection([('',''),
-            ('exceptional','1-Expectional'),
+            ('exceptional','1-Exceptional'),
             ('specific','2-Specific'),
             ('important','3-Important'),
             ('medium','4-Medium'),
             ('common','5-Common'),
             ('other','X-Other')], 'Criticism'),
+        'narcotic': fields.boolean('Narcotic/Psychotropic'),
         'abc_class': fields.selection([('',''),
             ('a','A'),
             ('b','B'),
@@ -113,9 +152,9 @@ class product_attributes(osv.osv):
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
         'heat_sensitive_item': fields.selection([('',''),
             ('_','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
-            ('*','* Keep Cool'),
-            ('**','** Keep Cool, airfreight'),
-            ('***','*** Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
+            ('*','Keep Cool'),
+            ('**','Keep Cool, airfreight'),
+            ('***','Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
         'cold_chain': fields.selection([('',''),
             ('*0','*0 Problem if any window blue'),
             ('*0F','*0F Problem if any window blue or F'),
@@ -135,19 +174,38 @@ class product_attributes(osv.osv):
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'restricted_country': fields.boolean('Restricted in the Country'),
+        # TODO: add real country restrictions
+        'country_restriction': fields.selection([('',''),
+            ('A','A'),
+            ('B','B'),
+            ('C','C')], 'Country Restriction'),
+        # TODO: validation on 'un_code' field
+        'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
+        'life_time': fields.integer('Product Life Time',
+            help='The number of months before a production lot may become dangerous and should not be consumed.'),
+        'use_time': fields.integer('Product Use Time',
+            help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
+        'removal_time': fields.integer('Product Removal Time',
+            help='The number of months before a production lot should be removed.'),
+        'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
+        'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
+                                    type='many2many', relation='product.list', method=True, string='Lists'),
     }
     
     _defaults = {
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
+        'narcotic': False,
         'composed_kit': False,
         'sterilized': False,
         'single_use': False,
         'closed_article': False,
         'dangerous_goods': False,
+        'restricted_country': False,
     }
     
     def _check_gmdn_code(self, cr, uid, ids, context=None):

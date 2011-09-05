@@ -787,7 +787,7 @@
             <field name="name">Prepayments and accruals</field>
             <field name="parent_id" ref="msf_chart_of_account.4" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.480">
@@ -797,7 +797,7 @@
             <field name="name">Prepaid charges</field>
             <field name="parent_id" ref="msf_chart_of_account.48" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.481">
@@ -807,7 +807,7 @@
             <field name="name">Accrued income</field>
             <field name="parent_id" ref="msf_chart_of_account.48" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.482">
@@ -817,7 +817,7 @@
             <field name="name">Accrued charges (liability)</field>
             <field name="parent_id" ref="msf_chart_of_account.48" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.4820">
@@ -827,7 +827,7 @@
             <field name="name">Payroll &amp; employee benefits</field>
             <field name="parent_id" ref="msf_chart_of_account.482" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48200">
@@ -837,7 +837,7 @@
             <field name="name">Salaries</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48201">
@@ -847,7 +847,7 @@
             <field name="name">13th month</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48202">
@@ -857,7 +857,7 @@
             <field name="name">Holiday pay</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48203">
@@ -867,7 +867,7 @@
             <field name="name">Severance pay</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48204">
@@ -877,7 +877,7 @@
             <field name="name">Pension</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.48209">
@@ -887,7 +887,7 @@
             <field name="name">Other</field>
             <field name="parent_id" ref="msf_chart_of_account.4820" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.4821">
@@ -927,7 +927,7 @@
             <field name="name">Suspense accounts</field>
             <field name="parent_id" ref="msf_chart_of_account.48" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_liability" />
+            <field name="user_type" ref="account_activable.account_type_debt" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.49">
@@ -1105,7 +1105,7 @@
         <record model="account.account" id="msf_chart_of_account.5811">
             <field name="code">5811</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">Bank transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1115,7 +1115,7 @@
         <record model="account.account" id="msf_chart_of_account.5812">
             <field name="code">5812</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">cash transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1125,7 +1125,7 @@
         <record model="account.account" id="msf_chart_of_account.5813">
             <field name="code">5813</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">transfer to another financial mission: Same section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1135,7 +1135,7 @@
         <record model="account.account" id="msf_chart_of_account.5814">
             <field name="code">5814</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">transfer to another MSF section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1145,7 +1145,7 @@
         <record model="account.account" id="msf_chart_of_account.5815">
             <field name="code">5815</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">Internal transfer same currency</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1155,7 +1155,7 @@
         <record model="account.account" id="msf_chart_of_account.5816">
             <field name="code">5816</field>
             <field name="type_for_register">transfer</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">Internal transfer with currency exchange</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
             <field name="reconcile" eval="False" />
@@ -1175,7 +1175,7 @@
         <record model="account.account" id="msf_chart_of_account.5821">
             <field name="code">5821</field>
             <field name="type_for_register">none</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">expenses for another financial mission: Same section</field>
             <field name="parent_id" ref="msf_chart_of_account.582" />
             <field name="reconcile" eval="False" />
@@ -1185,7 +1185,7 @@
         <record model="account.account" id="msf_chart_of_account.5822">
             <field name="code">5822</field>
             <field name="type_for_register">none</field>
-            <field name="type">liquidity</field>
+            <field name="type">other</field>
             <field name="name">expenses: Other MSF sections</field>
             <field name="parent_id" ref="msf_chart_of_account.582" />
             <field name="reconcile" eval="False" />
