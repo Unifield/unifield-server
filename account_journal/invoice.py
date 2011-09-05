@@ -117,46 +117,36 @@ class account_invoice_line(osv.osv):
             # Search old engagement journal lines to be deleted (to not have split invoice problem that delete not engagement journal lines)
             analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], context=context)
             analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
-            if inv_line.analytics_id:
-                # inv_line.analytics_id.id --> account.analytic.plan.instance
-                # Search analytic plan line
-                plan_ids = plan_line_obj.search(cr, uid, [('plan_id', '=', inv_line.analytics_id.id)], context=context)
-                for plan in plan_line_obj.browse(cr, uid, plan_ids, context=context):
-                    val = inv_line.price_subtotal # (credit or  0.0) - (debit or 0.0)
-                    # In create function, price_subtotal is null, that's why we search real amount
-                    # So this fix an error of subtotal calculation during line creation
-                    if inv_line.price_subtotal == 0:
-                        new_val = self._amount_line(cr, uid, [inv_line.id], False, False, False)
-                        val = new_val.get(inv_line.id, 0.0)
-                    amt = val * (plan.rate/100)
-                    # Change amount if invoice are supplier invoice or customer refund
-                    if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
-                        amt = -1 * amt
-                    date = inv_line.invoice_id.date_invoice
-                    if not date:
-                        perm = self.perm_read(cr, uid, [inv_line.id], context=context)
-                        if perm and 'create_date' in perm[0]:
-                            date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
-                    # Prepare some values
-                    invoice_currency = inv_line.invoice_id.currency_id.id
-                    context.update({'date': date})
-                    al_vals = {
-                        'name': inv_line.name,
-                        'date': date,
-                        'account_id': plan.id,
-                        'unit_amount': inv_line.quantity,
-                        'product_id': inv_line.product_id and inv_line.product_id.id or False,
-                        'product_uom_id': inv_line.uos_id and inv_line.uos_id.id or False,
-                        'amount': self.pool.get('res.currency').compute(cr, uid, invoice_currency, company_currency, amt, round=False, context=context),
-                        'amount_currency': amt,
-                        'currency_id': invoice_currency,
-                        'general_account_id': inv_line.account_id.id,
-                        'journal_id': journal,
-                        'source_date': date,
-                        'invoice_line_id': inv_line.id,
-                    }
-                    res = analytic_line_obj.create(cr, uid, al_vals, context=context)
-                    engagement_line_ids.append(res)
+            if inv_line.analytic_distribution_id:
+                # Search distribution lines
+                distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, inv_line.analytic_distribution_id.id, context=context)
+                for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
+                    for distrib_line in distrib_lines:
+                        date = inv_line.invoice_id.date_invoice
+                        if not date:
+                            perm = self.perm_read(cr, uid, [inv_line.id], context=context)
+                            if perm and 'create_date' in perm[0]:
+                                date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+                        # Prepare some values
+                        invoice_currency = inv_line.invoice_id.currency_id.id
+                        context.update({'date': date})
+                        al_vals = {
+                            'name': inv_line.name,
+                            'date': date,
+                            'account_id': distrib_line.analytic_id and distrib_line.analytic_id.id or False,
+                            'unit_amount': inv_line.quantity,
+                            'product_id': inv_line.product_id and inv_line.product_id.id or False,
+                            'product_uom_id': inv_line.uos_id and inv_line.uos_id.id or False,
+                            'amount': distrib_line.amount or 0.0,
+                            'amount_currency': self.pool.get('res.currency').compute(cr, uid, company_currency, invoice_currency, distrib_line.amount or 0.0, round=False, context=context),
+                            'currency_id': invoice_currency,
+                            'general_account_id': inv_line.account_id.id,
+                            'journal_id': journal,
+                            'source_date': date,
+                            'invoice_line_id': inv_line.id,
+                        }
+                        res = analytic_line_obj.create(cr, uid, al_vals, context=context)
+                        engagement_line_ids.append(res)
         return engagement_line_ids or False
 
     def create(self, cr, uid, vals, context={}):
@@ -198,7 +188,7 @@ class account_invoice_line(osv.osv):
             # Don't create any line if state not draft
             if inv_line.invoice_id.state != 'draft':
                 continue
-            if inv_line.analytics_id:
+            if inv_line.analytic_distribution_id:
                 to_create.append(inv_line.id)
         if to_create:
             # Delete existing anaytic lines
