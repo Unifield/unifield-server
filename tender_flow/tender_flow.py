@@ -54,7 +54,7 @@ class tender(osv.osv):
                 'creation_date': fields.date(string="Creation Date", readonly=True),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", states={'draft':[('readonly',False)],}, readonly=True),
-                'note': fields.text('Notes'),
+                'notes': fields.text('Notes'),
                 }
     
     _defaults = {'state': 'draft',
@@ -398,6 +398,19 @@ class procurement_order(osv.osv):
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
         return result
+    
+    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        if the procurement corresponds to a tender, the created po is confirmed but not validated
+        '''
+        po_obj = self.pool.get('purchase.order')
+        procurement = kwargs['procurement']
+        purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
+        # if tender
+        if procurement.is_tender:
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
+        return purchase_id
     
 procurement_order()
 
