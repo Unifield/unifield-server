@@ -154,13 +154,14 @@ class account_move_line(osv.osv):
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal'),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
@@ -249,10 +250,22 @@ class account_move_line(osv.osv):
                     domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
 
             if acc_type == 'transfer':
-                third_type = [('account.bank.statement', 'Register')]
+                # UF-427: transfer type shows only Journals instead of Registers as before
+                third_type = [('account.journal', 'Journal')]
                 third_required = True
-                third_selection = 'account.bank.statement,0'
-                domain = {'partner_type': [('state', '=', 'open')]}
+                third_selection = 'account.journal,0'
+
+                # UF-429: retrieve the currency of the journal of the register (some journals could have no currency attached)
+                account_bank_statement_obj = self.pool.get('account.bank.statement')
+                register_object = account_bank_statement_obj.browse(cr, uid, statement_id, context=context)
+
+                jn = register_object.journal_id
+                acc_currency = jn.currency
+                if not acc_currency:
+                    acc_currency = -1 # if the journal has no currency, do not show any journals in the search 
+                else:
+                    acc_currency = acc_currency.id # otherwise only show journals of the same currency
+                domain = {'partner_type': [('currency', '=', acc_currency)]}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True

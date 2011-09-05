@@ -70,7 +70,7 @@ class account_move(osv.osv):
 
     _columns = {
         'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
-            ('res.partner', 'Partner')], size=128, readonly="1", type="reference", method=True),
+            ('res.partner', 'Partner'), ('account.journal', 'Journal')], size=128, readonly="1", type="reference", method=True),
     }
 
 account_move()
