@@ -273,6 +273,24 @@ class procurement_order(osv.osv):
             if not res:
                 return False
         return res
+    
+    def _partner_check_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        check the if supplier is available or not
+        
+        return the list of available partners
+        '''
+        procurement = kwargs['procurement']
+        result = procurement.product_id.seller_ids
+        return result
+    
+    def _partner_get_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        returns the partner from suppinfo
+        '''
+        procurement = kwargs['procurement']
+        partner = procurement.product_id.seller_id #Taken Main Supplier of Product of Procurement.
+        return partner
 
     def check_buy(self, cr, uid, ids):
         """ Checks product type.
@@ -283,11 +301,11 @@ class procurement_order(osv.osv):
         for procurement in self.browse(cr, uid, ids):
             if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
                 return False
-            if not procurement.product_id.seller_ids:
+            if not self._partner_check_hook(cr, uid, ids, context=None, procurement=procurement):
                 cr.execute('update procurement_order set message=%s where id=%s',
                         (_('No supplier defined for this product !'), procurement.id))
                 return False
-            partner = procurement.product_id.seller_id #Taken Main Supplier of Product of Procurement.
+            partner = self._partner_get_hook(cr, uid, ids, context=None, procurement=procurement)
 
             if not partner:
                 cr.execute('update procurement_order set message=%s where id=%s',
