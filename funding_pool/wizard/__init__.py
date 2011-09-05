@@ -19,8 +19,10 @@
 #
 ##############################################################################
 
-import analytic_account_activable
-import analytic_line_activable
-import wizard
+import account_analytic_chart
+import wizard_costcenter_distribution
+import wizard_fundingpool_distribution
+import wizard_free1_distribution
+import wizard_free2_distribution
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

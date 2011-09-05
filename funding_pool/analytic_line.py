@@ -22,7 +22,7 @@
 from osv import osv
 from tools.translate import _
 
-class analytic_line_activable(osv.osv):
+class analytic_line(osv.osv):
     _inherit = "account.analytic.line"
 
     def _check_date(self, cr, uid, vals, context={}):
@@ -46,7 +46,7 @@ class analytic_line_activable(osv.osv):
         Check date for given date and given account_id
         """
         self._check_date(cr, uid, vals)
-        return super(analytic_line_activable, self).create(cr, uid, vals, context=context)
+        return super(analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context={}):
         """
@@ -60,8 +60,7 @@ class analytic_line_activable(osv.osv):
                 account_id = line and line[0] and line[0].account_id.id or False
                 vals.update({'account_id': account_id})
             self._check_date(cr, uid, vals, context=context)
-        return super(analytic_line_activable, self).write(cr, uid, ids, vals, context=context)
+        return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-analytic_line_activable()
-
+analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

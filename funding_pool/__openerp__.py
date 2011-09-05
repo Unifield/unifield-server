@@ -23,15 +23,22 @@
     "version": "1.1",
     "author" : "MSF: Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_analytic_plans"],
+    "depends" : ["analytic", "account", "account_analytic_plans", "register_accounting", "res_currency_functional"],
     "description": """Module for defining analytic accounting object.
     """,
     "init_xml" : [
         'data/analytic_account_data.xml',
     ],
     "update_xml": [
-        'analytic_account_activable_view.xml',
-        'wizard/account_analytic_chart_view.xml'
+        'analytic_account_view.xml',
+        'account_bank_statement_view.xml',
+        'account_move_line_view.xml',
+        'invoice_view.xml',
+        'wizard/account_analytic_chart_view.xml',
+        'wizard/wizard_costcenter_distribution_view.xml',
+        'wizard/wizard_fundingpool_distribution_view.xml',
+        'wizard/wizard_free1_distribution_view.xml',
+        'wizard/wizard_free2_distribution_view.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
