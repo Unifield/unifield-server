@@ -84,7 +84,65 @@
     	<menuitem id="menu_expired_products"
     			  action="action_expired_products"
     			  parent="stock.next_id_61" />
+    			  
+    			  
+    	<record id="product_likely_expire_report_form_init" model="ir.ui.view">
+    		<field name="name">product.likely.expire.report.form.init</field>
+    		<field name="model">product.likely.expire.report</field>
+    		<field name="type">form</field>
+    		<field name="priority" eval="16" />
+    		<field name="arch" type="xml">
+    			<form string="Products list likely to expire">
+    				<separator colspan="4" string="Location" />
+    				<field name="location_id" />
+    				<separator colspan="4" string="Period of calculation" />
+    				<field name="date_from" />
+    				<field name="date_to" />
+    				<field name="consumption_type" colspan="4" />
+    				<separator colspan="4" string="Actions" />
+    				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
+    				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
+    			</form>
+    		</field>
+    	</record>
+    	
+    	<record id="product_likely_expire_report_form_processed" model="ir.ui.view">
+    		<field name="name">product.likely.expire.report.form.processed</field>
+    		<field name="model">product.likely.expire.report</field>
+    		<field name="type">form</field>
+    		<field name="priority" eval="99" />
+    		<field name="arch" type="xml">
+    			<form string="Products list likely to expire">
+    				<separator colspan="4" string="Location" />
+    				<field name="location_id" readonly="1" />
+    				<separator colspan="4" string="Period of calculation" />
+    				<field name="date_from" readonly="1" />
+    				<field name="date_to" readonly="1" />
+    				<field name="consumption_type" colspan="4" readonly="1" />
+    				<separator colspan="4" string="Expired products" />
+    				<field colspan="4" nolabel="1" name="line_ids" mode="tree" readonly="1">
+    					<tree string="Expired products">
+    						<field name="product_code" />
+    						<field name="product_name" />
+    						<field name="real_stock" />
+    						<field name="total_expired" />
+    					</tree>
+    				</field>
+    			</form>
+    		</field>
+    	</record> 
     
+    	<record id="action_products_to_expire" model="ir.actions.act_window">
+    		<field name="name">Products likely to expire</field>
+    		<field name="res_model">product.likely.expire.report</field>
+    		<field name="view_type">form</field>
+    		<field name="view_mode">form</field>
+    		<field name="target">new</field>
+    	</record>
+    	
+    	<menuitem id="menu_products_to_expire"
+    			  action="action_products_to_expire"
+    			  parent="stock.next_id_61" />
     
     </data>
 </openerp>

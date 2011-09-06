@@ -119,33 +119,29 @@
 -
   !python {model: product.product}: |
     import time
-    context = {'average': True}
-    p1_rac = self.compute_mac(cr, uid, ref('product1'), context=context)
+    p1_rac = self.browse(cr, uid, ref('product1'), context=context).monthly_consumption
     to_date_str = time.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d')
     nb_months = (to_date_str.tm_year-2011)*12
     nb_months = to_date_str.tm_mon-6
     nb_months -= to_date_str.tm_mday < 1 and ((1-to_date_str.tm_mday)/30)
     nb_months += to_date_str.tm_mday > 1 and ((to_date_str.tm_mday-1)/30)
-        
-    assert p1_rac == float(506/nb_months), "The average of product 1 is not correct"
+    assert p1_rac == round(506.00/nb_months, 2), "The average of product 1 is not correct"
 -
   I check the calculation of a consumption for the entire period with another UoM
 -
   !python {model: product.product}: |
     import time
-    context = {'average': True}
-    p1_rac = self.compute_mac(cr, uid, ref('product2'), context=context)
+    p1_rac = self.browse(cr, uid, ref('product1'), context=context).monthly_consumption
     to_date_str = time.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d')
     nb_months = (to_date_str.tm_year-2011)*12
     nb_months = to_date_str.tm_mon-6
     nb_months -= to_date_str.tm_mday < 1 and ((1-to_date_str.tm_mday)/30)
     nb_months += to_date_str.tm_mday > 1 and ((to_date_str.tm_mday-1)/30)
-        
-    assert p1_rac == float(470/nb_months), "The average of product 1 is not correct"
+    assert p1_rac == round(506.00/nb_months, 2), "The average of product 1 is not correct"
 -
   I check the average consumption for 2011, June
 -
   !python {model: product.product}: |
     context = {'from_date': '2011-06-01', 'to_date': '2011-06-30'}
-    p4_rac = self.compute_mac(cr, uid, ref('product4'), context=context)
-    assert p4_rac == 103, "The average of product 4 for 2011, June is not correct"
+    p4_rac = self.browse(cr, uid, ref('product4'), context=context).monthly_consumption
+    assert p4_rac == 103.00, "The average of product 4 for 2011, June is not correct"

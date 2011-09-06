@@ -161,3 +161,51 @@
     context = {'from_date': '2011-06-01','to_date': '2011-08-31'}
     amc = self.compute_amc(cr, uid, ref('product1'), context=context)
     assert amc == 15.67, "The calculate AMC is not correct"
+-
+  I create a new Monthly review consumption
+-
+  !record {model: monthly.review.consumption, id: mrc1}:
+    cons_location_id: stock.stock_location_stock
+    period_from: 2011-01-01
+    period_to: 2011-02-01
+-
+  I create a line for mrc1
+- 
+  !record {model: monthly.review.consumption.line, id: mrc1_l1}:
+    name: product1
+    fmc: 250.0
+    valid_until: 2011-09-01
+    mrc_id: mrc1
+-
+  I confirm the line
+-
+  !function {model: monthly.review.consumption.line, name: valid_line}:
+    - model: monthly.review.consumption.line
+      search: "[('id', '=', ref('mrc1_l1'))]"
+-
+  I create a new Monthly review consumption
+-
+  !record {model: monthly.review.consumption, id: mrc2}:
+    cons_location_id: stock.stock_location_stock
+    period_from: 2011-09-01
+    period_to: 2012-02-01
+-
+  I create a line for mrc1
+- 
+  !record {model: monthly.review.consumption.line, id: mrc2_l1}:
+    name: product1
+    fmc: 300.0
+    mrc_id: mrc2
+-
+  I confirm the line
+-
+  !function {model: monthly.review.consumption.line, name: valid_line}:
+    - model: monthly.review.consumption.line
+      search: "[('id', '=', ref('mrc2_l1'))]"
+-
+  Check the value of the FMC according to the context
+-
+  !python {model: product.product}: |
+    context = {'location_id': ref('stock.stock_location_stock')}
+    res = self.browse(cr, uid, ref('product1'), context=context).reviewed_consumption
+    assert res == 300.0, "Bad FMC for product1"

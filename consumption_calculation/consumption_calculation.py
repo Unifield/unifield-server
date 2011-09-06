@@ -94,8 +94,8 @@ class real_average_consumption(osv.osv):
         
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
-                #return False
-                raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
+                return False
+                #raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
             
@@ -325,16 +325,15 @@ class monthly_review_consumption_line(osv.osv):
         '''
         Valid the line and enter data in product form
         '''
-        product_obj = self.pool.get('product.product')
-        
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+                
         for line in self.browse(cr, uid, ids, context=context):
             if line.valid_ok:
                 raise osv.except_osv(_('Error'), _('The line is already validated !'))
-            
-            product_obj.write(cr, uid, [line.name.id], 
-                              {'last_fmc': line.fmc,
-                               'last_fmc_reviewed': time.strftime('%Y-%m-%d')},
-                               context=context)
             
             self.write(cr, uid, [line.id], {'valid_ok': True}, context=context)
             
@@ -389,7 +388,46 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
-    def compute_mac(self, cr, uid, ids, context={}):
+    def _compute_fmc(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns the last value of the FMC
+        '''
+        if not context:
+            context = {}
+            
+        res = {}
+        location_ids = []
+        fmc_line_obj = self.pool.get('monthly.review.consumption.line')
+        
+        if context.get('location_id', False):
+            if type(context['location_id']) == type(1):
+                location_ids = [context['location_id']]
+            elif type(context['location_id']) in (type(''), type(u'')):
+                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
+            else:
+                location_ids = context.get('location_id', [])
+        else:
+            location_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        
+        for product in ids:
+            res[product] = 0.00
+            last_date = False
+            line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True)], context=context)
+            for line in fmc_line_obj.browse(cr, uid, line_ids, context=context):
+                if line.mrc_id.cons_location_id.id in location_ids:
+                    if not last_date:
+                        last_date = line.valid_until and line.valid_until or line.mrc_id.period_to
+                        res[product] = line.fmc
+                    elif line.valid_until and line.valid_until > last_date:
+                        last_date = line.valid_until
+                        res[product] = line.fmc
+                    elif line.mrc_id.period_to > last_date:
+                        last_date = line.mrc_id.period_to
+                        res[product] = line.fmc                 
+        
+        return res
+    
+    def compute_mac(self, cr, uid, ids, field_name, args, context={}):
         '''
         Compute the Monthly Real Average Consumption
         '''
@@ -401,7 +439,7 @@ class product_product(osv.osv):
         uom_obj = self.pool.get('product.uom')
         
         rac_domain = [('created_ok', '=', True)]
-        res = 0.00
+        res = {}
         
         from_date = False
         to_date = False
@@ -415,33 +453,46 @@ class product_product(osv.osv):
             to_date = context.get('to_date')
             rac_domain.append(('period_to', '<', to_date))
             
+        if context.get('location_id', False):
+            if type(context['location_id']) == type(1):
+                location_ids = [context['location_id']]
+            elif type(context['location_id']) in (type(''), type(u'')):
+                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
+            else:
+                location_ids = context.get('location_id', [])
+            
+            rac_domain.append(('location_id', 'in', location_ids))
+            
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
-        line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', 'in', ids)], context=context)
         
-        for line in line_obj.browse(cr, uid, line_ids, context=context):
-            res += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
-            if not context.get('from_date') and (not from_date or line.rac_id.period_to < from_date):
-                from_date = line.rac_id.period_to
-            if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
-                to_date = line.rac_id.period_to
+        for product in ids:
+            res[product] = 0.00
+            line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', '=', product)], context=context)
             
-        # We want the average for the entire period
-        if context.get('average', False):
-            if to_date < from_date:
-                raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
-            # Calculate the # of months in the period
-            to_date_str = time.strptime(to_date, '%Y-%m-%d')
-            from_date_str = time.strptime(from_date, '%Y-%m-%d')
-            
-            nb_months = (to_date_str.tm_year-from_date_str.tm_year)*12
-            nb_months += to_date_str.tm_mon-from_date_str.tm_mon
-            nb_months -= to_date_str.tm_mday < from_date_str.tm_mday and ((from_date_str.tm_mday-to_date_str.tm_mday)/30)
-            nb_months += to_date_str.tm_mday > from_date_str.tm_mday and ((to_date_str.tm_mday-from_date_str.tm_mday)/30)
-            
-            if not nb_months: nb_months = 1
-            
-            res = res/nb_months
-            
+            for line in line_obj.browse(cr, uid, line_ids, context=context):
+                res[product] += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
+                if not context.get('from_date') and (not from_date or line.rac_id.period_to < from_date):
+                    from_date = line.rac_id.period_to
+                if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
+                    to_date = line.rac_id.period_to
+                
+            # We want the average for the entire period
+            if context.get('average', True):
+                if to_date < from_date:
+                    raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
+                # Calculate the # of months in the period
+                to_date_str = time.strptime(to_date, '%Y-%m-%d')
+                from_date_str = time.strptime(from_date, '%Y-%m-%d')
+                
+                nb_months = (to_date_str.tm_year-from_date_str.tm_year)*12
+                nb_months += to_date_str.tm_mon-from_date_str.tm_mon
+                nb_months -= to_date_str.tm_mday < from_date_str.tm_mday and ((from_date_str.tm_mday-to_date_str.tm_mday)/30)
+                nb_months += to_date_str.tm_mday > from_date_str.tm_mday and ((to_date_str.tm_mday-from_date_str.tm_mday)/30)
+                
+                if not nb_months: nb_months = 1
+                
+                res[product] = round(res[product]/nb_months, 2)
+                
         return res
     
     def compute_amc(self, cr, uid, ids, context={}):
@@ -451,6 +502,9 @@ class product_product(osv.osv):
                   -
                   sum(INCOMING with reason type Return from unit)) / Number of period's months
         '''
+        if not context:
+            context = {}
+        
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -475,10 +529,21 @@ class product_product(osv.osv):
         loss_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
         discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+
+        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
+        
+        if context.get('location_id', False):
+            if type(context['location_id']) == type(1):
+                location_ids = [context['location_id']]
+            elif type(context['location_id']) in (type(''), type(u'')):
+                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
+            else:
+                location_ids = context.get('location_id', [])
+            domain.append('|')
+            domain.append(('location_id', 'in', location_ids))
+            domain.append(('location_dest_id', 'in', location_ids))
             
-        out_move_ids = move_obj.search(cr, uid, [('state', '=', 'done'),
-                                                 ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), 
-                                                 ('product_id', 'in', ids)], context=context)
+        out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
             if move.reason_type_id.id == return_id:
@@ -498,8 +563,15 @@ class product_product(osv.osv):
         if to_date < from_date:
             raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
         # Calculate the # of months in the period
-        to_date_str = time.strptime(to_date, '%Y-%m-%d')
-        from_date_str = time.strptime(from_date, '%Y-%m-%d')
+        try:
+            to_date_str = time.strptime(to_date, '%Y-%m-%d')
+        except ValueError:
+            to_date_str = time.strptime(to_date, '%Y-%m-%d %H:%M:%S')
+        
+        try:
+            from_date_str = time.strptime(from_date, '%Y-%m-%d')
+        except ValueError:
+            from_date_str = time.strptime(from_date, '%Y-%m-%d %H:%M:%S')
         
         nb_months = (to_date_str.tm_year-from_date_str.tm_year)*12
         nb_months += to_date_str.tm_mon-from_date_str.tm_mon
@@ -517,11 +589,10 @@ class product_product(osv.osv):
         'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
                                         help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'monthly_consumption': fields.function(compute_mac, method=True, string='Monthly consumption', readonly=True),
-        'reviewed_consumption': fields.float(digits=(16,2), string='Reviewed monthly consumption'),
+        'reviewed_consumption': fields.function(_compute_fmc, method=True, type='float', string='Forecasted Monthly Consumption', readonly=True),
     }
     
     _defaults = {
-        'reviewed_consumption': lambda *a: 0.00,
         'procure_delay': lambda *a: 1,
     }
 
