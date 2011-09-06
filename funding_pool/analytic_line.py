@@ -78,7 +78,7 @@ class analytic_line(osv.osv):
             if vals['date'] < account.date_start \
             or (account.date != False and \
                 vals['date'] >= account.date):
-                raise osv.except_osv(_('Error !'), _('The analytic account selected is not active.'))
+                raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
 
     def create(self, cr, uid, vals, context={}):
         """
