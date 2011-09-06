@@ -102,7 +102,7 @@ class wizard_free2_distribution(osv.osv_memory):
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         # if there are child distributions, we refresh them
-        if 'child_distributions' in context:
+        if 'child_distributions' in context and context['child_distributions']:
             for child in context['child_distributions']:
                 distrib_obj.copy_from_global_distribution(cr,
                                                           uid,
@@ -204,11 +204,7 @@ class wizard_free2_distribution(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [newwiz_id],
-                'context': {
-                    'active_id': context.get('active_id'),
-                    'active_ids': context.get('active_ids'),
-                    'child_distributions': context.get('child_distributions'),
-               }
+                'context': context,
         }
             
     def button_save(self, cr, uid, ids, context={}):

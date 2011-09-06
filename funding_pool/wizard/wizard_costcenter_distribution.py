@@ -111,7 +111,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
             }
             cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         # if there are child distributions, we refresh them
-        if 'child_distributions' in context:
+        if 'child_distributions' in context and context['child_distributions']:
             for child in context['child_distributions']:
                 distrib_obj.copy_from_global_distribution(cr,
                                                           uid,

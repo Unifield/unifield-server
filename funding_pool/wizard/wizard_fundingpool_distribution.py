@@ -233,11 +233,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [newwiz_id],
-                'context': {
-                    'active_id': context.get('active_id'),
-                    'active_ids': context.get('active_ids'),
-                    'child_distributions': context.get('child_distributions'),
-               }
+                'context': context,
         }
             
     def button_next_step(self, cr, uid, ids, context={}):
@@ -262,11 +258,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [newwiz_id],
-                'context': {
-                    'active_id': context.get('active_id'),
-                    'active_ids': context.get('active_ids'),
-                    'child_distributions': context.get('child_distributions'),
-               }
+                'context': context,
         }
             
     def button_save(self, cr, uid, ids, context={}):
