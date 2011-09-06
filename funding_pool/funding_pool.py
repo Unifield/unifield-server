@@ -148,10 +148,8 @@ class analytic_distribution(osv.osv):
                 'distribution_id': destination_id
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
-        super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
-        return
-        
-    
+        return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
+
 analytic_distribution()
     
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

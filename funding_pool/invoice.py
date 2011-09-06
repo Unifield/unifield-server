@@ -135,6 +135,7 @@ class account_invoice_line(osv.osv):
             return super(account_invoice_line, self).create(cr, uid, vals, context=context)
         
     def write(self, cr, uid, ids, vals, context=None):
+        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
         lines = self.browse(cr, uid, ids, context=context)
         for line in lines:
             if line.invoice_id.analytic_distribution_id:
@@ -149,7 +150,7 @@ class account_invoice_line(osv.osv):
                                                                                          destination_distrib_obj.id,
                                                                                          abs(vals.get('price_subtotal', line.price_subtotal)),
                                                                                          context=context)
-        return super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
+        return res
     
     
     def move_line_get_item(self, cr, uid, line, context=None):
