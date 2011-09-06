@@ -22,7 +22,7 @@
                                 <button name="button_previous_step" string="Previous" type="object" icon="gtk-apply" colspan="1" />
                                 <button name="button_next_step" string="Next" type="object" icon="gtk-apply" colspan="1" />
                                 <button name="button_save" string="Save" type="object" icon="gtk-apply" colspan="1" />
-                                <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="1" />
+                                <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
                             </group>
                         </form>
                   </field>

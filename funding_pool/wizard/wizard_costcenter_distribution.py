@@ -227,7 +227,16 @@ class wizard_costcenter_distribution(osv.osv_memory):
                     'child_distributions': context.get('child_distributions'),
                }
         }
-    
-wizard_costcenter_distribution()
 
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close the wizard
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type' : 'ir.actions.act_window_close'}
+
+wizard_costcenter_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

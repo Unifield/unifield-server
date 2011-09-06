@@ -282,7 +282,17 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             self._cleanup_and_store(cr, uid, ids[0], context=context)
         # and we open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
-    
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close the wizard
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type' : 'ir.actions.act_window_close'}
+
 wizard_fundingpool_distribution()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
