@@ -34,7 +34,7 @@
         "msf_partner",
         "register_accounting",
         "stock_inventory_type",
-        "analytic_plan_tree",
+        "funding_pool",
         "account_period_closing_level",
         "account_activable",  
         "msf_order_date",

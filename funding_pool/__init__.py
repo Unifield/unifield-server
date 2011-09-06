@@ -19,23 +19,13 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-
-class account_analytic_chart_activable(osv.osv_memory):
-    _inherit = "account.analytic.chart"
-    _columns = {
-        'show_inactive': fields.boolean('Show inactive accounts'),
-    }
-    
-    def analytic_account_chart_open_window(self, cr, uid, ids, context=None):
-        result = super(account_analytic_chart_activable, self).analytic_account_chart_open_window(cr, uid, ids, context=context)
-        # add 'active_test' to the result's context; this allows to show or hide inactive items
-        data = self.read(cr, uid, ids, [], context=context)[0]
-        context = eval(result['context'])
-        context['filter_inactive_accounts'] = not data['show_inactive']
-        result['context'] = unicode(context)
-        return result
-    
-account_analytic_chart_activable()
+import funding_pool
+import account
+import account_bank_statement
+import account_move_line
+import analytic_account
+import analytic_line
+import invoice
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
