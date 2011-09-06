@@ -66,6 +66,8 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the move line!"))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
         wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        # update context in order not to lose context modification (for an example in accounting correction wizard)
+        context.update({'active_id': ids[0], 'active_ids': ids})
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -74,10 +76,7 @@ class account_move_line(osv.osv):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [wiz_id],
-                'context': {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-               }
+                'context': context,
         }
     
 account_move_line()

@@ -69,6 +69,7 @@ class journal_items_corrections_lines(osv.osv_memory):
             ids = []
         # Prepare some values
         aml_obj = self.pool.get('account.move.line')
+        context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': self.browse(cr, uid, ids[0], context=context).wizard_id.id or False})
         return aml_obj.button_analytic_distribution(cr, uid, [x.move_line_id.id for x in self.browse(cr, uid, ids, context=context)], context=context)
 
 journal_items_corrections_lines()
