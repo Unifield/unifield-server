@@ -21,7 +21,7 @@
 {
     "name": "Multi-Currency Management",
     "version": "1.0",
-    "depends": ["purchase", "account_analytic_plans", "account_journal", "register_accounting"],
+    "depends": ["purchase", "account_analytic_plans", "account_journal", "register_accounting", "funding_pool"],
     "category": "General/Standard",
     "description": """
     This module aims to only use a subset of currencies, and have them available
