@@ -151,5 +151,4 @@ class analytic_distribution(osv.osv):
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
 
 analytic_distribution()
-    
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
