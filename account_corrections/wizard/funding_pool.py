@@ -48,4 +48,168 @@ class wizard_costcenter_distribution(osv.osv_memory):
         return super(wizard_costcenter_distribution, self).button_cancel(cr, uid, ids, context=context)
 
 wizard_costcenter_distribution()
+
+class wizard_free1_distribution(osv.osv_memory):
+    _inherit = 'wizard.free1.distribution'
+
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+        """
+        Return a wizard which name is wiz_name and id is wiz_id
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not wiz_name and not wiz_id:
+            raise osv.except_osv(_('Error'), _('No name view or no id given!'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': wiz_name,
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': wiz_id,
+            'context': context,
+        }
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Return to the initial wizard if 'from' in context
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            # return to wizard named "wizard_name"
+            return self.return_on_wizard(cr, uid, wizard_name, wizard_id, context=context)
+        # else, return normal behaviour
+        return super(wizard_free1_distribution, self).button_cancel(cr, uid, ids, context=context)
+
+    def button_save(self, cr, uid, ids, context={}):
+        """
+        Save modifications and return to initial wizard if given
+        """
+        res = super(wizard_free1_distribution, self).button_save(cr, uid, ids, context=context)
+        # Return to the initial wizard if 'from' in context
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            # return to wizard named "wizard_name"
+            return self.return_on_wizard(cr, uid, wizard_name, wizard_id, context=context)
+        return res
+
+wizard_free1_distribution()
+
+class wizard_free2_distribution(osv.osv_memory):
+    _inherit = 'wizard.free2.distribution'
+
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+        """
+        Return a wizard which name is wiz_name and id is wiz_id
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not wiz_name and not wiz_id:
+            raise osv.except_osv(_('Error'), _('No name view or no id given!'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': wiz_name,
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': wiz_id,
+            'context': context,
+        }
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': wizard_name,
+                'target': 'new',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_id': wizard_id,
+                'context': context,
+            }
+        return super(wizard_free2_distribution, self).button_cancel(cr, uid, ids, context=context)
+
+    def button_save(self, cr, uid, ids, context={}):
+        """
+        Save modifications and return to initial wizard if given
+        """
+        res = super(wizard_free2_distribution, self).button_save(cr, uid, ids, context=context)
+        # Return to the initial wizard if 'from' in context
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            # return to wizard named "wizard_name"
+            return self.return_on_wizard(cr, uid, wizard_name, wizard_id, context=context)
+        return res
+
+wizard_free2_distribution()
+
+class wizard_fundingpool_distribution(osv.osv_memory):
+    _inherit = 'wizard.fundingpool.distribution'
+
+    def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
+        """
+        Return a wizard which name is wiz_name and id is wiz_id
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not wiz_name and not wiz_id:
+            raise osv.except_osv(_('Error'), _('No name view or no id given!'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': wiz_name,
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': wiz_id,
+            'context': context,
+        }
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close wizard and return on another wizard if 'from' and 'wiz_id' are in context
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Return to the initial wizard if 'from' in context
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            # return to wizard named "wizard_name"
+            return self.return_on_wizard(cr, uid, wizard_name, wizard_id, context=context)
+        # else, return normal behaviour
+        return super(wizard_fundingpool_distribution, self).button_cancel(cr, uid, ids, context=context)
+
+    def button_save(self, cr, uid, ids, context={}):
+        """
+        Save modifications and return to initial wizard if given
+        """
+        res = super(wizard_fundingpool_distribution, self).button_save(cr, uid, ids, context=context)
+        # Return to the initial wizard if 'from' in context
+        if 'from' in context and 'wiz_id' in context:
+            wizard_name = context.get('from')
+            wizard_id = context.get('wiz_id')
+            # return to wizard named "wizard_name"
+            return self.return_on_wizard(cr, uid, wizard_name, wizard_id, context=context)
+        return res
+
+wizard_fundingpool_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
