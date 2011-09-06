@@ -7,8 +7,8 @@ import threading
 
 from config import *
 
-client_module = ['sync_client', 'sync_client_test', 'sync_so', 'purchase', 'account_voucher', 'account_analytic_plans'] #add sync_so
-server_module = ['sync_server', 'sync_server_test']
+client_module = ['sync_client', 'sync_client_test_unifield', 'sync_so', 'purchase', 'account_voucher', 'account_analytic_plans', 'msf_profile'] #add sync_so
+server_module = ['sync_server', 'sync_server_test_unifield']
 
 def get_proxy(host, port, database, model):
     connector = rpc.NetRPCConnector(host, port)

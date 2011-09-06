@@ -387,6 +387,8 @@ class entity(osv.osv):
     """
     def sync(self, cr, uid, context=None):
         #TODO thread
+        if not context:
+            context = {}
         self.pull_update(cr, uid, context)
         self.pull_message(cr, uid, context)
         self.push_update(cr, uid, context)

@@ -92,6 +92,8 @@ class test(osv.osv_memory):
         return True
     
     def check_model_info(self, cr, uid, model, data, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get(model).search(cr, uid, [('name', '=', data.get('name'))], context=context)
         if not ids:
             return False
@@ -135,6 +137,8 @@ class test(osv.osv_memory):
         return ids and ids[0] or False
 
     def delete_record(self, cr, uid, model, name, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get(model).search(cr, uid, [('name', '=', name)], context=context)
         if not ids:
             return False
@@ -351,6 +355,15 @@ class test(osv.osv_memory):
             'reconcile': True,
             'user_type': 15,
         })
+        
+        purchase_account_id2 = self.pool.get('account.account').create(cr, uid, {
+            'code': "M2PP", 
+            "name": "MSF Suppliers", 
+            "type": "payable",
+            'currency_id': 2,
+            'reconcile': True,
+            'user_type': 15,
+        })
         purchase_journal_id = self.pool.get('account.journal').create(cr, uid, {
             'code': 'M2J1', 
             'currency': 2,
@@ -365,13 +378,13 @@ class test(osv.osv_memory):
             'journal_id': purchase_journal_id,
             'partner_id': supplier_S2_id,
             'address_invoice_id': 1, # TODO get supplier res.partner.address
-            'account_id': 13, # TODO get supplier account.account
+            'account_id': purchase_account_id2, # TODO get supplier account.account
             'check_total': 2000.0, # shortcut
         })
         invoice_line_id = self.pool.get('account.invoice.line').create(cr, uid, {
             'name': 'test_invoice_line_S2',
             'invoice_id': invoice_id,
-            'account_id': 13, # TODO get appropriate account
+            'account_id': purchase_account_id2, # TODO get appropriate account
             'price_unit': 1000.0,
             'quantity': 2,
         })

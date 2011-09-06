@@ -19,8 +19,10 @@
 #
 ##############################################################################
 
+#TODO réécrire le create pour creer un nouveau ir.model.data si besoin
+#Dans auto-init : créer un méthode qui parse tout les ir.model.data existant 
 
-MODELS_TO_IGNORE=(
+MODELS_TO_IGNORE=[
                     'ir.actions.wizard',
                     'ir.actions.act_window.view',
                     'ir.report.custom',
@@ -61,8 +63,16 @@ MODELS_TO_IGNORE=(
                     'sync.client.message_sync',  
                     'sync.client.write_info',
                     
-                    'res.currency'
-                  )
+                    'res.widget',
+                    
+                    #'res.currency'
+                  ]
+
+XML_ID_TO_IGNORE = [
+                'main_partner',
+                'main_address',
+                'main_company', 
+                    ]
 
 from osv import osv,orm
 from osv import fields
@@ -75,7 +85,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 from tools.safe_eval import safe_eval as eval
-
+from tools.convert import xml_import
 class write_info(osv.osv):
     _name = 'sync.client.write_info'
     
@@ -129,6 +139,39 @@ class ir_model_data_sync(osv.osv):
         'version' : 1
     }
     
+    def _auto_init(self,cr,context=None):
+        res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
+        for rec in self.browse(cr, 1, ids):
+            name = "%s_%s" % (rec.module, rec.name)
+            res_ids = self.search(cr, 1, [('module', '=', 'sd'), ('name', '=', name)] )
+            if res_ids:
+                continue
+            args = {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'model' :rec.model,
+                    'module' : 'sd',#model._module,
+                    'name' : name,
+                    'res_id' : rec.res_id,
+                    }
+            self.create(cr, 1, args)
+        return res
+    
+    def create(self,cr,uid,values,context=None):
+        res_id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
+        if values.get('module') and values.get('module') != 'sd':
+            name = "%s_%s" % (values.get('module'), values.get('name'))
+            args = {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'model' : values.get('model'),
+                    'module' : 'sd',#model._module,
+                    'name' : name,
+                    'res_id' : values.get('res_id'),
+                    }
+            super(ir_model_data_sync, self).create(cr, uid, args, context=context)
+            
+    
+        return res_id
     def get(self, cr, uid, model, res_id, context=None):
         ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', res_id), ('module', '=', 'sd')], context=context)
         if ids:
@@ -296,7 +339,7 @@ def link_with_ir_model(model, cr, uid, id, context=None):
     }
     return model_data_pool.create(cr,uid,args,context=context)
 
-   
+  
 # we modify the import method such that no line in ir_model_data is created if
 old_import_data = osv.osv.import_data
 
@@ -479,4 +522,8 @@ class dict_to_obj(object):
     
     def to_dict(self):
         return self.d
+
+
+
+
 

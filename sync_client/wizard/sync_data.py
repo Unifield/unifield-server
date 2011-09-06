@@ -34,6 +34,9 @@ pp = pprint.PrettyPrinter(indent=4)
 from tools.safe_eval import safe_eval as eval
 
 def eval_poc_domain(obj, cr, uid, domain, context=None):
+    if not context:
+        context = {}
+    
     domain_new = []
     for tp in domain:
         if isinstance(tp, tuple):
@@ -143,7 +146,6 @@ class update_to_send(osv.osv):
             domain = []
             
         ids = eval_poc_domain(obj, cr, uid, domain, context=context)
-        print 'id found with domain', rule.name, ids
         for id in ids:
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
@@ -265,13 +267,14 @@ class update_received(osv.osv):
             
         #4 check for fallback value : report missing fallback_value
         values = self._check_and_replace_missing_id(cr, uid, values, fields, fallback, message, context=context)
-            
         #5 import data : report error
         try:
+            run = True
             res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
             if res and res[2]:
-                message.append(res[2])
-            run = True
+                if res[0] != 1:
+                    message.append(res[2])
+                    run = False
         except Exception, e:
             message.append(str(e))
             run = False
@@ -284,7 +287,6 @@ class update_received(osv.osv):
             message.append(str(e))
                 
         message_str = "\n".join(message)
-        print update.id
         self.write(cr, uid, update.id, {'run' : run, 'log' : message_str}, context=context)
     
     def run(self, cr, uid, ids, context=None):

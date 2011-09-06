@@ -48,7 +48,7 @@
             <field name="model">sync.client.update_received</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Entity Tree">
+                <tree colors="red:run == False" string="Entity Tree">
                     <field name="source"/>
                     <field name="model"/>
                     <field name="sequence"/>
@@ -114,6 +114,8 @@
 	                       context="{'group_by':'source'}" />
 	                   <filter string="Model" icon="terp-personal"
 	                       domain="[]" context="{'group_by':'model'}" />
+	                  <filter string="Sequence" icon="terp-accessories-archiver"
+	                       domain="[]" context="{'group_by':'sequence'}" />
 	                   
 	               </group>
 	           </search>
@@ -127,7 +129,7 @@
             <field name="model">sync.client.message_received</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Entity Tree">
+                <tree colors="red:run == False" string="Entity Tree">
                 	<field name="identifier" />
                     <field name="source"/>
                     <field name="remote_call"/>
@@ -188,6 +190,8 @@
 	                       context="{'group_by':'source'}" />
 	                   <filter string="Call" icon="terp-personal"
 	                       domain="[]" context="{'group_by':'remote_call'}" />
+	                   <filter string="Sequence" icon="terp-accessories-archiver"
+	                       domain="[]" context="{'group_by':'sequence'}" />
 	                   
 	               </group>
 	           </search>
