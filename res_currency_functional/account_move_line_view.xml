@@ -89,6 +89,7 @@
                     <field name="date" string="Posting Date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
                     <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
