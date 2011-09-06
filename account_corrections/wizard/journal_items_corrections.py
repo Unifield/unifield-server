@@ -55,8 +55,21 @@ class journal_items_corrections_lines(osv.osv_memory):
         'debit': fields.float('Func. Out', readonly=True),
         'credit': fields.float('Func. In', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Func. currency", readonly=True),
-#        FIXME: add this field: 'analytic_distribution_id'
+        'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
     }
+
+    def button_analytic_distribution(self, cr, uid, ids, context={}):
+        """
+        Open Analytic Distribution wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = []
+        # Prepare some values
+        aml_obj = self.pool.get('account.move.line')
+        return aml_obj.button_analytic_distribution(cr, uid, [x.move_line_id.id for x in self.browse(cr, uid, ids, context=context)], context=context)
 
 journal_items_corrections_lines()
 
@@ -104,7 +117,7 @@ class journal_items_corrections(osv.osv_memory):
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
                 'register_id': move_line.register_id and move_line.register_id.id or None,
                 'partner_type_mandatory': move_line.partner_type_mandatory or None,
-#                FIXME: add this line: 'analytic_distribution_id': move_line.analytic_distribution_id,
+                'analytic_distribution_id': move_line.analytic_distribution_id and move_line.analytic_distribution_id.id or None,
             }
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
         return res
@@ -131,9 +144,8 @@ class journal_items_corrections(osv.osv_memory):
         if cmp(old_line.partner_id, new_line.partner_id): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or 
             # cmp(old_line.register_id, new_line.register_id):
             res += 2
-#        FIXME: uncomment this when analytical distribution is done
-#        if cmp(old_line.analytic_distribution_id, new_line.analytic_distribution_id):
-#            res += 4
+        if cmp(old_line.analytic_distribution_id, new_line.analytic_distribution_id):
+            res += 4
         return res
 
     def action_reverse(self, cr, uid, ids, context={}):
@@ -188,6 +200,8 @@ class journal_items_corrections(osv.osv_memory):
                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
 #        elif old_line.partner_id and old_line.partner_id.id != new_lines[0].partner_id.id:
 #            raise osv.except_osv('Information', 'Entering third parties change')
+        elif comparison == 4:
+            raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
         elif comparison in [3, 5, 7]:
             raise osv.except_osv(_('Error'), _("You're just allowed to change ONE field amoungst Account, Third Party or Analytical Distribution"))
         else:

@@ -30,7 +30,7 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional'],
+    "depends" : ["base", "account", 'res_currency_functional', 'funding_pool'],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',

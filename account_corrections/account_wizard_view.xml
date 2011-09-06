@@ -24,7 +24,8 @@
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="currency_id"/>
-                            <!-- FIXME: add field analytic_distribution_id -->
+                            <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string=""/>
+                            <field name="analytic_distribution_id" invisible="0"/>
                         </tree>
                     </field>
                     <newline/>
