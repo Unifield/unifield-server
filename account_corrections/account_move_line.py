@@ -44,8 +44,12 @@ class account_move_line(osv.osv):
 
     def copy(self, cr, uid, id, defaults={}, context={}):
         """
-        Copy a move line
+        Copy a move line with draft state. Do not create a new analytic_distribution from line if we come from a correction.
         """
+        if 'omit_analytic_distribution' in context and context.get('omit_analytic_distribution') is True:
+            defaults.update({
+                'analytic_distribution_id': False,
+            })
         defaults.update({
             'state': 'draft',
         })
@@ -324,6 +328,7 @@ class account_move_line(osv.osv):
                 'journal_id': j_corr_ids[0],
                 'period_id': period_ids[0],
             }
+            context.update({'omit_analytic_distribution': True})
             # Copy the line
             rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             correction_line_id = self.copy(cr, uid, ml.id, vals, context=context)
@@ -342,8 +347,20 @@ class account_move_line(osv.osv):
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
             name = join_without_redundancy(ml.name, 'COR')
-            self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': ml.id,
-                'account_id': new_account_id,}, context=context)
+            cor_vals = {
+                'name': name,
+                'journal_id': j_corr_ids[0],
+                'corrected_line_id': ml.id,
+                'account_id': new_account_id,
+                'ref': ml.ref,
+            }
+            self.write(cr, uid, [correction_line_id], cor_vals, context=context)
+            # Do process on analytic distribution:
+            # 1/ copy old distribution_id on new correction line
+            # 2/ delete old distribution on original move line
+            if ml.analytic_distribution_id:
+                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
+                self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
             # Post the move
