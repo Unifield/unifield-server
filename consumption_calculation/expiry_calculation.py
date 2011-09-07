@@ -196,10 +196,7 @@ class product_likely_expire_report(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         line_obj = self.pool.get('product.likely.expire.report.line')
-        model_obj = self.pool.get('ir.model')
-        fields_obj = self.pool.get('ir.model.field')
-        
-        model_id = model_obj.search(cr, uid, [('model', '=', 'product.likely.expire.report.line')], context=context)[0]        
+        expired_line_obj = self.pool.get('expiry.report.date.line')    
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
         report = self.browse(cr, uid, ids[0], context=context)
@@ -255,13 +252,15 @@ class product_likely_expire_report(osv.osv_memory):
                 
         for product in products:
             if products[product]['total_expired'] != 0.00:
-                data = {'report_id': ids[0],
-                        'product_id': product,
-                        'real_stock': products[product]['start'],
-                        'total_expired': products[product]['total_expired']}
-                
-                line_id = line_obj.create(cr, uid, data, context=context)
-            
+                line_id = line_obj.create(cr, uid, {'report_id': ids[0],
+                                                    'product_id': product,
+                                                    'real_stock': products[product]['start'],
+                                                    'total_expired': products[product]['total_expired']}, context=context)
+            for expired in products[product]['expired']:
+                expired_line_obj.create(cr, uid, {'name': expired[0],
+                                                  'qty': expired[1],
+                                                  'line_id': line_id}, context=context) 
+                                        
                 products[product]['line_id'] = line_id
             
         context.update({'products': products})            
@@ -350,10 +349,35 @@ class product_likely_expire_report_line(osv.osv_memory):
         return res
     
     def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+        '''
+        Set value for date
+        '''
+        expired_line_obj = self.pool.get('expiry.report.date.line')
         res = super(product_likely_expire_report_line, self).read(cr, uid, ids, vals, context=context, load=load)
+        
+        for r in res:
+            exp_ids = expired_line_obj.search(cr, uid, [('line_id', '=', r['id'])], context=context)
+            for exp in expired_line_obj.browse(cr, uid, exp_ids, context=context):
+                r.update({exp.name: exp.qty})            
         
         return res
     
 product_likely_expire_report_line()
+
+
+class expiry_report_date_line(osv.osv_memory):
+    _name = 'expiry.report.date.line'
     
+    _columns = {
+        'name': fields.date(string='Name', required=True),
+        'qty': fields.float(string='Qty', required=True),
+        'line_id': fields.many2one('product.likely.expire.report.line', string='Line', required=True),
+    }
+    
+    _defaults = {
+        'qty': lambda *a: 0.00,
+    }
+    
+expiry_report_date_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
