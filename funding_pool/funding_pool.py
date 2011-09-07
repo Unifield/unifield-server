@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import decimal_precision as dp
+from tools.misc import flatten
 
 class analytic_distribution(osv.osv):
     
@@ -35,6 +36,28 @@ class analytic_distribution(osv.osv):
         'global_distribution': False,
     }
     
+    def search_analytic_lines(self, cr, uid, ids, context={}):
+        """
+        Give analytic lines attached to this distribution
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        cc_obj = self.pool.get('cost_center_distribution_line')
+        fp_obj = self.pool.get('funding_pool_distribution_line')
+        free1_obj = self.pool.get('free_1_distribution_line')
+        free2_obj = self.pool.get('free_2_distribution_line')
+        aal_obj = self.pool.get('account.analytic.line')
+        for distrib_id in ids:
+            distrib_line_ids = []
+            for obj in [cc_obj, fp_obj, free1_obj, free2_obj]:
+                search_ids = obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                distrib_line_ids.append([x.analytic_id and x.analytic_id.id for x in obj.browse(cr, uid, search_ids, context=context)])
+            res.append(aal_obj.search(cr, uid, [('account_id', 'in', distrib_line_ids)], context=context))
+        return sorted(flatten(res))
+
 analytic_distribution()
 
 class distribution_line(osv.osv):
