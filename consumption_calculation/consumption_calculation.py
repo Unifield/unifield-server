@@ -397,8 +397,10 @@ class product_product(osv.osv):
             
         res = {}
         location_ids = []
+        fmc_obj = self.pool.get('monthly.review.consumption')
         fmc_line_obj = self.pool.get('monthly.review.consumption.line')
         
+        # Filter for some locations only
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
@@ -408,22 +410,28 @@ class product_product(osv.osv):
                 location_ids = context.get('location_id', [])
         else:
             location_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+            
+        # Search all Review report for locations
+        fmc_ids = fmc_obj.search(cr, uid, [('cons_location_id', 'in', location_ids)], context=context)
         
         for product in ids:
             res[product] = 0.00
             last_date = False
-            line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True)], context=context)
+            
+            # Search all validated lines with the product
+            line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True), ('mrc_id', 'in', fmc_ids)], context=context)
+            
+            # Get the last created line
             for line in fmc_line_obj.browse(cr, uid, line_ids, context=context):
-                if line.mrc_id.cons_location_id.id in location_ids:
-                    if not last_date:
-                        last_date = line.valid_until and line.valid_until or line.mrc_id.period_to
-                        res[product] = line.fmc
-                    elif line.valid_until and line.valid_until > last_date:
-                        last_date = line.valid_until
-                        res[product] = line.fmc
-                    elif line.mrc_id.period_to > last_date:
-                        last_date = line.mrc_id.period_to
-                        res[product] = line.fmc                 
+                if not last_date:
+                    last_date = line.valid_until or line.mrc_id.period_to
+                    res[product] = line.fmc
+                elif line.valid_until and line.valid_until > last_date:
+                    last_date = line.valid_until
+                    res[product] = line.fmc
+                elif line.mrc_id.period_to > last_date:
+                    last_date = line.mrc_id.period_to
+                    res[product] = line.fmc                
         
         return res
     
@@ -452,7 +460,8 @@ class product_product(osv.osv):
         if context.get('to_date', False):
             to_date = context.get('to_date')
             rac_domain.append(('period_to', '<', to_date))
-            
+        
+        # Filter for one or some locations    
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
@@ -461,8 +470,10 @@ class product_product(osv.osv):
             else:
                 location_ids = context.get('location_id', [])
             
+            # Update the domain of research
             rac_domain.append(('location_id', 'in', location_ids))
-            
+        
+        
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
         
         for product in ids:
@@ -471,6 +482,7 @@ class product_product(osv.osv):
             
             for line in line_obj.browse(cr, uid, line_ids, context=context):
                 res[product] += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
+                # Update limit in time
                 if not context.get('from_date') and (not from_date or line.rac_id.period_to < from_date):
                     from_date = line.rac_id.period_to
                 if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
@@ -523,6 +535,7 @@ class product_product(osv.osv):
         if context.get('to_date', False):
             to_date = context.get('to_date')
             
+        # Get all reason types
         loan_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
         donation_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
         donation_exp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
@@ -530,8 +543,10 @@ class product_product(osv.osv):
         discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
 
+        # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
         
+        # Add locations filters in domain if locations are passed in context
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
@@ -542,15 +557,18 @@ class product_product(osv.osv):
             domain.append('|')
             domain.append(('location_id', 'in', location_ids))
             domain.append(('location_dest_id', 'in', location_ids))
-            
+        
+        
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
+            # Remove the quantity if the reason type is 'Return from unit'
             if move.reason_type_id.id == return_id:
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             else:
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
-                
+            
+            # Update the limit in time
             if not context.get('from_date') and (not from_date or move.date_expected < from_date):
                 from_date = move.date_expected
             if not context.get('to_date') and (not to_date or move.date_expected > to_date):

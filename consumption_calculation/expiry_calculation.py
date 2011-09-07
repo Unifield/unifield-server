@@ -195,9 +195,11 @@ class product_likely_expire_report(osv.osv_memory):
             
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
-        product_obj = self.pool.get('product.product')
-        location_obj = self.pool.get('stock.location')
         line_obj = self.pool.get('product.likely.expire.report.line')
+        model_obj = self.pool.get('ir.model')
+        fields_obj = self.pool.get('ir.model.field')
+        
+        model_id = model_obj.search(cr, uid, [('model', '=', 'product.likely.expire.report.line')], context=context)[0]        
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
         report = self.browse(cr, uid, ids[0], context=context)
@@ -206,6 +208,7 @@ class product_likely_expire_report(osv.osv_memory):
             context.update({'location_id': report.location_id.id})
         
         products = {}
+        location_ids = []
         
         if report.location_id:
             location_ids = [report.location_id.id]
@@ -213,14 +216,24 @@ class product_likely_expire_report(osv.osv_memory):
             location_ids = []
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-                if move.location_id not in location_ids:
-                    location_ids.append(move.location_id.id)
+                if move.location_id.id not in location_ids:
+                    if move.location_id.usage == 'internal':
+                        location_ids.append(move.location_id.id)
+                if move.location_dest_id.id not in location_ids:
+                    if move.location_dest_id.usage == 'internal':
+                        location_ids.append(move.location_dest_id.id)
         
         lot_ids = lot_obj.search(cr, uid, [('stock_available', '>', 0.00), ('life_date', '>=', report.date_from)], order='product_id, life_date', context=context)
         
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             if lot.product_id.id not in products:
-                products[lot.product_id.id] = {'start': 0.00, 'expired': [], 'rest': 0.00}
+                products[lot.product_id.id] = {'start': 0.00, 
+                                               'expired': [], 
+                                               'rest': 0.00, 
+                                               'consumed': 0.00, 
+                                               'total_expired': 0.00, 
+                                               'line_id': False}
+                
             products[lot.product_id.id]['start'] += lot.stock_available
             
         for product in products:
@@ -229,16 +242,29 @@ class product_likely_expire_report(osv.osv_memory):
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             coeff = datetime.strptime(lot.life_date, '%Y-%m-%d') - datetime.strptime(report.date_from, '%Y-%m-%d')
             # Theorical consumption
-            theo = ((coeff.days/30) * products[lot.product_id.id]['average_consumption']) + products[lot.product_id.id]['rest']
-            
+            theo = round((coeff.days/30.0), 1) * products[lot.product_id.id]['average_consumption']
+            theo = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, theo, lot.product_id.uom_id.id) + products[lot.product_id.id]['rest'] - products[lot.product_id.id]['consumed']
+            products[lot.product_id.id]['consumed'] += theo
+                    
             # Fill the expired quantities on date
             if theo < lot.stock_available:
                 products[lot.product_id.id]['expired'].append((lot.life_date, lot.stock_available-theo))
+                products[lot.product_id.id]['total_expired'] += lot.stock_available-theo
             else:
                 products[lot.product_id.id]['rest'] = theo - lot.stock_available
                 
-        print products
+        for product in products:
+            if products[product]['total_expired'] != 0.00:
+                data = {'report_id': ids[0],
+                        'product_id': product,
+                        'real_stock': products[product]['start'],
+                        'total_expired': products[product]['total_expired']}
+                
+                line_id = line_obj.create(cr, uid, data, context=context)
             
+                products[product]['line_id'] = line_id
+            
+        context.update({'products': products})            
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.likely.expire.report',
@@ -247,15 +273,6 @@ class product_likely_expire_report(osv.osv_memory):
                 'view_id': [view_id],
                 'context': context,
                 'res_id': report.id}
-        
-        
-    def fields_get(self, cr, uid, fields=None, context={}):
-        if not context:
-            context = {}
-            
-        res = super(product_likely_expire_report, self).fields_get(cr, uid, fields, context)
-        
-        return res
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
         if not context:
@@ -263,8 +280,33 @@ class product_likely_expire_report(osv.osv_memory):
             
         res = super(product_likely_expire_report, self).fields_view_get(cr, uid, view_id, view_type, context=context)
         
-        return res
+        line_view = """<tree string="Expired products">
+    <field name="product_code"/>
+    <field name="product_name"/>
+    """
         
+        products = context.get('products', [])
+        
+        dates = []
+        
+        for product in products:
+            for expired_date in products[product].get('expired', []):
+                if expired_date[0] not in dates:
+                    dates.append(expired_date[0])
+                    
+        dates.sort()
+                    
+        for date in dates:
+            line_view += '<field name="%s" />' % date
+            
+        line_view += """<field name="real_stock"/>
+    <field name="total_expired"/>
+    </tree>"""
+    
+        if res['fields'].get('line_ids', {}).get('views', {}).get('tree', {}).get('arch', {}):
+            res['fields']['line_ids']['views']['tree']['arch'] = line_view
+             
+        return res
     
 product_likely_expire_report()
 
@@ -288,6 +330,27 @@ class product_likely_expire_report_line(osv.osv_memory):
             context = {}
             
         res = super(product_likely_expire_report_line, self).fields_get(cr, uid, fields, context)
+        products = context.get('products', [])
+        dates = []
+        
+        for product in products:
+            for expired_date in products[product].get('expired', []):
+                if expired_date[0] not in dates:
+                    dates.append(expired_date[0])
+                    
+        dates.sort()
+                    
+        for date in dates:
+            label = time.strptime(date, '%Y-%m-%d')
+            res.update({date: {'digits': (16, 2),
+                               'selectable': True,
+                               'type': 'float',
+                               'string': '%s-%s-%s' % (label.tm_mday, label.tm_mon, label.tm_year)}})
+            
+        return res
+    
+    def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+        res = super(product_likely_expire_report_line, self).read(cr, uid, ids, vals, context=context, load=load)
         
         return res
     
