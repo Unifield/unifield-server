@@ -250,22 +250,23 @@ class account_move_line(osv.osv):
                     domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
 
             if acc_type == 'transfer':
-                # UF-427: transfer type shows only Journals instead of Registers as before
+                # UF-428: transfer type shows only Journals instead of Registers as before
                 third_type = [('account.journal', 'Journal')]
                 third_required = True
                 third_selection = 'account.journal,0'
 
-                # UF-429: retrieve the currency of the journal of the register (some journals could have no currency attached)
-                account_bank_statement_obj = self.pool.get('account.bank.statement')
-                register_object = account_bank_statement_obj.browse(cr, uid, statement_id, context=context)
+                # UF-429: if the account is 5815 and if the journal of the register has currency (some journals could have no currency attached)
+                # then show only journals of the same currency in the search box
+                acc_currency = [] # normally show all journals, except the 5815 below
+                if account.code == '5815':
+                    account_bank_statement_obj = self.pool.get('account.bank.statement')
+                    register_object = account_bank_statement_obj.browse(cr, uid, statement_id, context=context)
 
-                jn = register_object.journal_id
-                acc_currency = jn.currency
-                if not acc_currency:
-                    acc_currency = -1 # if the journal has no currency, do not show any journals in the search 
-                else:
-                    acc_currency = acc_currency.id # otherwise only show journals of the same currency
-                domain = {'partner_type': [('currency', '=', acc_currency)]}
+                    jn = register_object.journal_id
+                    if jn.currency:
+                        acc_currency = [('currency', '=', jn.currency.id)] # otherwise only show journals of the same currency
+                        
+                domain = {'partner_type': acc_currency}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
