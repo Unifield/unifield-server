@@ -138,14 +138,22 @@ class journal_items_corrections(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An ID is missing!'))
         # Prepare some values
         res = 0
+        # Lines
         old_line = self.pool.get('account.move.line').browse(cr, uid, [old_line_id], context=context)[0]
         new_line = self.pool.get('wizard.journal.items.corrections.lines').browse(cr, uid, [new_line_id], context=context)[0]
-        if cmp(old_line.account_id, new_line.account_id):
+        # Fields
+        old_account = old_line.account_id and old_line.account_id.id or False
+        new_account = new_line.account_id and new_line.account_id.id or False
+        old_partner = old_line.partner_id and old_line.partner_id.id or False
+        new_partner = new_line.partner_id and new_line.partner_id.id or False
+        old_distrib = old_line.analytic_distribution_id and old_line.analytic_distribution_id.id or False
+        new_distrib = new_line.analytic_distribution_id and new_line.analytic_distribution_id.id or False
+        if cmp(old_account, new_account):
             res += 1
-        if cmp(old_line.partner_id, new_line.partner_id): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or 
+        if cmp(old_partner, new_partner): # FIXME !!!!! or cmp(old_line.employee_id, new_line.employee_id) or 
             # cmp(old_line.register_id, new_line.register_id):
             res += 2
-        if cmp(old_line.analytic_distribution_id, new_line.analytic_distribution_id):
+        if cmp(old_distrib, new_distrib):
             res += 4
         return res
 
