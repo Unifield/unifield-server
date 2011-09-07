@@ -748,6 +748,10 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="address_id"/>
+                    <field name="total_amount" />
+                    <field name="currency_id" />
+                    <field name="num_of_packs" />
+                    <field name="total_weight" />
                     <field name="state"/>
                     <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add"/>
                     <button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo"/>
@@ -785,6 +789,8 @@
                                     <field name="weight"/>
                                     <field name="num_of_packs"/>
                                     <field name="total_weight"/>
+                                    <field name="total_amount" />
+                                    <field name="currency_id" />
                                     <field name="state"/>
                                 </tree>
                                 <form string="Pack Families">

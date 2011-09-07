@@ -43,6 +43,7 @@
         'wizard/stock_partial_move_view.xml',
         'wizard/split_memory_move_view.xml',
         'wizard/shipment_view.xml',
+        'msf_outgoing_report.xml',
     ],
     'demo_xml': [
     ],

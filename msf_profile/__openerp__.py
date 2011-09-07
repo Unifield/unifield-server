@@ -31,6 +31,7 @@
         "data.xml",
     ],
     "depends" : [
+        "base_report_designer",
         "msf_partner",
         "register_accounting",
         "stock_inventory_type",

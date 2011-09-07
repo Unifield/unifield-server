@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report auto="False" 
+                id="report_pro_forma_invoice" 
+                model="shipment" 
+                name="pro.forma.invoice"
+                header="False"
+                rml="addons/msf_outgoing/report/pro_forma_invoice.rml"
+                string="Pro Forma Invoice" />
+    
+    </data>
+</openerp>

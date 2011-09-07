@@ -63,6 +63,36 @@ class shipment(osv.osv):
     '''
     _name = 'shipment'
     _description = 'represents a group of pack families'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi function for global shipment values
+        '''
+        result = {}
+        for shipment in self.browse(cr, uid, ids, context=context):
+            values = {'total_amount': 0.0,
+                      'currency_id': False,
+                      'num_of_packs': 0,
+                      'total_weight': 0.0,
+                      }
+            result[shipment.id] = values
+            
+            for family in shipment.pack_family_ids:
+                # num of packs
+                num_of_packs = family.num_of_packs
+                values['num_of_packs'] += int(num_of_packs)
+                # total weight
+                total_weight = family.total_weight
+                values['total_weight'] += int(total_weight)
+                # total amount
+                total_amount = family.total_amount
+                values['total_amount'] += total_amount
+                # currency
+                currency_id = family.currency_id.id
+                values['currency_id'] = currency_id
+                
+        return result
+    
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.date(string='Date'),
                 'transport_type': fields.selection([('by_road', 'By road')],
@@ -76,6 +106,10 @@ class shipment(osv.osv):
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='ship_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='ship_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Number of Packs', multi='ship_vals',),
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='ship_vals',),
                 }
     _order = 'name desc'
     _defaults = {'state': 'draft'}
@@ -589,6 +623,32 @@ class pack_family(osv.osv):
     '''
     _name = 'pack.family'
     _description = 'represents a pack family'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for family in self.browse(cr, uid, ids, context=context):
+            values = {'total_amount': 0.0,
+                      'currency_id': False,
+                      'num_of_packs': 0,
+                      'total_weight': 0.0,
+                      }
+            result[family.id] = values
+            # number of packs with from/to values
+            num_of_packs = family.to_pack - family.from_pack + 1
+            values['num_of_packs'] = num_of_packs
+            total_weight = family.weight * num_of_packs
+            values['total_weight'] = total_weight
+            
+            # depends on corresponding stock moves
+            for move in family.move_lines:
+                values['total_amount'] += move.sale_line_id.price_unit * move.product_qty
+                values['currency_id'] = move.sale_line_id.currency_id.id
+                    
+        return result
+    
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
@@ -601,8 +661,10 @@ class pack_family(osv.osv):
                 'width' : fields.float(digits=(16,2), string='Width [cm]'),
                 'height' : fields.float(digits=(16,2), string='Height [cm]'),
                 'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
-                'num_of_packs': fields.integer(string='#Packs'),
-                'total_weight' : fields.float(digits=(16,2), string='Total Weight [kg]'),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='family_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='family_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='family_vals',),
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='family_vals',),
                 'move_lines': fields.one2many('stock.move', 'pack_family_id', string="Stock Moves"),
                 'state': fields.selection([
                                            ('draft', 'Draft'),
