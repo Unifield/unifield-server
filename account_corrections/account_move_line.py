@@ -224,6 +224,7 @@ class account_move_line(osv.osv):
                 'name': name,
                 'corrected_line_id': ml.id,
                 'account_id': ml.account_id.id,
+                'source_date': ml.date,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Inform old line that it have been corrected
@@ -281,7 +282,7 @@ class account_move_line(osv.osv):
                 name = join_without_redundancy(ml.name, 'REV')
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id}, context=context)
                 self.write(cr, uid, [new_line_id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 
-                    'corrected_line_id': ml.id}, context=context)
+                    'corrected_line_id': ml.id, 'source_date': ml.date,}, context=context)
                 # Flag this line as corrected
                 self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
                 if ml.id in ids:
@@ -364,6 +365,7 @@ class account_move_line(osv.osv):
                 'name': name,
                 'corrected_line_id': ml.id,
                 'account_id': ml.account_id.id,
+                'source_date': ml.date,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -374,6 +376,7 @@ class account_move_line(osv.osv):
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
                 'ref': ml.ref,
+                'source_date': ml.date,
             }
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
             # Do process on analytic distribution:
@@ -445,6 +448,7 @@ class account_move_line(osv.osv):
                 'date': date,
                 'journal_id': j_corr_ids[0],
                 'period_id': period_ids[0],
+                'source_date': ml.date,
             }
             # Copy the line
             rev_line_id = self.copy(cr, uid, move_line.id, vals, context=context)
