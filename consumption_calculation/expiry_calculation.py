@@ -195,6 +195,7 @@ class product_likely_expire_report(osv.osv_memory):
             
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
+        product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('product.likely.expire.report.line')
         expired_line_obj = self.pool.get('expiry.report.date.line')    
         
@@ -220,45 +221,75 @@ class product_likely_expire_report(osv.osv_memory):
                     if move.location_dest_id.usage == 'internal':
                         location_ids.append(move.location_dest_id.id)
         
-        lot_ids = lot_obj.search(cr, uid, [('stock_available', '>', 0.00), ('life_date', '>=', report.date_from)], order='product_id, life_date', context=context)
+        lot_ids = lot_obj.search(cr, uid, [('stock_available', '>', 0.00)], order='product_id, life_date', context=context)
+        
+        dates = []
         
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
+            # Get all products
             if lot.product_id.id not in products:
-                products[lot.product_id.id] = {'start': 0.00, 
-                                               'expired': [], 
+                products[lot.product_id.id] = {'start': product_obj.browse(cr, uid, lot.product_id.id, context=context).qty_available,
+                                               'average_consumption':self._get_average_consumption(cr, uid, lot.product_id.id, report.consumption_type, location_ids, report.date_from, report.date_to, context=context), 
+                                               'expired': {}, 
                                                'rest': 0.00, 
                                                'consumed': 0.00, 
-                                               'total_expired': 0.00, 
+                                               'total_expired': 0.00,
+                                               'lots': {}, 
                                                'line_id': False}
                 
-            products[lot.product_id.id]['start'] += lot.stock_available
+            if not products[lot.product_id.id].get(lot.id, False):
+                products[lot.product_id.id].update({lot.id: 0.00})
             
-        for product in products:
-            products[product]['average_consumption'] = self._get_average_consumption(cr, uid, product, report.consumption_type, location_ids, report.date_from, report.date_to, context=context)
-            
+            # Get all dates
+            if lot.life_date not in dates and lot.life_date >= report.date_from:
+                dates.append(lot.life_date)
+        
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
-            coeff = datetime.strptime(lot.life_date, '%Y-%m-%d') - datetime.strptime(report.date_from, '%Y-%m-%d')
-            # Theorical consumption
-            theo = round((coeff.days/30.0), 1) * products[lot.product_id.id]['average_consumption']
-            theo = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, theo, lot.product_id.uom_id.id) + products[lot.product_id.id]['rest'] - products[lot.product_id.id]['consumed']
-            products[lot.product_id.id]['consumed'] += theo
+            for date_to_test in dates:
+                # Add a dictionary for the new date
+                if not products[lot.product_id.id]['expired'].get(date_to_test, False):
+                    products[lot.product_id.id]['expired'].update({date_to_test: {'expired_qty': 0.00,
+                                                                                  'consumed': 0.00}})
                     
-            # Fill the expired quantities on date
-            if theo < lot.stock_available:
-                products[lot.product_id.id]['expired'].append((lot.life_date, lot.stock_available-theo))
-                products[lot.product_id.id]['total_expired'] += lot.stock_available-theo
-            else:
-                products[lot.product_id.id]['rest'] = theo - lot.stock_available
+                if lot.life_date < date_to_test and lot.stock_available:
+                    products[lot.product_id.id]['expired'][date_to_test]['expired_qty'] += lot.stock_available
+                    products[lot.product_id.id]['total_expired'] += lot.stock_available
+                else:
+                    # Compute the expired and consumed quantities
+                    coeff = datetime.strptime(date_to_test, '%Y-%m-%d') - datetime.strptime(report.date_from, '%Y-%m-%d')
+                    # Theorical consumption
+                    theo = round((coeff.days/30.0), 1) * products[lot.product_id.id]['average_consumption']
+                    theo = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, theo, lot.product_id.uom_id.id)
+                    products[lot.product_id.id]['rest'] = 0.00
+                    
+                    for prd_lot in products[lot.product_id.id]['lots']:
+                        theo -= lot.id != prd_lot and products[lot.product_id.id]['lots'][prd_lot] or 0.00
+                    
+                    # Enter value in dictionary
+                    products[lot.product_id.id]['consumed'] += theo
+                    products[lot.product_id.id]['lots'].update({lot.id: theo + products[lot.product_id.id]['rest']})
+                        
+                    products[lot.product_id.id]['expired'][date_to_test]['consumed'] += theo + products[lot.product_id.id]['rest']
+                            
+                    # Fill the quantities on dates
+                    if products[lot.product_id.id]['lots'][lot.id] < lot.stock_available and lot.life_date == date_to_test:
+                        # Add the expiry quantities
+                        products[lot.product_id.id]['expired'][date_to_test]['expired_qty'] = lot.stock_available - products[lot.product_id.id]['lots'][lot.id]
+                        products[lot.product_id.id]['total_expired'] += lot.stock_available - products[lot.product_id.id]['lots'][lot.id]
+                    elif lot.life_date == date_to_test:
+                        products[lot.product_id.id]['rest'] = products[lot.product_id.id]['lots'][lot.id] - lot.stock_available
                 
         for product in products:
-            if products[product]['total_expired'] != 0.00:
-                line_id = line_obj.create(cr, uid, {'report_id': ids[0],
-                                                    'product_id': product,
-                                                    'real_stock': products[product]['start'],
-                                                    'total_expired': products[product]['total_expired']}, context=context)
+            #if products[product]['total_expired'] != 0.00:
+            line_id = line_obj.create(cr, uid, {'report_id': ids[0],
+                                                'product_id': product,
+                                                'real_stock': products[product]['start'],
+                                                'total_expired': products[product]['total_expired']}, context=context)
             for expired in products[product]['expired']:
-                expired_line_obj.create(cr, uid, {'name': expired[0],
-                                                  'qty': expired[1],
+                expired2 = products[product]['expired'][expired]
+                expired_line_obj.create(cr, uid, {'name': expired,
+                                                  'expired_qty': expired2.get('expired_qty', 0.00),
+                                                  'qty': products[product].get('start', 0.00) - expired2.get('consumed', 0.00),
                                                   'line_id': line_id}, context=context) 
                                         
                 products[product]['line_id'] = line_id
@@ -290,8 +321,8 @@ class product_likely_expire_report(osv.osv_memory):
         
         for product in products:
             for expired_date in products[product].get('expired', []):
-                if expired_date[0] not in dates:
-                    dates.append(expired_date[0])
+                if expired_date not in dates:
+                    dates.append(expired_date)
                     
         dates.sort()
                     
@@ -334,16 +365,16 @@ class product_likely_expire_report_line(osv.osv_memory):
         
         for product in products:
             for expired_date in products[product].get('expired', []):
-                if expired_date[0] not in dates:
-                    dates.append(expired_date[0])
+                if expired_date not in dates:
+                    dates.append(expired_date)
                     
         dates.sort()
                     
         for date in dates:
             label = time.strptime(date, '%Y-%m-%d')
-            res.update({date: {'digits': (16, 2),
+            res.update({date: {'size': 128,
                                'selectable': True,
-                               'type': 'float',
+                               'type': 'char',
                                'string': '%s-%s-%s' % (label.tm_mday, label.tm_mon, label.tm_year)}})
             
         return res
@@ -355,11 +386,17 @@ class product_likely_expire_report_line(osv.osv_memory):
         expired_line_obj = self.pool.get('expiry.report.date.line')
         res = super(product_likely_expire_report_line, self).read(cr, uid, ids, vals, context=context, load=load)
         
-        for r in res:
-            exp_ids = expired_line_obj.search(cr, uid, [('line_id', '=', r['id'])], context=context)
-            for exp in expired_line_obj.browse(cr, uid, exp_ids, context=context):
-                r.update({exp.name: exp.qty})            
-        
+        if 'total_expired' in vals:
+            for r in res:
+                exp_ids = expired_line_obj.search(cr, uid, [('line_id', '=', r['id'])], context=context)
+                for exp in expired_line_obj.browse(cr, uid, exp_ids, context=context):
+                    if exp.expired_qty > 0.00:
+                        name = '%s (%s)' % (exp.qty, exp.expired_qty)
+                    else:
+                        name = '%s' % (exp.qty,)
+                        
+                    r.update({exp.name: name})
+            
         return res
     
 product_likely_expire_report_line()
@@ -370,6 +407,7 @@ class expiry_report_date_line(osv.osv_memory):
     
     _columns = {
         'name': fields.date(string='Name', required=True),
+        'expired_qty': fields.float(string='Expired Qty', required=True),
         'qty': fields.float(string='Qty', required=True),
         'line_id': fields.many2one('product.likely.expire.report.line', string='Line', required=True),
     }
