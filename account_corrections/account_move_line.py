@@ -290,24 +290,6 @@ class account_move_line(osv.osv):
             move_obj.post(cr, uid, [new_move_id], context=context)
         return success_move_line_ids
 
-    def get_attached_statement_lines(self, cr, uid, id, context={}):
-        """
-        Give statement line attached to this move line
-        """
-        if not context:
-            context = {}
-        res = []
-        absl_obj = self.pool.get('account.bank.statement.line')
-        ml = self.browse(cr, uid, id, context=context)
-        if ml.statement_id:
-            st_line_ids = absl_obj.search(cr, uid, [('statement_id', '=', ml.statement_id.id)], context=context)
-            for st_line in absl_obj.browse(cr, uid, st_line_ids, context=context):
-                if ml.move_id.id in [x.id for x in st_line.move_ids]:
-                    res.append(st_line.id)
-        if not res:
-            return False
-        return res
-
     def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
         """
         Update the account from the statement line attached if different
@@ -323,12 +305,10 @@ class account_move_line(osv.osv):
         absl_obj = self.pool.get('account.bank.statement.line')
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
-            if ml.statement_id:
-                st_line_ids = self.get_attached_statement_lines(cr, uid, ml.id, context=context)
-                if st_line_ids:
-                    # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
-                    context.update({'from_correction': True})
-                    absl_obj.write(cr, uid, st_line_ids, {'account_id': account_id}, context=context)
+            if ml.statement_id and ml.move_id.statement_line_ids:
+                # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
+                context.update({'from_correction': True})
+                absl_obj.write(cr, uid, [x.id for x in ml.move_id.statement_line_ids], {'account_id': account_id}, context=context)
         return True
 
     def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
