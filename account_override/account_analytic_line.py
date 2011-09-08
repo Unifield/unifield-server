@@ -70,7 +70,7 @@ class account_analytic_line(osv.osv):
         Update amount_currency from previous element
         """
         amt = self.read(cr, uid, defaults, ['amount_currency'], context=context).get('amount_currency', False)
-        res = super(analytic_line, self).copy(cr, uid, defaults, context=context)
+        res = super(account_analytic_line, self).copy(cr, uid, defaults, context=context)
         self.write(cr, uid, [res], {'amount_currency': amt}, context=context)
         return res
 
