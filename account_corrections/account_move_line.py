@@ -290,6 +290,47 @@ class account_move_line(osv.osv):
             move_obj.post(cr, uid, [new_move_id], context=context)
         return success_move_line_ids
 
+    def get_attached_statement_lines(self, cr, uid, id, context={}):
+        """
+        Give statement line attached to this move line
+        """
+        if not context:
+            context = {}
+        res = []
+        absl_obj = self.pool.get('account.bank.statement.line')
+        ml = self.browse(cr, uid, id, context=context)
+        if ml.statement_id:
+            st_line_ids = absl_obj.search(cr, uid, [('statement_id', '=', ml.statement_id.id)], context=context)
+            for st_line in absl_obj.browse(cr, uid, st_line_ids, context=context):
+                if ml.move_id.id in [x.id for x in st_line.move_ids]:
+                    res.append(st_line.id)
+        if not res:
+            return False
+        return res
+
+    def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
+        """
+        Update the account from the statement line attached if different
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not account_id:
+            raise osv.except_osv(_('Error'), _('No account_id given. update_account_on_st_line() could not works.'))
+        # Prepare some values
+        absl_obj = self.pool.get('account.bank.statement.line')
+        # Update lines
+        for ml in self.browse(cr, uid, ids, context=context):
+            if ml.statement_id:
+                st_line_ids = self.get_attached_statement_lines(cr, uid, ml.id, context=context)
+                if st_line_ids:
+                    # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
+                    context.update({'from_correction': True})
+                    absl_obj.write(cr, uid, st_line_ids, {'account_id': account_id}, context=context)
+        return True
+
     def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
         """
         Correct given account_move_line by only changin account
@@ -361,6 +402,9 @@ class account_move_line(osv.osv):
             if ml.analytic_distribution_id:
                 self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
                 self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
+            # Update register line if exists
+            if ml.statement_id:
+                self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
             # Post the move
