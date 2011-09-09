@@ -83,14 +83,80 @@ stock_forecast_line()
 class stock_forecast(osv.osv_memory):
     _name = "stock.forecast"
     _description = "Stock Level Forecast"
+    
+    def _get_selection(self, cr, uid, field, objects, text, context=None):
+        '''
+        get selection related of specified objects, and modify keys on the fly
+        '''
+        result = []
+        
+        for obj in objects:
+            tuples = self.pool.get(obj)._columns[field].selection
+            for tuple in tuples:
+                if tuple[0] == text:
+                    return tuple[1]
+        
+        return text
+    
+    def _get_info(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get info concerning the selected product
+        '''
+        result = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            values = {'product_family_info_id': False,
+                      'procurement_method': False,
+                      'supply_method': False,
+                      'keep_cool': False,
+                      'short_shelf_life': False,
+                      'dangerous_goods': False,
+                      'justification_code_id': False,
+                      }
+            result[wiz.id] = values
+            if wiz.product_id:
+                values['product_family_info_id'] = wiz.product_id.nomen_manda_2.id
+                values['procurement_method'] = wiz.product_id.procure_method
+                values['supply_method'] = wiz.product_id.supply_method
+                values['keep_cool'] = wiz.product_id.heat_sensitive_item
+                values['short_shelf_life'] = wiz.product_id.short_shelf_life
+                values['dangerous_goods'] = wiz.product_id.dangerous_goods
+                values['justification_code_id'] = wiz.product_id.justification_code_id.id
+        
+        return result
+    
     _columns = {
-        'product_id': fields.many2one('product.product', 'Product'),
-        'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
-        'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
-        'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
-        'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]),
-        'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
-    }
+                'product_id': fields.many2one('product.product', 'Product'),
+                'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
+                'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
+                'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+                'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
+                'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
+                'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
+                'procurement_method': fields.function(_get_info, type='selection', selection=[('make_to_stock','Make to Stock'),('make_to_order','Make to Order')], method=True, string='Procurement Method', multi='get_info',),
+                'supply_method': fields.function(_get_info, type='selection', selection=[('produce','Produce'),('buy','Buy')], method=True, string='Supply Method', multi='get_info',),
+                'keep_cool': fields.function(_get_info, type='boolean', method=True, string='Keep Cool', multi='get_info',),
+                'short_shelf_life': fields.function(_get_info, type='boolean', method=True, string='Short Shelf Life', multi='get_info',),
+                'dangerous_goods': fields.function(_get_info, type='boolean', method=True, string='Dangerous Goods', multi='get_info',),
+                'justification_code_id': fields.function(_get_info, type='many2one', relation='product.justification.code', method=True, string='Justification Code', multi='get_info',),
+                }
+    
+    def start_forecast(self, cr, uid, ids, context=None):
+        '''
+        create forecast wizard object and execute do_forecast method before
+        displaying it
+        '''
+        wizard_id = self.create(cr, uid, {}, context=context)
+        # call do forecast on the created wizard
+        self.do_forecast(cr, uid, [wizard_id], context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.forecast',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': wizard_id,
+                'context': dict(context),
+                }
     
     def onchange(self, cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context=None):
         '''
@@ -141,6 +207,15 @@ class stock_forecast(osv.osv_memory):
         warehouse_name = 'n/a'
         product_uom_name = 'n/a'
         product_family_name = 'n/a'
+        product_family_info = 'n/a'
+        
+        procurement_method = 'n/a'
+        supply_method = 'n/a'
+        
+        keep_cool = False
+        short_shelf_life = False
+        dangerous_goods = False
+        
         qty = False
         date = time.strftime('%Y-%m-%d')
         
@@ -152,6 +227,18 @@ class stock_forecast(osv.osv_memory):
                 product_list.append(wizard.product_id.id)
                 product_name = wizard.product_id.name
                 product_code = wizard.product_id.default_code
+                product_family_info = wizard.product_family_info_id.name
+                
+                procurement_method = self._get_selection(cr, uid, 'procure_method', ['product.template',], wizard.procurement_method, context=context)
+                supply_method = self._get_selection(cr, uid, 'supply_method', ['product.template',], wizard.supply_method, context=context)
+                
+                keep_cool = str(bool(wizard.keep_cool)) 
+                short_shelf_life = str(wizard.short_shelf_life)
+                dangerous_goods = str(wizard.dangerous_goods)
+                justification_code = wizard.justification_code_id and wizard.justification_code_id.name_get()[0][1] or 'n/a'
+                
+            else:
+                raise osv.except_osv(_('Warning !'), _('No product selected.'))
                 
             if wizard.product_family_id:
                 product_ids = product_obj.search(cr, uid, [('nomen_manda_2', '=', wizard.product_family_id.id)], context=context)
@@ -176,14 +263,21 @@ class stock_forecast(osv.osv_memory):
             if wizard.product_uom_id:
                 product_uom_name = wizard.product_uom_id.name
         
-            data = {
-                    'product_name': product_name,
+            data = {'product_name': product_name,
                     'product_code': product_code,
                     'warehouse_name': warehouse_name,
                     'product_uom_name': product_uom_name,
                     'product_family_name': product_family_name,
                     'qty': overall_qty,
-                    'date': date,}
+                    'date': date,
+                    'product_family_info': product_family_info,
+                    'procurement_method': procurement_method,
+                    'supply_method': supply_method,
+                    'keep_cool': keep_cool,
+                    'short_shelf_life': short_shelf_life,
+                    'dangerous_goods': dangerous_goods,
+                    'justification_code': justification_code,
+                    }
            
             line_ids = [x.id for x in wizard.stock_forecast_lines]
             if not line_ids:
@@ -201,10 +295,12 @@ class stock_forecast(osv.osv_memory):
         '''
         call the export action
         '''
+        if context is None:
+            context = {}
         # create stock.forecast.export object
         export_obj = self.pool.get('stock.forecast.export')
         
-        return export_obj.export_to_csv(cr, uid, ids, context=context)
+        return export_obj.export_to_csv(cr, uid, ids, context=dict(context, stock_forecast_id=ids))
         
         return {
                 'name': 'Stock Level Forecast',
@@ -341,13 +437,12 @@ class stock_forecast(osv.osv_memory):
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
-                sol_list = sol_obj.search(cr, uid, [('date_planned', '>', today),
-                                                    ('state', 'in', ('procurement', 'proc_progress', 'draft')),
+                sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'proc_progress', 'draft')),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):
                     # create lines corresponding to so
-                    values = {'date': sol.date_planned.split(' ')[0],
+                    values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
                               'reference': sol.order_id.name,
@@ -361,13 +456,12 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append(values)
                 
                 # PURCHASE ORDERS - positive
-                pol_list = pol_obj.search(cr, uid, [('date_planned', '>', today),
-                                                    ('state', 'in', ('draft',)),
+                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft',)),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for pol in pol_obj.browse(cr, uid, pol_list, context=context):
                     # create lines corresponding to po
-                    line_to_create.append({'date': pol.date_planned.split(' ')[0],
+                    line_to_create.append({'date': pol.confirmed_delivery_date or len(pol.date_planned.split(' ')) > 1 and pol.date_planned.split(' ')[0] or pol.date_planned,
                                            'doc': 'PO',
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
                                            'reference': pol.order_id.name,
@@ -542,25 +636,37 @@ class stock_forecast(osv.osv_memory):
         _moves_arch_lst = """
                         <form string="Stock Forecast">
                             <group col="4" colspan="4">
-                                <field name="product_id" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                                <field name="product_id" colspan="4" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
                                 <!-- <field name="product_family_id" on_change="onchange_nomen(product_id, product_family_id, warehouse_id, product_uom_id)" /> -->
+                                <field name="product_family_info_id" />
                                 <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
                                 <field name="product_uom_id" attrs="{'readonly':[('product_id', '=', False),],}" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
                                 <field name="qty" />
                             </group>
-                            <newline />
-                            <group col="4" colspan="2"></group>
-                            <group col="4" colspan="2">
-                                <button name="reset_fields" string="Reset" type="object" icon="gtk-clear" />
-                                <button name="do_forecast" string="Forecast" type="object" icon="gtk-apply" />
+                            <group col="2" colspan="2">
+                                <separator string='Procurement' />
+                                <field name="procurement_method" />
+                                <field name="supply_method" />
                             </group>
-                            
+                            <group col="2" colspan="2">
+                                <separator string='Specific Information' />
+                                <field name="keep_cool" />
+                                <field name="short_shelf_life" />
+                                <field name="dangerous_goods" />
+                                <field name="justification_code_id" />
+                            </group>
+                            <newline />
                             <field name="stock_forecast_lines" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
-                            <group col="6" colspan="2"></group>
                             <group col="6" colspan="2">
                                 <button name="do_print" string="Print" type="object" icon="gtk-print" />
                                 <button name="do_export" string="Export" type="object" icon="gtk-save" />
                                 <button name="do_graph" string="Graph" type="object" icon="terp-account" />
+                            </group>
+                            <group col="6" colspan="2">
+                                <group col="6" colspan="2"></group>
+                                <!-- <button name="reset_fields" string="Reset" type="object" icon="gtk-clear" /> -->
+                                <button name="do_forecast" string="Refresh Forecast" type="object" icon="gtk-apply" />
+                                <button icon="gtk-cancel" special="cancel" string="Close Wizard"/>
                             </group>
                         </form>
                         """
