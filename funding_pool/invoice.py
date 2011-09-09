@@ -73,6 +73,7 @@ class account_invoice(osv.osv):
                 'context': {
                     'active_id': ids[0],
                     'active_ids': ids,
+                    'wizard_ids': {'cost_center': wiz_id},
                     'child_distributions': child_distributions
                }
         }
@@ -109,6 +110,7 @@ class account_invoice_line(osv.osv):
                 'context': {
                     'active_id': ids[0],
                     'active_ids': ids,
+                    'wizard_ids': {'cost_center': wiz_id}
                }
         }
         

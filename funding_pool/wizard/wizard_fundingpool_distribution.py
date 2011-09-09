@@ -65,12 +65,29 @@ wizard_fundingpool_distribution_line()
 
 class wizard_fundingpool_distribution(osv.osv_memory):
     _name="wizard.fundingpool.distribution"
+    _inherit="wizard.distribution"
     
     def _get_initial_lines(self, cr, uid, wizard_id, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, wizard_obj.distribution_id.id, context=context)
-        if len(distrib_obj.funding_pool_lines) > 0:
-            # there are already funding pool lines; we retrieve them in the wizard
+        if 'cost_center_updated' in context and context['cost_center_updated']:
+            # create funding pool lines from cost center lines
+            private_funds_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')])
+            cc_wizard_obj = self.pool.get('wizard.costcenter.distribution').browse(cr, uid, context['wizard_ids']['cost_center'], context=context)
+            for cc_wizard_line in cc_wizard_obj.wizard_distribution_lines:
+                wizard_line_vals = {
+                    'name': 'Funding Line', #required by one2many, never used
+                    'wizard_id': wizard_id,
+                    'analytic_id': private_funds_ids[0],
+                    'cost_center_id': cc_wizard_line.analytic_id.id,
+                    'amount': cc_wizard_line.amount,
+                    'percentage': cc_wizard_line.percentage,
+                }
+                self.pool.get('wizard.fundingpool.distribution.line').create(cr, uid, wizard_line_vals, context=context)
+            # lines were created, flag is set to true
+            self.write(cr, uid, [wizard_id], vals={'modified_line': True})
+        elif len(distrib_obj.funding_pool_lines) > 0:
+            # we retrieve funding pool lines from the DB
             for funding_pool_line in distrib_obj.funding_pool_lines:
                 wizard_line_vals = {
                     'name': 'Funding Line', #required by one2many, never used
@@ -82,55 +99,6 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 }
                 self.pool.get('wizard.fundingpool.distribution.line').create(cr, uid, wizard_line_vals, context=context)
             self.write(cr, uid, [wizard_id], vals={'modified_line': False})
-        elif len(distrib_obj.cost_center_lines) > 0:
-            # no funding pool lines, but cost center lines
-            private_funds_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')])
-            for cost_center_line in distrib_obj.cost_center_lines:
-                wizard_line_vals = {
-                    'name': 'Funding Line', #required by one2many, never used
-                    'wizard_id': wizard_id,
-                    'analytic_id': private_funds_ids[0],
-                    'cost_center_id': cost_center_line.analytic_id.id,
-                    'amount': cost_center_line.amount,
-                    'percentage': cost_center_line.percentage,
-                }
-                self.pool.get('wizard.fundingpool.distribution.line').create(cr, uid, wizard_line_vals, context=context)
-            # lines were created, flag is set to true
-            self.write(cr, uid, [wizard_id], vals={'modified_line': True})
-        return
-    
-    
-    def _cleanup_and_store(self, cr, uid, wizard_id, context=None):
-        wizard_obj = self.browse(cr, uid, wizard_id, context=context)
-        fp_distrib_line_obj = self.pool.get('funding_pool_distribution_line')
-        distrib_obj = self.pool.get('analytic.distribution')
-        # first, distribution is not derived from a global one; the flag is set
-        distrib_id = wizard_obj.distribution_id.id
-        distrib_obj.write(cr, uid, [distrib_id], vals={'global_distribution': False}, context=context)
-        distrib = distrib_obj.browse(cr, uid, distrib_id, context=context)
-        # remove old lines
-        for funding_pool_line in distrib.funding_pool_lines:
-            fp_distrib_line_obj.unlink(cr, uid, funding_pool_line.id)
-        # and save the new ones in the distribution
-        for wizard_line in wizard_obj.wizard_distribution_lines:
-            distrib_line_vals = {
-                'name': wizard_line.name,
-                'analytic_id': wizard_line.analytic_id.id,
-                'cost_center_id': wizard_line.cost_center_id.id,
-                'amount': wizard_line.amount,
-                'percentage': wizard_line.percentage,
-                'distribution_id': wizard_obj.distribution_id.id
-            }
-            fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
-        # if there are child distributions, we refresh them
-        if 'child_distributions' in context and context['child_distributions']:
-            for child in context['child_distributions']:
-                distrib_obj.copy_from_global_distribution(cr,
-                                                          uid,
-                                                          distrib_id,
-                                                          child[0],
-                                                          child[1],
-                                                          context=context)
         return
     
     def _get_cost_centers(self, cr, uid, ids, name, arg, context={}):
@@ -144,8 +112,6 @@ class wizard_fundingpool_distribution(osv.osv_memory):
     _columns = {
         "entry_mode": fields.selection([('percent','Percentage'),
                                         ('amount','Amount')], 'Entry Mode', select=1),
-        "total_amount": fields.float("Total amount to be allocated"),
-        "distribution_id": fields.many2one("analytic.distribution", string='Analytic Distribution'),
         "cost_centers": fields.function(_get_cost_centers, method=True, string="Cost Centers", type='one2many', relation="account.analytic.account", store=False),
         "wizard_distribution_lines": fields.one2many("wizard.fundingpool.distribution.line", "wizard_id", string='Wizard Lines'),
         "modified_line": fields.boolean('Was a line modified')
@@ -222,9 +188,9 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             
     def button_previous_step(self, cr, uid, ids, context={}):
         # and we open the previous state
-        wizard_obj = self.browse(cr, uid, ids[0], context=context)
-        newwiz_obj = self.pool.get('wizard.costcenter.distribution')
-        newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+        if 'cost_center' not in context['wizard_ids']:
+            # we should never be there
+            raise osv.except_osv(_('Previous wizard missing!'),_("Previous wizard missing!"))
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -232,12 +198,8 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
-                'res_id': [newwiz_id],
-                'context': {
-                    'active_id': context.get('active_id'),
-                    'active_ids': context.get('active_ids'),
-                    'child_distributions': context.get('child_distributions'),
-               }
+                'res_id': [context['wizard_ids']['cost_center']],
+                'context': context
         }
             
     def button_next_step(self, cr, uid, ids, context={}):
@@ -248,12 +210,10 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
-        if wizard_obj.modified_line:
-            # abstract method to be implemented
-            self._cleanup_and_store(cr, uid, ids[0], context=context)
-        # and we open the following state with another abstract method
-        newwiz_obj = self.pool.get('wizard.free1.distribution')
-        newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+        if 'free_1' not in context['wizard_ids']:
+            newwiz_obj = self.pool.get('wizard.free1.distribution')
+            newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+            context['wizard_ids']['free_1'] = newwiz_id
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -261,12 +221,8 @@ class wizard_fundingpool_distribution(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
-                'res_id': [newwiz_id],
-                'context': {
-                    'active_id': context.get('active_id'),
-                    'active_ids': context.get('active_ids'),
-                    'child_distributions': context.get('child_distributions'),
-               }
+                'res_id': [context['wizard_ids']['free_1']],
+                'context': context
         }
             
     def button_save(self, cr, uid, ids, context={}):
@@ -277,9 +233,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
-        if wizard_obj.modified_line:
-            # abstract method to be implemented
-            self._cleanup_and_store(cr, uid, ids[0], context=context)
+        self.store_distribution(cr, uid, ids[0], context=context)
         # and we open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
     

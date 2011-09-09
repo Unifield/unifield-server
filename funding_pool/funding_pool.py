@@ -39,7 +39,7 @@ analytic_distribution()
 
 class distribution_line(osv.osv):
     
-    _name = "distribution_line"
+    _name = "distribution.line"
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution'),
@@ -55,14 +55,14 @@ class distribution_line(osv.osv):
 distribution_line()
 
 class cost_center_distribution_line(osv.osv):
-    _name = "cost_center_distribution_line"
-    _inherit = "distribution_line"
+    _name = "cost.center.distribution.line"
+    _inherit = "distribution.line"
     
 cost_center_distribution_line()
 
 class funding_pool_distribution_line(osv.osv):
-    _name = "funding_pool_distribution_line"
-    _inherit = "distribution_line"
+    _name = "funding.pool.distribution.line"
+    _inherit = "distribution.line"
     _columns = {
         "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account'),
     }
@@ -70,14 +70,14 @@ class funding_pool_distribution_line(osv.osv):
 funding_pool_distribution_line()
 
 class free_1_distribution_line(osv.osv):
-    _name = "free_1_distribution_line"
-    _inherit = "distribution_line"
+    _name = "free.1.distribution.line"
+    _inherit = "distribution.line"
     
 free_1_distribution_line()
 
 class free_2_distribution_line(osv.osv):
-    _name = "free_2_distribution_line"
-    _inherit = "distribution_line"
+    _name = "free.2.distribution.line"
+    _inherit = "distribution.line"
     
 free_2_distribution_line()
 
@@ -85,17 +85,17 @@ class analytic_distribution(osv.osv):
     
     _inherit = "analytic.distribution"
     _columns = {
-        'cost_center_lines': fields.one2many('cost_center_distribution_line', 'distribution_id', 'Cost Center Distribution'),
-        'funding_pool_lines': fields.one2many('funding_pool_distribution_line', 'distribution_id', 'Funding Pool Distribution'),
-        'free_1_lines': fields.one2many('free_1_distribution_line', 'distribution_id', 'Free 1 Distribution'),
-        'free_2_lines': fields.one2many('free_2_distribution_line', 'distribution_id', 'Free 2 Distribution'),
+        'cost_center_lines': fields.one2many('cost.center.distribution.line', 'distribution_id', 'Cost Center Distribution'),
+        'funding_pool_lines': fields.one2many('funding.pool.distribution.line', 'distribution_id', 'Funding Pool Distribution'),
+        'free_1_lines': fields.one2many('free.1.distribution.line', 'distribution_id', 'Free 1 Distribution'),
+        'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
     }
     
     def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, context={}):
-        cc_distrib_line_obj = self.pool.get('cost_center_distribution_line')
-        fp_distrib_line_obj = self.pool.get('funding_pool_distribution_line')
-        f1_distrib_line_obj = self.pool.get('free_1_distribution_line')
-        f2_distrib_line_obj = self.pool.get('free_2_distribution_line')
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
+        f1_distrib_line_obj = self.pool.get('free.1.distribution.line')
+        f2_distrib_line_obj = self.pool.get('free.2.distribution.line')
         source_obj = self.browse(cr, uid, source_id, context=context)
         destination_obj = self.browse(cr, uid, destination_id, context=context)
         # clean up

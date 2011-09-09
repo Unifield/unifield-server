@@ -77,6 +77,7 @@ class account_move_line(osv.osv):
                 'context': {
                     'active_id': ids[0],
                     'active_ids': ids,
+                    'wizard_ids': {'cost_center': wiz_id}
                }
         }
     

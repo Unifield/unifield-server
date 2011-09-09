@@ -31,7 +31,6 @@
     ],
     "update_xml": [
         'analytic_account_view.xml',
-        'invoice_view.xml',
         'wizard/account_analytic_chart_view.xml',
         'wizard/wizard_costcenter_distribution_view.xml',
         'wizard/wizard_fundingpool_distribution_view.xml',
