@@ -48,18 +48,14 @@ class account_invoice(osv.osv):
                 # Create new line and change some fields:
                 # - name with REV
                 # - amount * -1
-                # - source_date with same date as first one
-                # - date with current date
-                # Update old engagement line with invoice date
-                eng_obj.write(cr, uid, [eng.id], {'date': inv.date_invoice, 'source_date': inv.date_invoice,})
+                # - date with invoice_date
                 # Copy this line for reverse
                 new_line_id = eng_obj.copy(cr, uid, eng.id, context=context)
                 # Prepare reverse values
                 vals = {
                     'name': join_without_redundancy(eng.name, 'REV'),
                     'amount': eng.amount * -1,
-                    'date': strftime('%Y-%m-%d'),
-                    'source_date': inv.date_invoice,
+                    'date': inv.date_invoice,
                     'reversal_origin': eng.id,
                 }
                 # Write changes
