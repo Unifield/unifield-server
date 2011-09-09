@@ -31,7 +31,7 @@
     ],
     "depends" : [
         "sale",
-        "reason_types_moves",
+        "stock_override",
     ],
     "update_xml": [
         "sale_view.xml",

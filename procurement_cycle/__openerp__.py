@@ -31,6 +31,7 @@
                 "purchase",
                 "product_expiry",
                 "purchase_double_validation",
+                "reason_types_moves",
                 ],
     "author": "TeMPO Consulting, MSF",
     "website": "",

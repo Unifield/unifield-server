@@ -31,7 +31,7 @@
     ],
     "depends" : [
         "purchase",
-        "reason_types_moves",
+        "stock_override",
     ],
     "update_xml": [
         "purchase_view.xml",
