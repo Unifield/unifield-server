@@ -26,7 +26,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Reason Types Moves">
-                    <field name="name" />
+                    <field name="complete_name" />
                     <field name="parent_id" />
                     <field name="level" />
                 </tree>

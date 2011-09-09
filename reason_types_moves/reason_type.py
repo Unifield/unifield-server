@@ -71,13 +71,15 @@ class stock_reason_type(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        reads = self.browse(cr, uid, ids, context=context)
         res = []
         for record in reads:
-            name = record['name']
-            if record['parent_id']:
-                name = record['parent_id'][1]+' / '+name
-            res.append((record['id'], name))
+            name = record.name
+            code = record.code
+            if record.parent_id:
+                name = record.parent_id.name + ' / ' + name
+                code = str(record.parent_id.code) + '.' + str(code)
+            res.append((record.id, '%s %s' % (code, name)))
         return res
 
     def _name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
@@ -86,6 +88,7 @@ class stock_reason_type(osv.osv):
     
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
+        'code': fields.integer(string='Code', required=True),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
