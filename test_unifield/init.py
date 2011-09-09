@@ -31,7 +31,7 @@ def init_client_module(host, port, list):
     
 def init_module():
     client_list = ['msf_c1', 'msf_c2', 'msf_c3', 'msf_p1', 'msf_p2', 'msf_p3']
-    #client_list = ['msf_c1']
+    #client_list = ['msf_c2', 'msf_p2']
     thread_list = []
 
     t = threading.Thread(None, init_client_module, None, (client_host, client_port, client_list), {})
@@ -71,6 +71,11 @@ def module_init(host, port, db):
     proxy_account = get_proxy(host, port, db, 'account.installer')
     wiz_id = proxy_account.create({})
     proxy_account.action_next([wiz_id])
+    
+    proxy_journal = get_proxy(host, port, db, 'msf_chart_of_account.installer')
+    j_id = proxy_journal.create({})
+    proxy_journal.action_next([j_id])
+    
 
 def create_database(host, port, db_name):
     print "create" , host, port, db_name

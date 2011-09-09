@@ -80,6 +80,8 @@ class purchase_order_sync(osv.osv):
         return self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_stock_customer.id
 
     def create_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
         print "call purchase order", source
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
@@ -97,6 +99,8 @@ class purchase_order_sync(osv.osv):
         
         
     def confirm_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
         name = so_info.client_order_ref.split('.')[1]
         ids = self.search(cr, uid, [('name', '=', name)])
         wf_service = netsvc.LocalService("workflow")
@@ -104,6 +108,8 @@ class purchase_order_sync(osv.osv):
     
     
     def picking_send(self, cr, uid, source, picking_info, context=None):
+        if not context:
+            context = {}
         name = picking_info.sale_id.client_order_ref.split('.')[1]
         ids = self.search(cr, uid, [('name', '=', name)])
         self.write(cr, uid, ids, {'sended_by_supplier' : True}, context=context)

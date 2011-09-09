@@ -79,6 +79,8 @@ class sale_order_sync(osv.osv):
         return self.pool.get('product.uom').create(cr, uid, {'name' : uom_name}, context=context)
         
     def create_so(self, cr, uid, source, po_info, context=None):
+        if not context:
+            context = {}
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
         lines = self.get_lines(cr, uid, po_info, context)
@@ -95,6 +97,8 @@ class sale_order_sync(osv.osv):
         return True
     
     def picking_received(self, cr, uid, source, picking_info, context=None):
+        if not context:
+            context = {}
         name = picking_info.purchase_id.name
         ids = self.search(cr, uid, [('client_order_ref', '=', source + "." + name)])
         self.write(cr, uid, ids, {'received' : True}, context=context)

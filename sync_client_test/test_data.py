@@ -20,19 +20,8 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
 
-import sync_client.rpc
-import uuid
-import tools
-import time
-import sys
-import traceback
 import netsvc
-
-import sync_client
 
 class test(osv.osv_memory):
     _name = "sync.client.test"
@@ -108,6 +97,8 @@ class test(osv.osv_memory):
         """
             check for all object with name like, if one of the data is the same in one object
         """
+        if not context:
+            context = {}
         ids = self.pool.get(model).search(cr, uid, [('name', 'like', data.get('name'))], context=context)
         if not ids:
             return False
@@ -122,10 +113,14 @@ class test(osv.osv_memory):
     
     
     def create_record(self, cr, uid, model, data, context=None):
+        if not context:
+            context = {}
         res_id = self.pool.get(model).create(cr, uid, data, context=context)
         return res_id
     
     def write_record(self, cr, uid, model, data, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get(model).search(cr, uid, [('name', '=', data.get('name'))], context=context)
         if not ids:
             return False
@@ -133,6 +128,8 @@ class test(osv.osv_memory):
         return True
     
     def get_record_id(self, cr, uid, model, data, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get(model).search(cr, uid, [('name', '=', data)], context=context)
         return ids and ids[0] or False
 
@@ -146,6 +143,8 @@ class test(osv.osv_memory):
         return True
         
     def get_record_data(self, cr, uid, model, id, fields, context=None):
+        if not context:
+            context = {}
         return self.pool.get(model).read(cr, uid, id, fields, context=context)
     
     def confirm_so(self, cr, uid, ref, context=None):
@@ -250,11 +249,15 @@ class test(osv.osv_memory):
         self.pool.get('account.bank.statement.line').write(cr, uid, line_ids, {'account_id' : account_ids[0]}, context=context)
         return True
     
-    def check_final_data_ucf1(self, cr, uid):
+    def check_final_data_ucf1(self, cr, uid, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('account_id', '=', 'MSF Cash Account 2 UCF1')], context=None)
         return len(ids) == 2
     
     def create_data_ucf2(self, cr, uid, context=None):
+        if not context:
+            context = {}
         a1_id = self.pool.get('account.account').create(cr, uid, {'code' : "M23", 
                                                           "name" : "MSF Bank Account 1 UCF2", 
                                                           "type" : "other",
@@ -307,6 +310,8 @@ class test(osv.osv_memory):
         return True
     
     def create_cash_statement_ufc2(self, cr, uid, context=None):
+        if not context:
+            context = {}
         j_ids = self.pool.get('account.journal').search(cr, uid, [('name', '=', 'MSF Cash Journal UCF2')], context=context)
         account_ids = self.pool.get('account.account').search(cr, uid, [('name', '=', 'MSF Transfert Account 1 UCF2')], context=context)
         print j_ids, account_ids
@@ -331,6 +336,8 @@ class test(osv.osv_memory):
         return True
         
     def reconcile_ucf2(self, cr, uid, context=None):
+        if not context:
+            context = {}
         ids = self.pool.get('account.move.line').search(cr, uid, [('name', 'ilike', 'Move'), ('account_id', '=', 'M24 MSF Transfert Account 1 UCF2')], context=context)
         if not ids:
             return False
@@ -343,6 +350,8 @@ class test(osv.osv_memory):
         return True
 
     def init_data_ucf3(self, cr, uid, context=None):
+        if not context:
+            context = {}
         supplier_S2_id = self.pool.get('res.partner').create(cr, uid, {
             'name': 'msf_supplier_UCF3',
             'supplier': True,
@@ -393,6 +402,8 @@ class test(osv.osv_memory):
         return True
 
     def register_invoice_payment_ucf3(self, cr, uid, context=None):
+        if not context:
+            context = {}
         creditors_account_id = self.pool.get('account.account').create(cr, uid, {
             'code': "M2CR", 
             "name": "Creditors", 
@@ -434,6 +445,8 @@ class test(osv.osv_memory):
         return True
 
     def check_final_data_ucf3(self, cr, uid, context=None):
+        if not context:
+            context = {}
         supplier_S2_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', 'msf_supplier_UCF3')])
         if supplier_S2_ids:
             supplier_S2_id = supplier_S2_ids[0]
@@ -442,6 +455,8 @@ class test(osv.osv_memory):
         return False
 
     def create_data_ucf4(self, cr, uid, context=None):
+        if not context:
+            context = {}
     
         a1_id = self.pool.get('account.analytic.account').create(cr, uid, {"name" : 'Analytic Account MSF 1',
                                                                    "code" :  'M2A1',
@@ -510,6 +525,8 @@ class test(osv.osv_memory):
         return True
     
     def change_distribution_ucf4(self, cr, uid, context=None):
+        if not context:
+            context = {}
         a_ids = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'M2A1')], context=context)
         fj_ids = self.pool.get('account.journal').search(cr, uid, [('name', '=', 'MSF Bank journal UCF4')], context=context)
         i_ids = self.pool.get('account.analytic.plan.instance').search(cr, uid, [("name", '=', "M2 Analytic Distribution 50 - 50")], context=context)

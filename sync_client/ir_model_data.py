@@ -31,6 +31,7 @@ MODELS_TO_IGNORE=[
                     'ir.actions.wizard',
                     'ir.report.custom',
                     'ir.ui.menu',
+                    'ir.ui.view',
                     'ir.sequence',
                     'ir.actions.url',
                     'ir.values',
@@ -346,6 +347,7 @@ old_import_data = osv.osv.import_data
 def import_data(model, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
     if not context:
         context = {}
+    context['sync_data'] = True
     if 'id' in fields:
         context['no_model_data_line'] = True
     res = old_import_data(model,cr,uid,fields,datas,mode,current_module,noupdate=noupdate,context=context,filename=filename)

@@ -276,6 +276,8 @@ class update_received(osv.osv):
                     message.append(res[2])
                     run = False
         except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+            print e
             message.append(str(e))
             run = False
             

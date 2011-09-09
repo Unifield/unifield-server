@@ -27,6 +27,7 @@
                 	<separator string="Connection information" colspan="4"/>
                     <field name="host"/>
                     <field name="port"/>
+                    <field name="protocol"/>
                     <field name="database"/>
                     <field name="login"/>
                     <field name="password" />

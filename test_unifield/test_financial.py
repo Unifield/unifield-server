@@ -8,59 +8,67 @@ class TestMSFFinancial(TestMSFMessage):
     
     def create_data_ucf1(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.create_data_ucf1()
+        res = proxy.create_data_ucf1_u()
         self.assertTrue(res)
     
     def modify_data_ucf1(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.modify_data_ucf1()
+        res = proxy.modify_data_ucf1_u()
         self.assertTrue(res)
 
     def check_final_data_ucf1(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.check_final_data_ucf1()
+        res = proxy.check_final_data_ucf1_u()
         self.assertTrue(res)
         
     def create_data_ucf2(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.create_data_ucf2()
+        res = proxy.create_data_ucf2_u()
         self.assertTrue(res)
         
     def create_cash_statement_ufc2(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.create_cash_statement_ufc2()
+        res = proxy.create_cash_statement_ufc2_u()
         self.assertTrue(res)
         
     def reconcile_ucf2(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.reconcile_ucf2()
+        res = proxy.reconcile_ucf2_u()
         self.assertTrue(res)
         
     def init_data_ucf3(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.init_data_ucf3()
+        res = proxy.init_data_ucf3_u()
         self.assertTrue(res)
         
     def register_invoice_payment_ucf3(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.register_invoice_payment_ucf3()
+        res = proxy.register_invoice_payment_ucf3_u()
         self.assertTrue(res)
 
     def check_final_data_ucf3(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.check_final_data_ucf3()
+        res = proxy.check_final_data_ucf3_u()
         self.assertTrue(res)
 
     def create_data_ucf4(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.create_data_ucf4()
+        res = proxy.create_data_ucf4_u()
         self.assertTrue(res)
         
     def change_distribution_ucf4(self, host, port, db_name):
         proxy = get_proxy(host, port, db_name)
-        res = proxy.change_distribution_ucf4()
+        res = proxy.change_distribution_ucf4_u()
         self.assertTrue(res)
         
+    def open_period(self, host, port, db_name):
+        proxy = get_proxy(host, port, db_name)
+        proxy.open_period()
+
+class INIT(TestMSFFinancial):
+    def runTest(self):
+        self.open_period(client_host, client_port, 'msf_p2')
+        self.open_period(client_host, client_port, 'msf_c2')
 class TestUCF1(TestMSFFinancial):
     
     def runTest(self):
@@ -106,9 +114,12 @@ class TestUCF3(TestMSFFinancial):
         self.synchronize(client_host, client_port, 'msf_c2')
         self.check_final_data_ucf3(client_host, client_port, 'msf_c2')
 
+
 class TestUCF4(TestMSFFinancial):
     def runTest(self):
-        #
+        """
+            DEPRECATED 
+        """
         self.create_data_ucf4(client_host, client_port, 'msf_c2')
         self.synchronize(client_host, client_port, 'msf_c2')
         self.synchronize(client_host, client_port, 'msf_p2')
@@ -119,9 +130,10 @@ class TestUCF4(TestMSFFinancial):
 
 if __name__ == '__main__':
     test = unittest.TestSuite()
+    test.addTest(INIT())
     test.addTest(TestUCF1())
     test.addTest(TestUCF2())
     test.addTest(TestUCF3())
-    test.addTest(TestUCF4())
+    #test.addTest(TestUCF4())
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(test)

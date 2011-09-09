@@ -1,0 +1,11 @@
+sync_server/.bzr
+sync_server/.bzrignore
+sync_server/.project
+sync_server/.pydevproject
+sync_server/.settings
+*.pyc
+sync_client/.project
+sync_client/.pydevproject
+sync_client/.bzr
+sync_client/.bzrignore
+sync_client/.settings

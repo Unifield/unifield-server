@@ -429,7 +429,8 @@ class sync_server_connection(osv.osv):
 
     _columns = {
         'host': fields.char('Host', help='Synchronization server host name', size=256),
-        'port': fields.integer('Port', help='Synchronization server connection port (secure net-rpc)'),
+        'port': fields.integer('Port', help='Synchronization server connection port'),
+        'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
         'uid': fields.integer('Uid on synchro server', readonly=True),
@@ -441,6 +442,7 @@ class sync_server_connection(osv.osv):
     _defaults = {
         'host' : 'localhost',
         'port' : 10070,
+        'protocol': 'netrpc',
         'login' : 'admin',
         'password' : 'a',
         'max_size' : 5,
@@ -450,9 +452,24 @@ class sync_server_connection(osv.osv):
         ids = self.search(cr, uid, [], context=context)
         return self.browse(cr, uid, ids, context=context)[0]
     
+    def connector_factory(self, con):
+        if con.protocol == 'xmlrpc':
+            connector = rpc.XmlRPCConnector(con.host, con.port)
+        elif con.protocol == 'gzipxmlrpc':
+            connector = rpc.GzipXmlRPCConnector(con.host, con.port)
+        elif con.protocol == 'xmlrpcs':
+            connector = rpc.SecuredXmlRPCConnector(con.host, con.port)
+        elif con.protocol == 'netrpc':
+            connector = rpc.NetRPCConnector(con.host, con.port)
+        elif con.protocol == 'netrpc_gzip':
+            connector = rpc.GzipNetRPCConnector(con.host, con.port)
+        else:
+            raise Exception('Unknown protocol: %s' % con.protocol)
+        return connector
+ 
     def connect(self, cr, uid, ids, context=None):
         for con in self.browse(cr, uid, ids, context=context):
-            connector = rpc.NetRPCConnector(con.host, con.port)
+            connector = self.connector_factory(con)
             cnx = rpc.Connection(connector, con.database, con.login, con.password)
             if cnx.user_id:
                 self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
@@ -465,7 +482,7 @@ class sync_server_connection(osv.osv):
             @param model: the model name we want to call remote method
         """
         con = self._get_connection_manager(cr, uid, context=context)
-        connector = rpc.NetRPCConnector(con.host, con.port)
+        connector = self.connector_factory(con)
         cnx = rpc.Connection(connector, con.database, con.login, con.password, con.uid)
         return rpc.Object(cnx, model)
     

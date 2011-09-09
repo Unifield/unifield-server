@@ -1,0 +1,223 @@
+=== added file 'bin/service/gzip_xmlrpclib.py'
+--- bin/service/gzip_xmlrpclib.py	1970-01-01 00:00:00 +0000
++++ bin/service/gzip_xmlrpclib.py	2011-09-08 13:10:09 +0000
+@@ -0,0 +1,109 @@
++import zlib
++import xmlrpclib
++from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
++import logging
++
++from timeout_transport import TimeoutTransport
++
++# xmlrpc server side
++
++class GzipXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
++
++    def do_POST(self):
++        if not(self.headers.has_key('accept-encoding') and self.headers['accept-encoding'] == 'gzip'):
++            return SimpleXMLRPCRequestHandler.do_POST(self)
++        else:
++            if not self.is_rpc_path_valid():
++                self.report_404()
++                return
++            try:
++                max_chunk_size = 10*1024*1024
++                size_remaining = int(self.headers["content-length"])
++                L = []
++                while size_remaining:
++                    chunk_size = min(size_remaining, max_chunk_size)
++                    L.append(self.rfile.read(chunk_size))
++                    size_remaining -= len(L[-1])
++                data = ''.join(L)
++                data = zlib.decompress(data) # is_gzip
++                response = self.server._marshaled_dispatch(
++                        data, getattr(self, '_dispatch', None)
++                    )
++            except Exception, e:
++                self.send_response(500)
++                self.end_headers()
++            else:
++                response = zlib.compress(response, zlib.Z_BEST_COMPRESSION) # is_gzip
++                self.send_response(200)
++                self.send_header("Content-type", "text/xml")
++                self.send_header("Content-length", str(len(response)))
++                self.send_header("Accept-Encoding", "gzip") # is_gzip
++                self.end_headers()
++                self.wfile.write(response)
++                self.wfile.flush()
++                self.connection.shutdown(1)
++
++# xmlrpc client side
++
++class GzipTransport(TimeoutTransport):
++
++    def __init__(self, timeout=None, *args, **kwargs):
++        TimeoutTransport.__init__(self, timeout=timeout, *args, **kwargs)
++        self.__logger = logging.getLogger('xmlrpc.transport')
++
++    def request(self, host, handler, request_body, verbose=0):
++        h = self.make_connection(host)
++        if verbose:
++            h.set_debuglevel(1)
++        self.send_request(h, handler, request_body)
++        self.send_host(h, host)
++        self.send_user_agent(h)
++
++        # is_gzip
++        h.putheader('Accept-Encoding', 'gzip')
++        raw_size = len(request_body)
++        request_body = zlib.compress(request_body, zlib.Z_BEST_COMPRESSION)
++        gzipped_size = len(request_body)
++        saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
++        self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
++                raw_size, gzipped_size, saving)
++
++        self.send_content(h, request_body)
++        errcode, errmsg, headers = h.getreply()
++        if errcode != 200:
++            raise xmlrpclib.ProtocolError(
++                    host + handler,
++                    errcode, errmsg,
++                    headers
++                    )
++        self.verbose = verbose
++        try:
++            sock = h._conn.sock
++        except AttributeError:
++            sock = None
++
++        # is_gzip
++        if headers.has_key('accept-encoding') and headers['accept-encoding'] == 'gzip':
++            return self._parse_gzipped_response(h.getfile(), sock)
++
++        return self._parse_response(h.getfile(), sock)
++
++    def _parse_gzipped_response(self, file, sock):
++        p, u = self.getparser()
++        response_chunks = []
++        while 1:
++            if sock:
++                chunk = sock.recv(1024)
++            else:
++                chunk = file.read(1024)
++            if not chunk:
++                break
++            response_chunks.append(chunk)
++        response = zlib.decompress("".join(response_chunks))
++        if self.verbose:
++            print "body:", repr(response)
++        p.feed(response)
++        file.close()
++        p.close()
++        return u.close()
++
+
+=== modified file 'bin/service/http_server.py'
+--- bin/service/http_server.py	2011-01-18 23:50:33 +0000
++++ bin/service/http_server.py	2011-09-08 15:43:15 +0000
+@@ -43,7 +43,9 @@
+ import xmlrpclib
+ import logging
+ 
++import SimpleXMLRPCServer
+ from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
++import gzip_xmlrpclib
+ 
+ try:
+     import fcntl
+@@ -227,7 +229,7 @@
+ 
+ def init_servers():
+     global httpd, httpsd
+-    if tools.config.get('xmlrpc'):
++    if tools.config.get('xmlrpc') or tools.config.get('gzipxmlrpc'):
+         httpd = HttpDaemon(tools.config.get('xmlrpc_interface', ''),
+                            int(tools.config.get('xmlrpc_port', 8069)))
+ 
+@@ -260,7 +262,6 @@
+     else:
+         raise Exception("Incorrect protocol or no http services")
+ 
+-import SimpleXMLRPCServer
+ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+     rpc_paths = []
+     protocol_version = 'HTTP/1.1'
+@@ -283,6 +284,27 @@
+         self.connection = dummyconn()
+         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+ 
++class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
++    rpc_paths = []
++    protocol_version = 'HTTP/1.1'
++    _logger = logging.getLogger('xmlrpc')
++
++    def _dispatch(self, method, params):
++        try:
++            service_name = self.path.split("/")[-1]
++            return self.dispatch(service_name, method, params)
++        except netsvc.OpenERPDispatcherException, e:
++            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
++
++    def handle(self):
++        pass
++
++    def finish(self):
++        pass
++
++    def setup(self):
++        self.connection = dummyconn()
++        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+ 
+ def init_xmlrpc():
+     if tools.config.get('xmlrpc', False):
+@@ -291,6 +313,12 @@
+         reg_http_service(HTTPDir('/xmlrpc/', XMLRPCRequestHandler))
+         logging.getLogger("web-services").info("Registered XML-RPC over HTTP")
+ 
++    if tools.config.get('gzipxmlrpc', False):
++        # Example of http file serving:
++        # reg_http_service(HTTPDir('/test/',HTTPHandler))
++        reg_http_service(HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler))
++        logging.getLogger("web-services").info("Registered gzipped XML-RPC over HTTP")
++
+     if tools.config.get('xmlrpcs', False) \
+             and not tools.config.get('xmlrpc', False):
+         # only register at the secure server
+
+=== modified file 'bin/tools/config.py'
+--- bin/tools/config.py	2011-05-17 05:54:43 +0000
++++ bin/tools/config.py	2011-09-08 15:36:04 +0000
+@@ -55,6 +55,7 @@
+             'reportgz': False,
+             'netrpc': True,
+             'xmlrpc': True,
++            'gzipxmlrpc': False,
+             'xmlrpcs': True,
+             'translate_in': None,
+             'translate_out': None,
+@@ -119,6 +120,7 @@
+         group.add_option("--xmlrpc-interface", dest="xmlrpc_interface", help="specify the TCP IP address for the XML-RPC protocol")
+         group.add_option("--xmlrpc-port", dest="xmlrpc_port", help="specify the TCP port for the XML-RPC protocol", type="int")
+         group.add_option("--no-xmlrpc", dest="xmlrpc", action="store_false", help="disable the XML-RPC protocol")
++        group.add_option("--gzipxmlrpc", dest="gzipxmlrpc", action="store_true", help="enable gzipping XML-RPC protocol (disable standard XMLRPC)")
+         parser.add_option_group(group)
+ 
+         title = "XML-RPC Secure Configuration"
+@@ -290,11 +292,15 @@
+         if self.options['pidfile'] in ('None', 'False'):
+             self.options['pidfile'] = False
+ 
++        if opt.gzipxmlrpc:
++            # gzip prevails over standard
++            opt.xmlrpc = False
++
+         keys = ['xmlrpc_interface', 'xmlrpc_port', 'db_name', 'db_user', 'db_password', 'db_host',
+                 'db_port', 'logfile', 'pidfile', 'smtp_port', 'cache_timeout',
+                 'email_from', 'smtp_server', 'smtp_user', 'smtp_password',
+                 'netrpc_interface', 'netrpc_port', 'db_maxconn', 'import_partial', 'addons_path',
+-                'netrpc', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
++                'netrpc', 'xmlrpc', 'gzipxmlrpc', 'syslog', 'without_demo', 'timezone',
+                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
+                 'secure_cert_file', 'secure_pkey_file',
+                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix'
+

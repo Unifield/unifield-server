@@ -5,11 +5,12 @@
 OpenObject Client Library
 """
 
-import xmlrpclib
-import logging
-import socket
 import sys
-import time
+import socket
+import zlib
+import xmlrpclib
+from timeout_transport import TimeoutTransport
+from gzip_xmlrpclib import GzipTransport
 
 try:
     import cPickle as pickle
@@ -21,7 +22,14 @@ try:
 except:
     import StringIO
 
+import logging
+import logging.config
+
+#logging.config.fileConfig('logging.cfg')
+
 TIMEOUT = 250
+
+GZIP_MAGIC = '\x78\xda' # magic when max compression used
 
 # Safer Unpickler, in case the server is untrusted, from Nadia Alramli
 # http://nadiana.com/python-pickle-insecure#How_to_Make_Unpickling_Safer
@@ -52,7 +60,6 @@ class SafeUnpickler(object):
         return pickle_obj.load()
 
 
-
 class Connector(object):
     """
     Connector class
@@ -77,11 +84,69 @@ class XmlRPCConnector(Connector):
     def __init__(self, hostname, port=8069):
         Connector.__init__(self, hostname, port)
         self.__logger = logging.getLogger('connector.xmlrpc')
-        self.url = 'http://%s:%d/xmlrpc' % (self.hostname, self.port)
+        self.url = 'http://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
-        service = xmlrpclib.ServerProxy(url)
+        timeout_transport = TimeoutTransport(timeout=TIMEOUT)
+        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=timeout_transport)
+        return getattr(service, method)(*args)
+
+"""Modified version of xmlrcpclib.Transport.request (same in Python 2.4, 2.5, 2.6)
+   to workaround Python bug http://bugs.python.org/issue1223
+   for Python versions before 2.6
+   This patch is inspired by http://www.cherrypy.org/ticket/743.
+   See LP bug https://bugs.launchpad.net/openobject-client/+bug/673775
+"""
+def fixed_request(self, host, handler, request_body, verbose=0):
+    h = self.make_connection(host)
+    if verbose:
+        h.set_debuglevel(1)
+    self.send_request(h, handler, request_body)
+    self.send_host(h, host)
+    self.send_user_agent(h)
+    self.send_content(h, request_body)
+    errcode, errmsg, headers = h.getreply()
+    if errcode != 200:
+        raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg,
+                    headers)
+    self.verbose = verbose
+    # below we make sure to call parse_response() and
+    # not _parse_response(), and don't pass the socket,
+    # so it will have to use the file instead, and avoid
+    # the problem of the original code.
+    return self.parse_response(h.getfile())
+
+# Rude monkey-patch to fix the SSL connection error in Python 2.5-,
+# as last resort solution to fix it all at once.
+if sys.version_info < (2,6):
+    xmlrpclib.SafeTransport.request = fixed_request
+
+class SecuredXmlRPCConnector(XmlRPCConnector):
+    """
+    This class supports the XmlRPC protocol over HTTPS
+    """
+    PROTOCOL = 'xmlrpcs'
+
+    def __init__(self, hostname, port=8070):
+        XmlRPCConnector.__init__(self, hostname, port)
+        self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
+
+    def send(self, service_name, method, *args):
+        url = '%s/%s' % (self.url, service_name)
+        service = xmlrpclib.ServerProxy(url, allow_none=1)
+        return getattr(service, method)(*args)
+
+class GzipXmlRPCConnector(XmlRPCConnector):
+    """
+    This class supports the XmlRPC protocol with gzipped payload
+    """
+    PROTOCOL = 'gzipxmlrpc'
+
+    def send(self, service_name, method, *args):
+        url = '%s/%s' % (self.url, service_name)
+        gzip_transport = GzipTransport(timeout=TIMEOUT)
+        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
         return getattr(service, method)(*args)
 
 class NetRPC_Exception(Exception):
@@ -91,13 +156,16 @@ class NetRPC_Exception(Exception):
         self.args = (faultCode, faultString)
 
 class NetRPC:
-    def __init__(self, sock=None):
+    def __init__(self, sock=None, is_gzip=False):
         if sock is None:
             self.sock = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
         self.sock.settimeout(TIMEOUT)
+        self.is_gzip = is_gzip
+        self.__logger = logging.getLogger('netrpc')
+
     def connect(self, host, port=False):
         if not port:
             protocol, buf = host.split('//')
@@ -113,6 +181,13 @@ class NetRPC:
 
     def mysend(self, msg, exception=False, traceback=None):
         msg = pickle.dumps([msg,traceback])
+        if self.is_gzip:
+            raw_size = len(msg)
+            msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
+            gzipped_size = len(msg)
+            saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
+            self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
+                    raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
         self.sock.send(exception and "1" or "0")
@@ -142,6 +217,13 @@ class NetRPC:
             if chunk == '':
                 raise RuntimeError, "socket connection broken"
             msg = msg + chunk
+        if msg.startswith(GZIP_MAGIC):
+            gzipped_size = len(msg)
+            msg = zlib.decompress(msg)
+            raw_size = len(msg)
+            saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
+            self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%',
+                    raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
         if isinstance(res[0],Exception):
@@ -154,17 +236,24 @@ class NetRPC:
 class NetRPCConnector(Connector):
     PROTOCOL = 'netrpc'
 
-    def __init__(self, hostname, port=8070):
+    def __init__(self, hostname, port=8070, is_gzip=False):
         Connector.__init__(self, hostname, port)
         self.__logger = logging.getLogger('connector.netrpc')
+        self.is_gzip = is_gzip
 
     def send(self, service_name, method, *args):
-        socket = NetRPC()
+        socket = NetRPC(is_gzip=self.is_gzip)
         socket.connect(self.hostname, self.port)
         socket.mysend((service_name, method, )+args)
         result = socket.myreceive()
         socket.disconnect()
         return result
+
+class GzipNetRPCConnector(NetRPCConnector):
+    PROTOCOL = 'netrpc_gzip'
+
+    def __init__(self, *args, **kwargs):
+        super(GzipNetRPCConnector, self).__init__(is_gzip=True, *args, **kwargs)
 
 class Common(object):
     __logger = logging.getLogger('connection.common')
