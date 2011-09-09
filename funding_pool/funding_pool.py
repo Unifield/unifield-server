@@ -28,6 +28,7 @@ class analytic_distribution(osv.osv):
     _columns = {
         'name': fields.char('Name', size=12, required=True),
         'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
+        'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
     }
     
     _defaults ={

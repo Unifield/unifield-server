@@ -61,7 +61,8 @@ class analytic_line(osv.osv):
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", readonly=True, help="Invoice line from which this line is linked."),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'amount_currency': fields.function(_get_amount_currency, fnct_inv=_set_amount_currency, method=True, store=True, string="Amount currency", type="float", readonly="True", help="")
+        'amount_currency': fields.function(_get_amount_currency, fnct_inv=_set_amount_currency, method=True, store=True, string="Amount currency", type="float", readonly="True", help=""),
+        "distribution_id": fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
     def _check_date(self, cr, uid, vals, context={}):

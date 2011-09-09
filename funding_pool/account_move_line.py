@@ -49,6 +49,7 @@ class account_move_line(osv.osv):
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
+                                     'distribution_id': obj_line.analytic_distribution_id.id,
                                      'user_id': uid
                         }
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
