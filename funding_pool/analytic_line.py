@@ -93,6 +93,8 @@ class analytic_line(osv.osv):
         """
         if not context:
             context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for id in ids:
             if not 'account_id' in vals:
                 line = self.browse(cr, uid, [id], context=context)
