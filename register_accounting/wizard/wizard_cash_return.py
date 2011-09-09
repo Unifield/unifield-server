@@ -531,6 +531,18 @@ class wizard_cash_return(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('An error has occured: The journal entries cannot be posted.'))
                         # Do reconciliation
                         supp_reconcile_id = move_line_obj.reconcile_partial(cr, uid, [supp_move_line_debit_id, supp_move_line_credit_id])
+            else:
+                # reconcile automatically when it is in advance return and not in all cases already handled above
+                # get the move_id of the original account move line
+                original_move_id = wizard.advance_st_line_id.move_ids[0]
+                criteria = [('statement_id', '=', wizard.advance_st_line_id.statement_id.id), ('account_id', '=', adv_closing_acc_id), ('move_id', '=', original_move_id.id)]
+                
+                ml_ids = move_line_obj.search(cr, uid, criteria, context=context)
+                if not ml_ids or len(ml_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('An error occured on the automatic reconciliation in advance return.'))
+                inv_ml = move_line_obj.browse(cr, uid, ml_ids, context=context)[0]
+                move_line_obj.reconcile_partial(cr, uid, [inv_ml.id, adv_closing_id])
+                    
         # create the statement line for the advance closing
         adv_closing_st_id = self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, context=context)
 
@@ -539,7 +551,7 @@ class wizard_cash_return(osv.osv_memory):
 
         # Close Wizard
         return { 'type': 'ir.actions.act_window_close', }
-
+    
 wizard_cash_return()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
