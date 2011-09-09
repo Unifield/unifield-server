@@ -33,13 +33,21 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     _columns = {
-        'corrected': fields.boolean(string="Corrected", readonly=True, help="If true, this line has been corrected by an accounting correction wizard"),
+        'corrected': fields.boolean(string="Corrected?", readonly=True, help="If true, this line has been corrected by an accounting correction wizard"),
         'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True, 
-            help="Line that have been corrected by this line."),
+            help="Line that have been corrected by this one."),
+        'reversal': fields.boolean(string="Reversal?", readonly=True, 
+            help="If true, this line is a reversal of another (This was done via a correction wizard)."),
+        'reversal_line_id': fields.many2one('account.move.line', string="Reversal Line", readonly=True, 
+            help="Line that have been reversed by this one."),
+        'have_an_historic': fields.boolean(string="Display historic?", readonly=True, 
+            help="If true, this implies that this line have historical correction(s)."),
     }
 
     _defaults = {
         'corrected': lambda *a: False,
+        'reversal': lambda *a: False,
+        'have_an_historic': lambda *a: False,
     }
 
     def copy(self, cr, uid, id, defaults={}, context={}):
@@ -52,6 +60,9 @@ class account_move_line(osv.osv):
             })
         defaults.update({
             'state': 'draft',
+            'have_an_historic': False,
+            'corrected': False,
+            'reversal': False,
         })
         return super(account_move_line, self).copy(cr, uid, id, defaults, context=context)
 
@@ -145,7 +156,7 @@ class account_move_line(osv.osv):
         if not domain_ids:
             domain_ids = ids
         # Create domain
-        domain = [('id', 'in', flatten(domain_ids))]
+        domain = [('id', 'in', flatten(domain_ids)), ('reversal', '=', False)]
         # Display the result
         return {
             'name': "History Move Line",
@@ -222,13 +233,14 @@ class account_move_line(osv.osv):
                 'amount_currency': amt,
                 'journal_id': j_corr_ids[0],
                 'name': name,
-                'corrected_line_id': ml.id,
+                'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
+                'reversal': True,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Inform old line that it have been corrected
-            self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
+            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
@@ -282,9 +294,9 @@ class account_move_line(osv.osv):
                 name = join_without_redundancy(ml.name, 'REV')
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id}, context=context)
                 self.write(cr, uid, [new_line_id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 
-                    'corrected_line_id': ml.id, 'source_date': ml.date,}, context=context)
+                    'reversal_line_id': ml.id, 'source_date': ml.date, 'reversal': True}, context=context)
                 # Flag this line as corrected
-                self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
+                self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
                 if ml.id in ids:
                     success_move_line_ids.append(ml.id)
             # Hard post the move
@@ -363,9 +375,10 @@ class account_move_line(osv.osv):
                 'amount_currency': amt,
                 'journal_id': j_corr_ids[0],
                 'name': name,
-                'corrected_line_id': ml.id,
+                'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
+                'reversal': True,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -377,6 +390,7 @@ class account_move_line(osv.osv):
                 'account_id': new_account_id,
                 'ref': ml.ref,
                 'source_date': ml.date,
+                'have_an_historic': True,
             }
             self.write(cr, uid, [correction_line_id], cor_vals, context=context)
             # Do process on analytic distribution:
@@ -389,7 +403,7 @@ class account_move_line(osv.osv):
             if ml.statement_id:
                 self.update_account_on_st_line(cr, uid, [ml.id], new_account_id, context=context)
             # Inform old line that it have been corrected
-            self.write(cr, uid, [ml.id], {'corrected': True}, context=context)
+            self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
             # Add this line to succeded lines
@@ -462,16 +476,16 @@ class account_move_line(osv.osv):
                 'amount_currency': amt,
                 'journal_id': j_corr_ids[0],
                 'name': name,
-                'corrected_line_id': move_line.id,
+                'reversal_line_id': move_line.id,
                 'account_id': move_line.account_id.id,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
             name = join_without_redundancy(move_line.name, 'COR')
             self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': move_line.id,
-                'account_id': account_id, 'partner_id': partner_id}, context=context)
+                'account_id': account_id, 'partner_id': partner_id, 'have_an_historic': True,}, context=context)
             # Inform old line that it have been corrected
-            self.write(cr, uid, [move_line.id], {'corrected': True}, context=context)
+            self.write(cr, uid, [move_line.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
             # Reconcile the line with its reversal
