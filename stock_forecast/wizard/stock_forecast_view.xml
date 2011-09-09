@@ -51,7 +51,7 @@
 		         <graph string="Stock Forecast Lines" type="bar">
 		              <field name="date" />
 		              <field name="stock_situation" operator="max" />
-		              <field name="qty" />
+		              <!-- <field name="qty" /> -->
 		        </graph>
 		    </field>
 		</record>
