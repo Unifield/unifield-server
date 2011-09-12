@@ -558,7 +558,7 @@ class orm_template(object):
             elif field_type == 'integer':
                 return 0
             elif field_type == 'boolean':
-                return False
+                return 'False'
             return ''
 
         def selection_field(in_field):
