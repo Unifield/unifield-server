@@ -26,6 +26,10 @@ from tools.translate import _
 class analytic_line(osv.osv):
     _inherit = "account.analytic.line"
 
+    _columns = {
+        'distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+    }
+
     def _check_date(self, cr, uid, vals, context={}):
         """
         Check if given account_id is active for given date
