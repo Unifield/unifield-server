@@ -40,13 +40,6 @@ class account_account(osv.osv):
         'type_for_register': lambda *a: 'none',
     }
 
-    def name_get(self, cr, uid, ids, context={}):
-        """
-        Give only code account for each id given by ids
-        """
-        res = self.pool.get('account.account').read(cr, uid, ids, ['code'], context=context)
-        return [(int(x['id']), x['code']) for x in res]
-
 account_account()
 
 class account_move(osv.osv):

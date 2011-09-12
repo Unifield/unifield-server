@@ -73,6 +73,17 @@ class account_journal(osv.osv):
             res += [(rs.id, code)]
         return res
     
+    def onchange_type(self, cr, uid, ids, type, currency, context=None):
+        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
+        default_dom = [('type','<>','view'),('type','<>','consolidation')]
+        value.setdefault('domain',{})
+        if type in ('cash', 'bank', 'cheque'):
+            default_dom += [('code', '=like', '5%' )]
+        value['domain']['default_debit_account_id'] = default_dom
+        value['domain']['default_crebit_account_id'] = default_dom
+        return value
+
+
     def create(self, cr, uid, vals, context=None):
         
         # TODO: add default accounts
@@ -108,6 +119,9 @@ class account_journal(osv.osv):
         
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
+            # 'from_journal_creation' in context permits to pass register creation that have a
+            #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
+            context.update({'from_journal_creation': True})
             self.pool.get('account.bank.statement') \
                 .create(cr, uid, {'journal_id': journal_obj,
                                   'name': "REG1" + vals['code'],

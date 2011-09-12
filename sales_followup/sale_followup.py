@@ -234,7 +234,7 @@ class sale_order_followup(osv.osv_memory):
         tender_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            for tender in line.tender_ids:
+            for tender in line.tender_line_ids:
                 tender_ids.append(tender.id)
         
         return tender_ids

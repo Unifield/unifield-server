@@ -78,7 +78,6 @@
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (1)"
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
-              print line.sourced_ok
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P1)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P1)"
               assert line.tender_status == 'Waiting', "Tender status is different 'Waiting' (1/P1)"

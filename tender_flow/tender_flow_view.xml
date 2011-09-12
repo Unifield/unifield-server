@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+        <record id="tender_form" model="ir.ui.view">
+            <field name="name">tender.form</field>
+            <field name="model">tender</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Tender">
+                    <group col="6" colspan="4">
+                    	<field name="creator" />
+                    	<field name="creation_date" />
+                    	<field name="requested_date" />
+                        <field name="name"/>
+                        <field name="sale_order_id"/>
+                        <field name="warehouse_id" />
+                        <field name="location_id" />
+                        <field name="company_id" />
+                        <field name="categ" />
+                        <field name="priority" />
+                        <field name="details" />
+                    </group>
+                    <notebook colspan="5">
+                        <page string="Tender Lines">
+                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Tender Lines" editable="top">
+                                	<field name="date_planned" />
+                                    <field name="product_id" on_change="on_product_change(product_id)" />
+                                    <field name="qty" />
+                                    <field name="product_uom" />
+                                    <field name="supplier_id" />
+                                    <field name="price_unit" />
+                                    <field name="total_price" />
+                                    <field name="purchase_order_id" />
+                                    <field name="purchase_order_line_number" />
+                                </tree>
+                            </field>
+                            <newline/>
+                            <group col="13" colspan="10">
+                            </group>
+                        </page>
+                        <page string="Suppliers">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1">
+                                <tree string="Suppliers">
+                                    <field name="name" />
+                                    <field name="partner_type" />
+                                    <field name="city" />
+                                    <field name="country" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="RfQs">
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1">
+                                <tree string="RfQs">
+                                    <field name="name" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                        	<field name="notes" nolabel="1" />
+                        </page>
+                    </notebook>
+                    <group col="13" colspan="4">
+                        <field name="state"/>
+                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
+                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
+                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-execute"/>
+                        <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="tender_tree" model="ir.ui.view">
+            <field name="name">tender.tree</field>
+            <field name="model">tender</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Tender">
+                    <field name="name" />
+                    <field name="sale_order_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+	
+		<record id="tender_search_form_view" model="ir.ui.view">
+			<field name="name">tender.search.form</field>
+			<field name="model">tender</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Tender">
+					<field name="name" />
+					<field name="sale_order_id" />
+					<field name="state" />
+					<newline />
+					<group expand="0" string="Group By..." colspan="11" col="11"
+						groups="base.group_extended">
+						<filter string="Sale Order" icon="terp-accessories-archiver" domain="[]"
+							context="{'group_by':'sale_order_id'}" />
+						<filter string="Tender State" icon="terp-rating-rated"
+							domain="[]" context="{'group_by':'state'}" />
+					</group>
+				</search>
+			</field>
+		</record>
+
+		<record id="tender_action" model="ir.actions.act_window">
+			<field name="name">Tenders</field>
+			<field name="res_model">tender</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[]</field>
+			<field name="search_view_id" ref="tender_search_form_view" />
+		</record>
+
+		<menuitem icon="STOCK_INDENT" action="tender_action"
+			id="menu_tender" parent="base.menu_sales" sequence="100" />
+			
+        <record id="purchase_order_form" model="ir.ui.view">
+            <field name="name">purchase.order.form</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+            	<data>
+            		
+            		<field name="details" position="after">
+            			<field name="tender_id" invisible="True" />
+            			<field name="valid_till" />
+            		</field>
+            		
+            		<button name="purchase_confirm" position="replace">
+            			<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'draft'),],}" />
+            			<button name="rfq_done" states="draft" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', '!=', 'draft'),],}" />
+            		</button>
+            		
+            		<!-- <button name="purchase_cancel" position="replace">
+            			<button name="purchase_cancel" states="draft,confirmed,wait_auth" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('tender_id', '!=', False)],}" />
+            		</button>
+            		 -->
+            	
+            	</data>
+            </field>
+       	</record>
+            
+
+	</data>
+</openerp>

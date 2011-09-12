@@ -257,6 +257,10 @@
                 </button>
             </field>
         </record>
-        
+
+    <!-- Delete "Pay Invoice" button by deleting view that add it previously -->
+        <delete model="ir.ui.view" id="account_voucher.view_invoice_supplier"/>
+        <delete model="ir.ui.view" id="account_voucher.view_invoice_customer"/>
+
     </data>
 </openerp>

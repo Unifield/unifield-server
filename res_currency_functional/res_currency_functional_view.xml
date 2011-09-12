@@ -35,14 +35,12 @@
                         <form string="Rates">
                             <field name="name"/>
                             <field name="rate"/>
-                            <field name="k_currency"/>
                         </form>
                     </form>
                     <tree string="Rates"  position="replace">
                         <tree string="Rates">
                             <field name="name"/>
                             <field name="rate"/>
-                            <field name="k_currency"/>
                         </tree>
                     </tree>
                 </data>

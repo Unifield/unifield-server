@@ -10,6 +10,7 @@
     name:
     period_id: period_6
     user_id: base.user_root
+    balance_start: 1.0
 -
   I click on 'Open Bank' button to open the Bank Register
 -
@@ -24,7 +25,15 @@
     journal_id: account_journal_cash_0
     name: Our cash register
     period_id: period_6
-    user_id: base.user_root
+    starting_details_ids:
+      -  pieces: 100.0
+         number: 2
+         subtotal: 200.0
+      -  pieces: 100.0
+         number: 1
+         subtotal: 100.0
+    balance_start: 300.0
+    balance_end: 300.0
 -
   I click on 'Open Cash' button to open the Cash Register
 -
