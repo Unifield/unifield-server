@@ -36,6 +36,7 @@
         "stock",
         "purchase",
         "msf_order_date",
+        "tender_flow",
     ],
     "update_xml": [
         "sale_followup_view.xml",

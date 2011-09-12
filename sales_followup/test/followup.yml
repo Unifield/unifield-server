@@ -78,9 +78,10 @@
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (1)"
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
+              print line.sourced_ok
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P1)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P1)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (1/P1)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P1)"
+              assert line.tender_status == 'Waiting', "Tender status is different 'Waiting' (1/P1)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (1/P1)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (1/P1)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (1/P1)"
@@ -94,8 +95,8 @@
             
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P2)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P2)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (1/P2)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P2)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (1/P2)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (1/P2)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (1/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (1/P2)"              
@@ -109,8 +110,8 @@
               
             if line.product_id.id == ref('product3'):              
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P3)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P3)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (1/P3)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P3)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (1/P3)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (1/P3)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (1/P3)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (1/P3)"
@@ -124,8 +125,8 @@
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P4)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P4)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (1/P4)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P4)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (1/P4)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (1/P4)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (1/P4)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (1/P4)"
@@ -161,9 +162,9 @@
         
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
-              assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (1/P1)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P1)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (2/P1)"
+              assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (2/P1)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P1)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (2/P1)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (2/P1)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (2/P1)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (2/P1)"
@@ -177,8 +178,8 @@
             
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (2/P2)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P2)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (2/P2)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P2)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (2/P2)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (2/P2)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (2/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (2/P2)"              
@@ -192,8 +193,8 @@
               
             if line.product_id.id == ref('product3'):              
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (2/P3)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P3)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (2/P3)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P3)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (2/P3)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (2/P3)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (2/P3)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (2/P3)"
@@ -207,8 +208,8 @@
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (2/P4)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P4)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (2/P4)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (2/P4)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (2/P4)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (2/P4)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (2/P4)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (2/P4)"
@@ -247,8 +248,8 @@
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (3/P1)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P1)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (3/P1)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P1)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (3/P1)"
               assert len(line.quotation_ids) == 1, "Number of quotation is different than 1 (3/P1)"
               assert line.quotation_status == 'Waiting', "Quotation status is different than 'Waiting' (3/P1)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (3/P1)"
@@ -266,8 +267,8 @@
             
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (3/P2)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P2)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (3/P2)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P2)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (3/P2)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (3/P2)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (3/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (3/P2)"              
@@ -281,8 +282,8 @@
               
             if line.product_id.id == ref('product3'):              
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (3/P3)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P3)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (3/P3)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P3)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (3/P3)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (3/P3)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (3/P3)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (3/P3)"
@@ -292,12 +293,12 @@
               assert line.product_available == 'Done', "The product availability is not 'Done' (3/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (3/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (3/P3)"
-              assert line.outgoing_status == 'Assigned', "Outgoing status is different than 'Assigned' (3/P3)"
+              assert line.outgoing_status == 'In Progress', "Outgoing status is different than 'In Progress' (3/P3)"
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (3/P4)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P4)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (3/P4)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (3/P4)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (3/P4)"
               assert len(line.quotation_ids) == 1, "Number of quotation is different than 1 (3/P4)"
               assert line.quotation_status == 'Waiting', "Quotation status is different than 'Waiting' (3/P4)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (3/P4)"
@@ -335,8 +336,8 @@
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (4/P1)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P1)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (4/P1)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P1)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (4/P1)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (4/P1)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (4/P1)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (4/P1)"
@@ -354,8 +355,8 @@
             
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (4/P2)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P2)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (4/P2)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P2)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (4/P2)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (4/P2)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (4/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (4/P2)"              
@@ -369,8 +370,8 @@
               
             if line.product_id.id == ref('product3'):              
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (4/P3)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P3)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (4/P3)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P3)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (4/P3)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (4/P3)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (4/P3)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (4/P3)"
@@ -380,12 +381,12 @@
               assert line.product_available == 'Done', "The product availability is not 'Done' (4/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (4/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P3)"
-              assert line.outgoing_status == 'Assigned', "Outgoing status is different than 'Assigned' (4/P3)"
+              assert line.outgoing_status == 'In Progress', "Outgoing status is different than 'In Progress' (4/P3)"
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (4/P4)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P4)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (4/P4)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P4)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (4/P4)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (4/P4)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (4/P4)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (4/P4)"
@@ -423,14 +424,14 @@
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (5/P1)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P1)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (5/P1)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P1)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (5/P1)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (5/P1)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (5/P1)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (5/P1)"
               assert line.purchase_status == 'Approved', "The purchase status is different than 'Approved' (5/P1)"
               assert len(line.incoming_ids) == 1, "Number of Incoming shipment is different than 1 (5/P1)"
-              assert line.incoming_status == 'Assigned', "The incoming status is different than 'Assigned' (5/P1)"
+              assert line.incoming_status == 'In Progress', "The incoming status is different than 'In Progress' (5/P1)"
               assert line.product_available == 'In Progress', "The product availability is not 'In Progress' (5/P1)"
               assert line.available_qty == 0.00, "The available qty is not equal to 0.00 (5/P1)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P1)"
@@ -438,8 +439,8 @@
             
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (5/P2)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P2)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (5/P2)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P2)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (5/P2)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (5/P2)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (5/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (5/P2)"              
@@ -453,8 +454,8 @@
               
             if line.product_id.id == ref('product3'):              
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (5/P3)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P3)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (5/P3)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P3)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (5/P3)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (5/P3)"
               assert line.quotation_status == 'N/A', "Quotation status is different than N/A (5/P3)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (5/P3)"
@@ -464,18 +465,18 @@
               assert line.product_available == 'Done', "The product availability is not 'Done' (5/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (5/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P3)"
-              assert line.outgoing_status == 'Assigned', "Outgoing status is different than 'Assigned' (5/P3)"
+              assert line.outgoing_status == 'In Progress', "Outgoing status is different than 'In Progress' (5/P3)"
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'No' (5/P4)"
-              #assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P4)"
-              #assert line.tender_status == ???, "Tender status is different than ??? (5/P4)"
+              assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (5/P4)"
+              assert line.tender_status == 'Waiting', "Tender status is different than 'Waiting' (5/P4)"
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (5/P4)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (5/P4)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (5/P4)"
               assert line.purchase_status == 'Approved', "The purchase status is different than 'Approved' (5/P4)"
               assert len(line.incoming_ids) == 1, "Number of Incoming shipment is different than 1 (5/P4)"
-              assert line.incoming_status == 'Assigned', "The incoming status is different than 'Assigned' (5/P4)"
+              assert line.incoming_status == 'In Progress', "The incoming status is different than 'In Progress' (5/P4)"
               assert line.product_available == 'In Progress', "The product availability is not 'In Progress' (5/P4)"
               assert line.available_qty == 0.00, "The available qty is not equal to 0.00 (5/P4)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P4)"

@@ -103,7 +103,6 @@ class sale_order_followup(osv.osv_memory):
     
     def start_order_followup(self, cr, uid, ids, context={}):
         order_obj = self.pool.get('sale.order')
-        order_line_obj = self.pool.get('sale.order.line')
         line_obj = self.pool.get('sale.order.line.followup')
         
         # openERP BUG ?
@@ -128,7 +127,7 @@ class sale_order_followup(osv.osv_memory):
                 
                 line_obj.create(cr, uid, {'followup_id': followup_id,
                                           'line_id': line.id,
-#                                          'tender_ids': [(6,0,tender_ids)],
+                                          'tender_ids': [(6,0,tender_ids)],
                                           'quotation_ids': [(6,0,quotation_ids)],
                                           'purchase_ids': [(6,0,purchase_ids)],
                                           'incoming_ids': [(6,0,incoming_ids)],
@@ -235,7 +234,8 @@ class sale_order_followup(osv.osv_memory):
         tender_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            pass
+            for tender in line.tender_ids:
+                tender_ids.append(tender.id)
         
         return tender_ids
         
@@ -282,7 +282,7 @@ class sale_order_line_followup(osv.osv_memory):
                     if res[line.id]['product_available'] == 'Waiting':
                         res[line.id]['product_available'] = 'Done'
                 # If at least one stock move is not done, change the state to 'In Progress'
-                if move.state == 'confirmed' and res[line.id]['product_available'] != 'Exception':
+                if move.state in ('draft', 'confirmed') and res[line.id]['product_available'] == 'Done':
                     res[line.id]['product_available'] = 'In Progress'
                 # If at least one stock move was cancelled, the state is Exception
                 # TODO : See with Magali if we need to take care about cancelled associated stock moves
@@ -297,12 +297,13 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['quotation_status'] = 'Waiting'
                     
             # Get information about the state of all call for tender
-#            TODO: Add call for tender when the feature of call for tender will be implemented
-#            for tender in line.tender_ids:
-#                if tender.state == 'draft':
-#                    res[line.id]['tender_status'] = 'Waiting'
-#                else:
-#                    res[line.id]['tender_status'] = 'Done'
+            for tender in line.tender_ids:
+                if tender.state == 'draft':
+                    res[line.id]['tender_status'] = 'Waiting'
+                elif tender.state == 'comparison' and res[line.id]['tender_status'] != 'Waiting':
+                    res[line.id]['tender_status'] = 'In Progress'
+                elif tender.state == 'Done' and res[line.id]['tender_status'] not in ('Waiting', 'In Progress'):
+                    res[line.id]['tender_status'] = 'Done'
             
             # Get information about the state of all purchase order
             if line.line_id.type == 'make_to_stock':
@@ -329,8 +330,8 @@ class sale_order_line_followup(osv.osv_memory):
                 if shipment.state in ('draft', 'confirmed'):
                     res[line.id]['incoming_status'] = 'Waiting'
                 if shipment.state in ('assigned') and res[line.id]['incoming_status'] not in ('Waiting'):
-                    res[line.id]['incoming_status'] = 'Assigned'
-                if shipment.state in ('done') and res[line.id]['incoming_status'] not in ('Waiting', 'Assigned'):
+                    res[line.id]['incoming_status'] = 'In Progress'
+                if shipment.state in ('done') and res[line.id]['incoming_status'] not in ('Waiting', 'In Progress'):
                     res[line.id]['incoming_status'] = 'Done'
                 if shipment.state == 'cancel':
                     res[line.id]['incoming_status'] = 'Exception' 
@@ -358,11 +359,10 @@ class sale_order_line_followup(osv.osv_memory):
         'uom_id': fields.related('line_id', 'product_uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                    readonly=True, multi='status'),
-        #TODO: Add call for tender when the feature of call for tender will be implemented
-#        'tender_ids': fields.many2many('call.tender', 'call_tender_follow_rel',
-#                                       'follow_line_id', 'tender_id', string='Call for tender'),
-#        'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
-#                                         readonly=True, multi='status'),
+        'tender_ids': fields.many2many('tender', 'call_tender_follow_rel',
+                                       'follow_line_id', 'tender_id', string='Call for tender'),
+        'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
+                                         readonly=True, multi='status'),
         'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
                                           'quotation_id', string='Requests for Quotation', readonly=True),
         'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
