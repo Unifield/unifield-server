@@ -83,7 +83,6 @@ class account_move_line(osv.osv):
                 'target': 'new',
                 'res_id': [wiz_id],
                 'context': context,
-               }
         }
     
 account_move_line()
