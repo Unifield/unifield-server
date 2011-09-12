@@ -49,6 +49,7 @@ class account_move_line(osv.osv):
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
+                                     'distribution_id': obj_line.analytic_distribution_id.id,
                                      'user_id': uid
                         }
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
@@ -69,6 +70,11 @@ class account_move_line(osv.osv):
         # update context in order not to lose context modification (for an example in accounting correction wizard)
         context.update({'active_id': ids[0], 'active_ids': ids})
         # we open a wizard
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+            'cost_center': wiz_id,
+        })
         return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'wizard.costcenter.distribution',
@@ -77,6 +83,7 @@ class account_move_line(osv.osv):
                 'target': 'new',
                 'res_id': [wiz_id],
                 'context': context,
+               }
         }
     
 account_move_line()

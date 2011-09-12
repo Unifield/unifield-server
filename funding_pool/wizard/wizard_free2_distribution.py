@@ -65,6 +65,7 @@ wizard_free2_distribution_line()
 
 class wizard_free2_distribution(osv.osv_memory):
     _name="wizard.free2.distribution"
+    _inherit="wizard.distribution"
     
     def _get_initial_lines(self, cr, uid, wizard_id, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
@@ -80,43 +81,9 @@ class wizard_free2_distribution(osv.osv_memory):
             self.pool.get('wizard.free2.distribution.line').create(cr, uid, wizard_line_vals, context=context)
         return
     
-    def _cleanup_and_store(self, cr, uid, wizard_id, context=None):
-        wizard_obj = self.browse(cr, uid, wizard_id, context=context)
-        f2_distrib_line_obj = self.pool.get('free_2_distribution_line')
-        distrib_obj = self.pool.get('analytic.distribution')
-        # first, distribution is not derived from a global one; the flag is set
-        distrib_id = wizard_obj.distribution_id.id
-        distrib_obj.write(cr, uid, [distrib_id], vals={'global_distribution': False}, context=context)
-        distrib = distrib_obj.browse(cr, uid, distrib_id, context=context)
-        # remove old lines
-        for free_2_line in distrib.free_2_lines:
-            f2_distrib_line_obj.unlink(cr, uid, free_2_line.id)
-        # and save the new lines in the distribution
-        for wizard_line in wizard_obj.wizard_distribution_lines:
-            distrib_line_vals = {
-                'name': wizard_line.name,
-                'analytic_id': wizard_line.analytic_id.id,
-                'amount': wizard_line.amount,
-                'percentage': wizard_line.percentage,
-                'distribution_id': wizard_obj.distribution_id.id
-            }
-            f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
-        # if there are child distributions, we refresh them
-        if 'child_distributions' in context and context['child_distributions']:
-            for child in context['child_distributions']:
-                distrib_obj.copy_from_global_distribution(cr,
-                                                          uid,
-                                                          distrib_id,
-                                                          child[0],
-                                                          child[1],
-                                                          context=context)
-        return
-    
     _columns = {
         "entry_mode": fields.selection([('percent','Percentage'),
                                         ('amount','Amount')], 'Entry Mode', select=1),
-        "total_amount": fields.float("Total amount to be allocated"),
-        "distribution_id": fields.many2one("analytic.distribution", string='Analytic Distribution'),
         "wizard_distribution_lines": fields.one2many("wizard.free2.distribution.line", "wizard_id", string='Wizard Lines'),
         "modified_line": fields.boolean('Was a line modified')
     }
@@ -193,9 +160,9 @@ class wizard_free2_distribution(osv.osv_memory):
             
     def button_previous_step(self, cr, uid, ids, context={}):
         # and we open the previous state
-        wizard_obj = self.browse(cr, uid, ids[0], context=context)
-        newwiz_obj = self.pool.get('wizard.free1.distribution')
-        newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+        if 'funding_pool' not in context['wizard_ids']:
+            # we should never be there
+            raise osv.except_osv(_('Previous wizard missing!'),_("Previous wizard missing!"))
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -204,7 +171,7 @@ class wizard_free2_distribution(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [newwiz_id],
-                'context': context,
+                'context': context
         }
             
     def button_save(self, cr, uid, ids, context={}):
@@ -215,8 +182,7 @@ class wizard_free2_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
-        if wizard_obj.modified_line:
-            self._cleanup_and_store(cr, uid, ids[0], context=context)
+        self.store_distribution(cr, uid, ids[0], context=context)
         # we open a wizard
         return {'type': 'ir.actions.act_window_close'}
 
