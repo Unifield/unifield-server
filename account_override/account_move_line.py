@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,32 +20,16 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Analytic Account for MSF",
-    "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
-    "description": """Module for defining analytic accounting object.
-    """,
-    "init_xml" : [
-        'data/analytic_account_data.xml',
-    ],
-    "update_xml": [
-        'analytic_account_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-        'wizard/wizard_costcenter_distribution_view.xml',
-        'wizard/wizard_fundingpool_distribution_view.xml',
-        'wizard/wizard_free1_distribution_view.xml',
-        'wizard/wizard_free2_distribution_view.xml',
-    ],
-    'test': [
-        'test/analytic_account_activable.yml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+from osv import fields
+
+class account_move_line(osv.osv):
+    _inherit = 'account.move.line'
+
+    _columns = {
+        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
+    }
+
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

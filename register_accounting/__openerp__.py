@@ -31,7 +31,8 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "funding_pool"],
+    # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
+    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "account_analytic_plans", "funding_pool"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
