@@ -76,7 +76,9 @@ class wizard_split_invoice(osv.osv_memory):
             # Price unit
             if wiz_line.price_unit <= 0:
                 raise osv.except_osv(_('Warning'), _('%s: Unit price should be positive!') % wiz_line.description)
-            if wiz_line.quantity != wiz_line.invoice_line_id.quantity:
+            # We add line if its quantity have changed or that another line have been deleted from original invoice 
+            #+ (so that the number of original invoice are more than invoice line in the current wizard)
+            if wiz_line.quantity != wiz_line.invoice_line_id.quantity or len(wizard.invoice_id.invoice_line) > len(wizard.invoice_line_ids):
                 line_to_modify.append(wiz_line.id)
         if not len(line_to_modify):
             raise osv.except_osv(_('Error'), _('No line were modified. No split done.'))
