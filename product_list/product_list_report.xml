@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report 
+            auto="False" 
+            id="product_list.product_list"
+            model="product.list" 
+            name="product.list" 
+            rml="product_list/report/product_list.rml" 
+            string="List / Sublist" />
+    
+    </data>
+</openerp>

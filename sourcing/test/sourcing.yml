@@ -7,6 +7,14 @@
     debit_limit: 0.0
     name: A
     supplier: true
+    customer_lt: 1
+    procurement_lt: 2
+    transport_by_air_lt: 3
+    air_sequence: 1
+    transport_by_sea_lt: 4
+    sea_sequence: 2
+    transport_by_road_lt: 5
+    road_sequence: 3
     
 - 
   Creating a res.partner.address record
@@ -139,11 +147,11 @@
       assert sourcing.type == 'make_to_stock', 'sourcing type wrong'
       assert sourcing.state == 'draft', 'sourcing state wrong'
       assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
-      assert int(sourcing.supplier) == ref("product_supplierinfo_0"), 'sourcing supplier wrong'
+      assert not sourcing.supplier.id, 'make_to_stock: sourcing has a supplier !'
       
-      sourcing.write({'type':'make_to_order', 'supplier':ref("product_supplierinfo_1")})
+      sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_b0")})
       
-      assert int(sol.supplier) == ref("product_supplierinfo_1"), 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, ref("product_supplierinfo_1"))
+      assert int(sol.supplier) == ref("res_partner_b0"), 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, ref("product_supplierinfo_1"))
       assert sol.type == 'make_to_order', 'sol type is wrong after update of sourcing line (%s, %s)'%(sol.type, 'make_to_order')
       
     assert count == 1, 'number of sourcing line wrong (%i)'%(count)

@@ -55,6 +55,19 @@
     name: S3
     partner_id: supplier3
 -
+    I create the inter-section supplier S4
+-
+  !record {model: res.partner, id: section4}:
+    name: S4
+    supplier: True
+    partner_type: section
+-
+    I create the address for S4
+-
+  !record {model: res.partner.address, id: address4}:
+    name: S4
+    partner_id: section4
+-
     In order to test the procurement list module, I start by creating a new product category
 -
   !record {model: product.category, id: product_cat1}:

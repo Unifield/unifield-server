@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report auto="False" 
+                id="stock_forecast_report" 
+                model="stock.forecast.line" 
+                name="stock.forecast.report"
+                header="False"
+                rml="addons/stock_forecast/report/stock_forecast.rml"
+                string="Stock Forecast Report" />
+    
+    </data>
+</openerp>

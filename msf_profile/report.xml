@@ -4,7 +4,7 @@
         <report id="report_ir_model_overview_ods"
             string="Model Overview (ODS)"
             model="ir.model"
-            name="ir.model.overview_ods"
+            name="msf_profile.overview_ods2"
             report_type="sxw"
             file="addons/msf_profile/report/modeloverview.ods"
             header="False"

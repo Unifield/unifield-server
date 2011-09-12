@@ -162,7 +162,20 @@ class account_move_line_compute_currency(osv.osv):
             newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, vals.get('date'), line.debit_currency, line.credit_currency))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
         return res
-    
+   
+    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        ret = {}
+        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
+            if line['reconcile_id']:
+                ret[line['id']] = line['reconcile_id']
+            elif line['reconcile_partial_id']:
+                ret[line['id']] = line['reconcile_partial_id']
+            else:
+                ret[line['id']] = False
+        return ret
+
     _columns = {
         'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
@@ -170,6 +183,7 @@ class account_move_line_compute_currency(osv.osv):
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
+        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
     
     _defaults = {
