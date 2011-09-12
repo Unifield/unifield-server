@@ -100,7 +100,7 @@ class stock_forecast_export(osv.osv_memory):
         
         export_id = self.create(cr, uid, {'list_id': active_id,
                                           'file': file, 
-                                          'filename': 'list_%s.csv' % (time.strftime('%Y-%m-%d-%H:%M:%S')),
+                                          'filename': 'list_%s_%s.csv' % (list.product_id.code, time.strftime('%Y-%m-%d-%H:%M:%S')),
                                           'message': 'The list has been exported. Please click on Save As button to download the file'}, context=context)
         
         return {'type': 'ir.actions.act_window',

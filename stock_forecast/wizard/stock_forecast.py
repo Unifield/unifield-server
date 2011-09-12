@@ -456,7 +456,7 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append(values)
                 
                 # PURCHASE ORDERS - positive
-                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft',)),
+                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft', 'wait', 'confirmed',)),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for pol in pol_obj.browse(cr, uid, pol_list, context=context):
