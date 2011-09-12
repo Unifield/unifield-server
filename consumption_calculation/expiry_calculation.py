@@ -228,62 +228,92 @@ class product_likely_expire_report(osv.osv_memory):
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             # Get all products
             if lot.product_id.id not in products:
-                products[lot.product_id.id] = {'start': product_obj.browse(cr, uid, lot.product_id.id, context=context).qty_available,
-                                               'average_consumption':self._get_average_consumption(cr, uid, lot.product_id.id, report.consumption_type, location_ids, report.date_from, report.date_to, context=context),
-                                               'total_expired': 0.00,  
+                products[lot.product_id.id] = {'uom_id': lot.product_id.uom_id.id,
+                                               'average_consumption': self._get_average_consumption(cr, uid, lot.product_id.id, report.consumption_type, location_ids, report.date_from, report.date_to, context=context),
+                                               'start': product_obj.browse(cr, uid, lot.product_id.id, context=context).qty_available,
+                                               'total_expired': 0.00,
+                                               'total_consumed': 0.00,
                                                'line_id': False,
-                                               'lots_ok': [],
-                                               'dates': {}}
+                                               'already_exp': 0.00,
+                                               'lots': {},
+                                               'dates': {},}
+            
+            if lot.id not in products[lot.product_id.id]['lots']:
+                products[lot.product_id.id]['lots'][lot.id] = {'remaind': lot.life_date >= report.date_from and lot.stock_available or 0.00,
+                                                               'expired': lot.life_date < report.date_from and lot.stock_available or 0.00,
+                                                               'consumed': 0.00,
+                                                               'life_date': lot.life_date,}
+                if lot.life_date < report.date_from:
+                    products[lot.product_id.id]['total_expired'] += lot.stock_available
             
             # Get all dates
             if lot.life_date not in dates and lot.life_date >= report.date_from:
                 dates.append(lot.life_date)
-
-        for date in dates:
-            for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
-                prod_id = lot.product_id.id
+                
+        dates.sort()
+        
+        # Search a relation between life_date and lot_id to have a sorted list of lots
+        life_dates = {}
+        for prod_id in products:
+            for lot_id in products[prod_id]['lots']:
+                if not products[prod_id]['lots'][lot_id]['life_date'] in life_dates:
+                    life_dates.update({products[prod_id]['lots'][lot_id]['life_date']: []})
+                life_dates[products[prod_id]['lots'][lot_id]['life_date']].append(lot_id)
+                
+        for prod_id in products:
+            uom_id = products[prod_id]['uom_id']
             
+            for date in dates:
                 if not products[prod_id]['dates'].get(date, False):
-                    products[prod_id]['dates'].update({date: {'lots': {},
-                                                     'stock': products[prod_id]['start'],
-                                                     'rest': 0.00,
-                                                     'expired': products[prod_id]['total_expired']}})
+                    context.update({'to_date': date})
+                    qty_available = product_obj.browse(cr, uid, prod_id, context=context).qty_available
                     
-                if not products[prod_id]['dates'][date]['lots'].get(lot.id, False):
-                    products[prod_id]['dates'][date]['lots'].update({lot.id: 0.00})
-
-                if lot.life_date < report.date_from and lot.stock_available:                    
-                    if lot.id not in products[prod_id]['lots_ok']:
-                        products[prod_id]['dates'][date]['expired'] += lot.stock_available
-                        products[prod_id]['total_expired'] += lot.stock_available
-                        products[prod_id]['lots_ok'].append(lot.id)
-                else:
+                    products[prod_id]['dates'].update({date: {'expired': 0.00,
+                                                              'consumed': 0.00,
+                                                              'in_stock': qty_available - products[prod_id]['total_consumed'] - products[prod_id]['total_expired']}})
+                    
                     # Compute the expired and consumed quantities
                     coeff = datetime.strptime(date, '%Y-%m-%d') - datetime.strptime(report.date_from, '%Y-%m-%d')
                     # Theorical consumption
-                    theo = round((coeff.days/30.0), 1) * products[lot.product_id.id]['average_consumption']
-                    theo = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, theo, lot.product_id.uom_id.id)
+                    theo = round((coeff.days/30.0), 1) * products[prod_id]['average_consumption']
+                    theo = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, theo, uom_id) - products[prod_id]['total_consumed']
+                
+                    for life_date in life_dates:
+                        for lot in life_dates[life_date]:
+                            if lot not in products[prod_id]['lots']:
+                                continue
+                            lot_info = products[prod_id]['lots'][lot]
+                              
+                            if lot_info['remaind'] and theo < lot_info['remaind']:
+                                lot_info['consumed'] += theo
+                                lot_info['remaind'] -= theo
+                                products[prod_id]['dates'][date]['in_stock'] -= theo
+                                products[prod_id]['dates'][date]['consumed'] += theo
+                                products[prod_id]['total_consumed'] += lot_info['consumed']
+    
+                                # If the lot expires on this date
+                                if lot_info['life_date'] == date:
+                                    lot_info['expired'] = lot_info['remaind']
+                                    products[prod_id]['dates'][date]['expired'] += lot_info['remaind']
+                                    products[prod_id]['total_expired'] += lot_info['remaind']
+                                    products[prod_id]['dates'][date]['in_stock'] -= lot_info['remaind']
+                                    lot_info['remaind'] = 0.00
+                                    
+                                # Set the theo to 0.00 because all requested products are given
+                                theo = 0.00
+                                
+                            elif lot_info['remaind'] and theo >= lot_info['remaind']:
+                                lot_info['consumed'] += lot_info['remaind']
+                                products[prod_id]['dates'][date]['in_stock'] -= lot_info['remaind']
+                                products[prod_id]['dates'][date]['consumed'] += lot_info['remaind']
+                                products[prod_id]['total_consumed'] += lot_info['consumed']
+                                theo = theo - lot_info['remaind']
+                                lot_info['remaind'] = 0.00
                     
-                    if lot.life_date < date:
-                        theo = 0.00
-                    
-                    if theo < lot.stock_available and date == lot.life_date:
-                        products[prod_id]['dates'][date]['expired'] += lot.stock_available - theo
-                        products[prod_id]['total_expired'] += lot.stock_available - theo
-                        products[prod_id]['dates'][date]['stock'] -= lot.stock_available - theo
-                    elif theo > lot.stock_available and date == lot.life_date:
-                        products[prod_id]['dates'][date]['lots'][lot.id] = lot.stock_available
-                        theo = lot.stock_available
-                    else:
-                        for dts in products[prod_id]['dates']:
-                            for prd_lot in products[prod_id]['dates'][dts]['lots']:
-                                theo -= products[prod_id]['dates'][dts]['lots'][prd_lot]
-                        products[prod_id]['dates'][date]['lots'][lot.id] = theo
-                            
-                    products[prod_id]['dates'][date]['stock'] -= theo
-                
-                
-                
+                    # If no lot to give products, also remove the theorical consumption            
+                    if theo:
+                        products[prod_id]['dates'][date]['in_stock'] -= theo
+                                            
         for product in products:
             line_id = line_obj.create(cr, uid, {'report_id': ids[0],
                                                 'product_id': product,
@@ -295,7 +325,7 @@ class product_likely_expire_report(osv.osv_memory):
                 expired_line_obj.create(cr, uid, {'name': expired,
                                                   'expired_qty': expired2.get('expired', 0.00),
                                                   #'qty': products[product].get('start', 0.00) - expired2.get('stock', 0.00),
-                                                  'qty': expired2.get('stock', 0.00),
+                                                  'qty': expired2.get('in_stock', 0.00),
                                                   'line_id': line_id}, context=context) 
                                         
                 products[product]['line_id'] = line_id
