@@ -51,14 +51,17 @@ class account_bank_statement_line(osv.osv):
         move = st_line.move_ids and st_line.move_ids[0] or False
         if move:
             for line in move.line_id:
-                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id':st_line.analytic_distribution_id.id}, context=context)
+                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id': st_line.analytic_distribution_id.id}, context=context)
         return result
     
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         statement_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(statement_line_obj.amount)
+        amount = statement_line_obj.amount or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = statement_line_obj.statement_id.journal_id.currency and statement_line_obj.statement_id.journal_id.currency.id or company_currency
         if statement_line_obj.analytic_distribution_id:
             distrib_id = statement_line_obj.analytic_distribution_id.id
         else:
@@ -66,7 +69,7 @@ class account_bank_statement_line(osv.osv):
             newvals={'analytic_distribution_id': distrib_id}
             super(account_bank_statement_line, self).write(cr, uid, ids, newvals, context=context)
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',

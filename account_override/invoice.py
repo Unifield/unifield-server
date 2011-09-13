@@ -57,6 +57,8 @@ class account_invoice(osv.osv):
                     'amount': eng.amount * -1,
                     'date': inv.date_invoice,
                     'reversal_origin': eng.id,
+                    'amount_currency': eng.amount_currency * -1,
+                    'currency_id': eng.currency_id.id,
                 }
                 # Write changes
                 eng_obj.write(cr, uid, [new_line_id], vals, context=context)

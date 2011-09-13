@@ -24,19 +24,19 @@ import decimal_precision as dp
 from tools.misc import flatten
 
 class analytic_distribution(osv.osv):
-    
     _name = "analytic.distribution"
+
     _columns = {
         'name': fields.char('Name', size=12, required=True),
         'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
     }
-    
+
     _defaults ={
         'name': 'Distribution',
         'global_distribution': False,
     }
-    
+
     def search_analytic_lines(self, cr, uid, ids, context={}):
         """
         Give analytic lines attached to this distribution
@@ -62,16 +62,17 @@ class analytic_distribution(osv.osv):
 analytic_distribution()
 
 class distribution_line(osv.osv):
-    
     _name = "distribution.line"
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution'),
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
-        "amount": fields.float('Amount'),
+        "amount": fields.float('Amount', required=True),
         "percentage": fields.float('Percentage'),
+        "currency_id": fields.many2one('res.currency', 'Currency', required=True),
     }
-    
+
     _defaults ={
         'name': 'Distribution Line',
     }
@@ -96,18 +97,18 @@ funding_pool_distribution_line()
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
-    
+
 free_1_distribution_line()
 
 class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
-    
+
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):
-    
     _inherit = "analytic.distribution"
+
     _columns = {
         'cost_center_lines': fields.one2many('cost.center.distribution.line', 'distribution_id', 'Cost Center Distribution'),
         'funding_pool_lines': fields.one2many('funding.pool.distribution.line', 'distribution_id', 'Funding Pool Distribution'),
@@ -115,7 +116,7 @@ class analytic_distribution(osv.osv):
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
     }
     
-    def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, context={}):
+    def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, destination_currency, context={}):
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         f1_distrib_line_obj = self.pool.get('free.1.distribution.line')
@@ -141,7 +142,8 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_cost_center_line.analytic_id.id,
                 'percentage': source_cost_center_line.percentage,
                 'amount': round(source_cost_center_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
             }
             cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_funding_pool_line in source_obj.funding_pool_lines:
@@ -151,7 +153,8 @@ class analytic_distribution(osv.osv):
                 'cost_center_id': source_funding_pool_line.cost_center_id.id,
                 'percentage': source_funding_pool_line.percentage,
                 'amount': round(source_funding_pool_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
             }
             fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_1_line in source_obj.free_1_lines:
@@ -160,7 +163,8 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_free_1_line.analytic_id.id,
                 'percentage': source_free_1_line.percentage,
                 'amount': round(source_free_1_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
             }
             f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_2_line in source_obj.free_2_lines:
@@ -169,7 +173,8 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_free_2_line.analytic_id.id,
                 'percentage': source_free_2_line.percentage,
                 'amount': round(source_free_2_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)

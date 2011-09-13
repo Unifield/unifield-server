@@ -27,6 +27,7 @@ class wizard_distribution(osv.osv_memory):
     _columns = {
         "total_amount": fields.float("Total amount to be allocated"),
         "distribution_id": fields.many2one("analytic.distribution", string='Analytic Distribution'),
+        'currency_id': fields.many2one('res.currency', string="Currency"),
     }
     
     def store_distribution(self, cr, uid, wizard_id, context=None):
@@ -35,6 +36,7 @@ class wizard_distribution(osv.osv_memory):
         distrib_id = wizard_obj.distribution_id.id
         distrib_obj.write(cr, uid, [distrib_id], vals={'global_distribution': False}, context=context)
         distrib = distrib_obj.browse(cr, uid, distrib_id, context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         if 'wizard_ids' in context:
             if 'cost_center' in context['wizard_ids']:
                 cc_wizard_obj = self.pool.get('wizard.costcenter.distribution').browse(cr, uid, context['wizard_ids']['cost_center'], context=context)
@@ -49,7 +51,8 @@ class wizard_distribution(osv.osv_memory):
                         'analytic_id': cc_wizard_line.analytic_id.id,
                         'amount': cc_wizard_line.amount,
                         'percentage': cc_wizard_line.percentage,
-                        'distribution_id': distrib_id
+                        'distribution_id': distrib_id,
+                        'currency_id': wizard_obj.currency_id.id,
                     }
                     cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'funding_pool' in context['wizard_ids']:
@@ -66,7 +69,8 @@ class wizard_distribution(osv.osv_memory):
                         'cost_center_id': fp_wizard_line.cost_center_id.id,
                         'amount': fp_wizard_line.amount,
                         'percentage': fp_wizard_line.percentage,
-                        'distribution_id': distrib_id
+                        'distribution_id': distrib_id,
+                        'currency_id': wizard_obj.currency_id.id,
                     }
                     fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'free_1' in context['wizard_ids']:
@@ -82,7 +86,8 @@ class wizard_distribution(osv.osv_memory):
                         'analytic_id': f1_wizard_line.analytic_id.id,
                         'amount': f1_wizard_line.amount,
                         'percentage': f1_wizard_line.percentage,
-                        'distribution_id': distrib_id
+                        'distribution_id': distrib_id,
+                        'currency_id': wizard_obj.currency_id.id,
                     }
                     f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'free_2' in context['wizard_ids']:
@@ -98,18 +103,14 @@ class wizard_distribution(osv.osv_memory):
                         'analytic_id': f2_wizard_line.analytic_id.id,
                         'amount': f2_wizard_line.amount,
                         'percentage': f2_wizard_line.percentage,
-                        'distribution_id': distrib_id
+                        'distribution_id': distrib_id,
+                        'currency_id': wizard_obj.currency_id.id,
                     }
                     f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             # if there are child distributions, we refresh them
             if 'child_distributions' in context and context['child_distributions']:
                 for child in context['child_distributions']:
-                    distrib_obj.copy_from_global_distribution(cr,
-                                                              uid,
-                                                              distrib_id,
-                                                              child[0],
-                                                              child[1],
-                                                              context=context)
+                    distrib_obj.copy_from_global_distribution(cr, uid, distrib_id, child[0], child[1], wizard_obj.currency_id.id, context=context)
         return
     
 wizard_distribution()
