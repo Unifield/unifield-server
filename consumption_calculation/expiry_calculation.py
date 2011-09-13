@@ -193,6 +193,9 @@ class product_likely_expire_report(osv.osv_memory):
         if not context:
             context = {}
             
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
@@ -254,12 +257,16 @@ class product_likely_expire_report(osv.osv_memory):
         
         # Search a relation between life_date and lot_id to have a sorted list of lots
         life_dates = {}
+        for date in dates:
+            if not life_dates.get(date, False):
+                life_dates.update({date: []})
         for prod_id in products:
             for lot_id in products[prod_id]['lots']:
-                if not products[prod_id]['lots'][lot_id]['life_date'] in life_dates:
-                    life_dates.update({products[prod_id]['lots'][lot_id]['life_date']: []})
-                life_dates[products[prod_id]['lots'][lot_id]['life_date']].append(lot_id)
+                test_date = products[prod_id]['lots'][lot_id]['life_date'] 
+                if test_date in life_dates:
+                    life_dates[test_date].append(lot_id)
                 
+
         for prod_id in products:
             uom_id = products[prod_id]['uom_id']
             
@@ -278,18 +285,18 @@ class product_likely_expire_report(osv.osv_memory):
                     theo = round((coeff.days/30.0), 1) * products[prod_id]['average_consumption']
                     theo = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, theo, uom_id) - products[prod_id]['total_consumed']
                 
-                    for life_date in life_dates:
+                    for life_date in sorted(life_dates.keys()):
                         for lot in life_dates[life_date]:
                             if lot not in products[prod_id]['lots']:
                                 continue
                             lot_info = products[prod_id]['lots'][lot]
                               
-                            if lot_info['remaind'] and theo < lot_info['remaind']:
+                            if theo and lot_info['life_date'] >= date and lot_info['remaind'] and theo < lot_info['remaind']:
                                 lot_info['consumed'] += theo
                                 lot_info['remaind'] -= theo
                                 products[prod_id]['dates'][date]['in_stock'] -= theo
                                 products[prod_id]['dates'][date]['consumed'] += theo
-                                products[prod_id]['total_consumed'] += lot_info['consumed']
+                                products[prod_id]['total_consumed'] += theo
     
                                 # If the lot expires on this date
                                 if lot_info['life_date'] == date:
@@ -302,11 +309,11 @@ class product_likely_expire_report(osv.osv_memory):
                                 # Set the theo to 0.00 because all requested products are given
                                 theo = 0.00
                                 
-                            elif lot_info['remaind'] and theo >= lot_info['remaind']:
+                            elif theo and lot_info['life_date'] >= date and lot_info['remaind'] and theo >= lot_info['remaind']:
                                 lot_info['consumed'] += lot_info['remaind']
                                 products[prod_id]['dates'][date]['in_stock'] -= lot_info['remaind']
                                 products[prod_id]['dates'][date]['consumed'] += lot_info['remaind']
-                                products[prod_id]['total_consumed'] += lot_info['consumed']
+                                products[prod_id]['total_consumed'] += lot_info['remaind']
                                 theo = theo - lot_info['remaind']
                                 lot_info['remaind'] = 0.00
                     

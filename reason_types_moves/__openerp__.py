@@ -33,6 +33,7 @@ stock moves.
     ],
     "depends" : [
         "stock",
+        "procurement",
     ],
     "update_xml": [
         "reason_type_view.xml",

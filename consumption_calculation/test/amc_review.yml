@@ -203,6 +203,45 @@
     - model: monthly.review.consumption.line
       search: "[('id', '=', ref('mrc2_l1'))]"
 -
+  I create a line for mrc2
+- 
+  !record {model: monthly.review.consumption.line, id: mrc2_l2}:
+    name: product5
+    fmc: 15.0
+    mrc_id: mrc2
+-
+  I confirm the line
+-
+  !function {model: monthly.review.consumption.line, name: valid_line}:
+    - model: monthly.review.consumption.line
+      search: "[('id', '=', ref('mrc2_l2'))]"
+-
+  I create a line for mrc2
+- 
+  !record {model: monthly.review.consumption.line, id: mrc2_l3}:
+    name: product6
+    fmc: 10.0
+    mrc_id: mrc2
+-
+  I confirm the line
+-
+  !function {model: monthly.review.consumption.line, name: valid_line}:
+    - model: monthly.review.consumption.line
+      search: "[('id', '=', ref('mrc2_l3'))]"
+-
+  I create a line for mrc2
+- 
+  !record {model: monthly.review.consumption.line, id: mrc2_l4}:
+    name: product7
+    fmc: 25.0
+    mrc_id: mrc2
+-
+  I confirm the line
+-
+  !function {model: monthly.review.consumption.line, name: valid_line}:
+    - model: monthly.review.consumption.line
+      search: "[('id', '=', ref('mrc2_l4'))]"
+-
   Check the value of the FMC according to the context
 -
   !python {model: product.product}: |

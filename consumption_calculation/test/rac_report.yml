@@ -22,7 +22,7 @@
   I check the default value of fields
 -
   !assert {model: real.average.consumption, id: rac1}:
-    - period_to == time.strftime('%Y-%m-%d'), "The default value of the field period_ok not corresponding on today"
+    - period_to == time.strftime('%Y-%m-%d'), "The default value of the field period_to not corresponding on today"
     - valid_ok, "The checkbox valid_ok is not checked by default"
     - not created_ok, "The checkbox created_ok is checked by default"
 -
