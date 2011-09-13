@@ -24,6 +24,7 @@
 
 from osv import osv
 from osv import fields
+from register_tools import previous_register_is_closed
 
 class one2many_register(fields.one2many):
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None, values=None):

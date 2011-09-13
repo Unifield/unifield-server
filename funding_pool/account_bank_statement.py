@@ -51,14 +51,14 @@ class account_bank_statement_line(osv.osv):
         move = st_line.move_ids and st_line.move_ids[0] or False
         if move:
             for line in move.line_id:
-                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id':st_line.analytic_distribution_id.id}, context=context)
+                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id': st_line.analytic_distribution_id.id}, context=context)
         return result
     
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         statement_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(statement_line_obj.amount)
+        amount = statement_line_obj.amount or 0.0
         if statement_line_obj.analytic_distribution_id:
             distrib_id = statement_line_obj.analytic_distribution_id.id
         else:
@@ -78,6 +78,7 @@ class account_bank_statement_line(osv.osv):
                 'context': {
                     'active_id': ids[0],
                     'active_ids': ids,
+                    'wizard_ids': {'cost_center': wiz_id}
                }
         }
         

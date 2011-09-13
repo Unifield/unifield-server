@@ -27,6 +27,9 @@ from osv import fields
 from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+from register_tools import previous_register_is_closed
+from register_tools import create_starting_cashbox_lines
+from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -80,6 +83,9 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
+        'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
 
     }
 
@@ -93,6 +99,10 @@ class account_bank_statement(osv.osv):
         """
         if not context:
             context={}
+        # Disrupt cheque verification
+        if journal_type == 'cheque':
+            return True
+        # Add other verification for cash register
         if journal_type == 'cash':
             if not self._equal_balance(cr, uid, register_id, context):
                 raise osv.except_osv(_('Error !'), _('CashBox Balance is not matching with Calculated Balance !'))
@@ -109,10 +119,28 @@ class account_bank_statement(osv.osv):
         """
         return super(osv.osv, self).write(cr, uid, ids, values, context=context)
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete a bank statement is forbidden!
+        """
+        raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
+        return True
+
     def button_open_bank(self, cr, uid, ids, context={}):
         """
         when pressing 'Open Bank' button
         """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Verify that a first register (register that doesn't have a prev_reg_id) has a starting balance not null
+        registers = self.browse(cr, uid, ids, context=context)
+        for register in registers:
+            if not register.prev_reg_id:
+                if not register.balance_start > 0:
+                    raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+        # Verify that previous register is open, unless this register is the first register
         return self.write(cr, uid, ids, {'state': 'open'})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
@@ -175,10 +203,29 @@ class account_bank_statement(osv.osv):
                 # Lines are hard posted. That's why create move lines is useless
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
+            # Verify lines reconciliation status
+            if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
+                raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
-            self.log(cr, uid, st.id, _('Statement %s is confirmed, journal items are created.') % (st_number,))
+            # Verify that the closing balance is freezed
+            if not st.closing_balance_frozen:
+                raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
-        return self.write(cr, uid, ids, {'state':'confirm', 'closing_date': datetime.today()}, context=context)
+        # Display the bank confirmation wizard
+        return {
+            'name': "Bank confirmation wizard",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.confirm.bank',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+                'statement_id': st.id,
+            }
+        }
         # @@@end
 
     def button_create_invoice(self, cr, uid, ids, context={}):
@@ -247,7 +294,8 @@ class account_bank_statement(osv.osv):
         # currency_id is useful to filter cheques in the same currency
         # period_id is useful to filter cheques drawn in the same period
         st = self.browse(cr, uid, ids[0], context=context)
-        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 'period_id': st.period_id.id}, context=context)
+        id = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None, 
+            'period_id': st.period_id.id}, context=context)
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -262,6 +310,33 @@ class account_bank_statement(osv.osv):
                 'active_ids': ids,
             }
         }
+
+    def button_confirm_closing_balance(self, cr, uid, ids, context={}):
+        """
+        Confirm that the closing balance could not be editable.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        for reg in self.browse(cr, uid, ids, context=context):
+            # Validate register only if this one is open
+            if reg.state == 'open':
+                res_id = self.write(cr, uid, [reg.id], {'closing_balance_frozen': True}, context=context)
+                res.append(res_id)
+            # Create next starting balance for cash registers
+            if reg.journal_id.type == 'cash':
+                create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
+            # For bank register, give balance_end
+            elif reg.journal_id.type == 'bank':
+                # Verify that another bank statement exists
+                st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
+                if len(st_prev_ids) > 1:
+                    raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                if st_prev_ids:
+                    self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
+        return res
 
 account_bank_statement()
 
@@ -340,6 +415,11 @@ class account_bank_statement_line(osv.osv):
             LEFT JOIN account_move m ON m.id = rel.statement_id 
             WHERE m.state = 'draft'
             """
+        sql_hard = """SELECT st.id FROM account_bank_statement_line st 
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
+            LEFT JOIN account_move m ON m.id = rel.statement_id 
+            WHERE m.state = 'posted'
+            """
         ids = []
         filterok = False
         if args[0][1] == '=' and args[0][2] == 'draft' or 'draft' in args[0][2]:
@@ -350,6 +430,11 @@ class account_bank_statement_line(osv.osv):
         # Case where we search temp lines
         if args[0][1] == '=' and args[0][2] == 'temp' or 'temp' in args[0][2]:
             sql = sql_temp
+            cr.execute(sql)
+            ids += [x[0] for x in cr.fetchall()]
+            filterok = True
+        if args[0][1] == '=' and args[0][2] == 'hard' or 'hard' in args[0][2]:
+            sql = sql_hard
             cr.execute(sql)
             ids += [x[0] for x in cr.fetchall()]
             filterok = True
@@ -413,6 +498,12 @@ class account_bank_statement_line(osv.osv):
             """
         cr.execute(sql_posted_moves)
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
+    
+    def _get_number_imported_invoice(self, cr, uid, ids, field_name=None, args=None, context={}):
+        ret = {}
+        for i in self.read(cr, uid, ids, ['imported_invoice_line_ids']):
+            ret[i['id']] = len(i['imported_invoice_line_ids'])
+        return ret
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -425,7 +516,7 @@ class account_bank_statement_line(osv.osv):
             string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean'),
+        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -438,6 +529,7 @@ class account_bank_statement_line(osv.osv):
             help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
             required=False, readonly=True),
+        'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
     }
 
@@ -846,7 +938,9 @@ class account_bank_statement_line(osv.osv):
                 amount -= abs(amount_to_write)
                 if not amount:
                     todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
-                    absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
+                    # remove remaining invoice lines
+                    if todo:
+                        absl_obj.write(cr, uid, [st_line.id], {'imported_invoice_line_ids': [(3, x) for x in todo]}, context=context)
                     break
             # STEP 2 : Post moves
             move_obj.post(cr, uid, move_ids, context=context)
@@ -980,9 +1074,9 @@ class account_bank_statement_line(osv.osv):
                 else:
                     # In case of line that content some move_line that come from imported invoices
                     # delete link between account_move_line and register_line that will be unlinked
-                    if st_line.imported_invoice_line_ids:
-                        self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
-                            {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
+                    #if st_line.imported_invoice_line_ids:
+                    #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
+                    #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
@@ -1034,6 +1128,21 @@ class account_bank_statement_line(osv.osv):
             }
         else:
             return False
+
+    def button_open_invoices(self, cr, uid, ids, context={}):
+        l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
+        if not l['imported_invoice_line_ids']:
+            raise osv.except_osv(_('Error'), _("No related invoice line"))
+        return {
+            'name': "Invoice Lines",
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'target': 'new',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('id', 'in', l['imported_invoice_line_ids'])]
+        }
+        
 
     def button_open_invoice(self, cr, uid, ids, context={}):
         """

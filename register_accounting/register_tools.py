@@ -21,6 +21,9 @@
 #
 ##############################################################################
 
+from osv import osv
+from tools.translate import _
+
 def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
     """
     Get "Third Parties" following other fields
@@ -121,4 +124,122 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
+def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+    """
+    Give the previous register id regarding some criteria:
+     - period_id: the period of current register
+     - currency_id: currency of the current register
+     - register_type: type of register
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    p_obj = self.pool.get('account.period')
+    j_obj = self.pool.get('account.journal')
+    st_obj = self.pool.get('account.bank.statement')
+    # Search period and previous one
+    period = p_obj.browse(cr, uid, [period_id], context=context)[0]
+    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
+    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], 
+        order='date_start desc', limit=1, context=context)
+    if period_id == first_period_id: 
+        # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
+        previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
+            limit=1, order="date_start desc", context=context)
+        if not previous_fiscalyear:
+            raise osv.except_osv(_('Error'), 
+                _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
+        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
+            limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+            # and "Period 15"
+    # Search journal_ids that have the type we search
+    journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+    if len(previous_reg_ids) != 1:
+        return False
+    return previous_reg_ids[0]
+
+def previous_register_is_closed(self, cr, uid, ids, context={}):
+    """
+    Return true if previous register is closed. Otherwise return an exception
+    """
+    if not context:
+        context={}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    # Verify that the previous register is closed
+    for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
+        # if no previous register (case where register is the first register) we don't need to close unexistent register
+        if reg.prev_reg_id:
+            if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
+                raise osv.except_osv(_('Error'), 
+                    _('The previous register "%s" for period "%s" has not been closed properly.') % 
+                        (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
+    return True
+
+def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
+    """
+    Verify that all given statement lines are totally or partially reconciled.
+    To conclue first a statement line is reconciled these lines should be hard-posted.
+    Then move_lines that come from this statement lines should have all reconciled account with a reconciled_id or a reconcile_partial_id.
+    If ONE account_move_line is not reconciled totally or partially, the function return False
+    """
+    # Verifications
+    if not context:
+        context={}
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    # Prepare some variables
+    absl_obj = self.pool.get('account.bank.statement.line')
+    aml_obj = self.pool.get('account.move.line')
+    # Process lines
+    for absl in absl_obj.browse(cr, uid, ids, context=context):
+        for move in absl.move_ids:
+            aml_ids = aml_obj.search(cr, uid, [('move_id', '=', move.id)])
+            for aml in aml_obj.browse(cr, uid, aml_ids, context=context):
+                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                    return False
+    return True
+
+def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
+    """
+    Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
+    """
+    if isinstance(register_ids, (int, long)):
+        register_ids = [register_ids]
+    st_obj = self.pool.get('account.bank.statement')
+    for st in st_obj.browse(cr, uid, register_ids, context=context):
+        # Some verification
+        # Verify that the register is a cash register
+        if not st.journal_id.type == 'cash':
+            continue
+        # Verify that another Cash Register exists
+        next_reg_ids = st_obj.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
+        if not next_reg_ids:
+            return False
+        next_reg_id = next_reg_ids[0]
+        # if yes, put in the closing balance in opening balance
+        if next_reg_id:
+            cashbox_line_obj = self.pool.get('account.cashbox.line')
+            # Search lines from current register ending balance
+            cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
+            # Unlink all previously cashbox lines for the next register
+            old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', next_reg_id)], context=context)
+            cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
+            for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
+                new_vals = {
+                    'starting_id': next_reg_id,
+                    'pieces': line.pieces,
+                    'number': line.number,
+                }
+                cashbox_line_obj.create(cr, uid, new_vals, context=context)
+            # update new register balance_end
+            balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
+            if balance:
+                st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
+    return True
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

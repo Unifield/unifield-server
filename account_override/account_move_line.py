@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -21,15 +21,15 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import cashbox_write_off
-import temp_posting
-import hard_posting
-import wizard_cash_return
-import direct_invoice
-import import_invoice_on_registers
-import import_cheque_on_bank_registers
-import register_creation
-import wizard_confirm_bank
+from osv import osv
+from osv import fields
 
+class account_move_line(osv.osv):
+    _inherit = 'account.move.line'
+
+    _columns = {
+        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
+    }
+
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

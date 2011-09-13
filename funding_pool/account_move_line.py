@@ -49,6 +49,7 @@ class account_move_line(osv.osv):
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
+                                     'distribution_id': obj_line.analytic_distribution_id.id,
                                      'user_id': uid
                         }
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
@@ -59,7 +60,7 @@ class account_move_line(osv.osv):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(move_line_obj.amount_currency)
+        amount = move_line_obj.amount_currency or 0.0
         if move_line_obj.analytic_distribution_id:
             distrib_id = move_line_obj.analytic_distribution_id.id
         else:
@@ -77,6 +78,7 @@ class account_move_line(osv.osv):
                 'context': {
                     'active_id': ids[0],
                     'active_ids': ids,
+                    'wizard_ids': {'cost_center': wiz_id}
                }
         }
     
