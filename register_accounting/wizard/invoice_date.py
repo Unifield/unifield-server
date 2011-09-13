@@ -4,7 +4,6 @@
 #
 #    OpenERP, Open Source Management Solution    
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,15 +20,27 @@
 #
 ##############################################################################
 
-import cashbox_closing
-import cashbox_write_off
-import temp_posting
-import hard_posting
-import wizard_cash_return
-import direct_invoice
-import import_invoice_on_registers
-import import_cheque_on_bank_registers
-import register_creation
-import wizard_confirm_bank
-import invoice_date
+from osv import osv
+from osv import fields
+from tools.translate import _
+import netsvc
+
+
+class wizard_invoice_date(osv.osv_memory):
+    _name = "wizard.invoice.date"
+    _columns = {
+        'invoice_id': fields.many2one('account.invoice','Invoice', required=True),
+        'date': fields.date('Invoice Date', required=True),
+        'period_id': fields.many2one('account.period', 'Force Period', domain=[('state','<>','done')], help="Keep empty to use the period of the validation(invoice) date."),
+    }
+
+    def validate(self, cr, uid, ids, context={}):
+        inv_obj = self.pool.get('account.invoice')
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids):
+            inv_obj.write(cr, uid, [wiz.invoice_id.id], {'date': wiz.date, 'period_id': wiz.period_id and wiz.period_id.id or False})
+            wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
+        return { 'type': 'ir.actions.act_window_close', }
+        
+wizard_invoice_date()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
