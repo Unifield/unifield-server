@@ -703,11 +703,47 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
-    _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], string='Flow Type'),
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for stock_picking in self.browse(cr, uid, ids, context=context):
+            values = {'total_amount': 0.0,
+                      'currency_id': False,
+                      'num_of_packs': 0,
+                      'total_weight': 0.0,
+                      }
+            result[stock_picking.id] = values
+            
+            for family in stock_picking.pack_family_ids:
+                # total amount from pack_family
+                total_amount = family.total_amount
+                values['total_amount'] += total_amount
+                # currency_id
+                currency_id = family.currency_id.id
+                values['currency_id'] = currency_id
+                # number of packs from pack_family
+                num_of_packs = family.num_of_packs
+                values['num_of_packs'] += int(num_of_packs)
+                # total_weight
+                total_weight = family.total_weight
+                values['total_weight'] = total_weight
+                    
+        return result
+    
+    _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
+                'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
+                # functions
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 }
     #_order = 'origin desc, name asc'
     _order = 'name desc'

@@ -33,6 +33,22 @@
                 header="False"
                 rml="addons/msf_outgoing/report/certificate_free_gift.rml"
                 string="Free Gift Certificate" />
+                
+        <report auto="False" 
+                id="stock_picking_test" 
+                model="stock.picking" 
+                name="stock.picking.test"
+                header="False"
+                rml="addons/msf_outgoing/report/stock_picking_test.rml"
+                string="Stock Picking Test" />
+                
+        <report auto="False" 
+                id="pre_packing_list" 
+                model="stock.picking" 
+                name="pre.packing.list"
+                header="False"
+                rml="addons/msf_outgoing/report/pre_packing_list.rml"
+                string="Pre-Packing List" />
     
     </data>
 </openerp>
