@@ -726,9 +726,13 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if po:
-            res = po.delivery_requested_date
+        so = order_obj.browse(cr, uid, context.get('sale_id', []))
+        if so:
+            if so.partner_id.customer_lt:
+                res = (datetime.now() + relativedelta(days=so.partner_id.customer_lt)).strftime('%Y-%m-%d')
+            
+            else:
+                res = so.delivery_requested_date
         
         return res
 

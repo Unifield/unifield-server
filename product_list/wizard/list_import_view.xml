@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="product_list_import_form_view" model="ir.ui.view">
+            <field name="name">product.list.import.form.view</field>
+            <field name="model">product.list.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="List importation">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to import" />
+                    <field name="file_to_import" colspan="4" />
+                    <separator colspan="4" string="List definition" />
+                    <field name="type" />
+                    <field name="list_id" attrs="{'invisible': [('type', '=', 'new')], 'required': [('type', '=', 'exist')]}" />
+                    <field name="new_list_name" attrs="{'invisible': [('type', '=', 'exist')], 'required': [('type', '=', 'new')]}" />
+                    <field name="new_list_type" attrs="{'invisible': [('type', '=', 'exist')], 'required': [('type', '=', 'new')]}" />
+                    <separator colspan="4" string="" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="import_csv" string="Import file" icon="gtk-execute" type="object" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="product_list_import_error_view" model="ir.ui.view">
+            <field name="name">product.list.import.form.view</field>
+            <field name="model">product.list.import</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Error on import">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <label colspan="2" string="" />
+                    <button name="close_window" string="Close window" icon="gtk-cancel" type="object" />
+                </form>
+            </field>
+        </record>
+        
+        <act_window
+            name="Import list"
+            res_model="product.list.import"
+            src_model="product.list"
+            view_mode="form"
+            view_type="form"
+            view_id="product_list_import_form_view"
+            target="new"
+            key2="client_action_multi"
+            id="action_open_wizard_list_import" />
+        
+    </data>
+</openerp>

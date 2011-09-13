@@ -29,25 +29,44 @@
     - date_stop == str(datetime.now().year+1) + "-12-31"
     - special == True
     - state == 'created'
-  
+-
+  In order to test period state, we create a cheque register for current period and close it
+-
+  !python {model: account.bank.statement}: |
+    import datetime
+    per_obj = self.pool.get('account.period')
+    per_ids = per_obj.search(cr, uid, [('name','=', '%s %s'%(datetime.datetime.now().strftime('%b'), datetime.datetime.now().year+1))], 
+        order='date_start, name', limit=1)
+    self.create(cr, uid, {'name': 'For closing period (test)', 'journal_id': ref('account.bank_journal'), 'state': 'confirm', 'date': datetime.datetime.now(), 
+        'balance_start': 15.0, 'balance_end': 15.0, 'period_id': per_ids[0]})
 -
   We change the period state.
 -
   !python {model: account.period}: |
     import datetime
     per_obj = self.pool.get('account.period')
-    per_ids = per_obj.search(cr, uid, [('name','=', '%s %s'%(datetime.datetime.now().strftime('%b'), datetime.datetime.now().year+1))])
+    per_ids = per_obj.search(cr, uid, [('name','=', '%s %s'%(datetime.datetime.now().strftime('%b'), datetime.datetime.now().year+1))], 
+        order='date_start, name', limit=1)
     period = per_obj.browse(cr, uid, per_ids[0])
     period.action_set_state(context={'state': 'draft'})
     period = per_obj.browse(cr, uid, per_ids[0])
-    assert period.state == 'draft'
-    period.action_set_state(context={'state': 'field-closed'})
+    assert period.state == 'draft', "Period not in draft state!"
+    
+    res_wizard = period.action_set_state(context={'state': 'field-closed'})
+    assert res_wizard != None, "No wizard returned for closing period @ field level!"
+    assert res_wizard.get('res_model', False) == 'wizard.confirm.closing.period', "No res_model found! Should be 'wizard.confirm.closing.period'"
+    
+    wiz_obj = self.pool.get('wizard.confirm.closing.period')
+    wizard = wiz_obj.create(cr, uid, {})
+    if wizard:
+        wiz_obj.button_confirm(cr, uid, [wizard], {'period_id': period.id})
+    
     period = per_obj.browse(cr, uid, per_ids[0])
-    assert period.state == 'field-closed'
+    assert period.state == 'field-closed', "Period not in field-closed state!"
+    
     period.action_set_state(context={'state': 'mission-closed'})
     period = per_obj.browse(cr, uid, per_ids[0])
-    assert period.state == 'mission-closed'
+    assert period.state == 'mission-closed', "Period not in mission-closed state!"
     period.action_set_state(context={'state': 'done'})
     period = per_obj.browse(cr, uid, per_ids[0])
-    assert period.state == 'done'
-    
+    assert period.state == 'done', "Period not in done state!"

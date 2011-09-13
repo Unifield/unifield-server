@@ -297,6 +297,18 @@
     user_type : account_account_type_cash_0
     activation_date: !eval time.strftime('%Y-01-01')
 -
+  I create a X11004-US Bank USD Account.
+-
+  !record {model: account.account, id: account_account_bank1}:
+    code: 'X11004-usd-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Bank in USD (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
+-
   I create a X11005 Cheque Account
 -
   !record {model: account.account, id: account_account_cheque0}:
@@ -308,6 +320,21 @@
     reconcile: False
     user_type : account_account_type_cash_0
     activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
+-
+  I create a X11005-US Cheque USD Account
+-
+  !record {model: account.account, id: account_account_cheque1}:
+    code: 'X11005-usd-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cheque in USD (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash_0
+    type_for_register: 'transfer'
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
 -
   I create a Journal View with some columns
 -
@@ -382,6 +409,18 @@
     default_credit_account_id: account_account_bank0
     allow_date: 0
 -
+  I create a Bank Journal in USD
+-
+  !record {model: account.journal, id: account_journal_bank_usd}:
+    code: bnk_usd
+    company_id: base.main_company
+    name: Bank Journal in USD (test)
+    type: bank
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_bank1
+    default_credit_account_id: account_account_bank1
+    allow_date: 0
+-
   I create a Cheque Journal
 -
   !record {model: account.journal, id: account_journal_cheque_0}:
@@ -392,6 +431,18 @@
     view_id: account_journal_view0
     default_debit_account_id: account_account_cheque0
     default_credit_account_id: account_account_cheque0
+    allow_date: 0
+-
+  I create a Cheque Journal in USD
+-
+  !record {model: account.journal, id: account_journal_cheque_usd}:
+    code: chq_usd
+    company_id: base.main_company
+    name: Cheque Journal in USD (test)
+    type: cheque
+    view_id: account_journal_view0
+    default_debit_account_id: account_account_cheque1
+    default_credit_account_id: account_account_cheque1
     allow_date: 0
 -
   I create an Expenses Journal.
@@ -446,3 +497,34 @@
     city: Oberhausbergen
     phone: +33 3 88 56 82 10
     email: info@tempo-consulting.fr
+-
+  I create a Cheque USD Register
+-
+  !record {model: account.bank.statement, id: cheque_register_0}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account_journal_cheque_usd
+    name: REG-CHK-USD-1
+    period_id: current_period
+    user_id: base.user_root
+-
+  I click on 'Open Cheque' button to open the Cheque Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_cheque(cr, uid, [ref("cheque_register_0")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("cheque_register_0")], "active_id": ref("cheque_register_0"), })
+-
+  I create a Bank USD Register
+-
+  !record {model: account.bank.statement, id: bank_register_0}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account_journal_bank_usd
+    name: REG-BNK-USD-1
+    period_id: current_period
+    user_id: base.user_root
+    balance_start: 100.0
+-
+  I click on 'Open Bank' button to open the Bank Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_bank(cr, uid, [ref("bank_register_0")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("bank_register_0")], "active_id": ref("bank_register_0"), })
