@@ -11,10 +11,11 @@
     date_expected: 2011-07-11
     date: 2011-07-10
     product_qty: 12.0
+    type: in
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_external_supply
     location_dest_id: stock.stock_location_stock
-    location_id: stock.stock_location_customers
+    location_id: stock.stock_location_suppliers
 -
   I confirm it
 -
@@ -30,10 +31,11 @@
     date_expected: 2011-07-25
     date: 2011-07-10
     product_qty: 55.0
+    type: in
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_external_supply
     location_dest_id: stock.stock_location_stock
-    location_id: stock.stock_location_customers
+    location_id: stock.stock_location_suppliers
 -
   I confirm it
 -
@@ -49,6 +51,7 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 25.0
+    type: in
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_return_from_unit
     location_dest_id: stock.stock_location_stock
@@ -68,8 +71,9 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 5.0
+    type: out
     product_uom: product.product_uom_unit
-    reason_type_id: reason_types_moves.reason_type_external_supply
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
     location_dest_id: stock.stock_location_customers
     location_id: stock.stock_location_stock
 -
@@ -87,6 +91,7 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 5.0
+    type: out
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_loan
     location_dest_id: stock.stock_location_customers
@@ -106,6 +111,7 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 12.0
+    type: out
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_donation_expiry
     location_dest_id: stock.stock_location_customers
@@ -125,6 +131,7 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 25.0
+    type: out
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_loss
     location_dest_id: stock.stock_location_customers
@@ -144,6 +151,7 @@
     date_expected: 2011-08-12
     date: 2011-07-10
     product_qty: 7.0
+    type: out
     product_uom: product.product_uom_unit
     reason_type_id: reason_types_moves.reason_type_discrepancy
     location_dest_id: stock.stock_location_customers
@@ -155,12 +163,32 @@
     self.action_confirm(cr, uid, [ref('sm8')])
     self.action_done(cr, uid, [ref('sm8')])
 -
+    Create an discrepancy outgoing stock move
+-
+  !record {model: stock.move, id: sm9}:
+    name: sm9
+    product_id: product1
+    date_expected: 2011-07-10
+    date: 2011-07-10
+    product_qty: 30.0
+    type: out
+    product_uom: product_10_unit
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    location_dest_id: stock.stock_location_customers
+    location_id: stock.stock_location_stock
+-
+  I confirm it
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, [ref('sm9')])
+    self.action_done(cr, uid, [ref('sm9')])
+-
   I check the calculate AMC
 -
   !python {model: product.product}: |
     context = {'from_date': '2011-06-01','to_date': '2011-08-31'}
     amc = self.compute_amc(cr, uid, ref('product1'), context=context)
-    assert amc == 15.67, "The calculate AMC is not correct"
+    assert amc == 93.00, "The calculate AMC is not correct"
 -
   I create a new Monthly review consumption
 -

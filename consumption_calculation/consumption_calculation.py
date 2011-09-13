@@ -437,7 +437,7 @@ class product_product(osv.osv):
     
     def compute_mac(self, cr, uid, ids, field_name, args, context={}):
         '''
-        Compute the Monthly Real Average Consumption
+        Compute the Real Average Consumption
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -476,20 +476,19 @@ class product_product(osv.osv):
         
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
         
-        for product in ids:
-            res[product] = 0.00
-            line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', '=', product)], context=context)
+        for id in ids:
+            res[id] = 0.00
+            line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', '=', id)], context=context)
             
             for line in line_obj.browse(cr, uid, line_ids, context=context):
-                res[product] += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
-                # Update limit in time
+                res[id] += uom_obj._compute_qty(cr, uid, line.uom_id.id, line.consumed_qty, line.product_id.uom_id.id)
                 if not context.get('from_date') and (not from_date or line.rac_id.period_to < from_date):
                     from_date = line.rac_id.period_to
                 if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
                     to_date = line.rac_id.period_to
                 
             # We want the average for the entire period
-            if context.get('average', True):
+            if context.get('average', False):
                 if to_date < from_date:
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
@@ -503,8 +502,10 @@ class product_product(osv.osv):
                 
                 if not nb_months: nb_months = 1
                 
-                res[product] = round(res[product]/nb_months, 2)
-                
+                uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
+                res[id] = res[id]/nb_months
+                res[id] = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id)
+            
         return res
     
     def compute_amc(self, cr, uid, ids, context={}):
@@ -562,10 +563,9 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            # Remove the quantity if the reason type is 'Return from unit'
-            if move.reason_type_id.id == return_id:
+            if move.reason_type_id.id == return_id and move.type == 'in':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
-            else:
+            elif move.type == 'out':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             
             # Update the limit in time
@@ -598,7 +598,9 @@ class product_product(osv.osv):
         
         if not nb_months: nb_months = 1
         
-        res = round(res/nb_months, 2)
+        uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
+        res = res/nb_months
+        res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             
         return res
     

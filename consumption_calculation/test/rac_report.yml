@@ -119,25 +119,16 @@
 -
   !python {model: product.product}: |
     import time
-    p1_rac = self.browse(cr, uid, ref('product1'), context=context).monthly_consumption
+    context = {'average': True}
+    p1_rac = self.browse(cr, uid, ref('product1'), context=context)
+    uom_id = p1_rac.uom_id.id
     to_date_str = time.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d')
     nb_months = (to_date_str.tm_year-2011)*12
     nb_months = to_date_str.tm_mon-6
     nb_months -= to_date_str.tm_mday < 1 and ((1-to_date_str.tm_mday)/30)
     nb_months += to_date_str.tm_mday > 1 and ((to_date_str.tm_mday-1)/30)
-    assert p1_rac == round(506.00/nb_months, 2), "The average of product 1 is not correct"
--
-  I check the calculation of a consumption for the entire period with another UoM
--
-  !python {model: product.product}: |
-    import time
-    p1_rac = self.browse(cr, uid, ref('product1'), context=context).monthly_consumption
-    to_date_str = time.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d')
-    nb_months = (to_date_str.tm_year-2011)*12
-    nb_months = to_date_str.tm_mon-6
-    nb_months -= to_date_str.tm_mday < 1 and ((1-to_date_str.tm_mday)/30)
-    nb_months += to_date_str.tm_mday > 1 and ((to_date_str.tm_mday-1)/30)
-    assert p1_rac == round(506.00/nb_months, 2), "The average of product 1 is not correct"
+    res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, 506.0/nb_months, uom_id)
+    assert p1_rac.monthly_consumption == res, "The average of product 1 is not correct"
 -
   I check the average consumption for 2011, June
 -
