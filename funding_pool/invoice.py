@@ -40,8 +40,13 @@ class account_invoice(osv.osv):
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         # we get the analytical distribution object linked to this line
         distrib_id = False
+        negative_inv = False
         invoice_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(invoice_obj.check_total)
+        amount = invoice_obj.check_total or 0.0
+        if invoice_obj.type in ['in_invoice', 'out_refund']:
+            negative_inv = True
+        if negative_inv:
+            amount = -1 * amount
         if invoice_obj.analytic_distribution_id:
             distrib_id = invoice_obj.analytic_distribution_id.id
         else:
@@ -50,7 +55,9 @@ class account_invoice(osv.osv):
             super(account_invoice, self).write(cr, uid, ids, newvals, context=context)
         child_distributions = []
         for invoice_line in invoice_obj.invoice_line:
-            amount = abs(invoice_line.price_subtotal)
+            amount = invoice_line.price_subtotal
+            if negative_inv:
+                amount = -1 * amount
             if invoice_line.analytic_distribution_id:
                 if invoice_line.analytic_distribution_id.global_distribution \
                 or ('reset_all' in context and context['reset_all']):
@@ -91,8 +98,13 @@ class account_invoice_line(osv.osv):
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         # we get the analytical distribution object linked to this line
         distrib_id = False
+        negative_inv = False
         invoice_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(invoice_line_obj.price_subtotal)
+        amount = invoice_line_obj.price_subtotal or 0.0
+        if invoice_line_obj.invoice_id.type in ['in_invoice', 'out_refund']:
+            negative_inv = True
+        if negative_inv:
+            amount = -1 * amount
         if invoice_line_obj.analytic_distribution_id:
             distrib_id = invoice_line_obj.analytic_distribution_id.id
         else:
@@ -124,12 +136,14 @@ class account_invoice_line(osv.osv):
                 child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
                 vals['analytic_distribution_id'] = child_distrib_id
                 res_id =  super(account_invoice_line, self).create(cr, uid, vals, context=context)
-                amount = self._amount_line(cr, uid, [res_id], None, None, {})
+                amount = self._amount_line(cr, uid, [res_id], None, None, {})[res_id] or 0.0
+                if invoice_obj.type in ['in_invoice', 'out_refund']:
+                    amount = -1 * amount
                 analytic_obj.copy_from_global_distribution(cr,
                                                            uid,
                                                            invoice_obj.analytic_distribution_id.id,
                                                            child_distrib_id,
-                                                           abs(amount[res_id]),
+                                                           amount,
                                                            context=context)
         if res_id:
             return res_id
@@ -146,6 +160,9 @@ class account_invoice_line(osv.osv):
                 if 'price_subtotal' in vals \
                 or ('reset_all' in context and context['reset_all']) \
                 or destination_distrib_obj.global_distribution:
+                    amount = vals.get('price_subtotal', line.price_subtotal) or 0.0
+                    if invoice_obj.invoice_id.type in ['in_invoice', 'out_refund']:
+                        amount = -1 * amount
                     self.pool.get('analytic.distribution').copy_from_global_distribution(cr,
                                                                                          uid,
                                                                                          source_distrib_obj.id,

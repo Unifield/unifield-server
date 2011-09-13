@@ -60,7 +60,7 @@ class account_move_line(osv.osv):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = abs(move_line_obj.amount_currency)
+        amount = move_line_obj.amount_currency or 0.0
         if move_line_obj.analytic_distribution_id:
             distrib_id = move_line_obj.analytic_distribution_id.id
         else:
