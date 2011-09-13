@@ -1,0 +1,218 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            
+            <record id="view_financing_contract_contract_form" model="ir.ui.view">
+                <field name="name">financing.contract.contract.form</field>
+                <field name="model">financing.contract.contract</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Financing Contract">
+                        <field name="code" colspan="1"/>
+                        <field name="name" colspan="1"/>
+                        <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"/>
+                        <separator string="Dates"/>
+                        <field name="eligibility_from_date"/>
+                        <field name="eligibility_to_date"/>
+                        <notebook colspan="4">
+                            <page string="Contract information">
+                                <group colspan="4" col="6">
+			                        <field name="grant_name" colspan="2"/>
+			                        <field name="donor_grant_reference" colspan="2"/>
+			                        <field name="hq_grant_reference" colspan="2"/>
+		                        </group>
+                                <group colspan="4" col="6">
+			                        <field name="grant_amount" colspan="2"/>
+			                        <field name="reporting_currency" colspan="2"/>
+			                        <field name="contract_type" colspan="2"/>
+                                </group>
+                            </page>
+                            <page string="Funding pools">
+                                <field colspan="4" name="funding_pool_ids" nolabel="1"
+                                       domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]">
+                                    <tree string="Funding pools" >
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Actual lines">
+                                <field name="format_id" invisible="1"/>
+                                <field colspan="4" name="actual_line_ids" nolabel="1">
+                                    <tree string="Actual lines" colors="black:(number_of_childs==0);blue:(number_of_childs&gt;0)">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="allocated_amount" sum="Allocated Total"/>
+                                        <field name="total_amount" sum="Allocated Total"/>
+                                        <field name="number_of_childs" invisible="1"/>
+                                    </tree>
+                                    <form string="Actual lines">
+                                        <group colspan="4" col="6">
+	                                        <field name="code" colspan="2"/>
+	                                        <field name="name" colspan="2"/>
+	                                        <field name="parent_id" colspan="2"
+	                                               domain="[('format_id', '=', parent.format_id)]"/>
+                                        </group>
+                                        <field name="number_of_childs" invisible="1"/>
+                                        <field name="allocated_amount" attrs="{'readonly': [('number_of_childs', '!=', '0')]}"/>
+                                        <field name="total_amount" attrs="{'readonly': [('number_of_childs', '!=', '0')]}"/>
+                                        <field name="account_ids" colspan="4" string="Expense accounts"
+                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="Other lines">
+                                <form string="Other lines">
+                                    <separator colspan="4" string="Overhead"/>
+                                    <field name="overhead_type" colspan="2"/>
+                                    <field name="overhead_value" colspan="2"/>
+                                    <separator colspan="4" string="Other"/>
+                                    <field name="lump_sum" colspan="2"/>
+                                    <field name="consumption" colspan="2"/>
+                                </form>
+                            </page>
+                            <page string="Comments">
+	                           <field name="notes" nolabel="1"/>
+                            </page>
+                        </notebook>
+                        <group col="8" colspan="4">
+	                        <field name="open_date" colspan="2" readonly="1"/>
+	                        <field name="soft_closed_date" colspan="2" readonly="1"/>
+	                        <field name="hard_closed_date" colspan="2" readonly="1"/>
+	                        <field name="state" colspan="2" readonly="1"/>
+                        </group>
+                    </form>
+                </field>
+            </record>
+            
+	        <record id="view_financing_contract_contract_tree" model="ir.ui.view">
+	            <field name="name">financing.contract.contract.tree</field>
+	            <field name="model">financing.contract.contract</field>
+	            <field name="type">tree</field>
+	            <field name="arch" type="xml">
+	                <tree string="Financing Contracts">
+	                    <field name="code"/>
+	                    <field name="name"/>
+	                    <field name="donor_id"/>
+                        <field name="grant_amount"/>
+                        <field name="reporting_currency"/>
+	                    <field name="eligibility_from_date"/>
+	                    <field name="eligibility_to_date"/>
+                        <field name="state"/>
+	                </tree>
+	            </field>
+	        </record>
+	        <record id="view_financing_contract_contract_search" model="ir.ui.view">
+	            <field name="name">financing.contract.contract.search</field>
+	            <field name="model">financing.contract.contract</field>
+	            <field name="type">search</field>
+	            <field name="arch" type="xml">
+	                <search string="Search Fiscalyear">
+	                    <group>
+		                    <filter name="active" icon="terp-check" string="Active"
+		                            domain="[('eligibility_from_date', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
+		                                     ('eligibility_to_date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d'))]"/>
+	                        <separator orientation="vertical"/>
+	                        <field name="code"/>
+	                        <field name="name"/>
+	                        <field name="donor_id"/>
+                            <field name="reporting_currency"/>
+	                    </group>
+	                </search>
+	            </field>
+	        </record>
+	        <record id="action_financing_contract_contract_form" model="ir.actions.act_window">
+	            <field name="name">Financing Contracts</field>
+	            <field name="res_model">financing.contract.contract</field>
+	            <field name="view_type">form</field>
+	            <field name="view_mode">tree,form</field>
+	        </record>
+	        
+	        
+            
+            <record id="view_financing_contract_donor_form" model="ir.ui.view">
+                <field name="name">financing.contract.donor.form</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Donor">
+                        <field name="code" colspan="1"/>
+                        <field name="name" colspan="1"/>
+                        <newline/>
+                        <field name="active" colspan="2"/>
+                        <separator string="Dates"/>
+                        <notebook colspan="4">
+                            <page string="Actual lines">
+                                <field name="format_id" invisible="1"/>
+                                <field colspan="4" name="actual_line_ids" nolabel="1">
+                                    <tree string="Actual lines" >
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                    </tree>
+                                    <form string="Actual lines">
+                                        <group colspan="4" col="6">
+                                            <field name="code" colspan="2"/>
+                                            <field name="name" colspan="2"/>
+                                            <field name="parent_id" colspan="2"
+                                                   domain="[('format_id', '=', parent.format_id)]"/>
+                                        </group>
+                                        <field name="account_ids" colspan="4" string="Expense accounts"
+                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="Other lines">
+                                <form string="Other lines">
+                                    <separator colspan="4" string="Overhead"/>
+                                    <field name="overhead_type" colspan="2"/>
+                                    <field name="overhead_value" colspan="2"/>
+                                    <separator colspan="4" string="Other"/>
+                                    <field name="lump_sum" colspan="2"/>
+                                    <field name="consumption" colspan="2"/>
+                                </form>
+                            </page>
+                        </notebook>
+                    </form>
+                </field>
+            </record>
+            
+            <record id="view_financing_contract_donor_tree" model="ir.ui.view">
+                <field name="name">financing.contract.donor.tree</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Donors">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
+            </record>
+            <record id="view_financing_contract_donor_search" model="ir.ui.view">
+                <field name="name">financing.contract.donor.search</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Search Fiscalyear">
+                        <group>
+                            <filter name="active" icon="terp-check" string="Active"
+                                    domain="[('active', '=', True)]"/>
+                            <separator orientation="vertical"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+            <record id="action_financing_contract_donor_form" model="ir.actions.act_window">
+                <field name="name">Donors</field>
+                <field name="res_model">financing.contract.donor</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+            </record>
+            <menuitem id="donor_reporting_menu" name="Donor Reporting" parent="account.menu_finance"/>
+            <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
+            <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
+	            
+            
+       </data>
+</openerp> 
