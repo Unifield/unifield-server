@@ -19,5 +19,7 @@
 #
 ##############################################################################
 
-import msf_outgoing
 import pro_forma_invoice
+import invoice
+import certificate_donation
+import certificate_free_gift

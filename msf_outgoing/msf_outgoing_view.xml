@@ -597,6 +597,9 @@
                                     <field name="qty_per_pack" />
                                     <field name="from_pack" />
                                     <field name="to_pack" />
+                                    <field name="num_of_packs" />
+                                    <field name="total_amount" />
+                                    <field name="currency_id" />
                                     <field name="date"/>
                                     <field name="state"/>
                                 </tree>

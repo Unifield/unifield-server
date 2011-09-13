@@ -71,9 +71,30 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
     '''
     _name = "stock.move.memory.ppl"
     _inherit = "stock.move.memory.picking"
-    _columns = {'qty_per_pack': fields.integer(string='Qty p.p'),
-                'from_pack': fields.integer(string='From p.'),
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for memory_move in self.browse(cr, uid, ids, context=context):
+            values = {'num_of_packs': 0,
+                      'qty_per_pack': 0,
+                      }
+            result[memory_move.id] = values
+            # number of packs with from/to values
+            num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
+            values['num_of_packs'] = num_of_packs
+            qty_per_pack = memory_move.quantity / num_of_packs
+            values['qty_per_pack'] = qty_per_pack
+                    
+        return result
+    
+    _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
+                # functions
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p.', multi='get_vals',),
                 }
     
     def create(self, cr, uid, vals, context=None):

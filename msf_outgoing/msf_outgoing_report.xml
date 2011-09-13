@@ -9,6 +9,30 @@
                 header="False"
                 rml="addons/msf_outgoing/report/pro_forma_invoice.rml"
                 string="Pro Forma Invoice" />
+                
+        <report auto="False" 
+                id="report_invoice" 
+                model="shipment" 
+                name="invoice"
+                header="False"
+                rml="addons/msf_outgoing/report/invoice.rml"
+                string="Invoice" />
+                
+        <report auto="False" 
+                id="report_certificate_donation" 
+                model="shipment" 
+                name="certificate.donation"
+                header="False"
+                rml="addons/msf_outgoing/report/certificate_donation.rml"
+                string="Certificate of Donation" />
+                
+        <report auto="False" 
+                id="report_certificate_free_gift" 
+                model="shipment" 
+                name="certificate.free.gift"
+                header="False"
+                rml="addons/msf_outgoing/report/certificate_free_gift.rml"
+                string="Free Gift Certificate" />
     
     </data>
 </openerp>

@@ -23,9 +23,9 @@ import time
 
 from report import report_sxw
 
-class msf_outgoing_report(report_sxw.rml_parse):
+class invoice(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(msf_outgoing_report, self).__init__(cr, uid, name, context=context)
+        super(invoice, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'get_selection': self.get_selection,
@@ -44,5 +44,5 @@ class msf_outgoing_report(report_sxw.rml_parse):
         else:
             return res
 
-report_sxw.report_sxw('report.msf.outgoing.report', 'shipment', 'addons/msf_outgoing/report/msf_outgoing.rml', parser=msf_outgoing_report, header="external")
+report_sxw.report_sxw('report.invoice', 'shipment', 'addons/msf_outgoing/report/invoice.rml', parser=invoice, header="external")
 

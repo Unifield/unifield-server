@@ -67,6 +67,7 @@ class shipment(osv.osv):
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi function for global shipment values
+        
         '''
         result = {}
         for shipment in self.browse(cr, uid, ids, context=context):
@@ -97,15 +98,16 @@ class shipment(osv.osv):
                 'date': fields.date(string='Date'),
                 'transport_type': fields.selection([('by_road', 'By road')],
                                                    string="Transport Type", readonly=True),
-                'state': fields.selection([
-                                           ('draft', 'Draft'),
+                'state': fields.selection([('draft', 'Draft'),
                                            ('packed', 'Packed'),
                                            ('shipped', 'Shipped'),
                                            ('done', 'Done'),
                                            ('cancel', 'Canceled')], string='State', readonly=True, select=True),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
-                'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'sequence_id': fields.many2one('ir.sequence', 'Shipment Sequence', help="This field contains the information related to the numbering of the shipment.", ondelete='cascade'),
+                # partner related to address
+                'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
+                # functions
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='ship_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='ship_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Number of Packs', multi='ship_vals',),
@@ -631,6 +633,7 @@ class pack_family(osv.osv):
         result = {}
         for family in self.browse(cr, uid, ids, context=context):
             values = {'total_amount': 0.0,
+                      'amount': 0.0,
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
@@ -644,8 +647,9 @@ class pack_family(osv.osv):
             
             # depends on corresponding stock moves
             for move in family.move_lines:
-                values['total_amount'] += move.sale_line_id.price_unit * move.product_qty
-                values['currency_id'] = move.sale_line_id.currency_id.id
+                values['total_amount'] += move.total_amount
+                values['amount'] += move.amount
+                values['currency_id'] = move.currency_id.id
                     
         return result
     
@@ -661,18 +665,19 @@ class pack_family(osv.osv):
                 'width' : fields.float(digits=(16,2), string='Width [cm]'),
                 'height' : fields.float(digits=(16,2), string='Height [cm]'),
                 'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='family_vals',),
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='family_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='family_vals',),
-                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='family_vals',),
                 'move_lines': fields.one2many('stock.move', 'pack_family_id', string="Stock Moves"),
-                'state': fields.selection([
-                                           ('draft', 'Draft'),
+                'state': fields.selection([('draft', 'Draft'),
                                            ('assigned', 'Available'),
                                            ('stock_return', 'Returned to Stock'),
                                            ('ship_return', 'Returned from Shipment'),
                                            ('cancel', 'Canceled'),
                                            ('done', 'Done'),], string='State', readonly=True, select=True),
+                # functions
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='family_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='family_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='family_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='family_vals',),
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='family_vals',),
                 }
     _defaults = {'state': 'draft'}
 
@@ -1451,8 +1456,33 @@ class stock_move(osv.osv):
         result = dict([id, virtual[result[id]]] for id in result.keys())
         return result
     
-    _columns = {'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
-                'qty_per_pack': fields.integer(string='Qty p.p'),
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for move in self.browse(cr, uid, ids, context=context):
+            values = {'total_amount': 0.0,
+                      'amount': 0.0,
+                      'currency_id': False,
+                      'num_of_packs': 0,
+                      }
+            result[move.id] = values
+            # number of packs with from/to values (integer)
+            num_of_packs = move.to_pack - move.from_pack + 1
+            values['num_of_packs'] = num_of_packs
+            # total amount (float)
+            total_amount = move.sale_line_id.price_unit * move.product_qty
+            values['total_amount'] = total_amount
+            # amount for one pack
+            amount = total_amount / num_of_packs
+            values['amount'] = amount
+            # currency
+            values['currency_id'] = move.sale_line_id.currency_id.id
+                    
+        return result
+    
+    _columns = {'qty_per_pack': fields.integer(string='Qty p.p'), # should be a function - todo refactoring + wizard level
                 'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -1464,6 +1494,12 @@ class stock_move(osv.osv):
                 'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
                 # relation to the corresponding move from draft object
                 'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
+                # functions
+                'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='move_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='move_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='move_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='move_vals',),
                 }
     
 #    _constraints = [
