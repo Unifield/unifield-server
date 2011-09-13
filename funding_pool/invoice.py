@@ -101,6 +101,9 @@ class account_invoice_line(osv.osv):
         negative_inv = False
         invoice_line_obj = self.browse(cr, uid, ids[0], context=context)
         amount = invoice_line_obj.price_subtotal or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = invoice_line_obj.invoice_id.currency_id and invoice_line_obj.invoice_id.currency_id.id or company_currency
         if invoice_line_obj.invoice_id.type in ['in_invoice', 'out_refund']:
             negative_inv = True
         if negative_inv:
@@ -110,7 +113,7 @@ class account_invoice_line(osv.osv):
         else:
             raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution for the whole invoice first!"))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -139,11 +142,14 @@ class account_invoice_line(osv.osv):
                 amount = self._amount_line(cr, uid, [res_id], None, None, {})[res_id] or 0.0
                 if invoice_obj.type in ['in_invoice', 'out_refund']:
                     amount = -1 * amount
+                company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
                 analytic_obj.copy_from_global_distribution(cr,
                                                            uid,
                                                            invoice_obj.analytic_distribution_id.id,
                                                            child_distrib_id,
                                                            amount,
+                                                           currency,
                                                            context=context)
         if res_id:
             return res_id
@@ -161,13 +167,16 @@ class account_invoice_line(osv.osv):
                 or ('reset_all' in context and context['reset_all']) \
                 or destination_distrib_obj.global_distribution:
                     amount = vals.get('price_subtotal', line.price_subtotal) or 0.0
-                    if invoice_obj.invoice_id.type in ['in_invoice', 'out_refund']:
+                    if line.invoice_id.type in ['in_invoice', 'out_refund']:
                         amount = -1 * amount
+                    company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                    currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
                     self.pool.get('analytic.distribution').copy_from_global_distribution(cr,
                                                                                          uid,
                                                                                          source_distrib_obj.id,
                                                                                          destination_distrib_obj.id,
-                                                                                         abs(vals.get('price_subtotal', line.price_subtotal)),
+                                                                                         amount,
+                                                                                         currency,
                                                                                          context=context)
         return res
     

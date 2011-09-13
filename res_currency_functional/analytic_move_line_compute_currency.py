@@ -25,11 +25,24 @@ import decimal_precision as dp
 class account_analytic_line_compute_currency(osv.osv):
     _inherit = "account.analytic.line"
     
-    def update_amounts(self, cr, uid, ids):
+    def update_amounts(self, cr, uid, ids, context={}):
+        """
+        Update analytic line amount with debit and credit if move_id exists, otherwise use amount_currency to do change
+        """
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for analytic_line in self.browse(cr, uid, ids):
-            amount = analytic_line.move_id.debit - analytic_line.move_id.credit
-            cr.execute('update account_analytic_line set amount=%s where id=%s', 
-                      (amount, analytic_line.id))
+            amount = None
+            if analytic_line.amount_currency and analytic_line.currency_id:
+                context.update({'date': analytic_line.source_date or analytic_line.date})
+                company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                amount = self.pool.get('res.currency').compute(cr, uid, analytic_line.currency_id.id, company_currency, 
+                    analytic_line.amount_currency,round=False, context=context)
+            if amount:
+                cr.execute('update account_analytic_line set amount=%s where id=%s', (amount, analytic_line.id))
+        return True
     
 account_analytic_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

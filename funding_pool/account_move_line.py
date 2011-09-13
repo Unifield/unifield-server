@@ -32,6 +32,7 @@ class account_move_line(osv.osv):
     
     def create_analytic_lines(self, cr, uid, ids, context=None):
         acc_ana_line_obj = self.pool.get('account.analytic.line')
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
                 if not obj_line.journal_id.analytic_journal_id:
@@ -40,17 +41,21 @@ class account_move_line(osv.osv):
                 # create lines
                 for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
+                        context.update({'date': obj_line.source_date or obj_line.date})
                         line_vals = {
                                      'name': obj_line.name,
                                      'date': obj_line.date,
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                                     'amount': distrib_line.amount,
+                                     'amount': self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
+                                        distrib_line.amount or 0.0, round=False, context=context),
+                                     'amount_currency': distrib_line.amount,
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
                                      'distribution_id': obj_line.analytic_distribution_id.id,
-                                     'user_id': uid
+                                     'user_id': uid,
+                                     'currency_id': obj_line.currency_id.id,
                         }
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
                     
@@ -61,12 +66,15 @@ class account_move_line(osv.osv):
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)
         amount = move_line_obj.amount_currency or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = move_line_obj.currency_id and move_line_obj.currency_id.id or company_currency
         if move_line_obj.analytic_distribution_id:
             distrib_id = move_line_obj.analytic_distribution_id.id
         else:
             raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the move line!"))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',

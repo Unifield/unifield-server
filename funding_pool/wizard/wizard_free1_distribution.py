@@ -36,6 +36,7 @@ class wizard_free1_distribution_line(osv.osv_memory):
         "analytic_id": fields.many2one('account.analytic.account', 'Free Allocation', required=True),
         "percentage": fields.float('Percentage'),
         "amount": fields.float('Amount'),
+        'currency_id': fields.many2one('res.currency', string="Currency"),
     }
     
     _defaults ={
@@ -70,6 +71,7 @@ class wizard_free1_distribution(osv.osv_memory):
     def _get_initial_lines(self, cr, uid, wizard_id, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, wizard_obj.distribution_id.id, context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for free_1_line in distrib_obj.free_1_lines:
             wizard_line_vals = {
                 'name': 'Free 1 Line', #required by one2many, never used
@@ -77,6 +79,7 @@ class wizard_free1_distribution(osv.osv_memory):
                 'analytic_id': free_1_line.analytic_id.id,
                 'amount': free_1_line.amount,
                 'percentage': free_1_line.percentage,
+                'currency_id': free_1_line.currency_id and free_1_line.currency_id.id or company_currency,
             }
             self.pool.get('wizard.free1.distribution.line').create(cr, uid, wizard_line_vals, context=context)
         return
@@ -103,6 +106,8 @@ class wizard_free1_distribution(osv.osv_memory):
         allocated_amount = 0.0
         allocated_percentage = 0.0
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wizard_obj.currency_id and wizard_obj.currency_id.id or company_currency
         # Something was written; we modify the flag in the wizard
         self.write(cr, uid, [wizard_id], vals={'modified_line': True}, context={})
         # Create a temporary object to keep track of values
@@ -154,7 +159,8 @@ class wizard_free1_distribution(osv.osv_memory):
                                                                   uid,
                                                                   [wizard_line['id']],
                                                                   vals={'amount': wizard_line['amount'],
-                                                                        'percentage': wizard_line['percentage']},
+                                                                        'percentage': wizard_line['percentage'],
+                                                                        'currency_id': currency},
                                                                   context={'skip_validation': True})
         return
             
@@ -178,6 +184,8 @@ class wizard_free1_distribution(osv.osv_memory):
         # check if the allocation is fully done
         allocated_percentage = 0.0
         wizard_obj = self.browse(cr, uid, ids[0], context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wizard_obj.currency_id and wizard_obj.currency_id.id or company_currency
         for wizard_line in wizard_obj.wizard_distribution_lines:
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
@@ -186,7 +194,8 @@ class wizard_free1_distribution(osv.osv_memory):
             self._cleanup_and_store(cr, uid, ids[0], context=context)
         if 'free_2' not in context['wizard_ids']:
             newwiz_obj = self.pool.get('wizard.free2.distribution')
-            newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+            newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id,
+                'currency_id': currency,}, context=context)
             context['wizard_ids']['free_2'] = newwiz_id
         # we open a wizard
         return {
