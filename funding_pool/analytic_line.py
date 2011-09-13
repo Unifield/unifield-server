@@ -24,6 +24,7 @@ from osv import fields
 from tools.translate import _
 
 class analytic_line(osv.osv):
+    _name = "account.analytic.line"
     _inherit = "account.analytic.line"
 
     def _get_amount_currency(self, cr, uid, ids, field_name=None, arg=None, context={}):

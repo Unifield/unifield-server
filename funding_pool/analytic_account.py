@@ -25,6 +25,7 @@ from osv import fields, osv
 from tools.translate import _
 
 class analytic_account(osv.osv):
+    _name = "account.analytic.account"
     _inherit = "account.analytic.account"
     
     _columns = {
