@@ -35,14 +35,11 @@ class account_analytic_line_compute_currency(osv.osv):
             ids = [ids]
         for analytic_line in self.browse(cr, uid, ids):
             amount = None
-            if analytic_line.move_id:
-                amount = analytic_line.move_id.debit - analytic_line.move_id.credit
-            else:
-                if analytic_line.amount_currency and analytic_line.currency_id:
-                    context.update({'date': analytic_line.source_date})
-                    company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    amount = self.pool.get('res.currency').compute(cr, uid, analytic_line.currency_id.id, company_currency, 
-                        analytic_line.amount_currency,round=False, context=context)
+            if analytic_line.amount_currency and analytic_line.currency_id:
+                context.update({'date': analytic_line.source_date or analytic_line.date})
+                company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                amount = self.pool.get('res.currency').compute(cr, uid, analytic_line.currency_id.id, company_currency, 
+                    analytic_line.amount_currency,round=False, context=context)
             if amount:
                 cr.execute('update account_analytic_line set amount=%s where id=%s', (amount, analytic_line.id))
         return True

@@ -47,7 +47,7 @@ class account_move_line(osv.osv):
                                      'date': obj_line.date,
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                                     'amount': self.pool.get('res.currency').compute(cr, uid, company_currency, obj_line.currency_id.id, 
+                                     'amount': self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
                                         distrib_line.amount or 0.0, round=False, context=context),
                                      'amount_currency': distrib_line.amount,
                                      'account_id': distrib_line.analytic_id.id,

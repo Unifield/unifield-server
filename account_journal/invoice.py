@@ -140,7 +140,7 @@ class account_invoice_line(osv.osv):
                             'unit_amount': inv_line.quantity,
                             'product_id': inv_line.product_id and inv_line.product_id.id or False,
                             'product_uom_id': inv_line.uos_id and inv_line.uos_id.id or False,
-                            'amount': self.pool.get('res.currency').compute(cr, uid, company_currency, invoice_currency, distrib_line.amount or 0.0, round=False, context=context),
+                            'amount': self.pool.get('res.currency').compute(cr, uid, invoice_currency, company_currency, distrib_line.amount or 0.0, round=False, context=context),
                             'amount_currency': distrib_line.amount or 0.0,
                             'currency_id': invoice_currency,
                             'general_account_id': inv_line.account_id.id,
