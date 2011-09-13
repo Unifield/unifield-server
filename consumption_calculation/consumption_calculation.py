@@ -94,8 +94,8 @@ class real_average_consumption(osv.osv):
         
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
-                #return False
-                raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
+                return False
+                #raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
             
@@ -391,7 +391,7 @@ class product_product(osv.osv):
     
     def compute_mac(self, cr, uid, ids, context={}):
         '''
-        Compute the Monthly Real Average Consumption
+        Compute the Real Average Consumption
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -440,7 +440,9 @@ class product_product(osv.osv):
             
             if not nb_months: nb_months = 1
             
+            uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
             res = res/nb_months
+            res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             
         return res
     
@@ -481,9 +483,9 @@ class product_product(osv.osv):
                                                  ('product_id', 'in', ids)], context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            if move.reason_type_id.id == return_id:
+            if move.reason_type_id.id == return_id and move.type == 'in':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
-            else:
+            elif move.type == 'out':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
                 
             if not context.get('from_date') and (not from_date or move.date_expected < from_date):
@@ -508,7 +510,9 @@ class product_product(osv.osv):
         
         if not nb_months: nb_months = 1
         
-        res = round(res/nb_months, 2)
+        uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
+        res = res/nb_months
+        res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             
         return res
     
