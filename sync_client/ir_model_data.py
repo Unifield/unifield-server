@@ -277,7 +277,7 @@ def create(model,cr,uid,values,context=None):
     
     res_id = old_create(model,cr,uid,values,context=context)
     if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(context.get('no_model_data_line'))):
-        link_with_ir_model(model, cr, uid, res_id, context=context)
+        #link_with_ir_model(model, cr, uid, res_id, context=context)
         modif_o2m(model,cr,uid,res_id,values,context=context)
     
     return res_id

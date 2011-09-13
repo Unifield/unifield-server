@@ -31,8 +31,7 @@
     'website': 'http://openerp.com',
     'depends': ['base', 'sync_client'],
     'init_xml': [],
-    'data': [
-    ],
+    'data': [ 'create_data_view.xml'],
     'demo_xml': [
     ],
     'test':[
