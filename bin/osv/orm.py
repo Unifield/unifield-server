@@ -2143,8 +2143,10 @@ class orm_memory(orm_template):
         # nothing to check in memory...
         pass
 
-    def exists(self, cr, uid, id, context=None):
-        return id in self.datas
+    def exists(self, cr, uid, ids, context=None):
+        if isinstance(ids, (long,int)):
+            ids = [ids]
+        return [id for id in ids if id in self.datas]
 
 class orm(orm_template):
     _sql_constraints = []
