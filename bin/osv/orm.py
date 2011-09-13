@@ -1962,11 +1962,6 @@ class orm_memory(orm_template):
                 result.append(r)
                 if id in self.datas:
                     self.datas[id]['internal.date_access'] = time.time()
-            fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
-            for f in fields_post:
-                res2 = self._columns[f].get_memory(cr, self, ids, f, user, context=context, values=result)
-                for record in result:
-                    record[f] = res2[record['id']]
             
             # all non inherited fields for which the attribute whose name is in load is False
             fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
