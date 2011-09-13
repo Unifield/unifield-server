@@ -23,13 +23,14 @@
     "version": "1.1",
     "author" : "MSF: Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account"],
+    "depends" : ["analytic", "account", "account_override"],
     "description": """Module for defining analytic accounting object.
     """,
     "init_xml" : [
         'data/analytic_account_data.xml',
     ],
     "update_xml": [
+        'security/ir.model.access.csv',
         'analytic_account_view.xml',
         'wizard/account_analytic_chart_view.xml',
         'wizard/wizard_costcenter_distribution_view.xml',

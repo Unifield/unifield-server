@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,32 +20,17 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Multi-Currency Management",
-    "version": "1.0",
-    "depends": ["account_journal", "account_override", "account_analytic_plans", "funding_pool", "purchase", "register_accounting"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to only use a subset of currencies, and have them available
-    for each accounting entry.
-    
-    """,
-    "init_xml": [
-        'data/currency_data.xml',
-    ],
-    'update_xml': [
-        'res_currency_functional_view.xml',
-        'account_move_view.xml',
-        'account_move_line_view.xml',
-        'account_bank_statement_view.xml',
-        'order_line_view.xml',
-    ],
-    'test': [
-        'test/res_currency_functional.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+from osv import osv
+from osv import fields
+
+class account_move(osv.osv):
+    _inherit = 'account.move'
+
+    _columns = {
+        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
+            string="Statement lines", help="This field give all statement lines linked to this move.")
+    }
+
+account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
