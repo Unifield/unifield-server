@@ -28,6 +28,18 @@ import decimal_precision as dp
 class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
 
+    def __init__(self, pool, cr):
+        """
+        Permits to OpenERP not attempt to update DB field with the old field_function
+        """
+        super(account_analytic_line, self).__init__(pool, cr)
+        if self.pool._store_function.get(self._name, []):
+            newstore = []
+            for fct in self.pool._store_function[self._name]:
+                if fct[1] not in ['currency_id', 'amount_currency']:
+                    newstore.append(fct)
+            self.pool._store_function[self._name] = newstore
+
     _columns = {
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", readonly=True, help="Invoice line from which this line is linked."),
@@ -35,15 +47,6 @@ class account_analytic_line(osv.osv):
         'amount_currency': fields.float(string="Amount currency", digits_compute=dp.get_precision('Account'), store=True, readonly="True", required=True, help="The amount expressed in an optional other currency."),
         'currency_id': fields.many2one('res.currency', string="Currency", store=True, required=True),
     }
-
-    def copy(self, cr, uid, defaults, context={}):
-        """
-        Update amount_currency from previous element
-        """
-        amt = self.read(cr, uid, defaults, ['amount_currency'], context=context).get('amount_currency', False)
-        res = super(account_analytic_line, self).copy(cr, uid, defaults, context=context)
-        self.write(cr, uid, [res], {'amount_currency': amt}, context=context)
-        return res
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
