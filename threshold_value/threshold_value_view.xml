@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-    <data noupdate="0">
+    <data>
     
         <record id="threshold_value_form_view" model="ir.ui.view">
         	<field name="name">threshold.value.form.view</field>
@@ -10,9 +10,10 @@
         		<form string="Threshold value">
         			<separator colspan="4" string="General Information" />
         			<field name="name" />
-        			<field name="warehouse_id" widget="selection" />
+        			<field name="warehouse_id" widget="selection" 
+        				on_change="onchange_warehouse_id(warehouse_id)" />
         			<field name="category_id" on_change="category_on_change(category_id)" />
-        			<field name="location_id" domain="[('warehouse_id', '=', warehouse_id)]" />
+        			<field name="location_id"  />
         			<field name="product_id" on_change="product_on_change(product_id)" 
         				attrs="{'invisible': [('category_id', '!=', False)], 'required': [('category_id', '=', False)]}" />
         			<field name="active" />
@@ -20,16 +21,23 @@
         			<newline />
         			<group colspan="2" col="2">
         				<separator colspan="2" string="Quantity rules" />
-        				<field name="threshold_value" />
-        				<field name="safety_stock" />
-        				<field name="qty_to_order" />
+        				<field name="threshold_manual_ok" 
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        				<field name="threshold_value"  attrs="{'readonly': [('threshold_manual_ok', '=', False)]}" />
+        				<field name="qty_order_manual_ok" 
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        				<field name="qty_to_order" attrs="{'readonly': [('qty_order_manual_ok', '=', False)]}" />
         			</group>
         			<group colspan="2" col="2">
         				<separator colspan="2" string="Calculation parameters" />
-        				<field name="frequency" />
-        				<field name="safety_month" />
-        				<field name="lead_time" attrs="{'readonly': [('supplier_lt', '=', True)]}" />
-        				<field name="supplier_lt" />
+        				<field name="frequency" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        				<field name="safety_month" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        				<field name="lead_time" attrs="{'readonly': [('supplier_lt', '=', True)], 'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}" 
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        				<field name="supplier_lt" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
         			</group>
         		</form>
         	</field>
