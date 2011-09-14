@@ -18,7 +18,7 @@
                             <field name="ref"/>
                             <field name="date"/>
                             <field name="period_id"/>
-                            <field name="account_id"/>
+                            <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
                             <field name="partner_type" attrs="{'required': [('partner_type_mandatory', '=', True)]}" invisible="1"/>
                             <field name="partner_type_mandatory" invisible="1"/>
                             <field name="debit"/>
