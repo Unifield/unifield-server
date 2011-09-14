@@ -47,9 +47,9 @@ class account_move_line(osv.osv):
                                      'date': obj_line.date,
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
-                                     'amount': self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
+                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
                                         distrib_line.amount or 0.0, round=False, context=context),
-                                     'amount_currency': distrib_line.amount,
+                                     'amount_currency': -1 * distrib_line.amount,
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
@@ -65,7 +65,7 @@ class account_move_line(osv.osv):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = move_line_obj.amount_currency or 0.0
+        amount = move_line_obj.amount_currency and move_line_obj.amount_currency or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = move_line_obj.currency_id and move_line_obj.currency_id.id or company_currency

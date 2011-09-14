@@ -104,7 +104,7 @@ class account_invoice_line(osv.osv):
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = invoice_line_obj.invoice_id.currency_id and invoice_line_obj.invoice_id.currency_id.id or company_currency
-        if invoice_line_obj.invoice_id.type in ['in_invoice', 'out_refund']:
+        if invoice_line_obj.invoice_id.type in ['out_invoice', 'in_refund']:
             negative_inv = True
         if negative_inv:
             amount = -1 * amount
@@ -141,7 +141,7 @@ class account_invoice_line(osv.osv):
                 vals['analytic_distribution_id'] = child_distrib_id
                 res_id =  super(account_invoice_line, self).create(cr, uid, vals, context=context)
                 amount = self._amount_line(cr, uid, [res_id], None, None, {})[res_id] or 0.0
-                if invoice_obj.type in ['in_invoice', 'out_refund']:
+                if invoice_obj.type in ['out_invoice', 'in_refund']:
                     amount = -1 * amount
                 company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
@@ -168,7 +168,7 @@ class account_invoice_line(osv.osv):
                 or ('reset_all' in context and context['reset_all']) \
                 or destination_distrib_obj.global_distribution:
                     amount = vals.get('price_subtotal', line.price_subtotal) or 0.0
-                    if line.invoice_id.type in ['in_invoice', 'out_refund']:
+                    if line.invoice_id.type in ['out_invoice', 'in_refund']:
                         amount = -1 * amount
                     company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                     currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency

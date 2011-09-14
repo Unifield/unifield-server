@@ -58,7 +58,7 @@ class account_bank_statement_line(osv.osv):
         # we get the analytical distribution object linked to this line
         distrib_id = False
         statement_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = statement_line_obj.amount or 0.0
+        amount = statement_line_obj.amount * -1 or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = statement_line_obj.statement_id.journal_id.currency and statement_line_obj.statement_id.journal_id.currency.id or company_currency
