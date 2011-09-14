@@ -19,10 +19,10 @@
                             <field name="date"/>
                             <field name="period_id"/>
                             <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                            <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="currency_id"/>
-                            <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string=""/>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </tree>
                     </field>
