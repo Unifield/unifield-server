@@ -8,6 +8,7 @@
         	<field name="type">form</field>
         	<field name="arch" type="xml">
         		<form string="Threshold value">
+        			<separator colspan="4" string="General Information" />
         			<field name="name" />
         			<field name="warehouse_id" widget="selection" />
         			<field name="category_id" on_change="category_on_change(category_id)" />
