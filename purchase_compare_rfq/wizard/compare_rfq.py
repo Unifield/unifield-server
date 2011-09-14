@@ -33,6 +33,7 @@ class wizard_compare_rfq(osv.osv_memory):
     _columns = {
         'rfq_number': fields.integer(string='# of Quotations', readonly=True),
         'line_ids': fields.one2many('wizard.compare.rfq.line', 'compare_id', string='Lines'),
+        'tender_id': fields.many2one('tender', string="Tender", readonly=True,)
     }
 
     def start_compare_rfq(self, cr, uid, ids, context={}):
@@ -42,17 +43,20 @@ class wizard_compare_rfq(osv.osv_memory):
         # openERP BUG ?
         ids = context.get('active_ids',[])
         
+        # tender reference
+        tender_id = context.get('tender_id', False)
+        
         if not ids:
             raise osv.except_osv(_('Error'), _('No quotation found !'))
-        if len(ids) < 2:
-            raise osv.except_osv(_('Error'), _('You should select at least two quotations to compare !'))
+#        if len(ids) < 2:
+#            raise osv.except_osv(_('Error'), _('You should select at least two quotations to compare !'))
             
         products = {}
         line_ids = []
         
         for o in order_obj.browse(cr, uid, ids, context=context):
-            if o.state != 'draft':
-                raise osv.except_osv(_('Error'), _('You cannot compare confirmed Quotations !'))
+            if o.state != 'draft' and o.state != 'rfq_done':
+                raise osv.except_osv(_('Error'), _('You cannot compare confirmed Purchase Order !'))
             for l in o.order_line:
                 if l.price_unit > 0.00:
                     if not products.get(l.product_id.id, False):
@@ -72,7 +76,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 line_ids.append((0, 0, cmp_line_ids[0]))
              
         rfq_compare_obj = self.pool.get('wizard.compare.rfq')
-        newid = rfq_compare_obj.create(cr, uid, {'rfq_number': len(ids), 'line_ids': line_ids})
+        newid = rfq_compare_obj.create(cr, uid, {'rfq_number': len(ids), 'line_ids': line_ids, 'tender_id': tender_id}, context=context)
         
         return {'type': 'ir.actions.act_window',
             'res_model': 'wizard.compare.rfq',
@@ -82,6 +86,36 @@ class wizard_compare_rfq(osv.osv_memory):
             'res_id': newid,
             'context': context,
            }
+        
+    def update_tender(self, cr, uid, ids, context=None):
+        '''
+        update the corresponding tender lines
+        
+        related rfq line: po_line_id.id
+        '''
+        tender_obj = self.pool.get('tender')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # loop through wizard_compare_rfq_line
+            tender_id = wiz.tender_id.id
+            for wiz_line in wiz.line_ids:
+                # check if a supplier has been selected for this product
+                if wiz_line.po_line_id:
+                    # update the tender lines with corresponding product_id
+                    for tender in tender_obj.browse(cr, uid, [wiz.tender_id.id], context=context):
+                        for tender_line in tender.tender_line_ids:
+                            if tender_line.product_id.id == wiz_line.product_id.id:
+                                values = {'purchase_order_line_id': wiz_line.po_line_id.id,}
+                                tender_line.write(values, context=context)
+
+            # display the corresponding tender                                
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'tender',
+                    'view_type': 'form',
+                    'view_mode': 'form,tree',
+                    'target': 'crush',
+                    'res_id': tender_id,
+                    'context': context
+                    }
         
     def create_po(self, cr, uid, ids, context={}):
         '''
