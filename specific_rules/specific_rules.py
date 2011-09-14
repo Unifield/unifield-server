@@ -447,20 +447,15 @@ class stock_production_lot(osv.osv):
         
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
     
-    def remove_flag(self, flag, list):
+    def remove_flag(self, flag, _list):
         '''
         if we do not remove the flag, we fall into an infinite loop
         '''
-        i = 0
-        to_del = []
-        for arg in list:
-            if arg[0] == flag:
-                to_del.append(i)
-            i+=1
-        for i in to_del:
-            list.pop(i)
-        
-        return True
+        args2 = []
+        for arg in _list:
+            if arg[0] != flag:
+                args2.append(arg)
+        return args2
     
     def search_check_type(self, cr, uid, obj, name, args, context=None):
         '''
@@ -475,7 +470,7 @@ class stock_production_lot(osv.osv):
         product_id = context.get('product_id', False)
         
         # remove flag avoid infinite loop
-        self.remove_flag('check_type', args)
+        args = self.remove_flag('check_type', args)
             
         if not product_id:
             return args
