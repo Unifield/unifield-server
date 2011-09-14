@@ -55,8 +55,6 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                     third_type = [('hr.employee', 'Employee')]
                     third_selection = 'hr.employee,'
                 res[st_line.id]['partner_type'] = {'options': third_type, 'selection': third_selection}
-    if self._table == 'wizard_journal_items_corrections_lines':
-        return dict(zip(res.keys(), [x.get('third_parties') for x in res.values()]))
     return res
 
 def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context={}):
