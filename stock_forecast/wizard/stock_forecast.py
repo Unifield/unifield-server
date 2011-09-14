@@ -152,7 +152,7 @@ class stock_forecast(osv.osv_memory):
                 'res_model': 'stock.forecast',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'new',
+                'target': 'popup',
                 'res_id': wizard_id,
                 'context': dict(context),
                 }
