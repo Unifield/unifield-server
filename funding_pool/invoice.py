@@ -43,7 +43,7 @@ class account_invoice(osv.osv):
         negative_inv = False
         invoice_obj = self.browse(cr, uid, ids[0], context=context)
         amount = invoice_obj.check_total or 0.0
-        if invoice_obj.type in ['in_invoice', 'out_refund']:
+        if invoice_obj.type in ['out_invoice', 'in_refund']:
             negative_inv = True
         if negative_inv:
             amount = -1 * amount
@@ -171,7 +171,7 @@ class account_invoice_line(osv.osv):
                     if line.invoice_id.type in ['out_invoice', 'in_refund']:
                         amount = -1 * amount
                     company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
+                    currency = line.invoice_id.currency_id and line.invoice_id.currency_id.id or company_currency
                     self.pool.get('analytic.distribution').copy_from_global_distribution(cr,
                                                                                          uid,
                                                                                          source_distrib_obj.id,
