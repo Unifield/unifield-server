@@ -65,6 +65,7 @@
         "specific_locations",
         "reason_types_moves",
         "stock_inventory_type",
+        "specific_rules",
     ],
     "update_xml": [
         "report.xml",
