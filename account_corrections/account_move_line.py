@@ -32,8 +32,53 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
+    def _is_corrigible(self, cr, uid, ids, name, args, context={}):
+        """
+        Return True for all element that correspond to some criteria:
+         - The entry state is posted
+         - The account is not payable or receivable
+         - Item have not been corrected
+         - Item have not been reversed
+         - The account is not the default credit/debit account of the attached statement (register)
+         - All items attached to the entry have no reconcile_id on reconciliable account
+        """
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            res[ml.id] = True
+            # False if move is posted
+            if ml.move_id.state != 'posted':
+                res[ml.id] = False
+            # False if account is payable or receivable
+            if ml.account_id.type in ['payable', 'receivable']:
+                res[ml.id] = False
+            # False if line have been corrected
+            if ml.corrected:
+                res[ml.id] = False
+            # False if line is a reversal
+            if ml.reversal:
+                res[ml.id] = False
+            # False if line account and statement default debit/credit account are similar
+            if ml.statement_id:
+                accounts = []
+                accounts.append(ml.statement_id.journal_id.default_debit_account_id and ml.statement_id.journal_id.default_debit_account_id.id)
+                accounts.append(ml.statement_id.journal_id.default_credit_account_id and ml.statement_id.journal_id.default_credit_account_id.id)
+                if ml.account_id.id in accounts:
+                    res[ml.id] = False
+            # False if one of move line account is reconciliable and reconciled
+            for aml in ml.move_id.line_id:
+                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                    res[aml.id] = False
+        return res
+
+    def _search_is_corrigible(self, cr, uid, obj, name, args, context={}):
+        """
+        This is for not having trouble on account_move_line search when displaying search view
+        """
+        return [('id', '=', '0')]
+
     _columns = {
-        'corrected': fields.boolean(string="Corrected?", readonly=True, help="If true, this line has been corrected by an accounting correction wizard"),
+        'corrected': fields.boolean(string="Corrected?", readonly=True, 
+            help="If true, this line has been corrected by an accounting correction wizard"),
         'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True, 
             help="Line that have been corrected by this one."),
         'reversal': fields.boolean(string="Reversal?", readonly=True, 
@@ -42,12 +87,17 @@ class account_move_line(osv.osv):
             help="Line that have been reversed by this one."),
         'have_an_historic': fields.boolean(string="Display historic?", readonly=True, 
             help="If true, this implies that this line have historical correction(s)."),
+        'is_corrigible': fields.function(_is_corrigible, fnct_search=_search_is_corrigible, method=True, string="Is corrigible?", type='boolean', 
+            readonly=True, help="This inform if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
+receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).", 
+            store=False),
     }
 
     _defaults = {
         'corrected': lambda *a: False,
         'reversal': lambda *a: False,
         'have_an_historic': lambda *a: False,
+        'is_corrigible': lambda *a: True,
     }
 
     def copy(self, cr, uid, id, defaults={}, context={}):
@@ -397,7 +447,8 @@ class account_move_line(osv.osv):
             # 1/ copy old distribution_id on new correction line
             # 2/ delete old distribution on original move line
             if ml.analytic_distribution_id:
-                self.write(cr, uid, [correction_line_id], {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
+                self.write(cr, uid, [correction_line_id], 
+                    {'analytic_distribution_id': ml.analytic_distribution_id and ml.analytic_distribution_id.id or False,}, context=context)
                 self.write(cr, uid, [ml.id], {'analytic_distribution_id': False}, context=context)
             # Update register line if exists
             if ml.statement_id:
