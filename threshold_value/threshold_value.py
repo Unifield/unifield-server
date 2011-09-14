@@ -35,6 +35,13 @@ class threshold_value(osv.osv):
         'uom_id': fields.many2one('product.uom', string='UoM'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'location_id': fields.many2one('stock.location', string='Location', required=True),
+        'threshold_value': fields.float(digits=(16,2), string='Threshold Value (in UoM)', required=True),
+        'safety_stock': fields.float(digits=(16,2), string='Safety Stock (in UoM)', required=True),
+        'qty_to_order': fields.float(digits=(16,2), string='Quantity to Order (in UoM)', required=True),
+        'frequency': fields.float(digits=(16,2), string='Order frequency'),
+        'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
+        'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
+        'supplier_lt': fields.boolean(string='Product\'s supplier LT'),
     }
     
     _defaults = {

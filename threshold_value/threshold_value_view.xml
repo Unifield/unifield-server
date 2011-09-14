@@ -17,6 +17,20 @@
         				attrs="{'invisible': [('category_id', '!=', False)], 'required': [('category_id', '=', False)]}" />
         			<field name="active" />
         			<field name="uom_id" attrs="{'invisible': [('category_id', '!=', False)]}" />
+        			<newline />
+        			<group colspan="2" col="2">
+        				<separator colspan="2" string="Quantity rules" />
+        				<field name="threshold_value" />
+        				<field name="safety_stock" />
+        				<field name="qty_to_order" />
+        			</group>
+        			<group colspan="2" col="2">
+        				<separator colspan="2" string="Calculation parameters" />
+        				<field name="frequency" />
+        				<field name="safety_month" />
+        				<field name="lead_time" />
+        				<field name="supplier_lt" />
+        			</group>
         		</form>
         	</field>
         </record>
