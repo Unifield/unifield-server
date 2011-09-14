@@ -75,7 +75,7 @@ class sale_order_line(osv.osv):
             if prod_obj.browse(cr, uid, product).short_shelf_life:
                 warning = {
                             'title': 'Short Shelf Life product',
-                            'message': SHORT_SHELF_LIFE_MESS
+                            'message': _(SHORT_SHELF_LIFE_MESS)
                             }
                 result.update(warning=warning)
             
@@ -101,7 +101,7 @@ class sale_order(osv.osv):
                 # log the message
                 if line.product_id.short_shelf_life:
                     # log the message
-                    self.log(cr, uid, obj.id, SHORT_SHELF_LIFE_MESS)
+                    self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -128,7 +128,7 @@ class purchase_order(osv.osv):
                 # log the message
                 if line.product_id.short_shelf_life:
                     # log the message
-                    self.log(cr, uid, obj.id, SHORT_SHELF_LIFE_MESS)
+                    self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -151,7 +151,7 @@ class stock_warehouse_orderpoint(osv.osv):
         product_id = vals.get('product_id', False)
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
-                self.log(cr, uid, new_id, SHORT_SHELF_LIFE_MESS)
+                self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
                 
         return new_id
     
@@ -166,7 +166,7 @@ class stock_warehouse_orderpoint(osv.osv):
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
                 for obj in self.browse(cr, uid, ids, context=context):
-                    self.log(cr, uid, obj.id, SHORT_SHELF_LIFE_MESS)
+                    self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
         
@@ -189,7 +189,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         product_id = vals.get('product_id', False)
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
-                self.log(cr, uid, new_id, SHORT_SHELF_LIFE_MESS)
+                self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
                 
         return new_id
     
@@ -204,7 +204,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
                 for obj in self.browse(cr, uid, ids, context=context):
-                    self.log(cr, uid, obj.id, SHORT_SHELF_LIFE_MESS)
+                    self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
     
@@ -227,7 +227,7 @@ class stock_warehouse_order_cycle(osv.osv):
         product_id = vals.get('product_id', False)
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
-                self.log(cr, uid, new_id, SHORT_SHELF_LIFE_MESS)
+                self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
                 
         return new_id
     
@@ -245,7 +245,7 @@ class stock_warehouse_order_cycle(osv.osv):
         if product_id:
             if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
                 for obj in self.browse(cr, uid, ids, context=context):
-                    self.log(cr, uid, obj.id, SHORT_SHELF_LIFE_MESS)
+                    self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
     
