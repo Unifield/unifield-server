@@ -34,6 +34,29 @@
         	</field>
         </record>
         
+        <record id="threshold_value_search_view" model="ir.ui.view">
+        	<field name="name">threshold.value.search.view</field>
+        	<field name="model">threshold.value</field>
+        	<field name="type">search</field>
+        	<field name="arch" type="xml">
+        		<search string="Threshold values">
+        			 <group expand="1" string="Filters...">
+        			 	<field name="name" default_focus="1" />
+        			 	<field name="product_id" eval="context.get('product_id', False)" />
+        			 	<field name="category_id" eval="context.get('category_id', False)" />
+        			 	<field name="location_id" eval="context.get('location_id', False)" />
+	                </group>
+	                <newline/>
+	                <group expand="1" string="Group By...">
+	                	<filter name="group_product_categ_id" string="Product Category" icon="terp-stock_symbol-selection" context="{'group_by':'product_categ_id'}"/>
+	                	<filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
+	                	<separator orientation="vertical"/>
+	                	<filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+	                </group>
+        		</search>
+        	</field>
+        </record>
+        
         <record id="action_threshold_value" model="ir.actions.act_window">
         	<field name="name">Threshold value</field>
         	<field name="res_model">threshold.value</field>
