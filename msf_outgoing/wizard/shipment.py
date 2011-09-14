@@ -39,6 +39,60 @@ class shipment_wizard(osv.osv_memory):
         'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
      }
     
+    def select_all(self, cr, uid, ids, context=None):
+        '''
+        select all buttons, write max number of packs in each pack family line
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for line in wiz.product_moves_shipment_create:
+                line.write({'selected_number':int(line.num_of_packs),}, context=context)
+            for line in wiz.product_moves_shipment_returnpacks:
+                line.write({'selected_number':int(line.num_of_packs),}, context=context)
+            for line in wiz.product_moves_shipment_returnpacksfromshipment:
+                line.write({'return_from': line.from_pack,
+                            'return_to': line.to_pack,}, context=context)
+        
+        return {
+                'name': 'Create Shipment',
+                'view_mode': 'form',
+                'view_id': False,
+                'view_type': 'form',
+                'res_model': 'shipment.wizard',
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': context,
+                }
+        
+    def deselect_all(self, cr, uid, ids, context=None):
+        '''
+        select all buttons, write max number of packs in each pack family line
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for line in wiz.product_moves_shipment_create:
+                line.write({'selected_number':0,}, context=context)
+            for line in wiz.product_moves_shipment_returnpacks:
+                line.write({'selected_number':0,}, context=context)
+            for line in wiz.product_moves_shipment_returnpacksfromshipment:
+                line.write({'return_from': 0,
+                            'return_to': 0,}, context=context)
+        
+        return {
+                'name': 'Create Shipment',
+                'view_mode': 'form',
+                'view_id': False,
+                'view_type': 'form',
+                'res_model': 'shipment.wizard',
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': context,
+                }
+    
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
          @param self: The object pointer.
@@ -169,10 +223,12 @@ class shipment_wizard(osv.osv_memory):
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
-                <group col="3" colspan="2">
+                <group col="4" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />
                 <button name="select_all" string="Select All"
+                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
+                <button name="deselect_all" string="Deselect All"
                     colspan="1" type="object" icon="terp_stock_symbol-selection" />
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />

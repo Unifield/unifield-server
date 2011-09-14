@@ -25,3 +25,4 @@ import certificate_donation
 import certificate_free_gift
 import stock_picking_test
 import pre_packing_list
+import labels

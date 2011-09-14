@@ -49,6 +49,14 @@
                 header="False"
                 rml="addons/msf_outgoing/report/pre_packing_list.rml"
                 string="Pre-Packing List" />
+                
+        <report auto="False" 
+                id="labels" 
+                model="stock.picking" 
+                name="labels"
+                header="False"
+                rml="addons/msf_outgoing/report/labels.rml"
+                string="Labels" />
     
     </data>
 </openerp>

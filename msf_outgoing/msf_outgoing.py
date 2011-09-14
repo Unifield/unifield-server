@@ -680,6 +680,7 @@ class pack_family(osv.osv):
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='family_vals',),
                 }
     _defaults = {'state': 'draft'}
+    _order = 'name desc, from_pack'
 
 pack_family()
 
@@ -692,6 +693,28 @@ class shipment(osv.osv):
     _columns = {'pack_family_ids': fields.one2many('pack.family', 'shipment_id', string='Pack Families')}
 
 shipment()
+
+
+class ppl_customize_label(osv.osv):
+    '''
+    label preferences
+    '''
+    _name = 'ppl.customize.label'
+    _columns = {'name': fields.char(string='Name', size=1024,),
+                'notes': fields.text(string='Notes'),
+                'packing_list_reference': fields.boolean(string='Packing List Reference'),
+                'pre_packing_list_reference': fields.boolean(string='Pre-Packing List Reference'),
+                'destination_partner': fields.boolean(string='Destination Partner'),
+                'destination_address': fields.boolean(string='Destination Address'),
+                'requestor_order_reference': fields.boolean(string='Requestor Order Reference'),
+                'weight': fields.boolean(string='Weight'),
+                'shipment_reference': fields.boolean(string='Shipment Reference'),
+                'packing_parcel_number': fields.boolean(string='Packing Parcel Number'),
+                'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
+                'specific_information': fields.boolean(string='Specific Information'),
+                }
+
+ppl_customize_label()
 
 
 class stock_picking(osv.osv):
@@ -739,6 +762,9 @@ class stock_picking(osv.osv):
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
+                # attributes for specific packing labels
+                'label_preferences': fields.boolean(string='Packing List Reference'),
+                
                 # functions
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),

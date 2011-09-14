@@ -194,12 +194,32 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
     _name = "stock.move.memory.shipment.create"
     _inherit = "stock.move.memory.families"
     _rec_name = 'from_pack'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for memory_move in self.browse(cr, uid, ids, context=context):
+            values = {'num_of_packs': 0,
+                      'selected_weight': 0.0,
+                      }
+            result[memory_move.id] = values
+            # number of packs with from/to values
+            num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
+            values['num_of_packs'] = num_of_packs
+            selected_weight = memory_move.weight * memory_move.selected_number
+            values['selected_weight'] = selected_weight
+                    
+        return result
+    
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
-                'num_of_packs': fields.integer(string='#Packs'),
                 'selected_number': fields.integer(string='Selected Number'),
-                'selected_weight' : fields.float(digits=(16,2), string='Selected Weight [kg]'),
+                # functions
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals',),
     }
     
 stock_partial_move_memory_shipment_create()
