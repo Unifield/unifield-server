@@ -65,6 +65,7 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
         fields = value.split(",")
         element = fields[0]
         sql = "UPDATE %s SET " % self._table
+        obj = False
         if element == 'hr.employee':
             obj = 'employee_id'
         elif element == 'account.bank.statement':
