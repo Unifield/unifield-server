@@ -28,7 +28,7 @@
         				<separator colspan="2" string="Calculation parameters" />
         				<field name="frequency" />
         				<field name="safety_month" />
-        				<field name="lead_time" />
+        				<field name="lead_time" attrs="{'readonly': [('supplier_lt', '=', True)]}" />
         				<field name="supplier_lt" />
         			</group>
         		</form>

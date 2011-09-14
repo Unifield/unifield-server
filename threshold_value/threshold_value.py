@@ -46,6 +46,7 @@ class threshold_value(osv.osv):
     
     _defaults = {
         'name': lambda obj, cr, uid, context={}: obj.pool.get('ir.sequence').get(cr, uid, 'threshold.value') or '',
+        'active': lambda *a: True,
     }
     
     def product_on_change(self, cr, uid, ids, product_id=False, context={}):
