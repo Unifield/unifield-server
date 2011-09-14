@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="0">
+    
+        <record id="threshold_value_form_view" model="ir.ui.view">
+        	<field name="name">threshold.value.form.view</field>
+        	<field name="model">threshold.value</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Threshold value">
+        			<field name="name" />
+        			<field name="warehouse_id" widget="selection" />
+        			<field name="category_id" on_change="category_on_change(category_id)" />
+        			<field name="location_id" domain="[('warehouse_id', '=', warehouse_id)]" />
+        			<field name="product_id" on_change="product_on_change(product_id)" 
+        				attrs="{'invisible': [('category_id', '!=', False)], 'required': [('category_id', '=', False)]}" />
+        			<field name="active" />
+        			<field name="uom_id" attrs="{'invisible': [('category_id', '!=', False)]}" />
+        		</form>
+        	</field>
+        </record>
+        
+        <record id="threshold_value_tree_view" model="ir.ui.view">
+        	<field name="name">threshold.value.tree.view</field>
+        	<field name="model">threshold.value</field>
+        	<field name="type">tree</field>
+        	<field name="arch" type="xml">
+        		<tree string="Threshold value">
+        			<field name="name" />
+        			<field name="category_id" />
+        			<field name="product_id" />
+        			<field name="location_id" />
+        		</tree>
+        	</field>
+        </record>
+        
+        <record id="action_threshold_value" model="ir.actions.act_window">
+        	<field name="name">Threshold value</field>
+        	<field name="res_model">threshold.value</field>
+        	<field name="view_type">form</field>
+        	<field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_threshold_value"
+        		  action="action_threshold_value"
+        		  parent="procurement.menu_stock_procurement" />
+    
+    </data>
+</openerp>

@@ -94,8 +94,7 @@ class real_average_consumption(osv.osv):
         
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
-                return False
-                #raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
+                raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
             

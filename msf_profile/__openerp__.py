@@ -62,6 +62,7 @@
         "reason_types_moves",
         "stock_inventory_type",
         "consumption_calculation",
+        "threshold_value",
     ],
     "update_xml": [
         "report.xml",

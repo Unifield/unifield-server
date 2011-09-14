@@ -29,10 +29,9 @@
   I click on the button 'Save and Process'
 -
   !python {model: real.average.consumption}: |
-    from osv import osv
     try:
       self.process_moves(cr, uid, ref('rac1'), context=context)
-    except osv.except_osv, e:
+    except:
       assert False, "Error when processing moves"
 -
   I check if stock moves has been created
@@ -61,7 +60,11 @@
   I click on the button 'Save and Process'
 -
   !python {model: real.average.consumption}: |
-    self.process_moves(cr, uid, ref('rac2'))
+    try:
+      self.process_moves(cr, uid, ref('rac2'), context=context)
+      assert False, "Moves are processed when valid_ok is not true"
+    except:
+      pass
 -
   I check if stock moves hasn't been created
 -
@@ -90,7 +93,7 @@
 -
   !python {model: real.average.consumption}: |
     try:
-      res = self.process_moves(cr, uid, ref('rac3'))
+      self.process_moves(cr, uid, ref('rac3'), context=context)
     except:
       assert False, "Error when processing moves"
 -
