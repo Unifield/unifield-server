@@ -31,8 +31,6 @@ ORDER_CATEGORY = [('medical', 'Medical'),
                   ('mixed', 'Mixed'),
                   ('other', 'Other')]
 
-import purchase
-import sale
 import stock
 import report
 import wizard

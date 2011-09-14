@@ -10,4 +10,4 @@ ORDER_CATEGORY = [('medical', 'Medical'),
                   ('mixed', 'Mixed'),
                   ('other', 'Other')]
 
-import sale
+import purchase

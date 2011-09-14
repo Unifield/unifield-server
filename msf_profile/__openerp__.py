@@ -33,7 +33,6 @@
     "depends" : [
         "msf_partner",
         "register_accounting",
-        "stock_inventory_type",
         "analytic_plan_tree",
         "account_period_closing_level",
         "account_activable",  
@@ -64,6 +63,8 @@
         'account_invoice_split',
         "account_msf",
         "specific_locations",
+        "reason_types_moves",
+        "stock_inventory_type",
     ],
     "update_xml": [
         "report.xml",

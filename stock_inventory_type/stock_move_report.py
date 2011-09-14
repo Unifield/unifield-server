@@ -33,6 +33,7 @@ class report_stock_move(osv.osv):
     
     _columns = {
         'type_id': fields.many2one('stock.adjustment.type', string='Adjustment type'),
+        'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
     }
     
     def init(self, cr):
@@ -43,6 +44,7 @@ class report_stock_move(osv.osv):
                 SELECT
                         min(sm_id) as id,
                         al.sm_type_id as type_id,
+                        al.sm_reason_type_id as reason_type_id,
                         date_trunc('day',al.dp) as date,
                         al.curr_year as year,
                         al.curr_month as month,
@@ -85,6 +87,7 @@ class report_stock_move(osv.osv):
                         min(sm.id) as sm_id,
                         sm.date as dp,
                         sm.type_id as sm_type_id,
+                        sm.reason_type_id as sm_reason_type_id,
                         to_char(date_trunc('day',sm.date), 'YYYY') as curr_year,
                         to_char(date_trunc('day',sm.date), 'MM') as curr_month,
                         to_char(date_trunc('day',sm.date), 'YYYY-MM-DD') as curr_day,
@@ -112,14 +115,14 @@ class report_stock_move(osv.osv):
                         LEFT JOIN stock_location sl ON (sm.location_id = sl.id)
 
                     GROUP BY
-                        sm.id,sp.type, sm.date,sm.address_id, sm.type_id,
+                        sm.id,sp.type, sm.date,sm.address_id, sm.type_id, sm.reason_type_id,
                         sm.product_id,sm.state,sm.product_uom,sm.date_expected,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty,
                         sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.categ_id, sp.stock_journal_id)
                     AS al
 
                     GROUP BY
-                        al.out_qty,al.in_qty,al.curr_year,al.curr_month, al.sm_type_id,
+                        al.out_qty,al.in_qty,al.curr_year,al.curr_month, al.sm_type_id, al.sm_reason_type_id,
                         al.curr_day,al.curr_day_diff,al.curr_day_diff1,al.curr_day_diff2,al.dp,al.location_id,al.location_dest_id,
                         al.address_id,al.product_id,al.state,al.product_uom,
                         al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal
