@@ -87,15 +87,6 @@ class wizard_fundingpool_distribution(osv.osv_memory):
         # else, return normal behaviour
         return super(wizard_fundingpool_distribution, self).button_cancel(cr, uid, ids, context=context)
 
-    def store_distribution(self, cr, uid, wiz_id, context={}):
-        """
-        Do reversal lines if period is closed
-        """
-        if not context:
-            context = {}
-        
-        return super(wizard_fundingpool_distribution, self).store_distribution(cr, uid, wiz_id, context=context)
-
     def button_save(self, cr, uid, ids, context={}):
         """
         Save modifications and return to initial wizard if given
