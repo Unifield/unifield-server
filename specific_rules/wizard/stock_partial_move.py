@@ -26,44 +26,16 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
-    def _get_checks_batch(self, cr, uid, ids, name, arg, context=None):
-        '''
-        todo should be merged with 'multi'
-        '''
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
-            result[id] = False
+            result[id] = {'batch_number_check': False, 'expiry_date_check': False, 'type_check': False}
             
         for out in self.browse(cr, uid, ids, context=context):
             if out.product_id:
-                result[out.id] = out.product_id.batch_management
-            
-        return result
-    
-    def _get_checks_expiry(self, cr, uid, ids, name, arg, context=None):
-        '''
-        todo should be merged with 'multi'
-        '''
-        result = {}
-        for id in ids:
-            result[id] = False
-            
-        for out in self.browse(cr, uid, ids, context=context):
-            if out.product_id:
-                result[out.id] = out.product_id.perishable
-            
-        return result
-    
-    def _get_checks_type(self, cr, uid, ids, name, arg, context=None):
-        '''
-        todo should be merged with 'multi'
-        '''
-        result = {}
-        for id in ids:
-            result[id] = False
-            
-        for out in self.browse(cr, uid, ids, context=context):
-            result[out.id] = out.move_id.type
+                result[out.id]['batch_number_check'] = out.product_id.batch_management
+                result[out.id]['expiry_date_check'] = out.product_id.perishable
+            result[out.id]['type_check'] = out.move_id.type
             
         return result
     
@@ -116,9 +88,9 @@ class stock_partial_move_memory_out(osv.osv_memory):
         return result
     
     _columns = {
-        'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True),
-        'expiry_date_check': fields.function(_get_checks_expiry, method=True, string='Expiry Date Check', type='boolean', readonly=True),
-        'type_check': fields.function(_get_checks_type, method=True, string='Picking Type Check', type='char', readonly=True),
+        'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
+        'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
+        'type_check': fields.function(_get_checks_all, method=True, string='Picking Type Check', type='char', readonly=True, multi="m"),
         'expiry_date': fields.date('Expiry Date'),
     }
 
