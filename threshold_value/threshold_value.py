@@ -97,7 +97,7 @@ class threshold_value(osv.osv):
             
             # If the user hasn't fill manually the qty to order value, compute them
             if not qty_order_manual_ok:
-                qty_order = amc * (lead_time + safety_month + frequency)
+                qty_order = amc * (lead_time + safety_month + frequency) - product.real_available + product.incoming_qty - product.outgoing_qty
                 qty_order = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_order, product.uom_id.id)
                 
                 v.update({'qty_to_order': qty_order})
@@ -106,20 +106,15 @@ class threshold_value(osv.osv):
         if not product_id:
             v.update({'threshold_value': 0.00,
                       'qty_to_order': 0.00})
-
-        # If the threshold form is for an entire product category, display an explanation message
-        if category_id:
-            m = {'title': 'Warning',
-                 'message': '''The threshold and order quantity values couldn\'t be calculated for an entire category but
-they will be used on scheduler to reorder product !'''}
             
         
         return {'value': v,}
-                #'warning': m}
     
     def product_on_change(self, cr, uid, ids, product_id=False, context={}):
         '''
         Update the UoM when the product change
+        
+        If no product, remove the UoM value
         '''
         v = {}
         
@@ -138,18 +133,22 @@ they will be used on scheduler to reorder product !'''}
     
     def category_on_change(self, cr, uid, ids, category_id=False, context={}):
         '''
-        If a category is selected, remove values of product and uom on the form
+        If a category is selected, remove values for product and uom on the form
         '''
-        v = {}
+        v = m = {}
         
         if category_id:
             v.update({'product_id': False,
                       'uom_id': False})
+            # If the threshold form is for an entire product category, display an explanation message
+            m = {'title': 'Warning',
+                 'message': '''If you define a threshold rule for an entire category, the values for threshold and order quantities
+will can\'t be displayed on this form for each product of the category, but it will be used when the scheduler will compute reorder products !'''}
             
-        return {'value': v}
+        return {'value': v, 'warning': m}
     
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, context=None):
-        """ Finds location id for changed warehouse.
+        """ Finds default stock location id for changed warehouse.
         @param warehouse_id: Changed id of warehouse.
         @return: Dictionary of values.
         """
