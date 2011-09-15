@@ -52,9 +52,9 @@ class journal_items_corrections_lines(osv.osv_memory):
 #            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
 #            help="To use for python code when registering", multi="third_parties_key"),
         # Third Parties fields - END
-        'debit': fields.float('Func. Out', readonly=True),
-        'credit': fields.float('Func. In', readonly=True),
-        'currency_id': fields.many2one('res.currency', string="Func. currency", readonly=True),
+        'debit_currency': fields.float('Book. Out', readonly=True),
+        'credit_currency': fields.float('Book. In', readonly=True),
+        'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
     }
 
@@ -110,10 +110,10 @@ class journal_items_corrections(osv.osv_memory):
                 'ref': move_line.ref,
                 'journal_id': move_line.journal_id.id,
                 'date': move_line.date,
-                'debit': move_line.debit,
-                'credit': move_line.credit,
+                'debit_currency': move_line.debit_currency,
+                'credit_currency': move_line.credit_currency,
                 'period_id': move_line.period_id.id,
-                'currency_id': move_line.functional_currency_id.id,
+                'currency_id': move_line.currency_id.id,
                 'partner_id': move_line.partner_id and move_line.partner_id.id or None,
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
                 'register_id': move_line.register_id and move_line.register_id.id or None,
