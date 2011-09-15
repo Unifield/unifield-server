@@ -108,6 +108,16 @@ class res_partner(osv.osv):
                 'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time', multi="seller_delay"),
                 }
     
+    _defaults = {'customer_lt': 0,
+                 'procurement_lt': 0,
+                 'transport_by_air_lt': 0,
+                 'transport_by_sea_lt': 0,
+                 'transport_by_road_lt': 0,
+                 'air_sequence': 1,
+                 'sea_sequence': 2,
+                 'road_sequence': 3,
+                 }
+    
 res_partner()
 
 
@@ -148,11 +158,13 @@ class product_supplierinfo(osv.osv):
         '''
         set the default delay value
         '''
-        # supplier object
-        partner_obj = self.pool.get('res.partner')
-        # partner
-        partner = partner_obj.browse(cr, uid, name)
-        
-        return {'value': {'delay': partner.default_delay}}
-        
+        if name:
+            # supplier object
+            partner_obj = self.pool.get('res.partner')
+            # partner
+            partner = partner_obj.browse(cr, uid, name)
+            
+            return {'value': {'delay': partner.default_delay}}
+        else:
+            return {'value': {'delay': False}}
 product_supplierinfo()

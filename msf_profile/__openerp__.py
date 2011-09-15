@@ -66,6 +66,7 @@
         "reason_types_moves",
         "stock_inventory_type",
         "specific_rules",
+        "tender_flow",
     ],
     "update_xml": [
         "report.xml",
