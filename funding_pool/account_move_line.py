@@ -29,7 +29,7 @@ class account_move_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
-    
+
     def create_analytic_lines(self, cr, uid, ids, context=None):
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -57,14 +57,20 @@ class account_move_line(osv.osv):
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
                         }
+                        # Add source_date value for account_move_line that are a correction of another account_move_line
+                        if obj_line.corrected_line_id and obj_line.source_date:
+                            line_vals.update({'source_date': obj_line.source_date})
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
-                    
         return True
-    
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
+        """
+        Launch the analytic distribution wizard from a journal item (account_move_line)
+        """
         # we get the analytical distribution object linked to this line
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)
+        # Get amount using account_move_line amount_currency field
         amount = move_line_obj.amount_currency and move_line_obj.amount_currency or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -90,7 +96,6 @@ class account_move_line(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
-    
-account_move_line()
 
+account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
