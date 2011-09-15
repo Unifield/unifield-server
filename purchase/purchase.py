@@ -758,6 +758,40 @@ class procurement_order(osv.osv):
         res = self.make_po(cr, uid, ids, context=context)
         res = res.values()
         return len(res) and res[0] or 0 #TO CHECK: why workflow is generated error if return not integer value
+    
+    def get_partner_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return a dictionary with partner, seller_qty and seller_delay
+        '''
+        result = {}
+        
+        procurement = kwargs['procurement']
+        partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
+        seller_qty = procurement.product_id.seller_qty
+        seller_delay = int(procurement.product_id.seller_delay)
+        
+        result.update(partner=partner,
+                      seller_qty=seller_qty,
+                      seller_delay=seller_delay)
+        
+        return result
+    
+    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        data for the purchase order creation
+        '''
+        values = kwargs['values']
+        return values
+    
+    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        creation of purchase order
+        return the id of newly created po
+        '''
+        po_obj = self.pool.get('purchase.order')
+        values = kwargs['values']
+        purchase_id = po_obj.create(cr, uid, values, context=context)
+        return purchase_id
 
     def make_po(self, cr, uid, ids, context=None):
         """ Make purchase order from procurement
@@ -775,9 +809,12 @@ class procurement_order(osv.osv):
         po_obj = self.pool.get('purchase.order')
         for procurement in self.browse(cr, uid, ids, context=context):
             res_id = procurement.move_id.id
-            partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
-            seller_qty = procurement.product_id.seller_qty
-            seller_delay = int(procurement.product_id.seller_delay)
+            
+            # partner, seller_qty and seller_delay are computed with hook
+            hook = self.get_partner_hook(cr, uid, ids, context=context, procurement=procurement)
+            partner = hook['partner']
+            seller_qty = hook['seller_qty']
+            seller_delay = hook['seller_delay']
             partner_id = partner.id
             address_id = partner_obj.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
             pricelist_id = partner.property_product_pricelist_purchase.id
@@ -789,9 +826,11 @@ class procurement_order(osv.osv):
                 qty = max(qty,seller_qty)
 
             price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
+            if hook.get('price_unit', False):
+                price = hook.get('price_unit', False)            
 
             newdate = datetime.strptime(procurement.date_planned, '%Y-%m-%d %H:%M:%S')
-            newdate = (newdate - relativedelta(days=company.po_lead)) - relativedelta(days=seller_delay)
+            newdate = (newdate - relativedelta(days=int(company.po_lead))) - relativedelta(days=int(seller_delay))
 
             #Passing partner_id to context for purchase order line integrity of Line name
             context.update({'lang': partner.lang, 'partner_id': partner_id})
@@ -814,16 +853,20 @@ class procurement_order(osv.osv):
             line.update({
                 'taxes_id': [(6,0,taxes)]
             })
-            purchase_id = po_obj.create(cr, uid, {
-                'origin': procurement.origin,
-                'partner_id': partner_id,
-                'partner_address_id': address_id,
-                'location_id': procurement.location_id.id,
-                'pricelist_id': pricelist_id,
-                'order_line': [(0,0,line)],
-                'company_id': procurement.company_id.id,
-                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False
-            })
+            values = {
+                      'origin': procurement.origin,
+                      'partner_id': partner_id,
+                      'partner_address_id': address_id,
+                      'location_id': procurement.location_id.id,
+                      'pricelist_id': pricelist_id,
+                      'order_line': [(0,0,line)],
+                      'company_id': procurement.company_id.id,
+                      'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+                      }
+            # values modification from hook
+            values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement)
+            # purchase creation from hook
+            purchase_id = self.create_po_hook(cr, uid, ids, context=context, values=values, procurement=procurement)
             res[procurement.id] = purchase_id
             self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
         return res
