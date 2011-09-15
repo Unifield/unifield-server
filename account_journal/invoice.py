@@ -132,6 +132,9 @@ class account_invoice_line(osv.osv):
                                 date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
                         # Prepare some values
                         invoice_currency = inv_line.invoice_id.currency_id.id
+                        amount = distrib_line.amount
+                        if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
+                            amount = -1 * amount
                         context.update({'date': date})
                         al_vals = {
                             'name': inv_line.name,
@@ -140,8 +143,8 @@ class account_invoice_line(osv.osv):
                             'unit_amount': inv_line.quantity,
                             'product_id': inv_line.product_id and inv_line.product_id.id or False,
                             'product_uom_id': inv_line.uos_id and inv_line.uos_id.id or False,
-                            'amount': self.pool.get('res.currency').compute(cr, uid, invoice_currency, company_currency, distrib_line.amount or 0.0, round=False, context=context),
-                            'amount_currency': distrib_line.amount or 0.0,
+                            'amount': self.pool.get('res.currency').compute(cr, uid, invoice_currency, company_currency, amount or 0.0, round=False, context=context),
+                            'amount_currency': amount or 0.0,
                             'currency_id': invoice_currency,
                             'general_account_id': inv_line.account_id.id,
                             'journal_id': journal,
