@@ -36,6 +36,7 @@
         "stock",
         "purchase",
         "msf_order_date",
+        "purchase_double_validation",
         "tender_flow",
     ],
     "update_xml": [

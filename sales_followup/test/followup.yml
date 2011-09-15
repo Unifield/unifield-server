@@ -15,7 +15,7 @@
     order_type: regular
     order_line:
       - name: P1
-        price_unit: 200
+        price_unit: 5000
         product_uom: product.product_uom_unit
         product_uom_qty: 5.0
         state: draft
@@ -25,7 +25,7 @@
         th_weight: 0.0
         type: make_to_order
       - name: P4
-        price_unit: 200
+        price_unit: 5000
         product_uom: product.product_uom_unit
         product_uom_qty: 2.0
         state: draft
@@ -342,7 +342,7 @@
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (4/P1)"
               assert line.purchase_status == 'Confirmed', "The purchase status is different than 'Confirmed' (4/P1)"
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (4/P1)"
-              assert line.incoming_status == 'No shipment', "The incoming status is different than 'No shipment' (4/P1)"
+              assert line.incoming_status == 'No shipment', "The incoming status is different than 'Mo shipment' (4/P1)"
               assert line.product_available == 'Waiting', "The product availability is not 'Waiting' (4/P1)"
               assert line.available_qty == 0.00, "The available qty is not equal to 0.00 (4/P1)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P1)"
@@ -389,7 +389,7 @@
               assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (4/P4)"
               assert line.quotation_status == 'No quotation', "Quotation status is different than 'No quotation' (4/P4)"
               assert len(line.purchase_ids) == 1, "Number of PO is different than 1 (4/P4)"
-              assert line.purchase_status == 'Confirmed', "The purchase status is different than 'Confirmed' (4/P4)"
+              assert line.purchase_status == 'Confirmed', "The purchase status is different than 'Confirmed' (4/P4)"  
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (4/P4)"
               assert line.incoming_status == 'No shipment', "The incoming status is different than 'No shipment' (4/P4)"
               assert line.product_available == 'Waiting', "The product availability is not 'Waiting' (4/P4)"
