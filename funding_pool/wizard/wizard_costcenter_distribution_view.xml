@@ -10,25 +10,24 @@
                             <field colspan="2" name="total_amount" readonly="1"/>
                             <field colspan="2" name="entry_mode"/>
                             <separator colspan="4" string="Allocation"/>
-		                    <field colspan="4" name="wizard_distribution_lines" nolabel="1" widget="one2many_list">
-		                        <tree string="" editable="top">
-		                            <field name="analytic_id" domain="[('type', '!=', 'view'),
-		                                                               ('category', '=', 'OC'),
-		                                                               ('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
+                            <field colspan="4" name="wizard_distribution_lines" nolabel="1" widget="one2many_list">
+                                <tree string="" editable="top">
+                                    <field name="analytic_id" domain="[('type', '!=', 'view'),
+                                                                       ('category', '=', 'OC'),
+                                                                       ('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
                                                                        ('|'),
                                                                        ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
                                                                        ('date', '=', False)]"/>
-		                            <field name="percentage" sum="Total Percentage"/>
-		                            <field name="amount" sum="Total Amount"/>
-		                        </tree>
-		                    </field>
+                                    <field name="percentage" sum="Total Percentage"/>
+                                    <field name="amount" sum="Total Amount"/>
+                                </tree>
+                            </field>
                             <group colspan="4">
-                                <button name="button_next_step" string="Next" type="object" icon="gtk-apply" colspan="2" />
                                 <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="2"/>
+                                <button name="button_next_step" string="Next" type="object" icon="gtk-go-forward" colspan="2" />
                             </group>
                         </form>
                   </field>
             </record>
-	        
        </data>
-</openerp> 
+</openerp>

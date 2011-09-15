@@ -166,7 +166,7 @@ class wizard_free2_distribution(osv.osv_memory):
             
     def button_previous_step(self, cr, uid, ids, context={}):
         # and we open the previous state
-        if 'funding_pool' not in context['wizard_ids']:
+        if 'free_1' not in context['wizard_ids']:
             # we should never be there
             raise osv.except_osv(_('Previous wizard missing!'),_("Previous wizard missing!"))
         # we open a wizard
@@ -176,7 +176,7 @@ class wizard_free2_distribution(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
-                'res_id': [newwiz_id],
+                'res_id': [context['wizard_ids']['free_1']],
                 'context': context
         }
             
@@ -188,8 +188,11 @@ class wizard_free2_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
+        # First save distribution
         self.store_distribution(cr, uid, ids[0], context=context)
-        # we open a wizard
+        # then recreate analytic lines
+        self.update_analytic_lines(cr, uid, ids, context=context)
+        # finally open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
 
     def button_cancel(self, cr, uid, ids, context={}):

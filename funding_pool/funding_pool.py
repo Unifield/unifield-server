@@ -30,6 +30,10 @@ class analytic_distribution(osv.osv):
         'name': fields.char('Name', size=12, required=True),
         'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
+        'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
+        'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
+        'register_line_ids': fields.one2many('account.bank.statement.line', 'analytic_distribution_id', string="Register Lines"),
+        'move_line_ids': fields.one2many('account.move.line', 'analytic_distribution_id', string="Move Lines"),
     }
 
     _defaults ={
@@ -71,6 +75,8 @@ class distribution_line(osv.osv):
         "amount": fields.float('Amount', required=True),
         "percentage": fields.float('Percentage'),
         "currency_id": fields.many2one('res.currency', 'Currency', required=True),
+        "date": fields.date(string="Date"),
+        "source_date": fields.date(string="Source Date", help="This date is for source_date for analytic lines"),
     }
 
     _defaults ={
@@ -144,6 +150,8 @@ class analytic_distribution(osv.osv):
                 'amount': round(source_cost_center_line.percentage * destination_amount) / 100.0,
                 'distribution_id': destination_id,
                 'currency_id': destination_currency,
+                'date': source_cost_center_line.date or False,
+                'source_date': source_cost_center_line.source_date or False,
             }
             cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_funding_pool_line in source_obj.funding_pool_lines:
@@ -155,6 +163,8 @@ class analytic_distribution(osv.osv):
                 'amount': round(source_funding_pool_line.percentage * destination_amount) / 100.0,
                 'distribution_id': destination_id,
                 'currency_id': destination_currency,
+                'date': source_funding_pool_line.date or False,
+                'source_date': source_funding_pool_line.source_date or False,
             }
             fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_1_line in source_obj.free_1_lines:
@@ -165,6 +175,8 @@ class analytic_distribution(osv.osv):
                 'amount': round(source_free_1_line.percentage * destination_amount) / 100.0,
                 'distribution_id': destination_id,
                 'currency_id': destination_currency,
+                'date': source_free_1_line.date or False,
+                'source_date': source_free_1_line.source_date or False,
             }
             f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_2_line in source_obj.free_2_lines:
@@ -175,6 +187,8 @@ class analytic_distribution(osv.osv):
                 'amount': round(source_free_2_line.percentage * destination_amount) / 100.0,
                 'distribution_id': destination_id,
                 'currency_id': destination_currency,
+                'date': source_free_2_line.date or False,
+                'source_date': source_free_2_line.source_date or False,
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)

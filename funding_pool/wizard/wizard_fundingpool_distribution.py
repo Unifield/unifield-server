@@ -242,8 +242,11 @@ class wizard_fundingpool_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
+        # First save distribution
         self.store_distribution(cr, uid, ids[0], context=context)
-        # and we open the following state with another abstract method
+        # then recreate analytic lines
+        self.update_analytic_lines(cr, uid, ids, context=context)
+        # finally open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
 
     def button_cancel(self, cr, uid, ids, context={}):

@@ -30,7 +30,7 @@ class wizard_distribution(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency"),
     }
     
-    def store_distribution(self, cr, uid, wizard_id, context=None):
+    def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         distrib_obj = self.pool.get('analytic.distribution')
         distrib_id = wizard_obj.distribution_id.id
@@ -54,6 +54,10 @@ class wizard_distribution(osv.osv_memory):
                         'distribution_id': distrib_id,
                         'currency_id': wizard_obj.currency_id.id,
                     }
+                    if source_date:
+                        distrib_line_vals.update({'source_date': source_date})
+                    if date:
+                        distrib_line_vals.update({'date': date})
                     cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'funding_pool' in context['wizard_ids']:
                 fp_wizard_obj = self.pool.get('wizard.fundingpool.distribution').browse(cr, uid, context['wizard_ids']['funding_pool'], context=context)
@@ -72,6 +76,10 @@ class wizard_distribution(osv.osv_memory):
                         'distribution_id': distrib_id,
                         'currency_id': wizard_obj.currency_id.id,
                     }
+                    if source_date:
+                        distrib_line_vals.update({'source_date': source_date})
+                    if date:
+                        distrib_line_vals.update({'date': date})
                     fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'free_1' in context['wizard_ids']:
                 f1_wizard_obj = self.pool.get('wizard.free1.distribution').browse(cr, uid, context['wizard_ids']['free_1'], context=context)
@@ -89,6 +97,10 @@ class wizard_distribution(osv.osv_memory):
                         'distribution_id': distrib_id,
                         'currency_id': wizard_obj.currency_id.id,
                     }
+                    if source_date:
+                        distrib_line_vals.update({'source_date': source_date})
+                    if date:
+                        distrib_line_vals.update({'date': date})
                     f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             if 'free_2' in context['wizard_ids']:
                 f2_wizard_obj = self.pool.get('wizard.free2.distribution').browse(cr, uid, context['wizard_ids']['free_2'], context=context)
@@ -106,13 +118,45 @@ class wizard_distribution(osv.osv_memory):
                         'distribution_id': distrib_id,
                         'currency_id': wizard_obj.currency_id.id,
                     }
+                    if source_date:
+                        distrib_line_vals.update({'source_date': source_date})
+                    if date:
+                        distrib_line_vals.update({'date': date})
                     f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
             # if there are child distributions, we refresh them
             if 'child_distributions' in context and context['child_distributions']:
                 for child in context['child_distributions']:
                     distrib_obj.copy_from_global_distribution(cr, uid, distrib_id, child[0], child[1], wizard_obj.currency_id.id, context=context)
         return
-    
-wizard_distribution()
 
+    def update_analytic_lines(self, cr, uid, ids, context={}):
+        """
+        Update analytic lines with an ugly method: delete old lines and create new ones
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Process all given wizards
+        for wizard in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            distrib = wizard.distribution_id or False
+            move_lines = [x.id for x in distrib.move_line_ids]
+            aal_obj = self.pool.get('account.analytic.line')
+            ml_obj = self.pool.get('account.move.line')
+            if not distrib:
+                return False
+            # Search account analytic lines attached to this move lines
+            operator = 'in'
+            if len(move_lines) == 1:
+                operator = '='
+            aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
+            if aal_ids:
+                # delete old analytic lines
+                aal_obj.unlink(cr, uid, aal_ids, context=context)
+                # create new analytic lines
+                ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+        return True
+
+wizard_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

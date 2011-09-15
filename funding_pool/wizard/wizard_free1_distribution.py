@@ -190,8 +190,6 @@ class wizard_free1_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
-        if wizard_obj.modified_line:
-            self._cleanup_and_store(cr, uid, ids[0], context=context)
         if 'free_2' not in context['wizard_ids']:
             newwiz_obj = self.pool.get('wizard.free2.distribution')
             newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id,
@@ -216,8 +214,11 @@ class wizard_free1_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
+        # First save distribution
         self.store_distribution(cr, uid, ids[0], context=context)
-        # we open a wizard
+        # then update analytic lines
+        self.update_analytic_lines(cr, uid, ids, context=context)
+        # finally open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
 
     def button_cancel(self, cr, uid, ids, context={}):

@@ -67,6 +67,11 @@ class account_move_line(osv.osv):
         """
         Launch the analytic distribution wizard from a journal item (account_move_line)
         """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # we get the analytical distribution object linked to this line
         distrib_id = False
         move_line_obj = self.browse(cr, uid, ids[0], context=context)

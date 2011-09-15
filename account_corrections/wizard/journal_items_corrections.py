@@ -69,8 +69,24 @@ class journal_items_corrections_lines(osv.osv_memory):
             ids = []
         # Prepare some values
         aml_obj = self.pool.get('account.move.line')
-        context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': self.browse(cr, uid, ids[0], context=context).wizard_id.id or False})
-        return aml_obj.button_analytic_distribution(cr, uid, [x.move_line_id.id for x in self.browse(cr, uid, ids, context=context)], context=context)
+        # Add context in order to know we come from a correction wizard
+        this_wizard = self.browse(cr, uid, ids[0], context=context).wizard_id
+        context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': this_wizard.id or False})
+        # Get wizard_id for cost_center_distribution before launching it
+        wizard = aml_obj.button_analytic_distribution(cr, uid, [this_wizard.move_line_id.id], context=context)
+        if 'res_model' in wizard and 'res_id' in wizard:
+            wiz_obj = self.pool.get(wizard.get('res_model'))
+            wiz_obj.write(cr, uid, wizard.get('res_id'), {'state': 'correction', 'date': this_wizard.date or False}, context=context)
+            return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': wizard.get('res_model'),
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wizard.get('res_id'),
+                    'context': context,
+            }
+        return False
 
 journal_items_corrections_lines()
 

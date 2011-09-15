@@ -11,22 +11,22 @@
                             <field colspan="2" name="entry_mode"/>
                             <separator colspan="4" string="Allocation"/>
                             <field colspan="4" name="distribution_id" invisible="1"/>
-		                    <field colspan="4" name="wizard_distribution_lines" nolabel="1" widget="one2many_list">
-		                        <tree string="" editable="top">
-		                            <field name="analytic_id"/>
-		                            <field name="percentage" sum="Total Percentage"/>
-		                            <field name="amount" sum="Total Amount"/>
-		                        </tree>
-		                    </field>
-                            <group colspan="4">
-                                <button name="button_previous_step" string="Previous" type="object" icon="gtk-apply" colspan="1" />
-                                <button name="button_next_step" string="Next" type="object" icon="gtk-apply" colspan="1" />
-                                <button name="button_save" string="Save" type="object" icon="gtk-apply" colspan="1" />
+                            <field colspan="4" name="wizard_distribution_lines" nolabel="1" widget="one2many_list">
+                                <tree string="" editable="top">
+                                    <field name="analytic_id"/>
+                                    <field name="percentage" sum="Total Percentage"/>
+                                    <field name="amount" sum="Total Amount"/>
+                                </tree>
+                            </field>
+                            <group colspan="6">
                                 <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
+                                <button name="button_previous_step" string="Previous" type="object" icon="gtk-go-back" colspan="1"/>
+                                <button name="button_next_step" string="Next" type="object" icon="gtk-go-forward" colspan="1"/>
+                                <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" />
+                                <label string="" colspan="1"/>
                             </group>
                         </form>
                   </field>
             </record>
-	        
        </data>
-</openerp> 
+</openerp>
