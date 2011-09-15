@@ -25,7 +25,10 @@
     "version": "1.0",
     "depends": [
                 "base",
+                "sale",
                 "stock",
+                "consumption_calculation",
+                "reason_types_moves",
                 "procurement",
     ],
     "author": "TeMPO Consulting, MSF",
@@ -40,11 +43,14 @@
     'update_xml': [
         "threshold_value_data.xml",
         "threshold_value_view.xml",
+        "wizard/schedulers_all_view.xml",
         "security/ir.model.access.csv",
     ],
     'demo_xml': [
     ],
     "test": [
+        "test/data.yml",
+        "test/threshold.yml",
     ],
     'installable': True,
     'active': False,
