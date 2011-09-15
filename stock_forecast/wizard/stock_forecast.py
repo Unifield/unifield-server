@@ -26,7 +26,12 @@ import time
 import netsvc
 from operator import itemgetter, attrgetter
 
-PREFIXES = {'sale.order': 'so_', 'purchase.order': 'po_', 'procurement.order': 'pr_', 'stock.picking': 'pick_'}
+PREFIXES = {'sale.order': 'so_',
+            'purchase.order': 'po_',
+            'procurement.order': 'pr_',
+            'stock.picking': 'pick_',
+            'tender': 'tend_',
+            }
 
 class stock_forecast_line(osv.osv_memory):
     '''
@@ -55,7 +60,7 @@ class stock_forecast_line(osv.osv_memory):
         get states of specified objects, and modify keys on the fly
         '''
         field = 'state'
-        objects = ['sale.order', 'purchase.order', 'procurement.order', 'stock.picking']
+        objects = ['sale.order', 'purchase.order', 'procurement.order', 'stock.picking', 'tender',]
         return self._get_selection(cr, uid, field, objects, context=context)
     
     def _get_order_type(self, cr, uid, context=None):
@@ -70,7 +75,7 @@ class stock_forecast_line(osv.osv_memory):
         'date' : fields.date(string="Date"),
         'doc' : fields.char('Doc', size=1024,),
         'order_type': fields.selection(_get_order_type, string='Order Type'),
-        'reference' : fields.char('Reference', size=1024,),
+        'reference': fields.reference('Reference', selection=[], size=128),
         'state' : fields.selection(_get_states, string='State'),
         'qty' : fields.float('Quantity', digits=(16,2)),
         'stock_situation' : fields.float('Stock Situation', digits=(16,2)),
@@ -383,6 +388,7 @@ class stock_forecast(osv.osv_memory):
         sol_obj = self.pool.get('sale.order.line')
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
+        tenderl_obj = self.pool.get('tender.line')
         pro_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
@@ -444,7 +450,7 @@ class stock_forecast(osv.osv_memory):
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
-                              'reference': sol.order_id.name,
+                              'reference': 'sale.order,%s'%sol.order_id.id,
                               'state': PREFIXES['sale.order'] + sol.order_id.state,
                               'qty': uom_obj._compute_qty_obj(cr, uid, sol.product_uom, -sol.product_uom_qty, uom_to_use, context=context),
                               'stock_situation': False,
@@ -455,7 +461,8 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append(values)
                 
                 # PURCHASE ORDERS - positive
-                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft', 'wait', 'confirmed',)),
+                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft', 'confirmed',)),
+                                                    ('tender_id', '=', False),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for pol in pol_obj.browse(cr, uid, pol_list, context=context):
@@ -463,11 +470,27 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append({'date': pol.confirmed_delivery_date or len(pol.date_planned.split(' ')) > 1 and pol.date_planned.split(' ')[0] or pol.date_planned,
                                            'doc': 'PO',
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
-                                           'reference': pol.order_id.name,
+                                           'reference': 'purchase.order,%s'%pol.order_id.id,
                                            'state': PREFIXES['purchase.order'] + pol.order_id.state,
                                            'qty':  uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
                                            'wizard_id': wizard.id,})
+                    
+                # TENDERS - positive
+                ids_list = tenderl_obj.search(cr, uid, [('state', 'not in', ('done',)),
+                                                        ('product_id', '=', product.id)], order='date_planned', context=context)
+                
+                for obj in tenderl_obj.browse(cr, uid, ids_list, context=context):
+                    # create lines corresponding to po
+                    line_to_create.append({'date': len(obj.date_planned.split(' ')) > 1 and obj.date_planned.split(' ')[0] or obj.date_planned,
+                                           'doc': 'TENDER',
+                                           'order_type': False,
+                                           'reference': 'tender,%s'%obj.tender_id.id,
+                                           'state': PREFIXES['tender'] + obj.tender_id.state,
+                                           'qty':  uom_obj._compute_qty_obj(cr, uid, obj.product_uom, obj.qty, uom_to_use, context=context),
+                                           'stock_situation': False,
+                                           'wizard_id': wizard.id,
+                                           })
                 
                 # PROCUREMENT ORDERS
                 pro_list = pro_obj.search(cr, uid, [('date_planned', '>', today),
@@ -479,7 +502,7 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append({'date': pro.date_planned.split(' ')[0],
                                            'doc': 'PR',
                                            'order_type': False,
-                                           'reference': pro.origin,
+                                           'reference': 'procurement.order,%s'%pro.id,
                                            'state': PREFIXES['procurement.order'] + pro.state,
                                            'qty': uom_obj._compute_qty_obj(cr, uid, pro.product_uom, pro.product_qty, uom_to_use, context=context),
                                            'stock_situation': False,
@@ -497,7 +520,7 @@ class stock_forecast(osv.osv_memory):
                                   'doc': 'IN',
                                   # to check - purchase order or sale order prefix ?
                                   'order_type': move.order_type and PREFIXES['purchase.order'] + move.order_type or False,
-                                  'reference': move.picking_id.name,
+                                  'reference': 'stock.picking,%s'%move.picking_id.id,
                                   'state': PREFIXES['stock.picking'] + move.picking_id.state,
                                   'qty': uom_obj._compute_qty_obj(cr, uid, move.product_uom, move.product_qty, uom_to_use, context=context),
                                   'stock_situation': False,
@@ -527,6 +550,7 @@ class stock_forecast(osv.osv_memory):
                 line.update(stock_situation=overall_qty)
                 line_obj.create(cr, uid, line, context=context)
             
+            return True # popup policy
             return {
                     'name': 'Stock Level Forecast',
                     'view_mode': 'form',

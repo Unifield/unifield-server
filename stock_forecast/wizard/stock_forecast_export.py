@@ -42,7 +42,8 @@ class stock_forecast_export(osv.osv_memory):
     
     def do_back(self, cr, uid, ids, context=None):
         '''
-        
+        button was removed following the 'popup' solution 
+        <button name='do_back' string='Back to Forecast' type='object' icon='gtk-back' />
         '''
         back_id = context['stock_forecast_id'][0]
         
