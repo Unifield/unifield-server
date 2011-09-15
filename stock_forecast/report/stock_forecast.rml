@@ -270,7 +270,7 @@
             <para style="P3">[[ get_selection(line, 'order_type') ]]</para>
           </td>
           <td>
-            <para style="P3">[[ line.reference ]]</para>
+            <para style="P3">[[ line.reference and line.reference.name_get()[0][1] or "" ]]</para>
           </td>
           <td>
             <para style="P3">[[ get_selection(line, 'state') ]]</para>

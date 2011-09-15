@@ -91,7 +91,7 @@ class stock_forecast_export(osv.osv_memory):
             export += '%s;%s;%s;%s;%s;%s;%s' % (line.date.split(' ')[0] or '',
                                                 line.doc or '',
                                                 self.get_selection_text(cr, uid, line_obj, 'order_type', line.order_type, context=context) or '',
-                                                line.reference or '',
+                                                line.reference and line.reference.name_get()[0][1] or '',
                                                 self.get_selection_text(cr, uid, line_obj, 'state', line.state, context=context) or '',
                                                 line.qty or '0.0',
                                                 line.stock_situation or '0.0',)
