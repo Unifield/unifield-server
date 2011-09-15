@@ -2,6 +2,65 @@
 <openerp>
     <data>
     
+    	<menuitem id="menu_report_config" name="Report Customization" parent="stock.menu_stock_configuration" sequence="1"/>
+    
+        # -------------------------------------------------------------
+        # Labels
+        # -------------------------------------------------------------
+        <record id="view_labels_tree" model="ir.ui.view">
+            <field name="name">stock.labels.tree</field>
+            <field name="model">ppl.customize.label</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Labels Customization">
+                    <field name="name"/>
+                    <field name="logo" />
+                    <field name="requestor_order_reference" />
+                    <field name="packing_parcel_number" />
+                    <field name="pre_packing_list_reference" />
+                    <field name="destination_partner" />
+                    <field name="destination_address" />
+                    <field name="weight" />
+                    <field name="specific_information" />
+                </tree>
+            </field>
+        </record>
+        <record id="view_labels_form" model="ir.ui.view">
+            <field name="name">stock.labels.form</field>
+            <field name="model">ppl.customize.label</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Labels Customization">
+                    <notebook>
+                		<page string="Customization">
+	                		<field name="name"/>
+	                		<separator string="Options" />
+	                		<field name="logo" />
+	                		<field name="requestor_order_reference" />
+	                		<field name="packing_parcel_number" />
+		                    <field name="pre_packing_list_reference" />
+		                    <field name="destination_partner" />
+		                    <field name="destination_address" />
+		                    <field name="weight" />
+		                    <field name="specific_information" />
+                		</page>
+                		<page string="Notes">
+                			<field name="notes" nolabel="True" />
+                		</page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_labels_tree" model="ir.actions.act_window">
+            <field name="name">Labels</field>
+            <field name="res_model">ppl.customize.label</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
+    
     	<!-- delete outgoing delivery menuitem -->
     	<delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/>
     	
@@ -363,6 +422,7 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                            <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
                     <notebook colspan="4">

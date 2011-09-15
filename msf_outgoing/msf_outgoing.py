@@ -647,7 +647,9 @@ class pack_family(osv.osv):
             
             # depends on corresponding stock moves
             for move in family.move_lines:
+                # price of all packs within a pack family
                 values['total_amount'] += move.total_amount
+                # price of one pack
                 values['amount'] += move.amount
                 values['currency_id'] = move.currency_id.id
                     
@@ -702,16 +704,32 @@ class ppl_customize_label(osv.osv):
     _name = 'ppl.customize.label'
     _columns = {'name': fields.char(string='Name', size=1024,),
                 'notes': fields.text(string='Notes'),
-                'packing_list_reference': fields.boolean(string='Packing List Reference'),
+                #'packing_list_reference': fields.boolean(string='Packing List Reference'),
                 'pre_packing_list_reference': fields.boolean(string='Pre-Packing List Reference'),
                 'destination_partner': fields.boolean(string='Destination Partner'),
                 'destination_address': fields.boolean(string='Destination Address'),
                 'requestor_order_reference': fields.boolean(string='Requestor Order Reference'),
                 'weight': fields.boolean(string='Weight'),
-                'shipment_reference': fields.boolean(string='Shipment Reference'),
+                #'shipment_reference': fields.boolean(string='Shipment Reference'),
                 'packing_parcel_number': fields.boolean(string='Packing Parcel Number'),
-                'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
+                #'expedition_parcel_number': fields.boolean(string='Expedition Parcel Number'),
                 'specific_information': fields.boolean(string='Specific Information'),
+                'logo': fields.boolean(string='Company Logo'),
+                }
+    
+    _defaults = {'name': 'My Customization',
+                'notes': '',
+                #'packing_list_reference': True,
+                'pre_packing_list_reference': True,
+                'destination_partner': True,
+                'destination_address': True,
+                'requestor_order_reference': True,
+                'weight': True,
+                #'shipment_reference': True,
+                'packing_parcel_number': True,
+                #'expedition_parcel_number': True,
+                'specific_information': True,
+                'logo': True,
                 }
 
 ppl_customize_label()
@@ -737,22 +755,32 @@ class stock_picking(osv.osv):
                       'currency_id': False,
                       'num_of_packs': 0,
                       'total_weight': 0.0,
+                      'is_dangerous_good': False,
+                      'is_keep_cool': False,
+                      'is_narcotic': False,
                       }
             result[stock_picking.id] = values
             
-            for family in stock_picking.pack_family_ids:
-                # total amount from pack_family
-                total_amount = family.total_amount
-                values['total_amount'] += total_amount
-                # currency_id
-                currency_id = family.currency_id.id
-                values['currency_id'] = currency_id
+            for family in stock_picking.pack_family_ids: # total amount and currency should not depend on pack family
                 # number of packs from pack_family
                 num_of_packs = family.num_of_packs
                 values['num_of_packs'] += int(num_of_packs)
                 # total_weight
                 total_weight = family.total_weight
                 values['total_weight'] = total_weight
+                
+            for move in stock_picking.move_lines:
+                # total amount (float)
+                total_amount = move.total_amount
+                values['total_amount'] = total_amount
+                # currency
+                values['currency_id'] = move.currency_id.id
+                # dangerous good
+                values['is_dangerous_good'] = move.is_dangerous_good
+                # keep cool - if heat_sensitive_item is True
+                values['is_keep_cool'] = move.is_keep_cool
+                # narcotic
+                values['is_narcotic'] = move.is_narcotic
                     
         return result
     
@@ -763,14 +791,18 @@ class stock_picking(osv.osv):
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
                 # attributes for specific packing labels
-                'label_preferences': fields.boolean(string='Packing List Reference'),
-                
+                'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
                 # functions
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
+                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 }
+#    _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Labels'),], context=c)[0],
+#                 }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
     
@@ -1486,12 +1518,36 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
+class product_product(osv.osv):
+    '''
+    add a getter for keep cool notion
+    '''
+    _inherit = 'product.product'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for product in self.browse(cr, uid, ids, context=context):
+            values = {'is_keep_cool': False,
+                      }
+            result[product.id] = values
+            # keep cool
+            is_keep_cool = product.heat_sensitive_item in ('*', '**', '***',)
+            values['is_keep_cool'] = is_keep_cool
+                    
+        return result
+    
+    _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
+                }
+
+
 class stock_move(osv.osv):
     '''
     stock move
     '''
     _inherit = 'stock.move'
-    _name = 'stock.move'
     
     def _keep_prodlot_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -1528,6 +1584,9 @@ class stock_move(osv.osv):
                       'amount': 0.0,
                       'currency_id': False,
                       'num_of_packs': 0,
+                      'is_dangerous_good': False,
+                      'is_keep_cool': False,
+                      'is_narcotic': False,
                       }
             result[move.id] = values
             # number of packs with from/to values (integer)
@@ -1541,6 +1600,12 @@ class stock_move(osv.osv):
             values['amount'] = amount
             # currency
             values['currency_id'] = move.sale_line_id.currency_id.id
+            # dangerous good
+            values['is_dangerous_good'] = move.product_id.dangerous_goods
+            # keep cool - if heat_sensitive_item is True
+            values['is_keep_cool'] = bool(move.product_id.heat_sensitive_item)
+            # narcotic
+            values['is_narcotic'] = move.product_id.narcotic
                     
         return result
     
@@ -1558,10 +1623,13 @@ class stock_move(osv.osv):
                 'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='move_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='move_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='move_vals',),
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='move_vals',),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
+                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 }
     
 #    _constraints = [
