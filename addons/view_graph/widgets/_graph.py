@@ -396,7 +396,9 @@ class BarChart(GraphData):
                     x_data.sort()
                     mx = x_data[-1]
                 else:
-                    mn = 0
+                    mn = values[0]
+                    if mn > 0:
+                        mn = 0
                     mx = values[-1]
 
             if mx != 0:
@@ -404,8 +406,10 @@ class BarChart(GraphData):
                     mx = mx - (10 + mx % 10)
                 else:
                     mx = mx + (10 - (mx % 10))
-
-            total = mx + mn
+            if mn < 0:
+                total = max(mx, abs(mn))
+            else:
+                total = mx + abs(mn)
             tk = round(total/10)
 
             return {'y_max': mx, 'y_min': mn, 'y_steps': tk}
