@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -39,22 +40,19 @@ account_bank_statement()
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
     _name = "account.bank.statement.line"
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
-    
-    def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
-        account_move_line_pool = self.pool.get('account.move.line')
-        account_bank_statement_line_pool = self.pool.get('account.bank.statement.line')
-        st_line = account_bank_statement_line_pool.browse(cr, uid, st_line_id, context=context)
-        result = super(account_bank_statement_line,self).create_move_from_st_line(cr, uid, st_line_id, company_currency_id, st_line_number, context=context)
-        move = st_line.move_ids and st_line.move_ids[0] or False
-        if move:
-            for line in move.line_id:
-                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id': st_line.analytic_distribution_id.id}, context=context)
-        return result
-    
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
+        """
+        Launch analytic distribution wizard from a statement line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # we get the analytical distribution object linked to this line
         distrib_id = False
         statement_line_obj = self.browse(cr, uid, ids[0], context=context)
@@ -71,6 +69,11 @@ class account_bank_statement_line(osv.osv):
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
         wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+            'wizard_ids': {'cost_center': wiz_id},
+        })
         return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'wizard.costcenter.distribution',

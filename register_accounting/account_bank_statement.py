@@ -604,7 +604,8 @@ class account_bank_statement_line(osv.osv):
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
             'currency_id': st.currency.id,
-            'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False
+            'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False,
+            'analytic_distribution_id': st_line.analytic_distribution_id and st_line.analytic_distribution_id.id or False,
         }
 
         if st.currency.id <> company_currency_id:
@@ -792,8 +793,8 @@ class account_bank_statement_line(osv.osv):
                 # Amount currency for "other line" is the opposite of "register line"
                 other_amount_currency = -register_amount_currency
             # Update values for register line
-            values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 'amount_currency': register_amount_currency, 
-                'currency_id': currency_id})
+            values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
+                'amount_currency': register_amount_currency, 'currency_id': currency_id})
             # Write move line object for register line
             acc_move_line_obj.write(cr, uid, [register_line.id], values, context=context)
             # Update values for other line
