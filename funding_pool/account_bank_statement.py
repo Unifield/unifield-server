@@ -41,8 +41,31 @@ class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
     _name = "account.bank.statement.line"
 
+    def _display_analytic_button(self, cr, uid, ids, name, args, context={}):
+        """
+        Return True for all element that correspond to some criteria:
+         - The entry state is draft
+         - The account is an expense account
+        """
+        res = {}
+        for absl in self.browse(cr, uid, ids, context=context):
+            res[absl.id] = True
+            # False if st_line is hard posted
+            if absl.state == 'hard':
+                res[absl.id] = False
+            # False if account not an expense account
+            if absl.account_id.user_type.code not in ['expense']:
+                res[absl.id] = False
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+            help="This informs system that we can display or not an analytic button", store=False),
+    }
+
+    _defaults = {
+        'display_analytic_button': lambda *a: True,
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
