@@ -22,12 +22,10 @@
 import time
 
 from report import report_sxw
-from osv import osv
-from tools.translate import _
 
-class stock_picking_test(report_sxw.rml_parse):
+class picking_ticket(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        super(stock_picking_test, self).__init__(cr, uid, name, context=context)
+        super(picking_ticket, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
             'get_selection': self.get_selection,
@@ -35,18 +33,6 @@ class stock_picking_test(report_sxw.rml_parse):
             'cr': cr,
             'uid': uid,
         })
-        
-        
-    def set_context(self, objects, data, ids, report_type = None):
-        '''
-        
-        '''
-        for obj in objects:
-            if obj.subtype != 'ppl':
-                raise osv.except_osv(_('Warning !'), _('Pre-Packing List is only available for Pre-Packing Objects!'))
-        
-        
-        return super(stock_picking_test, self).set_context(objects, data, ids, report_type)
         
     def get_selection(self, o, field):
         """
@@ -61,5 +47,5 @@ class stock_picking_test(report_sxw.rml_parse):
         else:
             return res
 
-report_sxw.report_sxw('report.stock.picking.test', 'stock.picking', 'addons/msf_outgoing/report/stock_picking_test.rml', parser=stock_picking_test, header="external")
+report_sxw.report_sxw('report.picking.ticket', 'stock.picking', 'addons/msf_outgoing/report/picking_ticket.rml', parser=picking_ticket, header=False)
 

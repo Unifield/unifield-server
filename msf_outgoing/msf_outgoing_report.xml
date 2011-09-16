@@ -51,6 +51,14 @@
                 string="Pre-Packing List" />
                 
         <report auto="False" 
+                id="picking_ticket" 
+                model="stock.picking" 
+                name="picking.ticket"
+                header="False"
+                rml="addons/msf_outgoing/report/picking_ticket.rml"
+                string="Picking Ticket" />
+                
+        <report auto="False" 
                 id="labels" 
                 model="stock.picking" 
                 name="labels"

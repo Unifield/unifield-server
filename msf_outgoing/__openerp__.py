@@ -34,7 +34,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "purchase", "sale", "product_asset"],
+    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number",],
     'update_xml': [
         'outgoing_sequence.xml',
         'security/ir.model.access.csv',

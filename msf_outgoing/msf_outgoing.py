@@ -89,7 +89,7 @@ class shipment(osv.osv):
                 total_amount = family.total_amount
                 values['total_amount'] += total_amount
                 # currency
-                currency_id = family.currency_id.id
+                currency_id = family.currency_id and family.currency_id.id or False
                 values['currency_id'] = currency_id
                 
         return result
@@ -651,7 +651,7 @@ class pack_family(osv.osv):
                 values['total_amount'] += move.total_amount
                 # price of one pack
                 values['amount'] += move.amount
-                values['currency_id'] = move.currency_id.id
+                values['currency_id'] = move.currency_id and move.currency_id.id or False
                     
         return result
     
@@ -774,7 +774,7 @@ class stock_picking(osv.osv):
                 total_amount = move.total_amount
                 values['total_amount'] = total_amount
                 # currency
-                values['currency_id'] = move.currency_id.id
+                values['currency_id'] = move.currency_id and move.currency_id.id or False
                 # dangerous good
                 values['is_dangerous_good'] = move.is_dangerous_good
                 # keep cool - if heat_sensitive_item is True
@@ -805,6 +805,93 @@ class stock_picking(osv.osv):
 #                 }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
+    
+    def picking_ticket_data(self, cr, uid, ids, context=None):
+        '''
+        generate picking ticket data
+        
+        - sale order line without product: does not work presently
+        
+        - many sale order line with same product: stored in different dictionary with line id as key.
+            so the same product could be displayed many times in the picking ticket according to sale order
+        
+        - many stock move with same product: two cases, if from different sale order lines, the above rule applies,
+            if from the same order line, they will be stored according to prodlot id
+            
+        - many stock move with same prodlot (so same product): if same sale order line, the moves will be
+            stored in the same structure, with global quantity, i.e. this batch for this product for this
+            sale order line will be displayed only once with summed quantity from concerned stock moves
+        
+        [sale_line.id][product_id][prodlot_id]
+        
+        other prod lot, not used are added in order that all prod lot are displayed 
+        
+        to check, if a move does not come from the sale order line:
+        stored with line id False, product is relevant, multiple
+        product for the same 0 line id is possible
+        '''
+        result = {}
+        for stock_picking in self.browse(cr, uid, ids, context=context):
+            values = {}
+            result[stock_picking.id] = {'obj': stock_picking,
+                                        'lines': values,
+                                        }
+            for move in stock_picking.move_lines:
+                if move.product_id: # product is mandatory at stock_move level ;)
+                    sale_line_id = move.sale_line_id and move.sale_line_id.id or False
+                    # structure, data is reorganized in order to regroup according to sale order line > product > production lot
+                    # and to sum the quantities corresponding to different levels because this is impossible within the rml framework
+                    values \
+                        .setdefault(sale_line_id, {}) \
+                        .setdefault('products', {}) \
+                        .setdefault(move.product_id.id, {}) \
+                        .setdefault('uoms', {}) \
+                        .setdefault(move.product_uom.id, {}) \
+                        .setdefault('lots', {})
+                        
+                    # ** sale order line info**
+                    values[sale_line_id]['obj'] = move.sale_line_id or False
+                    
+                    # **uom level info**
+                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['obj'] = move.product_uom
+                    
+                    # **prodlot level info**
+                    if move.prodlot_id:
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['lots'].setdefault(move.prodlot_id.id, {})
+                        # qty corresponding to this production lot
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['lots'][move.prodlot_id.id].setdefault('reserved_qty', 0)
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['lots'][move.prodlot_id.id]['reserved_qty'] += move.product_qty
+                        # store the object for info retrieval
+                        values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['lots'][move.prodlot_id.id]['obj'] = move.prodlot_id
+                    
+                    # **product level info**
+                    # total quantity from STOCK_MOVES for one sale order line (directly for one product)
+                    # or if not linked to a sale order line, stock move created manually, the line id is False
+                    # and in this case the product is important
+                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_sm', 0)
+                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_sm'] += move.product_qty
+                    # total quantity from SALE_ORDER_LINES, which can be different from the one from stock moves
+                    # if stock moves have been created manually in the picking, no present in the so, equal to 0 if not linked to an so
+                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id].setdefault('qty_to_pick_so', 0)
+                    values[sale_line_id]['products'][move.product_id.id]['uoms'][move.product_uom.id]['qty_to_pick_so'] += move.sale_line_id and move.sale_line_id.product_uom_qty or 0.0 
+                    # store the object for info retrieval
+                    values[sale_line_id]['products'][move.product_id.id]['obj'] = move.product_id
+                    
+            # all moves have been treated
+            # complete the lot lists for each product
+            for sale_line in values.values():
+                for product in sale_line['products'].values():
+                    for uom in product['uoms'].values():
+                        # loop through all existing production lot for this product - all are taken into account, internal and external
+                        for lot in product['obj'].prodlot_ids:
+                            if lot.id not in uom['lots'].keys():
+                                # the lot is not present, we add it
+                                uom['lots'][lot.id] = {}
+                                uom['lots'][lot.id]['obj'] = lot
+                                # reserved qty is 0 since no stock moves correspond to this lot
+                                uom['lots'][lot.id]['reserved_qty'] = 0.0
+                    
+        return result
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -1540,7 +1627,10 @@ class product_product(osv.osv):
         return result
     
     _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
+                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Production Lots',),
                 }
+    
+product_product()
 
 
 class stock_move(osv.osv):
@@ -1587,25 +1677,28 @@ class stock_move(osv.osv):
                       'is_dangerous_good': False,
                       'is_keep_cool': False,
                       'is_narcotic': False,
+                      'sale_order_line_number': 0,
                       }
             result[move.id] = values
             # number of packs with from/to values (integer)
             num_of_packs = move.to_pack - move.from_pack + 1
             values['num_of_packs'] = num_of_packs
             # total amount (float)
-            total_amount = move.sale_line_id.price_unit * move.product_qty
+            total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
             values['total_amount'] = total_amount
             # amount for one pack
             amount = total_amount / num_of_packs
             values['amount'] = amount
             # currency
-            values['currency_id'] = move.sale_line_id.currency_id.id
+            values['currency_id'] = move.sale_line_id and move.sale_line_id.currency_id and move.sale_line_id.currency_id.id or False
             # dangerous good
-            values['is_dangerous_good'] = move.product_id.dangerous_goods
+            values['is_dangerous_good'] = move.product_id and move.product_id.dangerous_goods or False
             # keep cool - if heat_sensitive_item is True
-            values['is_keep_cool'] = bool(move.product_id.heat_sensitive_item)
+            values['is_keep_cool'] = bool(move.product_id and move.product_id.heat_sensitive_item or False)
             # narcotic
-            values['is_narcotic'] = move.product_id.narcotic
+            values['is_narcotic'] = move.product_id and move.product_id.narcotic or False
+            # sale_order_line_number
+            values['sale_order_line_number'] = move.sale_line_id and move.sale_line_id.line_number or 0
                     
         return result
     
@@ -1630,6 +1723,7 @@ class stock_move(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
+                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals',),
                 }
     
 #    _constraints = [
