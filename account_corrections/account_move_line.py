@@ -70,12 +70,6 @@ class account_move_line(osv.osv):
                     res[aml.id] = False
         return res
 
-    def _search_is_corrigible(self, cr, uid, obj, name, args, context={}):
-        """
-        This is for not having trouble on account_move_line search when displaying search view
-        """
-        return [('id', '=', '0')]
-
     _columns = {
         'corrected': fields.boolean(string="Corrected?", readonly=True, 
             help="If true, this line has been corrected by an accounting correction wizard"),
@@ -87,8 +81,8 @@ class account_move_line(osv.osv):
             help="Line that have been reversed by this one."),
         'have_an_historic': fields.boolean(string="Display historic?", readonly=True, 
             help="If true, this implies that this line have historical correction(s)."),
-        'is_corrigible': fields.function(_is_corrigible, fnct_search=_search_is_corrigible, method=True, string="Is corrigible?", type='boolean', 
-            readonly=True, help="This inform if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
+        'is_corrigible': fields.function(_is_corrigible, method=True, string="Is corrigible?", type='boolean', 
+            readonly=True, help="This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
 receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).", 
             store=False),
     }
