@@ -65,17 +65,13 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
         if not context:
             context = {}
         view = super(wizard_costcenter_distribution_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
         if view_type=='tree' and context.get('mode'):
             view['arch'] = """<tree string="" editable="top">
-    <field name="analytic_id" domain="[('type', '!=', 'view'),
-        ('category', '=', 'OC'),
-        ('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-        ('|'),
-        ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
-        ('date', '=', False)]"/>
+    <field name="analytic_id" domain="[('type', '!=', 'view'), ('id', 'child_of', %s), ('state', '=', 'open')]"/>
     <field name="percentage" sum="Total Percentage" readonly="%s" />
     <field name="amount" sum="Total Amount" readonly="%s" />
-</tree>"""%(context['mode']=='amount', context['mode']=='percent')
+</tree>""" % (oc_id, context['mode'] == 'amount', context['mode'] == 'percent')
         return view
 
 wizard_costcenter_distribution_line()

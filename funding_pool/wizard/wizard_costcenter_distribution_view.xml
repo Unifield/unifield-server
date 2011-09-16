@@ -7,12 +7,7 @@
                 <field name="type">tree</field>
                 <field name="arch" type='xml'>
                     <tree string="" editable="top">
-                        <field name="analytic_id" domain="[('type', '!=', 'view'),
-                                                           ('category', '=', 'OC'),
-                                                           ('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                                           ('|'),
-                                                           ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                                           ('date', '=', False)]"/>
+                        <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]"/>
                         <field name="percentage" sum="Total Percentage" />
                         <field name="amount" sum="Total Amount" />
                     </tree>
