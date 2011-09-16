@@ -11,6 +11,7 @@
                 <data>
                     <button name="create_period" position="replace"/>
                     <button name="create_period3" position="replace"/>
+                    <field name="end_journal_period_id" position="replace"/>
                 </data>
             </field>
         </record>
