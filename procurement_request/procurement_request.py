@@ -47,7 +47,7 @@ class procurement_request(osv.osv):
         
         return res
     
-    #@@@ override sale.sale.orer._get_order
+    #@@@ override sale.sale.order._get_order
     # Not modified method, but simply add here to fix an error on amount_total field
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
@@ -87,9 +87,6 @@ class procurement_request(osv.osv):
             multi='sums', help="The total amount."),
         'state': fields.selection([
             ('procurement', 'Internal Supply Requirement'),
-            ('proc_progress', 'Waiting Sourcing'),
-            ('proc_cancel', 'Cancelled'),
-            ('proc_done', 'Done'),
             ('draft', 'Quotation'),
             ('waiting_date', 'Waiting Schedule'),
             ('manual', 'Manual In Progress'),
@@ -191,7 +188,7 @@ class procurement_request(osv.osv):
         '''
         Confirmed the request
         '''
-        self.write(cr, uid, ids, {'state': 'proc_progress'})
+        self.write(cr, uid, ids, {'state': 'progress'})
         
         return True
     
@@ -200,7 +197,7 @@ class procurement_request(osv.osv):
         Creates all procurement orders according to lines
         '''
         self.action_ship_create(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'proc_done'})
+        self.write(cr, uid, ids, {'state': 'done'})
         
         return True
     
