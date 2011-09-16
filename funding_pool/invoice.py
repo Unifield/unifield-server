@@ -164,10 +164,10 @@ class account_invoice_line(osv.osv):
             if line.invoice_id.analytic_distribution_id:
                 source_distrib_obj = line.invoice_id.analytic_distribution_id
                 destination_distrib_obj = line.analytic_distribution_id
-                if 'price_subtotal' in vals \
-                or ('reset_all' in context and context['reset_all']) \
+                if 'price_unit' in vals or 'quantity' in vals or 'discount' in vals \
+                or context.get('reset_all', False) \
                 or destination_distrib_obj.global_distribution:
-                    amount = vals.get('price_subtotal', line.price_subtotal) or 0.0
+                    amount = line.price_subtotal or 0.0
                     if line.invoice_id.type in ['out_invoice', 'in_refund']:
                         amount = -1 * amount
                     company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
