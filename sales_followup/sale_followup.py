@@ -155,10 +155,13 @@ class sale_order_followup(osv.osv_memory):
         purchase_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id \
-            and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id \
-            and line.procurement_id.purchase_id.state != 'draft':
-                purchase_ids.append(line.procurement_id.purchase_id.id)
+            if line.type == 'make_to_order' and line.procurement_id:
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state != 'draft':
+                    purchase_ids.append(line.procurement_id.purchase_id.id)
+                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
+                    for rfq in line.procurement_id.tender_id.rfq_ids:
+                        if rfq.state != 'draft':
+                            purchase_ids.append(rfq.id)
         
         return purchase_ids
     
@@ -174,10 +177,14 @@ class sale_order_followup(osv.osv_memory):
         quotation_ids = []
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id \
-            and line.procurement_id.purchase_id and line.procurement_id.purchase_id.id \
-            and line.procurement_id.purchase_id.state == 'draft':
-                quotation_ids.append(line.procurement_id.purchase_id.id)
+            if line.type == 'make_to_order' and line.procurement_id:
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state == 'draft':
+                    quotation_ids.append(line.procurement_id.purchase_id.id)
+                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
+                    for rfq in line.procurement_id.tender_id.rfq_ids:
+                        if rfq.state == 'draft':
+                            quotation_ids.append(rfq.id)
+                
         
         return quotation_ids
         
@@ -235,7 +242,7 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for tender in line.tender_line_ids:
-                tender_ids.append(tender.id)
+                tender_ids.append(tender.tender_id.id)
         
         return tender_ids
         
@@ -356,7 +363,7 @@ class sale_order_line_followup(osv.osv_memory):
         'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
                                      type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
-        'uom_id': fields.related('line_id', 'product_uom', string='UoM', readonly=True),
+        'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                    readonly=True, multi='status'),
         'tender_ids': fields.many2many('tender', 'call_tender_follow_rel',

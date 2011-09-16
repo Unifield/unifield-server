@@ -37,7 +37,7 @@
 		                    <field name="product_id" />
 		                    <field name="qty_ordered" />
 		                    <field name="uom_id" />
-		                    <!--<field name="tender_ids" />-->
+		                    <field name="tender_ids" />
 		                    <field name="quotation_ids" />
 		                    <field name="purchase_ids" />
 		                    <field name="incoming_ids" />
@@ -73,6 +73,7 @@
                             <field name="qty_ordered" />
                             <field name="uom_id" />
                             <field name="sourced_ok" />
+                            <field name="tender_status" />
                             <field name="quotation_status" />
                             <field name="purchase_status" />
                             <field name="incoming_status" />
@@ -98,7 +99,7 @@
                     <field name="qty_ordered" />
                     <field name="uom_id" />
                     <field name="sourced_ok" />
-                    <!--<field name="tender_ids" />-->
+                    <field name="tender_ids" />
                     <field name="quotation_ids" />
                     <field name="quotation_status" />
                     <field name="purchase_ids" />
@@ -125,7 +126,7 @@
                     <field name="product_id" />
                     <field name="qty_ordered" />
                     <separator colspan="4" string="Associated documents" />
-                    <!--<field name="tender_ids" nolabel="1" />-->
+                    <field name="tender_ids" nolabel="1" />
                     <field name="quotation_ids" nolabel="1" colspan="2" />
                     <field name="purchase_ids" nolabel="1" colspan="2" />
                     <newline />
