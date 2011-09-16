@@ -115,8 +115,7 @@ class real_average_consumption(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
-                'view_mode': 'tree,form',
-                'target': 'new',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 }
         
@@ -160,6 +159,11 @@ class real_average_consumption(osv.osv):
                 'view_type': 'form',
                 'target': 'new',
                 }
+        
+    def nomen_change(self, cr, uid, ids, nomen_id, context={}):
+        context.update({'test_id': nomen_id})
+        
+        return {}
     
 real_average_consumption()
 
@@ -188,14 +192,21 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
-        'list_id': fields.many2one('product.list', string='List'),
-        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
     }
     
-    _defaults = {
-        'list_id': lambda obj, cr, uid, context={}: context.get('rac_id', False) and obj.pool.get('real.average.consumption').browse(cr, uid, context.get('rac_id')).sublist_id.id or False,
-        'nomen_id': lambda obj, cr, uid, context={}: context.get('rac_id', False) and obj.pool.get('real.average.consumption').browse(cr, uid, context.get('rac_id')).nomen_id.id or False,
-    }
+    def product_onchange(self, cr, uid, ids, product_id, context={}):
+        '''
+        Set the product uom when the product change
+        '''
+        v = {}
+        
+        if product_id:
+            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+            v.update({'uom_id': uom})
+        else:
+            v.update({'uom_id': False})
+        
+        return {'value': v}
     
 real_average_consumption_line()
 
@@ -311,13 +322,6 @@ class monthly_review_consumption_line(osv.osv):
         'valid_until': fields.date(string='Valid until'),
         'valid_ok': fields.boolean(string='OK', readonly=True),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
-        'list_id': fields.many2one('product.list', string='List'),
-        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
-    }
-    
-    _defaults = {
-        'list_id': lambda obj, cr, uid, context={}: context.get('mrc_id', False) and obj.pool.get('monthly.review.consumption').browse(cr, uid, context.get('mrc_id')).sublist_id.id or False,
-        'nomen_id': lambda obj, cr, uid, context={}: context.get('mrc_id', False) and obj.pool.get('monthly.review.consumption').browse(cr, uid, context.get('mrc_id')).nomen_id.id or False,
     }
     
     def valid_line(self, cr, uid, ids, context={}):
@@ -342,7 +346,7 @@ class monthly_review_consumption_line(osv.osv):
         '''
         Display the graph view of the line
         '''
-        raise osv.except_osv('Error !', 'Not implemented')
+        raise osv.except_osv('Error !', 'Not implemented yet !')
     
     def product_onchange(self, cr, uid, ids, product_id, context={}):
         '''

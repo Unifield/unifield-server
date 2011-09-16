@@ -9,27 +9,26 @@
             <field name="arch" type="xml">
                 <form string="Real consumption reporting">
                     <separator colspan="4" string="General information" />
-                    <field name="cons_location_id" />
-                    <field name="creation_date" />
-                    <field name="activity_id" />
-                    <button name="import_rac" string="Import a file" icon="gtk-leave-fullscreen" type="object" />
+                    <field name="cons_location_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <button name="import_rac" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
                     <button name="export_rac" string="Export lines" icon="terp-mail-forward" type="object" />
                     <separator colspan="4" string="Period of consumption" />
-                    <field name="period_from" />
-                    <field name="period_to" />
+                    <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" />
-                    <field name="nomen_id" />
+                    <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" context="{'rac_id': active_id}">
-                        <tree string="Products" editable="top">
-                            <field name="product_id" domain="[('list_ids', '=', list_id), ('nomen_ids', '=', nomen_id)]" />
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
+						<tree string="Products" editable="top">
+                            <field name="product_id" on_change="product_onchange(product_id)"
+                            	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" />
                             <field name="product_qty" />
                             <field name="consumed_qty" />
                             <field name="remark" />
-                            <field name="list_id" invisible="0" />
-                            <field name="nomen_id" invisible="0" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
@@ -143,12 +142,10 @@
                     <newline />
                     <field name="sublist_id" />
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" context="{'mrc_id': active_id,
-                    																	 'sloc_id': cons_location_id,
-                                                                                         'from_date': period_from,
-                                                                                         'to_date': period_to}">
-                        <tree string="Products" editable="top">
-                            <field name="name" on_change="product_onchange(name)" domain="[('list_ids', '=', list_id), ('nomen_ids', '=', nomen_id)]" />
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
+                        <tree string="Products" editable="top"> 
+                            <field name="name" on_change="product_onchange(name)" 
+                            	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
                             <field name="fmc" />
                             <field name="last_reviewed" />
@@ -156,8 +153,6 @@
                             <field name="valid_until" />
                             <button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
-                            <field name="list_id" invisible="0" />
-                            <field name="nomen_id" invisible="0" />
                         </tree>
                     </field>
                 </form>
