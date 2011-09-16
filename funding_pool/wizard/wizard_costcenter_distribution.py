@@ -44,7 +44,7 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
         'percentage': 0.0,
         'amount': 0.0
     }
-    
+ 
     def create(self, cr, uid, vals, context=None):
         res = super(wizard_costcenter_distribution_line, self).create(cr, uid, vals, context=context)
         if 'wizard_id' in vals:
@@ -60,7 +60,24 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
                 line_obj = self.browse(cr, uid, ids[0])
                 self.pool.get('wizard.costcenter.distribution').validate(cr, uid, line_obj.wizard_id.id, context=context)
         return res
-    
+   
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        view = super(wizard_costcenter_distribution_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree' and context.get('mode'):
+            view['arch'] = """<tree string="" editable="top">
+    <field name="analytic_id" domain="[('type', '!=', 'view'),
+        ('category', '=', 'OC'),
+        ('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
+        ('|'),
+        ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
+        ('date', '=', False)]"/>
+    <field name="percentage" sum="Total Percentage" readonly="%s" />
+    <field name="amount" sum="Total Amount" readonly="%s" />
+</tree>"""%(context['mode']=='amount', context['mode']=='percent')
+        return view
+
 wizard_costcenter_distribution_line()
 
 

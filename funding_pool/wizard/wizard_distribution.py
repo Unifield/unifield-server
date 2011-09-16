@@ -29,7 +29,12 @@ class wizard_distribution(osv.osv_memory):
         "distribution_id": fields.many2one("analytic.distribution", string='Analytic Distribution'),
         'currency_id': fields.many2one('res.currency', string="Currency"),
     }
-    
+
+    def dummy(self, cr, uid, ids, *args, **kwargs):
+        mode = self.read(cr, uid, ids, ['entry_mode'])[0]['entry_mode']
+        self.write(cr, uid, [ids[0]], {'entry_mode': mode=='percent' and 'amount' or 'percent'})
+        return True
+
     def store_distribution(self, cr, uid, wizard_id, date=False, source_date=False, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         distrib_obj = self.pool.get('analytic.distribution')
