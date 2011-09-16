@@ -802,6 +802,11 @@ class account_bank_statement_line(osv.osv):
                 'currency_id': currency_id})
             # Write move line object for other line
             acc_move_line_obj.write(cr, uid, [other_line.id], values, context=context)
+            # Update analytic distribution lines
+            analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.id], ['amount_currency'], context=context)[0].get('amount_currency', False)
+            if analytic_amount:
+                self.pool.get('analytic.distribution').update_distribution_line_amount(cr, uid, [st_line.analytic_distribution_id.id], 
+                amount=analytic_amount, context=context)
             # Update move
             # first prepare partner_type
             partner_type = False

@@ -81,21 +81,8 @@ class account_bank_statement_line(osv.osv):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [wiz_id],
-                'context': {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-                    'wizard_ids': {'cost_center': wiz_id}
-               }
+                'context': context,
         }
-        
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'amount_in' in vals or 'amount_out' in vals:
-            #new amount, we remove the distribution
-            lines = self.browse(cr, uid, ids, context=context)
-            for line in lines:
-                self.pool.get('analytic.distribution').unlink(cr, uid, line.analytic_distribution_id.id, context=context)
-        return super(account_bank_statement_line, self).write(cr, uid, ids, vals, context=context)
-    
-account_bank_statement_line()
 
+account_bank_statement_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

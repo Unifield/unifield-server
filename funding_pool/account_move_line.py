@@ -53,7 +53,7 @@ class account_move_line(osv.osv):
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
-                                     'distribution_id': obj_line.analytic_distribution_id.id,
+                                     'distribution_id': distrib_obj.id,
                                      'user_id': uid,
                                      'currency_id': obj_line.currency_id.id,
                         }

@@ -193,5 +193,28 @@ class analytic_distribution(osv.osv):
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
 
+    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
+        """
+        Update amount on distribution lines for given distribution (ids)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not amount:
+            return False
+        # Process distributions
+        for distrib_id in ids:
+            for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
+                dl_obj = self.pool.get(dl_name)
+                dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
+                    dl_vals = {
+                        'amount': round(dl.percentage * amount) / 100.0,
+                    }
+                    dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
+        return True
+
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
