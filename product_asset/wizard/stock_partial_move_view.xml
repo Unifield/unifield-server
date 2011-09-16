@@ -14,7 +14,9 @@
 				<data>
 				
 					<field name="product_id" position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
+						<field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False),],}" />
+						<field name="asset_check" invisible="True" />
 					</field>
 				
 				</data>
@@ -30,7 +32,9 @@
 				<data>
 				
 					<field name="product_id" position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]" />
+						<field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False),],}" />
+						<field name="asset_check" invisible="True" />
 					</field>
 				
 				</data>

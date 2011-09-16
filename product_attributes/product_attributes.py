@@ -220,6 +220,8 @@ class product_attributes(osv.osv):
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
             vals['track_outgoing'] = vals['batch_management']
+            if vals['batch_management']:
+                vals['perishable'] = True
         return super(product_attributes, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -227,7 +229,17 @@ class product_attributes(osv.osv):
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
             vals['track_outgoing'] = vals['batch_management']
+            if vals['batch_management']:
+                vals['perishable'] = True
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+    
+    def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
+        '''
+        batch management is modified -> modification of Expiry Date Mandatory (perishable)
+        '''
+        if batch_management:
+            return {'value': {'perishable': True}}
+        return {}
     
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

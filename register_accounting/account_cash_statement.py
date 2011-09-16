@@ -135,13 +135,38 @@ class account_cash_statement(osv.osv):
                 }
         }
 
+    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Calculate register's balance: call super, then add the Open Advance Amount to the end balance
+        """
+        res = super(account_cash_statement, self)._end_balance(cr, uid, ids, field_name, arg, context)
+        for statement in self.browse(cr, uid, ids, context):
+            print statement.prev_reg_id
+            # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
+            res[statement.id] += statement.open_advance_amount or 0.0
+                
+        return res
+
+    def _gap_compute(self, cursor, user, ids, name, attr, context=None):
+        res = {}
+        statements = self.browse(cursor, user, ids, context=context)
+        for statement in statements:
+            diff_amount = statement.balance_end - statement.balance_end_cash 
+            res[statement.id] = diff_amount 
+        
+        return res
+
     _columns = {
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', help="Closing balance"),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
-            'name': fields.char('Name', size=64, required=False, readonly=True),
+            'name': fields.char('Register Name', size=64, required=False, readonly=True),
             'period_id': fields.many2one('account.period', 'Period', required=True, states={'draft':[('readonly', False)]}, readonly=True),
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
+            'open_advance_amount': fields.float('Open Advances Amount'),
+            'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
+            'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context={}):

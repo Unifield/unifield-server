@@ -102,7 +102,9 @@ class account_journal(osv.osv):
             'name': name,
             'code': code,
             'active': True,
-            'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+            # UF-433: sequence is now only the number, no more prefix
+            #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+            'prefix': "",
             'padding': 6,
             'number_increment': 1
         }

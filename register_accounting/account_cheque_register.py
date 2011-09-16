@@ -76,8 +76,6 @@ class account_cheque_register(osv.osv):
         """
         When you click on "Open Cheque Register"
         """
-        # Verify that previous register is closed
-        previous_register_is_closed(self, cr, uid, ids, context=context)
         return self.write(cr, uid, ids, {'state': 'open'}, context=context)
 
     def button_confirm_cheque(self, cr, uid, ids, context={}):

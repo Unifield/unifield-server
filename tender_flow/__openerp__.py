@@ -34,7 +34,7 @@
     'test': ['test/tender_flow.yml',
              ],
     'update_xml': [
-        #'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'tender_flow_sequence.xml',
         'tender_flow_view.xml',
         'tender_flow_workflow.xml',

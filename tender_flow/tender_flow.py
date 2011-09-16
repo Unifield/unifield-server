@@ -223,6 +223,8 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _description= 'Tender Line'
     
+    _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'),]
+    
     def on_product_change(self, cr, uid, id, product_id, context=None):
         '''
         product is changed, we update the UoM
@@ -257,16 +259,18 @@ class tender_line(osv.osv):
     
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
                 'qty': fields.float(string="Qty", required=True),
-                'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
-                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
                 'tender_id': fields.many2one('tender', string="Tender", required=True),
-                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
                 'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
                 'date_planned': fields.datetime('Scheduled date', required=True),
+                # functions
+                'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
+                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
+                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price"),
+                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
+                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
+                'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 }
     
 tender_line()
@@ -387,14 +391,15 @@ class procurement_order(osv.osv):
     
     def action_po_assign(self, cr, uid, ids, context=None):
         '''
-        add message at po creation during on_order workflow
+        - convert the created rfq by the tender to a po
+        - add message at po creation during on_order workflow
         '''
         po_obj = self.pool.get('purchase.order')
         result = super(procurement_order, self).action_po_assign(cr, uid, ids, context=context)
         # The quotation 'SO001' has been converted to a sales order.
         if result:
             po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
-            if self.browse(cr, uid, ids[0], context=context).price_unit:
+            if self.browse(cr, uid, ids[0], context=context).is_tender:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
         return result
@@ -440,6 +445,16 @@ class purchase_order(osv.osv):
     
 purchase_order()
 
+
+class purchase_order_line(osv.osv):
+    '''
+    add a tender_id related field
+    '''
+    _inherit = 'purchase.order.line'
+    _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
+                }
+    
+purchase_order_line()
 
 class sale_order_line(osv.osv):
     '''

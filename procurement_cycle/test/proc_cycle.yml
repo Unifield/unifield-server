@@ -82,7 +82,7 @@
   We run the scheduler
 -
   !python {model: procurement.order, context: {'button': 'test'}}: |
-    self.run_automatic_cycle(cr, uid, False, context={})
+    self.run_automatic_cycle(cr, uid, False, context=context)
 -
   Check if the procurement for P1 in Sloc1 has good values
 -

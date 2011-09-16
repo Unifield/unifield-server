@@ -49,6 +49,7 @@
         'account_invoice_view.xml',
         'wizard/register_creation.xml',
         'wizard/wizard_confirm_bank.xml',
+        'wizard/invoice_date.xml',
     ],
     "demo_xml" : [],
     "test": [

@@ -264,5 +264,5 @@
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
     ids = po_obj.search(cr, uid, [('origin', '=', so.name),])
     po = po_obj.browse(cr, uid, ids[0])
-    assert po.state == 'confirmed', 'the state of purchase order is wrong. %s-confirmed'%po.state
+    assert po.state in ('approved', 'confirmed',), 'the state of purchase order is wrong. %s-approved'%po.state # state depends on the installation or not of double validation module for purchase order
     
