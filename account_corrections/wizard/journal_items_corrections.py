@@ -105,6 +105,20 @@ class journal_items_corrections(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
+    def onchange_date(self, cr, uid, ids, date, context={}):
+        """
+        Write date on this wizard.
+        NB: this is essentially for analytic distribution correction wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not date:
+            return False
+        return self.write(cr, uid, ids, {'date': date}, context=context)
+
     def create(self, cr, uid, vals, context={}):
         """
         Fill in all elements in our wizard with given move_line_id field

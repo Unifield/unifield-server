@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <form string="Journal items corrections Wizard">
                     <field name="move_line_id" invisible="1" colspan="1"/>
-                    <field name="date"/>
+                    <field name="date" on_change="onchange_date(date)"/>
                     <newline/>
                     <field name="to_be_corrected_ids" colspan="6">
                         <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
