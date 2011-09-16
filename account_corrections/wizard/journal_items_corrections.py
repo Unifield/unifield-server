@@ -76,7 +76,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         wizard = aml_obj.button_analytic_distribution(cr, uid, [this_wizard.move_line_id.id], context=context)
         if 'res_model' in wizard and 'res_id' in wizard:
             wiz_obj = self.pool.get(wizard.get('res_model'))
-            wiz_obj.write(cr, uid, wizard.get('res_id'), {'state': 'correction', 'date': this_wizard.date or False}, context=context)
+            wiz_obj.write(cr, uid, wizard.get('res_id'), {'state': 'correction', 'date': this_wizard.date or strftime('%Y-%m-%d')}, context=context)
             return {
                     'type': 'ir.actions.act_window',
                     'res_model': wizard.get('res_model'),

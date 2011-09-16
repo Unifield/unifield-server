@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+import time
 
 class wizard_costcenter_distribution(osv.osv_memory):
     _inherit = 'wizard.costcenter.distribution'
@@ -34,6 +35,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
 
     _defaults = {
         'state': lambda *a: 'normal',
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def button_cancel(self, cr, uid, ids, context={}):
@@ -94,6 +96,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
 
     _defaults = {
         'state': lambda *a: 'normal',
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
@@ -181,6 +184,7 @@ class wizard_free1_distribution(osv.osv_memory):
 
     _defaults = {
         'state': lambda *a: 'normal',
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
@@ -268,6 +272,7 @@ class wizard_free2_distribution(osv.osv_memory):
 
     _defaults = {
         'state': lambda *a: 'normal',
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def return_on_wizard(self, cr, uid, wiz_name=None, wiz_id=None, context={}):
