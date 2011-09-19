@@ -73,6 +73,8 @@ class analytic_line(osv.osv):
     
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
+        if context is None:
+            context = {}
         if 'search_financing_contract' in context and context['search_financing_contract'] and 'active_id' in context:
             donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
             # project domain

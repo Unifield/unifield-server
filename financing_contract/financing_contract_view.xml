@@ -222,50 +222,53 @@
             <menuitem id="donor_reporting_menu" name="Donor Reporting" parent="account.menu_finance"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
-	        
-	        <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.act_window">
-	            <field name="name">Interactive Report</field>
-	            <field name="res_model">financing.contract.donor.reporting.line</field>
-                <field name="src_model">financing.contract.contract</field>
-	            <field name="view_type">tree</field>
-	            <field name="view_id" ref="view_donor_reporting_line_tree"/>
-                <field name="domain">[('contract_id','=',active_id)]</field>
-	        </record>
-	        
-	        <record id="view_donor_reporting_line_tree" model="ir.ui.view">
-	            <field name="name">financing.contract.donor.reporting.line.tree</field>
-	            <field name="model">financing.contract.donor.reporting.line</field>
-	            <field name="type">tree</field>
-	            <field name="field_parent">child_ids</field>
-	            <field name="arch" type="xml">
-	                <tree string="Interactive Report">
-	                    <field name="code"/>
-	                    <field name="name"/>
+            <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
+            
+            
+            <record id="view_donor_reporting_line_tree" model="ir.ui.view">
+                <field name="name">financing.contract.donor.reporting.line.tree</field>
+                <field name="model">financing.contract.donor.reporting.line</field>
+                <field name="type">tree</field>
+                <field name="field_parent">child_ids</field>
+                <field name="arch" type="xml">
+                    <tree string="Interactive Report">
+                        <field name="code"/>
+                        <field name="name"/>
                         <field name="allocated_budget"/>
                         <field name="allocated_real"/>
                         <field name="project_budget"/>
                         <field name="project_real"/>
-	                    <field name="parent_id" invisible="1"/>
-	                </tree>
-	            </field>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+            
+            <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.act_window">
+                <field name="name">Interactive Report</field>
+                <field name="res_model">financing.contract.donor.reporting.line</field>
+                <field name="src_model">financing.contract.contract</field>
+                <field name="key2">client_action_multi</field>
+                <field name="view_type">tree</field>
+                <field name="view_id" ref="view_donor_reporting_line_tree"/>
+                <field name="domain">[('contract_id','=',active_id)]</field>
+            </record>
+
+	        <record id="action_open_analytic_lines_button" model="ir.actions.act_window">
+	            <field name="name">Analytic Items</field>
+	            <field name="res_model">account.analytic.line</field>
+	            <field name="view_type">form</field>
+	            <field name="view_mode">tree,form</field>
+	            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+	            <field name="context">{'search_financing_contract': 1}</field>
 	        </record>
-
-        <record id="action_open_analytic_lines_button" model="ir.actions.act_window">
-            <field name="name">Analytic Items</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
-            <field name="context">{'search_financing_contract': 1}</field>
-        </record>
-
-        <record id="ir_open_donor_reporting_line" model="ir.values">
-            <field name="key2">tree_but_open</field>
-            <field name="model">financing.contract.donor.reporting.line</field>
-            <field name="name">Open Analytic Lines</field>
-            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_button" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
+	
+	        <record id="ir_open_donor_reporting_line" model="ir.values">
+	            <field name="key2">tree_but_open</field>
+	            <field name="model">financing.contract.donor.reporting.line</field>
+	            <field name="name">Open Analytic Lines</field>
+	            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_button" name="value"/>
+	            <field eval="True" name="object"/>
+	        </record>
 	            
        </data>
 </openerp> 
