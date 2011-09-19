@@ -939,6 +939,43 @@
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
+                        <page string="Document Information">
+                        	<field name="cargo_manifest_reference" />
+                        	<field name="date_of_departure" />
+                        	<field name="planned_date_of_arrival" />
+                        	<field name="transit_via" />
+                        	<field name="registration" />
+                        	<field name="driver_name" />
+                        </page>
+                        <page string="Transport Information">
+                        	<group col="2" colspan="1">
+	                        	<separator string="Shipper" colspan="2" />
+	                        	<field name="shipper_name" />
+	                        	<field name="shipper_address" />
+	                        	<field name="shipper_phone" />
+	                        	<field name="shipper_email" />
+	                        	<field name="shipper_other" />
+	                        	<field name="shipper_date" />
+	                        </group>
+	                        <group col="2" colspan="1">
+	                        	<separator string="Carrier" colspan="2" />
+	                        	<field name="carrier_name" />
+	                        	<field name="carrier_address" />
+	                        	<field name="carrier_phone" />
+	                        	<field name="carrier_email" />
+	                        	<field name="carrier_other" />
+	                        	<field name="carrier_date" />
+	                        </group>
+	                        <group col="2" colspan="1">
+	                        	<separator string="Consignee" colspan="2" />
+	                        	<field name="consignee_name" />
+	                        	<field name="consignee_address" />
+	                        	<field name="consignee_phone" />
+	                        	<field name="consignee_email" />
+	                        	<field name="consignee_other" />
+	                        	<field name="consignee_date" />
+	                        </group>
+                        </page>
                     </notebook>
                 </form>
             </field>
