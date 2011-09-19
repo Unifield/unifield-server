@@ -84,7 +84,7 @@ class tender(osv.osv):
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!'%supplier.name))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'origin': tender.name,
+                values = {'origin': tender.sale_order_id.name + '/' + tender.name,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
                           'location_id': tender.location_id.id,
@@ -323,6 +323,7 @@ class procurement_order(osv.osv):
     
     _columns = {'is_tender': fields.function(_is_tender, method=True, type='boolean', string='Is Tender', readonly=True,),
                 'sale_order_line_ids': fields.one2many('sale.order.line', 'procurement_id', string="Sale Order Lines"),
+                'tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'is_tender_done': fields.boolean(string="Tender Done"),
                 'state': fields.selection([
                                            ('draft','Draft'),
@@ -375,6 +376,9 @@ class procurement_order(osv.osv):
                                              'location_id': proc.location_id.id,
                                              'product_uom': proc.product_uom.id,
                                              'date_planned': proc.date_planned,}, context=context)
+            
+            self.write(cr, uid, ids, {'tender_id': tender_id}, context=context)
+            
             # log message concerning tender creation
             tender_obj.log(cr, uid, tender_id, "The tender '%s' has been created and must be completed before purchase order creation."%tender_obj.browse(cr, uid, tender_id, context=context).name)
         # state of procurement is Tender
