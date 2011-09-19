@@ -25,7 +25,7 @@
     "depends": ["base",
                 "procurement",
                 "stock",
-                "product_consumption",
+                "consumption_calculation",
                 "stock_schedule",
                 "sale",
                 "purchase",

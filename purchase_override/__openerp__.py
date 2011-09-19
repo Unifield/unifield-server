@@ -33,6 +33,7 @@
         "purchase",
         "stock_override",
         "purchase_double_validation",
+        "reason_types_moves",
     ],
     "update_xml": [
         "purchase_view.xml",

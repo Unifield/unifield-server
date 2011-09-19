@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,26 +19,8 @@
 #
 ##############################################################################
 
-{
-    "name": "Product Consumption",
-    "version": "1.0",
-    "depends": ["base", "product", "stock"],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Stock & Warehouse",
-    "description": """
-    This module aims to compute stock consumption for products
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'product_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import wizard_import_fmc
+import wizard_import_rac
+import wizard_export_fmc_rac
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

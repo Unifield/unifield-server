@@ -161,6 +161,9 @@ class stock_warehouse_orderpoint(osv.osv):
         '''
         result = super(stock_warehouse_orderpoint, self).write(cr, uid, ids, vals, context=context)
         
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
@@ -198,6 +201,9 @@ class stock_warehouse_automatic_supply(osv.osv):
         add message
         '''
         result = super(stock_warehouse_automatic_supply, self).write(cr, uid, ids, vals, context=context)
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
@@ -239,6 +245,9 @@ class stock_warehouse_order_cycle(osv.osv):
             context = {}
             
         result = super(stock_warehouse_order_cycle, self).write(cr, uid, ids, vals, context=context)
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
@@ -432,6 +441,9 @@ class stock_production_lot(osv.osv):
         '''
         update the sequence for the version management
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         revision_obj = self.pool.get('stock.production.lot.revision')
         
         for lot in self.browse(cr, uid, ids, context=context):

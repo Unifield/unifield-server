@@ -68,6 +68,8 @@
         "stock_inventory_type",
         "specific_rules",
         "tender_flow",
+        "consumption_calculation",
+        "threshold_value",
     ],
     "update_xml": [
         "report.xml",

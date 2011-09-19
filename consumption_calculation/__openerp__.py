@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,36 +16,42 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
+
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name": "Consumption Calculation",
+    "version": "1.0",
+    "depends": ["product", "stock", "product_nomenclature",
+                "product_list", "reason_types_moves",],
+    "author": "TeMPO Consulting, MSF",
+    "website": "",
+    "category": "Specific Modules",
     "description": """
-        This module aims in adding a reason type for all stock picking documents
-meaning all stock moves in order to make a specific and precise statistics on 
-stock moves.
+        This module aims at defining different kind of consumption calculation.
     """,
-    "website": "http://unifield.msf.org",
     "init_xml": [
     ],
-    "depends" : [
-        "stock",
-        "procurement",
+    'update_xml': [
+        'consumption_data.xml',
+        'consumption_view.xml',
+        'expiry_calculation_view.xml',
+        'wizard/wizard_import_fmc_view.xml',
+        'wizard/wizard_import_rac_view.xml',
+        'wizard/wizard_export_fmc_rac_view.xml',
+        'security/ir.model.access.csv',
     ],
-    "update_xml": [
-        "reason_type_view.xml",
-        "reason_type_data.xml",
-        "security/ir.model.access.csv",
+    'demo_xml': [
     ],
-    "demo_xml": [
+    'test': [
+        'test/data.yml',
+        'test/rac_report.yml',
+        'test/amc_review.yml',
+        'test/expiration.yml',
     ],
-    "test": [
-    ],
-    "installable": True,
-    "active": False,
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

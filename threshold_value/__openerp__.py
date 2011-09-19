@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,36 +16,45 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
+
+
 {
-    "name" : "MSF Modules",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
+    "name": "Threshold value",
+    "version": "1.0",
+    "depends": [
+                "base",
+                "sale",
+                "stock",
+                "consumption_calculation",
+                "reason_types_moves",
+                "procurement",
+    ],
+    "author": "TeMPO Consulting, MSF",
+    "website": "",
+    "category": "Warehouse",
     "description": """
-        This module aims in adding a reason type for all stock picking documents
-meaning all stock moves in order to make a specific and precise statistics on 
-stock moves.
+        This module aims to add a threshold value replenishment
+        object.
     """,
-    "website": "http://unifield.msf.org",
     "init_xml": [
     ],
-    "depends" : [
-        "stock",
-        "procurement",
-    ],
-    "update_xml": [
-        "reason_type_view.xml",
-        "reason_type_data.xml",
+    'update_xml': [
+        "threshold_value_data.xml",
+        "threshold_value_view.xml",
+        "wizard/schedulers_all_view.xml",
         "security/ir.model.access.csv",
     ],
-    "demo_xml": [
+    'demo_xml': [
     ],
     "test": [
+        "test/data.yml",
+        "test/threshold.yml",
     ],
-    "installable": True,
-    "active": False,
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

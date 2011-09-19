@@ -267,7 +267,7 @@ class purchase_order(osv.osv):
             if order.order_type == 'donation_exp':
                 reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
             if order.order_type == 'in_kind':
-                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1],
+                reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1]
                 
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
