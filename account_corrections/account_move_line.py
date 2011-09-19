@@ -451,6 +451,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move
             move_obj.post(cr, uid, [move_id], context=context)
+            # Copy old journal attached to old distribution
+            if ml.analytic_distribution_id:
+                cl = self.browse(cr, uid, [correction_line_id], context=context)[0]
+                self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_distribution_id.analytic_lines], {'journal_id': ml.journal_id.analytic_journal_id.id}, context=context)
             # Add this line to succeded lines
             success_move_line_ids.append(ml.id)
         return success_move_line_ids
