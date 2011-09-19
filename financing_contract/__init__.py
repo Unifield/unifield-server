@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import donor_reporting_line
 import format
 import donor
 import contract

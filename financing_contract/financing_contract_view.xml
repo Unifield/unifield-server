@@ -11,6 +11,7 @@
                         <field name="code" colspan="1"/>
                         <field name="name" colspan="1"/>
                         <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"/>
+                        <field name="reporting_type"/>
                         <separator string="Dates"/>
                         <field name="eligibility_from_date"/>
                         <field name="eligibility_to_date"/>
@@ -39,37 +40,47 @@
                             <page string="Actual lines">
                                 <field name="format_id" invisible="1"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1">
-                                    <tree string="Actual lines" colors="black:(number_of_childs==0);blue:(number_of_childs&gt;0)">
+                                    <tree string="Actual lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
+                                        <field name="line_type" invisible="1"/>
                                         <field name="allocated_amount" sum="Allocated Total"/>
-                                        <field name="total_amount" sum="Allocated Total"/>
-                                        <field name="number_of_childs" invisible="1"/>
+                                        <field name="project_amount" sum="Project Total"/>
                                     </tree>
                                     <form string="Actual lines">
                                         <group colspan="4" col="6">
-	                                        <field name="code" colspan="2"/>
-	                                        <field name="name" colspan="2"/>
-	                                        <field name="parent_id" colspan="2"
-	                                               domain="[('format_id', '=', parent.format_id)]"/>
+                                            <field name="code" colspan="2"/>
+                                            <field name="name" colspan="2"/>
+                                            <field name="parent_id" colspan="2"
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
                                         </group>
-                                        <field name="number_of_childs" invisible="1"/>
-                                        <field name="allocated_amount" attrs="{'readonly': [('number_of_childs', '!=', '0')]}"/>
-                                        <field name="total_amount" attrs="{'readonly': [('number_of_childs', '!=', '0')]}"/>
+                                        <field name="line_type"/>
+                                        <field name="allocated_amount" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <field name="project_amount" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
-                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
+                                               attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                     </form>
                                 </field>
                             </page>
                             <page string="Other lines">
-                                <form string="Other lines">
-                                    <separator colspan="4" string="Overhead"/>
-                                    <field name="overhead_type" colspan="2"/>
-                                    <field name="overhead_value" colspan="2"/>
-                                    <separator colspan="4" string="Other"/>
-                                    <field name="lump_sum" colspan="2"/>
-                                    <field name="consumption" colspan="2"/>
-                                </form>
+                                <separator colspan="4" string="Overhead"/>
+                                <field name="overhead_type" colspan="2"/>
+                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')]}"/>
+                                <field name="budget_allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')]}"/>
+                                <field name="budget_project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')]}"/>
+                                <field name="allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')]}"/>
+                                <field name="project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')]}"/>
+                                <separator colspan="4" string="Lump sum"/>
+                                <field name="budget_allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
+                                <field name="budget_project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
+                                <field name="allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
+                                <field name="project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
+                                <separator colspan="4" string="Consumption"/>
+                                <field name="budget_allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
+                                <field name="budget_project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
+                                <field name="allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
+                                <field name="project_consumption" colspan="2"/>
                             </page>
                             <page string="Comments">
 	                           <field name="notes" nolabel="1"/>
@@ -139,37 +150,36 @@
                         <field name="code" colspan="1"/>
                         <field name="name" colspan="1"/>
                         <newline/>
+                        <field name="reporting_type"/>
                         <field name="active" colspan="2"/>
                         <separator string="Dates"/>
                         <notebook colspan="4">
                             <page string="Actual lines">
                                 <field name="format_id" invisible="1"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1">
-                                    <tree string="Actual lines" >
+                                    <tree string="Actual lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
+                                        <field name="line_type" invisible="1"/>
                                     </tree>
                                     <form string="Actual lines">
                                         <group colspan="4" col="6">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
                                             <field name="parent_id" colspan="2"
-                                                   domain="[('format_id', '=', parent.format_id)]"/>
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
                                         </group>
+                                        <field name="line_type"/>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
-                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
+                                               domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
+                                               attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                     </form>
                                 </field>
                             </page>
                             <page string="Other lines">
-                                <form string="Other lines">
-                                    <separator colspan="4" string="Overhead"/>
-                                    <field name="overhead_type" colspan="2"/>
-                                    <field name="overhead_value" colspan="2"/>
-                                    <separator colspan="4" string="Other"/>
-                                    <field name="lump_sum" colspan="2"/>
-                                    <field name="consumption" colspan="2"/>
-                                </form>
+                                <separator colspan="4" string="Overhead"/>
+                                <field name="overhead_type" colspan="2"/>
+                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')]}"/>
                             </page>
                         </notebook>
                     </form>
@@ -212,7 +222,50 @@
             <menuitem id="donor_reporting_menu" name="Donor Reporting" parent="account.menu_finance"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
+	        
+	        <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.act_window">
+	            <field name="name">Interactive Report</field>
+	            <field name="res_model">financing.contract.donor.reporting.line</field>
+                <field name="src_model">financing.contract.contract</field>
+	            <field name="view_type">tree</field>
+	            <field name="view_id" ref="view_donor_reporting_line_tree"/>
+                <field name="domain">[('contract_id','=',active_id)]</field>
+	        </record>
+	        
+	        <record id="view_donor_reporting_line_tree" model="ir.ui.view">
+	            <field name="name">financing.contract.donor.reporting.line.tree</field>
+	            <field name="model">financing.contract.donor.reporting.line</field>
+	            <field name="type">tree</field>
+	            <field name="field_parent">child_ids</field>
+	            <field name="arch" type="xml">
+	                <tree string="Interactive Report">
+	                    <field name="code"/>
+	                    <field name="name"/>
+                        <field name="allocated_budget"/>
+                        <field name="allocated_real"/>
+                        <field name="project_budget"/>
+                        <field name="project_real"/>
+	                    <field name="parent_id" invisible="1"/>
+	                </tree>
+	            </field>
+	        </record>
+
+        <record id="action_open_analytic_lines_button" model="ir.actions.act_window">
+            <field name="name">Analytic Items</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="context">{'search_financing_contract': 1}</field>
+        </record>
+
+        <record id="ir_open_donor_reporting_line" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">financing.contract.donor.reporting.line</field>
+            <field name="name">Open Analytic Lines</field>
+            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_button" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 	            
-            
        </data>
 </openerp> 

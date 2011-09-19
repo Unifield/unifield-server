@@ -161,7 +161,7 @@ class account_invoice_line(osv.osv):
                 or ('reset_all' in context and context['reset_all']) \
                 or destination_distrib_obj.global_distribution:
                     amount = vals.get('price_subtotal', line.price_subtotal) or 0.0
-                    if invoice_obj.invoice_id.type in ['in_invoice', 'out_refund']:
+                    if line.invoice_id.type in ['in_invoice', 'out_refund']:
                         amount = -1 * amount
                     self.pool.get('analytic.distribution').copy_from_global_distribution(cr,
                                                                                          uid,

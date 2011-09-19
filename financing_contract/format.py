@@ -27,18 +27,44 @@ class financing_contract_format(osv.osv):
     
     _columns = {
         'format_name': fields.char('Name', size=64, required=True),
-        'overhead_type': fields.selection([('total_costs','Total costs percentage'),
-                                           ('total_grant','Total grant percentage'),
-                                           ('lump_sum', 'Lump sum amount')], 'Overhead type', required=True),
-        'overhead_value': fields.float('Overhead', required=True),
-        'lump_sum': fields.float('Lump sum'),
-        'consumption': fields.float('Consumption'),
+        'reporting_type': fields.selection([('project','Total project costs'),
+                                            ('allocated','Allocated costs'),
+                                            ('all', 'Total and allocated costs')], 'Reporting type', required=True),
+        'overhead_type': fields.selection([('cost_percentage','Total costs percentage'),
+                                           ('grant_percentage','Total grant percentage'),
+                                           ('amount', 'Lump sum amount')], 'Overhead type', required=True),
+        'overhead_percentage': fields.float('Percentage overhead'),
+        'budget_allocated_overhead': fields.float('Budget allocated overhead'),
+        'budget_project_overhead': fields.float('Budget project overhead'),
+        'allocated_overhead': fields.float('Allocated overhead'),
+        'project_overhead': fields.float('Project overhead'),
+        'budget_allocated_lump_sum': fields.float('Budget allocated lump sum'),
+        'budget_project_lump_sum': fields.float('Budget project lump sum'),
+        'allocated_lump_sum': fields.float('Allocated lump sum'),
+        'project_lump_sum': fields.float('Project lump sum'),
+        'budget_allocated_consumption': fields.float('Budget allocated consumption'),
+        'budget_project_consumption': fields.float('Budget project consumption'),
+        'allocated_consumption': fields.float('Allocated consumption'),
+        'project_consumption': fields.float('Project consumption'),
     }
     
     _defaults = {
         'format_name': 'Format',
-        'overhead_type': 'total_costs',
-        'overhead_value': 0.0,
+        'reporting_type': 'all',
+        'overhead_type': 'cost_percentage',
+        'overhead_percentage': 0.0,
+        'budget_allocated_overhead': 0.0,
+        'budget_project_overhead': 0.0,
+        'allocated_overhead': 0.0,
+        'project_overhead': 0.0,
+        'budget_allocated_lump_sum': 0.0,
+        'budget_project_lump_sum': 0.0,
+        'allocated_lump_sum': 0.0,
+        'project_lump_sum': 0.0,
+        'budget_allocated_consumption': 0.0,
+        'budget_project_consumption': 0.0,
+        'allocated_consumption': 0.0,
+        'project_consumption': 0.0,
     }
     
     def name_get(self, cr, uid, ids, context=None):
@@ -78,14 +104,58 @@ class financing_contract_actual_line(osv.osv):
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
-        'account_ids': fields.many2many('account.account', 'financing_contract_actual_accounts', 'actual_line_id', 'account_id', string='Accounts', required=True),
-        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line'),
+        'account_ids': fields.many2many('account.account', 'financing_contract_actual_accounts', 'actual_line_id', 'account_id', string='Accounts'),
+        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line', ondelete='cascade'),
         'child_ids': fields.one2many('financing.contract.actual.line', 'parent_id', 'Child lines'),
-        'number_of_childs': fields.function(_get_number_of_childs, method=True, store={'financing.contract.actual.line': (_get_parent_ids, ['parent_id'], 10)}, string="Number of child lines", type="integer", readonly="True"),
+        'line_type': fields.selection([('view','View'),
+                                       ('normal','Normal')], 'Line type', required=True),
         'allocated_amount': fields.float('Budget allocated amount'),
-        'total_amount': fields.float('Budget total amount'),
+        'project_amount': fields.float('Budget project amount'),
     }
     
+    _defaults = {
+        'line_type': 'normal',
+    }
+    
+    def create(self, cr, uid, vals, context=None):
+        if not context:
+            context={}
+        # if the account is set as view, remove budget and account values
+        if 'line_type' in vals and vals['line_type'] == 'view':
+            vals['allocated_amount'] = 0.0
+            vals['project_amount'] = 0.0
+            vals['account_ids'] = []
+        return super(financing_contract_actual_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # if the account is set as view, remove budget and account values
+        if 'line_type' in vals and vals['line_type'] == 'view':
+            vals['allocated_amount'] = 0.0
+            vals['project_amount'] = 0.0
+            vals['account_ids'] = [(6, 0, [])]
+        return super(financing_contract_actual_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
+        if destination_format_id:
+            format_line_vals = {
+                'name': browse_source_line.name,
+                'code': browse_source_line.code,
+                'format_id': destination_format_id,
+                'account_ids': browse_source_line.account_ids,
+                'parent_id': parent_id,
+                'line_type': browse_source_line.line_type,
+                'allocated_amount': browse_source_line.allocated_amount,
+                'project_amount': browse_source_line.project_amount,
+            }
+            parent_line_id = self.pool.get('financing.contract.actual.line').create(cr, uid, format_line_vals, context=context)
+            for child_line in browse_source_line.child_ids:
+                self.copy_format_line(cr, uid, child_line, destination_format_id, parent_line_id, context=context)
+        return
+            
 financing_contract_actual_line()
 
 class financing_contract_format(osv.osv):
@@ -97,6 +167,24 @@ class financing_contract_format(osv.osv):
         'actual_line_ids': fields.one2many('financing.contract.actual.line', 'format_id', 'Actual lines'),
     }
     
+    def copy_format_lines(self, cr, uid, source_id, destination_id, context=None):
+        # remove all old report lines
+        destination_obj = self.browse(cr, uid, destination_id, context=context)
+        for to_remove_line in destination_obj.actual_line_ids:
+            self.pool.get('financing.contract.actual.line').unlink(cr, uid, to_remove_line.id, context=context)
+        source_obj = self.browse(cr, uid, source_id, context=context)
+        # Method to copy a format
+        # copy format lines
+        for source_line in source_obj.actual_line_ids:
+            if not source_line.parent_id:
+                self.pool.get('financing.contract.actual.line').copy_format_line(cr,
+                                                                                 uid,
+                                                                                 source_line,
+                                                                                 destination_id,
+                                                                                 parent_id=None,
+                                                                                 context=context)
+        return
+        
 financing_contract_format()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

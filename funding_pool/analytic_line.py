@@ -29,6 +29,7 @@ class analytic_line(osv.osv):
 
     _columns = {
         "distribution_id": fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center'),
     }
 
     def _check_date(self, cr, uid, vals, context={}):
@@ -69,6 +70,27 @@ class analytic_line(osv.osv):
                 vals.update({'account_id': account_id})
             self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
+        if 'search_financing_contract' in context and context['search_financing_contract'] and 'active_id' in context:
+            donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
+            # project domain
+            if donor_line.computation_type not in ('children_sum', 'analytic_sum'):
+                raise osv.except_osv(_('Warning !'), _("The line selected has no analytic lines associated."))
+                return
+            else:
+                private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
+                if private_funds_id:
+                    date_domain = eval(donor_line.date_domain)
+                    args += [date_domain[0],
+                             date_domain[1],
+                             eval(donor_line.cost_center_domain),
+                             ('account_id', '!=', private_funds_id),
+                             donor_line_obj._get_account_domain(donor_line)]
+            
+        return super(analytic_line, self).search(cr, uid, args, offset, limit,
+                     order, context=context, count=count)
 
 analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

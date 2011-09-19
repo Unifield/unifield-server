@@ -38,7 +38,7 @@ class account_move_line(osv.osv):
                     raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
                 # create lines
-                for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
+                for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
                         line_vals = {
                                      'name': obj_line.name,
@@ -53,7 +53,21 @@ class account_move_line(osv.osv):
                                      'user_id': uid
                         }
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
-                    
+                for funding_pool_distrib_line in distrib_obj.funding_pool_lines:
+                    line_vals = {
+                                 'name': obj_line.name,
+                                 'date': obj_line.date,
+                                 'ref': obj_line.ref,
+                                 'journal_id': obj_line.journal_id.analytic_journal_id.id,
+                                 'amount': funding_pool_distrib_line.amount,
+                                 'account_id': funding_pool_distrib_line.analytic_id.id,
+                                 'cost_center_id': funding_pool_distrib_line.cost_center_id.id,
+                                 'general_account_id': obj_line.account_id.id,
+                                 'move_id': obj_line.id,
+                                 'distribution_id': obj_line.analytic_distribution_id.id,
+                                 'user_id': uid
+                    }
+                    self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
     
     def button_analytic_distribution(self, cr, uid, ids, context={}):
