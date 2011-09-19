@@ -137,7 +137,7 @@ class procurement_request(osv.osv):
         normal_ids = []
         
         for request in self.browse(cr, uid, ids, context=context):
-            if request.procurement_request and request.state in ['procurement', 'proc_cancel']:
+            if request.procurement_request and request.state in ['procurement', 'cancel']:
                 del_ids.append(request.id)
             elif not request.procurement_request:
                 normal_ids.append(request.id)

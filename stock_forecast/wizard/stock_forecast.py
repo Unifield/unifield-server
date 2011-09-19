@@ -442,7 +442,7 @@ class stock_forecast(osv.osv_memory):
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
-                sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'proc_progress', 'draft')),
+                sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'progress', 'draft')),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):

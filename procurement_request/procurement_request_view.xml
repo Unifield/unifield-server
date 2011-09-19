@@ -69,9 +69,9 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="procurement,proc_progress" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="procurement,progress" />
                                 <button name="procurement_confirm" icon="gtk-execute" string="Confirm Request" states="procurement" />
-                                <button name="order_confirm" icon="gtk-execute" string="Close Request" states="proc_progress" />
+                                <button name="order_confirm" icon="gtk-execute" string="Close Request" states="progress" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
@@ -116,8 +116,8 @@
                 <search string="Procurment Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Procurement" icon="terp-document-new" domain="[('state', '=', 'procurement')]" />
-                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', '=', 'proc_progress')]" />
-                        <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'proc_done')]" />
+                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', '=', 'progress')]" />
+                        <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />
