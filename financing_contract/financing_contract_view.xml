@@ -247,7 +247,6 @@
                 <field name="name">Interactive Report</field>
                 <field name="res_model">financing.contract.donor.reporting.line</field>
                 <field name="src_model">financing.contract.contract</field>
-                <field name="key2">client_action_multi</field>
                 <field name="view_type">tree</field>
                 <field name="view_id" ref="view_donor_reporting_line_tree"/>
                 <field name="domain">[('contract_id','=',active_id)]</field>
