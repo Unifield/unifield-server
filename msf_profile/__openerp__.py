@@ -65,6 +65,7 @@
         'account_invoice_split',
         "account_msf",
         "specific_locations",
+        "analytic_distribution_on_po",
     ],
     "update_xml": [
         "report.xml",
