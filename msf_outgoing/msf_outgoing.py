@@ -473,9 +473,7 @@ class shipment(osv.osv):
         
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
-                            
-                            
-    
+        
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         cancel the shipment which is not yet shipped (packed state)
@@ -574,6 +572,8 @@ class shipment(osv.osv):
             self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
             # corresponding packing objects - only the distribution -> customer ones
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'assigned')], context=context)
+            # flag to know if all drafts were treated
+            treat_all_drafts = True
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
@@ -583,12 +583,12 @@ class shipment(osv.osv):
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
                 
-                # we check if the coresponding draft packing can be moved to done.
+                # we check if the corresponding draft packing can be moved to done.
                 # if all packing with backorder_id equal to draft are done or canceled
                 # and the quantity for each stock move of the draft packing is equal to zero
                 draft_packing = packing.backorder_id
                 
-                # we first check the stock moves quantities
+                # we first check the stock moves quantities of the draft packing
                 treat_draft = True
                 for move in draft_packing.move_lines:
                     if move.product_qty:
@@ -596,6 +596,7 @@ class shipment(osv.osv):
                     elif move.from_pack or move.to_pack:
                         assert False, 'stock moves with 0 quantity but part of pack family sequence'
                 
+                # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
                     linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
                     for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
@@ -611,11 +612,20 @@ class shipment(osv.osv):
                     # finish
                     pick_obj.action_move(cr, uid, [draft_packing.id])
                     wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_done', cr)
-
-                
-        # TODO which behavior
+                    # ask for draft picking validation, depending on picking completion
+                    # if picking ticket is not completed, the validation will not complete
+                    draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
+                else:
+                    # all draft are not treated, the shipment is not validated
+                    treat_all_drafts = False
+            
+            # all draft packing are validated (done state)
+            if treat_all_drafts:
+                # set the corresponding shipment object to done
+                draft_packing.shipment_id.write({'state': 'done',}, context=context)
+            
         return True
-                
+        
 shipment()
 
 
@@ -745,6 +755,40 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
     
+    def validate(self, cr, uid, ids, context=None):
+        '''
+        validate or not the draft picking ticket
+        '''
+        for draft_picking in self.browse(cr, uid, ids, context=context):
+            # the validate function should only be called on draft picking ticket
+            assert draft_picking.subtype == 'picking' and draft_picking.state == 'draft', 'the validate function should only be called on draft picking objects'
+            #check the qty of all stock moves
+            treat_draft = True
+            for move in draft_picking.move_lines:
+                if move.product_qty:
+                    treat_draft = False
+            
+            if treat_draft:
+                # then all child picking must be fully completed, meaning:
+                # - all picking must be 'completed'
+                # completed means, we recursively check that next_step link object is cancel or done
+                for picking in draft_picking.backorder_ids:
+                    if not picking.is_completed():
+                        treat_draft = False
+                        break
+            
+            if treat_draft:
+                # - all picking are completed (means ppl completed and all shipment validated)
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', draft_picking.id, 'button_confirm', cr)
+                # we force availability
+                draft_picking.force_assign()
+                # finish
+                draft_picking.action_move()
+                wf_service.trg_validate(uid, 'stock.picking', draft_picking.id, 'button_done', cr)
+                
+        return True
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -758,6 +802,7 @@ class stock_picking(osv.osv):
                       'is_dangerous_good': False,
                       'is_keep_cool': False,
                       'is_narcotic': False,
+                      #'is_completed': False,
                       }
             result[stock_picking.id] = values
             
@@ -781,12 +826,44 @@ class stock_picking(osv.osv):
                 values['is_keep_cool'] = move.is_keep_cool
                 # narcotic
                 values['is_narcotic'] = move.is_narcotic
+                
+            # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
+            # - picking checks that the corresponding ppl is completed
+            # - ppl checks that the corresponding draft packing and packings are completed
+            # the recursion stops there because packing does not have previous_step_ids values
+#            completed = stock_picking.state in ('done', 'cancel')
+#            if completed:
+#                for next_step in stock_picking.previous_step_ids:
+#                    if not next_step.is_completed:
+#                        completed = False
+#                        break
+#                    
+#            values['is_completed'] = completed
                     
+        return result
+    
+    def is_completed(self, cr, uid, ids, context=None):
+        '''
+        recursive test of completion
+        '''
+        result = {}
+        for stock_picking in self.browse(cr, uid, ids, context=context):
+            completed = stock_picking.state in ('done', 'cancel')
+            result[stock_picking.id] = completed
+            if completed:
+                for next_step in stock_picking.previous_step_ids:
+                    if not next_step.is_completed()[next_step.id]:
+                        completed = False
+                        result[stock_picking.id] = completed
+                        break
+        
         return result
     
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
+                'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
+                'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
                 'shipment_id': fields.many2one('shipment', string='Shipment'),
                 'sequence_id': fields.many2one('ir.sequence', 'Picking Ticket Sequence', help="This field contains the information related to the numbering of the picking tickets.", ondelete='cascade'),
                 'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
@@ -800,6 +877,7 @@ class stock_picking(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
+                #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 }
 #    _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Labels'),], context=c)[0],
 #                 }

@@ -35,6 +35,22 @@
                 string="Free Gift Certificate" />
                 
         <report auto="False" 
+                id="report_packing_list" 
+                model="shipment" 
+                name="packing.list"
+                header="False"
+                rml="addons/msf_outgoing/report/packing_list.rml"
+                string="Packing List" />
+                
+        <report auto="False" 
+                id="report_cargo_manifest" 
+                model="shipment" 
+                name="cargo.manifest"
+                header="False"
+                rml="addons/msf_outgoing/report/cargo_manifest.rml"
+                string="Cargo Manifest" />
+                
+        <report auto="False" 
                 id="stock_picking_test" 
                 model="stock.picking" 
                 name="stock.picking.test"
