@@ -21,20 +21,21 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
+{
+    "name" : "Analytic Distribution on Purchase Order",
+    "version" : "1.0",
+    "description" : "This permits to have analytic distribution wizard on a Purchase Order",
+    "author" : "TeMPO Consulting, MSF",
+    "category" : "Tools",
+    "depends" : ["base", "funding_pool", "purchase"],
+    "init_xml" : [],
+    "update_xml" : [
+            "purchase_view.xml",
+    ],
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
+}
 
-class analytic_distribution(osv.osv):
-    _name = 'analytic.distribution'
-    _inherit = 'analytic.distribution'
-
-    _columns = {
-        'purchase_ids': fields.one2many('purchase.order', 'analytic_distribution_id', string="Purchases"),
-    }
-
-analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
-
-
-
