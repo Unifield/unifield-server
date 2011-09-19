@@ -396,7 +396,7 @@ class sale_order(osv.osv):
 
             for proc_id in proc_ids:
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-                if order.state == 'proc_progress':
+                if order.procurement_request and order.state == 'progress':
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
 
             if order.state == 'shipping_except':

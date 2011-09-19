@@ -43,33 +43,28 @@ class sourcing_line(osv.osv):
     sourcing lines are generated when a Sale Order is created
     (overriding of create method of sale_order)
     '''
+    
+    def get_sale_order_states(self, cr, uid, context={}):
+        '''
+        Returns all states values for a sale.order object
+        '''
+        return self.pool.get('sale.order')._columns['state'].selection
+    
+    def get_sale_order_line_states(self, cr, uid, context={}):
+        '''
+        Returns all states values for a sale.order.line object
+        '''
+        return self.pool.get('sale.order.line')._columns['state'].selection
+        
+
     _SELECTION_TYPE = [
                        ('make_to_stock', 'from stock'),
                        ('make_to_order', 'on order'),
                        ]
     
-    _SELECTION_SALE_ORDER_STATE = [
-                                   ('procurement', 'Internal Supply Requirement'),
-                                   ('proc_progress', 'In Progress'),
-                                   ('proc_cancel', 'Cancelled'),
-                                   ('proc_done', 'Done'),
-                                   ('draft', 'Quotation'),
-                                   ('waiting_date', 'Waiting Schedule'),
-                                   ('manual', 'Manual In Progress'),
-                                   ('progress', 'In Progress'),
-                                   ('shipping_except', 'Shipping Exception'),
-                                   ('invoice_except', 'Invoice Exception'),
-                                   ('done', 'Done'),
-                                   ('cancel', 'Cancelled'),
-                                   ]
+    _SELECTION_SALE_ORDER_STATE = get_sale_order_states
     
-    _SELECTION_SALE_ORDER_LINE_STATE = [
-                                        ('draft', 'Draft'),
-                                        ('confirmed', 'Confirmed'),
-                                        ('done', 'Done'),
-                                        ('cancel', 'Cancelled'),
-                                        ('exception', 'Exception'),
-                                        ]
+    _SELECTION_SALE_ORDER_LINE_STATE = get_sale_order_line_states
     
     def unlink(self, cr, uid, ids, context=None):
         '''
