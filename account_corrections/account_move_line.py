@@ -336,9 +336,31 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for ml in self.browse(cr, uid, [x.id for x in m.line_id], context=context):
                 amt = -1 * ml.amount_currency
                 name = join_without_redundancy(ml.name, 'REV')
+                vals = {}
+                # omit analytic_distribution if exists on first move line
+                context.update({'omit_analytic_distribution': False})
+                new_distrib_id = False
+                if ml.analytic_distribution_id:
+                    context.update({'omit_analytic_distribution': True})
+                    ana_obj = self.pool.get('analytic.distribution')
+                    # create a new distribution
+                    new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
+                    # update amount on new distribution
+                    ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id}, context=context)
-                self.write(cr, uid, [new_line_id], {'name': name, 'debit': ml.credit, 'credit': ml.debit, 'amount_currency': amt, 
-                    'reversal_line_id': ml.id, 'source_date': ml.date, 'reversal': True}, context=context)
+                vals.update({
+                    'name': name,
+                    'debit': ml.credit,
+                    'credit': ml.debit,
+                    'amount_currency': amt,
+                    'reversal_line_id': ml.id,
+                    'source_date': ml.date,
+                    'reversal': True,
+                })
+                # Add distribution if new one
+                if new_distrib_id:
+                    vals.update({'analytic_distribution_id': new_distrib_id})
+                self.write(cr, uid, [new_line_id], vals, context=context)
                 # Flag this line as corrected
                 self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
                 if ml.id in ids:

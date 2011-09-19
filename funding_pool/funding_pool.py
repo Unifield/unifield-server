@@ -63,6 +63,19 @@ class analytic_distribution(osv.osv):
             res.append(aal_obj.search(cr, uid, [('account_id', 'in', distrib_line_ids)], context=context))
         return sorted(flatten(res))
 
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy an analytic distribution without the one2many links
+        """
+        defaults.update({
+            'analytic_lines': False,
+            'invoice_ids': False,
+            'invoice_line_ids': False,
+            'register_line_ids': False,
+            'move_line_ids': False,
+        })
+        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
+
 analytic_distribution()
 
 class distribution_line(osv.osv):
