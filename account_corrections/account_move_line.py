@@ -363,10 +363,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             if not corrigible:
                 continue
             
-            # FIXME: verify that no lines come from a statement_id => should be corrected if necessary
-            
             # Create a new move
             new_move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
+            
             # Search move line that have to be corrected.
             # NB: this is useful when you correct a move line twice and do a reverse on it. It should be reverse the complementary move line of the first move line
             # and reverse the last correction line.
@@ -392,6 +391,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         # Add lines that come not from valid lines
                         if ml.id != first_line_id:
                             to_reverse.append(ml.id)
+            
             # Browse all move lines and change information
             for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
@@ -428,6 +428,29 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     success_move_line_ids.append(ml.id)
             # Hard post the move
             move_obj.post(cr, uid, [new_move_id], context=context)
+            # Create register line reverse for line that are from the given move
+            for st_line in m.statement_line_ids:
+                # Search register where write new statement line
+                st_id = False
+                if st_line.statement_id:
+                    if st_line.statement_id.state == 'open':
+                        st_id = st_line.statement_id.id
+                    elif st_line.statement_id.state in ['partial_close', 'confirm']:
+                        # search next register
+                        reg_ids = self.pool.get('account.bank.statement').search(cr, uid, [('prev_reg_id', '=', st_line.statement_id.id)])
+                        if reg_ids:
+                            st_id = reg_ids[0]
+                        else:
+                            raise osv.except_osv(_('Error'), _("The register '%s' have no next register. Please open the next register via Register Creation wizard.") % st_line.statement_id.name)
+                else:
+                    raise osv.except_osv(_('Error'), _('No register linked to this move line.'))
+                # if register found, write a copy of register line
+                if st_id:
+                    name = join_without_redundancy(st_line.name, 'REV')
+                    self.pool.get('account.bank.statement.line').copy(cr, uid, st_line.id, 
+                        {'amount': -1 * st_line.amount, 'move_id': m.id, 'statement_id': st_id, 'name': name}, context=context)
+                else:
+                    raise osv.except_osv(_('Error'), _('An unexpected error has occured. Please contact an administrator to resolve the problem.'))
         return success_move_line_ids
 
     def update_account_on_st_line(self, cr, uid, ids, account_id=None, context={}):
