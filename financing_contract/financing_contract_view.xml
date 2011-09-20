@@ -37,17 +37,17 @@
                                     </tree>
                                 </field>
                             </page>
-                            <page string="Actual lines">
+                            <page string="Reporting lines">
                                 <field name="format_id" invisible="1"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type}">
-                                    <tree string="Actual lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
+                                    <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="line_type" invisible="1"/>
                                         <field name="allocated_amount" sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
                                         <field name="project_amount" sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
                                     </tree>
-                                    <form string="Actual lines">
+                                    <form string="Reporting lines">
                                         <group colspan="4" col="6">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
@@ -154,15 +154,15 @@
                         <field name="active" colspan="2"/>
                         <separator string="Dates"/>
                         <notebook colspan="4">
-                            <page string="Actual lines">
+                            <page string="Reporting lines">
                                 <field name="format_id" invisible="1"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1">
-                                    <tree string="Actual lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
+                                    <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="line_type" invisible="1"/>
                                     </tree>
-                                    <form string="Actual lines">
+                                    <form string="Reporting lines">
                                         <group colspan="4" col="6">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>

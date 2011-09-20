@@ -219,8 +219,8 @@ class financing_contract_contract(osv.osv):
 #        return True
     
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
-        'code': fields.char('Code', size=16, required=True),
+        'name': fields.char('Financing contract name', size=64, required=True),
+        'code': fields.char('Financing contract code', size=16, required=True),
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
         'grant_name': fields.char('Grant name', size=64, required=True),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),

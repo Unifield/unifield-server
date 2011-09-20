@@ -27,8 +27,8 @@ class financing_contract_donor(osv.osv):
     _inherits = {"financing.contract.format": "format_id"}
     
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
-        'code': fields.char('Code', size=16, required=True),
+        'name': fields.char('Donor name', size=64, required=True),
+        'code': fields.char('Donor code', size=16, required=True),
         'active': fields.boolean('Active'),
     }
     
