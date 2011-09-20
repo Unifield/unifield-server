@@ -154,6 +154,39 @@ receivable, item have not been corrected, item have not been reversed and accoun
             res[str(ml.id)] = list(set(upstream_line_ids + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
         return res
 
+    def get_first_corrected_line(self, cr, uid, ids, context={}):
+        """
+        For each move line, give the first line from which all corrections have been done.
+        Example:
+         - line 1 exists.
+         - line 1 was corrected by line 3.
+         - line 5 correct line 3.
+         - line 8 correct line 5.
+         - get_first_corrected_line of line 8 should give line 1.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            upstream_line_ids = []
+            # Get upstream move lines
+            line = ml
+            corrected_line_id = ml.corrected_line_id and ml.corrected_line_id
+            while corrected_line_id != False:
+                line = line.corrected_line_id or False
+                if not line:
+                    corrected_line_id = False
+                    continue
+                corrected_line_id = line.corrected_line_id and line.corrected_line_id.id or False
+            res[str(ml.id)] = False
+            if line:
+                res[str(ml.id)] = line.id
+        return res
+
     def button_do_accounting_corrections(self, cr, uid, ids, context={}):
         """
         Launch accounting correction wizard to do reverse or correction on selected move line.
@@ -365,6 +398,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 self.write(cr, uid, [new_line_id], vals, context=context)
                 # Flag this line as corrected
                 self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context)
+                # Only add line ID that appear in IDS (success move lines)
                 if ml.id in ids:
                     success_move_line_ids.append(ml.id)
             # Hard post the move
