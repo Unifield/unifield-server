@@ -325,7 +325,7 @@ class sale_order(osv.osv):
                             reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
                             
                         if reason_type_id:
-                            picking_values.update({'reason_type_id': reason_type_id})
+                            picking_values.update({'reason_type_id': reason_type_id[0]})
                             
                         picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
                     move_data =  {

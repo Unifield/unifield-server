@@ -138,7 +138,12 @@ stock_picking()
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
-
+    
+    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
+        if not 'reason_type_id' in pick_values:
+            pick_values.update({'reason_type_id': picking.reason_type_id.id})
+            
+        return pick_values
     
     def _get_default_reason(self, cr, uid, context={}):
         res = {}
