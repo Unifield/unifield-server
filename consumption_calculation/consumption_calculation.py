@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+from mx.DateTime import *
 
 from tools.translate import _
 
@@ -495,13 +496,10 @@ class product_product(osv.osv):
                 if to_date < from_date:
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
-                to_date_str = time.strptime(to_date, '%Y-%m-%d')
-                from_date_str = time.strptime(from_date, '%Y-%m-%d')
+                to_date_str = strptime(to_date, '%Y-%m-%d')
+                from_date_str = strptime(from_date, '%Y-%m-%d')
                 
-                nb_months = (to_date_str.tm_year-from_date_str.tm_year)*12
-                nb_months += to_date_str.tm_mon-from_date_str.tm_mon
-                nb_months -= to_date_str.tm_mday < from_date_str.tm_mday and ((from_date_str.tm_mday-to_date_str.tm_mday)/30)
-                nb_months += to_date_str.tm_mday > from_date_str.tm_mday and ((to_date_str.tm_mday-from_date_str.tm_mday)/30)
+                nb_months = Age(to_date_str, from_date_str).years*12 + Age(to_date_str, from_date_str).months + (Age(to_date_str, from_date_str).days/30)
                 
                 if not nb_months: nb_months = 1
                 
@@ -585,19 +583,16 @@ class product_product(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
         # Calculate the # of months in the period
         try:
-            to_date_str = time.strptime(to_date, '%Y-%m-%d')
+            to_date_str = strptime(to_date, '%Y-%m-%d')
         except ValueError:
-            to_date_str = time.strptime(to_date, '%Y-%m-%d %H:%M:%S')
+            to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
         
         try:
-            from_date_str = time.strptime(from_date, '%Y-%m-%d')
+            from_date_str = strptime(from_date, '%Y-%m-%d')
         except ValueError:
-            from_date_str = time.strptime(from_date, '%Y-%m-%d %H:%M:%S')
+            from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
         
-        nb_months = (to_date_str.tm_year-from_date_str.tm_year)*12
-        nb_months += to_date_str.tm_mon-from_date_str.tm_mon
-        nb_months -= to_date_str.tm_mday < from_date_str.tm_mday and ((from_date_str.tm_mday-to_date_str.tm_mday)/30)
-        nb_months += to_date_str.tm_mday > from_date_str.tm_mday and ((to_date_str.tm_mday-from_date_str.tm_mday)/30)
+        nb_months = Age(to_date_str, from_date_str).years*12 + Age(to_date_str, from_date_str).months + (Age(to_date_str, from_date_str).days/30)
         
         if not nb_months: nb_months = 1
         

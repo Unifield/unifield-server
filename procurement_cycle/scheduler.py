@@ -213,7 +213,7 @@ class procurement_order(osv.osv):
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.procure_delay and round(product.procure_delay/30.0, 2) or 1
+        delivery_leadtime = product.seller_delay and product.seller_delay != 'N/A' and round(int(product.seller_delay)/30.0, 2) or 1
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
         else:
@@ -227,19 +227,19 @@ class procurement_order(osv.osv):
                     delivery_leadtime = round(supplier_info.delay/30.0, 2)
                 
         # Get the monthly consumption
-        monthly_consumption = 1.0
+        monthly_consumption = 0.00
         
-        if cycle_id.product_id and cycle_id.product_id.id and d_values.get('manual_consumption', 0.00) != 0.00:
-            monthly_consumption = d_values.get('manual_consumption')
-        elif 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
+        if 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
             review_ids = review_obj.search(cr, uid, [('cons_location_id', '=', location_id)], context=context)
             review_line_ids = review_line_obj.search(cr, uid, [('mrc_id', 'in', review_ids), ('name', '=', product_id)], context=context)
             for line in review_line_obj.browse(cr, uid, review_line_ids, context=context):
                 last_date = False
                 if not last_date or last_date < line.mrc_id.period_to:
                     monthly_consumption = line.fmc
-        else:
+        elif 'monthly_consumption' in d_values and d_values.get('monthly_consumption'):
             monthly_consumption = product_obj.compute_amc(cr, uid, product.id, context=context)
+        else:
+            monthly_consumption = d_values.get('manual_consumption', 0.00)
             
         # Get the order coverage
         order_coverage = d_values.get('coverage', 3)
@@ -269,6 +269,7 @@ class procurement_order(osv.osv):
                         'from_date': time.strftime('%Y-%m-%d')})
         
         product = product_obj.browse(cr, uid, product_id, context=context)
+        location_name = location_obj.browse(cr, uid, location_id, context=context).name
         
         ''' Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
         
@@ -279,13 +280,13 @@ class procurement_order(osv.osv):
         
         # Get the available stock
         # Get the real stock
-#        real_stock = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['done'],
-#                                                                                       'what': 'in', 
-#                                                                                       'location': location_id,
-#                                                                                       'compute_child': True, 
-#                                                                                       'from_date': time.strftime('%Y-%m-%d')})
-#        # Get the picked reservation
-#        ## TODO: To confirm by Magali
+        picked_resa = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['assigned'],
+                                                                                       'what': ('in, out'), 
+                                                                                       'location': location_id,
+                                                                                       'compute_child': True, 
+                                                                                       'from_date': time.strftime('%Y-%m-%d')})
+        # Get the picked reservation
+        ## TODO: To confirm by Magali
 #        picked_reservation = 0.00
 #        move_ids = []
 #        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
@@ -295,11 +296,13 @@ class procurement_order(osv.osv):
 #            
 #        for move in move_obj.browse(cr, uid, move_ids):
 #            picked_reservation += move.product_qty
-#        
-#        available_stock = real_stock.get(product_id) - picked_reservation
-#        
-#        # Get the quantity on order
-#        ## TODO : To confirm by Magali
+            
+        available_stock = product.qty_available - picked_resa.get(product.id)
+        
+        #available_stock = real_stock.get(product_id) - picked_reservation
+        
+        # Get the quantity on order
+        ## TODO : To confirm by Magali
 #        quantity_on_order = 0.00
 #        move_ids = []
 #        for location in location_obj.search(cr, uid, [('location_id', 'child_of', [location_id])]):
@@ -309,6 +312,12 @@ class procurement_order(osv.osv):
 #        for move in move_obj.browse(cr, uid, move_ids):
 #            quantity_on_order += move.product_qty
             
+        quantity_on_order = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['confirmed'],
+                                                                                              'what': ('in, out'), 
+                                                                                              'location': location_id,
+                                                                                              'compute_child': True, 
+                                                                                              'from_date': time.strftime('%Y-%m-%d')})
+           
         # Get the safety stock
         safety_stock = d_values.get('safety', 0)
         
@@ -317,13 +326,14 @@ class procurement_order(osv.osv):
         
         # Get the expiry quantity
         # Set as comment because expiry quantity will be developed in a future sprint
-#        expiry_quantity = self.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
-        expiry_quantity = 0.00
+        expiry_quantity = product_obj.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
+        expiry_quantity = expiry_quantity and available_stock - expiry_quantity or 0.00
+        #expiry_quantity = 0.00
         
         # Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
-#        return available_stock + quantity_on_order - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
+        return available_stock + quantity_on_order.get(product.id) - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
 
-        return product.virtual_available - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
+#        return product.virtual_available - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
      
      
     def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
@@ -378,7 +388,7 @@ class procurement_order(osv.osv):
         Returns the number of month between the date in parameter and today
         '''
         date = Parser.DateFromString(date)
-        today = today()
+        today = datetime.today()
         
         # The batch is expired
         if date.year < today.year or (date.year == today.year and date.month < today.month):
