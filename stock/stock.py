@@ -1876,6 +1876,10 @@ class stock_move(osv.osv):
         """ Confirms stock move.
         @return: List of ids.
         """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         moves = self.browse(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
 
@@ -2125,6 +2129,8 @@ class stock_move(osv.osv):
             partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
