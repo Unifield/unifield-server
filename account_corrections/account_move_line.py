@@ -367,8 +367,33 @@ receivable, item have not been corrected, item have not been reversed and accoun
             
             # Create a new move
             new_move_id = move_obj.create(cr, uid,{'journal_id': j_corr_ids[0], 'period_id': period_ids[0], 'date': date}, context=context)
+            # Search move line that have to be corrected.
+            # NB: this is useful when you correct a move line twice and do a reverse on it. It should be reverse the complementary move line of the first move line
+            # and reverse the last correction line.
+            # This is just a little bit more complicated than reverse a move.
+            to_reverse = []
+            # 1/ add move line from this move that have not been reversed to the "to_reverse"
+            # 2/ search first move line of each move lines
+            # 3/ add complementary line of first move_line to the "to_reverse"
+            valid = []
+            # Search valid lines into current move
+            for line in m.line_id:
+                if not line.reversal:
+                    valid.append(line)
+            # Search first line for each valid lines
+            for line in valid:
+                first_line_id = self.get_first_corrected_line(cr, uid, line.id, context=context).get(str(line.id), False)
+                # add line_id to line to be reversed
+                to_reverse.append(line.id)
+                if first_line_id:
+                    # Get first line move
+                    first_line = self.browse(cr, uid, [first_line_id], context=context)[0]
+                    for ml in first_line.move_id.line_id:
+                        # Add lines that come not from valid lines
+                        if ml.id != first_line_id:
+                            to_reverse.append(ml.id)
             # Browse all move lines and change information
-            for ml in self.browse(cr, uid, [x.id for x in m.line_id], context=context):
+            for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
                 name = join_without_redundancy(ml.name, 'REV')
                 vals = {}
