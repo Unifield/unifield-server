@@ -85,6 +85,8 @@ class account_move_line(osv.osv):
             readonly=True, help="This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
 receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).", 
             store=False),
+        'corrected_st_line_id': fields.many2one('account.bank.statement.line', string="Corrected register line", readonly=True, 
+            help="This register line is those which have been corrected last."),
     }
 
     _defaults = {
@@ -384,10 +386,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
         absl_obj = self.pool.get('account.bank.statement.line')
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
+            # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
+            context.update({'from_correction': True})
+            # Search lines that are correction of this one (in order to add some fields)
+            corrected_line_ids = self.search(cr, uid, [('corrected_line_id', '=', ml.id)], context=context)
+            # Case where this move line have a link to some statement lines
             if ml.statement_id and ml.move_id.statement_line_ids:
-                # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
-                context.update({'from_correction': True})
-                absl_obj.write(cr, uid, [x.id for x in ml.move_id.statement_line_ids], {'account_id': account_id}, context=context)
+                for st_line in ml.move_id.statement_line_ids:
+                    absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
+                    # we informs new move line that it have correct a statement line
+                    self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
+            # if not, this move line should have a direct link to a register line
+            elif ml.statement_id and ml.corrected_st_line_id:
+                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], {'account_id': account_id}, context=context)
         return True
 
     def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
