@@ -145,12 +145,15 @@ class financing_contract_actual_line(osv.osv):
                 'name': browse_source_line.name,
                 'code': browse_source_line.code,
                 'format_id': destination_format_id,
-                'account_ids': browse_source_line.account_ids,
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
                 'allocated_amount': browse_source_line.allocated_amount,
                 'project_amount': browse_source_line.project_amount,
             }
+            account_ids = []
+            for account in browse_source_line.account_ids:
+                account_ids.append(account.id)
+            format_line_vals['account_ids'] = [(6, 0, account_ids)]
             parent_line_id = self.pool.get('financing.contract.actual.line').create(cr, uid, format_line_vals, context=context)
             for child_line in browse_source_line.child_ids:
                 self.copy_format_line(cr, uid, child_line, destination_format_id, parent_line_id, context=context)

@@ -206,6 +206,18 @@ class financing_contract_contract(osv.osv):
                 report_line_obj.create(cr, uid, consumption_line_vals, context=context)
         return
     
+#    def dummy(self, cr, uid, ids, *args, **kwargs):
+#        mode = self.read(cr, uid, ids, ['reporting_type'])[0]['reporting_type']
+#        next_mode = False
+#        if mode == 'allocated':
+#            next_mode = 'project'
+#        elif mode == 'project':
+#            next_mode = 'all'
+#        else:
+#            next_mode = 'allocated'
+#        self.write(cr, uid, [ids[0]], {'reporting_type': next_mode})
+#        return True
+    
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
@@ -283,6 +295,32 @@ class financing_contract_contract(osv.osv):
             report_line_obj.unlink(cr, uid, contract.report_line.id, context=context)
         return super(financing_contract_contract, self).unlink(cr, uid, ids, context=context)
     
+    
+    def menu_interactive_report(self, cr, uid, ids, context={}):
+        # we update the context with the contract reporting type
+        contract_obj = self.browse(cr, uid, ids[0], context=context)
+        model_data_obj = self.pool.get('ir.model.data')
+        # update the context with reporting type (used for "get analytic_lines" action)
+        context.update({'reporting_type': contract_obj.reporting_type,
+                        'active_id': ids[0],
+                        'active_ids': ids})
+        # retrieve the corresponding_view
+        view_id = False
+        view_ids = model_data_obj.search(cr, uid, 
+                                        [('module', '=', 'financing_contract'), 
+                                         ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract_obj.reporting_type))],
+                                        offset=0, limit=1)
+        if len(view_ids) > 0:
+            view_id = model_data_obj.browse(cr, uid, view_ids[0]).res_id
+        return {
+               'type': 'ir.actions.act_window',
+               'res_model': 'financing.contract.donor.reporting.line',
+               'view_type': 'tree',
+               'view_id': [view_id],
+               'target': 'current',
+               'domain': [('contract_id', '=', ids[0])],
+               'context': context
+        }
     
 financing_contract_contract()
 

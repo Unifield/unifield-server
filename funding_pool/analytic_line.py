@@ -75,21 +75,29 @@ class analytic_line(osv.osv):
         donor_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         if context is None:
             context = {}
-        if 'search_financing_contract' in context and context['search_financing_contract'] and 'active_id' in context:
-            donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
-            # project domain
-            if donor_line.computation_type not in ('children_sum', 'analytic_sum'):
-                raise osv.except_osv(_('Warning !'), _("The line selected has no analytic lines associated."))
-                return
-            else:
-                private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
-                if private_funds_id:
+        if 'search_financing_contract' in context and context['search_financing_contract']:
+            if 'active_id' in context and \
+               'reporting_type' in context:
+                donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
+                # project domain
+                if donor_line.computation_type not in ('children_sum', 'analytic_sum'):
+                    raise osv.except_osv(_('Warning !'), _("The line selected has no analytic lines associated."))
+                    return
+                else:
+                    # common domain part
                     date_domain = eval(donor_line.date_domain)
                     args += [date_domain[0],
                              date_domain[1],
-                             eval(donor_line.cost_center_domain),
-                             ('account_id', '!=', private_funds_id),
                              donor_line_obj._get_account_domain(donor_line)]
+                    if context['reporting_type'] == 'allocated':
+                        # funding pool lines
+                        args += [eval(donor_line.funding_pool_domain)]
+                    else:
+                        # total project lines
+                        private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
+                        if private_funds_id:
+                            args += [('account_id', '!=', private_funds_id),
+                                     eval(donor_line.cost_center_domain)]
             
         return super(analytic_line, self).search(cr, uid, args, offset, limit,
                      order, context=context, count=count)
