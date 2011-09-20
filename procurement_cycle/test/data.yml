@@ -218,7 +218,7 @@
   !record {model: stock.warehouse, id: warehouse_proc_cycle}:
     name: Warehouse Cycle
     lot_stock_id: cycle_sloc2
-    lot_input_id: stock.stock_location_suppliers
+    lot_input_id: cycle_sloc1
     lot_output_id: stock.stock_location_customers
     company_id: base.main_company
 -
@@ -228,6 +228,86 @@
     payment_default_id: account.account_payment_term
     name: Cycle Shop
     warehouse_id: warehouse_proc_cycle
+-
+  I create a batch for product 3 with today + 2 months as expiry date
+-
+  !record {model: stock.production.lot, id: lot1}:
+    name: '0001'
+    ref: '0001'
+    product_id: product3
+- 
+  I add the life date on the lot
+-
+  !python {model: stock.production.lot }: |
+    import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(months=2)).strftime('%Y-%m-%d')
+    self.write(cr, uid, ref('lot1'), {'life_date': req_date}, context=context)
+-
+  I create a batch for product 3 with today + 1 month as expiry date
+-
+  !record {model: stock.production.lot, id: lot2}:
+    name: '0002'
+    ref: '0002'
+    product_id: product3
+- 
+  I add the life date on the lot
+-
+  !python {model: stock.production.lot }: |
+    import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(months=1)).strftime('%Y-%m-%d')
+    self.write(cr, uid, ref('lot2'), {'life_date': req_date}, context=context)
+-
+  I create a batch for product 3 with today + 15 days as expiry date
+-
+  !record {model: stock.production.lot, id: lot3}:
+    name: '0003'
+    ref: '0003'
+    product_id: product3
+- 
+  I add the life date on the lot
+-
+  !python {model: stock.production.lot }: |
+    import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=15)).strftime('%Y-%m-%d')
+    self.write(cr, uid, ref('lot3'), {'life_date': req_date}, context=context)
+-
+  I create a batch for product 3 with today + 6 months as expiry date
+-
+  !record {model: stock.production.lot, id: lot4}:
+    name: '0004'
+    ref: '0004'
+    product_id: product3
+- 
+  I add the life date on the lot
+-
+  !python {model: stock.production.lot }: |
+    import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(months=6)).strftime('%Y-%m-%d')
+    self.write(cr, uid, ref('lot4'), {'life_date': req_date}, context=context)
+-
+  I create a batch for product 3 with today + 2 years as expiry date
+-
+  !record {model: stock.production.lot, id: lot5}:
+    name: '0005'
+    ref: '0005'
+    product_id: product3
+- 
+  I add the life date on the lot
+-
+  !python {model: stock.production.lot }: |
+    import time
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(years=2)).strftime('%Y-%m-%d')
+    self.write(cr, uid, ref('lot5'), {'life_date': req_date}, context=context)
 -
   I create an inventory to add products in stock
 -
@@ -270,17 +350,38 @@
       - company_id: base.main_company
         location_id: cycle_sloc2
         product_id: product3
-        product_qty: 55.0
+        product_qty: 40.0
+        prod_lot_id: lot1
+        product_uom: product.product_uom_unit
+      - company_id: base.main_company
+        location_id: cycle_sloc2
+        product_id: product3
+        product_qty: 5.00
+        prod_lot_id: lot3
+        product_uom: product.product_uom_unit
+      - company_id: base.main_company
+        location_id: cycle_sloc2
+        product_id: product3
+        product_qty: 250.00
+        prod_lot_id: lot4
+        product_uom: product.product_uom_unit
+      - company_id: base.main_company
+        location_id: cycle_sloc2
+        product_id: product3
+        product_qty: 500.00
+        prod_lot_id: lot5
         product_uom: product.product_uom_unit
       - company_id: base.main_company
         location_id: cycle_sloc3
         product_id: product3
         product_qty: 10.0
+        prod_lot_id: lot1
         product_uom: product.product_uom_unit
       - company_id: base.main_company
         location_id: cycle_sloc4
         product_id: product3
         product_qty: 25.0
+        prod_lot_id: lot2
         product_uom: product.product_uom_unit
       - company_id: base.main_company
         location_id: cycle_sloc2
@@ -341,8 +442,8 @@
   I check if the availability of P3 is correct
 -
   !assert {model: product.product, id: product3}:
-    - qty_available == 90.0
-    - virtual_available == 90.0
+    - qty_available == 830.0
+    - virtual_available == 830.0
 -
   I create a Purchase Order with 35 P3
 -
@@ -374,8 +475,8 @@
   I check if the availability of P3 is correct
 -
   !assert {model: product.product, id: product3}:
-    - qty_available == 90.0
-    - virtual_available == 125.0
+    - qty_available == 830.0
+    - virtual_available == 865.0
 -
   I crete a new FMC report for Sloc 2
 -
@@ -391,10 +492,10 @@
         fmc: 236.0
         valid_ok: True
       - name: product3
-        fmc: 500.0
+        fmc: 150.0
         valid_ok: True
 -
-  I crete a new FMC report for Sloc 1
+  I create a new FMC report for Sloc 1
 -
   !record {model: monthly.review.consumption, id: mrc1}:
     cons_location_id: cycle_sloc1
@@ -407,3 +508,126 @@
       - name: product2
         fmc: 45.0
         valid_ok: True
+      - name: product3
+        fmc: 5.0
+        valid_ok: True
+-
+  I create a stock move for P1 in SLoc 2
+- 
+  !record {model: stock.move, id: sm_p1_sloc2}:
+    name: Product 1 SLoc 2
+    product_id: product1
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc2
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 5
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p1_sloc2'), context=context)
+    self.action_done(cr, uid, ref('sm_p1_sloc2'), context=context)
+-
+  I create a stock move for P1 in SLoc 1
+- 
+  !record {model: stock.move, id: sm_p1_sloc1}:
+    name: Product 1 SLoc 1
+    product_id: product1
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc1
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 5
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p1_sloc1'), context=context)
+    self.action_done(cr, uid, ref('sm_p1_sloc1'), context=context)
+-
+  I create a stock move for P2 in SLoc 1
+- 
+  !record {model: stock.move, id: sm_p2_sloc1}:
+    name: Product 2 SLoc 1
+    product_id: product2
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc1
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 7
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p2_sloc1'), context=context)
+    self.action_done(cr, uid, ref('sm_p2_sloc1'), context=context)
+-
+  I create a stock move for P2 in SLoc 1
+- 
+  !record {model: stock.move, id: sm_p2_sloc2}:
+    name: Product 2 SLoc 2
+    product_id: product2
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc2
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 10
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p2_sloc2'), context=context)
+    self.action_done(cr, uid, ref('sm_p2_sloc2'), context=context)
+-
+  I create a stock move for P2 in SLoc 1
+- 
+  !record {model: stock.move, id: sm_p3_sloc1}:
+    name: Product 3 SLoc 1
+    product_id: product3
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc1
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 12
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p3_sloc1'), context=context)
+    self.action_done(cr, uid, ref('sm_p3_sloc1'), context=context)
+-
+  I create a stock move for P2 in SLoc 1
+- 
+  !record {model: stock.move, id: sm_p4_sloc2}:
+    name: Product 4 SLoc 2
+    product_id: product4
+    product_uom: product.product_uom_unit
+    date_expected: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-%d')
+    location_id: cycle_sloc2
+    location_dest_id: stock.stock_location_customers
+    type: out
+    reason_type_id: reason_types_moves.reason_type_deliver_partner
+    product_qty: 2
+-
+  I confirm the stock move
+-
+  !python {model: stock.move}: |
+    self.action_confirm(cr, uid, ref('sm_p4_sloc2'), context=context)
+    self.action_done(cr, uid, ref('sm_p4_sloc2'), context=context)

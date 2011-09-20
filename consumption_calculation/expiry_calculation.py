@@ -21,7 +21,9 @@
 
 from osv import osv, fields
 
+from mx.DateTime import *
 from datetime import date, timedelta, datetime
+
 import time
 
 class expiry_quantity_report(osv.osv_memory):
@@ -460,5 +462,66 @@ class expiry_report_date_line(osv.osv_memory):
     }
     
 expiry_report_date_line()
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    
+    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, context={}):
+        '''
+        Get the expired quantity of product
+        '''
+        move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
+        product_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        stock_obj = self.pool.get('stock.location')
+        
+        monthly_consumption = 0.00
+        
+        # Get the monthly consumption
+        if context.get('reviewed_consumption', False):
+            monthly_consumption = product_obj.browse(cr, uid, product_id, context=context).reviewed_consumption
+        elif context.get('monthly_consumption', False):
+            monthly_consumption = product_obj.browse(cr, uid, product_id, context=context).monthly_consumption
+        else:
+            monthly_consumption = context.get('manual_consumption', 0.00)
+            
+        location_ids = stock_obj.search(cr, uid, [('location_id', 'child_of', location_id)])
+            
+        move_ids = move_obj.search(cr, uid, ['|', ('location_id', 'in', location_ids), ('location_dest_id', 'in', location_ids), 
+                                             ('product_id', '=', product_id), ('prodlot_id', '!=', False)], context=context)
+        
+        lots = []
+        for move in move_obj.browse(cr, uid, move_ids, context=context):
+            if not move.prodlot_id.id in lots:
+                lots.append(move.prodlot_id.id)
+        
+        # Get all lots for the product product_id
+        lot_ids = lot_obj.search(cr, uid, [('product_id', '=', product_id), ('stock_available', '>', 0.00), ('id', 'in', lots)], \
+                                order='life_date', context=context)
+        
+        # Sum of months before expiry
+        sum_ni = 0.00      
+        expired_qty = 0.00
+        last_date = now()
+        last_qty = 0.00
+        
+        for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
+            life_date = strptime(lot.life_date, '%Y-%m-%d')
+            rel_time = RelativeDateDiff(life_date, now())
+            ni = round((rel_time.months*30 + rel_time.days)/30.0, 2)
+            if last_date > life_date:
+                expired_qty = lot.stock_available                
+            elif ni - sum_ni > 0.00:
+                expired_qty += last_qty
+                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
+                sum_ni += ni
+            else:
+                break
+            
+        return expired_qty
+    
+product_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
