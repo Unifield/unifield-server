@@ -83,6 +83,7 @@ class sale_order_line(osv.osv):
     
 sale_order_line()
 
+
 class sale_order(osv.osv):
     '''
     add message when so is written, i.e when we add new so lines

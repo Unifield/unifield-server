@@ -109,7 +109,9 @@ class create_picking(osv.osv_memory):
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
                 'move_id' : move.id,
-            }
+                # specific management rules
+                'expiry_date': move.expired_date,
+                }
             
             # the first wizard of ppl, we set default values as everything is packed in one pack
 #            if step == 'ppl1':
@@ -239,6 +241,8 @@ class create_picking(osv.osv_memory):
         
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
+        # add messages from specific management rules
+        result = self.pool.get('stock.partial.picking').add_message(cr, uid, result, context=context)
         return result
     
     def generate_move_as_key(self, cr, uid, ids, context=None):
