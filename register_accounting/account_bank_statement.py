@@ -83,8 +83,6 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
-        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
-            help="This fields give the previous register from which this one is linked."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
 
     }

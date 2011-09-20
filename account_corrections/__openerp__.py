@@ -30,9 +30,7 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    ## WARNING: register_accounting was added because of a 'prev_reg_id' field use in a method. 
-    # NB: prev_reg_id could be exported to account_override in order not to add a big dependancy on account_corrections
-    "depends" : ["base", "account", 'res_currency_functional', 'funding_pool', 'account_override', 'register_accounting'],
+    "depends" : ["base", "account", 'res_currency_functional', 'funding_pool', 'account_override'],
     "init_xml" : [],
     "update_xml" : [
         'account_view.xml',

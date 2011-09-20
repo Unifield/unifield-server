@@ -21,10 +21,19 @@
 #
 ##############################################################################
 
-import account
-import invoice
-import account_move_line
-import account_analytic_line
-import account_bank_statement
+from osv import osv
+from osv import fields
 
+class account_bank_statement(osv.osv):
+    _name = 'account.bank.statement'
+    _inherit = 'account.bank.statement'
+
+    _columns = {
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
+        'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True, 
+            help="This fields give the next register if exists."),
+    }
+
+account_bank_statement()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
