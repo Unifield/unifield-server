@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+import time
 
 import netsvc
 
@@ -89,7 +90,17 @@ class account_invoice(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         for inv in self.browse(cr, uid, ids):
             if not inv.date_invoice:
-                raise osv.except_osv(_('No invoice date !'), _('Please indicate an invoice date before approving the invoice!'))
+                wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, {'invoice_id': inv.id, 'date': time.strftime('%Y-%m-%d'), 'period_id': inv.period_id and inv.period_id.id or False})
+                return {
+                    'name': "Invoice Date",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.invoice.date',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': wiz_id,
+                    }
+            
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         return True
 

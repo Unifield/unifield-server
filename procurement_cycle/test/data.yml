@@ -59,7 +59,7 @@
     And a second category
 -
   !record {model: product.category, id: product_cat2}:
-    name: Categ1
+    name: Categ2
 -
     I create the product P1
 -
@@ -379,3 +379,34 @@
   !assert {model: product.product, id: product3}:
     - qty_available == 90.0
     - virtual_available == 125.0
+-
+  I crete a new FMC report for Sloc 2
+-
+  !record {model: monthly.review.consumption, id: mrc2}:
+    cons_location_id: cycle_sloc2
+    period_from: 2011-01-01
+    period_to: !eval time.strftime('%Y-%m-%d')
+    line_ids:
+      - name: product1
+        fmc: 125.0
+        valid_ok: True
+      - name: product2
+        fmc: 236.0
+        valid_ok: True
+      - name: product3
+        fmc: 500.0
+        valid_ok: True
+-
+  I crete a new FMC report for Sloc 1
+-
+  !record {model: monthly.review.consumption, id: mrc1}:
+    cons_location_id: cycle_sloc1
+    period_from: 2011-01-01
+    period_to: !eval time.strftime('%Y-%m-%d')
+    line_ids:
+      - name: product1
+        fmc: 15.0
+        valid_ok: True
+      - name: product2
+        fmc: 45.0
+        valid_ok: True

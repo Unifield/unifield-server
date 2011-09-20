@@ -46,13 +46,14 @@ class stock_production_lot(osv.osv):
     # @@@end
 
     _columns = {
-        'life_date': fields.date('End of Life Date',
-            help='The date on which the lot may become dangerous and should not be consumed.'),
-        'use_date': fields.date('Best before Date',
-            help='The date on which the lot starts deteriorating without becoming dangerous.'),
-        'removal_date': fields.date('Removal Date',
-            help='The date on which the lot should be removed.'),
-        'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
+                # renamed from End of Life Date
+                'life_date': fields.date('Expiry Date',
+                    help='The date on which the lot may become dangerous and should not be consumed.', required=True),
+                'use_date': fields.date('Best before Date',
+                    help='The date on which the lot starts deteriorating without becoming dangerous.'),
+                'removal_date': fields.date('Removal Date',
+                    help='The date on which the lot should be removed.'),
+                'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
     }
 
     _defaults = {

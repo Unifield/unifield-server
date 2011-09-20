@@ -205,13 +205,15 @@ class procurement_order(osv.osv):
         supplier_info_obj = self.pool.get('product.supplierinfo')
         location_obj = self.pool.get('stock.location')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
+        review_obj = self.pool.get('monthly.review.consumption')
+        review_line_obj = self.pool.get('monthly.review.consumption.line')
         
         product = product_obj.browse(cr, uid, product_id)
         location = location_obj.browse(cr, uid, location_id)
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.procure_delay and product.procure_delay/30.0 or 1
+        delivery_leadtime = product.procure_delay and round(product.procure_delay/30.0, 2) or 1
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
         else:
@@ -219,10 +221,10 @@ class procurement_order(osv.osv):
             for supplier_info in product.seller_ids:
                 if sequence and supplier_info.sequence < sequence:
                     sequence = supplier_info.sequence
-                    delivery_leadtime = supplier_info.delay/30.0
+                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
                 elif not sequence:
                     sequence = supplier_info.sequence
-                    delivery_leadtime = supplier_info.delay/30.0
+                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
                 
         # Get the monthly consumption
         monthly_consumption = 1.0
@@ -230,9 +232,14 @@ class procurement_order(osv.osv):
         if cycle_id.product_id and cycle_id.product_id.id and d_values.get('manual_consumption', 0.00) != 0.00:
             monthly_consumption = d_values.get('manual_consumption')
         elif 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
-            monthly_consumption = product.reviewed_consumption
+            review_ids = review_obj.search(cr, uid, [('cons_location_id', '=', location_id)], context=context)
+            review_line_ids = review_line_obj.search(cr, uid, [('mrc_id', 'in', review_ids), ('name', '=', product_id)], context=context)
+            for line in review_line_obj.browse(cr, uid, review_line_ids, context=context):
+                last_date = False
+                if not last_date or last_date < line.mrc_id.period_to:
+                    monthly_consumption = line.fmc
         else:
-            monthly_consumption = product.monthly_consumption
+            monthly_consumption = product_obj.compute_amc(cr, uid, product.id, context=context)
             
         # Get the order coverage
         order_coverage = d_values.get('coverage', 3)

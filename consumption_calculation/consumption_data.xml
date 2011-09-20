@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="1">
+    
+        <record id="msf_customer_location" model="stock.location">
+            <field name="name">MSF Customers</field>
+            <field name="usage">customer</field>
+        </record>
+    
+    </data>
+</openerp>

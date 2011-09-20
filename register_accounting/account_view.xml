@@ -12,15 +12,19 @@
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Bank Register" hide_new_button="1" hide_delete_button="1">
-                        <group col="7" colspan="4">
+                        <group col="6" colspan="4">
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="date" select="1" on_change="onchange_date(date)"/>
+                            <field name="code" />
                             <field name="journal_id" domain="[('type', '=', 'bank')]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
+                            <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
+                            <field name="journal_name"/>
+                            
+                            <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': [('prev_reg_id', '!=', False)]}"/>
-                            <group col="4" colspan="2">
+                            <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
@@ -140,10 +144,15 @@
                     <form string="Statement" hide_new_button="1" hide_delete_button="1">
                         <group col="6" colspan="4">
                             <field name="name" readonly="1"/>
+                            <field name="code"   attrs="{'readonly': [('state', 'not in',('draft'))]}"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash')]" select="1"/>
+                            <newline/>
+                            
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
+                            <field name="journal_name"/>
+                            
                             <field name="currency" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
@@ -272,11 +281,14 @@
                                 <separator string="Opening Balance" colspan="4"/>
                                 <field name="balance_start" string="Opening Balance" readonly="True"/>
                                 <field name="total_entry_encoding"/>
+                                <field name="open_advance_amount"  attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                             </group>
                             <group col="2" colspan="2">
                                 <separator string="Closing Balance" colspan="4"/>
                                 <field name="balance_end" string="Calculated Balance" readonly="1"/>
                                 <field name="balance_end_cash" readonly="1" string="CashBox Balance"/>
+                                <field name="closing_gap" readonly="1"/>
+                                <field name="comments" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                             </group>
                         </group>
                         <separator string="State" />
@@ -497,10 +509,13 @@
                 <form string="Cheque Register" hide_new_button="1" hide_delete_button="1">
                     <group col="7" colspan="4">
                         <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="date" select="1" on_change="onchange_date(date)"/>
+                        <field name="code" />
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" on_change="onchange_journal_id(journal_id)" select="1"/>
                         <newline/>
+                        <field name="date" select="1" on_change="onchange_date(date)"/>
                         <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
+                        <field name="journal_name"/>
+                        
                         <field name="currency" invisible="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
@@ -605,9 +620,6 @@
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="journal_id"/>
-                    <field name="balance_start"/>
-                    <field name="balance_end_real"/>
-                    <field name="balance_end" invisible="1"/>
                     <field name="state"/>
                     <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
@@ -736,5 +748,7 @@
             </field>
         </record>
 
+    	<!-- UF-426: remove Journal Items in Cash and Bank -->
+		<delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
     </data>
 </openerp>

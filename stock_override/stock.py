@@ -32,6 +32,49 @@ import decimal_precision as dp
 import logging
 
 
+#----------------------------------------------------------
+# Procurement Order
+#----------------------------------------------------------
+class procurement_order(osv.osv):
+    _name = 'procurement.order'
+    _inherit = 'procurement.order'
+
+    def action_confirm(self, cr, uid, ids, context=None):
+        """ Confirms procurement and writes exception message if any.
+        @return: True
+        """
+        move_obj = self.pool.get('stock.move')
+        for procurement in self.browse(cr, uid, ids, context=context):
+            if procurement.product_qty <= 0.00:
+                raise osv.except_osv(_('Data Insufficient !'),
+                    _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
+            if procurement.product_id.type in ('product', 'consu'):
+                if not procurement.move_id:
+                    source = procurement.location_id.id
+                    reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                    if procurement.procure_method == 'make_to_order':
+                        reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                        source = procurement.product_id.product_tmpl_id.property_stock_procurement.id
+                    id = move_obj.create(cr, uid, {
+                        'name': procurement.name,
+                        'location_id': source,
+                        'location_dest_id': procurement.location_id.id,
+                        'product_id': procurement.product_id.id,
+                        'product_qty': procurement.product_qty,
+                        'product_uom': procurement.product_uom.id,
+                        'date_expected': procurement.date_planned,
+                        'state': 'draft',
+                        'company_id': procurement.company_id.id,
+                        'auto_validate': True,
+                        'reason_type_id': reason_type_id,
+                    })
+                    move_obj.action_confirm(cr, uid, [id], context=context)
+                    self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
+        self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
+        return True
+    
+procurement_order()
+
 
 #----------------------------------------------------------
 # Stock Picking

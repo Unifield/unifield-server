@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Register creation Form -->
+        <record model="ir.ui.view" id="wizard_invoice_date_form">
+            <field name='name'>wizard.invoice.date.form</field>
+            <field name='model'>wizard.invoice.date</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Please indicate an invoice date before approving the invoice">
+                    <field name="date" />
+                    <field name="period_id" />
+                    <group colspan="4">
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button name="validate" type="object" string="Validate" icon="gtk-ok" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

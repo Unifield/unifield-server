@@ -31,5 +31,5 @@ import import_invoice_on_registers
 import import_cheque_on_bank_registers
 import register_creation
 import wizard_confirm_bank
-
+import invoice_date
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

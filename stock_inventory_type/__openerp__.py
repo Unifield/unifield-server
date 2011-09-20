@@ -33,6 +33,7 @@
     ],
     "depends" : [
         "stock",
+        "reason_types_moves",
     ],
     "update_xml": [
         "stock_view.xml",

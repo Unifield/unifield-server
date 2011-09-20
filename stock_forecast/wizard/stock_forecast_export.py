@@ -40,6 +40,21 @@ class stock_forecast_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
+    def do_back(self, cr, uid, ids, context=None):
+        '''
+        button was removed following the 'popup' solution 
+        <button name='do_back' string='Back to Forecast' type='object' icon='gtk-back' />
+        '''
+        back_id = context['stock_forecast_id'][0]
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.forecast',
+                'res_id': back_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                }
+    
     def get_selection_text(self, cr, uid, obj, field, id, context=None):
         '''
         get the text for selection id
@@ -56,7 +71,7 @@ class stock_forecast_export(osv.osv_memory):
         
         return False
     
-    def export_to_csv(self, cr, uid, ids, context={}):
+    def export_to_csv(self, cr, uid, ids, context=None):
         '''
         Builds and returns a file containing products list content
         '''
@@ -76,7 +91,7 @@ class stock_forecast_export(osv.osv_memory):
             export += '%s;%s;%s;%s;%s;%s;%s' % (line.date.split(' ')[0] or '',
                                                 line.doc or '',
                                                 self.get_selection_text(cr, uid, line_obj, 'order_type', line.order_type, context=context) or '',
-                                                line.reference or '',
+                                                line.reference and line.reference.name_get()[0][1] or '',
                                                 self.get_selection_text(cr, uid, line_obj, 'state', line.state, context=context) or '',
                                                 line.qty or '0.0',
                                                 line.stock_situation or '0.0',)
@@ -86,8 +101,8 @@ class stock_forecast_export(osv.osv_memory):
         
         export_id = self.create(cr, uid, {'list_id': active_id,
                                           'file': file, 
-                                          'filename': 'list_%s.csv' % (time.strftime('%Y-%m-%d %H:%M:%S')),
-                                          'message': 'The list has been exported. Please click on Save As button to download the file'})
+                                          'filename': 'list_%s_%s.csv' % (list.product_id.code, time.strftime('%Y-%m-%d-%H:%M:%S')),
+                                          'message': 'The list has been exported. Please click on Save As button to download the file'}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.forecast.export',
@@ -95,6 +110,7 @@ class stock_forecast_export(osv.osv_memory):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'target': 'new',
+                'context': context,
                 }
 
 stock_forecast_export()
