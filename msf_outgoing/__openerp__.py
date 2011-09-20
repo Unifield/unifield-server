@@ -46,8 +46,8 @@
         'msf_outgoing_report.xml',
         'outgoing_data.xml',
     ],
-    'demo_xml': [
-    ],
+    "demo_xml": ['data/msf_outgoing_data.xml',
+                 ],
     'test': [
     ],
     'installable': True,
