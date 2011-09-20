@@ -1808,23 +1808,29 @@ class stock_move(osv.osv):
                     result.setdefault(m.picking_id, [])
                     result[m.picking_id].append( (m, dest) )
         return result
+    
+    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
+        return pick_values
 
     def _create_chained_picking(self, cr, uid, pick_name, picking, ptype, move, context=None):
+        if not context:
+            context={}
         res_obj = self.pool.get('res.company')
         picking_obj = self.pool.get('stock.picking')
-        pick_id= picking_obj.create(cr, uid, {
-                                'name': pick_name,
-                                'origin': tools.ustr(picking.origin or ''),
-                                'type': ptype,
-                                'note': picking.note,
-                                'move_type': picking.move_type,
-                                'auto_picking': move[0][1][1] == 'auto',
-                                'stock_journal_id': move[0][1][3],
-                                'company_id': move[0][1][4] or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
-                                'address_id': picking.address_id.id,
-                                'invoice_state': 'none',
-                                'date': picking.date,
-                            })
+        pick_values = {'name': pick_name,
+                       'origin': tools.ustr(picking.origin or ''),
+                       'type': ptype,
+                       'note': picking.note,
+                       'move_type': picking.move_type,
+                       'auto_picking': move[0][1][1] == 'auto',
+                       'stock_journal_id': move[0][1][3],
+                       'company_id': move[0][1][4] or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
+                       'address_id': picking.address_id.id,
+                       'invoice_state': 'none',
+                       'date': picking.date,
+                   }
+        pick_values = self.hook__create_chained_picking(cr, uid, pick_values, picking)
+        pick_id= picking_obj.create(cr, uid, pick_values, context=context)
         return pick_id
     def create_chained_picking(self, cr, uid, moves, context=None):
         res_obj = self.pool.get('res.company')
