@@ -204,6 +204,8 @@ class analytic_distribution(osv.osv):
                 'source_date': source_free_2_line.source_date or False,
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        if destination_obj.invoice_line_ids:
+            self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [x.id for x in destination_obj.invoice_line_ids])
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
 
     def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):

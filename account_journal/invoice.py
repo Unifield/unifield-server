@@ -97,7 +97,7 @@ class account_invoice_line(osv.osv):
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for inv_line in self.browse(cr, uid, ids, context=context):
             # Don't create engagement journal line if the invoice come from a purchase list
-            if inv_line.invoice_id.purchase_list:
+            if inv_line.invoice_id.purchase_list or inv_line.invoice_id.state!='draft':
                 continue
             # Search old engagement journal lines to be deleted (to not have split invoice problem that delete not engagement journal lines)
             analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], context=context)
@@ -179,8 +179,6 @@ class account_invoice_line(osv.osv):
             if inv_line.analytic_distribution_id:
                 to_create.append(inv_line.id)
         if to_create:
-            # Delete existing anaytic lines
-            analytic_line_obj.unlink(cr, uid, to_remove, context=context)
             # Create new analytic lines
             self.create_engagement_lines(cr, uid, to_create, context=context)
         return res
