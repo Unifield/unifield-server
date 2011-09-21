@@ -151,6 +151,9 @@ class account_invoice_line(osv.osv):
                             'source_date': date,
                             'invoice_line_id': inv_line.id,
                         }
+                        # Update values if we come from a funding pool
+                        if distrib_line._name == 'funding.pool.distribution.line':
+                            al_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
                         res = analytic_line_obj.create(cr, uid, al_vals, context=context)
                         engagement_line_ids.append(res)
         return engagement_line_ids or False

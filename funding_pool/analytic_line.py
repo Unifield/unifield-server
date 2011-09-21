@@ -24,10 +24,12 @@ from osv import fields
 from tools.translate import _
 
 class analytic_line(osv.osv):
+    _name = "account.analytic.line"
     _inherit = "account.analytic.line"
 
     _columns = {
-        'distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        "distribution_id": fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center'),
     }
 
     def _check_date(self, cr, uid, vals, context={}):
