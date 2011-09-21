@@ -59,6 +59,7 @@
         "msf_printed_documents",
         "procurement_request",
         "import_data",
+        "financing_contract",
         "object_query",
         "stock_forecast",
         "partner_modification",
