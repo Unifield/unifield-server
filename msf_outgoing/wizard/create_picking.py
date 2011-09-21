@@ -469,7 +469,6 @@ class create_picking(osv.osv_memory):
         # ppl2
         self.do_ppl2(cr, uid, [wizard_ppl2], context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
         
-        
     def do_validate_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
