@@ -185,23 +185,5 @@ class account_invoice_line(osv.osv):
             self.create_engagement_lines(cr, uid, to_create, context=context)
         return res
 
-    def unlink(self, cr, uid, ids, context={}):
-        """
-        Delete engagement journal lines before deleting invoice line
-        """
-        # Some verifications
-        if not context:
-            context={}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_line_obj = self.pool.get('account.analytic.line')
-        # Delete engagement journal lines
-        for inv_line in self.browse(cr, uid, ids, context=context):
-            analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', ids)], context=context)
-            analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
-        res = super(account_invoice_line, self).unlink(cr, uid, ids, context=context)
-        return res
-
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
