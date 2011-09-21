@@ -135,6 +135,9 @@ class stock_return_picking(osv.osv_memory):
     def _hook_create_returns(self, cr, uid, default_values):
 	return default_values
 
+    def _hook_create_returns_move(self, cr, uid, default_values):
+	return default_values
+
     def create_returns(self, cr, uid, ids, context=None):
         """ 
          Creates return picking.
@@ -168,7 +171,7 @@ class stock_return_picking(osv.osv_memory):
                     new_type = 'out'
                 else:
                     new_type = 'internal'
-		default_values = _hook_create_returns(self, cr, uid, {'name':'%s-return' % pick.name,
+		default_values = self._hook_create_returns(cr, uid, {'name':'%s-return' % pick.name,
                         'move_lines':[], 'state':'draft', 'type':new_type,
                         'date':date_cur, 'invoice_state':data['invoice_state'],})
                 new_picking = pick_obj.copy(cr, uid, pick.id, default_values, context=context)
@@ -185,13 +188,13 @@ class stock_return_picking(osv.osv_memory):
 
                 if new_qty:
                     returned_lines += 1
-                    new_move=move_obj.copy(cr, uid, move.id, {
-                        'product_qty': new_qty,
-                        'product_uos_qty': uom_obj._compute_qty(cr, uid, move.product_uom.id,
-                            new_qty, move.product_uos.id),
-                        'picking_id':new_picking, 'state':'draft',
-                        'location_id':new_location, 'location_dest_id':move.location_id.id,
-                        'date':date_cur,})
+		    default_values = self._hook_create_returns_move(cr, uid, {
+						                        'product_qty': new_qty,
+						                        'product_uos_qty': uom_obj._compute_qty(cr, uid, move.product_uom.id,
+						                            new_qty, move.product_uos.id),
+						                        'picking_id':new_picking, 'state':'draft',
+						                        'location_id':new_location, 'location_dest_id':move.location_id.id,
+						                        'date':date_cur,})
                     move_obj.write(cr, uid, [move.id], {'move_history_ids2':[(4,new_move)]})
 
         if not returned_lines:
