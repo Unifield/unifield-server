@@ -132,6 +132,9 @@ class stock_return_picking(osv.osv_memory):
             res['arch'] = '\n'.join(arch_lst)
         return res
 
+    def _hook_create_returns(self, cr, uid, default_values):
+	return default_values
+
     def create_returns(self, cr, uid, ids, context=None):
         """ 
          Creates return picking.
@@ -165,9 +168,10 @@ class stock_return_picking(osv.osv_memory):
                     new_type = 'out'
                 else:
                     new_type = 'internal'
-                new_picking = pick_obj.copy(cr, uid, pick.id, {'name':'%s-return' % pick.name,
+		default_values = _hook_create_returns(self, cr, uid, {'name':'%s-return' % pick.name,
                         'move_lines':[], 'state':'draft', 'type':new_type,
                         'date':date_cur, 'invoice_state':data['invoice_state'],})
+                new_picking = pick_obj.copy(cr, uid, pick.id, default_values, context=context)
             new_location=move.location_dest_id.id
             if move.state=='done':
                 new_qty = data['return%s' % move.id]
