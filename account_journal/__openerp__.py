@@ -33,6 +33,7 @@
         'project/project_view.xml',
     ],
     'demo_xml': [
+        'account_journal_demo.xml'
     ],
     'test': [
         'test/account_journal.yml'
