@@ -760,16 +760,10 @@ class ppl_customize_label(osv.osv):
             super(ppl_customize_label, self).init(cr)
 
         mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'msf_outgoing'),])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-
-        if demo:
-            logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-            pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-            file = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'msf_outgoing', file, {}, mode='init', noupdate=False)
+        logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
+        pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'msf_outgoing', file, {}, mode='init', noupdate=False)
 
     _columns = {'name': fields.char(string='Name', size=1024,),
                 'notes': fields.text(string='Notes'),
