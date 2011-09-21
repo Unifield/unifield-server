@@ -1372,90 +1372,16 @@ class stock_picking(osv.osv):
             self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
             
         return new_packing_id
-    
-    #@@@override stock
-    def action_assign(self, cr, uid, ids, *args):
+
+    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        override to remove the error message, return False instead
-        '''
-        for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state == 'confirmed']
-            if not move_ids:
-                return False
-            self.pool.get('stock.move').action_assign(cr, uid, move_ids)
-        return True
-    #@@@end
-    
-    def open_wizard(self, cr, uid, ids, name=False, model=False, step='default', type='create', context=None):
-        '''
-        WARNING : IDS CORRESPOND TO ***MAIN OBJECT IDS*** (picking for example) take care when calling the method from wizards
-        return the newly created wizard's id
-        name, model, step are mandatory only for type 'create'
-        '''
-        if context is None:
-            context = {}
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
         
-        if type == 'create':
-            assert name, 'type "create" and no name defined'
-            assert model, 'type "create" and no model defined'
-            assert step, 'type "create" and no step defined'
-            # create the memory object - passing the picking id to it through context
-            wizard_id = self.pool.get(model).create(
-                cr, uid, {}, context=dict(context,
-                                          active_ids=ids,
-                                          model=model,
-                                          step=step,
-                                          back_model=context.get('model', False),
-                                          back_wizard_ids=context.get('wizard_ids', False),
-                                          back_wizard_name=context.get('wizard_name', False),
-                                          back_step=context.get('step', False),
-                                          wizard_name=name))
-        
-        elif type == 'back':
-            # open the previous wizard
-            assert context['back_wizard_ids'], 'no back_wizard_ids defined'
-            wizard_id = context['back_wizard_ids'][0]
-            assert context['back_wizard_name'], 'no back_wizard_name defined'
-            name = context['back_wizard_name']
-            assert context['back_model'], 'no back_model defined'
-            model = context['back_model']
-            assert context['back_step'], 'no back_step defined'
-            step = context['back_step']
-            
-        elif type == 'update':
-            # refresh the same wizard
-            assert context['wizard_ids'], 'no wizard_ids defined'
-            wizard_id = context['wizard_ids'][0]
-            assert context['wizard_name'], 'no wizard_name defined'
-            name = context['wizard_name']
-            assert context['model'], 'no model defined'
-            model = context['model']
-            assert context['step'], 'no step defined'
-            step = context['step']
-            
-        # call action to wizard view
-        return {
-            'name': name,
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': model,
-            'res_id': wizard_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': dict(context,
-                            active_ids=ids,
-                            wizard_ids=[wizard_id],
-                            model=model,
-                            step=step,
-                            back_model=context.get('model', False),
-                            back_wizard_ids=context.get('wizard_ids', False),
-                            back_wizard_name=context.get('wizard_name', False),
-                            back_step=context.get('step', False),
-                            wizard_name=name)
-        }
+        - allow to choose wether or not an exception should be raised in case of no stock move
+        '''
+        res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
+        return res and False
     
     def create_picking(self, cr, uid, ids, context=None):
         '''
