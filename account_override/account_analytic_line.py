@@ -40,6 +40,9 @@ class account_analytic_line(osv.osv):
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
 
+    def join_without_redundancy(self, text='', string=''):
+        self.pool.get('account.move.line').join_without_redundancy(text, string)
+
     _columns = {
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", readonly=True, help="Invoice line from which this line is linked."),
