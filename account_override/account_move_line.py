@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+import re
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
