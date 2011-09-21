@@ -60,6 +60,7 @@
         "procurement_request",
         "import_data",
         "sales_followup",
+        "financing_contract",
         "object_query",
         "stock_forecast",
         "partner_modification",

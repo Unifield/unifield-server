@@ -61,7 +61,7 @@ class distribution_line(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
-        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution'),
+        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade'),
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
         "amount": fields.float('Amount', required=True),
         "percentage": fields.float('Percentage'),
