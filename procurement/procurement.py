@@ -332,10 +332,15 @@ class procurement_order(osv.osv):
                 return True
         return False
 
+    def _hook_action_confirm(self, cr, uid, ids, context=None, *args, **kwargs):
+	return kwargs['move_values']
+
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirms procurement and writes exception message if any.
         @return: True
         """
+	if not context:
+	    context = {}
         move_obj = self.pool.get('stock.move')
         for procurement in self.browse(cr, uid, ids, context=context):
             if procurement.product_qty <= 0.00:
@@ -346,7 +351,7 @@ class procurement_order(osv.osv):
                     source = procurement.location_id.id
                     if procurement.procure_method == 'make_to_order':
                         source = procurement.product_id.product_tmpl_id.property_stock_procurement.id
-                    id = move_obj.create(cr, uid, {
+                    move_values = {
                         'name': procurement.name,
                         'location_id': source,
                         'location_dest_id': procurement.location_id.id,
@@ -358,6 +363,8 @@ class procurement_order(osv.osv):
                         'company_id': procurement.company_id.id,
                         'auto_validate': True,
                     })
+		    move_values = self._hook_action_confirm(cr, uid, ids, context=context, move_values=move_values)
+		    id = move_obj.create(cr, uid, move_values, context=context)
                     move_obj.action_confirm(cr, uid, [id], context=context)
                     self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
         self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
