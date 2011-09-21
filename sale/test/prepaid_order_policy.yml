@@ -98,7 +98,9 @@
    sale_order_obj = self.pool.get('sale.order')
    so = sale_order_obj.browse(cr, uid, ref("sale_order_so1"))
    picking_id = self.search(cr, uid, [('origin','=',so.name),('type','=','out')])
-   if picking_id:
+   modules = self.pool.get('ir.module.module')
+   mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+   if picking_id and not mod_pur:
       pick=self.browse(cr,uid,picking_id[0])
       pick.force_assign(cr, uid)
       partial_datas = {
@@ -117,11 +119,14 @@
   I verify that picking order is in done state.
 -
   !python {model: stock.picking }: |
-   sale_order_obj = self.pool.get('sale.order')
-   so = sale_order_obj.browse(cr, uid, ref("sale_order_so1"))
-   picking_id = self.search(cr, uid, [('origin','=',so.name),('type','=','out')])
-   pick = self.browse(cr,uid,picking_id[0])
-   assert (pick.state) =='done', "Picking for SO is not in done state."
+   modules = self.pool.get('ir.module.module')
+   mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+   if not mod_pur:
+      sale_order_obj = self.pool.get('sale.order')
+      so = sale_order_obj.browse(cr, uid, ref("sale_order_so1"))
+      picking_id = self.search(cr, uid, [('origin','=',so.name),('type','=','out')])
+      pick = self.browse(cr,uid,picking_id[0])
+      assert (pick.state) =='done', "Picking for SO is not in done state."
 -
   I verify that a procurement has been generated for so
 -
@@ -256,11 +261,17 @@
   I verify that a "Picked" has been set to true
 -
   !python {model: sale.order}: |
-    so = self.browse(cr, uid, ref("sale_order_so1"))
-    assert (so.shipped == True), "Picking is not done."
+    modules = self.pool.get('ir.module.module')
+    mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+    if not mod_pur:
+      so = self.browse(cr, uid, ref("sale_order_so1"))
+      assert (so.shipped == True), "Picking is not done."
 -
   I verify that a sale order is in done state
 -
    !python {model: sale.order}: |
-    so = self.browse(cr, uid, ref("sale_order_so1"))
-    assert (so.state == 'done'), "Sale order is not in the done state."
+    modules = self.pool.get('ir.module.module')
+    mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+    if not mod_pur:
+      so = self.browse(cr, uid, ref("sale_order_so1"))
+      assert (so.state == 'done'), "Sale order is not in the done state."

@@ -64,7 +64,9 @@
    sale_order_obj = self.pool.get('sale.order')
    so = sale_order_obj.browse(cr, uid, ref("sale_order_so8"))
    picking_id = self.search(cr, uid, [('origin','=',so.name),('type','=','out')])
-   if picking_id:
+   modules = self.pool.get('ir.module.module')
+   mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+   if picking_id and not mod_pur:
      pick = self.browse(cr,uid,picking_id[0])
      assert (pick.state == 'done'), "Picking for SO is not in done state."
 -
@@ -105,7 +107,9 @@
    sale_order_obj = self.pool.get('sale.order')
    so = sale_order_obj.browse(cr, uid, ref("sale_order_so8"))
    picking_id = self.search(cr, uid, [('origin','=',so.name)])
-   if picking_id:
+   modules = self.pool.get('ir.module.module')
+   mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+   if picking_id and not mod_pur:
      pick = self.browse(cr,uid,picking_id[0])
      assert (pick.state) =='done', "Picking for SO is not in done state."
 -

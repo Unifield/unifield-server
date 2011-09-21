@@ -677,7 +677,7 @@ class stock_picking(osv.osv):
             'context': dict(context, active_ids=ids)
         }
 
-    def _keep_prodlot_hook(self, cr, uid, id, context, *args, **kwargs):
+    def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):
         '''
         hook to keep the production lot when a stock move is copied
         '''
@@ -689,6 +689,8 @@ class stock_picking(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        if context is None:
+            context = {}
         default = default.copy()
         picking_obj = self.browse(cr, uid, id, context=context)
         move_obj = self.pool.get('stock.move')
@@ -698,7 +700,7 @@ class stock_picking(osv.osv):
             default['origin'] = ''
             default['backorder_id'] = False
         res = super(stock_picking, self).copy(cr, uid, id, default, context)
-        if self._keep_prodlot_hook(cr, uid, id, context, res=res):
+        if self._erase_prodlot_hook(cr, uid, id, context=context, res=res):
             picking_obj = self.browse(cr, uid, res, context=context)
             for move in picking_obj.move_lines:
                 move_obj.write(cr, uid, [move.id], {'tracking_id': False,'prodlot_id':False})
