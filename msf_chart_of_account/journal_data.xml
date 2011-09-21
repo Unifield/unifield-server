@@ -79,5 +79,10 @@
             <field name="default_debit_account_id" ref="msf_chart_of_account.5361" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5361" />
         </record>
+        <record id="engagement_journal" model="account.analytic.journal">
+            <field name="name">Engagement Journal</field>
+            <field name="code">ENG</field>
+            <field name="type">engagement</field>
+        </record>
     </data>
 </openerp>

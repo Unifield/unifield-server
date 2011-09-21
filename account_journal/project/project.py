@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #-*- encoding:utf-8 -*-
+
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -23,15 +24,32 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
-class account_move_line(osv.osv):
-    _inherit = 'account.move.line'
-
+class account_analytic_journal(osv.osv):
+    _name = 'account.analytic.journal'
+    _description = 'Analytic Journal'
+    _inherit = 'account.analytic.journal'
     _columns = {
-        'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
-            help="This indicates the state of the Journal Entry."),
+        'type': fields.selection([('sale','Sale'), ('purchase','Purchase'), ('cash','Cash'), ('general','General'), ('situation','Situation'), 
+            ('engagement', 'Engagement')], 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
+(eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
 
-account_move_line()
+    def _check_engagement_count(self, cr, uid, ids, context={}):
+        """
+        Check that no more than one engagement journal exists
+        """
+        if not context:
+            context={}
+        eng_ids = self.search(cr, uid, [('type', '=', 'engagement')])
+        if len(eng_ids) and len(eng_ids) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_engagement_count, 'You cannot have more than one engagement journal!', ['type']),
+    ]
+
+account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

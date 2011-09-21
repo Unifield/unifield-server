@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Journal Items -->
+        <record model="ir.ui.view" id="inherit_view_move_line_tree">
+            <field name="name">inherit.view.move.line.tree</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name='inherit_id' ref='res_currency_functional.view_move_line_tree_editable' />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='journal_id']" position="before">
+                        <field name="is_corrigible" invisible="1"/>
+                        <field name="have_an_historic" invisible="1"/>
+                        <button name="button_do_accounting_corrections" type="object" string='Open Accounting Correction Wizard' 
+                            attrs="{'invisible': [('is_corrigible', '=', False)]}" icon='terp-mail-message-new'/>
+                        <button name="button_open_corrections" type='object' string="Open corrections history" 
+                            attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

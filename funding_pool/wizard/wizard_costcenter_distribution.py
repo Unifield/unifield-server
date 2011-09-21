@@ -36,6 +36,7 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
         "analytic_id": fields.many2one('account.analytic.account', 'Cost Center', required=True),
         "percentage": fields.float('Percentage'),
         "amount": fields.float('Amount'),
+        'currency_id': fields.many2one('res.currency', string="Currency"),
     }
     
     _defaults ={
@@ -43,7 +44,7 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
         'percentage': 0.0,
         'amount': 0.0
     }
-    
+ 
     def create(self, cr, uid, vals, context=None):
         res = super(wizard_costcenter_distribution_line, self).create(cr, uid, vals, context=context)
         if 'wizard_id' in vals:
@@ -59,7 +60,20 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
                 line_obj = self.browse(cr, uid, ids[0])
                 self.pool.get('wizard.costcenter.distribution').validate(cr, uid, line_obj.wizard_id.id, context=context)
         return res
-    
+   
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        view = super(wizard_costcenter_distribution_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        if view_type=='tree' and context.get('mode'):
+            view['arch'] = """<tree string="" editable="top">
+    <field name="analytic_id" domain="[('type', '!=', 'view'), ('id', 'child_of', [%s]), ('state', '=', 'open')]"/>
+    <field name="percentage" sum="Total Percentage" readonly="%s" />
+    <field name="amount" sum="Total Amount" readonly="%s" />
+</tree>""" % (oc_id, context['mode'] == 'amount', context['mode'] == 'percent')
+        return view
+
 wizard_costcenter_distribution_line()
 
 
@@ -70,6 +84,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
     def _get_initial_lines(self, cr, uid, wizard_id, context=None):
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
         distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, wizard_obj.distribution_id.id, context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for cost_center_line in distrib_obj.cost_center_lines:
             wizard_line_vals = {
                 'name': 'Cost Center Line', #required by one2many, never used
@@ -77,6 +92,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
                 'analytic_id': cost_center_line.analytic_id.id,
                 'amount': cost_center_line.amount,
                 'percentage': cost_center_line.percentage,
+                'currency_id': cost_center_line.currency_id and cost_center_line.currency_id.id or company_currency,
             }
             self.pool.get('wizard.costcenter.distribution.line').create(cr, uid, wizard_line_vals, context=context)
         return
@@ -103,6 +119,8 @@ class wizard_costcenter_distribution(osv.osv_memory):
         allocated_amount = 0.0
         allocated_percentage = 0.0
         wizard_obj = self.browse(cr, uid, wizard_id, context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wizard_obj.currency_id and wizard_obj.currency_id.id or company_currency
         # Something was written; we modify the flag in the wizard
         self.write(cr, uid, [wizard_id], vals={'modified_line': True}, context={})
         # Create a temporary object to keep track of values
@@ -154,7 +172,8 @@ class wizard_costcenter_distribution(osv.osv_memory):
                                                                        uid,
                                                                        [wizard_line['id']],
                                                                        vals={'amount': wizard_line['amount'],
-                                                                             'percentage': wizard_line['percentage']},
+                                                                             'percentage': wizard_line['percentage'],
+                                                                             'currency_id': currency,},
                                                                        context={'skip_validation': True})
         return
             
@@ -162,6 +181,8 @@ class wizard_costcenter_distribution(osv.osv_memory):
         # check if the allocation is fully done
         allocated_percentage = 0.0
         wizard_obj = self.browse(cr, uid, ids[0], context=context)
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = wizard_obj.currency_id and wizard_obj.currency_id.id or company_currency
         for wizard_line in wizard_obj.wizard_distribution_lines:
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
@@ -169,8 +190,14 @@ class wizard_costcenter_distribution(osv.osv_memory):
         if wizard_obj.modified_line or 'funding_pool' not in context['wizard_ids']:
             context['cost_center_updated'] = wizard_obj.modified_line
             newwiz_obj = self.pool.get('wizard.fundingpool.distribution')
-            newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id}, context=context)
+            newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id, 
+                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode}, context=context)
             context['wizard_ids']['funding_pool'] = newwiz_id
+        else:
+            # Write some change to the wizard:
+            # - entry_mode
+            self.pool.get('wizard.fundingpool.distribution').write(cr, uid, [context['wizard_ids']['funding_pool']], 
+                {'entry_mode': wizard_obj.entry_mode}, context=context)
         # and we open the following state
         # we open a wizard
         return {
@@ -182,7 +209,16 @@ class wizard_costcenter_distribution(osv.osv_memory):
                 'res_id': [context['wizard_ids']['funding_pool']],
                 'context': context
         }
-    
-wizard_costcenter_distribution()
 
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close the wizard
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type' : 'ir.actions.act_window_close'}
+
+wizard_costcenter_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -39,26 +40,49 @@ account_bank_statement()
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
     _name = "account.bank.statement.line"
+
+    def _display_analytic_button(self, cr, uid, ids, name, args, context={}):
+        """
+        Return True for all element that correspond to some criteria:
+         - The entry state is draft
+         - The account is an expense account
+        """
+        res = {}
+        for absl in self.browse(cr, uid, ids, context=context):
+            res[absl.id] = True
+            # False if st_line is hard posted
+            if absl.state == 'hard':
+                res[absl.id] = False
+            # False if account not an expense account
+            if absl.account_id.user_type.code not in ['expense']:
+                res[absl.id] = False
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+            help="This informs system that we can display or not an analytic button", store=False),
     }
-    
-    def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
-        account_move_line_pool = self.pool.get('account.move.line')
-        account_bank_statement_line_pool = self.pool.get('account.bank.statement.line')
-        st_line = account_bank_statement_line_pool.browse(cr, uid, st_line_id, context=context)
-        result = super(account_bank_statement_line,self).create_move_from_st_line(cr, uid, st_line_id, company_currency_id, st_line_number, context=context)
-        move = st_line.move_ids and st_line.move_ids[0] or False
-        if move:
-            for line in move.line_id:
-                account_move_line_pool.write(cr, uid, [line.id], {'analytic_distribution_id': st_line.analytic_distribution_id.id}, context=context)
-        return result
-    
+
+    _defaults = {
+        'display_analytic_button': lambda *a: True,
+    }
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
+        """
+        Launch analytic distribution wizard from a statement line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # we get the analytical distribution object linked to this line
         distrib_id = False
         statement_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = statement_line_obj.amount or 0.0
+        amount = statement_line_obj.amount * -1 or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = statement_line_obj.statement_id.journal_id.currency and statement_line_obj.statement_id.journal_id.currency.id or company_currency
         if statement_line_obj.analytic_distribution_id:
             distrib_id = statement_line_obj.analytic_distribution_id.id
         else:
@@ -66,8 +90,13 @@ class account_bank_statement_line(osv.osv):
             newvals={'analytic_distribution_id': distrib_id}
             super(account_bank_statement_line, self).write(cr, uid, ids, newvals, context=context)
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+            'wizard_ids': {'cost_center': wiz_id},
+        })
         return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'wizard.costcenter.distribution',
@@ -75,21 +104,8 @@ class account_bank_statement_line(osv.osv):
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [wiz_id],
-                'context': {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-                    'wizard_ids': {'cost_center': wiz_id}
-               }
+                'context': context,
         }
-        
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'amount_in' in vals or 'amount_out' in vals:
-            #new amount, we remove the distribution
-            lines = self.browse(cr, uid, ids, context=context)
-            for line in lines:
-                self.pool.get('analytic.distribution').unlink(cr, uid, line.analytic_distribution_id.id, context=context)
-        return super(account_bank_statement_line, self).write(cr, uid, ids, vals, context=context)
-    
-account_bank_statement_line()
 
+account_bank_statement_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

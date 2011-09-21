@@ -65,6 +65,7 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
         fields = value.split(",")
         element = fields[0]
         sql = "UPDATE %s SET " % self._table
+        obj = False
         if element == 'hr.employee':
             obj = 'employee_id'
         elif element == 'account.bank.statement':
@@ -74,6 +75,9 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
         if obj:
             sql += "%s = %s " % (obj, fields[1])
             sql += "WHERE id = %s" % id
+            if self._table == 'wizard_journal_items_corrections_lines':
+                self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
+                return True
             cr.execute(sql)
     return True
 

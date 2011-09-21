@@ -21,34 +21,77 @@
 
 from osv import fields, osv
 import decimal_precision as dp
+from tools.misc import flatten
 
 class analytic_distribution(osv.osv):
-    
     _name = "analytic.distribution"
+
     _columns = {
         'name': fields.char('Name', size=12, required=True),
         'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
+        'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
+        'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
+        'register_line_ids': fields.one2many('account.bank.statement.line', 'analytic_distribution_id', string="Register Lines"),
+        'move_line_ids': fields.one2many('account.move.line', 'analytic_distribution_id', string="Move Lines"),
     }
-    
+
     _defaults ={
         'name': 'Distribution',
         'global_distribution': False,
     }
-    
+
+    def search_analytic_lines(self, cr, uid, ids, context={}):
+        """
+        Give analytic lines attached to this distribution
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        cc_obj = self.pool.get('cost_center_distribution_line')
+        fp_obj = self.pool.get('funding_pool_distribution_line')
+        free1_obj = self.pool.get('free_1_distribution_line')
+        free2_obj = self.pool.get('free_2_distribution_line')
+        aal_obj = self.pool.get('account.analytic.line')
+        for distrib_id in ids:
+            distrib_line_ids = []
+            for obj in [cc_obj, fp_obj, free1_obj, free2_obj]:
+                search_ids = obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                distrib_line_ids.append([x.analytic_id and x.analytic_id.id for x in obj.browse(cr, uid, search_ids, context=context)])
+            res.append(aal_obj.search(cr, uid, [('account_id', 'in', distrib_line_ids)], context=context))
+        return sorted(flatten(res))
+
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy an analytic distribution without the one2many links
+        """
+        defaults.update({
+            'analytic_lines': False,
+            'invoice_ids': False,
+            'invoice_line_ids': False,
+            'register_line_ids': False,
+            'move_line_ids': False,
+        })
+        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
+
 analytic_distribution()
 
 class distribution_line(osv.osv):
-    
     _name = "distribution.line"
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade'),
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
-        "amount": fields.float('Amount'),
+        "amount": fields.float('Amount', required=True),
         "percentage": fields.float('Percentage'),
+        "currency_id": fields.many2one('res.currency', 'Currency', required=True),
+        "date": fields.date(string="Date"),
+        "source_date": fields.date(string="Source Date", help="This date is for source_date for analytic lines"),
     }
-    
+
     _defaults ={
         'name': 'Distribution Line',
     }
@@ -73,18 +116,18 @@ funding_pool_distribution_line()
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
-    
+
 free_1_distribution_line()
 
 class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
-    
+
 free_2_distribution_line()
 
 class analytic_distribution(osv.osv):
-    
     _inherit = "analytic.distribution"
+
     _columns = {
         'cost_center_lines': fields.one2many('cost.center.distribution.line', 'distribution_id', 'Cost Center Distribution'),
         'funding_pool_lines': fields.one2many('funding.pool.distribution.line', 'distribution_id', 'Funding Pool Distribution'),
@@ -92,7 +135,7 @@ class analytic_distribution(osv.osv):
         'free_2_lines': fields.one2many('free.2.distribution.line', 'distribution_id', 'Free 2 Distribution'),
     }
     
-    def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, context={}):
+    def copy_from_global_distribution(self, cr, uid, source_id, destination_id, destination_amount, destination_currency, context={}):
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         f1_distrib_line_obj = self.pool.get('free.1.distribution.line')
@@ -118,7 +161,10 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_cost_center_line.analytic_id.id,
                 'percentage': source_cost_center_line.percentage,
                 'amount': round(source_cost_center_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
+                'date': source_cost_center_line.date or False,
+                'source_date': source_cost_center_line.source_date or False,
             }
             cc_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_funding_pool_line in source_obj.funding_pool_lines:
@@ -128,7 +174,10 @@ class analytic_distribution(osv.osv):
                 'cost_center_id': source_funding_pool_line.cost_center_id.id,
                 'percentage': source_funding_pool_line.percentage,
                 'amount': round(source_funding_pool_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
+                'date': source_funding_pool_line.date or False,
+                'source_date': source_funding_pool_line.source_date or False,
             }
             fp_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_1_line in source_obj.free_1_lines:
@@ -137,7 +186,10 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_free_1_line.analytic_id.id,
                 'percentage': source_free_1_line.percentage,
                 'amount': round(source_free_1_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
+                'date': source_free_1_line.date or False,
+                'source_date': source_free_1_line.source_date or False,
             }
             f1_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         for source_free_2_line in source_obj.free_2_lines:
@@ -146,11 +198,36 @@ class analytic_distribution(osv.osv):
                 'analytic_id': source_free_2_line.analytic_id.id,
                 'percentage': source_free_2_line.percentage,
                 'amount': round(source_free_2_line.percentage * destination_amount) / 100.0,
-                'distribution_id': destination_id
+                'distribution_id': destination_id,
+                'currency_id': destination_currency,
+                'date': source_free_2_line.date or False,
+                'source_date': source_free_2_line.source_date or False,
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
-    
+
+    def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
+        """
+        Update amount on distribution lines for given distribution (ids)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not amount:
+            return False
+        # Process distributions
+        for distrib_id in ids:
+            for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
+                dl_obj = self.pool.get(dl_name)
+                dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
+                    dl_vals = {
+                        'amount': round(dl.percentage * amount) / 100.0,
+                    }
+                    dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
+        return True
+
 analytic_distribution()
-    
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -52,7 +52,7 @@ class analytic_line(osv.osv):
         """
         Check date for given date and given account_id
         """
-        self._check_date(cr, uid, vals)
+        self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context={}):

@@ -25,15 +25,20 @@ from tools.translate import _
 
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
-    
+
     def update_amounts(self, cr, uid, ids):
         cur_obj = self.pool.get('res.currency')
         analytic_obj = self.pool.get('account.analytic.line')
         for move_line in self.browse(cr, uid, ids):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
+            # WARNING: since sprint2, source_date have priority to date if exists. That's why it should be used for computing amounts
             if move_line.date:
                 ctx['date'] = move_line.date
+            # source_date is more important than date
+            if move_line.source_date:
+                ctx['date'] = move_line.source_date
+            
             if move_line.period_id.state != 'done':
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
                     # amount currency is not set; it is computed from the 2 other fields
@@ -79,22 +84,24 @@ class account_move_line_compute_currency(osv.osv):
                 for analytic_line in move_line.analytic_lines:
                     analytic_line_ids.append(analytic_line.id)
                 analytic_obj.update_amounts(cr, uid, analytic_line_ids)
-    
+
     def check_date(self, cr, uid, vals):
         # check that date is in period
         if 'period_id' in vals and 'date' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'])
             if vals['date'] < period.date_start or vals['date'] > period.date_stop:
                 raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
-            
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, debit_currency=False, credit_currency=False):
         newvals = {}
         ctxcurr = {}
         cur_obj = self.pool.get('res.currency')
         
+        # WARNING: source_date field have priority to date field. This is because of Sprint 2 Specifications
         if vals.get('date', date):
             ctxcurr['date'] = vals.get('date', date)
+        if vals.get('source_date', date):
+            ctxcurr['date'] = vals.get('source_date', date)
         
         if vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
@@ -135,7 +142,7 @@ class account_move_line_compute_currency(osv.osv):
             m = move_obj.browse(cr, uid, vals['move_id'])
             ctx['journal_id'] = m.journal_id.id
         journal = journal_obj.browse(cr, uid, ctx['journal_id'])
-
+        
         account = account_obj.browse(cr, uid, vals['account_id'], context=context)
         curr_fun = account.company_id.currency_id.id
         
@@ -146,9 +153,9 @@ class account_move_line_compute_currency(osv.osv):
             else:
                 newvals['currency_id'] = curr_fun
         newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
-
+        
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
-    
+
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         self.check_date(cr, uid, vals)
         if isinstance(ids, (long, int)):
@@ -162,7 +169,7 @@ class account_move_line_compute_currency(osv.osv):
             newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, vals.get('date'), line.debit_currency, line.credit_currency))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
         return res
-   
+
     def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -185,11 +192,11 @@ class account_move_line_compute_currency(osv.osv):
         'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
-    
+
     _defaults = {
         'debit_currency': 0.0,
         'credit_currency': 0.0,
     }
-    
+
 account_move_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
