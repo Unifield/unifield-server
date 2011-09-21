@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,23 +21,7 @@
 #
 ##############################################################################
 
-import datetime
-from osv import osv
-from tools.translate import _
-
-class account_move_line_activable(osv.osv):
-    _inherit = "account.move.line"
-    
-    def _check_date(self, cr, uid, vals, context=None, check=True):
-        if 'date' in vals and vals['date'] is not False:
-            account_obj = self.pool.get('account.account')
-            account = account_obj.browse(cr, uid, vals['account_id'])
-            if vals['date'] < account.activation_date \
-            or (account.inactivation_date != False and \
-                vals['date'] >= account.inactivation_date):
-                raise osv.except_osv(_('Error !'), _('The account selected is not active.'))
-        return super(account_move_line_activable, self)._check_date(cr, uid, vals, context, check)
-
-account_move_line_activable()
+import funding_pool
+import journal_items_corrections
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

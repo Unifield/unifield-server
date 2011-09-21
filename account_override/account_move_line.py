@@ -29,6 +29,8 @@ class account_move_line(osv.osv):
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
+        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
+            help="This indicates the state of the Journal Entry."),
     }
 
 account_move_line()

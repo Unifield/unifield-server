@@ -68,8 +68,9 @@
                                             'required': [('partner_type_mandatory', '=', True)]}"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
-                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" 
-                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="amount_out" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -102,10 +103,12 @@
                                             />
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"/>
+                                        <field name="display_analytic_button" invisible="1"/>
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
-                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" 
-                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"
+                                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}" />
                                         <field name="amount_out" readonly="0" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -189,9 +192,11 @@
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             />
                                         <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
-                                            groups="analytic.group_analytic_accounting" invisible="1"/>
-                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" groups="analytic.group_analytic_accounting"
+                                                invisible="1" />
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                            attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
@@ -224,9 +229,10 @@
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             />
                                         <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" 
-                                            groups="analytic.group_analytic_accounting" invisible="1"/>
-                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1" groups="analytic.group_analytic_accounting" /> 
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                                            attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
                                         <field name="amount" invisible="1"/>
                                         <field name="amount_in" readonly="0"/>
                                         <field name="amount_out" readonly="0"/>
@@ -554,11 +560,9 @@
                                     <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                     <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 
-                                            'readonly': [('number_imported_invoice', '>', 0)]}"/>
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                     <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                         domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
-                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" context="context"/>
                                     <field name="amount" invisible="1"/>
                                     <field name="amount_in" readonly="0"/>
                                     <field name="amount_out" readonly="0"/>
@@ -589,10 +593,8 @@
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                     <field name="partner_type"
                                         attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"/>
-                                    <field name="analytic_account_id" 
-                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"/>
-                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" 
-                                        context="context"/>
+                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                     <field name="amount" invisible="1"/>
                                     <field name="amount_in" readonly="0"/>
                                     <field name="amount_out" readonly="0"/>

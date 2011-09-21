@@ -29,7 +29,7 @@ import decimal_precision as dp
     
 class wizard_free2_distribution_line(osv.osv_memory):
     _name="wizard.free2.distribution.line"
-    
+
     _columns = {
         'name': fields.char('Name', size=16, required=True), #required by one2many, never used
         "wizard_id": fields.many2one('wizard.free2.distribution', 'Associated Wizard'),
@@ -38,20 +38,20 @@ class wizard_free2_distribution_line(osv.osv_memory):
         "amount": fields.float('Amount'),
         'currency_id': fields.many2one('res.currency', string="Currency"),
     }
-    
+
     _defaults ={
         'name': 'Free2 Line', #required by one2many, never used
         'percentage': 0.0,
         'amount': 0.0
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         res = super(wizard_free2_distribution_line, self).create(cr, uid, vals, context=context)
         if 'wizard_id' in vals:
             if 'skip_validation' not in context or context['skip_validation'] == False:
                 self.pool.get('wizard.free2.distribution').validate(cr, uid, vals['wizard_id'], context=context)
         return res
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         res = super(wizard_free2_distribution_line, self).write(cr, uid, ids, vals, context=context)
         # retrieve the wizard_id field from first line
@@ -60,9 +60,20 @@ class wizard_free2_distribution_line(osv.osv_memory):
                 line_obj = self.browse(cr, uid, ids[0])
                 self.pool.get('wizard.free2.distribution').validate(cr, uid, line_obj.wizard_id.id, context=context)
         return res
-    
-wizard_free2_distribution_line()
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        view = super(wizard_free2_distribution_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree' and context.get('mode'):
+            view['arch'] = """<tree string="" editable="top">
+    <field name="analytic_id"/>
+    <field name="percentage" sum="Total Percentage" readonly="%s"/>
+    <field name="amount" sum="Total Amount" readonly="%s"/>
+</tree>"""%(context['mode']=='amount', context['mode']=='percent')
+        return view
+
+wizard_free2_distribution_line()
 
 class wizard_free2_distribution(osv.osv_memory):
     _name="wizard.free2.distribution"
@@ -86,7 +97,7 @@ class wizard_free2_distribution(osv.osv_memory):
     
     _columns = {
         "entry_mode": fields.selection([('percent','Percentage'),
-                                        ('amount','Amount')], 'Entry Mode', select=1),
+                                        ('amount','Amount')], 'Entry Mode', select=1, readonly=True),
         "wizard_distribution_lines": fields.one2many("wizard.free2.distribution.line", "wizard_id", string='Wizard Lines'),
         "modified_line": fields.boolean('Was a line modified')
     }
@@ -166,7 +177,7 @@ class wizard_free2_distribution(osv.osv_memory):
             
     def button_previous_step(self, cr, uid, ids, context={}):
         # and we open the previous state
-        if 'funding_pool' not in context['wizard_ids']:
+        if 'free_1' not in context['wizard_ids']:
             # we should never be there
             raise osv.except_osv(_('Previous wizard missing!'),_("Previous wizard missing!"))
         # we open a wizard
@@ -176,7 +187,7 @@ class wizard_free2_distribution(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
-                'res_id': [newwiz_id],
+                'res_id': [context['wizard_ids']['free_1']],
                 'context': context
         }
             
@@ -188,10 +199,23 @@ class wizard_free2_distribution(osv.osv_memory):
             allocated_percentage += wizard_line.percentage
         if abs(allocated_percentage - 100.0) > 10**-4:
             raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
+        # First save distribution
         self.store_distribution(cr, uid, ids[0], context=context)
-        # we open a wizard
+        # then recreate analytic lines
+        self.update_analytic_lines(cr, uid, ids, context=context)
+        # finally open the following state with another abstract method
         return {'type': 'ir.actions.act_window_close'}
-    
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close the wizard
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type' : 'ir.actions.act_window_close'}
+
 wizard_free2_distribution()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

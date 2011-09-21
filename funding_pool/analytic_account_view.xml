@@ -23,7 +23,12 @@
 	                </page>
                     <page string="Account Data" position="after">
                         <page string="Cost Centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
-                            <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                            <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                                <tree string="Cost Centers" >
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
                         </page>
                         <page string="Accounts" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="account_ids" nolabel="1" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>

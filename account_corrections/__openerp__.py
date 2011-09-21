@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,33 +20,26 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 {
-    "name" : "Analytic Account for MSF",
-    "version": "1.1",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
-    "description": """Module for defining analytic accounting object.
+    "name" : "Accounting Corrections",
+    "version" : "1.0",
+    "description" : """
+        Permits some corrections from Journal Items.
     """,
-    "init_xml" : [
-        'data/analytic_account_data.xml',
+    "author" : "TeMPO Consulting",
+    'website': 'http://tempo-consulting.fr',
+    "category" : "Tools",
+    "depends" : ["base", "account", 'res_currency_functional', 'funding_pool', 'account_override'],
+    "init_xml" : [],
+    "update_xml" : [
+        'account_view.xml',
+        'account_wizard_view.xml',
     ],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'analytic_account_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-        'wizard/wizard_costcenter_distribution_view.xml',
-        'wizard/wizard_fundingpool_distribution_view.xml',
-        'wizard/wizard_free1_distribution_view.xml',
-        'wizard/wizard_free2_distribution_view.xml',
-    ],
-    'test': [
-        'test/analytic_account_activable.yml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Journal Items -->
+        <record model="ir.ui.view" id="wizard_journal_items_corrections_form">
+            <field name="name">wizard.journal.items.corrections.form</field>
+            <field name="model">wizard.journal.items.corrections</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Journal items corrections Wizard">
+                    <field name="move_line_id" invisible="1" colspan="1"/>
+                    <field name="date" on_change="onchange_date(date)"/>
+                    <newline/>
+                    <field name="to_be_corrected_ids" colspan="6">
+                        <tree hide_new_button="1" hide_delete_button="1" editable="bottom">
+                            <field name="journal_id"/>
+                            <field name="ref"/>
+                            <field name="date"/>
+                            <field name="period_id"/>
+                            <field name="account_id" domain="[('type', '&lt;&gt;', 'view')]"/>
+                            <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Ana. Distri."/>
+                            <field name="credit_currency"/>
+                            <field name="debit_currency"/>
+                            <field name="currency_id"/>
+                            <field name="analytic_distribution_id" invisible="1"/>
+                        </tree>
+                    </field>
+                    <newline/>
+                    <label string="" colspan="6"/>
+                    <group colspan="4" col="6">
+                        <label string ="" colspan="1"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="terp-gtk-jump-to-rtl" string="Reverse All" name="action_reverse" type="object"/>
+                        <button icon="terp-gtk-jump-to-ltr" string="Correct entry" name="action_confirm" type="object"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Analytic Distribution Wizard -->
+        <record model="ir.ui.view" id="inherit_wizard_costcenter_distribution_form1">
+            <field name="name">inherit.wizard.costcenter.distribution.form1</field>
+            <field name="model">wizard.costcenter.distribution</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='funding_pool.wizard_costcenter_distribution_form1'/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                        <field name="state" invisible="1"/>
+                        <field name="date" context="context" 
+                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
+                        <newline/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="inherit_wizard_fundingpool_distribution_form1">
+            <field name="name">inherit.wizard.fundingpool.distribution.form1</field>
+            <field name="model">wizard.fundingpool.distribution</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='funding_pool.wizard_fundingpool_distribution_form1'/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                        <field name="state" invisible="1"/>
+                        <field name="date" context="context" 
+                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
+                        <newline/>
+                    </xpath>
+                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
+                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
+                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="inherit_wizard_free1_distribution_form1">
+            <field name="name">inherit.wizard.free1.distribution.form1</field>
+            <field name="model">wizard.free1.distribution</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='funding_pool.wizard_free1_distribution_form1'/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                        <field name="state" invisible="1"/>
+                        <field name="date" context="context" 
+                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
+                        <newline/>
+                    </xpath>
+                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
+                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
+                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="inherit_wizard_free2_distribution_form1">
+            <field name="name">inherit.wizard.free2.distribution.form1</field>
+            <field name="model">wizard.free2.distribution</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='funding_pool.wizard_free2_distribution_form1'/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/field[@name='total_amount']" position="before">
+                        <field name="state" invisible="1"/>
+                        <field name="date" context="context" 
+                            attrs="{'invisible': [('state', '!=', 'correction')], 'required': [('state', '=', 'correction')]}"/>
+                        <newline/>
+                    </xpath>
+                    <xpath expr="/form/group[1]/button[@name='button_save']" position="replace">
+                        <button name="button_save" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
+                        <button name="button_save" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
