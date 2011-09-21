@@ -134,7 +134,11 @@ class account_invoice_line(osv.osv):
         analytic_obj = self.pool.get('analytic.distribution')
         if 'invoice_id' in vals and vals['invoice_id']:
             #new line, we add the global distribution
-            invoice_obj = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], context=context)
+            if self._name == 'wizard.account.invoice.line':
+                obj_name = 'wizard.account.invoice'
+            else:
+                obj_name = 'account.invoice'
+            invoice_obj = self.pool.get(obj_name).browse(cr, uid, vals['invoice_id'], context=context)
             if invoice_obj.analytic_distribution_id:
                 child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
                 vals['analytic_distribution_id'] = child_distrib_id

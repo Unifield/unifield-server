@@ -152,7 +152,8 @@ class account_invoice_line(osv.osv):
         # Verify that the invoice is in draft state
         if res and 'invoice_id' in vals:
             invoice_id = vals.get('invoice_id')
-            state = self.pool.get('account.invoice').read(cr, uid, [invoice_id], ['state'])[0].get('state', False)
+            objname = self._name == 'wizard.account.invoice.line' and 'wizard.account.invoice' or 'account.invoice'
+            state = self.pool.get(objname).read(cr, uid, [invoice_id], ['state'])[0].get('state', False)
             # if invoice in draft state, do engagement journal lines
             if state and state == 'draft':
                 self.create_engagement_lines(cr, uid, [res], context=context)
