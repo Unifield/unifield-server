@@ -92,6 +92,9 @@
     lot_input_id: stock_location_0
     lot_stock_id: stock_location_1
     lot_output_id: stock_location_2
+    lot_packing_id: stock_location_2
+    lot_dispatch_id: stock_location_2
+    lot_distribution_id: stock_location_2
     
 -
 

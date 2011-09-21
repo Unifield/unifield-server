@@ -220,6 +220,9 @@
     lot_stock_id: cycle_sloc2
     lot_input_id: cycle_sloc1
     lot_output_id: stock.stock_location_customers
+    lot_packing_id: msf_outgoing.stock_location_packing
+    lot_dispatch_id: msf_outgoing.stock_location_dispatch
+    lot_distribution_id: msf_outgoing.stock_location_distribution
     company_id: base.main_company
 -
   I create a new shop
