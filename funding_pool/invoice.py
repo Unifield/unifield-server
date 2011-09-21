@@ -112,7 +112,7 @@ class account_invoice_line(osv.osv):
         else:
             raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution for the whole invoice first!"))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency, 'invoice_line': ids[0]}, context=context)
         # we open a wizard
         context.update({
           'active_id': ids[0],
