@@ -132,11 +132,11 @@ class stock_return_picking(osv.osv_memory):
             res['arch'] = '\n'.join(arch_lst)
         return res
 
-    def _hook_create_returns(self, cr, uid, default_values):
-	return default_values
+    def _hook_create_returns(self, cr, uid, ids, context={}, *args, **kwargs):
+	return kwargs['default_values']
 
-    def _hook_create_returns_move(self, cr, uid, default_values):
-	return default_values
+    def _hook_create_returns_move(self, cr, uid, ids, context={}, *args, **kwargs):
+	return kwargs['default_values']
 
     def create_returns(self, cr, uid, ids, context=None):
         """ 
@@ -171,9 +171,10 @@ class stock_return_picking(osv.osv_memory):
                     new_type = 'out'
                 else:
                     new_type = 'internal'
-		default_values = self._hook_create_returns(cr, uid, {'name':'%s-return' % pick.name,
-                        'move_lines':[], 'state':'draft', 'type':new_type,
-                        'date':date_cur, 'invoice_state':data['invoice_state'],})
+		default_values = self._hook_create_returns(cr, uid, ids, context=context, 
+						default_values={'name':'%s-return' % pick.name,
+					                        'move_lines':[], 'state':'draft', 'type':new_type,
+					                        'date':date_cur, 'invoice_state':data['invoice_state'],})
                 new_picking = pick_obj.copy(cr, uid, pick.id, default_values, context=context)
             new_location=move.location_dest_id.id
             if move.state=='done':
@@ -188,7 +189,8 @@ class stock_return_picking(osv.osv_memory):
 
                 if new_qty:
                     returned_lines += 1
-		    default_values = self._hook_create_returns_move(cr, uid, {
+		    default_values = self._hook_create_returns_move(cr, uid, ids, context=context, 
+								    default_value = {
 						                        'product_qty': new_qty,
 						                        'product_uos_qty': uom_obj._compute_qty(cr, uid, move.product_uom.id,
 						                            new_qty, move.product_uos.id),

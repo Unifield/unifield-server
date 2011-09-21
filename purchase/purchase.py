@@ -426,6 +426,12 @@ class purchase_order(osv.osv):
             self.log(cr, uid, id, message)
         return True
 
+    def _hook_action_picking_create_picking(self, cr, uid, ids, context={}, *args, **kwargs):
+	return kwargs['picking_values']
+
+    def _hook_action_picking_create_move(self, cr, uid, ids, context={}, *args, **kwargs):
+	return kwargs['move_values']
+
     def action_picking_create(self,cr, uid, ids, *args):
         picking_id = False
         for order in self.browse(cr, uid, ids):
@@ -434,40 +440,42 @@ class purchase_order(osv.osv):
             if order.invoice_method=='picking':
                 istate = '2binvoiced'
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in')
-            picking_id = self.pool.get('stock.picking').create(cr, uid, {
-                'name': pick_name,
-                'origin': order.name+((order.origin and (':'+order.origin)) or ''),
-                'type': 'in',
-                'address_id': order.dest_address_id.id or order.partner_address_id.id,
-                'invoice_state': istate,
-                'purchase_id': order.id,
-                'company_id': order.company_id.id,
-                'move_lines' : [],
-            })
+            picking_values = self._hook_action_picking_create_picking(cr, uid, order.id, context=context,
+								      picking_values={'name': pick_name,
+								                      'origin': order.name+((order.origin and (':'+order.origin)) or ''),
+								                      'type': 'in',
+								                      'address_id': order.dest_address_id.id or order.partner_address_id.id,
+								                      'invoice_state': istate,
+								                      'purchase_id': order.id,
+								                      'company_id': order.company_id.id,
+								                      'move_lines' : [], })
+	    picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
                 if not order_line.product_id:
                     continue
                 if order_line.product_id.product_tmpl_id.type in ('product', 'consu'):
                     dest = order.location_id.id
-                    move = self.pool.get('stock.move').create(cr, uid, {
-                        'name': order.name + ': ' +(order_line.name or ''),
-                        'product_id': order_line.product_id.id,
-                        'product_qty': order_line.product_qty,
-                        'product_uos_qty': order_line.product_qty,
-                        'product_uom': order_line.product_uom.id,
-                        'product_uos': order_line.product_uom.id,
-                        'date': order_line.date_planned,
-                        'date_expected': order_line.date_planned,
-                        'location_id': loc_id,
-                        'location_dest_id': dest,
-                        'picking_id': picking_id,
-                        'move_dest_id': order_line.move_dest_id.id,
-                        'state': 'draft',
-                        'purchase_line_id': order_line.id,
-                        'company_id': order.company_id.id,
-                        'price_unit': order_line.price_unit
-                    })
+            	    move_values = self._hook_action_picking_create_move(cr, uid, order_line.id, context=context,
+						                        move_values={
+							                        'name': order.name + ': ' +(order_line.name or ''),
+							                        'product_id': order_line.product_id.id,
+										'product_qty': order_line.product_qty,
+										'product_uos_qty': order_line.product_qty,
+										'product_uom': order_line.product_uom.id,
+										'product_uos': order_line.product_uom.id,
+										'date': order_line.date_planned,
+										'date_expected': order_line.date_planned,
+										'location_id': loc_id,
+										'location_dest_id': dest,
+										'picking_id': picking_id,
+										'move_dest_id': order_line.move_dest_id.id,
+										'state': 'draft',
+										'purchase_line_id': order_line.id,
+										'company_id': order.company_id.id,
+										'price_unit': order_line.price_unit
+									    })
+                    move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
                     if order_line.move_dest_id:
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)
