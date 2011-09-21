@@ -813,6 +813,29 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset one2many fields
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        # reset one2many fields
+        default.update(backorder_ids=[])
+        default.update(previous_step_ids=[])
+        result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
+        
+        return result
+    
+    def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):
+        '''
+        hook to keep the production lot when a stock move is copied
+        '''
+        res = super(stock_picking, self)._erase_prodlot_hook(cr, uid, id, context=context, *args, **kwargs)
+        
+        return res and not context.get('keep_prodlot', False)
+    
     def validate(self, cr, uid, ids, context=None):
         '''
         validate or not the draft picking ticket
@@ -1774,14 +1797,6 @@ class stock_move(osv.osv):
     stock move
     '''
     _inherit = 'stock.move'
-    
-    def _keep_prodlot_hook(self, cr, uid, id, context, *args, **kwargs):
-        '''
-        hook to keep the production lot when a stock move is copied
-        '''
-        res = super(stock_move, self)._keep_prodlot_hook(cr, uid, id, context=context, *args, **kwargs)
-        
-        return res and not context.get('keep_prodlot', False)
     
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''

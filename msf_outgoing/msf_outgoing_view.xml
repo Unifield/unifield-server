@@ -185,6 +185,8 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
                                     <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+                                    <field name="expired_date" />
+									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
                                     <field name="location_dest_id" string="Dest. Loc" />
                                     <field name="virtual_available" />
@@ -435,6 +437,8 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
                                     <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+									<field name="expired_date" />
+									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
                                     <field name="location_dest_id" string="Dest. Loc" />
                                     <field name="qty_per_pack" />
@@ -652,6 +656,8 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" groups="product.group_uos"/>
                                     <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
+                                    <field name="expired_date" />
+									<field name="kc_dg" />
                                     <field name="location_id" string="Src. Loc" />
                                     <field name="location_dest_id" string="Dest. Loc" />
                                     <field name="qty_per_pack" />
