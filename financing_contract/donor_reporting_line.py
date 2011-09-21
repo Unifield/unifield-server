@@ -104,7 +104,8 @@ class financing_contract_donor_reporting_line(osv.osv):
                     analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                     allocated_real_sum = 0.0
                     for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                        allocated_real_sum += abs(analytic_line.amount)
+                        allocated_real_sum += analytic_line.amount
+                    allocated_real_sum = abs(allocated_real_sum)
                     res[line.id] = {
                         'allocated_budget': line.allocated_budget_value,
                         'allocated_real': allocated_real_sum,
@@ -160,7 +161,8 @@ class financing_contract_donor_reporting_line(osv.osv):
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         project_real_sum = 0.0
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            project_real_sum += abs(analytic_line.amount)
+                            project_real_sum += analytic_line.amount
+                        project_real_sum = abs(project_real_sum)
                         res[line.id] = {
                             'project_budget': line.project_budget_value,
                             'project_real': project_real_sum,
