@@ -42,11 +42,9 @@ class account_invoice(osv.osv):
         distrib_id = False
         negative_inv = False
         invoice_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = invoice_obj.check_total or 0.0
+        amount_tot = 0.0
         if invoice_obj.type in ['out_invoice', 'in_refund']:
             negative_inv = True
-        if negative_inv:
-            amount = -1 * amount
         if invoice_obj.analytic_distribution_id:
             distrib_id = invoice_obj.analytic_distribution_id.id
         else:
@@ -58,6 +56,7 @@ class account_invoice(osv.osv):
             amount = invoice_line.price_subtotal
             if negative_inv:
                 amount = -1 * amount
+            amount_tot += amount
             if invoice_line.analytic_distribution_id:
                 if invoice_line.analytic_distribution_id.global_distribution \
                 or ('reset_all' in context and context['reset_all']):
@@ -68,7 +67,7 @@ class account_invoice(osv.osv):
                 self.pool.get('account.invoice.line').write(cr, uid, [invoice_line.id], child_vals, context=context)
                 child_distributions.append((child_distrib_id, amount))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount_tot, 'distribution_id': distrib_id}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
