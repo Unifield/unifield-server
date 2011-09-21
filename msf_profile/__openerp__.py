@@ -33,7 +33,8 @@
     "depends" : [
         "msf_partner",
         "register_accounting",
-        "analytic_plan_tree",
+        "stock_inventory_type",
+        "funding_pool",
         "account_period_closing_level",
         "account_activable",  
         "msf_order_date",
@@ -61,7 +62,7 @@
         "object_query",
         "stock_forecast",
         "partner_modification",
-        'account_invoice_split',
+        "account_invoice_split",
         "account_msf",
         "specific_locations",
         "reason_types_moves",

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,26 +19,32 @@
 #
 ##############################################################################
 {
-    "name" : "Accounting Journal for MSF",
-    "version" : "1.0",
-    "author" : "MSF - TeMPO Consulting",
-    "category": 'Generic Modules/Accounting',
-    "description": '''
-        Journals view and datas
-    ''',
-    'init_xml': [],
-    "depends" : ["account", "analytic", "account_override", "funding_pool"],
-    'update_xml': [
-        'account_journal_view.xml',
-        'project/project_view.xml',
+    "name" : "Analytic Account for MSF",
+    "version": "1.1",
+    "author" : "MSF: Matthieu Dietrich",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["analytic", "account", "account_override"],
+    "description": """Module for defining analytic accounting object.
+    """,
+    "init_xml" : [
+        'data/analytic_account_data.xml',
+    ],
+    "update_xml": [
+        'security/ir.model.access.csv',
+        'analytic_account_view.xml',
+        'wizard/account_analytic_chart_view.xml',
+        'wizard/wizard_costcenter_distribution_view.xml',
+        'wizard/wizard_fundingpool_distribution_view.xml',
+        'wizard/wizard_free1_distribution_view.xml',
+        'wizard/wizard_free2_distribution_view.xml',
+    ],
+    'test': [
+        'test/analytic_account_activable.yml',
     ],
     'demo_xml': [
     ],
-    'test': [
-        'test/account_journal.yml'
-    ],
     'installable': True,
     'active': False,
-    #'certificate': 'certificate',
+#    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

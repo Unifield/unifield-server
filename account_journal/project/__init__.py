@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-import analytic_account_activable
-import analytic_line_activable
-import wizard
+import project
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

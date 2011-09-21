@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,27 +18,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Accounting Journal for MSF",
-    "version" : "1.0",
-    "author" : "MSF - TeMPO Consulting",
-    "category": 'Generic Modules/Accounting',
-    "description": '''
-        Journals view and datas
-    ''',
-    'init_xml': [],
-    "depends" : ["account", "analytic", "account_override", "funding_pool"],
-    'update_xml': [
-        'account_journal_view.xml',
-        'project/project_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/account_journal.yml'
-    ],
-    'installable': True,
-    'active': False,
-    #'certificate': 'certificate',
-}
+
+import account_analytic_chart
+import wizard_distribution
+import wizard_costcenter_distribution
+import wizard_fundingpool_distribution
+import wizard_free1_distribution
+import wizard_free2_distribution
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
