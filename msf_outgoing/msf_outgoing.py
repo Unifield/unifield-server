@@ -182,14 +182,14 @@ class shipment(osv.osv):
         if context is None:
             context = {}
             
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # data
         name = _("Create Shipment")
         model = 'shipment.wizard'
         step = 'create'
         # open the selected wizard
-        return pick_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
     
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
@@ -250,14 +250,14 @@ class shipment(osv.osv):
         if context is None:
             context = {}
             
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # data
         name = _("Return Packs")
         model = 'shipment.wizard'
         step = 'returnpacks'
         # open the selected wizard
-        return pick_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
     
     def do_return_packs(self, cr, uid, ids, context=None):
         '''
@@ -364,14 +364,14 @@ class shipment(osv.osv):
         if context is None:
             context = {}
             
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # data
         name = _("Return Packs from Shipment")
         model = 'shipment.wizard'
         step = 'returnpacksfromshipment'
         # open the selected wizard
-        return pick_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
     
     def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
         '''
@@ -1469,8 +1469,9 @@ class stock_picking(osv.osv):
         name = _("Create Picking Ticket")
         model = 'create.picking'
         step = 'create'
+        wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -1493,9 +1494,9 @@ class stock_picking(osv.osv):
         name = _("Validate Picking Ticket")
         model = 'create.picking'
         step = 'validate'
-            
+        wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_validate_picking(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -1524,9 +1525,9 @@ class stock_picking(osv.osv):
         name = _("PPL Information - step1")
         model = 'create.picking'
         step = 'ppl1'
-        
+        wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_ppl1(self, cr, uid, ids, context=None):
         '''
@@ -1541,9 +1542,9 @@ class stock_picking(osv.osv):
         name = _("PPL Information - step2")
         model = 'create.picking'
         step = 'ppl2'
-        
+        wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
@@ -1647,9 +1648,9 @@ class stock_picking(osv.osv):
         name = _("Return Products")
         model = 'create.picking'
         step = 'returnproducts'
-        
+        wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return self.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
     
     def do_return_products(self, cr, uid, ids, context=None):
         '''
@@ -1779,8 +1780,87 @@ class stock_picking(osv.osv):
                         
         return True
             
-
 stock_picking()
+
+
+class wizard(osv.osv):
+    '''
+    class offering open_wizard method for wizard control
+    '''
+    _name = 'wizard'
+    
+    def open_wizard(self, cr, uid, ids, name=False, model=False, step='default', type='create', context=None):
+        '''
+        WARNING : IDS CORRESPOND TO ***MAIN OBJECT IDS*** (picking for example) take care when calling the method from wizards
+        return the newly created wizard's id
+        name, model, step are mandatory only for type 'create'
+        '''
+        if context is None:
+            context = {}
+        
+        if type == 'create':
+            assert name, 'type "create" and no name defined'
+            assert model, 'type "create" and no model defined'
+            assert step, 'type "create" and no step defined'
+            # create the memory object - passing the picking id to it through context
+            wizard_id = self.pool.get(model).create(
+                cr, uid, {}, context=dict(context,
+                                          active_ids=ids,
+                                          model=model,
+                                          step=step,
+                                          back_model=context.get('model', False),
+                                          back_wizard_ids=context.get('wizard_ids', False),
+                                          back_wizard_name=context.get('wizard_name', False),
+                                          back_step=context.get('step', False),
+                                          wizard_name=name))
+        
+        elif type == 'back':
+            # open the previous wizard
+            assert context['back_wizard_ids'], 'no back_wizard_ids defined'
+            wizard_id = context['back_wizard_ids'][0]
+            assert context['back_wizard_name'], 'no back_wizard_name defined'
+            name = context['back_wizard_name']
+            assert context['back_model'], 'no back_model defined'
+            model = context['back_model']
+            assert context['back_step'], 'no back_step defined'
+            step = context['back_step']
+            
+        elif type == 'update':
+            # refresh the same wizard
+            assert context['wizard_ids'], 'no wizard_ids defined'
+            wizard_id = context['wizard_ids'][0]
+            assert context['wizard_name'], 'no wizard_name defined'
+            name = context['wizard_name']
+            assert context['model'], 'no model defined'
+            model = context['model']
+            assert context['step'], 'no step defined'
+            step = context['step']
+            
+        # call action to wizard view
+        return {
+            'name': name,
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': model,
+            'res_id': wizard_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context,
+                            active_ids=ids,
+                            wizard_ids=[wizard_id],
+                            model=model,
+                            step=step,
+                            back_model=context.get('model', False),
+                            back_wizard_ids=context.get('wizard_ids', False),
+                            back_wizard_name=context.get('wizard_name', False),
+                            back_step=context.get('step', False),
+                            wizard_name=name)
+        }
+    
+wizard()
 
 
 class product_product(osv.osv):

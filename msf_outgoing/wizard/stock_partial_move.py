@@ -37,14 +37,14 @@ class stock_partial_move_memory_picking(osv.osv_memory):
         # we need the context for the wizard switch
         assert context, 'no context defined'
         
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # data - no step needed for present split wizard
         name = _("Split Selected Stock Move")
         model = 'split.memory.move'
         # we need to get the memory move id to know which line to split
         # and class name, to know which type of moves
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
 
 stock_partial_move_memory_picking()
 
@@ -254,7 +254,7 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         # quick integrity check
         assert context, 'No context defined, problem on method call'
         
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
 
         for memory_move in self.browse(cr, uid, ids, context=context):
                         
@@ -274,7 +274,7 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
             new_memory_move = self.create(cr, uid, values, context=context)
         
         # udpate the original wizard
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='update', context=context)
     
     
 stock_partial_move_memory_shipment_returnpacksfromshipment()

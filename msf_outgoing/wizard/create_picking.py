@@ -645,10 +645,10 @@ class create_picking(osv.osv_memory):
         # we need the context for the wizard switch
         assert context, 'no context defined'
         
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # no data for type 'back'
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''

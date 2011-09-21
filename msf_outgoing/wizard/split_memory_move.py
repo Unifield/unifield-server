@@ -44,10 +44,10 @@ class split_memory_move(osv.osv_memory):
         # we need the context for the wizard switch
         assert context, 'no context defined'
         
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # no data for type 'back'
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
 
     def split(self, cr, uid, ids, context=None):
         # quick integrity check
@@ -55,7 +55,7 @@ class split_memory_move(osv.osv_memory):
         assert context['class_name'], 'No class name defined'
         class_name = context['class_name']
         
-        pick_obj = self.pool.get('stock.picking')
+        wiz_obj = self.pool.get('wizard')
         
         # memory moves selected
         memory_move_ids = context['memory_move_ids']
@@ -105,6 +105,6 @@ class split_memory_move(osv.osv_memory):
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
         
         # no data for type 'back'
-        return pick_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
     
 split_memory_move()
