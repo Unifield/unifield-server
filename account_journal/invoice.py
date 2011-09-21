@@ -150,7 +150,7 @@ class account_invoice_line(osv.osv):
         res = super(account_invoice_line, self).create(cr, uid, vals, context=context)
         # FIXME / TODO: Verify that this invoice line don't come from a standard donation or purchase list
         # Verify that the invoice is in draft state
-        if res and 'invoice_id' in vals:
+        if res and vals.get('invoice_id'):
             invoice_id = vals.get('invoice_id')
             objname = self._name == 'wizard.account.invoice.line' and 'wizard.account.invoice' or 'account.invoice'
             state = self.pool.get(objname).read(cr, uid, [invoice_id], ['state'])[0].get('state', False)
