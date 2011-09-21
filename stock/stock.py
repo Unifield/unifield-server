@@ -733,16 +733,28 @@ class stock_picking(osv.osv):
     def test_auto_picking(self, cr, uid, ids):
         # TODO: Check locations to see if in the same location ?
         return True
+    
+    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
+        
+        - allow to choose wether or not an exception should be raised in case of no stock move
+        '''
+        return True
 
-    def action_assign(self, cr, uid, ids, *args):
+    def action_assign(self, cr, uid, ids, context=None, *args):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
         """
+        if context is None:
+            context = {}
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
             move_ids = [x.id for x in pick.move_lines if x.state == 'confirmed']
             if not move_ids:
-                raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
+                if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
+                    raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
             move_obj.action_assign(cr, uid, move_ids)
         return True
 
