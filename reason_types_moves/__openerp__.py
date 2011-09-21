@@ -33,6 +33,7 @@ stock moves.
     ],
     "depends" : [
         "stock",
+        "sale",
         "procurement",
     ],
     "update_xml": [
@@ -43,6 +44,7 @@ stock moves.
     "demo_xml": [
     ],
     "test": [
+        "test/chained_location.yml",
     ],
     "installable": True,
     "active": False,
