@@ -986,7 +986,7 @@ class stock_picking(osv.osv):
     
     def picking_ticket_data(self, cr, uid, ids, context=None):
         '''
-        generate picking ticket data
+        generate picking ticket data for report creation
         
         - sale order line without product: does not work presently
         
@@ -1399,14 +1399,70 @@ class stock_picking(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
         
-    def do_create_picking(self, cr, uid, ids, partial_datas, context=None):
+    def do_create_picking(self, cr, uid, ids, context=None):
         '''
         create the picking ticket from selected stock moves
-        
-        move here the logic of create picking
-        available for picking loop
         '''
-        pass
+        assert context, 'context is not defined'
+        assert 'partial_datas' in context, 'partial datas not present in context'
+        partial_datas = context['partial_datas']
+        
+        # stock move object
+        move_obj = self.pool.get('stock.move')
+        
+        for pick in self.browse(cr, uid, ids, context=context):
+            # create the new picking object
+            # a sequence for each draft picking ticket is used for the picking ticket
+            sequence = pick.sequence_id
+            ticket_number = sequence.get_id(test='id', context=context)
+            new_pick_id = self.copy(cr, uid, pick.id, {'name': pick.name + '-' + ticket_number,
+                                                       'backorder_id': pick.id,
+                                                       'move_lines': []}, context=context)
+            # create stock moves corresponding to partial datas
+            # browse returns a list of browse object in the same order as move_ids
+            # for now, each new line from the wizard corresponds to a new stock.move
+            # it could be interesting to regroup according to production lot/asset id
+            move_ids = partial_datas[pick.id].keys()
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
+                # qty selected
+                count = 0
+                # initial qty
+                initial_qty = move.product_qty
+                for partial in partial_datas[pick.id][move.id]:
+                    # integrity check
+                    partial['product_id'] == move.product_id.id
+                    partial['product_uom'] == move.product_uom.id
+                    # the quantity
+                    count = count + partial['product_qty']
+                    # copy the stock move and set the quantity
+                    new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_pick_id,
+                                                                'product_qty': partial['product_qty'],
+                                                                'prodlot_id': partial['prodlot_id'],
+                                                                'asset_id': partial['asset_id'],
+                                                                'backmove_id': move.id}, context=context)
+                # decrement the initial move, cannot be less than zero
+                initial_qty = max(initial_qty - count, 0)
+                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty}, context=context)
+                
+            # confirm the new picking ticket
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
+            # we force availability
+            self.force_assign(cr, uid, [new_pick_id])
+        
+        # TODO which behavior
+        return {'type': 'ir.actions.act_window_close'}
+        # display newly created picking ticket
+        return {
+            'name':_("Picking Ticket"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'stock.picking',
+            'res_id': new_pick_id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
         
     def validate_picking(self, cr, uid, ids, context=None):
         '''
@@ -1431,6 +1487,8 @@ class stock_picking(osv.osv):
         move here the logic of validate picking
         available for picking loop
         '''
+        assert context, 'context is not defined'
+        assert 'partial_data' in context, 'partial data not present in context'
         pass
 #        for pick in..
 #        

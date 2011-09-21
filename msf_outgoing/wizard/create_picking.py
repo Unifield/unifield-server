@@ -355,8 +355,6 @@ class create_picking(osv.osv_memory):
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
         # picking ids
         picking_ids = context['active_ids']
-        assert len(picking_ids) == 1, 'Number of picking ids is not valid (%i)' % len(picking_ids)
-        picking_id = picking_ids[0]
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         
@@ -365,80 +363,24 @@ class create_picking(osv.osv_memory):
 
         # date of the picking ticket creation, not used for now
         partial_datas = {}
-#        partial_datas = {
-#            'delivery_date' : partial.date
-#        }
         
-        pick = pick_obj.browse(cr, uid, picking_id, context=context)
-        # out moves for delivery
-        memory_moves_list = partial.product_moves_picking
-        # organize data according to move id
-        for move in memory_moves_list:
-            # only take into account if the quantity is greater than 0
-            if move.quantity:
-                partial_datas.setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
-                                                                      'product_qty': move.quantity,
-                                                                      'product_uom': move.product_uom.id,
-                                                                      'prodlot_id': move.prodlot_id.id,
-                                                                      'asset_id': move.asset_id.id,
-                                                                      })
-    
-        # create the new picking object
-        # TODO origin is not copied if name is not supplied as default.
-        #      create a new sequence for each draft picking ticket, and bricoler with draft ref or something for traceability
-        sequence = pick.sequence_id
-        ticket_number = sequence.get_id(test='id', context=context)
-        new_pick_id = pick_obj.copy(cr, uid, picking_id, {'name': pick.name + '-' + ticket_number,
-                                                          'backorder_id': picking_id,
-                                                          'move_lines': []}, context=context)
-        # create stock moves corresponding to partial datas
-        # browse returns a list of browse object in the same order as move_ids
-        # for now, each new line from the wizard corresponds to a new stock.move
-        # it could be interesting to regroup according to production lot/asset id
-        # TODO refactoring this load is useless -> load the move object in the first loop for in browse( keys() )
-        move_ids = partial_datas.keys()
-        browse_moves = move_obj.browse(cr, uid, move_ids, context=context)
-        moves = dict(zip(move_ids, browse_moves))
-        for move in partial_datas:
-            # qty selected
-            count = 0
-            # initial qty
-            initial_qty = moves[move].product_qty
-            for partial in partial_datas[move]:
-                # integrity check
-                partial['product_id'] == moves[move].product_id.id
-                partial['product_uom'] == moves[move].product_uom.id
-                # the quantity
-                count = count + partial['product_qty']
-                # copy the stock move and set the quantity
-                new_move = move_obj.copy(cr, uid, move, {'picking_id': new_pick_id,
-                                                         'product_qty': partial['product_qty'],
-                                                         'prodlot_id': partial['prodlot_id'],
-                                                         'asset_id': partial['asset_id'],
-                                                         'backmove_id': move}, context=context)
-            # decrement the initial move, cannot be less than zero
-            initial_qty = max(initial_qty - count, 0)
-            move_obj.write(cr, uid, [move], {'product_qty': initial_qty}, context=context)
-            
-        # confirm the new picking ticket
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'stock.picking', new_pick_id, 'button_confirm', cr)
-        # we force availability
-        pick_obj.force_assign(cr, uid, [new_pick_id])
-        
-        # TODO which behavior
-        return {'type': 'ir.actions.act_window_close'}
-        # display newly created picking ticket
-        return {
-            'name':_("Picking Ticket"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': new_pick_id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-        }
+        for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            # for each picking
+            partial_datas[pick.id] = {}
+            # out moves for delivery
+            memory_moves_list = partial.product_moves_picking
+            # organize data according to move id
+            for move in memory_moves_list:
+                # !!! only take into account if the quantity is greater than 0 !!!
+                if move.quantity:
+                    partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
+                                                                                   'product_qty': move.quantity,
+                                                                                   'product_uom': move.product_uom.id,
+                                                                                   'prodlot_id': move.prodlot_id.id,
+                                                                                   'asset_id': move.asset_id.id,
+                                                                                   })
+        # call stock_picking method which returns action call
+        return pick_obj.do_create_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
         
     def quick_mode(self, cr, uid, ppl, context=None):
         '''
@@ -504,11 +446,11 @@ class create_picking(osv.osv_memory):
             for move in memory_moves_list:
                 
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
-                                                                       'product_qty': move.quantity,
-                                                                       'product_uom': move.product_uom.id,
-                                                                       'prodlot_id': move.prodlot_id.id,
-                                                                       'asset_id': move.asset_id.id,
-                                                                       })
+                                                                               'product_qty': move.quantity,
+                                                                               'product_uom': move.product_uom.id,
+                                                                               'prodlot_id': move.prodlot_id.id,
+                                                                               'asset_id': move.asset_id.id,
+                                                                               })
             
             # create stock moves corresponding to partial datas
             # browse returns a list of browse object in the same order as move_ids
