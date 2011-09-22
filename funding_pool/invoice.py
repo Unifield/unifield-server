@@ -42,13 +42,11 @@ class account_invoice(osv.osv):
         distrib_id = False
         negative_inv = False
         invoice_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = invoice_obj.check_total or 0.0
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
+        amount_tot = 0.0
         if invoice_obj.type in ['out_invoice', 'in_refund']:
             negative_inv = True
-        if negative_inv:
-            amount = -1 * amount
         if invoice_obj.analytic_distribution_id:
             distrib_id = invoice_obj.analytic_distribution_id.id
         else:
@@ -60,6 +58,7 @@ class account_invoice(osv.osv):
             il_amount = invoice_line.price_subtotal
             if negative_inv:
                 amount = -1 * amount
+            amount_tot += amount
             if invoice_line.analytic_distribution_id:
                 if invoice_line.analytic_distribution_id.global_distribution \
                 or ('reset_all' in context and context['reset_all']):
@@ -70,7 +69,7 @@ class account_invoice(osv.osv):
                 self.pool.get('account.invoice.line').write(cr, uid, [invoice_line.id], child_vals, context=context)
                 child_distributions.append((child_distrib_id, il_amount))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount_tot, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -115,7 +114,7 @@ class account_invoice_line(osv.osv):
         else:
             raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution for the whole invoice first!"))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency, 'invoice_line': ids[0]}, context=context)
         # we open a wizard
         context.update({
           'active_id': ids[0],
@@ -137,7 +136,11 @@ class account_invoice_line(osv.osv):
         analytic_obj = self.pool.get('analytic.distribution')
         if 'invoice_id' in vals and vals['invoice_id']:
             #new line, we add the global distribution
-            invoice_obj = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], context=context)
+            if self._name == 'wizard.account.invoice.line':
+                obj_name = 'wizard.account.invoice'
+            else:
+                obj_name = 'account.invoice'
+            invoice_obj = self.pool.get(obj_name).browse(cr, uid, vals['invoice_id'], context=context)
             if invoice_obj.analytic_distribution_id:
                 child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
                 vals['analytic_distribution_id'] = child_distrib_id

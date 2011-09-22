@@ -21,10 +21,33 @@
 
 import datetime
 from osv import osv, fields
+import logging
+from os import path
+import tools
 
 class account_journal(osv.osv):
     _inherit = "account.journal"
-    
+
+    def init(self, cr):
+        """
+        Load demo.xml brefore addons
+        """
+        if hasattr(super(account_journal, self), 'init'):
+            super(account_journal, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        demo = False
+        mod_id = mod_obj.search(cr, 1, [('name', '=', 'account_journal')])
+        if mod_id:
+            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
+
+        if demo:
+            logging.getLogger('init').info('HOOK: module account_journal: loading account_journal_demo.xml')
+            pathname = path.join('account_journal', 'account_journal_demo.xml')
+            file = tools.file_open(pathname)
+            tools.convert_xml_import(cr, 'account_journal', file, {}, mode='init', noupdate=False)
+
+
     def get_journal_type(self, cursor, user_id, context=None):
         return [('bank', 'Bank'), \
                 ('cash','Cash'), \
@@ -102,7 +125,9 @@ class account_journal(osv.osv):
             'name': name,
             'code': code,
             'active': True,
-            'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+            # UF-433: sequence is now only the number, no more prefix
+            #'prefix': "%(year)s%(month)s-" + name + "-" + code + "-",
+            'prefix': "",
             'padding': 6,
             'number_increment': 1
         }

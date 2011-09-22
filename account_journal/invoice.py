@@ -64,24 +64,6 @@ class account_invoice(osv.osv):
             self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [x.id for x in inv.invoice_line], context=context)
         return res
 
-    def unlink(self, cr, uid, ids, context={}):
-        """
-        Delete engagement journal lines before deleting invoice
-        """
-        # Some verifications
-        if not context:
-            context={}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_line_obj = self.pool.get('account.analytic.line')
-        # Delete engagement journal lines
-        for inv in self.browse(cr, uid, ids, context=context):
-            analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', [x.id for x in inv.invoice_line])], context=context)
-            analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
-        res = super(account_invoice, self).unlink(cr, uid, ids, context=context)
-        return res
-
 account_invoice()
 
 class account_invoice_line(osv.osv):
@@ -115,7 +97,7 @@ class account_invoice_line(osv.osv):
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for inv_line in self.browse(cr, uid, ids, context=context):
             # Don't create engagement journal line if the invoice come from a purchase list
-            if inv_line.invoice_id.purchase_list:
+            if inv_line.invoice_id.purchase_list or inv_line.invoice_id.state!='draft':
                 continue
             # Search old engagement journal lines to be deleted (to not have split invoice problem that delete not engagement journal lines)
             analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', '=', inv_line.id)], context=context)
@@ -168,9 +150,10 @@ class account_invoice_line(osv.osv):
         res = super(account_invoice_line, self).create(cr, uid, vals, context=context)
         # FIXME / TODO: Verify that this invoice line don't come from a standard donation or purchase list
         # Verify that the invoice is in draft state
-        if res and 'invoice_id' in vals:
+        if res and vals.get('invoice_id'):
             invoice_id = vals.get('invoice_id')
-            state = self.pool.get('account.invoice').read(cr, uid, [invoice_id], ['state'])[0].get('state', False)
+            objname = self._name == 'wizard.account.invoice.line' and 'wizard.account.invoice' or 'account.invoice'
+            state = self.pool.get(objname).read(cr, uid, [invoice_id], ['state'])[0].get('state', False)
             # if invoice in draft state, do engagement journal lines
             if state and state == 'draft':
                 self.create_engagement_lines(cr, uid, [res], context=context)
@@ -200,28 +183,8 @@ class account_invoice_line(osv.osv):
             if inv_line.analytic_distribution_id:
                 to_create.append(inv_line.id)
         if to_create:
-            # Delete existing anaytic lines
-            analytic_line_obj.unlink(cr, uid, to_remove, context=context)
             # Create new analytic lines
             self.create_engagement_lines(cr, uid, to_create, context=context)
-        return res
-
-    def unlink(self, cr, uid, ids, context={}):
-        """
-        Delete engagement journal lines before deleting invoice line
-        """
-        # Some verifications
-        if not context:
-            context={}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_line_obj = self.pool.get('account.analytic.line')
-        # Delete engagement journal lines
-        for inv_line in self.browse(cr, uid, ids, context=context):
-            analytic_line_ids = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', ids)], context=context)
-            analytic_line_obj.unlink(cr, uid, analytic_line_ids, context=context)
-        res = super(account_invoice_line, self).unlink(cr, uid, ids, context=context)
         return res
 
 account_invoice_line()

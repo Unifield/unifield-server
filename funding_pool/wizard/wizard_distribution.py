@@ -27,7 +27,8 @@ class wizard_distribution(osv.osv_memory):
     _columns = {
         "total_amount": fields.float("Total amount to be allocated"),
         "distribution_id": fields.many2one("analytic.distribution", string='Analytic Distribution'),
-        'currency_id': fields.many2one('res.currency', string="Currency"),
+        "currency_id": fields.many2one('res.currency', string="Currency"),
+        "invoice_line": fields.many2one("account.invoice.line", "Invoice Line"),
     }
 
     def dummy(self, cr, uid, ids, context={}, *args, **kwargs):
@@ -169,6 +170,9 @@ class wizard_distribution(osv.osv_memory):
                 aal_obj.unlink(cr, uid, aal_ids, context=context)
                 # create new analytic lines
                 ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+
+            if not move_lines and wizard.invoice_line:
+                wizard.invoice_line.create_engagement_lines()
         return True
 
 wizard_distribution()

@@ -92,7 +92,7 @@ class account_move_line_compute_currency(osv.osv):
             if vals['date'] < period.date_start or vals['date'] > period.date_stop:
                 raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
 
-    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, debit_currency=False, credit_currency=False):
+    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}
         ctxcurr = {}
         cur_obj = self.pool.get('res.currency')
@@ -100,8 +100,8 @@ class account_move_line_compute_currency(osv.osv):
         # WARNING: source_date field have priority to date field. This is because of Sprint 2 Specifications
         if vals.get('date', date):
             ctxcurr['date'] = vals.get('date', date)
-        if vals.get('source_date', date):
-            ctxcurr['date'] = vals.get('source_date', date)
+        if vals.get('source_date', source_date):
+            ctxcurr['date'] = vals.get('source_date', source_date)
         
         if vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
@@ -120,10 +120,10 @@ class account_move_line_compute_currency(osv.osv):
                     newvals['credit_currency'] = 0
                 newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
                 newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        elif date and (credit_currency or debit_currency):
+        elif (vals.get('date') or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
-            newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
+            newvals['amount_currency'] = debit_currency - credit_currency
         return newvals
 
     def create(self, cr, uid, vals, context=None, check=True):
@@ -164,9 +164,10 @@ class account_move_line_compute_currency(osv.osv):
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
             date = vals.get('date', line.date)
+            source_date = vals.get('source_date', line.source_date)
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
-            newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, vals.get('date'), line.debit_currency, line.credit_currency))
+            newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
         return res
 

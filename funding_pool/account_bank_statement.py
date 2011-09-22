@@ -23,20 +23,6 @@ from osv import fields, osv
 import tools
 from tools.translate import _
 
-class account_bank_statement(osv.osv):
-    _inherit = "account.bank.statement"
-    _name = "account.bank.statement"
-
-    def button_confirm_bank(self, cr, uid, ids, context=None):
-        super(account_bank_statement,self).button_confirm_bank(cr, uid, ids, context=context)
-        for st in self.browse(cr, uid, ids, context=context):
-            for st_line in st.line_ids:
-                if not st_line.analytics_id:
-                    raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the '%s' statement line!") % (st_line))
-        return True
-    
-account_bank_statement()
-
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
     _name = "account.bank.statement.line"

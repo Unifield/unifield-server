@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -40,28 +40,6 @@ class analytic_distribution(osv.osv):
         'name': lambda *a: 'Distribution',
         'global_distribution': lambda *a: False,
     }
-
-    def search_analytic_lines(self, cr, uid, ids, context={}):
-        """
-        Give analytic lines attached to this distribution
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = []
-        cc_obj = self.pool.get('cost_center_distribution_line')
-        fp_obj = self.pool.get('funding_pool_distribution_line')
-        free1_obj = self.pool.get('free_1_distribution_line')
-        free2_obj = self.pool.get('free_2_distribution_line')
-        aal_obj = self.pool.get('account.analytic.line')
-        for distrib_id in ids:
-            distrib_line_ids = []
-            for obj in [cc_obj, fp_obj, free1_obj, free2_obj]:
-                search_ids = obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
-                distrib_line_ids.append([x.analytic_id and x.analytic_id.id for x in obj.browse(cr, uid, search_ids, context=context)])
-            res.append(aal_obj.search(cr, uid, [('account_id', 'in', distrib_line_ids)], context=context))
-        return sorted(flatten(res))
 
     def copy(self, cr, uid, id, defaults={}, context={}):
         """
@@ -204,6 +182,8 @@ class analytic_distribution(osv.osv):
                 'source_date': source_free_2_line.source_date or False,
             }
             f2_distrib_line_obj.create(cr, uid, distrib_line_vals, context=context)
+        if destination_obj.invoice_line_ids:
+            self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [x.id for x in destination_obj.invoice_line_ids])
         return super(analytic_distribution, self).write(cr, uid, [destination_id], vals, context=context)
 
     def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):

@@ -25,7 +25,6 @@
 from osv import osv
 from time import strftime
 from tools.translate import _
-from tools.misc import join_without_redundancy
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -53,7 +52,7 @@ class account_invoice(osv.osv):
                 new_line_id = eng_obj.copy(cr, uid, eng.id, context=context)
                 # Prepare reverse values
                 vals = {
-                    'name': join_without_redundancy(eng.name, 'REV'),
+                    'name': eng_obj.join_without_redundancy(eng.name, 'REV'),
                     'amount': eng.amount * -1,
                     'date': inv.date_invoice,
                     'reversal_origin': eng.id,

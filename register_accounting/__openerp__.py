@@ -32,7 +32,7 @@
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
-    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "account_analytic_plans", "funding_pool"],
+    "depends" : ["base", "account", "hr", "account_payment", "account_accountant", "account_activable", "funding_pool", "purchase_override"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
@@ -49,6 +49,7 @@
         'account_invoice_view.xml',
         'wizard/register_creation.xml',
         'wizard/wizard_confirm_bank.xml',
+        'wizard/invoice_date.xml',
     ],
     "demo_xml" : [],
     "test": [

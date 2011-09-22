@@ -15,7 +15,7 @@
   !record {model: account.period, id: period_000}:
     company_id: base.main_company
     date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
     fiscalyear_id: fiscalyear0
     name: JAN-HHHHH-OP
     special: 1
@@ -25,7 +25,7 @@
   !record {model: account.period, id: period_0001}:
     company_id: base.main_company
     date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
     fiscalyear_id: fiscalyear0
     name: For operational advance
     special: 1
@@ -35,7 +35,7 @@
   !record {model: account.period, id: current_period}:
     company_id: base.main_company
     date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
     fiscalyear_id: fiscalyear0
     name: Our current period
     special: 1
@@ -45,7 +45,7 @@
   !record {model: account.period, id: period_00}:
     company_id: base.main_company
     date_start: !eval time.strftime('%Y-%m-01')
-    date_stop: !eval datetime.now().replace(month=datetime.now().month+1).strftime('%Y-%m-01')
+    date_stop: !eval (DateTime.now()+DateTime.RelativeDateTime(day=-1)).strftime('%Y-%m-%d')
     fiscalyear_id: fiscalyear0
     name: JAN-HHHHH
     special: 1

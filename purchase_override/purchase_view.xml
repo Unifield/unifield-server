@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="purchase_order_type_form_view" model="ir.ui.view">
+            <field name="name">purchase.order.type.form.view</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <!-- <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_supplier':1}" />
+                    </xpath> -->
+                    
+                    <xpath expr="/form/group/field[@name='company_id']" position="before">
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
+                        <field name="priority" />
+                        <newline />
+                        <field name="categ" />
+                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                        <field name="details" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="replace">
+                        <field name="invoice_method" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )] , 'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="purchase_order_type_tree_view" model="ir.ui.view">
+            <field name="name">purchase.order.type.tree.view</field>
+            <field name="model">purchase.order</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="purchase.purchase_order_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='date_order']" position="before">
+                        <field name="order_type" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="purchase_order_type_search_view" model="ir.ui.view">
+            <field name="name">purchase.order.type.search.view</field>
+            <field name="model">purchase.order</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_filter" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="product_id" position="after">
+                        <field name="origin" />
+                    </field>
+                    <filter name="draft" position="replace">
+                        <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state', 'in', ('draft', 'rfq_done'))]" separator="1" help="Purchase order which are in draft state"/>
+                    </filter>
+                    <xpath expr="/search/group/field[@name='create_uid']" position="after">
+                    <newline />
+                    <group string="Type" expand="0">
+	                        <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
+	                        <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
+	                        <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
+	                        <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
+	                        <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
+	                        <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
+	                        <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
+	                    </group>
+	                    <newline />
+	                    <group string="Priority" expand="0">
+                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+	                    </group>
+	                    <newline />
+	                    <group string="Category" expand="0">
+                            <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                            <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
+                            <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
+                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
+                            <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
+	                    </group>
+                        <newline />
+                    </xpath>
+                    <xpath expr="/search/group[2]/filter[@string='Supplier']" position="before">
+                        <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                        <separator orientation="vertical"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

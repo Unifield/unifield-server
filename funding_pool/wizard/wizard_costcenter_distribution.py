@@ -191,7 +191,7 @@ class wizard_costcenter_distribution(osv.osv_memory):
             context['cost_center_updated'] = wizard_obj.modified_line
             newwiz_obj = self.pool.get('wizard.fundingpool.distribution')
             newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id, 
-                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode}, context=context)
+                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode, 'invoice_line': wizard_obj.invoice_line and wizard_obj.invoice_line.id or False}, context=context)
             context['wizard_ids']['funding_pool'] = newwiz_id
         else:
             # Write some change to the wizard:

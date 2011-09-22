@@ -26,7 +26,6 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from tools.misc import flatten
-from tools.misc import join_without_redundancy
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -304,7 +303,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Copy the line
             rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             # Do the reverse
-            name = join_without_redundancy(ml.name, 'REV')
+            name = self.join_without_redundancy(ml.name, 'REV')
             amt = -1 * ml.amount_currency
             vals.update({
                 'debit': ml.credit,
@@ -395,7 +394,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Browse all move lines and change information
             for ml in self.browse(cr, uid, to_reverse, context=context):
                 amt = -1 * ml.amount_currency
-                name = join_without_redundancy(ml.name, 'REV')
+                name = self.join_without_redundancy(ml.name, 'REV')
                 vals = {}
                 # omit analytic_distribution if exists on first move line
                 context.update({'omit_analytic_distribution': False})
@@ -462,7 +461,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 
     def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
         """
-        Correct given account_move_line by only changin account
+        Correct given account_move_line by only changing account
         """
         # Verification
         if not context:
@@ -503,7 +502,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             rev_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             correction_line_id = self.copy(cr, uid, ml.id, vals, context=context)
             # Do the reverse
-            name = join_without_redundancy(ml.name, 'REV')
+            name = self.join_without_redundancy(ml.name, 'REV')
             amt = -1 * ml.amount_currency
             vals.update({
                 'debit': ml.credit,
@@ -518,7 +517,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
-            name = join_without_redundancy(ml.name, 'COR')
+            name = self.join_without_redundancy(ml.name, 'COR')
             cor_vals = {
                 'name': name,
                 'journal_id': j_corr_ids[0],
@@ -614,7 +613,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             rev_line_id = self.copy(cr, uid, move_line.id, vals, context=context)
             correction_line_id = self.copy(cr, uid, move_line.id, vals, context=context)
             # Do the reverse
-            name = join_without_redundancy(move_line.name, 'REV')
+            name = self.join_without_redundancy(move_line.name, 'REV')
             amt = -1 * move_line.amount_currency
             vals.update({
                 'debit': move_line.credit,
@@ -627,7 +626,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
-            name = join_without_redundancy(move_line.name, 'COR')
+            name = self.join_without_redundancy(move_line.name, 'COR')
             self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': j_corr_ids[0], 'corrected_line_id': move_line.id,
                 'account_id': account_id, 'partner_id': partner_id, 'have_an_historic': True,}, context=context)
             # Inform old line that it have been corrected

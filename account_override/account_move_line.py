@@ -23,9 +23,32 @@
 
 from osv import osv
 from osv import fields
+import re
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
+    
+    def join_without_redundancy(self, text='', string=''):
+        """
+        Add string @ begining of text like that:
+            mystring1 - mysupertext
+        
+        If mystring1 already exist, increment 1:
+            mystring1 - mysupertext
+        give:
+            mystring2 - mysupertext
+
+        """
+        result = ''.join([string, '1 - ', text])
+        if text == '' or string == '':
+            return result
+        pattern = re.compile('\%s([0-9]*) - ' % string)
+        m = re.match(pattern, text)
+        if m and m.groups():
+            number = m.groups() and m.groups()[0]
+            replacement = string + str(int(number) + 1) + ' - '
+            result = re.sub(pattern, replacement, text, 1)
+        return result
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),

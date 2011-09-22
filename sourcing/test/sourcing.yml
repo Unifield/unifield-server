@@ -149,7 +149,7 @@
       assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
       assert not sourcing.supplier.id, 'make_to_stock: sourcing has a supplier !'
       
-      sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_b0")})
+      sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_b0"), 'po_cft':'po'})
       
       assert int(sol.supplier) == ref("res_partner_b0"), 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, ref("product_supplierinfo_1"))
       assert sol.type == 'make_to_order', 'sol type is wrong after update of sourcing line (%s, %s)'%(sol.type, 'make_to_order')

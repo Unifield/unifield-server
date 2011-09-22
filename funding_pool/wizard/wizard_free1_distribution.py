@@ -204,7 +204,7 @@ class wizard_free1_distribution(osv.osv_memory):
         if 'free_2' not in context['wizard_ids']:
             newwiz_obj = self.pool.get('wizard.free2.distribution')
             newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id,
-                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode}, context=context)
+                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode, 'invoice_line': wizard_obj.invoice_line and wizard_obj.invoice_line.id or False}, context=context)
             context['wizard_ids']['free_2'] = newwiz_id
         else:
             # Write some change to the wizard:

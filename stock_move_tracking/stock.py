@@ -50,7 +50,7 @@ class stock_move(osv.osv):
                                 }
                                
                                ),
-        'expired_date': fields.related('prodlot_id', 'life_date', string='Expired Date', type='datetime', readonly=True, 
+        'expired_date': fields.related('prodlot_id', 'life_date', string='Expiry Date', type='date', readonly=True, 
                                         store={
                                             'stock.production.lot': (_get_lot_ids, ['life_date'], 20),
                                             'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['prodlot_id'], 20), 

@@ -28,6 +28,7 @@
     """,
     "init_xml" : [],
     "update_xml": [
+        'security/ir.model.access.csv',
         'financing_contract_view.xml',
     ],
     'test': [],

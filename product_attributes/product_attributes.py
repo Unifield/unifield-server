@@ -104,10 +104,71 @@ class product_attributes(osv.osv):
         ids = []
             
         for arg in args:
-            if arg[0] == 'list_ids' and arg[1] == '=':
+            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
                 list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
                 for line in list.product_ids:
                     ids.append(line.name.id)
+            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
+                for list in self.pool.get('product.list').browse(cr, uid, arg[2], context=context):
+                    for line in list.product_ids:
+                        ids.append(line.name.id)
+            else:
+                return []
+            
+        return [('id', 'in', ids)]
+    
+    def _get_nomen(self, cr, uid, ids, field_name, args, context={}):
+        res = {}
+        
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = []
+            res[product.id].append(product.nomen_manda_0.id)
+            res[product.id].append(product.nomen_manda_1.id)
+            res[product.id].append(product.nomen_manda_2.id)
+            res[product.id].append(product.nomen_manda_3.id)
+            res[product.id].append(product.nomen_sub_0.id)
+            res[product.id].append(product.nomen_sub_1.id)
+            res[product.id].append(product.nomen_sub_2.id)
+            res[product.id].append(product.nomen_sub_3.id)
+            res[product.id].append(product.nomen_sub_4.id)
+            res[product.id].append(product.nomen_sub_5.id)
+            
+        return res
+    
+    def _search_nomen(self, cr, uid, obj, name, args, context={}):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if not context:
+            context = {}
+            
+        ids = []
+            
+        for arg in args:
+            if arg[0] == 'nomen_ids' and arg[1] == '=' and arg[2]:
+                nomen = self.pool.get('product.nomenclature').browse(cr, uid, arg[2], context=context)
+                if nomen.type == 'mandatory':
+                    ids = self.search(cr, uid, [('nomen_manda_%s' % nomen.level, '=', nomen.id)], context=context)
+                else:
+                    ids = self.search(cr, uid, [('nomen_sub_0', '=', nomen.id)], context=context)
+                    ids.append(self.search(cr, uid, [('nomen_sub_1', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_2', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_3', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_4', '=', nomen.id)], context=context))
+                    ids.append(self.search(cr, uid, [('nomen_sub_5', '=', nomen.id)], context=context))
+            elif arg[0] == 'nomen_ids' and arg[1] == 'in' and arg[2]:
+                for nomen in self.pool.get('product.nomenclature').browse(cr, uid, arg[2], context=context):
+                    if nomen.type == 'mandatory':
+                        ids = self.search(cr, uid, [('nomen_manda_%s' % nomen.level, '=', nomen.id)], context=context)
+                    else:
+                        ids = self.search(cr, uid, [('nomen_sub_0', '=', nomen.id)], context=context)
+                        ids.append(self.search(cr, uid, [('nomen_sub_1', '=', nomen.id)], context=context))
+                        ids.append(self.search(cr, uid, [('nomen_sub_2', '=', nomen.id)], context=context))
+                        ids.append(self.search(cr, uid, [('nomen_sub_3', '=', nomen.id)], context=context))
+                        ids.append(self.search(cr, uid, [('nomen_sub_4', '=', nomen.id)], context=context))
+                        ids.append(self.search(cr, uid, [('nomen_sub_5', '=', nomen.id)], context=context))
+            else:
+                return []
             
         return [('id', 'in', ids)] 
     
@@ -193,6 +254,8 @@ class product_attributes(osv.osv):
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
+                             type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
     }
     
     _defaults = {
@@ -220,6 +283,8 @@ class product_attributes(osv.osv):
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
             vals['track_outgoing'] = vals['batch_management']
+            if vals['batch_management']:
+                vals['perishable'] = True
         return super(product_attributes, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -227,7 +292,17 @@ class product_attributes(osv.osv):
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
             vals['track_outgoing'] = vals['batch_management']
+            if vals['batch_management']:
+                vals['perishable'] = True
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+    
+    def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
+        '''
+        batch management is modified -> modification of Expiry Date Mandatory (perishable)
+        '''
+        if batch_management:
+            return {'value': {'perishable': True}}
+        return {}
     
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

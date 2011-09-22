@@ -43,33 +43,28 @@ class sourcing_line(osv.osv):
     sourcing lines are generated when a Sale Order is created
     (overriding of create method of sale_order)
     '''
+    
+    def get_sale_order_states(self, cr, uid, context={}):
+        '''
+        Returns all states values for a sale.order object
+        '''
+        return self.pool.get('sale.order')._columns['state'].selection
+    
+    def get_sale_order_line_states(self, cr, uid, context={}):
+        '''
+        Returns all states values for a sale.order.line object
+        '''
+        return self.pool.get('sale.order.line')._columns['state'].selection
+        
+
     _SELECTION_TYPE = [
                        ('make_to_stock', 'from stock'),
                        ('make_to_order', 'on order'),
                        ]
     
-    _SELECTION_SALE_ORDER_STATE = [
-                                   ('procurement', 'Internal Supply Requirement'),
-                                   ('proc_progress', 'In Progress'),
-                                   ('proc_cancel', 'Cancelled'),
-                                   ('proc_done', 'Done'),
-                                   ('draft', 'Quotation'),
-                                   ('waiting_date', 'Waiting Schedule'),
-                                   ('manual', 'Manual In Progress'),
-                                   ('progress', 'In Progress'),
-                                   ('shipping_except', 'Shipping Exception'),
-                                   ('invoice_except', 'Invoice Exception'),
-                                   ('done', 'Done'),
-                                   ('cancel', 'Cancelled'),
-                                   ]
+    _SELECTION_SALE_ORDER_STATE = get_sale_order_states
     
-    _SELECTION_SALE_ORDER_LINE_STATE = [
-                                        ('draft', 'Draft'),
-                                        ('confirmed', 'Confirmed'),
-                                        ('done', 'Done'),
-                                        ('cancel', 'Cancelled'),
-                                        ('exception', 'Exception'),
-                                        ]
+    _SELECTION_SALE_ORDER_LINE_STATE = get_sale_order_line_states
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -649,134 +644,106 @@ class procurement_order(osv.osv):
         '''
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
-    # @@@override procurement.py > procurement.order > check_buy
-    def check_buy(self, cr, uid, ids):
-        """ Checks product type.
-        @return: True or Product Id.
-        """
-        user = self.pool.get('res.users').browse(cr, uid, uid)
-        partner_obj = self.pool.get('res.partner')
-        for procurement in self.browse(cr, uid, ids):
-            if procurement.product_id.product_tmpl_id.supply_method <> 'buy':
-                return False
-            # use new selection field instead
-            # the new selection field does not exist when the procurement has been produced by
-            # an order_point (minimum stock rules). in this case we take the default supplier from product
-            #if not procurement.product_id.seller_ids:
-            if not procurement.supplier and not procurement.product_id.seller_ids:
-                cr.execute('update procurement_order set message=%s where id=%s',
-                        (_('No supplier defined for this product !'), procurement.id))
-                return False
-            # use new selection field instead, **FIRST** the new one, and if not exist, from product
-            # the new selection field does not exist when the procurement has been produced by
-            # an order_point (minimum stock rules). in this case we take the default supplier from product
-            #partner = procurement.product_id.seller_id #Taken Main Supplier of Product of Procurement.
-            partner = procurement.supplier or procurement.product_id.seller_id
-
-            if user.company_id and user.company_id.partner_id:
-                if partner.id == user.company_id.partner_id.id:
-                    return False
-            address_id = partner_obj.address_get(cr, uid, [partner.id], ['delivery'])['delivery']
-            if not address_id:
-                cr.execute('update procurement_order set message=%s where id=%s',
-                        (_('No address defined for the supplier'), procurement.id))
-                return False
-        return True
-    # @@@override end
-
-    # @@@override purchase>purchase.py>procurement_order
-    def make_po(self, cr, uid, ids, context=None):
-        """ Make purchase order from procurement
-        @return: New created Purchase Orders procurement wise
-        """
-        res = {}
-        if context is None:
-            context = {}
-        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        partner_obj = self.pool.get('res.partner')
-        uom_obj = self.pool.get('product.uom')
-        pricelist_obj = self.pool.get('product.pricelist')
-        prod_obj = self.pool.get('product.product')
-        acc_pos_obj = self.pool.get('account.fiscal.position')
-        po_obj = self.pool.get('purchase.order')
-        for procurement in self.browse(cr, uid, ids, context=context):
-            res_id = procurement.move_id.id
-            # use new selection field instead, **FIRST** the new one, and if not exist, from product
-            # the new selection field does not exist when the procurement has been produced by
-            # an order_point (minimum stock rules). in this case we take the default supplier from product
-            if procurement.supplier:
-                partner = procurement.supplier
-                # if the supplier is present in product seller_ids, we take that quantity from supplierinfo
-                # otherwise 1
-                seller_qty = -1
-                seller_delay = -1
-                for suppinfo in procurement.product_id.seller_ids:
-                    if suppinfo.name.id == partner.id:
-                        seller_qty = suppinfo.qty
-                        seller_delay = int(suppinfo.delay)
-                
-                if seller_qty < 0:
-                    seller_qty = 1
-                
-                # if not, default delay from supplier (partner.default_delay)
-                if seller_delay < 0:
-                    seller_delay = partner.default_delay
-                
-            else:
-                partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
-                seller_qty = procurement.product_id.seller_qty
-                seller_delay = int(procurement.product_id.seller_delay)
+    def _partner_check_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        check the if supplier is available or not
+        
+        the new selection field does not exist when the procurement has been produced by
+        an order_point (minimum stock rules). in this case we take the default supplier from product
+        
+        same cas if no supplier were selected in the sourcing tool
+        
+        return True if a supplier is available
+        '''
+        procurement = kwargs['procurement']
+        # add supplier check in procurement object from sourcing tool
+        result = procurement.supplier or super(procurement_order, self)._partner_check_hook(cr, uid, ids, context=context, *args, **kwargs)
+        return result
+    
+    def _partner_get_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        returns the partner from procurement or suppinfo
+        
+        the new selection field does not exist when the procurement has been produced by
+        an order_point (minimum stock rules). in this case we take the default supplier from product
+        
+        same cas if no supplier were selected in the sourcing tool
+        '''
+        procurement = kwargs['procurement']
+        # the specified supplier in sourcing tool has priority over suppinfo
+        partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
+        return partner
+    
+    def get_delay_qty(self, cr, uid, ids, partner, product, context=None):
+        '''
+        find corresponding values for seller_qty and seller_delay from product supplierinfo or default values
+        '''
+        result = {}
+        # if the supplier is present in product seller_ids, we take that quantity from supplierinfo
+        # otherwise 1
+        # seller_qty default value
+        seller_qty = 1
+        seller_delay = -1
+        for suppinfo in product.seller_ids:
+            if suppinfo.name.id == partner.id:
+                seller_qty = suppinfo.qty
+                seller_delay = int(suppinfo.delay)
+        
+        # if not, default delay from supplier (partner.default_delay)
+        if seller_delay < 0:
+            seller_delay = partner.default_delay
+        
+        result.update(seller_qty=seller_qty,
+                      seller_delay=seller_delay,)
             
-            partner_id = partner.id
-            address_id = partner_obj.address_get(cr, uid, [partner_id], ['delivery'])['delivery']
-            pricelist_id = partner.property_product_pricelist_purchase.id
-
-            uom_id = procurement.product_id.uom_po_id.id
-
-            qty = uom_obj._compute_qty(cr, uid, procurement.product_uom.id, procurement.product_qty, uom_id)
-            if seller_qty:
-                qty = max(qty,seller_qty)
-
-            price = pricelist_obj.price_get(cr, uid, [pricelist_id], procurement.product_id.id, qty, partner_id, {'uom': uom_id})[pricelist_id]
-
-            newdate = datetime.strptime(procurement.date_planned, '%Y-%m-%d %H:%M:%S')
-            newdate = (newdate - relativedelta(days=company.po_lead)) - relativedelta(days=int(seller_delay))
-
-            #Passing partner_id to context for purchase order line integrity of Line name
-            context.update({'lang': partner.lang, 'partner_id': partner_id})
-
-            product = prod_obj.browse(cr, uid, procurement.product_id.id, context=context)
-
-            line = {
-                'name': product.partner_ref,
-                'product_qty': qty,
-                'product_id': procurement.product_id.id,
-                'product_uom': uom_id,
-                'price_unit': price,
-                'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
-                'move_dest_id': res_id,
-                'notes': product.description_purchase,
-            }
-
-            taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
-            taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
-            line.update({
-                'taxes_id': [(6,0,taxes)]
-            })
-            purchase_id = po_obj.create(cr, uid, {
-                'origin': procurement.origin,
-                'partner_id': partner_id,
-                'partner_address_id': address_id,
-                'location_id': procurement.location_id.id,
-                'pricelist_id': pricelist_id,
-                'order_line': [(0,0,line)],
-                'company_id': procurement.company_id.id,
-                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False
-            })
-            res[procurement.id] = purchase_id
-            self.write(cr, uid, [procurement.id], {'state': 'running', 'purchase_id': purchase_id})
-        return res
-    # @@@override end
+        return result
+    
+    def get_partner_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        get data from supplier
+        
+        return also the price_unit
+        '''
+        tender_line_obj = self.pool.get('tender_line')
+        # get default values
+        result = super(procurement_order, self).get_partner_hook(cr, uid, ids, context=context, *args, **kwargs)
+        procurement = kwargs['procurement']
+        
+        # this is kept here and not moved in the tender_flow module
+        # because we have no control on the order of inherited function call (do we?)
+        # and if we have tender and supplier defined and supplier code is ran after
+        # tender one, the supplier will be use while tender has priority
+        if procurement.is_tender:
+            # tender line -> search for info about this product in the corresponding tender
+            # if nothing found, we keep default values from super
+            for sol in procurement.sale_order_line_ids:
+                for tender_line in sol.tender_line_ids:
+                    # if a tender rfq has been selected for this sale order line
+                    if tender_line.purchase_order_line_id:
+                        partner = tender_line.supplier_id
+                        price_unit = tender_line.price_unit
+                        # get corresponding delay and qty
+                        delay_qty = self.get_delay_qty(cr, uid, ids, partner, procurement.product_id, context=None)
+                        seller_delay = delay_qty['seller_delay']
+                        seller_qty = delay_qty['seller_qty']
+                        result.update(partner=partner,
+                                      seller_qty=seller_qty,
+                                      seller_delay=seller_delay,
+                                      price_unit=price_unit)
+                        
+        elif procurement.supplier:
+            # not tender, we might have a selected supplier from sourcing tool
+            # if not, we keep default values from super
+            partner = procurement.supplier
+            # get corresponding delay and qty
+            delay_qty = self.get_delay_qty(cr, uid, ids, partner, procurement.product_id, context=None)
+            seller_delay = delay_qty['seller_delay']
+            seller_qty = delay_qty['seller_qty']
+            result.update(partner=partner,
+                          seller_qty=seller_qty,
+                          seller_delay=seller_delay)
+        
+        return result
 
 procurement_order()
 
