@@ -808,6 +808,48 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
     
+    def _hook_log_picking_view_list(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>stock_picking>log_picking
+        modify the list of view names
+        '''
+        view_list = super(stock_picking, self)._hook_log_picking_view_list(cr, uid, ids, context=context, *args, **kwargs)
+        view_list.update(picking='view_picking_ticket_form',
+                         ppl='view_ppl_form',
+                         packing='view_packing_form',)
+        return view_list
+    
+    def _hook_log_picking_view_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>stock_picking>log_picking
+        get the view name
+        '''
+        view_list = kwargs['view_list']
+        pick = kwargs['pick']
+        
+        view_name = super(stock_picking, self)._hook_log_picking_view_name(cr, uid, ids, context=context, *args, **kwargs)
+        if pick.type == 'out':
+            view_name = view_list.get(pick.subtype, 'view_picking_ticket_form')
+        return view_name
+    
+    def _hook_get_module_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>stock_picking>log_picking
+        specify module name
+        '''
+        return 'msf_outgoing'
+    
+    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>stock_picking>log_picking
+        specify if we display a log or not
+        '''
+        result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
+        pick = kwargs['pick']
+        if pick.subtype == 'packing':
+            return False
+        return result
+    
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset one2many fields
@@ -1446,14 +1488,17 @@ class stock_picking(osv.osv):
         
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
         # display newly created picking ticket
         return {
             'name':_("Picking Ticket"),
             'view_mode': 'form',
-            'view_id': False,
+            'view_id': view_id,
             'view_type': 'form',
             'res_model': 'stock.picking',
-            'res_id': new_pick_id,
+            'res_id': pick.id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
         }
@@ -1565,8 +1610,22 @@ class stock_picking(osv.osv):
             if pick.flow_type == 'quick':
                 self.quick_mode(cr, uid, new_ppl, context=context)
         
-        # close wizard
-        return {'type': 'ir.actions.act_window_close'}
+        # TODO which behavior
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+        view_id = view_id and view_id[1] or False
+        # display newly created picking ticket
+        return {
+            'name':_("Picking Ticket"),
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'stock.picking',
+            'res_id': pick.id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
 
     def ppl(self, cr, uid, ids, context=None):
         '''
@@ -1688,8 +1747,22 @@ class stock_picking(osv.osv):
             self.action_move(cr, uid, [pick.id])
             wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
         
-        # close wizard
-        return {'type': 'ir.actions.act_window_close'}
+        # TODO which behavior
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
+        view_id = view_id and view_id[1] or False
+        # display newly created picking ticket
+        return {
+            'name':_("Picking Ticket"),
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'stock.picking',
+            'res_id': pick.id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
     
     def return_products(self, cr, uid, ids, context=None):
         '''
