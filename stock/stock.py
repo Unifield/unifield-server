@@ -1314,6 +1314,35 @@ class stock_picking(osv.osv):
             res[pick.id] = {'delivered_picking': delivered_pack.id or False}
 
         return res
+    
+    def _hook_log_picking_view_list(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        modify the list of view names
+        '''
+        view_list = kwargs['view_list']
+        return view_list
+    
+    def _hook_log_picking_view_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        get the view name
+        '''
+        view_list = kwargs['view_list']
+        pick = kwargs['pick']
+        
+        view_name = view_list.get(pick.type, 'view_picking_form')
+        return view_name
+    
+    def _hook_get_module_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        specify module name
+        '''
+        return 'stock'
+    
+    def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        specify if we display a log or not
+        '''
+        return True
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1344,6 +1373,8 @@ class stock_picking(osv.osv):
                 'in': 'view_picking_in_form',
                 'internal': 'view_picking_form',
             }
+            # modify the list of views
+            view_list = self._hook_log_picking_view_list(cr, uid, ids, context=context, view_list=view_list,)
             message = type_list.get(pick.type, _('Document')) + " '" + (pick.name or '?') + "' "
             if pick.min_date:
                 msg= _(' for the ')+ datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format)
@@ -1354,10 +1385,16 @@ class stock_picking(osv.osv):
                 'done': _('is done.'),
                 'draft':_('is in draft state.'),
             }
-            res = data_obj.get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form'))
+            # select view name
+            view_name = self._hook_log_picking_view_name(cr, uid, ids, context=context, view_list=view_list, pick=pick,)
+            # module name
+            module_name = self._hook_get_module_name(cr, uid, ids, context=context,)
+            res = data_obj.get_object_reference(cr, uid, module_name, view_name)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
-            self.log(cr, uid, pick.id, message, context=context)
+            # conditional test for message log
+            if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
+                self.log(cr, uid, pick.id, message, context=context)
         return True
 
 stock_picking()
