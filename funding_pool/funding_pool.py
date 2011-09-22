@@ -37,8 +37,8 @@ class analytic_distribution(osv.osv):
     }
 
     _defaults ={
-        'name': 'Distribution',
-        'global_distribution': False,
+        'name': lambda *a: 'Distribution',
+        'global_distribution': lambda *a: False,
     }
 
     def search_analytic_lines(self, cr, uid, ids, context={}):

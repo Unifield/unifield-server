@@ -55,7 +55,7 @@ class account_analytic_line(osv.osv):
                             args += [('account_id', '!=', private_funds_id),
                                      eval(donor_line.cost_center_domain)]
         
-        return super(analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

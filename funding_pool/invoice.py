@@ -43,6 +43,8 @@ class account_invoice(osv.osv):
         negative_inv = False
         invoice_obj = self.browse(cr, uid, ids[0], context=context)
         amount = invoice_obj.check_total or 0.0
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
         if invoice_obj.type in ['out_invoice', 'in_refund']:
             negative_inv = True
         if negative_inv:
@@ -55,20 +57,20 @@ class account_invoice(osv.osv):
             super(account_invoice, self).write(cr, uid, ids, newvals, context=context)
         child_distributions = []
         for invoice_line in invoice_obj.invoice_line:
-            amount = invoice_line.price_subtotal
+            il_amount = invoice_line.price_subtotal
             if negative_inv:
                 amount = -1 * amount
             if invoice_line.analytic_distribution_id:
                 if invoice_line.analytic_distribution_id.global_distribution \
                 or ('reset_all' in context and context['reset_all']):
-                    child_distributions.append((invoice_line.analytic_distribution_id.id, amount))
+                    child_distributions.append((invoice_line.analytic_distribution_id.id, il_amount))
             else:
                 child_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'global_distribution': True}, context=context)
                 child_vals = {'analytic_distribution_id': child_distrib_id}
                 self.pool.get('account.invoice.line').write(cr, uid, [invoice_line.id], child_vals, context=context)
-                child_distributions.append((child_distrib_id, amount))
+                child_distributions.append((child_distrib_id, il_amount))
         wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
         # we open a wizard
         return {
                 'type': 'ir.actions.act_window',
@@ -158,9 +160,13 @@ class account_invoice_line(osv.osv):
             return super(account_invoice_line, self).create(cr, uid, vals, context=context)
         
     def write(self, cr, uid, ids, vals, context=None):
+        # Update values from invoice line
         res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
-        lines = self.browse(cr, uid, ids, context=context)
-        for line in lines:
+        # Browse invoice lines
+        for line in self.browse(cr, uid, ids, context=context):
+            # Do some update if this line have an analytic distribution
+            if line.analytic_distribution_id:
+                
             if line.invoice_id.analytic_distribution_id:
                 source_distrib_obj = line.invoice_id.analytic_distribution_id
                 destination_distrib_obj = line.analytic_distribution_id
