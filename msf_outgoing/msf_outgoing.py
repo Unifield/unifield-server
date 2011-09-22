@@ -837,6 +837,9 @@ class stock_picking(osv.osv):
         hook from stock>stock.py>stock_picking>log_picking
         specify module name
         '''
+        pick = kwargs['pick']
+        if pick.type != 'out':
+            return 'stock'
         return 'msf_outgoing'
     
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
