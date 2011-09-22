@@ -360,7 +360,7 @@ class create_picking(osv.osv_memory):
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
 
-        # date of the picking ticket creation, not used for now
+        # partial datas
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
@@ -420,22 +420,17 @@ class create_picking(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
-        pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-        wf_service = netsvc.LocalService("workflow")
+        # picking ids
+        picking_ids = context['active_ids']
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         
-        # data container
-        # date of the picking ticket creation, not used for now
-            #partial_datas = {
-            #                 'delivery_date' : partial.date
-            #}
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        # partial datas
         partial_datas = {}
         
-        # picking ids
-        picking_ids = context['active_ids']
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
             # for each picking
             partial_datas[pick.id] = {}
@@ -451,79 +446,8 @@ class create_picking(osv.osv_memory):
                                                                                'asset_id': move.asset_id.id,
                                                                                })
             
-            # create stock moves corresponding to partial datas
-            # browse returns a list of browse object in the same order as move_ids
-            move_ids = partial_datas[pick.id].keys()
-            browse_moves = move_obj.browse(cr, uid, move_ids, context=context)
-            moves = dict(zip(move_ids, browse_moves))
-            
-            for move in partial_datas[pick.id]:
-                # qty selected
-                count = 0
-                # flag to update the first move
-                first = True
-                # initial qty
-                initial_qty = moves[move].product_qty
-                for partial in partial_datas[pick.id][move]:
-                    # integrity check
-                    partial['product_id'] == moves[move].product_id.id
-                    partial['product_uom'] == moves[move].product_uom.id
-                    # the quantity
-                    count = count + partial['product_qty']
-                    if first:
-                        first = False
-                        # update existing move
-                        move_obj.write(cr, uid, [move], {'product_qty': partial['product_qty'],
-                                                         'prodlot_id': partial['prodlot_id'],
-                                                         'asset_id': partial['asset_id']}, context=context)
-                    else:
-                        # copy the stock move and set the quantity
-                        new_move = move_obj.copy(cr, uid, move, {'state': 'assigned',
-                                                                 'product_qty': partial['product_qty'],
-                                                                 'prodlot_id': partial['prodlot_id'],
-                                                                 'asset_id': partial['asset_id']}, context=context)
-                # decrement the initial move, cannot be less than zero
-                diff_qty = initial_qty - count
-                if diff_qty != 0:
-                    backorder_id = pick.backorder_id.id
-                    assert backorder_id, 'No backorder defined.'
-                    original_moves = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
-                                                              ('product_id', '=', moves[move].product_id.id),
-                                                              ('product_uom', '=', moves[move].product_uom.id)])
-                    assert len(original_moves) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(moves[move].product_id.name, moves[move].product_uom.name)
-                    backorder_qty = move_obj.read(cr, uid, original_moves, ['product_qty'], context=context)[0]['product_qty']
-                    backorder_qty = max(backorder_qty + diff_qty, 0)
-                    move_obj.write(cr, uid, original_moves, {'product_qty': backorder_qty}, context=context)
-        
-            # create the new ppl object
-            ppl_number = pick.name.split("/")[1]
-            new_ppl_id = pick_obj.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
-                                                          'subtype': 'ppl',
-                                                          'previous_step_id': pick.id,
-                                                          'backorder_id': False}, context=dict(context, keep_prodlot=True))
-            new_ppl = pick_obj.browse(cr, uid, new_ppl_id, context=context)
-            # update locations of stock moves - if the move quantity is equal to zero, the state is removed
-            for move in new_ppl.move_lines:
-                if move.product_qty:
-                    move_obj.write(cr, uid, [move.id], {'initial_location': move.location_id.id,
-                                                        'location_id': move.location_dest_id.id,
-                                                        'location_dest_id': new_ppl.sale_id.shop_id.warehouse_id.lot_dispatch_id.id}, context=context)
-                else:
-                    move_obj.unlink(cr, uid, [move.id], context=context)
-            
-            wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
-            # simulate check assign button, as stock move must be available
-            pick_obj.force_assign(cr, uid, [new_ppl_id])
-            # trigger standard workflow
-            pick_obj.action_move(cr, uid, [pick.id])
-            wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
-            
-            # if the flow type is in quick mode, we perform the ppl steps automatically
-            if pick.flow_type == 'quick':
-                self.quick_mode(cr, uid, new_ppl, context=context)
-        
-        # close wizard
-        return {'type': 'ir.actions.act_window_close'}
+        # call stock_picking method which returns action call
+        return pick_obj.do_validate_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     
     def do_return_products(self, cr, uid, ids, context=None):
         '''
