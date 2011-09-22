@@ -1314,29 +1314,15 @@ class stock_picking(osv.osv):
             res[pick.id] = {'delivered_picking': delivered_pack.id or False}
 
         return res
-    
-    def _hook_log_picking_view_list(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        modify the list of view names
-        '''
-        view_list = kwargs['view_list']
-        return view_list
-    
-    def _hook_log_picking_view_name(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        get the view name
-        '''
-        view_list = kwargs['view_list']
+   
+    def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
-        
-        view_name = view_list.get(pick.type, 'view_picking_form')
-        return view_name
-    
-    def _hook_get_module_name(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        specify module name
-        '''
-        return 'stock'
+        view_list = {
+            'out': 'view_picking_out_form',
+            'in': 'view_picking_in_form',
+            'internal': 'view_picking_form',
+        }
+        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form')) 
     
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1358,7 +1344,6 @@ class stock_picking(osv.osv):
         user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
         lang_id = lang_obj.search(cr, uid, [('code','=',user_lang)])
         date_format = lang_id and lang_obj.read(cr, uid, lang_id[0], ['date_format'], context=context)['date_format'] or '%m/%d/%Y'
-        data_obj = self.pool.get('ir.model.data')
         for pick in self.browse(cr, uid, ids, context=context):
             msg=''
             if pick.auto_picking:
@@ -1368,13 +1353,7 @@ class stock_picking(osv.osv):
                 'in':_('Reception'),
                 'internal': _('Internal picking'),
             }
-            view_list = {
-                'out': 'view_picking_out_form',
-                'in': 'view_picking_in_form',
-                'internal': 'view_picking_form',
-            }
             # modify the list of views
-            view_list = self._hook_log_picking_view_list(cr, uid, ids, context=context, view_list=view_list,)
             message = type_list.get(pick.type, _('Document')) + " '" + (pick.name or '?') + "' "
             if pick.min_date:
                 msg= _(' for the ')+ datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format)
@@ -1385,11 +1364,7 @@ class stock_picking(osv.osv):
                 'done': _('is done.'),
                 'draft':_('is in draft state.'),
             }
-            # select view name
-            view_name = self._hook_log_picking_view_name(cr, uid, ids, context=context, view_list=view_list, pick=pick,)
-            # module name
-            module_name = self._hook_get_module_name(cr, uid, ids, context=context,)
-            res = data_obj.get_object_reference(cr, uid, module_name, view_name)
+            res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
             # conditional test for message log
