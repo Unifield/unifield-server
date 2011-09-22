@@ -56,11 +56,11 @@
                     </xpath>
             		
 	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                    <field name="reason_type_id" />
+	                    <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	               </xpath>
 	               
 	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
+	               		<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	               </xpath>
                </data>
             </field>
@@ -78,11 +78,11 @@
                     </xpath>
             		
 	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                    <field name="reason_type_id" />
+	                    <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	               </xpath>
 	               
 	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
+	               		<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	               </xpath>
                </data>
             </field>
@@ -100,11 +100,11 @@
                     </xpath>
             		
 	            	<xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                	<field name="reason_type_id" />
+	                	<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	                </xpath>
 	                
 	                <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
+	               		<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
 	               	</xpath>               
             	</data>
             </field>
@@ -118,7 +118,7 @@
         	<field name="arch" type="xml">
         		<data>
         			<xpath expr="/form//field[@name='tracking_id']" position="before">
-        				<field name="reason_type_id" />
+        				<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
         			</xpath>
         		</data>
         	</field>
@@ -132,11 +132,40 @@
         	<field name="arch" type="xml">
         		<data>
         			<xpath expr="/form//field[@name='tracking_id']" position="before">
-        				<field name="reason_type_id" />
+        				<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
         			</xpath>
         		</data>
         	</field>
         </record>
+
+	<record id="inherit_view_move_tree" model="ir.ui.view">
+		<field name="name">inherit.view.move.tree</field>
+		<field name="model">stock.move</field>
+		<field name="type">tree</field>
+		<field name="inherit_id" ref="stock.view_move_tree" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/tree/field[@name='location_dest_id']" position="after">
+					<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+				</xpath>
+			</data>
+		</field>
+	</record>
+
+	<record id="inherit_view_move_search" model="ir.ui.view">
+		<field name="name">inherit.view.move.search</field>
+		<field name="model">stock.move</field>
+		<field name="type">search</field>
+		<field name="inherit_id" ref="stock.view_move_search" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
+					<separator />
+<!--					<filter string="Reason Type" name="groupby_reason_type_id" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'reason_type_id'}"/>-->
+				</xpath>
+			</data>
+		</field>
+	</record>
     
     </data>
 </openerp>
