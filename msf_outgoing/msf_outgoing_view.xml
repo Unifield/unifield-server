@@ -334,7 +334,7 @@
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_picking_ticket" model="ir.actions.act_window">
-            <field name="name">Picking</field>
+            <field name="name">Picking Tickets</field>
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -370,7 +370,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="PPL">
+                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
@@ -411,7 +411,7 @@
             <!-- but then other form view also use it... -->
             <!-- <field eval="11" name="priority"/> -->
             <field name="arch" type="xml">
-                <form string="PPL">
+                <form string="Pre-Packing List">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
@@ -521,7 +521,7 @@
             <field name="model">stock.picking</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="PPL">
+                <search string="Pre-Packing List">
                     <group col="8" colspan="4">
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
@@ -554,7 +554,7 @@
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_ppl" model="ir.actions.act_window">
-            <field name="name">Pre-Packing</field>
+            <field name="name">Pre-Packing Lists</field>
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
@@ -1014,7 +1014,7 @@
 
 		<!-- Added 'subtype' in domain -->
         <record id="action_shipment" model="ir.actions.act_window">
-            <field name="name">Shipment</field>
+            <field name="name">Packing Lists</field>
             <field name="res_model">shipment</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
