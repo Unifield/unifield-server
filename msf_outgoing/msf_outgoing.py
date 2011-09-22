@@ -1484,7 +1484,7 @@ class stock_picking(osv.osv):
         # display newly created picking ticket
         return {
             'name':_("Picking Ticket"),
-            'view_mode': 'form',
+            'view_mode': 'form,tree',
             'view_id': view_id,
             'view_type': 'form',
             'res_model': 'stock.picking',
@@ -1608,7 +1608,7 @@ class stock_picking(osv.osv):
         # display newly created picking ticket
         return {
             'name':_("Picking Ticket"),
-            'view_mode': 'form',
+            'view_mode': 'form,tree',
             'view_id': [view_id],
             'view_type': 'form',
             'res_model': 'stock.picking',
@@ -1744,8 +1744,8 @@ class stock_picking(osv.osv):
         view_id = view_id and view_id[1] or False
         # display newly created picking ticket
         return {
-            'name':_("Picking Ticket"),
-            'view_mode': 'form',
+            'name':_("Pre-Packing List"),
+            'view_mode': 'form,tree',
             'view_id': [view_id],
             'view_type': 'form',
             'res_model': 'stock.picking',
