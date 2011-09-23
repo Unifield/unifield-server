@@ -167,17 +167,28 @@ class stock_warehouse_automatic_supply(osv.osv):
         return super(stock_warehouse_automatic_supply, self).copy(cr, uid, id, default, context=context)
  
     def _check_frequency(self, cr, uid, ids, context={}):
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if context.get('button') == 'choose_change_frequence':
             return True
 
         for auto in self.read(cr, uid, ids, ['frequence_id']):
             if not auto['frequence_id']:
-                return False
+                raise osv.except_osv(_('Error !'), _('Frequence is mandatory, please add one by clicking on the "Change/Choose Frequency" button.'))
         return True
 
-    _constraints = [
-        (_check_frequency, 'Error ! Frequence is mandatory, please add one by clicking on the "Change/Choose Frequency" button.', ['frequence_name'])
-    ]
+    def create(self, cr, uid, vals, context={}):
+        id = super(stock_warehouse_automatic_supply, self).create(cr, uid, vals, context=context)
+        self._check_frequency(cr, uid, [id], context)
+        return id
+
+    def write(self, cr, uid, ids, vals, context={}):
+        ret = super(stock_warehouse_automatic_supply, self).write(cr, uid, ids, vals, context=context)
+        self._check_frequency(cr, uid, ids, context)
+        return ret
 
 stock_warehouse_automatic_supply()
 
