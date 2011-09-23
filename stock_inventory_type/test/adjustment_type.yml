@@ -116,20 +116,20 @@
     move = self.browse(cr, uid, move_ids[0])
     assert move.product_id.id == ref('stock_inventory_type.product_p1'), "Move product (P1) is not correct"
     assert move.product_qty == 70.0, "Move quatity (70.0) is not correct"
-    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct"
+    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct (1)"
     assert move.comment == 'Loss items', "Move comment (Loss items) is not correct"
 -
     I check the 'Expired' stock moves
 -
   !python {model: stock.move}: |
     move_ids = self.search(cr, uid, [('type_id', '=', ref('stock_inventory_type.adjustment_type_expired'))])
-    reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
+    reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
     assert move_ids, "No lines with 'Expired' type"
     move = self.browse(cr, uid, move_ids[0])
     assert move.product_id.id == ref('stock_inventory_type.product_p2'), "Move product (P2) is not correct"
     assert move.product_qty == 50.0, "Move quatity (50.0) is not correct"
-    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct"
-    assert move.comment == 'Expired product at 12/12/2012', "Move comment (Expired product at 12/12/2012) is not correct"
+    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct (2)"
+    assert move.comment == 'Expired product at 12/12/2012', "Move comment (Expired prod)uct at 12/12/2012) is not correct"
 -
     I check the 'Scrapped' stock moves
 -
@@ -139,7 +139,7 @@
     assert move_ids, "No lines with 'Scrap' type"
     move = self.browse(cr, uid, move_ids[0])
     assert move.product_id.id == ref('stock_inventory_type.product_p3'), "Move product (P3) is not correct"
-    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct"
+    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct (3)"
     assert move.product_qty == 10.0, "Move quatity (10.0) is not correct"
 -
     I check the 'Normal' stock moves
@@ -150,5 +150,5 @@
     assert move_ids, "No lines with no type"
     move = self.browse(cr, uid, move_ids[0])
     assert move.product_id.id == ref('stock_inventory_type.product_p4'), "Move product (P4) is not correct"
-    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct"
+    assert move.reason_type_id.id == reason_type_id, "Move reason type is not correct (4)"
     assert move.product_qty == 10.0, "Move quatity (10.0) is not correct"
