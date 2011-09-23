@@ -84,7 +84,7 @@ class tender(osv.osv):
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!'%supplier.name))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'origin': tender.sale_order_id.name + '/' + tender.name,
+                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
                           'location_id': tender.location_id.id,

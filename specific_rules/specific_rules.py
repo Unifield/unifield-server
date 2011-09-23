@@ -63,7 +63,7 @@ class sale_order_line(osv.osv):
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
-        
+        if the product is short shelf life we display a warning
         '''
         # call to super
         result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
@@ -82,6 +82,7 @@ class sale_order_line(osv.osv):
         return result
     
 sale_order_line()
+
 
 class sale_order(osv.osv):
     '''
@@ -106,6 +107,58 @@ class sale_order(osv.osv):
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
     
 sale_order()
+
+
+class purchase_order_line(osv.osv):
+    '''
+    override to add message at purchase order creation and update
+    '''
+    _inherit = 'purchase.order.line'
+    
+    
+    def _kc_dg(self, cr, uid, ids, name, arg, context=None):
+        '''
+        return 'KC' if cold chain or 'DG' if dangerous goods
+        '''
+        result = {}
+        for id in ids:
+            result[id] = ''
+            
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.product_id:
+                if pol.product_id.heat_sensitive_item:
+                    result[pol.id] = 'KC'
+                elif pol.product_id.dangerous_goods:
+                    result[pol.id] = 'DG'
+        
+        return result
+        
+    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
+    
+    def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order=False, fiscal_position=False, date_planned=False,
+            name=False, price_unit=False, notes=False):
+        '''
+        if the product is short shelf life we display a warning
+        '''
+        # call to super
+        result = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+            partner_id, date_order, fiscal_position, date_planned,
+            name, price_unit, notes)
+        
+        # if the product is short shelf life, display a warning
+        if product:
+            prod_obj = self.pool.get('product.product')
+            if prod_obj.browse(cr, uid, product).short_shelf_life:
+                warning = {
+                            'title': 'Short Shelf Life product',
+                            'message': _(SHORT_SHELF_LIFE_MESS)
+                            }
+                result.update(warning=warning)
+            
+        return result
+    
+purchase_order_line()
 
 
 class purchase_order(osv.osv):
