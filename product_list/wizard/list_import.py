@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- eoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -144,6 +144,7 @@ class product_list_import(osv.osv_memory):
                     'res_model': 'product.list',
                     'view_type': 'form',
                     'view_mode': 'form',
+                    'target': 'dummy',
                     'res_id': list_id,
                     'context': context,
                     }
