@@ -114,7 +114,8 @@ class account_invoice_line(osv.osv):
                                 date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
                         # Prepare some values
                         invoice_currency = inv_line.invoice_id.currency_id.id
-                        amount = distrib_line.amount
+                        amount = round(distrib_line.percentage * 
+                            self.pool.get('account.invoice.line')._amount_line(cr, uid, [inv_line.id], None, None, {})[inv_line.id]) / 100.0
                         if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
                             amount = -1 * amount
                         context.update({'date': date})

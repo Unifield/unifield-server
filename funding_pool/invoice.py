@@ -169,25 +169,19 @@ class account_invoice_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             # Do some update if this line have an analytic distribution
             if line.analytic_distribution_id:
-                
-            if line.invoice_id.analytic_distribution_id:
-                source_distrib_obj = line.invoice_id.analytic_distribution_id
-                destination_distrib_obj = line.analytic_distribution_id
-                if 'price_unit' in vals or 'quantity' in vals or 'discount' in vals \
-                or context.get('reset_all', False) \
-                or destination_distrib_obj.global_distribution:
+                if 'price_unit' in vals or 'quantity' in vals or 'discount' in vals or context.get('reset_all', False):
                     amount = line.price_subtotal or 0.0
                     if line.invoice_id.type in ['out_invoice', 'in_refund']:
                         amount = -1 * amount
                     company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                     currency = line.invoice_id.currency_id and line.invoice_id.currency_id.id or company_currency
-                    self.pool.get('analytic.distribution').copy_from_global_distribution(cr,
-                                                                                         uid,
-                                                                                         source_distrib_obj.id,
-                                                                                         destination_distrib_obj.id,
-                                                                                         amount,
-                                                                                         currency,
-                                                                                         context=context)
+                    distrib_obj = self.pool.get('analytic.distribution')
+                    if line.analytic_distribution_id.global_distribution:
+                        source = line.invoice_id.analytic_distribution_id.id
+                        dest = line.analytic_distribution_id.id
+                        distrib_obj.copy_from_global_distribution(cr, uid, source, dest, amount, currency, context=context)
+                    else:
+                        distrib_obj.update_distribution_line_amount(cr, uid, [line.analytic_distribution_id.id], amount, context=context)
         return res
 
     def move_line_get_item(self, cr, uid, line, context=None):
