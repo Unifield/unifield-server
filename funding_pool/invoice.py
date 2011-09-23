@@ -57,8 +57,8 @@ class account_invoice(osv.osv):
         for invoice_line in invoice_obj.invoice_line:
             il_amount = invoice_line.price_subtotal
             if negative_inv:
-                amount = -1 * amount
-            amount_tot += amount
+                il_amount = -1 * il_amount
+            amount_tot += il_amount
             if invoice_line.analytic_distribution_id:
                 if invoice_line.analytic_distribution_id.global_distribution \
                 or ('reset_all' in context and context['reset_all']):
