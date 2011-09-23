@@ -94,7 +94,7 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
                 'to_pack': fields.integer(string='To p.'),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
-                'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p.', multi='get_vals',),
+                'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p.', multi='get_vals_X',), # old_multi get_vals
                 }
     
     def create(self, cr, uid, vals, context=None):
@@ -219,7 +219,7 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 'selected_number': fields.integer(string='Selected Number'),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
-                'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals',),
+                'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
     }
     
 stock_partial_move_memory_shipment_create()
