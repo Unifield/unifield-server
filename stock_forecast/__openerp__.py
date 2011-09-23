@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", "msf_order_date", "order_types", "tender_flow",],
+    "depends" : ["sale", "purchase", "stock", "msf_order_date", "order_types", "tender_flow", "msf_outgoing",],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """

@@ -1522,6 +1522,8 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        # create picking object
+        create_picking_obj = self.pool.get('create.picking')
         
         for pick in self.browse(cr, uid, ids, context=context):
             # create stock moves corresponding to partial datas
@@ -1598,7 +1600,7 @@ class stock_picking(osv.osv):
             
             # if the flow type is in quick mode, we perform the ppl steps automatically
             if pick.flow_type == 'quick':
-                self.quick_mode(cr, uid, new_ppl, context=context)
+                create_picking_obj.quick_mode(cr, uid, new_ppl, context=context)
         
         # TODO which behavior
         #return {'type': 'ir.actions.act_window_close'}
