@@ -22,12 +22,10 @@
 from osv import osv, fields
 from tools.translate import _
 
-import netsvc
-
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
-    
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }

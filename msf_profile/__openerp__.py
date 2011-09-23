@@ -73,6 +73,7 @@
         "tender_flow",
         "consumption_calculation",
         "threshold_value",
+        "analytic_distribution_invoice",
         "analytic_distribution_purchase",
     ],
     "update_xml": [

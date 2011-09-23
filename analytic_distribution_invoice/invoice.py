@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,26 +19,31 @@
 #
 ##############################################################################
 
-
-from osv import osv
-from time import strftime
-from tools.translate import _
+from osv import osv, fields
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+    def _have_analytic_distribution(self, cr, uid, ids, name, arg, context={}):
         """
-        Give function to use when changing invoice to open state
+        If invoice have an analytic distribution, return True, else return False
         """
-        if not self.action_date_assign(cr, uid, ids, context, args):
-            return False
-        if not self.action_move_create(cr, uid, ids, context, args):
-            return False
-        if not self.action_number(cr, uid, ids, context):
-            return False
-        return True
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = False
+            if inv.analytic_distribution_id:
+                res[inv.id] = True
+        return res
+
+    _columns = {
+        'have_analytic_distribution': fields.function(_have_analytic_distribution, method=True, type='boolean', string='Have an analytic distribution?'),
+    }
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
