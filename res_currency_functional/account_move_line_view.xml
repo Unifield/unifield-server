@@ -41,7 +41,9 @@
                         <field name="name" select="1"/>
                         <field name="ref"/>
                         <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                            domain="[('filter_for_third_party', '=', account_id)]"
+                            context="{'curr': currency_id}"/>
                         <field name="partner_type_mandatory" invisible="1"/>
 
                         <field name="journal_id"/>
@@ -96,7 +98,9 @@
                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-gtk-jump-to-ltr" 
                         attrs="{'invisible': [('move_state', '!=', 'draft')]}" context="context"/>
                     <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                        domain="[('filter_for_third_party', '=', account_id)]"
+                        context="{'curr': currency_id}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>

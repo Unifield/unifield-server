@@ -34,6 +34,58 @@ import time
 from datetime import datetime
 import decimal_precision as dp
 
+def _get_fake(cr, table, ids, *a, **kw):
+    ret = {}
+    for id in ids:
+        ret[id] = False
+    return ret
+
+def _search_fake(*a, **kw):
+    return []
+
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = 'hr.employee'
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+    }
+hr_employee()
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+    }
+res_partner()
+
+class account_journal(osv.osv):
+    _name = 'account.journal'
+    _inherit = 'account.journal'
+
+    def _get_fake(self, cr, table, ids, field_name, arg, context):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_filter_third(self, cr, uid, obj, name, args, context):
+        if not context:
+            context = {}
+        if not args or not context.get('curr'):
+            return []
+        if args[0][2]:
+           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
+           if t['type_for_register'] == 'transfer_same':
+               return [('currency', 'in', [context['curr']])]
+        return []
+
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+    }
+account_journal()
+
+
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
@@ -104,6 +156,7 @@ class account_bank_statement(osv.osv):
         'code': fields.char('Register Code', size=10, ),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
     }
 
     _defaults = {
@@ -1241,7 +1294,7 @@ class account_bank_statement_line(osv.osv):
                 elif account.type == "receivable":
                     domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
 
-            if acc_type == 'transfer':
+            if acc_type in ['transfer', 'transfer_same']:
                 # UF-428: transfer type shows only Journals instead of Registers as before
                 third_type = [('account.journal', 'Journal')]
                 third_required = True
@@ -1250,15 +1303,14 @@ class account_bank_statement_line(osv.osv):
                 # UF-429: if the account is 5815 and if the journal of the register has currency (some journals could have no currency attached)
                 # then show only journals of the same currency in the search box
                 acc_currency = [] # normally show all journals, except the 5815 below
-                if account.code == '5815':
-                    account_bank_statement_obj = self.pool.get('account.bank.statement')
-                    register_object = account_bank_statement_obj.browse(cr, uid, statement_id, context=context)
+                if acc_type == 'transfer_same':
+                    if statement_id:
+                        account_bank_statement_obj = self.pool.get('account.bank.statement')
+                        register = account_bank_statement_obj.read(cr, uid, statement_id, ['currency'], context=context)
+                        domain = {'partner_type': [('currency','=', register['currency'][0])]}
+                    else:
+                        domain = {'partner_type': [('id','=',False)]}
 
-                    jn = register_object.journal_id
-                    if jn.currency:
-                        acc_currency = [('currency', '=', jn.currency.id)] # otherwise only show journals of the same currency
-                        
-                domain = {'partner_type': acc_currency}
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True

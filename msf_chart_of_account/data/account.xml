@@ -1144,7 +1144,7 @@
 
         <record model="account.account" id="msf_chart_of_account.5815">
             <field name="code">5815</field>
-            <field name="type_for_register">transfer</field>
+            <field name="type_for_register">transfer_same</field>
             <field name="type">other</field>
             <field name="name">Internal transfer same currency</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />

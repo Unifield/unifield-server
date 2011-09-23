@@ -52,7 +52,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 third_type = [('res.partner', 'Partner')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
-                if acc_type == 'transfer':
+                if acc_type in ['transfer', 'transfer_same']:
                     third_type = [('account.journal', 'Journal')]
                     third_selection = 'account.journal,'
                 elif acc_type == 'advance':
