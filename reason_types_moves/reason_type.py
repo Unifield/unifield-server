@@ -183,4 +183,29 @@ class stock_move(osv.osv):
     
 stock_move()
 
+
+class stock_return_picking(osv.osv_memory):
+    _name = 'stock.return.picking'
+    _inherit = 'stock.return.picking'
+
+    def _hook_default_return_data(self, cr, uid, ids, context={}, 
+                                  *args, **kwargs):
+        '''
+        Hook to allow user to modify the value for the stock move copy method
+        '''
+        default_value = super(stock_return_picking, self).\
+                        _hook_default_return_data(cr, uid, ids, 
+                                      context=context, 
+                                      default_value=kwargs['default_value'])
+
+        reason_type_id = self.pool.get('ir.model.data').\
+                         get_object_reference(cr, uid, 'reason_types_moves', 
+                                          'reason_type_return_from_unit')[1]
+
+        default_value.update({'reason_type_id': reason_type_id})
+
+        return default_value
+
+stock_return_picking()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

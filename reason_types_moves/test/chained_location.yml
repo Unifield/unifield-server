@@ -102,10 +102,17 @@
 - 
   !python {model: stock.picking}: |
     pick_id = self.search(cr, uid, [('sale_id', '=', ref('so1'))], order='id', context=context)
-    assert len(pick_id) == 2, "No stock picking created !"
+    modules = self.pool.get('ir.module.module')
+    mod_pur = modules.search(cr, uid, [('name','=','msf_outgoing'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+    if mod_pur:
+        l = 1
+    else:
+        l = 2
+    assert len(pick_id) == l, "No stock picking created !"
     assert self.browse(cr, uid, pick_id[0], context=context).reason_type_id.id == ref('reason_type_deliver_partner'), "The created stock picking has no the Deliver partner reason type move"
     for move in self.browse(cr, uid, pick_id[0], context=context).move_lines:
       assert move.reason_type_id.id == ref('reason_type_deliver_partner'), "The created stock move has no the Deliver partner reason type move"
-    assert self.browse(cr, uid, pick_id[1], context=context).reason_type_id.id == ref('reason_type_deliver_partner'), "The chained stock picking has no the Deliver partner reason type move"
-    for move in self.browse(cr, uid, pick_id[1], context=context).move_lines:
-      assert move.reason_type_id.id == ref('reason_type_deliver_partner'), "The chained stock move has no the Deliver partner reason type move"
+    if not mod_pur:  
+        assert self.browse(cr, uid, pick_id[1], context=context).reason_type_id.id == ref('reason_type_deliver_partner'), "The chained stock picking has no the Deliver partner reason type move"
+        for move in self.browse(cr, uid, pick_id[1], context=context).move_lines:
+          assert move.reason_type_id.id == ref('reason_type_deliver_partner'), "The chained stock move has no the Deliver partner reason type move"
