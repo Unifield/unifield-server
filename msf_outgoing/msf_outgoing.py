@@ -2159,7 +2159,8 @@ class sale_order(osv.osv):
         # diplay creation message for draft picking ticket
         picking_id = kwargs['picking_id']
         picking_obj = self.pool.get('stock.picking')
-        picking_obj.log_picking(cr, uid, [picking_id], context=context)
+        if picking_id:
+            picking_obj.log_picking(cr, uid, [picking_id], context=context)
         
         return cond
 
