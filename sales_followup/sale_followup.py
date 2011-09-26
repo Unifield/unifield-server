@@ -156,11 +156,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state != 'draft':
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'rfq_done'):
                     purchase_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state != 'draft':
+                        if rfq.state not in ('draft', 'rfq_done'):
                             purchase_ids.append(rfq.id)
         
         return purchase_ids
@@ -178,11 +178,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state == 'draft':
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state in ('draft', 'rfq_done'):
                     quotation_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state == 'draft':
+                        if rfq.state in ('draft', 'rfq_done'):
                             quotation_ids.append(rfq.id)
                 
         
@@ -239,7 +239,7 @@ class sale_order_followup(osv.osv_memory):
             line_id = [line_id]
             
         tender_ids = []
-        
+
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for tender in line.tender_line_ids:
                 tender_ids.append(tender.tender_id.id)
@@ -298,7 +298,7 @@ class sale_order_line_followup(osv.osv_memory):
             
             # Get information about the status of the RfQ
             for quotation in line.quotation_ids:
-                if quotation.state != 'draft' and res[line.id]['quotation_status'] != 'Waiting':
+                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] != 'Waiting':
                     res[line.id]['quotation_status'] = 'Done'
                 else:
                     res[line.id]['quotation_status'] = 'Waiting'
@@ -309,7 +309,7 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['tender_status'] = 'Waiting'
                 elif tender.state == 'comparison' and res[line.id]['tender_status'] != 'Waiting':
                     res[line.id]['tender_status'] = 'In Progress'
-                elif tender.state == 'Done' and res[line.id]['tender_status'] not in ('Waiting', 'In Progress'):
+                elif tender.state == 'done' and res[line.id]['tender_status'] not in ('Waiting', 'In Progress'):
                     res[line.id]['tender_status'] = 'Done'
             
             # Get information about the state of all purchase order
@@ -323,7 +323,7 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             for order in line.purchase_ids:
-                if order.state == 'confirmed':
+                if order.state in ('confirmed', 'wait'):
                     res[line.id]['purchase_status'] = 'Confirmed'
                 if order.state == 'approved' and res[line.id]['purchase_status'] not in ('Confirmed', 'Exception'):
                     res[line.id]['purchase_status'] = 'Approved'
