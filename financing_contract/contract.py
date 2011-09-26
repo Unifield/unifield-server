@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+import datetime
 
 class financing_contract_contract(osv.osv):
     
@@ -205,18 +206,28 @@ class financing_contract_contract(osv.osv):
                 }
                 report_line_obj.create(cr, uid, consumption_line_vals, context=context)
         return
-    
-#    def dummy(self, cr, uid, ids, *args, **kwargs):
-#        mode = self.read(cr, uid, ids, ['reporting_type'])[0]['reporting_type']
-#        next_mode = False
-#        if mode == 'allocated':
-#            next_mode = 'project'
-#        elif mode == 'project':
-#            next_mode = 'all'
-#        else:
-#            next_mode = 'allocated'
-#        self.write(cr, uid, [ids[0]], {'reporting_type': next_mode})
-#        return True
+
+    def contract_open(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'open',
+            'open_date': datetime.date.today().strftime('%Y-%m-%d'),
+            'soft_closed_date': None
+        })
+        return True
+
+    def contract_soft_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'soft_closed',
+            'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
+
+    def contract_hard_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'hard_closed',
+            'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
     
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
