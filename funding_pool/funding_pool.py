@@ -37,8 +37,8 @@ class analytic_distribution(osv.osv):
     }
 
     _defaults ={
-        'name': 'Distribution',
-        'global_distribution': False,
+        'name': lambda *a: 'Distribution',
+        'global_distribution': lambda *a: False,
     }
 
     def copy(self, cr, uid, id, defaults={}, context={}):

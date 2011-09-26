@@ -114,7 +114,8 @@ class account_invoice_line(osv.osv):
                                 date = datetime.strptime(perm[0].get('create_date').split('.')[0], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
                         # Prepare some values
                         invoice_currency = inv_line.invoice_id.currency_id.id
-                        amount = distrib_line.amount
+                        amount = round(distrib_line.percentage * 
+                            self.pool.get('account.invoice.line')._amount_line(cr, uid, [inv_line.id], None, None, {})[inv_line.id]) / 100.0
                         if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
                             amount = -1 * amount
                         context.update({'date': date})
@@ -139,6 +140,39 @@ class account_invoice_line(osv.osv):
                         res = analytic_line_obj.create(cr, uid, al_vals, context=context)
                         engagement_line_ids.append(res)
         return engagement_line_ids or False
+
+    def action_reverse_engagement_lines(self, cr, uid, ids, context, *args):
+        """
+        Reverse an engagement lines with an opposite amount
+        """
+        if not context:
+            context = {}
+        eng_obj = self.pool.get('account.analytic.line')
+        # Browse invoice
+        for inv in self.browse(cr, uid, ids, context=context):
+            # Search engagement journal line ids
+            invl_ids = [x.id for x in inv.invoice_line]
+            eng_ids = eng_obj.search(cr, uid, [('invoice_line_id', 'in', invl_ids)])
+            # Browse engagement journal line ids
+            for eng in eng_obj.browse(cr, uid, eng_ids, context=context):
+                # Create new line and change some fields:
+                # - name with REV
+                # - amount * -1
+                # - date with invoice_date
+                # Copy this line for reverse
+                new_line_id = eng_obj.copy(cr, uid, eng.id, context=context)
+                # Prepare reverse values
+                vals = {
+                    'name': eng_obj.join_without_redundancy(eng.name, 'REV'),
+                    'amount': eng.amount * -1,
+                    'date': inv.date_invoice,
+                    'reversal_origin': eng.id,
+                    'amount_currency': eng.amount_currency * -1,
+                    'currency_id': eng.currency_id.id,
+                }
+                # Write changes
+                eng_obj.write(cr, uid, [new_line_id], vals, context=context)
+        return True
 
     def create(self, cr, uid, vals, context={}):
         """
@@ -185,6 +219,15 @@ class account_invoice_line(osv.osv):
         if to_create:
             # Create new analytic lines
             self.create_engagement_lines(cr, uid, to_create, context=context)
+        return res
+
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Reverse engagement lines before opening invoice
+        """
+        res = super(account_invoice_line, self).action_open_invoice(cr, uid, ids, context, args)
+        if not self.action_reverse_engagement_lines(cr, uid, ids, context, args):
+            return False
         return res
 
 account_invoice_line()

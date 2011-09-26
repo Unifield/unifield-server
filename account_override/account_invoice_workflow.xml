@@ -5,7 +5,8 @@
     <!-- Invoice workflow -->
         <record id="account.act_open" model="workflow.activity">
             <field name="wkf_id" ref="account.wkf"/>
-            <field name="action">action_open_invoice()</field>
+            <field name="action">action_open_invoice()
+            write({'state':'open'})</field>
         </record>
 
     </data>

@@ -21,26 +21,19 @@
 #
 ##############################################################################
 
-
 from osv import osv
-from time import strftime
-from tools.translate import _
+from osv import fields
 
-class account_invoice(osv.osv):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
+class account_bank_statement(osv.osv):
+    _name = 'account.bank.statement'
+    _inherit = 'account.bank.statement'
 
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
-        """
-        Give function to use when changing invoice to open state
-        """
-        if not self.action_date_assign(cr, uid, ids, context, args):
-            return False
-        if not self.action_move_create(cr, uid, ids, context, args):
-            return False
-        if not self.action_number(cr, uid, ids, context):
-            return False
-        return True
+    _columns = {
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
+        'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True, 
+            help="This fields give the next register if exists."),
+    }
 
-account_invoice()
+account_bank_statement()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

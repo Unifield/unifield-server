@@ -461,7 +461,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
 
     def correct_account(self, cr, uid, ids, date=None, new_account_id=None, context={}):
         """
-        Correct given account_move_line by only changin account
+        Correct given account_move_line by only changing account
         """
         # Verification
         if not context:
