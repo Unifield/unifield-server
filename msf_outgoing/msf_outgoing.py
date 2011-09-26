@@ -1007,6 +1007,7 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 }
     _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
+                 'subtype': 'picking',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
