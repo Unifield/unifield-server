@@ -634,6 +634,11 @@ function onChange(caller){
                         });
                         break;
                     case 'many2one':
+                        if (value.length > 2 || typeof(value[0])=='object') {
+                            // bug: quick switch from list to form view on product, should be fixed in 6.1 :)
+                            fld.__lock_onchange = false;
+                            return;
+                        }
                         fld.value = value[0] || '';
                         try {
                             openobject.dom.get(prefix + k + '_text').value = value[1] || '';
