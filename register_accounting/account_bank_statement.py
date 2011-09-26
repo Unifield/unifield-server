@@ -1057,6 +1057,8 @@ class account_bank_statement_line(osv.osv):
         """
         Write some statement line into some account move lines with a state that depends on postype.
         """
+        if not context:
+            context = {}
         if postype not in ('hard', 'temp'):
             raise osv.except_osv(_('Warning'), _('Post type has to be hard or temp'))
         if not len(ids):
@@ -1073,6 +1075,8 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
+                if not absl.analytic_distribution_id and absl.account_id.user_type.code in ['expense'] and not context.get('from_yml'):
+                    raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
