@@ -58,7 +58,6 @@ import fields
 from query import Query
 import tools
 from tools.safe_eval import safe_eval as eval
-import inspect
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES
@@ -924,10 +923,7 @@ class orm_template(object):
         error_msgs = []
         for constraint in self._constraints:
             fun, msg, fields = constraint
-            kwargsctx = {}
-            if 'context' in inspect.getargspec(fun).args:
-                kwargsctx['context'] = context
-            if not fun(self, cr, uid, ids, **kwargsctx):
+            if not fun(self, cr, uid, ids):
                 # Check presence of __call__ directly instead of using
                 # callable() because it will be deprecated as of Python 3.0
                 if hasattr(msg, '__call__'):
