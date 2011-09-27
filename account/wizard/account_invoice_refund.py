@@ -69,6 +69,22 @@ class account_invoice_refund(osv.osv_memory):
                 res['fields'][field]['selection'] = journal_select
         return res
 
+    def _hook_fields_for_modify_refund(self, cr, uid, *args):
+        """
+        Permits to change values that are taken from initial invoice to new invoice(s)
+        """
+        res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
+            'partner_insite', 'partner_contact', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
+            'journal_id', 'period_id']
+        return res
+
+    def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
+        """
+        Permits to change values for m2o fields taken from initial values to new invoice(s)
+        """
+        res = ['address_contact_id', 'address_invoice_id', 'partner_id', 'account_id', 'currency_id', 'payment_term', 'journal_id']
+        return res
+
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
         @param cr: the current row, from the database cursor,
@@ -165,14 +181,7 @@ class account_invoice_refund(osv.osv_memory):
                                         writeoff_acc_id=inv.account_id.id
                                         )
                     if mode == 'modify':
-                        invoice = inv_obj.read(cr, uid, [inv.id],
-                                    ['name', 'type', 'number', 'reference',
-                                    'comment', 'date_due', 'partner_id',
-                                    'address_contact_id', 'address_invoice_id',
-                                    'partner_insite', 'partner_contact',
-                                    'partner_ref', 'payment_term', 'account_id',
-                                    'currency_id', 'invoice_line', 'tax_line',
-                                    'journal_id', 'period_id'], context=context)
+                        invoice = inv_obj.read(cr, uid, [inv.id], self._hook_fields_for_modify_refund(cr, uid), context=context)
                         invoice = invoice[0]
                         del invoice['id']
                         invoice_lines = inv_line_obj.read(cr, uid, invoice['invoice_line'], context=context)
@@ -189,8 +198,7 @@ class account_invoice_refund(osv.osv_memory):
                             'period_id': period,
                             'name': description
                         })
-                        for field in ('address_contact_id', 'address_invoice_id', 'partner_id',
-                                'account_id', 'currency_id', 'payment_term', 'journal_id'):
+                        for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                                 invoice[field] = invoice[field] and invoice[field][0]
                         inv_id = inv_obj.create(cr, uid, invoice, {})
                         if inv.payment_term.id:
