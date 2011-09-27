@@ -21,7 +21,27 @@
 #
 ##############################################################################
 
-import invoice
-import account_invoice_refund
+from osv import osv
 
+class account_invoice_refund(osv.osv_memory):
+    _name = 'account.invoice.refund'
+    _inherit = 'account.invoice.refund'
+
+    def _hook_fields_for_modify_refund(self, cr, uid, *args):
+        """
+        Add analytic_distribution_id field in result
+        """
+        res = super(account_invoice_refund, self)._hook_fields_for_modify_refund(cr, uid, args)
+        res.append('analytic_distribution_id')
+        return res
+
+    def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
+        """
+        Add analytic_distribution_id field in result
+        """
+        res = super(account_invoice_refund, self)._hook_fields_m2o_for_modify_refund(cr, uid, args)
+        res.append('analytic_distribution_id')
+        return res
+
+account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

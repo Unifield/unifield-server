@@ -45,5 +45,36 @@ class account_invoice(osv.osv):
         'have_analytic_distribution': fields.function(_have_analytic_distribution, method=True, type='boolean', string='Have an analytic distribution?'),
     }
 
+    def _hook_fields_for_refund(self, cr, uid, *args):
+        """
+        Add analytic_distribution_id field to result.
+        """
+        res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
+        res.append('analytic_distribution_id')
+        return res
+
+    def _hook_fields_m2o_for_refund(self, cr, uid, *args):
+        """
+        Add analytic_distribution_id field to result.
+        """
+        res = super(account_invoice, self)._hook_fields_m2o_for_refund(cr, uid, args)
+        res.append('analytic_distribution_id')
+        return res
+
+    def _refund_cleanup_lines(self, cr, uid, lines):
+        """
+        Add right analytic distribution values on each lines
+        """
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
+        for el in res:
+            if el[2]:
+                # Give analytic distribution on line
+                if 'analytic_distribution_id' in el[2]:
+                    el[2]['analytic_distribution_id'] = el[2].get('analytic_distribution_id')[0]
+                # Give right analytic lines for 'line'
+                if 'analytic_line_ids' in el[2]:
+                    el[2]['analytic_line_ids'] = [(6,0, el[2].get('analytic_line_ids', [])) ]
+        return res
+
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
