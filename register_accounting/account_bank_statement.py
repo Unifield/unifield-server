@@ -236,8 +236,8 @@ class account_bank_statement(osv.osv):
 #                self.create_move_from_st_line(cr, uid, st_line.id, company_currency_id, st_line_number, context)
 
             # Verify lines reconciliation status
-            if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
-                raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
+            #if not totally_or_partial_reconciled(self, cr, uid, [x.id for x in st.line_ids], context=context):
+            #    raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             # Verify that the closing balance is freezed
             if not st.closing_balance_frozen and st.journal_id.type in ['bank', 'cash']:
