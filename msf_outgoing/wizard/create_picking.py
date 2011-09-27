@@ -244,12 +244,6 @@ class create_picking(osv.osv_memory):
         result = self.pool.get('stock.partial.picking').add_message(cr, uid, result, context=context)
         return result
     
-    def generate_move_as_key(self, cr, uid, ids, context=None):
-        '''
-        
-        '''
-        pass
-    
     def generate_data_from_partial(self, cr, uid, ids, context=None):
         '''
         data is located in product_moves_ppl

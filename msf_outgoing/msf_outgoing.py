@@ -87,18 +87,18 @@ class shipment(osv.osv):
                       }
             result[shipment.id] = values
             
-            for family in shipment.pack_family_ids:
+            for memory_family in shipment.pack_family_memory_ids:
                 # num of packs
-                num_of_packs = family.num_of_packs
+                num_of_packs = memory_family.num_of_packs
                 values['num_of_packs'] += int(num_of_packs)
                 # total weight
-                total_weight = family.total_weight
+                total_weight = memory_family.total_weight
                 values['total_weight'] += int(total_weight)
                 # total amount
-                total_amount = family.total_amount
+                total_amount = memory_family.total_amount
                 values['total_amount'] += total_amount
                 # currency
-                currency_id = family.currency_id and family.currency_id.id or False
+                currency_id = memory_family.currency_id and memory_family.currency_id.id or False
                 values['currency_id'] = currency_id
                 
         return result
@@ -560,7 +560,7 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             # for each shipment update shipment status
             self.write(cr, uid, [shipment.id], {'state': 'shipped'}, context=context)
-            # correpsonding packing objects
+            # corresponding packing objects
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
@@ -575,15 +575,15 @@ class shipment(osv.osv):
                                 'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_output_id.id}, context=context)
                 
                 # update the pack families
-                pf_ids = pf_obj.search(cr, uid, [('draft_packing_id', '=', packing.id)], context=context)
-                pf_obj.write(cr, uid, pf_ids, {'draft_packing_id': new_packing.id}, context=context)
+#                pf_ids = pf_obj.search(cr, uid, [('draft_packing_id', '=', packing.id)], context=context)
+#                pf_obj.write(cr, uid, pf_ids, {'draft_packing_id': new_packing.id}, context=context)
                 
                 # update old moves - unlink so we don't see old moves when we open the pack families
-                for move in packing.move_lines:
-                    move.write({'pack_family_id': False}, context=context)
-                    
+#                for move in packing.move_lines:
+#                    move.write({'pack_family_id': False}, context=context)
+                
                 # update the packing object for the same reason
-                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False}, context=context)
+                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False,}, context=context)
                 
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
@@ -736,12 +736,115 @@ class pack_family(osv.osv):
 pack_family()
 
 
+class pack_family_memory(osv.osv_memory):
+    '''
+    dynamic memory object for pack families
+    '''
+    _name = 'pack.family.memory'
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for pf_memory in self.browse(cr, uid, ids, context=context):
+            values = {'move_lines': [],
+                      'state': 'cancel',
+                      'location_id': False,
+                      'location_dest_id': False,
+                      'total_amount': 0.0,
+                      'amount': 0.0,
+                      'currency_id': False,
+                      'num_of_packs': 0,
+                      'total_weight': 0.0,
+                      }
+            result[pf_memory.id] = values
+            # pack family related fields
+            num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
+            values['num_of_packs'] = num_of_packs
+            values['total_weight'] = pf_memory.weight * num_of_packs
+            
+            # moves related fields
+            for move in pf_memory.draft_packing_id.move_lines:
+                if move.from_pack == pf_memory.from_pack:
+                    if move.to_pack == pf_memory.to_pack:
+                        # this move is in the good packing object and corresponds to this pack family
+                        # we add it to the stock move list
+                        values['move_lines'].append(move.id)
+                        values['state'] = move.state
+                        values['location_id'] = move.location_id.id
+                        values['location_dest_id'] = move.location_dest_id.id
+                        values['total_amount'] += move.total_amount
+                        values['amount'] += move.amount
+                        values['currency_id'] = move.currency_id and move.currency_id.id or False
+                    else:
+                        raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
+                    
+        return result
+    
+    _columns = {'name': fields.char(string='Reference', size=1024),
+                'shipment_id': fields.many2one('shipment', string='Shipment'),
+                'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
+                'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
+                'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
+                'from_pack': fields.integer(string='From p.'),
+                'to_pack': fields.integer(string='To p.'),
+                'pack_type': fields.many2one('pack.type', string='Pack Type'),
+                'length' : fields.float(digits=(16,2), string='Length [cm]'),
+                'width' : fields.float(digits=(16,2), string='Width [cm]'),
+                'height' : fields.float(digits=(16,2), string='Height [cm]'),
+                'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
+                # functions
+                'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
+                'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
+                                                                                              ('assigned', 'Available'),
+                                                                                              ('stock_return', 'Returned to Stock'),
+                                                                                              ('ship_return', 'Returned from Shipment'),
+                                                                                              ('cancel', 'Canceled'),
+                                                                                              ('done', 'Done'),], string='State', multi='get_vals',),
+                'location_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Src Loc.', multi='get_vals',),
+                'location_dest_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Dest. Loc.', multi='get_vals',),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+                }
+    
+pack_family_memory()
+
+
 class shipment(osv.osv):
     '''
     add pack_family_ids
     '''
     _inherit = 'shipment'
-    _columns = {'pack_family_ids': fields.one2many('pack.family', 'shipment_id', string='Pack Families')}
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        pf_memory_obj = self.pool.get('pack.family.memory')
+        picking_obj = self.pool.get('stock.picking')
+        
+        result = {}
+        for shipment in self.browse(cr, uid, ids, context=context):
+            values = {'pack_family_memory_ids':[],
+                      }
+            result[shipment.id] = values
+            # look for all corresponding packing
+            packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
+            # get the corresponding data
+            data = picking_obj.generate_data_from_picking_for_pack_family(cr, uid, packing_ids, context=context)
+            # create a memory family
+            created_ids = picking_obj.create_pack_families_memory_from_data(cr, uid, data, shipment.id, context=context)
+            values['pack_family_memory_ids'].extend(created_ids)
+            
+        return result
+    
+    _columns = {'pack_family_ids': fields.one2many('pack.family', 'shipment_id', string='Pack Families'),
+                'pack_family_memory_ids': fields.function(_vals_get, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals',),
+                }
 
 shipment()
 
@@ -913,14 +1016,6 @@ class stock_picking(osv.osv):
                       #'is_completed': False,
                       }
             result[stock_picking.id] = values
-            
-            for family in stock_picking.pack_family_ids: # total amount and currency should not depend on pack family
-                # number of packs from pack_family
-                num_of_packs = family.num_of_packs
-                values['num_of_packs'] += int(num_of_packs)
-                # total_weight
-                total_weight = family.total_weight
-                values['total_weight'] = total_weight
                 
             for move in stock_picking.move_lines:
                 # total amount (float)
@@ -999,14 +1094,13 @@ class stock_picking(osv.osv):
                 # functions
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
-                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 }
     _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
+                 'subtype': 'picking',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
@@ -1208,6 +1302,7 @@ class stock_picking(osv.osv):
                                                                           'width': move.width,
                                                                           'height': move.height,
                                                                           'weight': move.weight,
+                                                                          'draft_packing_id': pick.id,
                                                                           }
         
         return result
@@ -1252,6 +1347,35 @@ class stock_picking(osv.osv):
                         pack_family_obj.unlink(cr, uid, [old_pf_id], context=context)
                         
         return True
+    
+    def create_pack_families_memory_from_data(self, cr, uid, data, shipment_id, context=None):
+        '''
+        - clear existing pack family memory objects is not necessary thanks to vaccum system
+        -> in fact cleaning old memory objects reslults in a bug, because when we click on a
+           pf memory to see it's form view, the shipment view is regenerated (delete the pf)
+           but then the form view uses the old pf memory id for data and it crashes. Cleaning
+           of previous pf memory has therefore been removed.
+        - generate new ones based on data
+        - return created ids
+        '''
+        pf_memory_obj = self.pool.get('pack.family.memory')
+        # find and delete existing objects
+        #ids = pf_memory_obj.search(cr, uid, [('shipment_id', '=', shipment_id),], context=context)
+        #pf_memory_obj.unlink(cr, uid, ids, context=context)
+        created_ids = []
+        # create pack family memory
+        for picking in data.values():
+            for from_pack in picking.values():
+                for to_pack in from_pack.values():
+                    for move_id in to_pack.keys():
+                        move_data = to_pack[move_id]
+                    # create corresponding memory object
+                    move_data.update(name='_name',
+                                     shipment_id=shipment_id,)
+                    id = pf_memory_obj.create(cr, uid, move_data, context=context)
+                    created_ids.append(id)
+        
+        return created_ids
         
     def create(self, cr, uid, vals, context=None):
         '''
@@ -1287,7 +1411,8 @@ class stock_picking(osv.osv):
                 vals.update(sequence_id=self.create_sequence(cr, uid, {'name':vals['name'],
                                                                        'code':vals['name'],
                                                                        'prefix':'',
-                                                                       'padding':2}, context=context))
+                                                                       'padding':2,
+                                                                       }, context=context))
         
         # create packing object
         new_packing_id = super(stock_picking, self).create(cr, uid, vals, context=context)
@@ -1343,7 +1468,7 @@ class stock_picking(osv.osv):
                         # find the corresponding moves
                         moves_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_packing_id),
                                                               ('from_pack', '=', from_pack),
-                                                              ('to_pack', '=', to_pack)], context=context)
+                                                              ('to_pack', '=', to_pack),], context=context)
                         
                         for move in move_obj.browse(cr, uid, moves_ids, context=context):
                             # we compute the selected quantity
@@ -1371,7 +1496,7 @@ class stock_picking(osv.osv):
             
             if not vals['backorder_id']:
                 # creation of packing after ppl validation
-                # find a existing shipment or create one - depends on new pick state
+                # find an existing shipment or create one - depends on new pick state
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])])
                 # only one 'draft' shipment should be available
                 assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time'
@@ -1393,10 +1518,10 @@ class stock_picking(osv.osv):
             
             # update the new pick with shipment_id
             self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
-            # generate data from stock.picking object
-            data = self.generate_data_from_picking_for_pack_family(cr, uid, [new_packing_id], context=context)
-            # create the pack_familiy objects from stock.picking object
-            self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
+#            # generate data from stock.picking object
+#            data = self.generate_data_from_picking_for_pack_family(cr, uid, [new_packing_id], context=context)
+#            # create the pack_familiy objects from stock.picking object
+#            self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
             
         return new_packing_id
 
@@ -2150,139 +2275,17 @@ class sale_order(osv.osv):
         This hook belongs to the action_ship_create method from sale>sale.py
         
         - allow to avoid the stock picking workflow execution
+        - trigger the logging message for the created picking, as it stays in draft state and no call to action_confirm is performed
+          for the moment within the msf_outgoing logic
         '''
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
         cond = cond and False
+        
+        # diplay creation message for draft picking ticket
+        picking_id = kwargs['picking_id']
+        picking_obj = self.pool.get('stock.picking')
+        picking_obj.log_picking(cr, uid, [picking_id], context=context)
+        
         return cond
-
-    # @@@override@sale_override.sale.order.action_ship_create
-#    def action_ship_create(self, cr, uid, ids, *args, **kwargs):
-#        """
-#        - no call to confirmation for picking object's workflow
-#        - fill the new picking attributes (flow_type: 'full', subtype: 'picking')
-#        - the picking state is 'draft'
-#        - the move state is 'confirmed'
-#        """
-#        wf_service = netsvc.LocalService("workflow")
-#        picking_id = False
-#        move_obj = self.pool.get('stock.move')
-#        proc_obj = self.pool.get('procurement.order')
-#        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-#        for order in self.browse(cr, uid, ids, context={}):
-#            proc_ids = []
-#            packing_id = order.shop_id.warehouse_id.lot_packing_id.id
-#            picking_id = False
-#            for line in order.order_line:
-#                proc_id = False
-#                date_planned = datetime.now() + relativedelta(days=line.delay or 0.0)
-#                date_planned = (date_planned - timedelta(days=company.security_lead)).strftime('%Y-%m-%d %H:%M:%S')
-#
-#                if line.state == 'done':
-#                    continue
-#                move_id = False
-#                if line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu') and not line.order_id.procurement_request:
-#                    location_id = order.shop_id.warehouse_id.lot_stock_id.id
-#                    if not picking_id:
-#                        pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
-#                        picking_id = self.pool.get('stock.picking').create(cr, uid, {
-#                            'name': pick_name,
-#                            'origin': order.name,
-#                            'type': 'out',
-#                            # 'state': 'auto',
-#                            'state': 'draft',
-#                            'move_type': order.picking_policy,
-#                            'sale_id': order.id,
-#                            'address_id': order.partner_shipping_id.id,
-#                            'note': order.note,
-#                            'invoice_state': (order.order_policy=='picking' and '2binvoiced') or 'none',
-#                            'company_id': order.company_id.id,
-#                            # subtype
-#                            'subtype': 'picking',
-#                            # flow type
-#                            'flow_type': 'full',
-#                            'backorder_id': False,
-#                        })
-#                    move_data =  {
-#                        'name': line.name[:64],
-#                        'picking_id': picking_id,
-#                        'product_id': line.product_id.id,
-#                        'date': date_planned,
-#                        'date_expected': date_planned,
-#                        'product_qty': line.product_uom_qty,
-#                        'product_uom': line.product_uom.id,
-#                        'product_uos_qty': line.product_uos_qty,
-#                        'product_uos': (line.product_uos and line.product_uos.id)\
-#                                or line.product_uom.id,
-#                        'product_packaging': line.product_packaging.id,
-#                        'address_id': line.address_allotment_id.id or order.partner_shipping_id.id,
-#                        'location_id': location_id,
-#                        'location_dest_id': packing_id,
-#                        'sale_line_id': line.id,
-#                        'tracking_id': False,
-#                        #'state': 'draft',
-#                        'state': 'confirmed',
-#                        #'state': 'waiting',
-#                        'note': line.notes,
-#                        'company_id': order.company_id.id,
-#                    }
-#                    move_data = self._hook_ship_create_stock_move(cr, uid, ids, move_data, line, *args, **kwargs)
-#                    move_id = self.pool.get('stock.move').create(cr, uid, move_data)
-#
-#                if line.product_id:
-#                    proc_data = {
-#                        'name': line.name,
-#                        'origin': order.name,
-#                        'date_planned': date_planned,
-#                        'product_id': line.product_id.id,
-#                        'product_qty': line.product_uom_qty,
-#                        'product_uom': line.product_uom.id,
-#                        'product_uos_qty': (line.product_uos and line.product_uos_qty)\
-#                                or line.product_uom_qty,
-#                        'product_uos': (line.product_uos and line.product_uos.id)\
-#                                or line.product_uom.id,
-#                        'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
-#                        'procure_method': line.type,
-#                        'move_id': move_id,
-#                        'property_ids': [(6, 0, [x.id for x in line.property_ids])],
-#                        'company_id': order.company_id.id,
-#                    }
-#                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, proc_data, line, *args, **kwargs)
-#                    proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data)
-#                    proc_ids.append(proc_id)
-#                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id})
-#                    if order.state == 'shipping_except':
-#                        for pick in order.picking_ids:
-#                            for move in pick.move_lines:
-#                                if move.state == 'cancel':
-#                                    mov_ids = move_obj.search(cr, uid, [('state', '=', 'cancel'),('sale_line_id', '=', line.id),('picking_id', '=', pick.id)])
-#                                    if mov_ids:
-#                                        for mov in move_obj.browse(cr, uid, mov_ids):
-#                                            move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
-#                                            proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
-#
-#            val = {}
-#
-#            if picking_id:
-#                # the picking is kept in 'draft' state
-#                #wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
-#                self.pool.get('stock.picking').log_picking(cr, uid, [picking_id])
-#
-#            for proc_id in proc_ids:
-#                wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-#                if order.state == 'proc_progress':
-#                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-#
-#            if order.state == 'shipping_except':
-#                val['state'] = 'progress'
-#                val['shipped'] = False
-#
-#                if (order.order_policy == 'manual'):
-#                    for line in order.order_line:
-#                        if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
-#                            val['state'] = 'manual'
-#                            break
-#            self.write(cr, uid, [order.id], val)
-#        return True
-        # @@@end
 
 sale_order()
