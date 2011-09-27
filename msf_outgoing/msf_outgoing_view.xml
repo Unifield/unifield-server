@@ -1044,7 +1044,7 @@
             <field name="domain">[]</field>
             <field name="context">{}</field>
             <field name="search_view_id" ref="view_shipment_search"/>
-            <field name="help">This is the list of all shipment that have been picked.</field>
+            <field name="help">This is the list of all packing lists that have been picked. The packing lists are regrouped by address.</field>
         </record>
         <record id="action_shipment_tree" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>

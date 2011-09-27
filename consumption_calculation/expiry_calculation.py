@@ -63,11 +63,10 @@ class expiry_quantity_report(osv.osv_memory):
         lots = {}
         
         report = self.browse(cr, uid, ids[0], context=context)
-        lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])        
-        domain = [('date_expected', '<=', date.today().strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
-        domain_out = domain
-        
-        
+        lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])
+        domain = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+        domain_out = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+
         if report.location_id:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_view')[1]
             domain.append(('location_dest_id', '=', report.location_id.id))
@@ -77,7 +76,7 @@ class expiry_quantity_report(osv.osv_memory):
             loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
             domain.append(('location_dest_id', 'in', loc_ids))
             domain_out.append(('location_id', 'in', loc_ids))
-            
+
         move_ids = move_obj.search(cr, uid, domain, context=context)
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             if move.prodlot_id:

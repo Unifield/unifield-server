@@ -37,7 +37,7 @@
   I hard post this line
 -
   !python {model: account.bank.statement.line}: |
-    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line2")], context={})
+    self.button_hard_posting(cr, uid, [ref("account_bank_statement_line2")], context={'from_yml': True})
 -
   I check that there is a move for this partner that has been reconciliated and have the same amount
 -
