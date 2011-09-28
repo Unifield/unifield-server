@@ -43,100 +43,116 @@
         <menuitem id="menu_reason_type_move"
                   action="action_reason_type_move"
                   parent="menu_configuration_inventory" />
-                  
-        <record id="inherit_view_picking_form" model="ir.ui.view">
-            <field name="name">inherit.view.picking.form</field>
+        
+	<record id="inherit_vpicktree" model="ir.ui.view">
+		<field name="name">inherit.vpicktree</field>
+		<field name="model">stock.picking</field>
+		<field name="type">tree</field>
+		<field name="inherit_id" ref="stock.vpicktree" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/tree/field[@name='origin']" position="after">
+					<field name="reason_type_id" />
+				</xpath>
+			</data>
+		</field>
+	</record>
+
+	<record id="inherit_view_picking_out_tree" model="ir.ui.view">
+		<field name="name">inherit.view.picking.out.tree</field>
+		<field name="model">stock.picking</field>
+		<field name="type">tree</field>
+		<field name="inherit_id" ref="stock.view_picking_out_tree" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/tree/field[@name='origin']" position="after">
+					<field name="reason_type_id" />
+				</xpath>
+			</data>
+		</field>
+	</record>
+
+	<record id="inherit_view_picking_in_tree" model="ir.ui.view">
+		<field name="name">inherit.view.picking.in.tree</field>
+		<field name="model">stock.picking</field>
+		<field name="type">tree</field>
+		<field name="inherit_id" ref="stock.view_picking_in_tree" />
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="/tree/field[@name='origin']" position="after">
+					<field name="reason_type_id" />
+				</xpath>
+			</data>
+		</field>
+	</record>
+
+        <record id="inherit_view_picking_in_search" model="ir.ui.view">
+            <field name="name">inherit.view.picking.in.search</field>
             <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_in_search" />
             <field name="arch" type="xml">
-            	<data>
-            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                <data>
+                    <xpath expr="/search/group/field[@name='name']" position="before">
+                        <field name="reason_type_id" widget="selection" />
                     </xpath>
-            		
-	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                    <field name="reason_type_id" />
-	               </xpath>
-	               
-	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
-	               </xpath>
-               </data>
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </xpath>
+                </data>
             </field>
         </record>
         
-        <record id="inherit_view_picking_out_form" model="ir.ui.view">
-            <field name="name">inherit.view.picking.out.form</field>
+        <record id="inherit_view_picking_out_search" model="ir.ui.view">
+            <field name="name">inherit.view.picking.out.search</field>
             <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_out_search" />
             <field name="arch" type="xml">
-            	<data>
-            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                <data>
+                    <xpath expr="/search/group/field[@name='name']" position="before">
+                        <field name="reason_type_id" widget="selection" />
                     </xpath>
-            		
-	                <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                    <field name="reason_type_id" />
-	               </xpath>
-	               
-	               <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
-	               </xpath>
-               </data>
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </xpath>
+                </data>
             </field>
         </record>
         
-        <record id="inherit_view_picking_in_form" model="ir.ui.view">
-            <field name="name">inherit.view.picking.in.form</field>
+        <record id="inherit_view_stock_picking_filter" model="ir.ui.view">
+            <field name="name">inherit.view.stock.picking.filter</field>
             <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_stock_picking_filter" />
             <field name="arch" type="xml">
-            	<data>
-            		<xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                <data>
+                    <xpath expr="/search/group/field[@name='name']" position="before">
+                        <field name="reason_type_id" widget="selection" />
                     </xpath>
-            		
-	            	<xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
-	                	<field name="reason_type_id" />
-	                </xpath>
-	                
-	                <xpath expr="/form/notebook/page/field[@name='move_lines']/form//field[@name='tracking_id']" position="before">
-	               		<field name="reason_type_id" />
-	               	</xpath>               
-            	</data>
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </xpath>
+                </data>
             </field>
         </record>
         
-        <record id="inherit_view_move_form" model="ir.ui.view">
-        	<field name="name">inherit.view.move.form</field>
-        	<field name="model">stock.move</field>
-        	<field name="type">form</field>
-        	<field name="inherit_id" ref="stock.view_move_form" />
-        	<field name="arch" type="xml">
-        		<data>
-        			<xpath expr="/form//field[@name='tracking_id']" position="before">
-        				<field name="reason_type_id" />
-        			</xpath>
-        		</data>
-        	</field>
+        <record id="inherit_view_picking_internal_search" model="ir.ui.view">
+            <field name="name">inherit.view.picking.internal.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_internal_search" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group/field[@name='name']" position="before">
+                        <field name="reason_type_id" widget="selection" />
+                    </xpath>
+                    <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
+                        <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />
+                    </xpath>
+                </data>
+            </field>
         </record>
-        
-        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
-        	<field name="name">inherit.view.move.form.reception.picking</field>
-        	<field name="model">stock.move</field>
-        	<field name="type">form</field>
-        	<field name="inherit_id" ref="stock.view_move_form_reception_picking" />
-        	<field name="arch" type="xml">
-        		<data>
-        			<xpath expr="/form//field[@name='tracking_id']" position="before">
-        				<field name="reason_type_id" />
-        			</xpath>
-        		</data>
-        	</field>
-        </record>
-    
+
     </data>
 </openerp>

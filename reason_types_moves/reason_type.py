@@ -170,16 +170,39 @@ class stock_move(osv.osv):
             if not has_required:
                 logging.getLogger('init').info('Loading default values for stock.picking')
                 vals.update(self._get_default_reason(cr, uid, context))
+
+        if 'location_dest_id' in vals:
+            dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
+            if dest_id.usage == 'inventory':
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location:
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+
         return super(stock_move, self).create(cr, uid, vals, context)
     
     _columns = {
-        #'reason_type_id': fields.related('picking_id', 'reason_type_id', type='many2one', relation='stock.reason.type', readonly=True),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
     }
     
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
     }
+
+    def location_dest_change(self, cr, uid, ids, location_dest_id, context={}):
+        '''
+        Tries to define a reason type for the move according to the destination location
+        '''
+        vals = {}
+
+        if location_dest_id:
+            dest_id = self.pool.get('stock.location').browse(cr, uid, location_dest_id, context=context)
+            if dest_id.usage == 'inventory':
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if dest_id.scrap_location:
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+
+
+        return {'value': vals}
     
 stock_move()
 

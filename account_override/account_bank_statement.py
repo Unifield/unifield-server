@@ -2,8 +2,9 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,25 +23,17 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
-import netsvc
 
+class account_bank_statement(osv.osv):
+    _name = 'account.bank.statement'
+    _inherit = 'account.bank.statement'
 
-class wizard_invoice_date(osv.osv_memory):
-    _name = "wizard.invoice.date"
     _columns = {
-        'invoice_id': fields.many2one('account.invoice','Invoice', required=True),
-        'date': fields.date('Invoice Date', required=True),
-        'period_id': fields.many2one('account.period', 'Force Period', domain=[('state','<>','done')], help="Keep empty to use the period of the validation(invoice) date."),
+        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
+            help="This fields give the previous register from which this one is linked."),
+        'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True, 
+            help="This fields give the next register if exists."),
     }
 
-    def validate(self, cr, uid, ids, context={}):
-        inv_obj = self.pool.get('account.invoice')
-        wf_service = netsvc.LocalService("workflow")
-        for wiz in self.browse(cr, uid, ids):
-            inv_obj.write(cr, uid, [wiz.invoice_id.id], {'date_invoice': wiz.date, 'period_id': wiz.period_id and wiz.period_id.id or False})
-            wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
-        return { 'type': 'ir.actions.act_window_close', }
-        
-wizard_invoice_date()
+account_bank_statement()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

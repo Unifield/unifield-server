@@ -149,7 +149,7 @@ class shipment(osv.osv):
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='ship_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='ship_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Number of Packs', multi='ship_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Number of Packs', multi='ship_vals_X',), # old_multi ship_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='ship_vals',),
                 }
     _order = 'name desc'
@@ -2216,12 +2216,12 @@ class stock_move(osv.osv):
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
-                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals',),
+                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',), # old_multi get_vals
                 }
     
 #    _constraints = [
@@ -2288,7 +2288,8 @@ class sale_order(osv.osv):
         # diplay creation message for draft picking ticket
         picking_id = kwargs['picking_id']
         picking_obj = self.pool.get('stock.picking')
-        picking_obj.log_picking(cr, uid, [picking_id], context=context)
+        if picking_id:
+            picking_obj.log_picking(cr, uid, [picking_id], context=context)
         
         return cond
 

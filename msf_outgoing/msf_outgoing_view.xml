@@ -120,6 +120,7 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="sale_id" invisible="True" />
+		    <field name="reason_type_id" />
                     <field name="origin"/>
                     <field name="date"/>
                     <field name="min_date"/>
@@ -172,7 +173,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
-                            <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                            <field name="reason_type_id" widget="selection"/>
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -209,7 +210,7 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
                                         <field name="location_id" domain="[('usage','=','internal')]" />
-                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" />
+                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -221,6 +222,8 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
+					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+	                                <field name="type_id" />
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
                                             domain="[('product_id','=?',product_id)]"
@@ -282,6 +285,7 @@
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
+			<field name="reason_type_id" />
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
@@ -289,6 +293,8 @@
                     <group expand="0" string="Group By..." colspan="4" col="8">
                     	<filter string="Sale Order" name="sale_id" icon="terp-partner" domain="[]" context="{'group_by':'sale_id'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
                         <separator orientation="vertical" />
@@ -374,6 +380,7 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
+		    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -423,7 +430,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
-                            <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                            <field name="reason_type_id" widget="selection"/>
                             <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
@@ -463,7 +470,7 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
                                         <field name="location_id" domain="[('usage','=','internal')]" />
-                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" />
+                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -474,6 +481,8 @@
                                     </group>
 
                                     <group colspan="2" col="4" groups="base.group_extended">
+					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+	                                <field name="type_id" />
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
@@ -533,6 +542,7 @@
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
+			<field name="reason_type_id" />
                         <field name="origin"/>
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
@@ -542,6 +552,8 @@
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
                         <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
@@ -593,6 +605,7 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
+		    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -643,7 +656,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
-                            <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                            <field name="reason_type_id" widget="selection"/>
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -685,7 +698,7 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
                                         <field name="location_id" domain="[('usage','=','internal')]" />
-                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" />
+                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -697,6 +710,9 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
+					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                <field name="type_id" />
+
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
                                             domain="[('product_id','=?',product_id)]"
@@ -757,6 +773,7 @@
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
+			<field name="reason_type_id" />
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
@@ -765,6 +782,8 @@
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
                         <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
@@ -985,7 +1004,7 @@
             <field name="domain">[]</field>
             <field name="context">{}</field>
             <field name="search_view_id" ref="view_shipment_search"/>
-            <field name="help">This is the list of all shipment that have been picked.</field>
+            <field name="help">This is the list of all packing lists that have been picked. The packing lists are regrouped by address.</field>
         </record>
         <record id="action_shipment_tree" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>

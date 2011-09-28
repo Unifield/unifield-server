@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,26 +21,6 @@
 #
 ##############################################################################
 
+import invoice
 
-from osv import osv
-from time import strftime
-from tools.translate import _
-
-class account_invoice(osv.osv):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
-
-    def action_open_invoice(self, cr, uid, ids, context={}, *args):
-        """
-        Give function to use when changing invoice to open state
-        """
-        if not self.action_date_assign(cr, uid, ids, context, args):
-            return False
-        if not self.action_move_create(cr, uid, ids, context, args):
-            return False
-        if not self.action_number(cr, uid, ids, context):
-            return False
-        return True
-
-account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

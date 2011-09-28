@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+import decimal_precision as dp
 import time 
 from ..register_tools import _get_date_in_period
 
@@ -34,16 +35,24 @@ class wizard_import_invoice_lines(osv.osv_memory):
     """
     _name = 'wizard.import.invoice.lines'
     _description = 'Lines from invoice to be imported'
+
+    def _get_num_inv(self, cr, uid, ids, *args, **kw):
+        res = {}
+        for obj in self.read(cr, uid, ids, ['line_ids']):
+            res[obj['id']] = obj['line_ids'] and len(obj['line_ids']) or 0
+        return res
+
     _columns = {
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
         'ref': fields.char('Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date': fields.date('Effective Date', readonly=False, required=True),
-        'amount': fields.integer('Amount', readonly=False, required=True),
-        'amount_to_pay': fields.integer('Amount to pay', readonly=True),
-        'amount_currency': fields.integer('Amount currency', readonly=True),
+        'amount': fields.float('Amount', readonly=False, required=True, digits_compute=dp.get_precision('Account')),
+        'amount_to_pay': fields.float('Amount to pay', readonly=True, digits_compute=dp.get_precision('Account')),
+        'amount_currency': fields.float('Amount currency', readonly=True, digits_compute=dp.get_precision('Account')),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
         'line_ids': fields.many2many('account.move.line', 'account_move_immport_rel', 'move_id', 'line_id', 'Invoices'),
+        'number_invoices': fields.function(_get_num_inv, type='integer', string='Invoices', method=True),
         'wizard_id': fields.many2one('wizard.import.invoice', string='wizard'),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=False, required=False),
     }

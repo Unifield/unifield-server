@@ -1,20 +1,41 @@
 <openerp>
     <data noupdate="1">
+        <record id="purchase_analytic_journal" model="account.analytic.journal">
+            <field name="name">Purchase</field>
+            <field name="code">PUR</field>
+            <field name="type">purchase</field>
+        </record>
         <record id="purchase_journal" model="account.journal">
             <field name="name">Purchase</field>
             <field name="code">PUR</field>
             <field name="type">purchase</field>
+            <field name="analytic_journal_id" ref="purchase_analytic_journal"/>
+        </record>
+        
+        <record id="sale_analytic_journal" model="account.analytic.journal">
+            <field name="name">Sale</field>
+            <field name="code">SAL</field>
+            <field name="type">sale</field>
         </record>
         <record id="sale_journal" model="account.journal">
             <field name="name">Sale</field>
             <field name="code">SAL</field>
             <field name="type">sale</field>
+            <field name="analytic_journal_id" ref="sale_analytic_journal"/>
+        </record>
+
+        <record id="od_analytic_journal" model="account.analytic.journal">
+            <field name="name">Correction</field>
+            <field name="code">OD</field>
+            <field name="type">general</field>
         </record>
         <record id="correction_journal" model="account.journal">
             <field name="name">Correction</field>
             <field name="code">OD</field>
             <field name="type">correction</field>
+            <field name="analytic_journal_id" ref="od_analytic_journal"/>
         </record>
+
         <record id="hq_journal" model="account.journal">
             <field name="name">HQ</field>
             <field name="code">HQ</field>
@@ -31,6 +52,12 @@
             <field name="type">stock</field>
             <field name="instance_id" search="[]" use="name" model="res.company" />
         </record>
+        
+        <record id="bank_analytic_journal" model="account.analytic.journal">
+            <field name="name">Bank</field>
+            <field name="code">BNK</field>
+            <field name="type">general</field>
+        </record>
         <record id="bank_chf_journal" model="account.journal">
             <field name="name">Bank CHF</field>
             <field name="code">BNK-CHF-1</field>
@@ -38,6 +65,7 @@
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5351" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5351" />
+            <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
         <record id="bank_euro_journal" model="account.journal">
             <field name="name">Bank EUR</field>
@@ -46,6 +74,13 @@
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5350" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5350" />
+            <field name="analytic_journal_id" ref="bank_analytic_journal"/>
+        </record>
+        
+        <record id="cash_analytic_journal" model="account.analytic.journal">
+            <field name="name">Cash</field>
+            <field name="code">CAS</field>
+            <field name="type">cash</field>
         </record>
         <record id="cash_chf_journal" model="account.journal">
             <field name="name">Cash CHF</field>
@@ -54,6 +89,7 @@
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5311" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5311" />
+            <field name="analytic_journal_id" ref="cash_analytic_journal"/>
         </record>
         <record id="cash_euro_journal" model="account.journal">
             <field name="name">Cash EUR</field>
@@ -62,6 +98,13 @@
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5310" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5310" />
+            <field name="analytic_journal_id" ref="cash_analytic_journal"/>
+        </record>
+        
+        <record id="cheque_analytic_journal" model="account.analytic.journal">
+            <field name="name">Cheque</field>
+            <field name="code">CHK</field>
+            <field name="type">general</field>
         </record>
         <record id="cheque_chf_journal" model="account.journal">
             <field name="name">Cheque CHF</field>
@@ -70,6 +113,7 @@
             <field name="currency" model="res.currency" search="[('name','=','CHF')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5362" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5362" />
+            <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
         <record id="cheque_euro_journal" model="account.journal">
             <field name="name">Cheque EUR</field>
@@ -78,6 +122,7 @@
             <field name="currency" model="res.currency" search="[('name','=','EUR')]" />
             <field name="default_debit_account_id" ref="msf_chart_of_account.5361" />
             <field name="default_credit_account_id" ref="msf_chart_of_account.5361" />
+            <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
         
         <delete model="account.analytic.journal" id="account_journal.engagement_journal"/>

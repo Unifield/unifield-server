@@ -141,7 +141,6 @@ class account_cash_statement(osv.osv):
         """
         res = super(account_cash_statement, self)._end_balance(cr, uid, ids, field_name, arg, context)
         for statement in self.browse(cr, uid, ids, context):
-            print statement.prev_reg_id
             # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
             res[statement.id] += statement.open_advance_amount or 0.0
                 
