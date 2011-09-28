@@ -94,7 +94,7 @@
 					<field name="weight" readonly="True" />
 					<field name="num_of_packs" readonly="True" />
 					<field name="selected_number" string="Number to Ship" />
-					<field name="selected_weight" string="Weight to Ship" readonly="True" />
+					<field name="selected_weight" string="Weight to Ship [kg]" readonly="True" />
                 </tree>
             </field>
         </record>
