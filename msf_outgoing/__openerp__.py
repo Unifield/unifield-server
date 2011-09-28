@@ -45,6 +45,7 @@
         'wizard/split_memory_move_view.xml',
         'wizard/shipment_view.xml',
         'msf_outgoing_report.xml',
+        'msf_outgoing_workflow.xml',
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],

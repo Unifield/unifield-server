@@ -302,7 +302,7 @@ class shipment_wizard(osv.osv_memory):
                 
         return partial_datas_shipment
     
-    def integrity_check(self, cr, uid, ids, data, context=None):
+    def integrity_check_create_shipment(self, cr, uid, ids, data, context=None):
         '''
         integrity check on shipment data
         '''
@@ -330,10 +330,24 @@ class shipment_wizard(osv.osv_memory):
         # generate data structure - selected_number must be non zero to be taken into accound
         partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
         # integrity check on wizard data
-        if not self.integrity_check(cr, uid, ids, partial_datas_shipment, context=context):
+        if not self.integrity_check_create_shipment(cr, uid, ids, partial_datas_shipment, context=context):
             raise osv.except_osv(_('Warning !'), _('You must at least select one pack to ship!'))
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
+    
+    def integrity_check_return_packs(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on shipment data
+        '''
+        for shipment_data in data.values():
+            for packing_data in shipment_data.values():
+                for from_pack_data in packing_data.values():
+                    for to_pack_data in from_pack_data.values():
+                        for partial in to_pack_data:
+                            if partial.get('selected_number', False):
+                                return True
+        
+        return False
     
     def do_return_packs(self, cr, uid, ids, context=None):
         '''
@@ -348,8 +362,25 @@ class shipment_wizard(osv.osv_memory):
         shipment_ids = context['active_ids']
         # generate data structure - selected_number must be non zero to be taken into account
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
+        # integrity check on wizard data
+        if not self.integrity_check_return_packs(cr, uid, ids, partial_datas, context=context):
+            raise osv.except_osv(_('Warning !'), _('You must at least select one pack to return!'))
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
+    
+    def integrity_check_return_packs_from_shipment(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on shipment data
+        '''
+        for shipment_data in data.values():
+            for packing_data in shipment_data.values():
+                for from_pack_data in packing_data.values():
+                    for to_pack_data in from_pack_data.values():
+                        for partial in to_pack_data:
+                            if partial.get('return_from', False) and partial.get('return_to', False):
+                                return True
+        
+        return False
     
     def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
         '''
@@ -364,6 +395,9 @@ class shipment_wizard(osv.osv_memory):
         shipment_ids = context['active_ids']
         # generate data structure - return_from and return_to must be non zero
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['return_from', 'return_to'], context=context)
+        # integrity check on wizard data
+        if not self.integrity_check_return_packs_from_shipment(cr, uid, ids, partial_datas, context=context):
+            raise osv.except_osv(_('Warning !'), _('You must at least select one pack to return!'))
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs_from_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     

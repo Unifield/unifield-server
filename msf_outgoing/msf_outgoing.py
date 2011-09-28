@@ -88,18 +88,20 @@ class shipment(osv.osv):
             result[shipment.id] = values
             
             for memory_family in shipment.pack_family_memory_ids:
-                # num of packs
-                num_of_packs = memory_family.num_of_packs
-                values['num_of_packs'] += int(num_of_packs)
-                # total weight
-                total_weight = memory_family.total_weight
-                values['total_weight'] += int(total_weight)
-                # total amount
-                total_amount = memory_family.total_amount
-                values['total_amount'] += total_amount
-                # currency
-                currency_id = memory_family.currency_id and memory_family.currency_id.id or False
-                values['currency_id'] = currency_id
+                # taken only into account if not done (done means returned packs)
+                if memory_family.state not in ('done',):
+                    # num of packs
+                    num_of_packs = memory_family.num_of_packs
+                    values['num_of_packs'] += int(num_of_packs)
+                    # total weight
+                    total_weight = memory_family.total_weight
+                    values['total_weight'] += int(total_weight)
+                    # total amount
+                    total_amount = memory_family.total_amount
+                    values['total_amount'] += total_amount
+                    # currency
+                    currency_id = memory_family.currency_id and memory_family.currency_id.id or False
+                    values['currency_id'] = currency_id
                 
         return result
     
@@ -297,6 +299,9 @@ class shipment(osv.osv):
                         
                         # update the moves, decrease the quantities
                         for move in move_obj.browse(cr, uid, move_ids, context=context):
+                            # stock move are not canceled as for ppl return process
+                            # beacause this represents a draft packing, meaning some shipment could be canceled and
+                            # returned to this stock move
                             # initial quantity
                             initial_qty = move.product_qty
                             # quantity to return
@@ -317,23 +322,23 @@ class shipment(osv.osv):
                                                              'to_pack': selected_to_pack,
                                                              'state': 'done'})
                             
-                            # find the corresponding move in draft (identified by product_id and uom_id)
-                            draft_move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_picking_id),
-                                                                       ('product_id', '=', move.product_id.id),
-                                                                       ('product_uom', '=', move.product_uom.id)], context=context)
-                            
-                            assert len(draft_move_ids) == 1, 'the number of original stock moves from the draft picking ticket does not match %i'%len(draft_move_ids)
+                            # find the corresponding move in draft in the draft picking
+                            draft_move = move.backmove_id
                             # increase the draft move with the move quantity
-                            draft_initial_qty = move_obj.read(cr, uid, draft_move_ids, ['product_qty'], context=context)[0]['product_qty']
+                            draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                             draft_initial_qty += return_qty
-                            move_obj.write(cr, uid, draft_move_ids, {'product_qty': draft_initial_qty}, context=context)
+                            move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
+                
+            # call complete_finished on the shipment object
+            # if everything is alright (all draft packing are finished) the shipment is done also 
+            self.complete_finished(cr, uid, [draft_shipment_id], context=context)
                             
-            # update the shipment object
-            # all moves have been created / updated. original shipment's pfs are updated
-            data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, partial_datas[draft_shipment_id].keys(), context=context)
-            # create the pack_familiy objects from stock.picking object
-            pick_obj.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
-                            
+#            # update the shipment object
+#            # all moves have been created / updated. original shipment's pfs are updated
+#            data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, partial_datas[draft_shipment_id].keys(), context=context)
+#            # create the pack_familiy objects from stock.picking object
+#            pick_obj.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
+            
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
     
@@ -526,18 +531,16 @@ class shipment(osv.osv):
         
         for shipment in self.browse(cr, uid, ids, context=context):
             # for each shipment
-            picking_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
+            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
             
-            for picking in pick_obj.browse(cr, uid, picking_ids, context=context):
-                # get draft_shipment reference
-                draft_shipment_id = picking.backorder_id.shipment_id.id
-                # we cancel each picking object
-                wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_cancel', cr)
+            for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
+                # we cancel each picking object - action_cancel is overriden at stock_picking level for stock_picking of subtype == 'packing'
+                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_cancel', cr)
             
-            # redo pack families for canceled shipment
-            pick_obj.update_pack_families(cr, uid, shipment.id, context=context)
-            # redo pack families for draft shipment
-            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
+#            # redo pack families for canceled shipment
+#            pick_obj.update_pack_families(cr, uid, shipment.id, context=context)
+#            # redo pack families for draft shipment
+#            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
             
         # cancel all shipments
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -595,45 +598,40 @@ class shipment(osv.osv):
     
         # TODO which behavior
         return True
-        
-    def validate(self, cr, uid, ids, context=None):
+    
+    def complete_finished(self, cr, uid, ids, context=None):
         '''
-        validate the shipment
-        
-        change the state to Done
-        - validate the workflow for all the packings
+        - check all draft packing corresponding to this shipment
+          - check the stock moves (qty and from/to)
+          - check all corresponding packing are done or canceled (no ongoing shipment)
+          - if all packings are ok, the draft is validated
+        - if all draft packing are ok, the shipment state is done
         '''
         pick_obj = self.pool.get('stock.picking')
-        pf_obj = self.pool.get('pack.family')
+        wf_service = netsvc.LocalService("workflow")
         
         for shipment in self.browse(cr, uid, ids, context=context):
-            # for each shipment update shipment status
-            self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
-            # corresponding packing objects - only the distribution -> customer ones
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'assigned')], context=context)
-            # flag to know if all drafts were treated
+            # flag if all drafts have been treated correctly
             treat_all_drafts = True
             
-            for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
-                assert packing.subtype == 'packing'
-                
-                wf_service = netsvc.LocalService("workflow")
-                # trigger standard workflow
-                pick_obj.action_move(cr, uid, [packing.id])
-                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
-                
+            # draft packing for this shipment
+            draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'draft')], context=context)
+            for draft_packing in pick_obj.browse(cr, uid, draft_packing_ids, context=context):
+                assert draft_packing.subtype == 'packing', 'draft packing which is not packing subtype'
                 # we check if the corresponding draft packing can be moved to done.
                 # if all packing with backorder_id equal to draft are done or canceled
-                # and the quantity for each stock move of the draft packing is equal to zero
-                draft_packing = packing.backorder_id
+                # and the quantity for each stock move (state != done) of the draft packing is equal to zero
                 
                 # we first check the stock moves quantities of the draft packing
+                # we can have done moves when some packs are returned
                 treat_draft = True
                 for move in draft_packing.move_lines:
-                    if move.product_qty:
-                        treat_draft = False
-                    elif move.from_pack or move.to_pack:
-                        assert False, 'stock moves with 0 quantity but part of pack family sequence'
+                    if move.state not in ('done',):
+                        if move.product_qty:
+                            treat_draft = False
+                        elif move.from_pack or move.to_pack:
+                            # qty = 0, from/to pack should have been set to zero
+                            assert False, 'stock moves with 0 quantity but part of pack family sequence'
                 
                 # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
                 if treat_draft:
@@ -660,9 +658,39 @@ class shipment(osv.osv):
             
             # all draft packing are validated (done state)
             if treat_all_drafts:
+                # integrity check
+                draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'draft')], context=context)
+                assert(len(draft_packing_ids) == 0), 'still draft packing for this shipment'
                 # set the corresponding shipment object to done
                 draft_packing.shipment_id.write({'state': 'done',}, context=context)
             
+        return True
+        
+    def validate(self, cr, uid, ids, context=None):
+        '''
+        validate the shipment
+        
+        change the state to Done for the corresponding packing
+        - validate the workflow for all the packings
+        '''
+        pick_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        
+        for shipment in self.browse(cr, uid, ids, context=context):
+            # validate should only be called on shipped shipments
+            assert shipment.state in ('shipped',), 'shipment state is not shipped'
+            # for each shipment update shipment status
+            self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
+            # corresponding packing objects - only the distribution -> customer ones
+            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'assigned')], context=context)
+            
+            for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
+                assert packing.subtype == 'packing'
+                # trigger standard workflow
+                pick_obj.action_move(cr, uid, [packing.id])
+                wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
+            
+        self.complete_finished(cr, uid, ids, context=context)
         return True
         
 shipment()
@@ -1929,8 +1957,9 @@ class stock_picking(osv.osv):
                 values = {'product_qty': initial_qty}
                 
                 if not initial_qty:
-                    # if all products are sent back to stock, the move state is cancel
-                    values.update({'state': 'cancel'})
+                    # if all products are sent back to stock, the move state is cancel - done for now, ideologic question, wahouuu!
+                    #values.update({'state': 'cancel'})
+                    values.update({'state': 'done'})
                 move_obj.write(cr, uid, [move.id], values, context=context)
                 
                 # create a back move with the quantity to return to the good location
@@ -1952,11 +1981,30 @@ class stock_picking(osv.osv):
                     cancel_ppl = False
             
             if cancel_ppl:
-                # we dont want the back move (done) to be canceled
-                self.write(cr, uid, [picking.id], {'state': 'cancel'}, context=context)
+                # we dont want the back move (done) to be canceled - so we dont use the original cancel workflow state because
+                # action_cancel() from stock_picking would be called, this would cancel the done stock_moves
+                # instead we move to the new return_cancel workflow state which simply set the stock_picking state to 'cancel'
+                # TODO THIS DOESNT WORK - still done state - replace with trigger for now
+                wf_service = netsvc.LocalService("workflow")
+                #wf_service.trg_validate(uid, 'stock.picking', picking.id, 'return_cancel', cr)
+                wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
                 
-        # close wizard
-        return {'type': 'ir.actions.act_window_close'}
+        # TODO which behavior
+        #return {'type': 'ir.actions.act_window_close'}
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
+        view_id = view_id and view_id[1] or False
+        # display newly created picking ticket
+        return {
+            'name':_("Pre-Packing List"),
+            'view_mode': 'form,tree',
+            'view_id': [view_id],
+            'view_type': 'form',
+            'res_model': 'stock.picking',
+            'res_id': picking.id,
+            'type': 'ir.actions.act_window',
+            'target': 'crush',
+        }
     
     def action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -1986,16 +2034,12 @@ class stock_picking(osv.osv):
                 
                 # for each move from picking ticket - could be split moves
                 for move in picking.move_lines:
-                    # find the corresponding move in draft (identified by product_id and uom_id)
-                    draft_move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_picking_id),
-                                                               ('product_id', '=', move.product_id.id),
-                                                               ('product_uom', '=', move.product_uom.id)], context=context)
-                    
-                    assert len(draft_move_ids) == 1, 'the number of original stock moves from the draft picking ticket does not match %i'%len(draft_move_ids)
+                    # find the corresponding move in draft
+                    draft_move = move.backmove_id
                     # increase the draft move with the move quantity
-                    initial_qty = move_obj.read(cr, uid, draft_move_ids, ['product_qty'], context=context)[0]['product_qty']
+                    initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                     initial_qty += move.product_qty
-                    move_obj.write(cr, uid, draft_move_ids, {'product_qty': initial_qty}, context=context)
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
@@ -2023,7 +2067,7 @@ class stock_picking(osv.osv):
                                                                'from_pack': move.from_pack,
                                                                'to_pack': move.to_pack,
                                                                'state': 'assigned'}, context=context)
-                        
+        
         return True
             
 stock_picking()

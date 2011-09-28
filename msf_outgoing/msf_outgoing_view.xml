@@ -823,7 +823,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_packing"/>
         </record>
-        <!-- <menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/> -->
+        <menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
         
         
 		<!-- Shipment -->
@@ -923,8 +923,6 @@
                                 <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-redo" />
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
                                 <button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-apply" />
-                                <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Document Information">

@@ -218,7 +218,7 @@ class create_picking(osv.osv_memory):
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
-                <group col="3" colspan="2">
+                <group col="4" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
                     string="_Cancel" />"""
                     
@@ -230,6 +230,8 @@ class create_picking(osv.osv_memory):
         elif step == 'returnproducts':
             _moves_arch_lst += """
                 <button name="select_all" string="Select All"
+                    colspan="1" type="object" icon="terp_stock_symbol-selection" />
+                <button name="deselect_all" string="Deselect All"
                     colspan="1" type="object" icon="terp_stock_symbol-selection" />"""
                     
         _moves_arch_lst += """
@@ -243,6 +245,56 @@ class create_picking(osv.osv_memory):
         # add messages from specific management rules
         result = self.pool.get('stock.partial.picking').add_message(cr, uid, result, context=context)
         return result
+    
+    def select_all(self, cr, uid, ids, context=None):
+        '''
+        select all buttons, write max qty in each line
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for line in wiz.product_moves_picking:
+                # get the qty from the corresponding stock move
+                original_qty = line.move_id.product_qty
+                line.write({'quantity':original_qty,}, context=context)
+            for line in wiz.product_moves_returnproducts:
+                line.write({'qty_to_return':line.quantity,}, context=context)
+        
+        return {
+                'name': context.get('wizard_name'),
+                'view_mode': 'form',
+                'view_id': False,
+                'view_type': 'form',
+                'res_model': context.get('model'),
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': context,
+                }
+        
+    def deselect_all(self, cr, uid, ids, context=None):
+        '''
+        deselect all buttons, write 0 qty in each line
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for line in wiz.product_moves_picking:
+                line.write({'quantity':0.0,}, context=context)
+            for line in wiz.product_moves_returnproducts:
+                line.write({'qty_to_return':0.0,}, context=context)
+        
+        return {
+                'name': context.get('wizard_name'),
+                'view_mode': 'form',
+                'view_id': False,
+                'view_type': 'form',
+                'res_model': context.get('model'),
+                'res_id': ids[0],
+                'type': 'ir.actions.act_window',
+                'nodestroy': True,
+                'target': 'new',
+                'domain': '[]',
+                'context': context,
+                }
     
     def generate_data_from_partial(self, cr, uid, ids, context=None):
         '''
@@ -314,8 +366,6 @@ class create_picking(osv.osv_memory):
         partial = self.browse(cr, uid, ids[0], context=context)
         # ppl families
         memory_families_list = partial.product_moves_families
-        for family in memory_families_list:
-            a=1
         # returned datas
         partial_datas_ppl1 = context['partial_datas_ppl1']
         
@@ -443,6 +493,17 @@ class create_picking(osv.osv_memory):
         # call stock_picking method which returns action call
         return pick_obj.do_validate_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     
+    def integrity_check(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on shipment data
+        '''
+        for picking_data in data.values():
+            for move_data in picking_data.values():
+                if move_data.get('qty_to_return', False):
+                    return True
+        
+        return False
+    
     def do_return_products(self, cr, uid, ids, context=None):
         '''
         process data and call do_return_products from stock picking
@@ -471,12 +532,16 @@ class create_picking(osv.osv_memory):
             for move in memory_moves_list:
                 if move.qty_to_return:
                     partial_datas[pick.id][move.move_id.id] = {'product_id': move.product_id.id,
-                                                              'asset_id': move.asset_id.id,
-                                                              'product_qty': move.quantity,
-                                                              'product_uom': move.product_uom.id,
-                                                              'prodlot_id': move.prodlot_id.id,
-                                                              'qty_to_return': move.qty_to_return,
-                                                              }
+                                                               'asset_id': move.asset_id.id,
+                                                               'product_qty': move.quantity,
+                                                               'product_uom': move.product_uom.id,
+                                                               'prodlot_id': move.prodlot_id.id,
+                                                               'qty_to_return': move.qty_to_return,
+                                                               }
+                    
+        # integrity check on wizard data
+        if not self.integrity_check(cr, uid, ids, partial_datas, context=context):
+            raise osv.except_osv(_('Warning !'), _('You must select something to return!'))
         
         return pick_obj.do_return_products(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
         
