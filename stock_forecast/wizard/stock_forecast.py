@@ -82,6 +82,8 @@ class stock_forecast_line(osv.osv_memory):
         'wizard_id' : fields.many2one('stock.forecast', string="Wizard"),
     }
     
+    _order = 'date asc'
+    
 stock_forecast_line()
 
 
@@ -461,7 +463,7 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append(values)
                 
                 # PURCHASE ORDERS - positive
-                pol_list = pol_obj.search(cr, uid, [('state', 'in', ('draft', 'confirmed',)),
+                pol_list = pol_obj.search(cr, uid, [('order_state', 'in', ('draft', 'confirmed',)),
                                                     ('tender_id', '=', False),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
@@ -493,8 +495,7 @@ class stock_forecast(osv.osv_memory):
                                            })
                 
                 # PROCUREMENT ORDERS
-                pro_list = pro_obj.search(cr, uid, [('date_planned', '>', today),
-                                                    ('state', 'in', ('exception',)),
+                pro_list = pro_obj.search(cr, uid, [('state', 'in', ('exception',)),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for pro in pro_obj.browse(cr, uid, pro_list, context=context):
@@ -509,8 +510,9 @@ class stock_forecast(osv.osv_memory):
                                            'wizard_id': wizard.id,})
                     
                 # STOCK MOVES - in positive - out negative
-                moves_list = move_obj.search(cr, uid, [('date_expected', '>', today),
-                                                       ('state', 'not in', ('done', 'cancel')),
+                moves_list = move_obj.search(cr, uid, [('state', 'not in', ('done', 'cancel')),
+                                                       ('product_qty', '!=', 0.0), # dont take empty draft picking tickets into account if empty
+                                                       ('picking_subtype', 'not in', ('ppl', 'packing')), # dont take into account moves that are out of STOCK location
                                                        ('product_id', '=', product.id)], order='date_expected', context=context)
                 
                 for move in move_obj.browse(cr, uid, moves_list, context=context):
@@ -704,3 +706,35 @@ class stock_forecast(osv.osv_memory):
         return result
 
 stock_forecast()
+
+
+class purchase_order_line(osv.osv):
+    '''
+    add order_state columns    
+    '''
+    _inherit = 'purchase.order.line'
+    STATE_SELECTION = [
+        ('draft', 'Request for Quotation'),
+        ('wait', 'Waiting'),
+        ('confirmed', 'Waiting Approval'),
+        ('approved', 'Approved'),
+        ('except_picking', 'Shipping Exception'),
+        ('except_invoice', 'Invoice Exception'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled')
+    ]
+    _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
+                }
+    
+purchase_order_line()
+
+
+class stock_move(osv.osv):
+    '''
+    corresponding picking subtype
+    '''
+    _inherit = 'stock.move'
+    _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
+                }
+    
+stock_move()

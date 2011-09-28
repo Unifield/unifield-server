@@ -31,8 +31,8 @@
                     <group colspan="4" col="6">
                         <label string ="" colspan="1"/>
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                        <button icon="terp-gtk-jump-to-rtl" string="Reverse All" name="action_reverse" type="object"/>
-                        <button icon="terp-gtk-jump-to-ltr" string="Correct entry" name="action_confirm" type="object"/>
+                        <button icon="gtk-undo" string="Reverse" name="action_reverse" type="object"/>
+                        <button icon="gtk-redo" string="Correct" name="action_confirm" type="object"/>
                     </group>
                     <field name="state" invisible="1"/>
                 </form>

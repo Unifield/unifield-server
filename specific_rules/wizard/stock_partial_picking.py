@@ -29,16 +29,11 @@ class stock_partial_picking(osv.osv_memory):
     add message
     '''
     _inherit = "stock.partial.picking"
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+    
+    def add_message(self, cr, uid, result, context=None):
         '''
-        add message
+        add message to arch
         '''
-        if context is None:
-            context = {}
-        
-        result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-
         pick_obj = self.pool.get('stock.picking')
         picking_ids = context.get('active_ids', False)
         message_in = '<label string="You receive %s products, please refer to the appropriate procedure." colspan="4" />'
@@ -83,7 +78,19 @@ class stock_partial_picking(osv.osv_memory):
         l = arch.split('<field name="date" invisible="1"/>')
         arch = l[0] + '<field name="date" invisible="1"/>' + message + l[1]
         result['arch'] = arch
+        
+        return result
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        add message
+        '''
+        if context is None:
+            context = {}
+        
+        result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        # add warning messages
+        result = self.add_message(cr, uid, result, context=context)
         return result
     
     def __create_partial_picking_memory(self, move, pick_type):

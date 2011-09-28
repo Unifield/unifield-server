@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Add new analytic distribution button -->
+        <record id="invoice_supplier_form_2" model="ir.ui.view">
+            <field name="name">account.invoice.supplier.form.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name='account_id' position="before">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
+                        <field name="have_analytic_distribution" invisible="1"/>
+                        <newline/>
+                    </field>
+                    <xpath expr="/form//field[@name='invoice_line']" position="before">
+                        <newline />
+                        <group attrs="{'invisible': [('have_analytic_distribution', '=', True)]}" colspan="6">
+                            <html>
+                                <p style="color: blue; padding-left: 15px;">Please add an analytic distribution on this invoice before creating some invoice lines!</p>
+                            </html>
+                        </group>
+                    </xpath>
+                    <xpath expr="/form//field[@name='invoice_line']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('have_analytic_distribution', '=', False)]}</attribute>
+                    </xpath>
+                    <xpath expr="//tree[@string='Invoice lines']/field[@name='account_analytic_id']" position="replace">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Delete old analytic field -->
+        <record id="invoice_line_form" model="ir.ui.view">
+            <field name="name">account.invoice.line.form</field>
+            <field name="model">account.invoice.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_invoice_line_form"/>
+            <field name="arch" type="xml">
+                <field name="account_analytic_id" position="replace" />
+            </field>
+        </record>
+
+    </data>
+</openerp>

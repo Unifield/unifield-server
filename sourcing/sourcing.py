@@ -393,10 +393,13 @@ class sale_order(osv.osv):
         
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
-    def _hook_ship_create_procurement_order(self, cr, uid, ids, procurement_data, order_line, *args, **kwargs):
-        # new field representing selected supplierinfo from sourcing tool
-        procurement_data['supplier'] = order_line.supplier and order_line.supplier.id or False
-        return super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, procurement_data, order_line, *args, **kwargs)
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
+        # new field representing selected partner from sourcing tool
+        line = kwargs['line']
+        result['supplier'] = line.supplier and line.supplier.id or False
+        
+        return result
 
 sale_order()
 

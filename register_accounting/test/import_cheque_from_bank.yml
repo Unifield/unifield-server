@@ -28,7 +28,7 @@
       absl_obj = self.pool.get('account.bank.statement.line')
       absl_ids = absl_obj.search(cr, uid, [('statement_id', '=', ref("cheque_register_0"))])
       for id in absl_ids:
-          absl_obj.button_hard_posting(cr, uid, [id], context={})
+          absl_obj.button_hard_posting(cr, uid, [id], context={'from_yml': True})
 -
   I click on the Import Cheque button in a US Bank Register to test if the wizard is launched and contains all values
 -

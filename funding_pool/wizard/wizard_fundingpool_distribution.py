@@ -126,10 +126,12 @@ class wizard_fundingpool_distribution(osv.osv_memory):
     
     def _get_cost_centers(self, cr, uid, ids, name, arg, context={}):
         res = {}
-        wizard_obj = self.browse(cr, uid, ids[0])
-        res[wizard_obj.id] = []
-        for wizard_line in wizard_obj.distribution_id.cost_center_lines:
-            res[wizard_obj.id].append(wizard_line.analytic_id.id)
+        if 'cost_center' in context['wizard_ids']:
+            current_wizard_id = ids[0]
+            cc_wizard_obj = self.pool.get('wizard.costcenter.distribution').browse(cr, uid, context['wizard_ids']['cost_center'])
+            res[current_wizard_id] = []
+            for wizard_line in cc_wizard_obj.wizard_distribution_lines:
+                res[current_wizard_id].append(wizard_line.analytic_id.id)
         return res
         
     _columns = {
@@ -241,7 +243,7 @@ class wizard_fundingpool_distribution(osv.osv_memory):
         if 'free_1' not in context['wizard_ids']:
             newwiz_obj = self.pool.get('wizard.free1.distribution')
             newwiz_id = newwiz_obj.create(cr, uid, {'total_amount': wizard_obj.total_amount, 'distribution_id': wizard_obj.distribution_id.id, 
-                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode}, context=context)
+                'currency_id': currency, 'entry_mode': wizard_obj.entry_mode, 'invoice_line': wizard_obj.invoice_line and wizard_obj.invoice_line.id or False}, context=context)
             context['wizard_ids']['free_1'] = newwiz_id
         else:
             # Write some change to the wizard:

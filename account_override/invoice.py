@@ -30,39 +30,6 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def action_reverse_engagement_lines(self, cr, uid, ids, context, *args):
-        """
-        Reverse an engagement lines with an opposite amount
-        """
-        if not context:
-            context = {}
-        eng_obj = self.pool.get('account.analytic.line')
-        # Browse invoice
-        for inv in self.browse(cr, uid, ids, context=context):
-            # Search engagement journal line ids
-            invl_ids = [x.id for x in inv.invoice_line]
-            eng_ids = eng_obj.search(cr, uid, [('invoice_line_id', 'in', invl_ids)])
-            # Browse engagement journal line ids
-            for eng in eng_obj.browse(cr, uid, eng_ids, context=context):
-                # Create new line and change some fields:
-                # - name with REV
-                # - amount * -1
-                # - date with invoice_date
-                # Copy this line for reverse
-                new_line_id = eng_obj.copy(cr, uid, eng.id, context=context)
-                # Prepare reverse values
-                vals = {
-                    'name': eng_obj.join_without_redundancy(eng.name, 'REV'),
-                    'amount': eng.amount * -1,
-                    'date': inv.date_invoice,
-                    'reversal_origin': eng.id,
-                    'amount_currency': eng.amount_currency * -1,
-                    'currency_id': eng.currency_id.id,
-                }
-                # Write changes
-                eng_obj.write(cr, uid, [new_line_id], vals, context=context)
-        return True
-
     def action_open_invoice(self, cr, uid, ids, context={}, *args):
         """
         Give function to use when changing invoice to open state
@@ -71,12 +38,9 @@ class account_invoice(osv.osv):
             return False
         if not self.action_move_create(cr, uid, ids, context, args):
             return False
-        if not self.action_reverse_engagement_lines(cr, uid, ids, context, args):
-            return False
         if not self.action_number(cr, uid, ids, context):
             return False
-        return self.write(cr, uid, ids, {'state': 'open'}, context=context)
+        return True
 
 account_invoice()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

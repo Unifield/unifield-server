@@ -97,8 +97,6 @@ class account_bank_statement(osv.osv):
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
-        'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True, 
-            help="This field gives the previous register from which this one is linked."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself', states={'confirm': [('readonly', True)]}),
         'code': fields.char('Register Code', size=10, ),
@@ -242,7 +240,7 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Warning'), _("Some lines are not reconciled. Please verify that all lines are reconciled totally or partially."))
             self.write(cr, uid, [st.id], {'name': st_number}, context=context)
             # Verify that the closing balance is freezed
-            if not st.closing_balance_frozen:
+            if not st.closing_balance_frozen and st.journal_id.type in ['bank', 'cash']:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
         # Display the bank confirmation wizard
@@ -1059,6 +1057,8 @@ class account_bank_statement_line(osv.osv):
         """
         Write some statement line into some account move lines with a state that depends on postype.
         """
+        if not context:
+            context = {}
         if postype not in ('hard', 'temp'):
             raise osv.except_osv(_('Warning'), _('Post type has to be hard or temp'))
         if not len(ids):
@@ -1075,6 +1075,8 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
+                if not absl.analytic_distribution_id and absl.account_id.user_type.code in ['expense'] and not context.get('from_yml'):
+                    raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard

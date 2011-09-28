@@ -312,7 +312,8 @@ class financing_contract_contract(osv.osv):
         contract_obj = self.browse(cr, uid, ids[0], context=context)
         model_data_obj = self.pool.get('ir.model.data')
         # update the context with reporting type (used for "get analytic_lines" action)
-        context.update({'reporting_type': contract_obj.reporting_type,
+        context.update({'reporting_currency': contract_obj.reporting_currency.id,
+                        'reporting_type': contract_obj.reporting_type,
                         'active_id': ids[0],
                         'active_ids': ids})
         # retrieve the corresponding_view

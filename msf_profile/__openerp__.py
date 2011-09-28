@@ -31,6 +31,7 @@
         "data.xml",
     ],
     "depends" : [
+        "base_report_designer",
         "msf_partner",
         "register_accounting",
         "stock_inventory_type",
@@ -58,6 +59,7 @@
         "procurement_report",
         "msf_printed_documents",
         "procurement_request",
+        "msf_outgoing",
         "import_data",
         "sales_followup",
         "financing_contract",
@@ -73,7 +75,8 @@
         "tender_flow",
         "consumption_calculation",
         "threshold_value",
-        "analytic_distribution_purchase",
+        "analytic_distribution_invoice",
+#        "analytic_distribution_purchase",
     ],
     "update_xml": [
         "report.xml",
