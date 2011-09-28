@@ -1449,6 +1449,7 @@ class stock_picking(osv.osv):
                         # total number of packs
                         total_num = to_pack - from_pack + 1
                         # number of selected packs to ship
+                        # note: when the data is generated, lines without selected_number are not kept, so we have nothing to check here
                         selected_number = data[from_pack][to_pack][0]['selected_number']
                         # we take the packs with the highest numbers
                         # new moves
@@ -1480,17 +1481,18 @@ class stock_picking(osv.osv):
                             
                             # update corresponding initial move
                             initial_qty = move.product_qty
-                            initial_qty = max(initial_qty - selected_qty, 0)# if all packs have been selected, from/to are set to 0
+                            initial_qty = max(initial_qty - selected_qty, 0)
+                            # if all packs have been selected, from/to have been set to 0
                             # update the original move object - the corresponding original shipment (draft)
                             # is automatically updated generically in the write method
                             move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty,
                                                                 'from_pack': initial_from_pack,
                                                                 'to_pack': initial_to_pack}, context=context)
                 
-                # all moves have been created / updated. original shipment's pfs are updated
-                data = self.generate_data_from_picking_for_pack_family(cr, uid, [draft_packing_id], context=context)
-                # create the pack_familiy objects from stock.picking object
-                self.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
+#                # all moves have been created / updated. original shipment's pfs are updated
+#                data = self.generate_data_from_picking_for_pack_family(cr, uid, [draft_packing_id], context=context)
+#                # create the pack_familiy objects from stock.picking object
+#                self.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
             
             if not vals['backorder_id']:
                 # creation of packing after ppl validation
