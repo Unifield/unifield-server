@@ -781,7 +781,7 @@ class history_order_date(osv.osv):
     }
     
     _defaults = {
-        'time': lambda *a: time.stftime('%Y-%m-%d %H:%M:%S'),
+        'time': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
     
 history_order_date()
