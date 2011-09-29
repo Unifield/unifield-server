@@ -30,7 +30,7 @@ class account_journal(osv.osv):
 
     def init(self, cr):
         """
-        Load demo.xml brefore addons
+        Load demo.xml before addons
         """
         if hasattr(super(account_journal, self), 'init'):
             super(account_journal, self).init(cr)
@@ -42,10 +42,13 @@ class account_journal(osv.osv):
             demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
 
         if demo:
-            logging.getLogger('init').info('HOOK: module account_journal: loading account_journal_demo.xml')
-            pathname = path.join('account_journal', 'account_journal_demo.xml')
-            file = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'account_journal', file, {}, mode='init', noupdate=False)
+            # Search if an engagement journal exists
+            eng_ids = self.pool.get('account.analytic.journal').search(cr, 1, [('type', '=', 'engagement')])
+            if not len(eng_ids):
+                logging.getLogger('init').info('HOOK: module account_journal: loading account_journal_demo.xml')
+                pathname = path.join('account_journal', 'account_journal_demo.xml')
+                file = tools.file_open(pathname)
+                tools.convert_xml_import(cr, 'account_journal', file, {}, mode='init', noupdate=False)
 
 
     def get_journal_type(self, cursor, user_id, context=None):
