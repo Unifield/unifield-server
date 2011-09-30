@@ -49,7 +49,7 @@
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],
-    'test': [
+    'test': ['test/msf_outgoing.yml'
     ],
     'installable': True,
 }
