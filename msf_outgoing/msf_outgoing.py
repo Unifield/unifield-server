@@ -130,6 +130,19 @@ class shipment(osv.osv):
                 
         return result
     
+    def _get_shipment_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of stock.picking objects for which state has changed
+        
+        return the list of ids of shipment object which need to get their state field updated
+        '''
+        pack_obj = self.pool.get('stock.picking')
+        result = []
+        for packing in pack_obj.browse(cr, uid, ids, context=context):
+            if packing.shipment_id and packing.shipment_id.id not in result:
+                result.append(packing.shipment_id.id)
+        return result 
+    
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.date(string='Date'),
                 'transport_type': fields.selection([('by_road', 'By road')],
@@ -177,10 +190,10 @@ class shipment(osv.osv):
                                                                                               ('packed', 'Packed'),
                                                                                               ('shipped', 'Shipped'),
                                                                                               ('done', 'Done'),
-                                                                                              ('cancel', 'Canceled')], string='State', multi='get_vals',),
+                                                                                              ('cancel', 'Canceled')], string='State', multi='get_vals',
+                                         store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
                 }
     _order = 'name desc'
-    _defaults = {'state': 'draft'}
     
     def create_shipment(self, cr, uid, ids, context=None):
         '''
@@ -1574,10 +1587,9 @@ class stock_picking(osv.osv):
                 assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time - %s'%len(shipment_ids)
                 
                 if not len(shipment_ids):
-                    # no shipment, create one
+                    # no shipment, create one - no need to specify the state, it's a function
                     name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
                     values = {'name': name,
-                              'state': 'draft',
                               'address_id': vals['address_id'],
                               'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                             'code':name,
