@@ -593,11 +593,6 @@ class shipment(osv.osv):
                 # we cancel each picking object - action_cancel is overriden at stock_picking level for stock_picking of subtype == 'packing'
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_cancel', cr)
             
-#            # redo pack families for canceled shipment
-#            pick_obj.update_pack_families(cr, uid, shipment.id, context=context)
-#            # redo pack families for draft shipment
-#            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
-            
         # cancel all shipments
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
                 
@@ -626,6 +621,7 @@ class shipment(osv.osv):
                 # update the packing object for the same reason
                 # - an integrity check at _get_vals level of shipment states that all packing linked to a shipment must have the same state
                 # we therefore modify it before the copy, otherwise new (assigned) and old (done) are linked to the same shipment
+                # -> integrity check has been removed
                 pick_obj.write(cr, uid, [packing.id], {'shipment_id': False,}, context=context)
                 # copy each packing
                 new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
@@ -898,6 +894,10 @@ class pack_family_memory(osv.osv_memory):
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 }
     
+    _defaults = {'shipment_id': False,
+                 'draft_packing_id': False,
+                 }
+    
 pack_family_memory()
 
 
@@ -1086,6 +1086,24 @@ class stock_picking(osv.osv):
                 
         return True
     
+    def _vals_get_2(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        for stock_picking in self.browse(cr, uid, ids, context=context):
+            values = {'pack_family_memory_ids':[],
+                      }
+            result[stock_picking.id] = values
+            
+            # get the corresponding data for pack family memory
+            data = self.generate_data_from_picking_for_pack_family(cr, uid, [stock_picking.id], context=context)
+            # create a memory family - no shipment id
+            created_ids = self.create_pack_families_memory_from_data(cr, uid, data, shipment_id=False, context=context)
+            values['pack_family_memory_ids'].extend(created_ids)
+                    
+        return result
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -1097,9 +1115,19 @@ class stock_picking(osv.osv):
                       'is_dangerous_good': False,
                       'is_keep_cool': False,
                       'is_narcotic': False,
+                      'num_of_packs': 0,
+                      'total_weight': 0.0,
                       #'is_completed': False,
                       }
             result[stock_picking.id] = values
+            
+            for family in stock_picking.pack_family_memory_ids:
+                # number of packs from pack_family
+                num_of_packs = family.num_of_packs
+                values['num_of_packs'] += int(num_of_packs)
+                # total_weight
+                total_weight = family.total_weight
+                values['total_weight'] += total_weight
                 
             for move in stock_picking.move_lines:
                 # total amount (float)
@@ -1177,12 +1205,15 @@ class stock_picking(osv.osv):
                 # attributes for specific packing labels
                 'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
                 # functions
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
+                'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
+                'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
     _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
                  'subtype': 'picking',
@@ -1324,18 +1355,6 @@ class stock_picking(osv.osv):
         }
         return seq_pool.create(cr, uid, seq)
     
-    def update_pack_families(self, cr, uid, shipment_id, object_type='shipment', from_pack=False, to_pack=False, context=None):
-        '''
-        update the pack families and delete them
-        '''
-        # get the pick_ids
-        pick_ids = self.search(cr, uid, [('shipment_id', '=', shipment_id), ('state', '=', 'assigned')], context=context)
-        
-        # all moves have been created / updated. original shipment's pfs are updated
-        data = self.generate_data_from_picking_for_pack_family(cr, uid, pick_ids, object_type, from_pack, to_pack, context=context)
-        # create the pack_familiy objects from stock.picking object
-        self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
-    
     def generate_data_from_picking_for_pack_family(self, cr, uid, pick_ids, object_type='shipment', from_pack=False, to_pack=False, context=None):
         '''
         generate the data structure from the stock.picking object
@@ -1377,19 +1396,36 @@ class stock_picking(osv.osv):
                     if not to_pack or move.to_pack == to_pack:
                         # the quantity must be positive and the state depends on the window's type
                         if move.product_qty and move.state not in states:
-                            result[pick.id] \
-                                .setdefault(move.from_pack, {}) \
-                                .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
-                                                                          'ppl_id': pick.previous_step_id.id,
-                                                                          'from_pack': move.from_pack,
-                                                                          'to_pack': move.to_pack,
-                                                                          'pack_type': move.pack_type.id,
-                                                                          'length': move.length,
-                                                                          'width': move.width,
-                                                                          'height': move.height,
-                                                                          'weight': move.weight,
-                                                                          'draft_packing_id': pick.id,
-                                                                          }
+                            # subtype == ppl - called from stock picking
+                            if pick.subtype == 'ppl':
+                                result[pick.id] \
+                                    .setdefault(move.from_pack, {}) \
+                                    .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
+                                                                              'ppl_id': pick.id, # only change between ppl - packing
+                                                                              'from_pack': move.from_pack,
+                                                                              'to_pack': move.to_pack,
+                                                                              'pack_type': move.pack_type.id,
+                                                                              'length': move.length,
+                                                                              'width': move.width,
+                                                                              'height': move.height,
+                                                                              'weight': move.weight,
+                                                                              'draft_packing_id': pick.id,
+                                                                              }
+                            # subtype == packing - caled from shipment
+                            elif pick.subtype == 'packing':
+                                result[pick.id] \
+                                    .setdefault(move.from_pack, {}) \
+                                    .setdefault(move.to_pack, {})[move.id] = {'sale_order_id': pick.sale_id.id,
+                                                                              'ppl_id': pick.previous_step_id.id,
+                                                                              'from_pack': move.from_pack,
+                                                                              'to_pack': move.to_pack,
+                                                                              'pack_type': move.pack_type.id,
+                                                                              'length': move.length,
+                                                                              'width': move.width,
+                                                                              'height': move.height,
+                                                                              'weight': move.weight,
+                                                                              'draft_packing_id': pick.id,
+                                                                              }
         
         return result
     
@@ -1434,7 +1470,7 @@ class stock_picking(osv.osv):
 #                        
 #        return True
     
-    def create_pack_families_memory_from_data(self, cr, uid, data, shipment_id, context=None):
+    def create_pack_families_memory_from_data(self, cr, uid, data, shipment_id, context=None,):
         '''
         - clear existing pack family memory objects is not necessary thanks to vaccum system
         -> in fact cleaning old memory objects reslults in a bug, because when we click on a
@@ -1576,11 +1612,6 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty,
                                                                 'from_pack': initial_from_pack,
                                                                 'to_pack': initial_to_pack}, context=context)
-                
-#                # all moves have been created / updated. original shipment's pfs are updated
-#                data = self.generate_data_from_picking_for_pack_family(cr, uid, [draft_packing_id], context=context)
-#                # create the pack_familiy objects from stock.picking object
-#                self.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
             
             if not vals['backorder_id']:
                 # creation of packing after ppl validation
@@ -1605,10 +1636,6 @@ class stock_picking(osv.osv):
             
             # update the new pick with shipment_id
             self.write(cr, uid, [new_packing_id], {'shipment_id': shipment_id}, context=context)
-#            # generate data from stock.picking object
-#            data = self.generate_data_from_picking_for_pack_family(cr, uid, [new_packing_id], context=context)
-#            # create the pack_familiy objects from stock.picking object
-#            self.create_pack_families_from_data(cr, uid, data, shipment_id, context=context)
             
         return new_packing_id
 
