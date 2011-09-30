@@ -73,6 +73,20 @@ class shipment(osv.osv):
     _name = 'shipment'
     _description = 'represents a group of pack families'
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset one2many fields
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        # reset one2many fields
+        default.update(pack_family_memory_ids=[])
+        result = super(shipment, self).copy_data(cr, uid, id, default=default, context=context)
+        
+        return result
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi function for global shipment values
@@ -1040,6 +1054,7 @@ class stock_picking(osv.osv):
         # reset one2many fields
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
+        default.update(pack_family_memory_ids=[])
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result

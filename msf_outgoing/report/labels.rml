@@ -38,17 +38,13 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="10.0" leading="13"/>
-    <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P4" fontName="Helvetica" fontSize="10.0" leading="13"/>
-    <paraStyle name="P5" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P9" fontName="Helvetica" fontSize="13.0" leading="16" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="13.0" leading="16" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="13.0" leading="16" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="13.0" leading="16" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P3" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="13.0" leading="16" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="13.0" leading="16" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="13.0" leading="16" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P7" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P8" fontName="Helvetica" fontSize="2.0" leading="3" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="8.0" leading="10" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -86,78 +82,78 @@
     <images/>
   </stylesheet>
   <story>
-    <para style="P5">[[repeatIn(objects,'stock_picking')]]</para>
+    <para style="P8">[[repeatIn(objects,'stock_picking')]]</para>
     <section>
-      <para style="P3">[[repeatIn(stock_picking.pack_family_ids,'pack_family')]]</para>
+      <para style="P7">[[repeatIn(stock_picking.pack_family_memory_ids,'pack_family')]]</para>
       <section>
-        <para style="P3">[[repeatIn(range(pack_family.from_pack,pack_family.to_pack+1),'titi')]]</para>
+        <para style="P7">[[repeatIn(range(pack_family.from_pack,pack_family.to_pack+1),'titi')]]</para>
         <blockTable colWidths="186.0,351.0" style="Table6">
           <tr>
             <td>
-              <para style="P10">
+              <para style="P5">
                 <font color="white"> </font>
               </para>
             </td>
             <td>
-              <image x="1.3cm" y="27.6cm" height="40.0" >[[ company.logo or removeParentNode('image') ]]</image>
+              <image>[[ company.logo or removeParentNode('image') ]]</image>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.requestor_order_reference and 'Your Order:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and 'Your Order:' or ' ' ]]</para>
             </td>
             <td>
-              <para style="P7">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.packing_parcel_number and 'Parcel No:' or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P7">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</para>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and 'Our Pre Packing List Reference:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and 'Parcel No:' or ' ' ]]</para>
             </td>
             <td>
-              <para style="P8">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.destination_partner and 'Project Destination:' or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P8">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.destination_address and 'Project Destination Address:' or '' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and 'Our Pre Packing List Reference:' or ' ' ]]</para>
             </td>
             <td>
-              <para style="P7">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
-              <para style="P8">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
-              <para style="P7">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.weight and 'Weight:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and 'Project Destination:' or ' ' ]]</para>
             </td>
             <td>
-              <para style="P8">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
             </td>
           </tr>
           <tr>
             <td>
-              <para style="P9">[[ stock_picking.ppl_customize_label.specific_information and 'Specific Information:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and 'Project Destination Address:' or '' ]]</para>
             </td>
             <td>
-              <para style="P7">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and 'KC / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and 'DG / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and 'N' or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
+              <para style="P3">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <para style="P4">[[ stock_picking.ppl_customize_label.weight and 'Weight:' or ' ' ]]</para>
+            </td>
+            <td>
+              <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and 'Specific Information:' or ' ' ]]</para>
+            </td>
+            <td>
+              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and 'KC / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and 'DG / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and 'N' or ' ' ]]</para>
             </td>
           </tr>
         </blockTable>
