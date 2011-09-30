@@ -205,15 +205,18 @@
                 <field name="inherit_id" ref="stock.view_move_search_reception_incoming_picking" />
                 <field name="arch" type="xml">
                         <data>
-                                <xpath expr="/search//field[@name='origin']" position="after">
-					<field name="type_id" widget="selection" />
-                                        <field name="reason_type_id" widget="selection" />
-                                </xpath>
-                                <xpath expr="/search//filter[@string='Supplier']" position="after">
-                                        <filter string="Adjustment Type" icon="terp-personal" domain="[]" context="{'group_by':'type_id'}"/>
-                                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
-                                        <separator orientation="vertical" />
-                                </xpath>
+				<xpath expr="/search/group/field[@name='product_id']" position="after">
+				    <newline />
+				    <field name="state" />
+				    <field name="reason_type_id" widget="selection" />
+				    <field name="type_id" widget="selection" />
+				    <field name="comment" />
+				</xpath>
+				<xpath expr="/search//filter[@string='Supplier']" position="after">
+					<filter string="Adjustment Type" icon="terp-personal" domain="[]" context="{'group_by':'type_id'}"/>
+					<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+					<separator orientation="vertical" />
+				</xpath>
                         </data>
                 </field>
         </record>
@@ -225,10 +228,13 @@
                 <field name="inherit_id" ref="stock.view_move_search_reception_outcoming_picking" />
                 <field name="arch" type="xml">
                         <data>
-                                <xpath expr="/search//field[@name='origin']" position="after">
-					<field name="type_id" widget="selection" />
-                                        <field name="reason_type_id" widget="selection" />
-                                </xpath>
+				<xpath expr="/search/group/field[@name='product_id']" position="after">
+				    <newline />
+				    <field name="state" />
+				    <field name="reason_type_id" widget="selection" />
+				    <field name="type_id" widget="selection" />
+				    <field name="comment" />
+				</xpath>
                                 <xpath expr="/search//filter[@string='Customer']" position="after">
                                         <separator orientation="vertical" />
                                         <filter string="Adjustment Type" icon="terp-personal" domain="[]" context="{'group_by':'type_id'}"/>
