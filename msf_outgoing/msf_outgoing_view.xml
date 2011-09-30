@@ -860,6 +860,7 @@
                             <field name="date" readonly="True" />
                             <field name="transport_type" />
                             <field name="partner_id" readonly="1"/>
+                            <field name="backshipment_id" readonly="True" />
                         </group>
                         <group colspan="6" col="2">
                             <field name="address_id" readonly="1"/>

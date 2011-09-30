@@ -88,22 +88,30 @@ class shipment(osv.osv):
                       'num_of_packs': 0,
                       'total_weight': 0.0,
                       'state': 'draft',
+                      'backshipment_id': False,
                       }
             result[shipment.id] = values
             # gather the state from packing objects, all packing must have the same state
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
+            # fields to check and get
             state = None
             first_shipment_packing_id = None
+            backshipment_id = None
+            # browse the corresponding packings
             for packing in picking_obj.browse(cr, uid, packing_ids, context=context):
                 # state check
-                if state and state != packing.state:
-                    assert False, 'all packing of the shipment have not the same state - %s - %s'%(state, packing.state)
+                # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 state = packing.state
-                # first_shipment_packing_id check
-                if first_shipment_packing_id and first_shipment_packing_id != packing.first_shipment_packing_id.id:
-                    assert False, 'all packing of the shipment have not the same first_shipment_packing_id - %s - %s'%(first_shipment_packing_id, packing.first_shipment_packing_id.id)
+                
+                # first_shipment_packing_id check - no check for the same reason
                 first_shipment_packing_id = packing.first_shipment_packing_id.id
-            # if state is in ('draft', 'done', 'cancel'), the shipment takes the same state
+                
+                # backshipment_id check
+                if backshipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
+                    assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s'%(backshipment_id, packing.backorder_id.shipment_id.id)
+                backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or None
+            
+            # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
                 if first_shipment_packing_id:
                     # second step of shipment : shipped
@@ -111,6 +119,7 @@ class shipment(osv.osv):
                 else:
                     state = 'packed'
             values['state'] = state
+            values['backshipment_id'] = backshipment_id
             
             for memory_family in shipment.pack_family_memory_ids:
                 # taken only into account if not done (done means returned packs)
@@ -192,6 +201,7 @@ class shipment(osv.osv):
                                                                                               ('done', 'Done'),
                                                                                               ('cancel', 'Canceled')], string='State', multi='get_vals',
                                          store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
+                'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
                 }
     _order = 'name desc'
     
@@ -368,15 +378,9 @@ class shipment(osv.osv):
                             draft_initial_qty += return_qty
                             move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
                 
-            # call complete_finished on the shipment object
-            # if everything is alright (all draft packing are finished) the shipment is done also 
-            self.complete_finished(cr, uid, [draft_shipment_id], context=context)
-                            
-#            # update the shipment object
-#            # all moves have been created / updated. original shipment's pfs are updated
-#            data = pick_obj.generate_data_from_picking_for_pack_family(cr, uid, partial_datas[draft_shipment_id].keys(), context=context)
-#            # create the pack_familiy objects from stock.picking object
-#            pick_obj.create_pack_families_from_data(cr, uid, data, draft_shipment_id, context=context)
+        # call complete_finished on the shipment object
+        # if everything is alright (all draft packing are finished) the shipment is done also 
+        result = self.complete_finished(cr, uid, partial_datas.keys(), context=context)
             
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
@@ -563,19 +567,9 @@ class shipment(osv.osv):
                             #move_obj.action_cancel(cr, uid, [move.id], context=context)
                             move_obj.write(cr, uid, [move.id], {'product_qty': 0.0, 'state': 'done', 'from_pack': 0, 'to_pack': 0,}, context=context)
                             
-                # if all moves are done or canceled, the picking is triggered
-                # we dont call the action_cancel method, because it cancel all the move lines,
-                # we dont want the back move (done) to be canceled
-#                if all([move.state in ('done', 'cancel') for move in packing.move_lines]):
-#                    pick_obj.write(cr, uid, [packing.id], {'state': 'cancel'}, context=context)
-                #wf_service.trg_validate(uid, 'stock.picking', picking.id, 'return_cancel', cr)
-                # if all moves done, the picking will be done (workflow continues)
-                wf_service.trg_write(uid, 'stock.picking', packing.id, cr)
-
-            # update the corresponding shipment object [one time for each shipment id]
-            pick_obj.update_pack_families(cr, uid, shipment_id, context=context)
-            # update the corresponding shipment object [one time for each shipment id ??]
-            pick_obj.update_pack_families(cr, uid, draft_shipment_id, context=context)
+        # call complete_finished on the shipment object
+        # if everything is allright (all draft packing are finished) the shipment is done also 
+        self.complete_finished(cr, uid, partial_datas.keys(), context=context)
         
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
@@ -629,8 +623,14 @@ class shipment(osv.osv):
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing'
+                # update the packing object for the same reason
+                # - an integrity check at _get_vals level of shipment states that all packing linked to a shipment must have the same state
+                # we therefore modify it before the copy, otherwise new (assigned) and old (done) are linked to the same shipment
+                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False,}, context=context)
                 # copy each packing
-                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name, 'first_shipment_packing_id': packing.id,}, context=dict(context, keep_prodlot=True))
+                new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
+                                                                     'first_shipment_packing_id': packing.id,
+                                                                     'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update locations of stock moves
@@ -645,9 +645,6 @@ class shipment(osv.osv):
                 # update old moves - unlink so we don't see old moves when we open the pack families
 #                for move in packing.move_lines:
 #                    move.write({'pack_family_id': False}, context=context)
-                
-                # update the packing object for the same reason
-                pick_obj.write(cr, uid, [packing.id], {'shipment_id': False,}, context=context)
                 
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
@@ -671,55 +668,61 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
         
-        for shipment in self.browse(cr, uid, ids, context=context):
+        for shipment_base in self.browse(cr, uid, ids, context=context):
+            # the shipment which will be treated
+            shipment = shipment_base
+            
             if shipment.state not in ('draft',):
                 # it's not a draft shipment, check all corresponding packing, trg.write them
                 packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
                 for packing_id in packing_ids:
                     wf_service.trg_write(uid, 'stock.picking', packing_id, cr)
                 
-            else:
-                # draft packing for this shipment
-                draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
-                for draft_packing in pick_obj.browse(cr, uid, draft_packing_ids, context=context):
-                    assert draft_packing.subtype == 'packing', 'draft packing which is not packing subtype - %s'%draft_packing.subtype
-                    assert draft_packing.state == 'draft', 'draft packing which is not draft state - %s'%draft_packing.state
-                    # we check if the corresponding draft packing can be moved to done.
-                    # if all packing with backorder_id equal to draft are done or canceled
-                    # and the quantity for each stock move (state != done) of the draft packing is equal to zero
-                    
-                    # we first check the stock moves quantities of the draft packing
-                    # we can have done moves when some packs are returned
-                    treat_draft = True
-                    for move in draft_packing.move_lines:
-                        if move.state not in ('done',):
-                            if move.product_qty:
-                                treat_draft = False
-                            elif move.from_pack or move.to_pack:
-                                # qty = 0, from/to pack should have been set to zero
-                                assert False, 'stock moves with 0 quantity but part of pack family sequence'
-                    
-                    # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
-                    if treat_draft:
-                        linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
-                        for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
-                            if linked_packing.state not in ('done','cancel'):
-                                treat_draft = False
-                    
-                    if treat_draft:
-                        # trigger the workflow for draft_picking
-                        # confirm the new picking ticket
-                        wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_confirm', cr)
-                        # we force availability
-                        pick_obj.force_assign(cr, uid, [draft_packing.id])
-                        # finish
-                        pick_obj.action_move(cr, uid, [draft_packing.id])
-                        wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_done', cr)
-                        # ask for draft picking validation, depending on picking completion
-                        # if picking ticket is not completed, the validation will not complete
-                        draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
+                # this shipment is possibly finished, we now check the corresponding draft shipment
+                # this will possibly validate the draft shipment, if everything is finished and corresponding draft picking
+                shipment = shipment.backshipment_id
                 
-                # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
+            # draft packing for this shipment
+            draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
+            for draft_packing in pick_obj.browse(cr, uid, draft_packing_ids, context=context):
+                assert draft_packing.subtype == 'packing', 'draft packing which is not packing subtype - %s'%draft_packing.subtype
+                assert draft_packing.state == 'draft', 'draft packing which is not draft state - %s'%draft_packing.state
+                # we check if the corresponding draft packing can be moved to done.
+                # if all packing with backorder_id equal to draft are done or canceled
+                # and the quantity for each stock move (state != done) of the draft packing is equal to zero
+                
+                # we first check the stock moves quantities of the draft packing
+                # we can have done moves when some packs are returned
+                treat_draft = True
+                for move in draft_packing.move_lines:
+                    if move.state not in ('done',):
+                        if move.product_qty:
+                            treat_draft = False
+                        elif move.from_pack or move.to_pack:
+                            # qty = 0, from/to pack should have been set to zero
+                            assert False, 'stock moves with 0 quantity but part of pack family sequence'
+                
+                # check if ongoing packing are present, if present, we do not validate the draft one, the shipping is not finished
+                if treat_draft:
+                    linked_packing_ids = pick_obj.search(cr, uid, [('backorder_id', '=', draft_packing.id)], context=context)
+                    for linked_packing in pick_obj.browse(cr, uid, linked_packing_ids, context=context):
+                        if linked_packing.state not in ('done','cancel'):
+                            treat_draft = False
+                
+                if treat_draft:
+                    # trigger the workflow for draft_picking
+                    # confirm the new picking ticket
+                    wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_confirm', cr)
+                    # we force availability
+                    pick_obj.force_assign(cr, uid, [draft_packing.id])
+                    # finish
+                    pick_obj.action_move(cr, uid, [draft_packing.id])
+                    wf_service.trg_validate(uid, 'stock.picking', draft_packing.id, 'button_done', cr)
+                    # ask for draft picking validation, depending on picking completion
+                    # if picking ticket is not completed, the validation will not complete
+                    draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
+            
+            # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
         return True
         
     def validate(self, cr, uid, ids, context=None):
@@ -738,15 +741,15 @@ class shipment(osv.osv):
             # for each shipment update shipment status
             self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
             # corresponding packing objects - only the distribution -> customer ones
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'assigned')], context=context)
+            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
-                assert packing.subtype == 'packing'
+                assert packing.subtype == 'packing' and packing.state == 'assigned'
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
             
-        self.complete_finished(cr, uid, ids, context=context)
+        result = self.complete_finished(cr, uid, ids, context=context)
         return True
         
 shipment()
@@ -2078,15 +2081,25 @@ class stock_picking(osv.osv):
         '''
         move_obj = self.pool.get('stock.move')
         
+        # check the state of the picking
+        for picking in self.browse(cr, uid, ids, context=context):
+            # if draft and all qty are still there, we can cancel it without further checks
+            if picking.subtype == 'picking' and picking.state in ('draft',):
+                for move in picking.move_lines:
+                    if move.product_qty != move.sale_line_id.product_uom_qty:
+                        raise osv.except_osv(_('Warning !'), _('The shipment process has already started! Return products to stock from ppl and shipment and try to cancel again.'))
+                return super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
+            # if not draft or qty does not match, the shipping is already in progress
+            if picking.subtype == 'picking' and picking.state in ('done',):
+                raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
+        
         # first call to super method, so if some checks fail won't perform other actions anyway
         # call super - picking is canceled
         super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
         
         for picking in self.browse(cr, uid, ids, context=context):
-            if picking.subtype == 'picking' and picking.state in ('draft',):
-                raise osv.except_osv(_('Warning !'), _('This functionality is not yet implemented, please hold.'))
                 
-            if picking.subtype == 'picking' and picking.state not in ('draft',):
+            if picking.subtype == 'picking':
                 # for each picking
                 # get the draft picking
                 draft_picking_id = picking.backorder_id.id
