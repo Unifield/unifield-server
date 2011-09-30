@@ -165,11 +165,15 @@
             <field name="inherit_id" ref="stock.view_move_search" />
             <field name="arch" type="xml">
 		<data>
-	                <xpath expr="/search/group/field[@name='product_id']" position="before">
+			<xpath expr="/search//field[@name='state']" position="replace" />
+
+			<xpath expr="/search/group/field[@name='address_id']" position="after">
+			    <field name="state" />
         	            <field name="reason_type_id" widget="selection" />
+			    <newline />
                 	    <field name="type_id" widget="selection" />
 	                    <field name="comment" />
-        	        </xpath>
+			</xpath>
 
 			<xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
                             <separator />
