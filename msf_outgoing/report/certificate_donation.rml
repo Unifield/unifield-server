@@ -103,15 +103,15 @@
     <paraStyle name="P4" fontName="Helvetica" fontSize="6.0" leading="8"/>
     <paraStyle name="P5" fontName="Helvetica-Bold" fontSize="10.0" leading="13"/>
     <paraStyle name="P6" fontName="Helvetica" fontSize="10.0" leading="13"/>
-    <paraStyle name="P7" fontName="Helvetica" fontSize="6.0" leading="8" spaceBefore="0.0" spaceAfter="6.0"/>
-    <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P7" fontName="Helvetica" alignment="JUSTIFY"/>
+    <paraStyle name="P8" fontName="Helvetica" fontSize="6.0" leading="8" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P10" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P13" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P15" fontName="Helvetica" alignment="JUSTIFY"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P14" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P15" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="8.0" leading="10" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -172,7 +172,9 @@
           <para style="P3">Cargo Manifest Reference</para>
         </td>
         <td>
-          <para style="terp_default_8">??</para>
+          <para style="terp_default_8">
+            <font color="white"> </font>
+          </para>
         </td>
         <td>
           <para style="P3">Packing Reference</para>
@@ -188,7 +190,7 @@
     <blockTable colWidths="531.0" style="Table5">
       <tr>
         <td>
-          <para style="P7">
+          <para style="P8">
             <font color="white"> </font>
           </para>
         </td>
@@ -227,14 +229,14 @@
     <blockTable colWidths="531.0" style="Table3">
       <tr>
         <td>
-          <para style="P7">
+          <para style="P8">
             <font color="white"> </font>
           </para>
         </td>
       </tr>
     </blockTable>
-    <para style="P9">High level description of goods:</para>
-    <para style="P8">
+    <para style="P10">High level description of goods:</para>
+    <para style="P9">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table7">
@@ -274,29 +276,29 @@
     <para style="Standard">
       <font color="white"> </font>
     </para>
-    <para style="P15">Médecins Sans Frontières …................................................. will bear no responsibility with regard to legal claims or claims for damage, injury, disability or death caused by the items or the items use. Declare that the items listed are donated by Médecins Sans Frontières without any exchange of currency.</para>
-    <para style="P8">Parcels details</para>
+    <para style="P7">Médecins Sans Frontières …................................................. will bear no responsibility with regard to legal claims or claims for damage, injury, disability or death caused by the items or the items use. Declare that the items listed are donated by Médecins Sans Frontières without any exchange of currency.</para>
+    <para style="P9">Parcels details</para>
     <section>
-      <para style="P13">[[repeatIn(shipment.pack_family_ids,'pack_family')]]</para>
+      <para style="P14">[[repeatIn(shipment.pack_family_memory_ids,'pack_family')]]</para>
       <blockTable colWidths="41.0,81.0,40.0,33.0,33.0,104.0,68.0,68.0,68.0" style="Table8">
         <tr>
           <td>
             <para style="terp_default_9">SO ref: [[ pack_family.sale_order_id.name ]]</para>
           </td>
           <td>
-            <para style="P10">PPL ref: [[ pack_family.ppl_id.name ]]</para>
+            <para style="P11">PPL ref: [[ pack_family.ppl_id.name ]]</para>
           </td>
           <td>
-            <para style="P10">#Packs: [[ pack_family.num_of_packs ]]</para>
+            <para style="P11">#Packs: [[ pack_family.num_of_packs ]]</para>
           </td>
           <td>
-            <para style="P10">From p: [[ pack_family.from_pack ]]</para>
+            <para style="P11">From p: [[ pack_family.from_pack ]]</para>
           </td>
           <td>
-            <para style="P10">To p: [[ pack_family.to_pack ]]</para>
+            <para style="P11">To p: [[ pack_family.to_pack ]]</para>
           </td>
           <td>
-            <para style="P10">Pack Weight [kg]: [[ pack_family.weight ]]</para>
+            <para style="P11">Pack Weight [kg]: [[ pack_family.weight ]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">Total Weight [kg]: [[ pack_family.total_weight ]]</para>
@@ -315,34 +317,34 @@
             <para style="terp_tblheader_Details">Product Code</para>
           </td>
           <td>
-            <para style="P11">Product Name</para>
+            <para style="P12">Product Name</para>
           </td>
           <td>
-            <para style="P11">Unit Price</para>
+            <para style="P12">Unit Price</para>
           </td>
           <td>
-            <para style="P11">Qty</para>
+            <para style="P12">Qty</para>
           </td>
           <td>
-            <para style="P12">Total Value</para>
+            <para style="P13">Total Value</para>
           </td>
         </tr>
       </blockTable>
       <section>
-        <para style="P14">[[repeatIn(pack_family.move_lines,'move')]]</para>
+        <para style="P15">[[repeatIn(pack_family.move_lines,'move')]]</para>
         <blockTable colWidths="117.0,174.0,66.0,51.0,110.0" style="Table2">
           <tr>
             <td>
               <para style="terp_default_9">[[ move.product_id.code ]]</para>
             </td>
             <td>
-              <para style="P10">[[ move.product_id.name ]]</para>
+              <para style="P11">[[ move.product_id.name ]]</para>
             </td>
             <td>
-              <para style="P10">[[ move.sale_line_id.price_unit ]] [[ move.currency_id.name ]]</para>
+              <para style="P11">[[ move.sale_line_id.price_unit ]] [[ move.currency_id.name ]]</para>
             </td>
             <td>
-              <para style="P10">[[ move.product_qty ]]</para>
+              <para style="P11">[[ move.product_qty ]]</para>
             </td>
             <td>
               <para style="terp_default_Right_9">[[ move.total_amount ]] [[ move.currency_id.name ]]</para>
