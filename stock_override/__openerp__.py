@@ -31,7 +31,7 @@
     "category" : "Generic Modules/Inventory Control",
     "init_xml" : [],
     "demo_xml" : [],
-    "update_xml" : [],
+    "update_xml" : ["report/report_stock_move_view.xml"],
     'test': [],
     'installable': True,
     'active': False,
