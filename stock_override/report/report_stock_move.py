@@ -26,7 +26,6 @@ from decimal_precision import decimal_precision as dp
 
 class report_stock_move(osv.osv):
     _name = "report.stock.move"
-    _inherit = "report.stock.move"
     _description = "Moves Statistics"
     _auto = False
 

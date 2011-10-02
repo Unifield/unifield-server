@@ -27,7 +27,7 @@
     Add hook to stock class and wizard
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["stock", "reason_types_moves"],
+    "depends" : ["stock", "reason_types_moves", "stock_inventory_type"],
     "category" : "Generic Modules/Inventory Control",
     "init_xml" : [],
     "demo_xml" : [],
