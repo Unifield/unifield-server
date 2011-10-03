@@ -834,7 +834,7 @@
             <field name="model">shipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done')" string="Shipment">
+                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Shipment">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="address_id"/>
@@ -842,6 +842,7 @@
                     <field name="currency_id" />
                     <field name="num_of_packs" />
                     <field name="total_weight" />
+                    <field name="date" />
                     <field name="state"/>
                     <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add"/>
                     <button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo"/>
