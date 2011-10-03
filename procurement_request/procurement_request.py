@@ -46,6 +46,15 @@ class procurement_request(osv.osv):
         res.update(super(procurement_request, self)._amount_all(cr, uid, new_ids, field_name, arg, context=context))
         
         return res
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Returns the procurement request search view instead of default sale order search view
+        '''
+        if view_type == 'search' and context.get('procurement_request') and not view_id:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_search_view')[1]
+
+        return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
     
     #@@@ override sale.sale.order._get_order
     # Not modified method, but simply add here to fix an error on amount_total field

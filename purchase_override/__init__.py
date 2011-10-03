@@ -11,3 +11,4 @@ ORDER_CATEGORY = [('medical', 'Medical'),
                   ('other', 'Other')]
 
 import purchase
+import report

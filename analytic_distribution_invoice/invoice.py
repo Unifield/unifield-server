@@ -45,5 +45,17 @@ class account_invoice(osv.osv):
         'have_analytic_distribution': fields.function(_have_analytic_distribution, method=True, type='boolean', string='Have an analytic distribution?'),
     }
 
+    def copy(self, cr, uid, id, default={}, context={}):
+        """
+        Copy global distribution and give it to new invoice
+        """
+        if not context:
+            context = {}
+        inv = self.browse(cr, uid, [id], context=context)[0]
+        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
+        if new_distrib_id:
+            default.update({'analytic_distribution_id': new_distrib_id})
+        return super(account_invoice, self).copy(cr, uid, id, default, context)
+
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

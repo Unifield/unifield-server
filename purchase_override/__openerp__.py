@@ -38,6 +38,7 @@
     "update_xml": [
         "purchase_view.xml",
         "purchase_workflow.xml",
+        "report/purchase_report_view.xml",
     ],
     "demo_xml": [
     ],
