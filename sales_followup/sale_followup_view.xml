@@ -126,12 +126,13 @@
                     <field name="product_id" />
                     <field name="qty_ordered" />
                     <separator colspan="4" string="Associated documents" />
-                    <field name="tender_ids" nolabel="1" />
-                    <field name="quotation_ids" nolabel="1" colspan="2" />
-                    <field name="purchase_ids" nolabel="1" colspan="2" />
+                    <field name="tender_ids" nolabel="1" string="Tenders" />
+                    <field name="quotation_ids" nolabel="1" colspan="2" string="Quotations" />
                     <newline />
-                    <field name="incoming_ids" nolabel="1" colspan="2" />
-                    <field name="outgoing_ids" nolabel="1" colspan="2" />
+                    <field name="purchase_ids" nolabel="1" colspan="2" string="Purchase Orders" />
+                    <field name="incoming_ids" nolabel="1" colspan="2" string="Incoming" />
+                    <newline />
+                    <field name="outgoing_ids" nolabel="1" colspan="2" string="Outgoing" />
                 </form>
             </field>
         </record>
