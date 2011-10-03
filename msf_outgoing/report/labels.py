@@ -20,7 +20,8 @@
 ##############################################################################
 
 import time
-
+from osv import osv
+from tools.translate import _
 from report import report_sxw
 
 class labels(report_sxw.rml_parse):
@@ -31,6 +32,16 @@ class labels(report_sxw.rml_parse):
             'get_selection': self.get_selection,
             'range': range,
         })
+           
+    def set_context(self, objects, data, ids, report_type=None):
+        '''
+        opening check
+        '''
+        for obj in objects:
+            if obj.subtype != 'ppl' or obj.state != 'done':
+                raise osv.except_osv(_('Warning !'), _('Labels are only available for completed Pre-Packing List Objects!'))
+        
+        return super(labels, self).set_context(objects, data, ids, report_type=report_type)
         
     def get_selection(self, o, field):
         """

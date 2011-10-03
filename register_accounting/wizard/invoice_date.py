@@ -38,7 +38,7 @@ class wizard_invoice_date(osv.osv_memory):
         inv_obj = self.pool.get('account.invoice')
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids):
-            inv_obj.write(cr, uid, [wiz.invoice_id.id], {'date': wiz.date, 'period_id': wiz.period_id and wiz.period_id.id or False})
+            inv_obj.write(cr, uid, [wiz.invoice_id.id], {'date_invoice': wiz.date, 'period_id': wiz.period_id and wiz.period_id.id or False})
             wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
         return { 'type': 'ir.actions.act_window_close', }
         

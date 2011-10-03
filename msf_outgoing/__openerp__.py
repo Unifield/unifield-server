@@ -34,7 +34,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number","reason_types_moves", "stock_inventory_type"],
+    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number","reason_types_moves", "stock_inventory_type", "specific_rules",],
     'update_xml': [
         'data/msf_outgoing_data.xml',
         'outgoing_sequence.xml',
@@ -45,10 +45,11 @@
         'wizard/split_memory_move_view.xml',
         'wizard/shipment_view.xml',
         'msf_outgoing_report.xml',
+        'msf_outgoing_workflow.xml',
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],
-    'test': [
+    'test': ['test/msf_outgoing.yml'
     ],
     'installable': True,
 }

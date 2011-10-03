@@ -76,5 +76,18 @@ class account_invoice(osv.osv):
                     el[2]['analytic_line_ids'] = [(6,0, el[2].get('analytic_line_ids', [])) ]
         return res
 
+    def copy(self, cr, uid, id, default={}, context={}):
+        """
+        Copy global distribution and give it to new invoice
+        """
+        if not context:
+            context = {}
+        inv = self.browse(cr, uid, [id], context=context)[0]
+        if inv.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
+        return super(account_invoice, self).copy(cr, uid, id, default, context)
+
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

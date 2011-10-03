@@ -20,7 +20,8 @@
 ##############################################################################
 
 import time
-
+from osv import osv
+from tools.translate import _
 from report import report_sxw
 
 class invoice(report_sxw.rml_parse):
@@ -30,6 +31,16 @@ class invoice(report_sxw.rml_parse):
             'time': time,
             'get_selection': self.get_selection,
         })
+        
+    def set_context(self, objects, data, ids, report_type=None):
+        '''
+        opening check
+        '''
+        for obj in objects:
+            if not obj.backshipment_id:
+                raise osv.except_osv(_('Warning !'), _('Invoice is only available for Shipment Objects (not draft)!'))
+        
+        return super(invoice, self).set_context(objects, data, ids, report_type=report_type)
         
     def get_selection(self, o, field):
         """

@@ -61,16 +61,16 @@
     <paraStyle name="P3" fontName="Helvetica" fontSize="10.0" leading="13"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="12.0" leading="15"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="6.0" leading="8" spaceBefore="0.0" spaceAfter="6.0"/>
-    <paraStyle name="P6" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P8" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
-    <paraStyle name="P9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="P14" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P15" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P9" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P11" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P12" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="P13" fontName="Helvetica" fontSize="6.0" leading="8" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P14" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P15" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="8.0" leading="10" spaceBefore="12.0" spaceAfter="6.0"/>
@@ -108,7 +108,7 @@
     <images/>
   </stylesheet>
   <story>
-    <para style="P6">[[repeatIn(objects,'stock_picking')]]</para>
+    <para style="P15">[[repeatIn(objects,'stock_picking')]]</para>
     <blockTable colWidths="531.0" style="Table1">
       <tr>
         <td>
@@ -128,13 +128,13 @@
     <blockTable colWidths="132.0,134.0,135.0,135.0" style="Table2">
       <tr>
         <td>
-          <para style="P11">Total Number of Packs</para>
+          <para style="P10">Total Number of Packs</para>
         </td>
         <td>
           <para style="terp_default_8">[[ stock_picking.num_of_packs ]]</para>
         </td>
         <td>
-          <para style="P11">Total Weight</para>
+          <para style="P10">Total Weight</para>
         </td>
         <td>
           <para style="terp_default_8">[[ stock_picking.total_weight or '0' ]] kg</para>
@@ -142,13 +142,13 @@
       </tr>
       <tr>
         <td>
-          <para style="P11">Total Value</para>
+          <para style="P10">Total Value</para>
         </td>
         <td>
           <para style="terp_default_8">[[ stock_picking.total_amount or '0']] [[ stock_picking.currency_id.name ]]</para>
         </td>
         <td>
-          <para style="P11">Sale Order Ref</para>
+          <para style="P10">Sale Order Ref</para>
         </td>
         <td>
           <para style="terp_default_8">[[ stock_picking.sale_id.name ]]</para>
@@ -167,28 +167,28 @@
         </td>
       </tr>
     </blockTable>
-    <para style="P8">
+    <para style="P7">
       <font color="white"> </font>
     </para>
-    <para style="P7">Pack details</para>
+    <para style="P6">Pack details</para>
     <section>
-      <para style="P14">[[repeatIn(stock_picking.pack_family_ids,'pack_family')]]</para>
+      <para style="P13">[[repeatIn(stock_picking.pack_family_memory_ids,'pack_family')]]</para>
       <blockTable colWidths="64.0,64.0,64.0,87.0,87.0,57.0,57.0,56.0" style="Table7">
         <tr>
           <td>
-            <para style="P9">#Packs: [[ pack_family.num_of_packs ]]</para>
+            <para style="P8">#Packs: [[ pack_family.num_of_packs ]]</para>
           </td>
           <td>
-            <para style="P9">From p: [[ pack_family.from_pack ]]</para>
+            <para style="P8">From p: [[ pack_family.from_pack ]]</para>
           </td>
           <td>
-            <para style="P9">To p: [[ pack_family.to_pack ]]</para>
+            <para style="P8">To p: [[ pack_family.to_pack ]]</para>
           </td>
           <td>
-            <para style="P9">Dimensions [cm]: [[ pack_family.length or '0' ]] x [[ pack_family.width or '0' ]] x [[ pack_family.height or '0' ]]</para>
+            <para style="P8">Dimensions [cm]: [[ pack_family.length or '0' ]] x [[ pack_family.width or '0' ]] x [[ pack_family.height or '0' ]]</para>
           </td>
           <td>
-            <para style="P9">Pack Weight: [[ pack_family.weight or '0' ]] kg</para>
+            <para style="P8">Pack Weight: [[ pack_family.weight or '0' ]] kg</para>
           </td>
           <td>
             <para style="terp_default_Right_9">Total Weight: [[ pack_family.total_weight or '0' ]] kg</para>
@@ -207,38 +207,38 @@
             <para style="terp_tblheader_Details">Product Code</para>
           </td>
           <td>
-            <para style="P12">Product Name /</para>
-            <para style="P13">Batch Number</para>
+            <para style="P11">Product Name /</para>
+            <para style="P12">Batch Number</para>
           </td>
           <td>
-            <para style="P12">Unit Price</para>
+            <para style="P11">Unit Price</para>
           </td>
           <td>
-            <para style="P12">Qty /</para>
-            <para style="P13">Qty per Pack</para>
+            <para style="P11">Qty /</para>
+            <para style="P12">Qty per Pack</para>
           </td>
           <td>
-            <para style="P13">Total Value</para>
+            <para style="P12">Total Value</para>
           </td>
         </tr>
       </blockTable>
       <section>
-        <para style="P15">[[repeatIn(pack_family.move_lines,'move')]]</para>
+        <para style="P14">[[repeatIn(pack_family.move_lines,'move')]]</para>
         <blockTable colWidths="117.0,174.0,66.0,88.0,73.0" style="Table9">
           <tr>
             <td>
               <para style="terp_default_9">[[ move.product_id.code ]]</para>
             </td>
             <td>
-              <para style="P9">[[ move.product_id.name ]] /</para>
-              <para style="P10">[[ move.prodlot_id.name ]]</para>
+              <para style="P8">[[ move.product_id.name ]] /</para>
+              <para style="P9">[[ move.prodlot_id.name ]]</para>
             </td>
             <td>
-              <para style="P9">[[ move.sale_line_id.price_unit or '0' ]] [[ move.currency_id.name ]]</para>
+              <para style="P8">[[ move.sale_line_id.price_unit or '0' ]] [[ move.currency_id.name ]]</para>
             </td>
             <td>
-              <para style="P9">[[ move.product_qty or '0' ]][[ move.product_uom.name ]] /</para>
-              <para style="P10">[[ move.qty_per_pack ]]</para>
+              <para style="P8">[[ move.product_qty or '0' ]][[ move.product_uom.name ]] /</para>
+              <para style="P9">[[ move.qty_per_pack ]]</para>
             </td>
             <td>
               <para style="terp_default_Right_9">[[ move.total_amount or '0' ]] [[ move.currency_id.name ]]</para>

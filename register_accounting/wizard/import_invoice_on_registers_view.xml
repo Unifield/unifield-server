@@ -96,7 +96,7 @@
                         <field name="invoice_lines_ids" colspan="4" nolabel="1">
                             <tree editable="bottom" hide_new_button="1">
                                 <field name="partner_id"/>
-                                <field name="line_ids" />
+                                <field name="number_invoices" />
                                 <field name="ref"/>
                                 <field name="account_id"/>
                                 <field name="date"/>
@@ -136,7 +136,7 @@
                         <field name="invoice_lines_ids" colspan="4" nolabel="1">
                             <tree editable="bottom" colors="red:cheque_number==False" hide_new_button="1">
                                 <field name="partner_id"/>
-                                <field name="line_ids" />
+                                <field name="number_invoices" />
                                 <field name="ref"/>
                                 <field name="cheque_number" required="1"/>
                                 <field name="account_id"/>
