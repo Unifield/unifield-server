@@ -182,7 +182,7 @@ class sale_order_followup(osv.osv_memory):
                     quotation_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state in ('draft', 'rfq_done'):
+                        if rfq.state in ('draft', 'rfq_done', 'rfq_updated', 'rfq_sent'):
                             quotation_ids.append(rfq.id)
                 
         
@@ -298,10 +298,14 @@ class sale_order_line_followup(osv.osv_memory):
             
             # Get information about the status of the RfQ
             for quotation in line.quotation_ids:
-                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] != 'Waiting':
-                    res[line.id]['quotation_status'] = 'Done'
-                else:
+                if quotation.state == 'draft':
                     res[line.id]['quotation_status'] = 'Waiting'
+                if quotation.state == 'rfq_sent' and res[line.id]['quotation_status'] not in ('Waiting'):
+                    res[line.id]['quotation_status'] = 'Sent'
+                elif quotation.state == 'rfq_updated' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent'):
+                    res[line.id]['quotation_status'] = 'Updated'
+                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
+                    res[line.id]['quotation_status'] = 'Done'
                     
             # Get information about the state of all call for tender
             for tender in line.tender_ids:
@@ -311,6 +315,8 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['tender_status'] = 'In Progress'
                 elif tender.state == 'done' and res[line.id]['tender_status'] not in ('Waiting', 'In Progress'):
                     res[line.id]['tender_status'] = 'Done'
+                elif tender.state == 'cancel':
+                    res[line.id]['tender_status'] = 'Exception'
             
             # Get information about the state of all purchase order
             if line.line_id.type == 'make_to_stock':

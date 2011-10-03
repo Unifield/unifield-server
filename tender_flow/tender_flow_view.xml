@@ -14,7 +14,7 @@
                     	<field name="requested_date" />
                         <field name="name"/>
                         <field name="sale_order_id"/>
-                        <field name="warehouse_id" />
+                        <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" />
                         <field name="location_id" />
                         <field name="company_id" />
                         <field name="categ" />
@@ -64,10 +64,13 @@
                     </notebook>
                     <group col="13" colspan="4">
                         <field name="state"/>
-                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-execute"/>
-                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-execute"/>
-                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-execute"/>
-                        <button name="button_done" states="comparison" string="Done" icon="gtk-execute"/>
+                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('sale_order_id','!=', False),],}" />
+                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
+                        <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
+                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" />
+                        <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','=', False),],}" />
+                        <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
+                        <button name="done" string="Done" type="object" icon="gtk-go-forward" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
                     </group>
                 </form>
             </field>
@@ -117,7 +120,7 @@
 		</record>
 
 		<menuitem icon="STOCK_INDENT" action="tender_action"
-			id="menu_tender" parent="base.menu_sales" sequence="100" />
+			id="menu_tender" parent="purchase.menu_procurement_management" sequence="100" />
 			
         <record id="purchase_order_form" model="ir.ui.view">
             <field name="name">purchase.order.form</field>
@@ -130,12 +133,17 @@
             		
             		<field name="details" position="after">
             			<field name="tender_id" invisible="True" />
-            			<field name="valid_till" />
+            			<field name="valid_till" attrs="{'invisible': [('tender_id', '=', False),],}"/>
             		</field>
             		
             		<button name="purchase_confirm" position="replace">
             			<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'draft'),],}" />
-            			<button name="rfq_done" states="draft" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', '!=', 'draft'),],}" />
+            			<button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', '!=', 'draft'),],}" />
+            			<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '=', False), ('state', '!=', 'rfq_sent'),],}" />
+            		</button>
+            		
+            		<button name="purchase_cancel" position="replace">
+            			<button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
             		</button>
             		
             		<!-- <button name="purchase_cancel" position="replace">
