@@ -518,7 +518,6 @@ class product_product(osv.osv):
                 sum_ni += ni
             else:
                 break
-            
         return expired_qty
     
 product_product()
