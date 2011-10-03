@@ -285,7 +285,7 @@
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
-			<field name="reason_type_id" />
+			<field name="reason_type_id" widget="selection" />
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
@@ -542,7 +542,7 @@
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
-			<field name="reason_type_id" />
+			<field name="reason_type_id" widget="selection" />
                         <field name="origin"/>
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>

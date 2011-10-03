@@ -85,7 +85,7 @@ class stock_reason_type(osv.osv):
     def _name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
-    
+
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'code': fields.integer(string='Code', required=True),
@@ -109,6 +109,23 @@ class stock_picking(osv.osv):
             nom = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', xml_id)
             res[field] = nom[1]
         return res
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+        '''
+        Take into account all stock_picking with reason_type_id is a children
+        '''
+        reason_obj = self.pool.get('stock.reason.type')
+
+        new_args = []
+
+        for arg in args:
+            if arg[0] == 'reason_type_id' and arg[1] in ('=', 'in'):
+                new_arg = (arg[0], 'child_of', arg[2])
+            else:
+                new_arg = arg
+            new_args.append(new_arg)
+
+        return super(stock_picking, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
     def create(self, cr, uid, vals, context={}):
         '''
@@ -179,6 +196,23 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
 
         return super(stock_move, self).create(cr, uid, vals, context)
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
+        '''
+        Take into account all stock_picking with reason_type_id is a children
+        '''
+        reason_obj = self.pool.get('stock.reason.type')
+
+        new_args = []
+
+        for arg in args:
+            if arg[0] == 'reason_type_id' and arg[1] in ('=', 'in'):
+                new_arg = (arg[0], 'child_of', arg[2])
+            else:
+                new_arg = arg
+            new_args.append(new_arg)
+
+        return super(stock_move, self).search(cr, uid, new_args, offset=offset, limit=limit, order=order, context=context, count=False)
     
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),

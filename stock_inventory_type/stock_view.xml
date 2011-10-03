@@ -173,7 +173,8 @@
 
 			<xpath expr="/search/group[@string='Group By...']/filter[@string='Destination']" position="after">
                             <separator />
-                            <filter string="Adjustment Type" name="groupby_type_id" icon="terp-purchase" domain="[]" context="{'group_by':'type_id'}"/>
+                            <filter string="Adjustment Type" name="groupby_type_id" icon="terp-personal+" domain="[]" context="{'group_by':'type_id'}"/>
+                            <filter string="Reason Type" name="groupby_reason_type_id" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                         </xpath>
 		</data>
             </field>
