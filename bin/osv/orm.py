@@ -1988,6 +1988,9 @@ class orm_memory(orm_template):
             if isinstance(ids_orig, (int, long)):
                 return result[0]
         return result
+    
+    def copy_translations(self, cr, uid, old_id, new_id, context=None):
+        pass
 
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
