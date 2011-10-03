@@ -115,16 +115,22 @@
             <field name="arch" type="xml">
                 <search string="Procurment Requests">
                     <group string="Filters" expand="1">
-                        <filter name="state_proc" string="Procurement" icon="terp-document-new" domain="[('state', '=', 'procurement')]" />
-                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', '=', 'progress')]" />
+                        <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'procurement')]" />
+                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
                         <filter name="state_done" string="Done" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />
                         <field name="requestor" />
+			<field name="warehouse_id" />
                     </group>
+		    <newline />
                     <group string="Group By...">
                         <filter string="State" icon="terp-gtk-select-all" domain="[]" context="{'group_by': 'state'}" />
+			<separator orientation="vertical" />
+			<filter string="Requestor" icon="terp-personal" domain="[]" context="{'group_by': 'requestor'}" />
+			<separator orientation="vertical" />
+			<filter string="Warehouse" icon="terp-stock" domain="[]" context="{'group_by': 'warehouse_id'}" />
                     </group>
                 </search>
             </field>
@@ -153,7 +159,7 @@
             <field name="view_mode">tree</field>
             <field name="view_id" ref="procurement_request_tree_view" />
         </record>
-        
+	
         <menuitem action="action_procurement_request"
                   id="menu_procurement_request"
                   parent="base.menu_sales" />
