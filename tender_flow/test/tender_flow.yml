@@ -223,7 +223,8 @@
       # trigger the workflow
       import netsvc
       wf_service = netsvc.LocalService("workflow")
-      wf_service.trg_validate(uid, 'purchase.order', po.id, 'rfq_done', cr)
+      wf_service.trg_validate(uid, 'purchase.order', po.id, 'rfq_sent', cr)
+      wf_service.trg_validate(uid, 'purchase.order', po.id, 'rfq_updated', cr)
     
     # simulate the compare rfq wizard
     wiz_obj = self.pool.get('wizard.compare.rfq')
