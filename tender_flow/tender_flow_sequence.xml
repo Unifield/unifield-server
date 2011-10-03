@@ -2,7 +2,7 @@
 <openerp>
 	<data>
 	
-	    <!-- Sequences for sourcing.line -->
+	    <!-- Sequences for tender -->
         <record id="seq_type_tender" model="ir.sequence.type">
             <field name="name">Tender</field>
             <field name="code">tender</field>
@@ -12,6 +12,19 @@
             <field name="name">Tender</field>
             <field name="code">tender</field>
             <field name="prefix">T/</field>
+            <field name="padding">5</field>
+        </record>
+        
+	    <!-- Sequences for rfq -->
+        <record id="seq_type_rfq" model="ir.sequence.type">
+            <field name="name">RfQ</field>
+            <field name="code">rfq</field>
+        </record>
+
+        <record id="seq_rfq" model="ir.sequence">
+            <field name="name">RfQ</field>
+            <field name="code">rfq</field>
+            <field name="prefix">RfQ/</field>
             <field name="padding">5</field>
         </record>
 

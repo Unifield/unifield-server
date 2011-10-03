@@ -95,7 +95,8 @@ class tender(osv.osv):
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!'%supplier.name))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
+                values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
+                          'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
                           'location_id': tender.location_id.id,
@@ -421,12 +422,27 @@ class tender(osv.osv):
         
         the copy method is here because upwards it goes in infinite loop
         '''
+        line_obj = self.pool.get('tender.line')
         if default is None:
             default = {}
         
-        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'tender'), rfq_ids=[])
+        default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'tender'),
+                       rfq_ids=[],
+                       sale_order_line_id=False,)
             
         result = super(tender, self).copy(cr, uid, id, default, context)
+        
+        return result
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset the tender line
+        '''
+        result = super(tender, self).copy_data(cr, uid, id, default=default, context=context)
+        # reset the tender line
+        for line in result['tender_line_ids']:
+            line[2].update(sale_order_line_id=False,
+                           purchase_order_line_id=False,)
         return result
 
 tender()
