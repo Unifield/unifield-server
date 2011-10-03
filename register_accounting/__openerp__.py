@@ -64,6 +64,7 @@
         'test/direct_invoice.yml',
         'test/import_cheque_from_bank.yml',
         'test/wizard_register_creation.yml',
+        'test/import_invoice.yml',
     ],
     "installable": True,
     "active": False
