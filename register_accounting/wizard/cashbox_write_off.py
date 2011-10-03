@@ -130,7 +130,9 @@ class cashbox_write_off(osv.osv_memory):
                         account_debit_id = cashbox.journal_id.default_debit_account_id.id
                         account_credit_id = cashbox.journal_id.default_credit_account_id.id
                         currency_id = cashbox.currency.id
-                        analytic_account_id = cashbox.journal_id.analytic_journal_id.id
+                        # FIXME ! Right now, no account can be set by default;
+                        # later, it should be a analytic distribution
+                        analytic_account_id = False
                         # create an account move (a journal entry)
                         move_vals = {
                             'journal_id': journal_id,
