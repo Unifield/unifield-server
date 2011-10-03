@@ -52,7 +52,7 @@
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
     next_yearly = DateTime(2009, 10, 03)
     if (today().year-2009)%2 == 0:
-      if today().month < 10 or (today().month == 10 and today().day < 3):
+      if today().month < 10 or (today().month == 10 and today().day <= 3):
         assert next_date == DateTime(today().year, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of the current year"
       else:
         assert next_date == DateTime(today().year+2, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s"%(today().year+2,)

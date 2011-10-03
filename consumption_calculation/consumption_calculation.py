@@ -500,13 +500,13 @@ class product_product(osv.osv):
                 from_date_str = strptime(from_date, '%Y-%m-%d')
                 
                 date_diff = Age(to_date_str, from_date_str)
-                nb_months = date_diff.years*12 + date_diff.months + (date_diff.days/30)
+                nb_months = round(date_diff.years*12.0 + date_diff.months + (date_diff.days/30.0), 2)
                 
                 if not nb_months: nb_months = 1
                 
                 uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
                 res[id] = res[id]/nb_months
-                res[id] = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id)
+                res[id] = round(self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id), 2)
             
         return res
     
