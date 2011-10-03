@@ -23,7 +23,7 @@ except:
     import StringIO
 
 import logging
-import logging.config
+#import logging.config
 
 #logging.config.fileConfig('logging.cfg')
 

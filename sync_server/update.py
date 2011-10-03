@@ -21,54 +21,46 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
-from tools.translate import _
 import tools
-import time
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-import sync_server
 from tools.safe_eval import safe_eval as eval
-
 
 class update(osv.osv):
     """
-        States : to_send : need to be send to the server or the server ack still not receive
-                 sended : Ack for this update receive but session not ended
+        States : to_send : need to be sent to the server or the server ack still not received
+                 sended : Ack for this update received but session not ended
                  validated : ack for the session of the update received, this update can be deleted
     """
     _name = "sync.server.update"
     _rec_name = 'source'
-    
-    
 
     _columns = {
         'source': fields.many2one('sync.server.entity', string="Source Entity"), 
-        'model' : fields.char('Model', size=128, readonly=True),
-        'session_id' : fields.char('Session Id', size=128),
-        'sequence' : fields.integer('Sequence'),
-        'version' : fields.integer('Record Version'),
-        'rule_id' : fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null"),
-        'fields' : fields.text("Fields"),
-        'values' : fields.text("Values"),
+        'model': fields.char('Model', size=128, readonly=True),
+        'session_id': fields.char('Session Id', size=128),
+        'sequence': fields.integer('Sequence'),
+        'version': fields.integer('Record Version'),
+        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null"),
+        'fields': fields.text("Fields"),
+        'values': fields.text("Values"),
     }
     
-            
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
-            'source' : entity.id,
-            'model' : packet['model'],
-            'session_id' : packet['session_id'],
-            'rule_id' : packet['rule_id'],
-            'fields' : packet['fields']
+            'source': entity.id,
+            'model': packet['model'],
+            'session_id': packet['session_id'],
+            'rule_id': packet['rule_id'],
+            'fields': packet['fields']
         }
         
         server_ids = []
         for update in packet['load']:
             data.update({
-                'version' : update['version'],
-                'values' : update['values']
+                'version': update['version'],
+                'values': update['values']
             })
             ids = self.search(cr, uid, [('version', '=', data['version']), 
                                   ('session_id', '=', data['session_id']),
@@ -96,7 +88,6 @@ class update(osv.osv):
             return 0
         seq = self.browse(cr, uid, ids, context=context)[0].sequence
         return seq
-    
     
     def get_update_to_send(self,cr, uid, entity, update_ids, context=None):
         update_to_send = []
@@ -162,8 +153,6 @@ class update(osv.osv):
                 
         return fields
                 
-            
-          
     def set_forced_values(self, update, fields):
         if not update.rule_id.forced_values:
             return update.values
@@ -183,13 +172,10 @@ class update(osv.osv):
             val = forced_values.get(key)
             if val:
                 values.append(val)      
-        
+
         return tools.ustr(values)
-        
-               
-        
     
     _order = 'sequence asc, id asc'
     
-    
 update()
+

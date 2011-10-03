@@ -21,31 +21,23 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
-from tools.translate import _
-import tools
-import time
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-
-import sync_server
-from tools.safe_eval import safe_eval as eval
 
 def log(model, cr, uid, message, ids=False, data=False, context=None):
     #more complete log system
     print("Error : " + message)
     pp.pprint(data)
 
-
 class message(osv.osv):
     _name = "sync.server.message"
     _rec_name = 'identifier'
     
     _columns = {
-        'identifier' : fields.char('Identifier', size=128),
-        'sent' : fields.boolean('Sent to destination ?'),
-        'remote_call':fields.text('Method to call', required = True),
-        'arguments':fields.text('Arguments of the method', required = True), 
+        'identifier': fields.char('Identifier', size=128),
+        'sent': fields.boolean('Sent to destination ?'),
+        'remote_call': fields.text('Method to call', required = True),
+        'arguments': fields.text('Arguments of the method', required = True), 
         'destination': fields.many2one('sync.server.entity', string="Destination Entity"),
         'source': fields.many2one('sync.server.entity', string="Source Entity"), 
     }
@@ -62,13 +54,12 @@ class message(osv.osv):
                 log(self, cr, uid, 'Message %s already in the server database' % data['id'])
                 continue
             self.create(cr, uid, {
-                'identifier' : data['id'],
-                'remote_call' : data['call'],
-                'arguments' : data['args'],
-                'destination' : destination,
-                'source' : entity.id,
-                                  
-                                  }, context=context)
+                'identifier': data['id'],
+                'remote_call': data['call'],
+                'arguments': data['args'],
+                'destination': destination,
+                'source': entity.id,
+            }, context=context)
         return (True, "Message received")
     
     def _get_destination(self, cr, uid, dest, context=None):
@@ -86,7 +77,7 @@ class message(osv.osv):
         packet = []
         for data in self.browse(cr, uid, ids, context=context):
             message = {
-                'id' : data.identifier,
+                'id': data.identifier,
                 'call': data.remote_call,
                 'args': data.arguments, 
                 'source': data.source.name,
@@ -100,7 +91,6 @@ class message(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         return True
-        
         
 message()
     

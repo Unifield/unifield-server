@@ -365,8 +365,3 @@ class update_received(osv.osv):
     _order = 'id asc'
 update_received()
 
-
-
-
-
-

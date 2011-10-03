@@ -119,6 +119,8 @@ class entity(osv.osv):
         Push Update
     """
     def push_update(self, cr, uid, context=None):
+        if not context:
+            context = {}
         entity = self.get_entity(cr, uid, context)
         if not entity.state in ['init', 'update_send', 'update_validate']:
             return False
@@ -211,13 +213,11 @@ class entity(osv.osv):
         Pull update
     """
     def pull_update(self, cr, uid, context=None):
+        if not context:
+            context = {}
         entity = self.get_entity(cr, uid, context)
         if not entity.state in ['init', 'update_pull']:
             return False
-        #for test reinit
-        #self.write(cr, uid, entity.id, {'update_offset' : 0, 
-        #                                'max_update' : 0,
-        #                                'update_last' : 0 }, context=context) 
         try:
             if entity.state == 'init':
                 self.set_last_sequence(cr, uid, context)
@@ -276,6 +276,8 @@ class entity(osv.osv):
         Push message
     """
     def push_message(self, cr, uid, context=None):
+        if not context:
+            context = {}
         entity = self.get_entity(cr, uid, context)
         if not entity.state in ['init', 'msg_push']:
             return False
@@ -330,6 +332,8 @@ class entity(osv.osv):
         Pull message
     """
     def pull_message(self, cr, uid, context):
+        if not context:
+            context = {}
         entity = self.get_entity(cr, uid, context)
         if not entity.state in ['init']:
             return False

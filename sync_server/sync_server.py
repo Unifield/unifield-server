@@ -21,11 +21,8 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
-from tools.translate import _
 import uuid
 import tools
-import time
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -34,18 +31,18 @@ def check_validated(f):
         entity_pool = self.pool.get("sync.server.entity")
         id = entity_pool.get(cr, uid, uuid=uuid)
         if not id:
-            return (False, "Error : entity does not exist in the server database")
+            return (False, "Error: entity does not exist in the server database")
         entity = entity_pool.browse(cr, uid, id)[0]
         if entity.state == 'updated':
-            return (False, 'This entity has been updated and the update procedure has to be launch at your side') 
+            return (False, 'This entity has been updated and the update procedure has to be launched at your side')
         if not (entity.state == 'validated' and entity.user_id.id == uid):
-            return (False, "Error : entity is not validated by the parent yet")
+            return (False, "Error: entity has not been validated yet by the parent")
         return f(self, cr, uid, entity, *args, **kargs)
         
     return check
 
 class entity_group0(osv.osv):
-    """ OpenERP group of entities """    
+    """ OpenERP group of entities """
     _name = "sync.server.entity_group"
 entity_group0()
 
@@ -60,11 +57,11 @@ class group_type(osv.osv):
     _description = "Synchronization Entity Group Type"
 
     _columns = {
-        'name':fields.char('Type Name',size = 64, required = True),       
+        'name': fields.char('Type Name', size = 64, required = True),
     }
     
     #Check that the group type has an unique name
-    _sql_constraints = [('unique_name', 'unique(name)','Group type name must be unique')]
+    _sql_constraints = [('unique_name', 'unique(name)', 'Group type name must be unique')]
 group_type()
 
 class entity_group(osv.osv):
@@ -74,23 +71,23 @@ class entity_group(osv.osv):
     _description = "Synchronization Entity Group"
 
     _columns = {
-        'name':fields.char('Group Name',size = 64, required=True),
-        'entity_ids':fields.many2many('sync.server.entity','sync_entity_group_rel','group_id','entity_id', string="Entities"), 
-        'type_id':fields.many2one('sync.server.group_type','Group Type', ondelete="set null", required=True),        
+        'name': fields.char('Group Name', size = 64, required=True),
+        'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Entities"),
+        'type_id': fields.many2one('sync.server.group_type', 'Group Type', ondelete="set null", required=True),
     }
     
     def get_group_name(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         res = []
         for group in self.browse(cr, uid, ids, context=context):
-            res.append({'name' : group.name, 'type' : group.type_id.name})
+            res.append({'name': group.name, 'type': group.type_id.name})
         return res
      
     def get(self, cr, uid, name, context=None):
-        return self.search(cr, uid, [('name', '=', name)], context=context)       
+        return self.search(cr, uid, [('name', '=', name)], context=context)
     
     #Check that the group has an unique name
-    _sql_constraints = [('unique_name', 'unique(name)','Group name must be unique')]
+    _sql_constraints = [('unique_name', 'unique(name)', 'Group name must be unique')]
     
 entity_group()
 
@@ -100,13 +97,13 @@ class entity(osv.osv):
     _description = "Synchronization Entity"
 
     _columns = {
-        'name':fields.char('Entity Name',size=64, required=True),
-        'identifier':fields.char('Identifier',size=64,readonly=True), 
-        'parent_id':fields.many2one('sync.server.entity','Parent Entity',ondelete='set null',),      
-        'group_ids':fields.many2many('sync.server.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
-        'state' : fields.selection([('pending','Pending'),('validated','Validated'),('invalidated','Invalidated'), ('updated', 'Updated')], 'State'),
-        'email':fields.char('Contact Email',size=512),
-        'user_id': fields.many2one('res.users','User',ondelete='restrict', required=True),  
+        'name':fields.char('Entity Name', size=64, required=True),
+        'identifier':fields.char('Identifier', size=64, readonly=True),
+        'parent_id':fields.many2one('sync.server.entity', 'Parent Entity', ondelete='set null', ),
+        'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
+        'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),
+        'email':fields.char('Contact Email', size=512),
+        'user_id': fields.many2one('res.users', 'User', ondelete='restrict', required=True),
         
         #just in case, since the many2one exist it has no cost in database
         'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Entities'),
@@ -118,10 +115,7 @@ class entity(osv.osv):
     
     def _check_duplicate(self, cr, uid, name, uuid, context=None):
         duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|', ('name', '=', name), ('identifier', '=', uuid)], context=context)
-        if duplicate_id:
-            return True
-        else:
-            return False
+        return bool(duplicate_id)
         
     def _get_ancestor(self, cr, uid, id, context=None):
         def _get_ancestor_rec(entity, ancestor_list):
@@ -140,11 +134,9 @@ class entity(osv.osv):
                     child_list.append(child.id)
                     _get_children_rec(child, child_list)
             return child_list
+
         entity = self.browse(cr, uid, id, context=context)
-        return _get_children_rec(entity, [])     
-        
-    
-    
+        return _get_children_rec(entity, [])
     
     def _check_children(self, cr, uid, entity, uuid_list, context=None):
         children_ids = self._get_all_children(cr, uid, entity.id)
@@ -170,47 +162,46 @@ class entity(osv.osv):
     """
     def activate_entity(self, cr, uid, name, identifier, context=None):
         """
-            Allow to change uuid, 
+            Allow to change uuid,
             and reactivate the link between an local instance and his data on the server
         """
-        ids = self.search(cr, uid, [('user_id','=', uid), ('name', '=', name), ('state', '=', 'updated')], context=context)
+        ids = self.search(cr, uid, [('user_id', '=', uid), ('name', '=', name), ('state', '=', 'updated')], context=context)
         if not ids:
-            return (False, 'No entity match with this name')
+            return (False, 'No entity matches with this name')
         
         token = uuid.uuid4().hex
-        self.write(cr, 1, ids, {'identifier' : identifier, 'update_token' : token}, context=context)
+        self.write(cr, 1, ids, {'identifier': identifier, 'update_token': token}, context=context)
         entity = self.browse(cr, uid, ids, context=context)[0]
         groups = [group.name for group in entity.group_ids]
         data = {
-                'name' : entity.name,
+                'name': entity.name,
                 'parent': entity.parent_id.name,
-                'email' : entity.email,
-                'groups' : groups,
-                'security_token' : token
+                'email': entity.email,
+                'groups': groups,
+                'security_token': token,
         }
         return (True, data)
-        
     
-    def update(self, cr, uid, identifier,  context=None):
-        ids = self.search(cr, uid, [('identifier', '=' , identifier), ('user_id','=', uid), ('state', '=', 'updated')], context=context)
+    def update(self, cr, uid, identifier, context=None):
+        ids = self.search(cr, uid, [('identifier', '=' , identifier), ('user_id', '=', uid), ('state', '=', 'updated')], context=context)
         if not ids:
-            return (False, 'No udate is ready for your entity. If you cannot synchronize data, check that your parent has validated your registration')
+            return (False, 'No update is ready for your entity. If you cannot synchronize data, check that your parent has validated your registration')
         
         token = uuid.uuid4().hex
         self.write(cr, 1, ids, {'update_token' : token}, context=context)
         entity = self.browse(cr, uid, ids, context=context)[0]
         groups = [group.name for group in entity.group_ids]
         data = {
-                'name' : entity.name,
+                'name': entity.name,
                 'parent': entity.parent_id.name,
-                'email' : entity.email,
-                'groups' : groups,
-                'security_token' : token
+                'email': entity.email,
+                'groups': groups,
+                'security_token': token,
         }
         return (True, data)
     
-    def ack_update(self, cr,uid, uuid, token, context=None):
-        ids = self.search(cr, uid, [('identifier', '=' , uuid), ('user_id','=', uid), ('state', '=', 'updated'), ('update_token', '=', token)], context=context)
+    def ack_update(self, cr, uid, uuid, token, context=None):
+        ids = self.search(cr, uid, [('identifier', '=' , uuid), ('user_id', '=', uid), ('state', '=', 'updated'), ('update_token', '=', token)], context=context)
         if not ids:
             return (False, 'Ack not valid')
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
@@ -218,7 +209,7 @@ class entity(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         if not context:
-            context={}
+            context = {}
         update = context.get('update', False)
         
         if update:
@@ -228,14 +219,13 @@ class entity(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         if not context:
-            context={}
+            context = {}
         update = context.get('update', False)
         
         if update:
             vals['state'] = 'updated'
             
         return super(entity, self).create(cr, uid, vals, context=context)
-        
         
     def register(self, cr, uid, data, context=None):
         def get_parent(parent_name):
@@ -250,7 +240,7 @@ class entity(osv.osv):
                     group_id = self.pool.get('sync.server.entity_group').get(cr, uid, g_name, context)
                     if group_id:
                         groups.extend(group_id)
-                return [(6,0, groups)]
+                return [(6, 0, groups)]
             return False
         
         if self._check_duplicate(cr, uid, data['name'], data['identifier'], context=context):
@@ -261,7 +251,7 @@ class entity(osv.osv):
         parent_id = parent_id and parent_id[0] or False
         
         if parent_name and not parent_id:
-            return (False, "Parent does not exist please write an existing one")
+            return (False, "Parent does not exist, please choose an existing one")
         
         groups_names = data.pop('group_names')
         group_ids = get_groups(groups_names)
@@ -269,37 +259,32 @@ class entity(osv.osv):
         entity_id = self._get_entity_id(cr, uid, data['name'], data['identifier'], context=context)
         data.update({'group_ids' : group_ids, 'parent_id' : parent_id, 'user_id': uid, 'state' : 'pending'})
         if entity_id:
-            res = self.write(cr, 1,  [entity_id], data, context=context)
+            res = self.write(cr, 1, [entity_id], data, context=context)
             if res:
-                self._send_registration_email(cr, uid, data, groups_names, context=context)
-                return (True, "Modification successfully done, wait for parent validation")
+                #self._send_registration_email(cr, uid, data, groups_names, context=context)
+                return (True, "Modification successfully done, waiting for parent validation")
             else:
-                return (False, "Modification failed !")
+                return (False, "Modification failed!")
         else:
             res = self.create(cr, 1, data, context=context)
             if res:
-                self._send_registration_email(cr, uid, data, groups_names, context=context)
-                return (True, "Registration successfully done, wait for parent validation")
+                #self._send_registration_email(cr, uid, data, groups_names, context=context)
+                return (True, "Registration successfully done, waiting for parent validation")
             else:
-                return (False, "Registration failed !") 
+                return (False, "Registration failed!")
     
     @check_validated
     def get_children(self, cr, uid, entity, context=None):
-        """
-            @param uuid: the uuid of the entity that request it's own children
-            @return: the list of children entity of the entity with the given uuid
-                   An error is return if the enity doesn't exist or 
-        """
         res = []
         for child in self.browse(cr, uid, self._get_all_children(cr, uid, entity.id), context=context):
             data = {
-                    'name' : child.name,
-                    'identifier' : child.identifier,
-                    'parent' : child.parent_id.name,
-                    'email' : child.email,
-                    'state' : child.state,
-                    'group' : ', '.join([group.name for group in child.group_ids]),
-                    }
+                    'name': child.name,
+                    'identifier': child.identifier,
+                    'parent': child.parent_id.name,
+                    'email': child.email,
+                    'state': child.state,
+                    'group': ', '.join([group.name for group in child.group_ids]),
+            }
             res.append(data)
         
         return (True, res)
@@ -307,27 +292,27 @@ class entity(osv.osv):
     @check_validated
     def validate(self, cr, uid, entity, uuid_list, context=None):
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
-            return (False, "Error : One of the entity you want validate is not one of your children")
+            return (False, "Error: One of the entity you want to validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
-        self.write(cr, 1, ids_to_validate, {'state' : 'validated'}, context=context)
+        self.write(cr, 1, ids_to_validate, {'state': 'validated'}, context=context)
         self._send_validation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now validated" % ", ".join(uuid_list))
     
     @check_validated
     def invalidate(self, cr, uid, entity, uuid_list, context=None):
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
-            return (False, "Error : One of the entity you want validate is not one of your children")
+            return (False, "Error: One of the entity you want validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in', uuid_list)], context=context)
-        self.write(cr, 1, ids_to_validate, {'state' : 'invalidated'}, context=context)
+        self.write(cr, 1, ids_to_validate, {'state': 'invalidated'}, context=context)
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
         
     def validate_action(self, cr, uid, ids, context=None):
         if not context:
-            context={}
+            context = {}
             
         context['update'] = False
-        self.write(cr, uid, ids, {'state' : 'validated'}, context)  
+        self.write(cr, uid, ids, {'state': 'validated'}, context)
         return True
         
     def invalidate_action(self, cr, uid, ids, context=None):
@@ -335,7 +320,7 @@ class entity(osv.osv):
             context={}
             
         context['update'] = False
-        self.write(cr, uid, ids, {'state' : 'invalidated'}, context)  
+        self.write(cr, uid, ids, {'state': 'invalidated'}, context)
         return True
       
     def _send_registration_email(self, cr, uid, data, groups_name, context=None):
@@ -394,8 +379,6 @@ class entity(osv.osv):
                 "Your registration has been invalidated by your parent %s" % entity.name,
                 "you or your parent has been invalidated by a parent, if you need more information please contact them by mail at %s" % entity.email
         )
-        
-       
 
     def _check_recursion(self, cr, uid, ids, context=None):
         for id in ids:
@@ -425,10 +408,10 @@ class entity(osv.osv):
                 return False
 
         visited_branch.remove(id)
-        return True  
+        return True
     
     _constraints = [
-        (_check_recursion, 'Error ! You cannot create cycle in entities structure.', ['parent_id']),
+        (_check_recursion, 'Error! You cannot create cycle in entities structure.', ['parent_id']),
     ]
 entity()
 
@@ -437,8 +420,8 @@ class sync_manager(osv.osv):
     _name = "sync.server.sync_manager"
     
     
-    """ 
-        Data synchronization 
+    """
+        Data synchronization
     """
     
     @check_validated
@@ -446,7 +429,7 @@ class sync_manager(osv.osv):
         res = self.pool.get('sync_server.sync_rule')._get_rule(cr, uid, entity, context=context)
         return (True, self._generate_session_id(), res[1])
         
-    @check_validated  
+    @check_validated
     def receive_package(self, cr, uid, entity, packet, context=None):
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
@@ -457,7 +440,6 @@ class sync_manager(osv.osv):
     @check_validated
     def confirm_update(self, cr, uid, entity, session_id, context=None):
         return self.pool.get("sync.server.update").confirm_updates(cr, 1, entity, session_id, context=context)
-    
     
     @check_validated
     def get_max_sequence(self, cr, uid, entity, context=None):
@@ -491,13 +473,6 @@ class sync_manager(osv.osv):
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
         return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
-        
 
 sync_manager()
-
-
-
-
-
-
 

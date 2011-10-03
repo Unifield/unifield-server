@@ -213,7 +213,6 @@ class message_received(osv.osv):
                 log += tools.ustr(e)
                 print log
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
-                
         return True
             
     _order = 'id asc'

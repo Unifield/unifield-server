@@ -21,19 +21,12 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
-from tools.translate import _
-import tools
-import time
-
-import sync_server
 
 class sync_rule(osv.osv):
     """ Synchronization Rule """
 
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
-
 
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
@@ -45,20 +38,19 @@ class sync_rule(osv.osv):
                     ('bidirectional', 'Bidirectional'),],
                     'Directionality',required = True,),
         'domain':fields.text('Domain', required = False),
-        'sequence': fields.integer('Sequence', required = True),   
+        'sequence': fields.integer('Sequence', required = True),
         'included_fields':fields.text('Fields to include', required = True),
-        'forced_values':fields.text('Values to force', required = False), 
-        'fallback_values':fields.text('Fallback values', required = False), 
+        'forced_values':fields.text('Values to force', required = False),
+        'fallback_values':fields.text('Fallback values', required = False),
     }
         
     _order = 'sequence asc,model_id asc'
     
-    #TODO add a last update to send only rule that were updated before => problem of dates 
+    #TODO add a last update to send only rule that were updated before => problem of dates
     def _get_rule(self, cr, uid, entity, context=None):
         rules_ids = self._compute_rules_to_send(cr, uid, entity, context)
         return (True, self._serialize_rule(cr, uid, rules_ids, context))
         
-      
     def get_groups(self, cr, uid, ids, context=None):
         groups = []
         for entity in self.pool.get("sync.server.entity").browse(cr, uid, ids, context=context):
@@ -69,15 +61,15 @@ class sync_rule(osv.osv):
         ancestor_list = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context)
         return self.get_groups(cr, uid, ancestor_list, context=context)
         
-    def _get_children_groups(self, cr, uid, entity, context=None):  
+    def _get_children_groups(self, cr, uid, entity, context=None):
         children_list = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         return self.get_groups(cr, uid, children_list, context=context)
     
     def _get_rules_per_group(self, cr, uid, entity, context=None):
         rules_ids = {}
         for group in entity.group_ids:
-            domain = ['|', 
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False), 
+            domain = ['|',
+                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
                     '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
             ids = self.search(cr, uid, domain, context=context)
             if ids:
@@ -88,8 +80,8 @@ class sync_rule(osv.osv):
     def _get_group_per_rules(self, cr, uid, entity, context=None):
         group_ids = {}
         for group in entity.group_ids:
-            domain = ['|', 
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False), 
+            domain = ['|',
+                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
                     '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
             ids = self.search(cr, uid, domain, context=context)
             for i in ids:
@@ -109,7 +101,7 @@ class sync_rule(osv.osv):
         rules_to_send = []
         for group_id, rule_ids in rules_ids.items():
             for rule in self.browse(cr, uid, rule_ids):
-                if rule.direction == 'bidirectional': 
+                if rule.direction == 'bidirectional':
                     rules_to_send.append(rule.id)
                 elif rule.direction == 'up' and entity.parent_id: #got a parent in the same group
                     if group_id in ancestor_group:
@@ -127,7 +119,6 @@ class sync_rule(osv.osv):
             rules_to_send.extend(rule_ids)
                     
         return rules_to_send
-        
     
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
@@ -138,20 +129,18 @@ class sync_rule(osv.osv):
                     'model' : rule.model_id,
                     'domain' : rule.domain,
                     'sequence' : rule.sequence,
-                    'included_fields' : rule.included_fields
+                    'included_fields' : rule.included_fields,
             }
             rules_data.append(data)
         return rules_data
             
 sync_rule()
 
-
 class message_rule(osv.osv):
     """ Message creation rules """
 
     _name = "sync_server.message_rule"
     _description = "Message Rule"
-
 
     _columns = {
         'name': fields.char('Rule Name', size=64, required = True),
@@ -160,10 +149,10 @@ class message_rule(osv.osv):
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
         'domain': fields.text('Domain', required = False),
-        'sequence': fields.integer('Sequence', required = True),   
+        'sequence': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
-        'arguments': fields.text('Arguments of the method', required = True), 
-        'destination_name': fields.char('Fields to extract destination', size=256, required = True), 
+        'arguments': fields.text('Arguments of the method', required = True),
+        'destination_name': fields.char('Fields to extract destination', size=256, required = True),
     }
     
     def _get_message_rule(self, cr, uid, entity, context=None):
@@ -174,8 +163,8 @@ class message_rule(osv.osv):
     def _get_rules(self, cr, uid, entity, context=None):
         rules_ids = []
         for group in entity.group_ids:
-            domain = ['|', 
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False), 
+            domain = ['|',
+                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
                     '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
             ids = self.search(cr, uid, domain, context=context)
             if ids:
@@ -201,15 +190,5 @@ class message_rule(osv.osv):
         
     _order = 'sequence asc,model_id asc'
 
-
 message_rule()
-
-
-
-
-
-
-
-
-
 

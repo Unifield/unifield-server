@@ -75,9 +75,8 @@ XML_ID_TO_IGNORE = [
                 'main_company', 
                     ]
 
-from osv import osv,orm
+from osv import osv
 from osv import fields
-from tools.translate import _
 
 from osv.orm import *
 from datetime import datetime
@@ -86,7 +85,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 from tools.safe_eval import safe_eval as eval
-from tools.convert import xml_import
+
 class write_info(osv.osv):
     _name = 'sync.client.write_info'
     
@@ -170,9 +169,9 @@ class ir_model_data_sync(osv.osv):
                     'res_id' : values.get('res_id'),
                     }
             super(ir_model_data_sync, self).create(cr, uid, args, context=context)
-            
     
         return res_id
+
     def get(self, cr, uid, model, res_id, context=None):
         ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', res_id), ('module', '=', 'sd')], context=context)
         if ids:
@@ -277,7 +276,7 @@ def create(model,cr,uid,values,context=None):
     
     res_id = old_create(model,cr,uid,values,context=context)
     if sync_client_install(model) and (model._name not in MODELS_TO_IGNORE) and (not(context.get('no_model_data_line'))):
-        #link_with_ir_model(model, cr, uid, res_id, context=context)
+        link_with_ir_model(model, cr, uid, res_id, context=context)
         modif_o2m(model,cr,uid,res_id,values,context=context)
     
     return res_id

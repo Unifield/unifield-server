@@ -255,6 +255,7 @@ class TestSoToPo(TestMSFMessage):
         self.synchronize(client_host, client_port, 'msf_c2')
         self.synchronize(client_host, client_port, 'msf_p3')
         self.synchronize(client_host, client_port, 'msf_c2')
+
     def runTest(self):
         so5_name = 'SO%s' % uuid.uuid1().hex
         self.create_so(client_host, client_port, 'msf_c2', 'msf_p3', so5_name, 'm2_A21')
@@ -332,7 +333,6 @@ class ShippementConfirmation(TestMSFMessage):
         self.confirm_so(client_host, client_port, 'msf_c2', 'msf_p2.' + self.po2_name)
         self.synchronize(client_host, client_port, 'msf_c2')
         self.synchronize(client_host, client_port, 'msf_p2')
-        self.check_model_data(client_host, client_port, 'msf_p2', 'purchase.order', {'name' : self.po2_name, 'state' : 'approved'  })
 
     def runTest(self):
         self.confirm_shippements(client_host, client_port, 'msf_c2', 'msf_p2.' + self.po2_name)

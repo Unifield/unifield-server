@@ -2,18 +2,18 @@
 <openerp>
     <data>
 
-		<record model="ir.ui.view" id="sale_view_inherit1235">
+        <record model="ir.ui.view" id="sale_view_inherit1235">
             <field name="name">sale.order.inherit</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <field name="shipped" position="after">
-                	<field name="received"/>
+                    <field name="received"/>
                 </field>
             </field>
         </record>
-        
+
         <record model="ir.ui.view" id="purchase_view_inherit1235">
             <field name="name">purchase.order.inherit</field>
             <field name="model">purchase.order</field>
@@ -25,6 +25,6 @@
                 </field>
             </field>
         </record>
-        
+
     </data>
 </openerp>
