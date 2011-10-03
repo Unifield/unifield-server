@@ -20,7 +20,8 @@
 ##############################################################################
 
 import time
-
+from osv import osv
+from tools.translate import _
 from report import report_sxw
 
 class pre_packing_list(report_sxw.rml_parse):
@@ -30,6 +31,16 @@ class pre_packing_list(report_sxw.rml_parse):
             'time': time,
             'get_selection': self.get_selection,
         })
+        
+    def set_context(self, objects, data, ids, report_type=None):
+        '''
+        opening check
+        '''
+        for obj in objects:
+            if obj.subtype != 'ppl' or obj.state != 'done':
+                raise osv.except_osv(_('Warning !'), _('Pre-Packing List is only available for completed Pre-Packing List Objects!'))
+        
+        return super(pre_packing_list, self).set_context(objects, data, ids, report_type=report_type)
         
     def get_selection(self, o, field):
         """

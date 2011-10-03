@@ -52,9 +52,10 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         inv = self.browse(cr, uid, [id], context=context)[0]
-        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
-        if new_distrib_id:
-            default.update({'analytic_distribution_id': new_distrib_id})
+        if inv.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
 account_invoice()

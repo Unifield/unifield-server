@@ -20,7 +20,8 @@
 ##############################################################################
 
 import time
-
+from osv import osv
+from tools.translate import _
 from report import report_sxw
 
 class picking_ticket(report_sxw.rml_parse):
@@ -33,6 +34,16 @@ class picking_ticket(report_sxw.rml_parse):
             'cr': cr,
             'uid': uid,
         })
+        
+    def set_context(self, objects, data, ids, report_type=None):
+        '''
+        opening check
+        '''
+        for obj in objects:
+            if obj.subtype != 'picking' or obj.state == 'draft':
+                raise osv.except_osv(_('Warning !'), _('Picking Ticket is only available for Picking Ticket Objects!'))
+        
+        return super(picking_ticket, self).set_context(objects, data, ids, report_type=report_type)
         
     def get_selection(self, o, field):
         """

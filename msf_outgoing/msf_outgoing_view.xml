@@ -426,6 +426,8 @@
                             <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4"/>
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
+                            <field name="num_of_packs" />
+                            <field name="total_weight" />
                         </group>
                         <group colspan="2" col="2">
                             <field name="date"/>
@@ -860,6 +862,7 @@
                             <field name="date" readonly="True" />
                             <field name="transport_type" />
                             <field name="partner_id" readonly="1"/>
+                            <field name="backshipment_id" readonly="True" />
                         </group>
                         <group colspan="6" col="2">
                             <field name="address_id" readonly="1"/>
@@ -867,92 +870,52 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Pack Families">
-                            <field colspan="4" name="pack_family_ids" nolabel="1" widget="one2many_list">
+                        	<field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" readonly="True">
                                 <tree string="Pack Families">
                                     <field name="sale_order_id"/>
                                     <field name="ppl_id" />
                                     <field name="from_pack"/>
                                     <field name="to_pack"/>
+                                    <field name="num_of_packs" />
                                     <field name="pack_type"/>
                                     <field name="weight"/>
-                                    <field name="num_of_packs"/>
-                                    <field name="total_weight"/>
+                                    <field name="total_weight" />
+                                    <field name="amount" />
                                     <field name="total_amount" />
                                     <field name="currency_id" />
-                                    <field name="state"/>
+                                    <field name="location_id" />
+                                    <field name="location_dest_id" />
+                                    <field name="state" />
                                 </tree>
-                                <form string="Pack Families">
-                                    <field name="sale_order_id"/>
+                                <form>
+                                	<field name="sale_order_id"/>
                                     <field name="ppl_id" />
                                     <field name="from_pack"/>
                                     <field name="to_pack"/>
+                                    <field name="num_of_packs" />
                                     <field name="pack_type"/>
                                     <field name="weight"/>
-                                    <field name="num_of_packs"/>
-                                    <field name="total_weight"/>
-                                    <field name="state"/>
-                                    <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}">
-	                                	<tree colors="grey:scrapped==True" string="Stock Moves">
-		                                    <field name="product_id"/>
-		                                    <field name="asset_id" />
-		                                    <field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
-		                                    <field name="product_uom" string="UoM"/>
-		                                    <field name="product_uos" groups="product.group_uos"/>
-		                                    <field name="prodlot_id" string="Prod. Lot" groups="base.group_extended"/>
-		                                    <field name="location_id" string="Src. Loc" />
-		                                    <field name="location_dest_id" string="Dest. Loc" />
-		                                    <field name="qty_per_pack" />
-		                                    <field name="from_pack" />
-		                                    <field name="to_pack" />
-		                                    <field name="date"/>
-		                                    <field name="state"/>
-		                                </tree>
-		                                <form string="Stock Moves">
-		                                    <group colspan="2" col="4">
-		                                        <separator colspan="4" string="Move Information"/>
-		                                        <field name="name" invisible="1" colspan="4" />
-		                                        <field name="product_id" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
-		                                        <field name="asset_id" />
-		                                        <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
-		                                        <field name="product_uom" string="Unit Of Measure" colspan="4" />
-		                                        <field name="product_uos_qty" groups="product.group_uos" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-		                                        <field groups="product.group_uos" name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-		                                        <field groups="base.group_extended" name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
-		                                    </group>
-		
-		                                    <group colspan="2" col="2">
-		                                        <separator string="Locations" colspan="2" />
-		                                        <field name="location_id" domain="[('usage','=','internal')]" />
-		                                        <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
-		                                    </group>
-		
-		                                    <group colspan="2" col="2">
-		                                        <separator string="Dates" colspan="2" />
-		                                        <field name="create_date" invisible="1"/>
-		                                        <field name="date"/>
-		                                        <field name="date_expected"/>
-		                                    </group>
-		
-		                                    <group colspan="2" col="4" groups="base.group_extended">
-		                                        <separator string="Traceability" colspan="4" groups="base.group_extended"/>
-							<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                                <field name="type_id" />
-
-		                                        <field name="prodlot_id" groups="base.group_extended"
-		                                            context="{'location_id':location_id, 'product_id':product_id}"
-		                                            domain="[('product_id','=?',product_id)]"
-		                                            on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"/>
-		                                    </group>
-		                                    <label string="" colspan="4"/>
-		                                    <field name="state"/>
-		                                    <group col="4" colspan="2">
-		                                        <button name="action_cancel" states="assigned" string="Cancel Move" type="object" icon="gtk-cancel"/>
-		                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
-		                                        <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-		                                        <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
-		                                    </group>
-		                                </form>
-		                            </field>
+                                    <field name="total_weight" />
+                                    <field name="amount" />
+                                    <field name="total_amount" />
+                                    <field name="currency_id" />
+                                    <field name="location_id" />
+                                    <field name="location_dest_id" />
+                                    <field name="state" />
+                                	<field name="move_lines" nolabel="True" colspan="4">
+                                		<tree editable="bottom">
+                                			<field name="name" />
+                                			<field name="origin" />
+                                			<field name="product_id" />
+                                			<field name="prodlot_id" />
+                                			<field name="expired_date" />
+                                			<field name="product_qty" />
+                                			<field name="product_uom" />
+                                			<field name="location_id" />
+                                			<field name="location_dest_id" />
+                                			<field name="state" />
+                                		</tree>
+                                	</field>
                                 </form>
                             </field>
                             <group col="12" colspan="4">
@@ -963,8 +926,6 @@
                                 <button name="ship" states="packed" string="Ship" type="object" groups="base.group_extended" icon="gtk-redo" />
                                 <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
                                 <button name="validate" states="shipped" string="Validate" type="object" groups="base.group_extended" icon="gtk-apply" />
-                                <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Document Information">
@@ -1064,6 +1025,21 @@
             <field name="act_window_id" ref="action_shipment"/>
         </record>
         <menuitem action="action_shipment" id="menu_action_shipment" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
+        
+        <!-- 
+        <record id="action_create_shipment_wizard" model="ir.actions.act_window">
+            <field name="name">Create Packing List</field>
+            <field name="res_model">shipment.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{'step':'create',}</field>
+        </record>
+        
+        <menuitem action="action_create_shipment_wizard"
+                  id="menu_create_shipment"
+                  parent="stock.menu_stock_warehouse_mgmt" />
+         -->
     
     </data>
 </openerp>

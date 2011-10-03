@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- delete packing list original report -->
+    	<delete model="ir.actions.report.xml" id="stock.report_picking_list"/>
+    	
     	<!-- shipment -->
         <report auto="False" 
                 id="report_pro_forma_invoice" 

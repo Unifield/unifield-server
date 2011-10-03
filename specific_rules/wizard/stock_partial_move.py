@@ -26,6 +26,28 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        if a production lot is specified and the expired date is empty, fill the expired date in
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        
+        if vals.get('prodlot_id', False) and not vals.get('expiry_date', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prodlot_id'), context=context).life_date)
+        
+        return super(stock_partial_move_memory_out, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        if a production lot is specified and the expired date is empty, fill the expired date in
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        
+        if vals.get('prodlot_id', False) and not vals.get('expiry_date', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prodlot_id'), context=context).life_date)
+        
+        return super(stock_partial_move_memory_out, self).write(cr, uid, ids, vals, context=context)
+    
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
