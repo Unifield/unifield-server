@@ -20,8 +20,8 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
             <field name="arch" type="xml">
-                <field name="priority" position="after">
-                	<field name="sended_by_supplier"/>
+                <field name="shipped" position="after">
+                    <field name="sended_by_supplier"/>
                 </field>
             </field>
         </record>

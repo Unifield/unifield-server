@@ -425,9 +425,9 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
             return row_name and row_name[0] and row_name[0][1] or ''
                
         def export_list(field, record_list, json_list):
-            if not json_list: #if the list was not create before
-                json_list = [{}] * len(record_list)
-                
+            if not json_list: #if the list was not created before
+                json_list = [{} for i in record_list]
+
             for i in xrange(0, len(record_list)):
                 if len(field) > 1:
                     if not record_list[i]:
@@ -435,6 +435,7 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
                     json_list[i] = export_field(field[1:], record_list[i], json_list[i])
                 else:
                     json_list[i] = get_name(record_list[i]) 
+
             return json_list
         
         def export_relation(field, record, json):
