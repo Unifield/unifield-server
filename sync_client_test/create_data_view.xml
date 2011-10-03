@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data> 
+	 	<record model="ir.ui.view" id="create_record_wizard_view">
+	        <field name="name">sync.client.test.create_data_wiz</field>
+	        <field name="model">sync.client.test.create_data</field>
+	        <field name="type">form</field>
+	        <field name="arch" type="xml">  
+	        	<form string="Create Test Records" col="4" >
+	        		<field name="nb" />
+	        		<field name="partner_name" />
+	        		<newline />
+	        		<button type="object" string="Create Partners" name="create_partner" icon="gtk-ok" />
+	        	</form>
+	   		</field>
+	   	</record>   
+	   	
+    	<record model="ir.actions.act_window" id="sync_test_create_action">
+	            <field name="name">Create Records</field>
+	            <field name="res_model">sync.client.test.create_data</field>
+	            <field name="view_type">form</field>
+	            <field name="view_mode">form</field>
+	            <field name="target">new</field>
+	  	</record>
+	   	<menuitem name="Test" parent="sync_client.sync_menu"
+	            id="sync_test_menu" /> 
+	            
+	    <menuitem name="Create Records" parent="sync_test_menu"
+	            id="sync_create_menu"
+	            action="sync_test_create_action"/> 
+	            
+            
+    </data>
+</openerp>
