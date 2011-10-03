@@ -51,6 +51,8 @@ class procurement_request(osv.osv):
         '''
         Returns the procurement request search view instead of default sale order search view
         '''
+        if not context:
+            context = {}
         if view_type == 'search' and context.get('procurement_request') and not view_id:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_search_view')[1]
 
