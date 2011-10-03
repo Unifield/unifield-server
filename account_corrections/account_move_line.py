@@ -235,19 +235,20 @@ receivable, item have not been corrected, item have not been reversed and accoun
             domain_ids = ids
         # Create domain
         domain = [('id', 'in', flatten(domain_ids)), ('reversal', '=', False)]
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
         # Display the result
         return {
             'name': "History Move Line",
             'type': 'ir.actions.act_window',
             'res_model': 'account.move.line',
             'target': 'new',
-            'view_mode': 'form,tree',
-            'view_type': 'tree',
-            'context':
-            {
-                'active_id': ids[0],
-                'active_ids': ids,
-            },
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'context': context,
             'domain': domain,
         }
         return True

@@ -50,14 +50,9 @@ class register_creation_lines(osv.osv_memory):
         'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
-        'to_create': fields.boolean("Create it?", help="Tick the box if this register have to be created."),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement", 
             required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
-    }
-
-    _defaults = {
-        'to_create': lambda *a: True,
     }
 
 register_creation_lines()
@@ -148,8 +143,6 @@ class register_creation(osv.osv_memory):
                         }
                         reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
                         reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
-                        if reg_id and not reg.prev_reg_id:
-                            reg_to_create_obj.write(cr, uid, [reg_id], {'to_create': False,}, context=context)
         # Delete lines that have no previous_register_id
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
@@ -190,23 +183,22 @@ class register_creation(osv.osv_memory):
         abs_obj = self.pool.get('account.bank.statement')
         wiz_register_lines_obj = self.pool.get('wizard.register.creation.lines')
         for new_reg in wizard.new_register_ids:
-            if new_reg.to_create:
-                # Shared values
-                reg_vals = {
-                    'date': curr_time,
-                    'period_id': new_reg.period_id.id,
-                }
-                if new_reg.prev_reg_id:
-                    reg_vals.update({
-                        'journal_id': new_reg.prev_reg_id.journal_id.id,
-                        'prev_reg_id': new_reg.prev_reg_id.id,
-                    })
-                    # FIXME: search old caracteristics from previous register
-                # Create the register
-                reg_id = abs_obj.create(cr, uid, reg_vals, context=context)
-                if reg_id:
-                    registers.append(reg_id)
-                    wiz_register_lines_obj.unlink(cr, uid, [new_reg.id], context=context)
+            # Shared values
+            reg_vals = {
+                'date': curr_time,
+                'period_id': new_reg.period_id.id,
+            }
+            if new_reg.prev_reg_id:
+                reg_vals.update({
+                    'journal_id': new_reg.prev_reg_id.journal_id.id,
+                    'prev_reg_id': new_reg.prev_reg_id.id,
+                })
+                # FIXME: search old caracteristics from previous register
+            # Create the register
+            reg_id = abs_obj.create(cr, uid, reg_vals, context=context)
+            if reg_id:
+                registers.append(reg_id)
+                wiz_register_lines_obj.unlink(cr, uid, [new_reg.id], context=context)
         if registers:
             abs_obj.log(cr, uid, registers[0], '%s register(s) created for period %s' % (len(registers), wizard.period_id.name))
             return open_register_view(self, cr, uid, registers[0])
