@@ -23,7 +23,7 @@
     next_yearly = today() + RelativeDate(years=+2,day=3, month=3)
     assert next_date == next_yearly, "Next date is not March, the 3rd of year+2"
 -
-  Change the start date to October the 3rd.
+  Change the start date to today
 -
   !record {model: stock.frequence, id: yearly1}:
     start_date: 2009-01-01
@@ -36,7 +36,6 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
-    assert (today().year-2009)%2 == 0, 'Next date is not multiple of 2'
     assert next_date.month == today().month and next_date.day == today().day, 'Next date is not March, the 3rd (2)'
 -
   Change the choose month to October
@@ -50,14 +49,7 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly1')).next_date)
-    next_yearly = DateTime(2009, 10, 03)
-    if (today().year-2009)%2 == 0:
-      if today().month < 10 or (today().month == 10 and today().day <= 3):
-        assert next_date == DateTime(today().year, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of the current year"
-      else:
-        assert next_date == DateTime(today().year+2, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s"%(today().year+2,)
-    else:
-      assert next_date == DateTime(today().year+1, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s"%(today().year+1,)
+    assert next_date == DateTime(today().year+2, 10, 3) and next_date >= today(), "Next date is not October, the 3rd of %s"%(today().year+2,)
 -
   Second yearly test
 -
@@ -121,7 +113,11 @@
   !python {model: stock.frequence}: |
     from mx.DateTime import *
     next_date = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).next_date)
-    assert (today().year-2009)%2 == 0, 'Next date is not multiple of 2'
+    last_run = Parser.DateFromString(self.browse(cr, uid, ref('yearly3')).last_run)
+    if (now() - last_run).days > 730:
+      assert (next_date.year-today().year) == 0, 'Next date is not today'
+    else:
+      assert (next_date.year-2009)%2 == 0, 'Next date is not multiple of 2'
     assert next_date.month == today().month and next_date.day == today().day, 'Next date is not March, the 3rd (2)'
 -
   Change the choose month to October
