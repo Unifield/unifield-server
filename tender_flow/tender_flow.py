@@ -146,13 +146,19 @@ class tender(osv.osv):
             for rfq in tender.rfq_ids:
                 if rfq.state not in ('rfq_updated', 'cancel',):
                     rfq_list.append(rfq.id)
+                else:
+                    wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_done', cr)
                 
             # if some rfq have wrong state, we display a message
             if rfq_list:
-                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Done or Canceled."))
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Canceled."))
+            
+            # integrity check, all lines must have purchase_order_line_id
+            if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids]):
+                raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
         
         # update product supplierinfo and pricelist
-        self.update_supplier_info(cr, uid, ids, context=context)
+        self.update_supplier_info(cr, uid, ids, context=context, integrity_test=False,)
         # change tender state
         self.write(cr, uid, ids, {'state':'done'}, context=context)
         return True
@@ -198,17 +204,20 @@ class tender(osv.osv):
             action = wiz_obj.start_compare_rfq(cr, uid, ids, context=c)
         return action
     
-    def update_supplier_info(self, cr, uid, ids, context=None):
+    def update_supplier_info(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         update the supplier info of corresponding products
         '''
         info_obj = self.pool.get('product.supplierinfo')
         pricelist_info_obj = self.pool.get('pricelist.partnerinfo')
+        # integrity check flag
+        integrity_test = kwargs.get('integrity_test', False)
         for tender in self.browse(cr, uid, ids, context=context):
             # flag if at least one update
             updated = False
             # check if corresponding rfqs are in the good state
-            self.tender_integrity(cr, uid, tender, context=context)
+            if integrity_test:
+                self.tender_integrity(cr, uid, tender, context=context)
             for line in tender.tender_line_ids:
                 # if a supplier has been selected
                 if line.purchase_order_line_id:

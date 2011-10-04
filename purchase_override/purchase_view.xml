@@ -53,7 +53,7 @@
                         <field name="origin" />
                     </field>
                     <filter name="draft" position="replace">
-                        <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state', 'in', ('draft', 'rfq_done'))]" separator="1" help="Purchase order which are in draft state"/>
+                        <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state', 'in', ('draft', 'rfq_done', 'rfq_sent', 'rfq_updated',))]" separator="1" help="Purchase order which are in draft state"/>
                     </filter>
                     <xpath expr="/search/group/field[@name='create_uid']" position="after">
                     <newline />
