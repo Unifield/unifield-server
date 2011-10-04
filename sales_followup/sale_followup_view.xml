@@ -46,8 +46,11 @@
 	                    </tree>
                     </field>
                     <separator colspan="4" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-                    <button name="switch_progress" string="Switch to progress view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    <group colspan="4" col="6">
+	                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+	                    <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+	                    <button name="switch_progress" string="Switch to progress view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -82,8 +85,11 @@
                         </tree>
                     </field>
                     <separator colspan="4" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-                    <button name="switch_documents" string="Switch to documents view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    <group colspan="4" col="6">
+	                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+	                    <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+	                    <button name="switch_documents" string="Switch to documents view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -151,6 +157,33 @@
                 </form>
             </field>
         </record>
+        
+        <record id="sale_order_followup_from_menu" model="ir.ui.view">
+        	<field name="name">sale.order.followup.from.menu</field>
+        	<field name="model">sale.order.followup.from.menu</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Choose a Sale Order">
+        			<separator colspan="4" string="Select Sale Order" />
+        			<field name="order_id" />
+        			<separator colspan="4" string="Actions" />
+        			<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
+        			<button name="go_to_followup" string="Go to followup" icon="gtk-execute" colspan="2" type="object"/>
+        		</form>
+        	</field>
+        </record>
+        
+        <record id="action_sale_order_followup_from_menu" model="ir.actions.act_window">
+        	<field name="name">Sale Order Follow-Up</field>
+        	<field name="res_model">sale.order.followup.from.menu</field>
+        	<field name="view_type">form</field>
+        	<field name="view_mode">form</field>
+        	<field name="target">new</field>
+        </record>
+        
+        <menuitem id="sale_order_followup_from_menu"
+        	  action="action_sale_order_followup_from_menu"
+        	  parent="base.next_id_64" />
     
     </data>
 </openerp>
