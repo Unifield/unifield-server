@@ -447,3 +447,91 @@ class sale_order_followup_from_menu(osv.osv_memory):
         return self.pool.get('sale.order.followup').start_order_followup(cr, uid, ids, context=new_context)
             
 sale_order_followup_from_menu()
+
+
+class tender(osv.osv):
+    _name = 'tender'
+    _inherit = 'tender'
+    
+    def go_to_tender_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'tender',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+tender()
+
+
+class purchase_order(osv.osv):
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
+    
+    def go_to_po_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+purchase_order()
+
+
+class request_for_quotation(osv.osv):
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
+    
+    def go_to_rfq_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+request_for_quotation()
+
+
+class stock_move(osv.osv):
+    _name = 'stock.move'
+    _inherit = 'stock.move'
+    
+    def go_to_incoming_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_move_form_reception_picking')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+        
+    def go_to_outgoing_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_move_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+stock_move()
