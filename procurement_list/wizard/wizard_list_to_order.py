@@ -43,7 +43,7 @@ class wizard_list_to_order(wizard.interface):
                 'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
-                'domain': [('state', 'not in', ('draft', 'rfq_done', 'rfq_sent', 'rfq_updated',)), ('id', 'in', order_ids)],
+                'domain': [('state', '!=', 'draft'), ('id', 'in', order_ids)],
                }
 
     states = {
