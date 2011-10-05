@@ -297,8 +297,8 @@
             <field name="arch" type="xml">
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
-                        <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
-                    </xpath>
+                        	<attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                    	</xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
                             <field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
@@ -310,7 +310,7 @@
                        </xpath>
 
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
-                                <field name="location_dest_id" domain="[('usage','=','internal')]" on_change="location_dest_change(location_dest_id)" />
+                                <field name="location_dest_id" domain="[('usage','in',('internal', 'inventory', 'procurement', 'production'))]" on_change="location_dest_change(location_dest_id)" />
                         </xpath>
 
                </data>
