@@ -21,3 +21,7 @@
     partner = self.browse(cr, uid, ref("res_partner_a0"))
     
     assert int(partner.default_delay) == (3+2), "default delay wrong : %s"%partner.default_delay
+    
+    air_delay = self.get_transport_lead_time(cr, uid, [partner.id], 'air', context=context)
+    air_delay = air_delay[partner.id]
+    assert air_delay == 3, 'air delay is wrong - 3 - %s'%air_delay
