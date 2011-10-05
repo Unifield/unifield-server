@@ -111,7 +111,7 @@ class res_partner(osv.osv):
     
     def on_change_lead_time(self, cr, uid, ids, transport_0_lt, procurement_lt, context=None):
         '''
-        
+        change supplier_lt and customer_lt according to preferred lead time and internal lead time
         '''
         return {'value': {'supplier_lt': transport_0_lt + procurement_lt,
                           'customer_lt': transport_0_lt + procurement_lt}}
