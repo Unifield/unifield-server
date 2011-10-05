@@ -139,7 +139,7 @@ class account_invoice_line(osv.osv):
             else:
                 obj_name = 'account.invoice'
             invoice_obj = self.pool.get(obj_name).browse(cr, uid, vals['invoice_id'], context=context)
-            if invoice_obj.analytic_distribution_id:
+            if invoice_obj.analytic_distribution_id and not vals.get('analytic_distribution_id'):
                 child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
                 vals['analytic_distribution_id'] = child_distrib_id
                 res_id =  super(account_invoice_line, self).create(cr, uid, vals, context=context)

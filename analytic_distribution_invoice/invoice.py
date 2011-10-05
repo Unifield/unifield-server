@@ -61,6 +61,16 @@ class account_invoice(osv.osv):
         res.append('analytic_distribution_id')
         return res
 
+    def _hook_refund_data(self, cr, uid, data, *args):
+        """
+        Delete analytic distribution for refund invoice
+        """
+        if not data:
+            return False
+        if 'analytic_distribution_id' in data:
+            data['analytic_distribution_id'] = False
+        return data
+
     def _refund_cleanup_lines(self, cr, uid, lines):
         """
         Add right analytic distribution values on each lines
@@ -70,11 +80,24 @@ class account_invoice(osv.osv):
             if el[2]:
                 # Give analytic distribution on line
                 if 'analytic_distribution_id' in el[2]:
-                    el[2]['analytic_distribution_id'] = el[2].get('analytic_distribution_id')[0]
-                # Give right analytic lines for 'line'
+                    el[2]['new_distribution_id'] = el[2].get('analytic_distribution_id') and el[2].get('analytic_distribution_id')[0]
+                    # default value
+                    el[2]['analytic_distribution_id'] = False
+                # Give false analytic lines for 'line' in order not to give an error
                 if 'analytic_line_ids' in el[2]:
-                    el[2]['analytic_line_ids'] = [(6,0, el[2].get('analytic_line_ids', [])) ]
+                    el[2]['analytic_line_ids'] = False
         return res
+
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
+        """
+        Reverse lines for given invoice (that are not from an engagement journal)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids):
+            ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
+            self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
+        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
 
     def copy(self, cr, uid, id, default={}, context={}):
         """
