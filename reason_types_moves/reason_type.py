@@ -68,6 +68,20 @@ class stock_reason_type(osv.osv):
         
         return res
     
+    def _get_inventory(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns if the type will be present in inventory line
+        '''
+        res = {}
+        
+        for type in self.browse(cr, uid, ids, context=context):
+            tmp_type = type
+            while tmp_type.parent_id:
+                tmp_type = tmp_type.parent_id
+            res[type.id] = tmp_type.inventory_ok
+            
+        return res
+    
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -92,6 +106,9 @@ class stock_reason_type(osv.osv):
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
+        'inventory_ok': fields.boolean(string='Inventory type', help='If checked, this reason type will be available in inventory line'),
+        'is_inventory': fields.function(_get_inventory, method=True, type='boolean', string='Inventory type', 
+                                        readonly=True, help='If checked, this reason type will be available in inventory line'),
     }
     
 stock_reason_type()
