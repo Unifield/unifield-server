@@ -9,12 +9,8 @@
     supplier: true
     customer_lt: 1
     procurement_lt: 2
-    transport_by_air_lt: 3
-    air_sequence: 1
-    transport_by_sea_lt: 4
-    sea_sequence: 2
-    transport_by_road_lt: 5
-    road_sequence: 3
+    transport_0_lt: 3
+    transport_0: 'air'
     
 - 
   Creating a res.partner.address record
