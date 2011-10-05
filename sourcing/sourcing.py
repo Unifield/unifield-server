@@ -659,6 +659,27 @@ class procurement_order(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
     
+    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        if a purchase order for the same supplier and the same requested date,
+        don't create a new one
+        '''
+        po_obj = self.pool.get('purchase.order')
+        procurement = kwargs['procurement']
+        values = kwargs['values']
+        
+        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft')], context=context)
+            # TODO: Waiting order dates improvements
+            #('delivery_requested_date', '=', values['order_line'][0][2].get('date_planned'))], context=context)
+        if purchase_ids:
+            line_values = values['order_line'][0][2]
+            line_values.update({'order_id': purchase_ids[0]})
+            self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
+            return purchase_ids[0]
+        else:
+            purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
+            return purchase_id
+    
     def write(self, cr, uid, ids, vals, context=None):
         '''
         override for workflow modification
