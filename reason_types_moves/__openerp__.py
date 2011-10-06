@@ -38,6 +38,7 @@ stock moves.
     ],
     "update_xml": [
         "reason_type_view.xml",
+        "stock_view.xml",
         "reason_type_data.xml",
         "security/ir.model.access.csv",
     ],

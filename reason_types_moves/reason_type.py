@@ -113,6 +113,17 @@ class stock_reason_type(osv.osv):
     
 stock_reason_type()
 
+class stock_inventory_line(osv.osv):
+    _name = 'stock.inventory.line'
+    _inherit = 'stock.inventory.line'
+
+    _columns = {
+        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type'),
+        'comment': fields.char(size=128, string='Comment'),
+    }
+
+stock_inventory_line()
+
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
@@ -233,6 +244,7 @@ class stock_move(osv.osv):
     
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
+        'comment': fields.char(size=128, string='Comment'),
     }
     
     _defaults = {

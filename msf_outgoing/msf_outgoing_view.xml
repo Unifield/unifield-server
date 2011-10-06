@@ -223,7 +223,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
                                             domain="[('product_id','=?',product_id)]"
@@ -484,7 +483,6 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
@@ -713,7 +711,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                                <field name="type_id" />
 
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
