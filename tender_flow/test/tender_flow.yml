@@ -259,6 +259,10 @@
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
     
+    # all rfqs must be rfq_done
+    for rfq in tender.rfq_ids:
+      assert rfq.state == 'rfq_done', 'the state of the rfq is not rfq_done : done - %s'%rfq.state
+       
     # the final po must have state = 'confirmed'
     po_obj = self.pool.get('purchase.order')
     so_obj = self.pool.get('sale.order')
