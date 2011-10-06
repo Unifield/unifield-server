@@ -89,14 +89,15 @@ class stock_reason_type(osv.osv):
         res = []
         
         for arg in args:
-            if arg[0] == 'is_inventory' and arg[1] == '=' and arg[2] in ('true', 'True', '1'):
+            if arg[0] == 'is_inventory' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
                 inv_ids = self.search(cr, uid, [('inventory_ok', '=', True)], context=context)
                 res_ids = inv_ids
                 while inv_ids:
                     inv_ids = self.search(cr, uid, [('parent_id', 'in', inv_ids)], context=context)
                     res_ids.extend(inv_ids)
+                res = [('id', 'in', res_ids)] 
                     
-        return [('id', 'in', res_ids)]
+        return res
                 
     
     def name_get(self, cr, uid, ids, context=None):
@@ -124,7 +125,8 @@ class stock_reason_type(osv.osv):
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
         'inventory_ok': fields.boolean(string='Inventory type', help='If checked, this reason type will be available in inventory line'),
-        'is_inventory': fields.function(_get_inventory, method=True, type='boolean', string='Inventory type', 
+        'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory, 
+                                        method=True, type='boolean', string='Inventory type', 
                                         readonly=True, help='If checked, this reason type will be available in inventory line'),
     }
     
