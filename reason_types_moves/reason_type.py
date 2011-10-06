@@ -118,11 +118,54 @@ class stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
 
     _columns = {
-        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type'),
+        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True),
         'comment': fields.char(size=128, string='Comment'),
     }
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['reason_type_id']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for stock.picking')
+                vals.update(self.pool.get('stock.picking')._get_default_reason(cr, uid, context))
+        return super(stock_inventory_line, self).create(cr, uid, vals, context)
 
 stock_inventory_line()
+
+class stock_inventory(osv.osv):
+    _name = 'stock.inventory'
+    _inherit = 'stock.inventory'
+
+    # @@@override@ stock.stock_inventory._inventory_line_hook()
+    def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
+        """ Creates a stock move from an inventory line
+        @param inventory_line:
+        @param move_vals:
+        @return:
+        """
+        location_obj = self.pool.get('stock.location')
+
+        # Copy the comment
+        move_vals.update({
+            'comment': inventory_line.comment,
+            'reason_type_id': inventory_line.reason_type_id.id,
+        })
+
+        return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
+        # @@@end
+
+stock_inventory()
+
 
 
 class stock_picking(osv.osv):
