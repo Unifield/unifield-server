@@ -82,6 +82,23 @@ class stock_reason_type(osv.osv):
             
         return res
     
+    def _search_inventory(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns the ids of all reason type which are displayed in inventory line
+        '''
+        res = []
+        
+        for arg in args:
+            if arg[0] == 'is_inventory' and arg[1] == '=' and arg[2] in ('true', 'True', '1'):
+                inv_ids = self.search(cr, uid, [('inventory_ok', '=', True)], context=context)
+                res_ids = inv_ids
+                while inv_ids:
+                    inv_ids = self.search(cr, uid, [('parent_id', 'in', inv_ids)], context=context)
+                    res_ids.extend(inv_ids)
+                    
+        return [('id', 'in', res_ids)]
+                
+    
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
