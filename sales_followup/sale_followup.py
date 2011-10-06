@@ -64,7 +64,7 @@ class sale_order_followup(osv.osv_memory):
     }
     
     _defaults = {
-        'choose_type': lambda *a: 'documents',
+        'choose_type': lambda *a: 'progress',
     }
     
     def go_to_view(self, cr, uid, ids, context={}):
@@ -83,7 +83,7 @@ class sale_order_followup(osv.osv_memory):
                 'view_id': [view_id],
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'new'}
+                'target': 'dummy'}
         
     def switch_documents(self, cr, uid, ids, context={}):
         '''
@@ -101,7 +101,35 @@ class sale_order_followup(osv.osv_memory):
         
         return self.go_to_view(cr, uid, ids, context=context)
     
+    def update_followup(self, cr, uid, ids, context={}):
+        '''
+        Updates data in followup view
+        '''
+        new_context = context.copy()
+        
+        # Get information of the old followup before deletion
+        for followup in self.browse(cr, uid, ids, context=new_context):
+            new_context['active_ids'] = [followup.order_id.id]
+            new_context['view_type'] = followup.choose_type
+        
+        # Get the id of the new followup object
+        result = self.start_order_followup(cr, uid, ids, context=new_context).get('res_id')
+        if not result:
+            raise osv.except_osv(_('Error'), _('No followup found ! Cannot update !'))
+        else:        
+            # Remove the old followup object and all his lines (on delete cascade)
+            self.unlink(cr, uid, ids, context=new_context)
+            
+        # Returns the same view as before
+        if new_context.get('view_type') == 'documents':
+            return self.switch_documents(cr, uid, [result], context=new_context)
+        else:
+            return self.switch_progress(cr, uid, [result], context=new_context)
+    
     def start_order_followup(self, cr, uid, ids, context={}):
+        '''
+        Creates and display a followup object
+        '''
         order_obj = self.pool.get('sale.order')
         line_obj = self.pool.get('sale.order.line.followup')
         
@@ -140,8 +168,7 @@ class sale_order_followup(osv.osv_memory):
                 'res_id': followup_id,
                 'view_id': [view_id],
                 'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new'}
+                'view_mode': 'form',}
         
     def get_purchase_ids(self, cr, uid, line_id, context={}):
         '''
@@ -363,7 +390,7 @@ class sale_order_line_followup(osv.osv_memory):
         return res
     
     _columns = {
-        'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True),
+        'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
         'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
@@ -399,3 +426,112 @@ class sale_order_line_followup(osv.osv_memory):
     }
     
 sale_order_line_followup()
+
+
+class sale_order_followup_from_menu(osv.osv_memory):
+    _name = 'sale.order.followup.from.menu'
+    _description = 'Sale order followup menu entry'
+    
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Sale Order', required=True),
+    }
+    
+    def go_to_followup(self, cr, uid, ids, context={}):
+        new_context = context.copy()
+        new_ids = []
+        for menu in self.browse(cr, uid, ids, context=context):
+            new_ids.append(menu.order_id.id)
+            
+        new_context['active_ids'] = new_ids
+        
+        return self.pool.get('sale.order.followup').start_order_followup(cr, uid, ids, context=new_context)
+            
+sale_order_followup_from_menu()
+
+
+class tender(osv.osv):
+    _name = 'tender'
+    _inherit = 'tender'
+    
+    def go_to_tender_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'tender',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+tender()
+
+
+class purchase_order(osv.osv):
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
+    
+    def go_to_po_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+purchase_order()
+
+
+class request_for_quotation(osv.osv):
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
+    
+    def go_to_rfq_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+request_for_quotation()
+
+
+class stock_move(osv.osv):
+    _name = 'stock.move'
+    _inherit = 'stock.move'
+    
+    def go_to_incoming_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_move_form_reception_picking')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+        
+    def go_to_outgoing_info(self, cr, uid, ids, context={}):
+        '''
+        Return the form of the object
+        '''
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_move_form')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.move',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'res_id': ids[0],}
+    
+stock_move()

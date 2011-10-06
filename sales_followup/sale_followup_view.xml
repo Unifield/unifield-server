@@ -46,8 +46,11 @@
 	                    </tree>
                     </field>
                     <separator colspan="4" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-                    <button name="switch_progress" string="Switch to progress view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    <group colspan="4" col="6">
+	                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+	                    <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+	                    <button name="switch_progress" string="Switch to progress view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -82,8 +85,11 @@
                         </tree>
                     </field>
                     <separator colspan="4" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-                    <button name="switch_documents" string="Switch to documents view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    <group colspan="4" col="6">
+	                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+	                    <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+	                    <button name="switch_documents" string="Switch to documents view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -126,13 +132,70 @@
                     <field name="product_id" />
                     <field name="qty_ordered" />
                     <separator colspan="4" string="Associated documents" />
-                    <field name="tender_ids" nolabel="1" string="Tenders" />
-                    <field name="quotation_ids" nolabel="1" colspan="2" string="Quotations" />
-                    <newline />
-                    <field name="purchase_ids" nolabel="1" colspan="2" string="Purchase Orders" />
-                    <field name="incoming_ids" nolabel="1" colspan="2" string="Incoming" />
-                    <newline />
-                    <field name="outgoing_ids" nolabel="1" colspan="2" string="Outgoing" />
+                    <field name="tender_ids" nolabel="1" string="Tenders" colspan="4">
+                    	<tree string="Tender" colors="green:state in ('done');grey: state in ('cancel')">
+                    		<field name="name" />
+                    		<field name="sale_order_id" />
+                    		<field name="state" />
+                    		<button name="go_to_tender_info" type="object" string="Go to tender form" icon="terp-stock_zoom" />
+                		</tree>
+                    </field>
+                    <field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
+                    	<tree string="Request for Quotation"
+                    		colors="red: state in ('rfq_sent');blue: state in ('rfq_updated');green: state in ('rfq_done')">
+                    		<field name="name" />
+                    		<field name="order_type" />
+                    		<field name="date_order" />
+                    		<field name="partner_id" />
+                    		<field name="delivery_requested_date" />
+                    		<field name="amount_total" />
+                    		<field name="state" />
+                    		<button name="go_to_rfq_info" type="object" string="Go to RfQ form" icon="terp-stock_zoom" />
+                    	</tree>
+                    </field>
+                    <field name="purchase_ids" nolabel="1" colspan="4" string="Purchase Orders">
+                    	<tree string="Purchase Orders"
+                    		colors="grey: state in ('cancel', 'done');green: state in ('approved');blue: state in ('confirmed')">
+                    		<field name="name" />
+                    		<field name="order_type" />
+                    		<field name="date_order" />
+                    		<field name="partner_id" />
+                    		<field name="delivery_requested_date" />
+                    		<field name="amount_total" />
+                    		<field name="state" />
+                    		<button name="go_to_po_info" type="object" string="Go to purchase order form" icon="terp-stock_zoom" />
+                    	</tree>
+                    </field>
+                    <field name="incoming_ids" nolabel="1" colspan="4" string="Incoming">
+                    	<tree string="Incoming Products"
+                    		colors="grey: state in ('cancel', 'done');green: state in ('available')">
+                    		<field name="name" />
+                    		<field name="location_dest_id" />
+                    		<field name="partner_id" />
+                    		<field name="product_id" />
+                    		<field name="product_qty" />
+                    		<field name="product_uom" />
+                    		<field name="order_type" />
+                    		<field name="date" />
+                    		<field name="state" />
+                    		<button name="go_to_incoming_info" type="object" string="Go to incoming move form" icon="terp-stock_zoom" />
+                    	</tree>
+                    </field>
+                    <field name="outgoing_ids" nolabel="1" colspan="4" string="Outgoing">
+                    	<tree string="Outgoing Products"
+                    		colors="grey: state in ('cancel', 'done');green: state in ('available')">
+                    		<field name="name" />
+                    		<field name="location_id" />
+                    		<field name="partner_id" />
+                    		<field name="product_id" />
+                    		<field name="product_qty" />
+                    		<field name="product_uom" />
+                    		<field name="order_type" />
+                    		<field name="date" />
+                    		<field name="state" />
+                    		<button name="go_to_outgoing_info" type="object" string="Go to outgoing move form" icon="terp-stock_zoom" />
+                    	</tree>
+                    </field>
                 </form>
             </field>
         </record>
@@ -151,6 +214,33 @@
                 </form>
             </field>
         </record>
+        
+        <record id="sale_order_followup_from_menu" model="ir.ui.view">
+        	<field name="name">sale.order.followup.from.menu</field>
+        	<field name="model">sale.order.followup.from.menu</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Choose a Sale Order">
+        			<separator colspan="4" string="Select Sale Order" />
+        			<field name="order_id" />
+        			<separator colspan="4" string="Actions" />
+        			<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
+        			<button name="go_to_followup" string="Go to followup" icon="gtk-execute" colspan="2" type="object"/>
+        		</form>
+        	</field>
+        </record>
+        
+        <record id="action_sale_order_followup_from_menu" model="ir.actions.act_window">
+        	<field name="name">Sale Order Follow-Up</field>
+        	<field name="res_model">sale.order.followup.from.menu</field>
+        	<field name="view_type">form</field>
+        	<field name="view_mode">form</field>
+        	<field name="target">new</field>
+        </record>
+        
+        <menuitem id="sale_order_followup_from_menu"
+        	  action="action_sale_order_followup_from_menu"
+        	  parent="base.next_id_64" />
     
     </data>
 </openerp>
