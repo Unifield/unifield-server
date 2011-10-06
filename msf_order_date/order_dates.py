@@ -803,7 +803,7 @@ class procurement_order(osv.osv):
         for key in res:
             purchase = po_obj.browse(cr, uid, res.get(key))
             for line in purchase.order_line:
-                pol_obj.write(cr, uid, [line.id], {'date_planned': (datetime.now()+relativedelta(days=+2)).strftime('%Y-%m-%d')})
+                pol_obj.write(cr, uid, [line.id], {'delivery_requested_date': (datetime.now()+relativedelta(days=+2)).strftime('%Y-%m-%d')})
         
         return res
     # @@@end
