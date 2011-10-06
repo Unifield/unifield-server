@@ -562,24 +562,6 @@ class sale_order_line(osv.osv):
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
                     values.update({'supplier': False})
-                elif vals['type'] == 'make_to_order':
-                    if 'product_id' in vals:
-                        deliveryDate = self.pool.get('product.product').browse(cr, uid, vals['product_id'], 
-                                                                               context=context).seller_delay
-                    else:
-                        product_id = self.browse(cr, uid, ids[0], context=context).product_id
-                        if product_id:
-                            deliveryDate = self.pool.get('product.product').browse(cr, uid, product_id.id, 
-                                                                                   context=context).seller_delay
-                
-                    estDeliveryDate = False
-                    if deliveryDate:
-                        daysToAdd = deliveryDate
-                        estDeliveryDate = date.today()
-                        estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
-                        estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
-                        values.update({'estimated_delivery_date': estDeliveryDate})
-                    
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
                 
@@ -658,27 +640,6 @@ class procurement_order(osv.osv):
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
-    
-    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        if a purchase order for the same supplier and the same requested date,
-        don't create a new one
-        '''
-        po_obj = self.pool.get('purchase.order')
-        procurement = kwargs['procurement']
-        values = kwargs['values']
-        
-        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft')], context=context)
-            # TODO: Waiting order dates improvements
-            #('delivery_requested_date', '=', values['order_line'][0][2].get('date_planned'))], context=context)
-        if purchase_ids:
-            line_values = values['order_line'][0][2]
-            line_values.update({'order_id': purchase_ids[0]})
-            self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
-            return purchase_ids[0]
-        else:
-            purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-            return purchase_id
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
