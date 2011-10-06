@@ -123,6 +123,9 @@
         <field name="company_id"></field>
         <field name="location_category">stock</field>
     </record>
+    <record id="consumption_calculation.msf_customer_location" model="stock.location">
+    	<field name="location_id" ref="stock_location_internal_cust" />
+    </record>
 
     </data>
 </openerp>
