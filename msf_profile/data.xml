@@ -11,14 +11,14 @@
         <field name="location_id" ref="stock.stock_location_locations"/>
         <field name="location_category">stock</field>
     </record>
-    <record id="stock_location_stock" model="stock.location">
+    <record id="stock_location_quarantine" model="stock.location">
         <field name="name">Quarantine</field>
         <field name="location_id" ref="stock.stock_location_stock"/>
         <field name="location_category">stock</field>
     </record>
     <record id="stock_location_input" model="stock.location">
         <field name="name">Input</field>
-        <field name="location_id" ref="stock.stock_location_stock"/>
+        <field name="location_id" ref="stock.stock_location_company"/>
         <field name="location_category">stock</field>
     </record>
     <record id="stock_location_medical" model="stock.location">
@@ -36,19 +36,19 @@
         <field name="location_id" ref="stock_location_medical"/>
         <field name="location_category">stock</field>
     </record>
-    <record id="stock_location_packing" model="stock.location">
+    <record id="msf_outgoing.stock_location_packing" model="stock.location">
         <field name="name">Packing</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
         <field name="location_category">stock</field>
     </record>
-    <record id="stock_location_dispatch" model="stock.location">
+    <record id="msf_outgoing.stock_location_dispatch" model="stock.location">
         <field name="name">Dispatch</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
         <field name="location_category">stock</field>
     </record>
-    <record id="stock_location_distribution" model="stock.location">
+    <record id="msf_outgoing.stock_location_distribution" model="stock.location">
         <field name="name">Distribution</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
@@ -87,7 +87,7 @@
         <field name="company_id"></field>
         <field name="location_category">stock</field>
     </record>
-    <record id="stock_location_internal_cust" model="stock.location">
+    <record id="stock.stock_location_internal_cust" model="stock.location">
         <field name="name">Internal Customer</field>
         <field name="location_id" ref="stock.stock_location_customers"/>
         <field name="usage">customer</field>
@@ -96,14 +96,14 @@
     </record>
     <record id="stock_location_cons_u2" model="stock.location">
         <field name="name">Consumption Unit U2</field>
-        <field name="location_id" ref="stock_location_internal_cust"/>
+        <field name="location_id" ref="stock.stock_location_internal_cust"/>
         <field name="usage">customer</field>
         <field name="company_id"></field>
         <field name="location_category">stock</field>
     </record>
     <record id="stock_location_cons_u3" model="stock.location">
         <field name="name">Consumption Unit U3</field>
-        <field name="location_id" ref="stock_location_internal_cust"/>
+        <field name="location_id" ref="stock.stock_location_internal_cust"/>
         <field name="usage">customer</field>
         <field name="company_id"></field>
         <field name="location_category">stock</field>
@@ -123,6 +123,14 @@
         <field name="company_id"></field>
         <field name="location_category">stock</field>
     </record>
-
+    <record id="stock.warehouse0" model="stock.warehouse">
+        <field name="name">MSF Coordination C1</field>
+        <field name="lot_input_id" ref="stock_location_input"/>
+        <field name="lot_stock_id" ref="stock.stock_location_stock"/>
+        <field name="lot_output_id" ref="stock.stock_location_output"/>
+    </record>
+    <record id="sale.shop" model="sale.shop">
+        <field name="name">MSF</field>
+    </record>
     </data>
 </openerp>

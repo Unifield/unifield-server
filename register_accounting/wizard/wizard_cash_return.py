@@ -163,7 +163,6 @@ class wizard_cash_return(osv.osv_memory):
             curr_date = date
         currency_id = register.currency.id
         register_id = register.id
-        analytic_account_id = journal.analytic_journal_id.id
         amount_currency = 0.0
         new_debit = debit
         new_credit = credit
@@ -197,7 +196,7 @@ class wizard_cash_return(osv.osv_memory):
             'period_id': period_id,
             'currency_id': currency_id,
             'amount_currency': amount_currency,
-            'analytic_account_id': analytic_account_id,
+            'analytic_account_id': False,
             'partner_type_mandatory': partner_mandatory or False,
         }
         move_line_id = move_line_obj.create(cr, uid, move_line_vals, context=context)
