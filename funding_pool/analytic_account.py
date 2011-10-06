@@ -23,6 +23,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
+import re
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -86,7 +87,18 @@ class analytic_account(osv.osv):
             
         return super(analytic_account, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
-    
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        view = super(analytic_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        if view_type=='form':
+            pattern = re.compile('<field name="cost_center_ids".*(domain=".*").*>')
+            m = re.search(pattern, view['arch'])
+            re.sub(pattern, "domain=\"[('type', '!=', 'view'), ('id', 'child_of', [%s])]\"" % oc_id, view['arch'], 1)
+        return view
+
 analytic_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
