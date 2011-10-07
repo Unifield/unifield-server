@@ -195,17 +195,24 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
     
-    def product_onchange(self, cr, uid, ids, product_id, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, context={}):
         '''
         Set the product uom when the product change
         '''
         v = {}
         
         if product_id:
-            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+            if location_id:
+                context.update({'location_id': location_id})
+                
+            product =self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
+            uom = product.uom_id.id
             v.update({'uom_id': uom})
+
+            if location_id:
+                v.update({'product_qty': product.qty_available})
         else:
-            v.update({'uom_id': False})
+            v.update({'uom_id': False, 'product_qty': 0.00})
         
         return {'value': v}
     
