@@ -671,7 +671,7 @@ class procurement_order(osv.osv):
         purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft')], context=context)
             # TODO: Waiting order dates improvements
             #('delivery_requested_date', '=', values['order_line'][0][2].get('date_planned'))], context=context)
-        if purchase_ids  and context.get('update_mode') not in ['init', 'update']:
+        if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
