@@ -647,9 +647,9 @@ class ir_model_data(osv.osv):
 
         if xml_id:
             cr.execute('''SELECT imd.id, imd.res_id, md.id
-                          FROM ir_model_data imd LEFT JOIN %s md ON (imd.res_id = md.id)
+                          FROM ir_model_data imd LEFT JOIN %s md ON (imd.res_id = md.id and imd.model=%%s)
                           WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,
-                          (module, xml_id))
+                          (model_obj._name,module, xml_id))
             results = cr.fetchall()
             for imd_id2,res_id2,real_id2 in results:
                 if not real_id2:
