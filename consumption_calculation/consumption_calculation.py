@@ -108,8 +108,11 @@ class real_average_consumption(osv.osv):
                                                     'product_qty': line.consumed_qty,
                                                     'location_id': rac.cons_location_id.id,
                                                     'location_dest_id': rac.activity_id.id,
+                                                    'state': 'done',
                                                     'reason_type_id': reason_type_id})
                 line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                
+                
                 
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
@@ -117,6 +120,7 @@ class real_average_consumption(osv.osv):
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
                 'view_mode': 'form,tree',
+                'target': 'dummy',
                 'res_id': ids[0],
                 }
         
@@ -203,7 +207,7 @@ class real_average_consumption_line(osv.osv):
         
         if product_id:
             if location_id:
-                context.update({'location_id': location_id})
+                context.update({'location': location_id})
                 
             product =self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
             uom = product.uom_id.id
