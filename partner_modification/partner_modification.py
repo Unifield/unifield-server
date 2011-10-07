@@ -29,6 +29,9 @@ import netsvc
 import pooler
 import time
 
+TRANSPORTS = [('',''), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),]
+NUMBER_OF_CHOICE = 3
+
 class product_template(osv.osv):
     _inherit = 'product.template'
 
@@ -56,7 +59,9 @@ class product_template(osv.osv):
     _columns = {
         'delay_for_supplier': fields.function(_get_delay_for_supplier, type='interger', string='Default delay for a supplier', method=True) 
     }
+    
 product_template()
+
 
 class res_partner(osv.osv):
     _description='Partner'
@@ -65,59 +70,77 @@ class res_partner(osv.osv):
     def _calc_dellay(self, cr, uid, ids, fields, arg, context=None):
         result = {}
         for partner in self.browse(cr, uid, ids, context=context):
+            result[partner.id] = {}
             for field in fields:
-                result[partner.id] = {field:0}
+                result[partner.id].update({field:0})
                 
             # get the default transport, the smallest sequence
-            value_list = self.read(cr, uid, [partner.id], ['air_sequence', 'sea_sequence', 'road_sequence'], context=context)
+            value_list = self.read(cr, uid, [partner.id], ['transport_0', 'transport_0_lt',], context=context)
             if not value_list:
                 continue
             
+            # it's a list, get the first element
             value = value_list[0]
-            
-            air_seq = value['air_sequence']
-            sea_seq = value['sea_sequence']
-            road_seq = value['road_sequence']
+            # preferred transport values
+            transport_0 = value['transport_0']
+            transport_0_lt = value['transport_0_lt']
+            # no favorite transport selected, return 0
+            if transport_0 == '':
+                continue
             # the default transport lead time
-            default_lt = 0
-            # select the smallest lead time
-            if air_seq < sea_seq:
-                if air_seq < road_seq:
-                    default_lt = partner.transport_by_air_lt
-                else:
-                    default_lt = partner.transport_by_road_lt
-            elif sea_seq < road_seq:
-                default_lt = partner.transport_by_sea_lt
-            else:
-                default_lt = partner.transport_by_road_lt
-                
-            result[partner.id]['default_delay'] = default_lt + partner.procurement_lt
+            result[partner.id]['default_delay'] = transport_0_lt + partner.procurement_lt
             
         return result
     
-    _columns = {
-                'zone': fields.selection([('national','National'),('international','International'),], 'Zone',),
+    def get_transport_lead_time(self, cr, uid, ids, transport_name, context=None):
+        '''
+        for a given transport name (road, air, sea), 
+        '''
+        list_of_vals = [x[0] for x in TRANSPORTS]
+        assert transport_name in list_of_vals, 'The transport name is not supported.'
+        # result values
+        result = {}
+        for partner in self.browse(cr, uid, ids, context=context):
+            result[partner.id] = 0
+            for i in range(NUMBER_OF_CHOICE):
+                if getattr(partner, 'transport_%s'%i) == transport_name:
+                    val = getattr(partner, 'transport_%s_lt'%i)
+                    result[partner.id] = val
+                    
+        return result
+    
+    def on_change_lead_time(self, cr, uid, ids, transport_0_lt, procurement_lt, context=None):
+        '''
+        change supplier_lt and customer_lt according to preferred lead time and internal lead time
+        '''
+        return {'value': {'supplier_lt': transport_0_lt + procurement_lt,
+                          'customer_lt': transport_0_lt + procurement_lt}}
+    
+    _columns = {'zone': fields.selection([('national','National'),('international','International'),], string='Zone',),
                 'customer_lt': fields.integer('Customer Lead Time'),
-                'procurement_lt': fields.integer('Procurement Treatment Lead Time'),
-                'transport_by_air_lt': fields.integer('Transport Lead Time by Air'),
-                'air_sequence': fields.integer('Air priority'),
-                'transport_by_sea_lt': fields.integer('Transport Lead Time by Sea'),
-                'sea_sequence': fields.integer('Sea priority'),
-                'transport_by_road_lt': fields.integer('Transport Lead Time by Road'),
-                'road_sequence': fields.integer('Road priority'),
-                'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time', multi="seller_delay"),
+                'supplier_lt': fields.integer('Supplier Lead Time'),
+                'procurement_lt': fields.integer('Internal Lead Time'),
+                'transport_0_lt': fields.integer('1st Transport Lead Time'),
+                'transport_0': fields.selection(selection=TRANSPORTS, string='1st (favorite) Mode of Transport',),
+                'transport_1_lt': fields.integer('2nd Transport Lead Time'),
+                'transport_1': fields.selection(selection=TRANSPORTS, string='2nd Mode of Transport'),
+                'transport_2_lt': fields.integer('3rd Transport Lead Time'),
+                'transport_2': fields.selection(selection=TRANSPORTS, string='3nd Mode of Transport'),
+                'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time (computed)', multi="seller_delay"),
                 }
     
-    _defaults = {'customer_lt': 0,
+    _defaults = {'zone': 'national',
+                 'customer_lt': 0,
+                 'supplier_lt': 0,
                  'procurement_lt': 0,
-                 'transport_by_air_lt': 0,
-                 'transport_by_sea_lt': 0,
-                 'transport_by_road_lt': 0,
-                 'air_sequence': 1,
-                 'sea_sequence': 2,
-                 'road_sequence': 3,
+                 'transport_0': TRANSPORTS[0][0], # empty
+                 'transport_0_lt': 0,
+                 'transport_1': TRANSPORTS[0][0], # empty
+                 'transport_1_lt': 0,
+                 'transport_2': TRANSPORTS[0][0], # empty
+                 'transport_2_lt': 0,
                  }
-    
+
 res_partner()
 
 
@@ -146,7 +169,6 @@ class purchase_order_line(osv.osv):
         
         return res
     
-    
 purchase_order_line()
 
 
@@ -167,4 +189,6 @@ class product_supplierinfo(osv.osv):
             return {'value': {'delay': partner.default_delay}}
         else:
             return {'value': {'delay': False}}
+        
 product_supplierinfo()
+

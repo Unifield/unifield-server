@@ -37,11 +37,10 @@ class stock_warehouse(osv.osv):
     _inherit = "stock.warehouse"
     _name = "stock.warehouse"
     
-    _columns = {
-        'lot_packing_id': fields.many2one('stock.location', 'Location Packing', required=True, domain=[('usage','<>','view')]),
-        'lot_dispatch_id': fields.many2one('stock.location', 'Location Dispatch', required=True, domain=[('usage','<>','view')]),
-        'lot_distribution_id': fields.many2one('stock.location', 'Location Distribution', required=True, domain=[('usage','<>','view')]),
-    }
+    _columns = {'lot_packing_id': fields.many2one('stock.location', 'Location Packing', required=True, domain=[('usage','<>','view')]),
+                'lot_dispatch_id': fields.many2one('stock.location', 'Location Dispatch', required=True, domain=[('usage','<>','view')]),
+                'lot_distribution_id': fields.many2one('stock.location', 'Location Distribution', required=True, domain=[('usage','<>','view')]),
+                }
     
     _defaults = {'lot_packing_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'),], context=c)[0] or False,
                  'lot_dispatch_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'),], context=c)[0] or False,
@@ -555,8 +554,8 @@ class shipment(osv.osv):
                                 # quantity to return
                                 new_qty = selected_number * move.qty_per_pack
                                 # values
-                                location_dispatch = move.picking_id.sale_id.shop_id.warehouse_id.lot_dispatch_id.id
-                                location_distrib = move.picking_id.sale_id.shop_id.warehouse_id.lot_distribution_id.id
+                                location_dispatch = move.picking_id.warehouse_id.lot_dispatch_id.id
+                                location_distrib = move.picking_id.warehouse_id.lot_distribution_id.id
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
                                           'product_qty': new_qty,
@@ -649,8 +648,8 @@ class shipment(osv.osv):
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update locations of stock moves
                 for move in new_packing.move_lines:
-                    move.write({'location_id': new_packing.sale_id.shop_id.warehouse_id.lot_distribution_id.id,
-                                'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_output_id.id}, context=context)
+                    move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
+                                'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
                 
                 # update the pack families
 #                pf_ids = pf_obj.search(cr, uid, [('draft_packing_id', '=', packing.id)], context=context)
@@ -884,8 +883,7 @@ class shipment(osv.osv):
             
         return result
     
-    _columns = {#'pack_family_ids': fields.one2many('pack.family', 'shipment_id', string='Pack Families'),
-                'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
+    _columns = {'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
 
 shipment()
@@ -956,14 +954,13 @@ class stock_picking(osv.osv):
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
         obj_data = self.pool.get('ir.model.data')
-        view_list = {
-             'out': ('stock', 'view_picking_out_form'),
-             'in': ('stock', 'view_picking_in_form'),
-             'internal': ('stock', 'view_picking_form'),
-             'picking': ('msf_outgoing', 'view_picking_ticket_form'),
-             'ppl': ('msf_outgoing', 'view_ppl_form'),
-             'packing': ('msf_outgoing', 'view_packing_form')
-            }
+        view_list = {'out': ('stock', 'view_picking_out_form'),
+                     'in': ('stock', 'view_picking_in_form'),
+                     'internal': ('stock', 'view_picking_form'),
+                     'picking': ('msf_outgoing', 'view_picking_ticket_form'),
+                     'ppl': ('msf_outgoing', 'view_ppl_form'),
+                     'packing': ('msf_outgoing', 'view_packing_form')
+                     }
         if pick.type == 'out':
             module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
             try:
@@ -1027,7 +1024,8 @@ class stock_picking(osv.osv):
                 # - all picking must be 'completed'
                 # completed means, we recursively check that next_step link object is cancel or done
                 for picking in draft_picking.backorder_ids:
-                    if not picking.is_completed():
+                    # take care, is_completed returns a dictionary
+                    if not picking.is_completed()[picking.id]:
                         treat_draft = False
                         break
             
@@ -1120,6 +1118,9 @@ class stock_picking(osv.osv):
         '''
         result = {}
         for stock_picking in self.browse(cr, uid, ids, context=context):
+            # for debugging
+            state = stock_picking.state
+            subtype = stock_picking.subtype
             completed = stock_picking.state in ('done', 'cancel')
             result[stock_picking.id] = completed
             if completed:
@@ -1161,6 +1162,9 @@ class stock_picking(osv.osv):
                 #'pack_family_ids': fields.one2many('pack.family', 'ppl_id', string='Pack Families',),
                 # attributes for specific packing labels
                 'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
+                # warehouse info (locations) are gathered from here - allow shipment process without sale order
+                'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True,),
+                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of partner", required=True,),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
@@ -1172,9 +1176,12 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 }
-    _defaults = {'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
+    _defaults = {'flow_type': 'full',
+                 'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
                  'subtype': 'picking',
                  'first_shipment_packing_id': False,
+                 'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
+                 'address_id': lambda obj, cr, uid, c: len(obj.pool.get('res.partner.address').search(cr, uid, [], context=c)) and obj.pool.get('res.partner.address').search(cr, uid, [], context=c)[0] or False,
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
@@ -1421,6 +1428,16 @@ class stock_picking(osv.osv):
         special behavior :
          - creation of corresponding shipment
         '''
+        if context is None:
+            context = {}
+        # the action adds subtype in the context depending from which screen it is created
+        # for now only implemented in picking screen
+        if context.get('picking_screen', False) and not vals.get('name', False):
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            vals.update(subtype='picking',
+                        backorder_id=False,
+                        name=pick_name,
+                        flow_type='full',)
         # shipment object
         shipment_obj = self.pool.get('shipment')
         # move object
@@ -1640,16 +1657,15 @@ class stock_picking(osv.osv):
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
         # display newly created picking ticket
-        return {
-            'name':_("Picking Ticket"),
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': pick.id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-        }
+        return {'name':_("Picking Ticket"),
+                'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'stock.picking',
+                'res_id': pick.id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                }
         
     def validate_picking(self, cr, uid, ids, context=None):
         '''
@@ -1735,16 +1751,16 @@ class stock_picking(osv.osv):
             ppl_number = pick.name.split("/")[1]
             # we want the copy to keep the production lot reference from picking ticket to pre-packing list
             new_ppl_id = self.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
-                                                          'subtype': 'ppl',
-                                                          'previous_step_id': pick.id,
-                                                          'backorder_id': False}, context=dict(context, keep_prodlot=True))
+                                                      'subtype': 'ppl',
+                                                      'previous_step_id': pick.id,
+                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True))
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves - if the move quantity is equal to zero, the stock move is removed
             for move in new_ppl.move_lines:
                 if move.product_qty:
                     move_obj.write(cr, uid, [move.id], {'initial_location': move.location_id.id,
                                                         'location_id': move.location_dest_id.id,
-                                                        'location_dest_id': new_ppl.sale_id.shop_id.warehouse_id.lot_dispatch_id.id}, context=context)
+                                                        'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id}, context=context)
                 else:
                     move_obj.unlink(cr, uid, [move.id], context=context)
             
@@ -1766,16 +1782,15 @@ class stock_picking(osv.osv):
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
         # display newly created picking ticket
-        return {
-            'name':_("Picking Ticket"),
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': pick.id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-        }
+        return {'name':_("Picking Ticket"),
+                'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'stock.picking',
+                'res_id': pick.id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                }
 
     def ppl(self, cr, uid, ids, context=None):
         '''
@@ -1891,8 +1906,8 @@ class stock_picking(osv.osv):
                     move_obj.unlink(cr, uid, [move.id], context=context)
                 else:
                     move.write({'state': 'assigned',
-                                'location_id': new_packing.sale_id.shop_id.warehouse_id.lot_dispatch_id.id,
-                                'location_dest_id': new_packing.sale_id.shop_id.warehouse_id.lot_distribution_id.id}, context=context)
+                                'location_id': new_packing.warehouse_id.lot_dispatch_id.id,
+                                'location_dest_id': new_packing.warehouse_id.lot_distribution_id.id}, context=context)
             
             # trigger standard workflow
             self.action_move(cr, uid, [pick.id])
@@ -1904,16 +1919,15 @@ class stock_picking(osv.osv):
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
         view_id = view_id and view_id[1] or False
         # display newly created picking ticket
-        return {
-            'name':_("Pre-Packing List"),
-            'view_mode': 'form,tree',
-            'view_id': [view_id],
-            'view_type': 'form',
-            'res_model': 'stock.picking',
-            'res_id': pick.id,
-            'type': 'ir.actions.act_window',
-            'target': 'crush',
-        }
+        return {'name':_("Pre-Packing List"),
+                'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'stock.picking',
+                'res_id': pick.id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                }
     
     def return_products(self, cr, uid, ids, context=None):
         '''
@@ -2336,6 +2350,7 @@ class sale_order(osv.osv):
         - allow to modify the data for stock picking creation
         '''
         picking_data = super(sale_order, self)._hook_ship_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
+        order = kwargs['order']
         # use the name according to picking ticket sequence
         pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
         picking_data['name'] = pick_name
@@ -2343,6 +2358,7 @@ class sale_order(osv.osv):
         picking_data['subtype'] = 'picking'
         picking_data['flow_type'] = 'full'
         picking_data['backorder_id'] = False
+        picking_data['warehouse_id'] = order.shop_id.warehouse_id.id
         
         return picking_data
     
