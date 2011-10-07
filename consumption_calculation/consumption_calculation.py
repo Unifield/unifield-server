@@ -229,7 +229,7 @@ class monthly_review_consumption(osv.osv):
     
     _columns = {
         'creation_date': fields.date(string='Creation date'),
-        'cons_location_id': fields.many2one('stock.location', string='Location', domain=[('usage', '=', 'internal')], required=True),
+        #'cons_location_id': fields.many2one('stock.location', string='Location', domain=[('usage', '=', 'internal')], required=True),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
@@ -273,7 +273,7 @@ class monthly_review_consumption(osv.osv):
         file = base64.encodestring(export.encode("utf-8"))
         
         export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
-                                                                        'filename': 'fmc_%s.csv' % (fmc.cons_location_id.name.replace(' ', '_')), 
+                                                                        'filename': 'fmc_%s.csv' % (strftime('%Y_%m_%d')), 
                                                                         'message': 'The FMC lines has been exported. Please click on Save As button to download the file'})
         
         return {'type': 'ir.actions.act_window',
@@ -310,7 +310,6 @@ class monthly_review_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            context.update({'sloc_id': line.mrc_id.cons_location_id.id})
             res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, context=context).get('value', None).get('last_reviewed', None)
             
         return res
@@ -368,10 +367,10 @@ class monthly_review_consumption_line(osv.osv):
                               'valid_until': False,
                               'valid_ok': False}}
         
-        if context.get('sloc_id', False):
-            mrc_ids = self.pool.get('monthly.review.consumption').search(cr, uid, [('cons_location_id', '=', context.get('sloc_id'))], context=context)
-            line_ids = line_obj.search(cr, uid, [('name', '=', product_id), ('mrc_id', 'in', mrc_ids)], order='valid_until desc', context=context)
+
+        line_ids = line_obj.search(cr, uid, [('name', '=', product_id)], order='valid_until desc', context=context)
             
+        if line_ids:
             for line in self.browse(cr, uid, [line_ids[0]], context=context):
                 last_fmc_reviewed = line.mrc_id.creation_date
                 
@@ -400,23 +399,11 @@ class product_product(osv.osv):
             context = {}
             
         res = {}
-        location_ids = []
         fmc_obj = self.pool.get('monthly.review.consumption')
         fmc_line_obj = self.pool.get('monthly.review.consumption.line')
-        
-        # Filter for some locations only
-        if context.get('location_id', False):
-            if type(context['location_id']) == type(1):
-                location_ids = [context['location_id']]
-            elif type(context['location_id']) in (type(''), type(u'')):
-                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
-            else:
-                location_ids = context.get('location_id', [])
-        else:
-            location_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
             
         # Search all Review report for locations
-        fmc_ids = fmc_obj.search(cr, uid, [('cons_location_id', 'in', location_ids)], context=context)
+        fmc_ids = fmc_obj.search(cr, uid, [], context=context)
         
         for product in ids:
             res[product] = 0.00
@@ -549,18 +536,11 @@ class product_product(osv.osv):
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
         
+        internal_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        partner_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context)
         # Add locations filters in domain if locations are passed in context
-        if context.get('location_id', False):
-            if type(context['location_id']) == type(1):
-                location_ids = [context['location_id']]
-            elif type(context['location_id']) in (type(''), type(u'')):
-                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
-            else:
-                location_ids = context.get('location_id', [])
-            domain.append('|')
-            domain.append(('location_id', 'in', location_ids))
-            domain.append(('location_dest_id', 'in', location_ids))
-        
+        domain.append(('location_id', 'in', internal_loc))
+        domain.append(('location_dest_id', 'in', partner_loc))
         
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         

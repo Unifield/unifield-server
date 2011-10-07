@@ -136,11 +136,8 @@
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" />
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
-                    <field name="cons_location_id" />
-                    <newline />
-                    <field name="nomen_id" />
-                    <newline />
                     <field name="sublist_id" />
+                    <field name="nomen_id" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
                         <tree string="Products" editable="top"> 
@@ -165,7 +162,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Monthly consumption">
-                    <field name="cons_location_id" />
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />
@@ -180,14 +176,11 @@
             <field name="arch" type="xml">
                 <search string="Monthly consumption">
                 	<group col="10" colspan="4">
-                        <field name="cons_location_id"/>
                         <field name="period_from"/>
                         <field name="period_to"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
-                        <filter string="Consumer" icon="terp-stock" domain="" context="{'group_by': 'cons_location_id'}" />
-                        <separator orientation="vertical"/>
                         <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
                         <filter string="Nomenclature" icon="terp-tools" domain="" context="{'group_by':'nomen_id'}"/>
                     </group>
