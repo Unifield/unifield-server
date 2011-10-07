@@ -7,6 +7,7 @@
              <field name="model">crossovered.budget</field>
              <field name="type">tree</field>
              <field name="inherit_id" ref="account_budget.crossovered_budget_view_tree"/>
+             <field name="priority" eval="20"/>
              <field name="arch" type="xml">
                  <data>
                      <field name="company_id" position="replace"/>
@@ -17,7 +18,7 @@
                  </data>
              </field>
          </record>
-        
+
          <record id="view_crossovered_budget_definition_search" model="ir.ui.view">
              <field name="name">crossovered.budget.definition.search</field>
              <field name="model">crossovered.budget</field>
@@ -36,34 +37,34 @@
                  </data>
              </field>
         </record>
-        
-        
+
         <record model="ir.ui.view" id="crossovered_budget_definition_view_form">
             <field name="name">crossovered.budget_definition.view.form</field>
             <field name="model">crossovered.budget</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account_budget.crossovered_budget_view_form"/>
+            <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <data>
-	                <field name="creating_user_id" position="replace"/>
-	                <field name="validating_user_id" position="replace"/>
-	                <field name="company_id" position="after">
-	                   <field name="analytic_account_id" domain="[('type', '=', 'normal')]" attrs="{'readonly':[('state','!=','draft')]}"/>
-	                   <field name="decision_moment" attrs="{'readonly':[('state','!=','draft')]}"/>
+                    <field name="creating_user_id" position="replace"/>
+                    <field name="validating_user_id" position="replace"/>
+                    <field name="company_id" position="after">
+                       <field name="analytic_account_id" domain="[('type', '=', 'normal')]" attrs="{'readonly':[('state','!=','draft')]}"/>
+                       <field name="decision_moment" attrs="{'readonly':[('state','!=','draft')]}"/>
                        <field name="currency_id" attrs="{'readonly':[('state','!=','draft')]}"/>
-	                </field>
-	                <tree string="Budget Lines" position="replace">
+                    </field>
+                    <tree string="Budget Lines" position="replace">
                         <tree string="Budget Lines">
                             <field name="general_budget_code"/>
                             <field name="general_budget_id"/>
                             <field name="planned_amount" sum="Planned Amount" string="Budget Amount"/>
                         </tree>
-	                </tree>
+                    </tree>
                     <form string="Budget Lines" position="replace">
-	                    <form string="Budget Lines">
-	                        <field name="general_budget_id" select="1"/>
-	                        <field name="planned_amount" string="Budget Amount" select="1"/>
-	                    </form>
+                        <form string="Budget Lines">
+                            <field name="general_budget_id" select="1"/>
+                            <field name="planned_amount" string="Budget Amount" select="1"/>
+                        </form>
                     </form>
                     <button name="confirm" position="replace"/>
                     <button name="cancel" position="replace"/>
@@ -85,6 +86,6 @@
             <field name="context">{'search_default_validated': 1}</field>
             <field name="help">A budget is a forecast of your company's income and expenses expected for a period in the future. With a budget, a company is able to carefully look at how much money they are taking in during a given period, and figure out the best way to divide it among various categories. By keeping track of where your money goes, you may be less likely to overspend, and more likely to meet your financial goals. Forecast a budget by detailing the expected revenue per analytic account and monitor its evolution based on the actuals realised during that period.</field>
         </record>
-        
+
     </data>
 </openerp>
