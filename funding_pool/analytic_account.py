@@ -23,7 +23,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 from tools.translate import _
-import re
+from lxml import etree
 
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
@@ -94,9 +94,11 @@ class analytic_account(osv.osv):
         view = super(analytic_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
         if view_type=='form':
-            pattern = re.compile('<field name="cost_center_ids".*(domain=".*").*>')
-            m = re.search(pattern, view['arch'])
-            re.sub(pattern, "domain=\"[('type', '!=', 'view'), ('id', 'child_of', [%s])]\"" % oc_id, view['arch'], 1)
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('/form/field[@name="cost_center_ids"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+            view['arch'] = etree.tostring(tree)
         return view
 
 analytic_account()
