@@ -136,6 +136,7 @@
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" />
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
+                    <field name="cons_location_id" />
                     <field name="sublist_id" />
                     <field name="nomen_id" />
                     <separator colspan="4" string="Products" />

@@ -229,7 +229,7 @@ class monthly_review_consumption(osv.osv):
     
     _columns = {
         'creation_date': fields.date(string='Creation date'),
-        #'cons_location_id': fields.many2one('stock.location', string='Location', domain=[('usage', '=', 'internal')], required=True),
+        'cons_location_id': fields.char(size=256, string='Location', readonly=True),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
@@ -241,6 +241,7 @@ class monthly_review_consumption(osv.osv):
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'cons_location_id': lambda *a: 'MSF Instance',
     }
     
     def import_fmc(self, cr, uid, ids, context={}):
