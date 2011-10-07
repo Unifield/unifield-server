@@ -68,6 +68,38 @@ class stock_reason_type(osv.osv):
         
         return res
     
+    def _get_inventory(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns if the type will be present in inventory line
+        '''
+        res = {}
+        
+        for type in self.browse(cr, uid, ids, context=context):
+            tmp_type = type
+            while tmp_type.parent_id:
+                tmp_type = tmp_type.parent_id
+            res[type.id] = tmp_type.inventory_ok
+            
+        return res
+    
+    def _search_inventory(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns the ids of all reason type which are displayed in inventory line
+        '''
+        res = []
+        
+        for arg in args:
+            if arg[0] == 'is_inventory' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
+                inv_ids = self.search(cr, uid, [('inventory_ok', '=', True)], context=context)
+                res_ids = inv_ids
+                while inv_ids:
+                    inv_ids = self.search(cr, uid, [('parent_id', 'in', inv_ids)], context=context)
+                    res_ids.extend(inv_ids)
+                res = [('id', 'in', res_ids)] 
+                    
+        return res
+                
+    
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -92,9 +124,67 @@ class stock_reason_type(osv.osv):
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),
         'level': fields.function(_get_level, method=True, type='integer', string='Level', readonly=True),
+        'inventory_ok': fields.boolean(string='Inventory type', help='If checked, this reason type will be available in inventory line'),
+        'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory, 
+                                        method=True, type='boolean', string='Inventory type', 
+                                        readonly=True, help='If checked, this reason type will be available in inventory line'),
     }
     
 stock_reason_type()
+
+class stock_inventory_line(osv.osv):
+    _name = 'stock.inventory.line'
+    _inherit = 'stock.inventory.line'
+
+    _columns = {
+        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True),
+        'comment': fields.char(size=128, string='Comment'),
+    }
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['reason_type_id']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for stock.picking')
+                vals.update(self.pool.get('stock.picking')._get_default_reason(cr, uid, context))
+        return super(stock_inventory_line, self).create(cr, uid, vals, context)
+
+stock_inventory_line()
+
+class stock_inventory(osv.osv):
+    _name = 'stock.inventory'
+    _inherit = 'stock.inventory'
+
+    # @@@override@ stock.stock_inventory._inventory_line_hook()
+    def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
+        """ Creates a stock move from an inventory line
+        @param inventory_line:
+        @param move_vals:
+        @return:
+        """
+        location_obj = self.pool.get('stock.location')
+
+        # Copy the comment
+        move_vals.update({
+            'comment': inventory_line.comment,
+            'reason_type_id': inventory_line.reason_type_id.id,
+        })
+
+        return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
+        # @@@end
+
+stock_inventory()
+
 
 
 class stock_picking(osv.osv):
@@ -216,6 +306,7 @@ class stock_move(osv.osv):
     
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
+        'comment': fields.char(size=128, string='Comment'),
     }
     
     _defaults = {

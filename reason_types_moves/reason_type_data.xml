@@ -55,6 +55,7 @@
         <record id="reason_type_loss" model="stock.reason.type">
             <field name="name">Loss</field>
             <field name="code">11</field>
+            <field name="inventory_ok" eval="1" />
         </record>
         
         <record id="reason_type_scrap" model="stock.reason.type">
@@ -84,11 +85,13 @@
         <record id="reason_type_discrepancy" model="stock.reason.type">
             <field name="name">Discrepancy</field>
             <field name="code">12</field>
+            <field name="inventory_ok" eval="1" />
         </record>
         
         <record id="reason_type_other" model="stock.reason.type">
             <field name="name">Other</field>
             <field name="code">13</field>
+            <field name="inventory_ok" eval="1" />
         </record>
     
     </data>

@@ -179,7 +179,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}">
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="asset_id" />
@@ -224,7 +224,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
                                             domain="[('product_id','=?',product_id)]"
@@ -486,7 +485,6 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
@@ -716,7 +714,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                                <field name="type_id" />
 
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
