@@ -254,6 +254,7 @@
     ids = self.search(cr, uid, [('sale_order_id', '=', ref("sale_order_tender_so0")),], context=context)
     tender = self.browse(cr, uid, ids[0])
     assert tender.tender_line_ids[0].price_unit == 1024, 'price_unit has not been updated. %s-1024'%tender.tender_line_ids[0].price_unit
+    po_id = self.create_po(cr, uid, tender.id, context=context)
     
     import netsvc
     wf_service = netsvc.LocalService("workflow")
@@ -267,7 +268,9 @@
     po_obj = self.pool.get('purchase.order')
     so_obj = self.pool.get('sale.order')
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
-    ids = po_obj.search(cr, uid, [('origin', '=', so.name),])
+    so_ids = po_obj.search(cr, uid, [])
+    ids = po_obj.search(cr, uid, [('origin', '=', so.name + '/' + tender.name),('id', '=', po_id)])
+    assert ids, 'The origin of the generated purchase order is not correct'
     po = po_obj.browse(cr, uid, ids[0])
     assert po.state in ('approved', 'confirmed',), 'the state of purchase order is wrong. %s-approved'%po.state # state depends on the installation or not of double validation module for purchase order
     

@@ -285,6 +285,9 @@ class tender(osv.osv):
         '''
         create a po from the updated RfQs
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         partner_obj = self.pool.get('res.partner')
         po_obj = self.pool.get('purchase.order')
         wf_service = netsvc.LocalService("workflow")
@@ -310,7 +313,7 @@ class tender(osv.osv):
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
-                po_values = {'origin': tender.name,
+                po_values = {'origin': tender.sale_order_id.name + '/' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
@@ -336,7 +339,7 @@ class tender(osv.osv):
             # when the po is generated, the tender is done - no more modification or comparison
             self.done(cr, uid, [tender.id], context=context)
         
-        return True
+        return po_id
     
     def wkf_action_cancel(self, cr, uid, ids, context=None):
         '''
