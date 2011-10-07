@@ -36,19 +36,19 @@
         <field name="location_id" ref="stock_location_medical"/>
         <field name="location_category">stock</field>
     </record>
-    <record id="msf_outgoing.stock_location_packing" model="stock.location">
+    <record id="stock_location_packing" model="stock.location">
         <field name="name">Packing</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
         <field name="location_category">stock</field>
     </record>
-    <record id="msf_outgoing.stock_location_dispatch" model="stock.location">
+    <record id="stock_location_dispatch" model="stock.location">
         <field name="name">Dispatch</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
         <field name="location_category">stock</field>
     </record>
-    <record id="msf_outgoing.stock_location_distribution" model="stock.location">
+    <record id="stock_location_distribution" model="stock.location">
         <field name="name">Distribution</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>

@@ -58,7 +58,7 @@
         "procurement_report",
         "msf_printed_documents",
         "procurement_request",
-        "msf_outgoing",
+#        "msf_outgoing",
         "import_data",
         "sales_followup",
         "financing_contract",

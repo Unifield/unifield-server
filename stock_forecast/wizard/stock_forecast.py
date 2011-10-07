@@ -512,7 +512,7 @@ class stock_forecast(osv.osv_memory):
                 # STOCK MOVES - in positive - out negative
                 moves_list = move_obj.search(cr, uid, [('state', 'not in', ('done', 'cancel')),
                                                        ('product_qty', '!=', 0.0), # dont take empty draft picking tickets into account if empty
-                                                       ('picking_subtype', 'not in', ('ppl', 'packing')), # dont take into account moves that are out of STOCK location
+#                                                       ('picking_subtype', 'not in', ('ppl', 'packing')), # dont take into account moves that are out of STOCK location
                                                        ('product_id', '=', product.id)], order='date_expected', context=context)
                 
                 for move in move_obj.browse(cr, uid, moves_list, context=context):
@@ -729,12 +729,12 @@ class purchase_order_line(osv.osv):
 purchase_order_line()
 
 
-class stock_move(osv.osv):
-    '''
-    corresponding picking subtype
-    '''
-    _inherit = 'stock.move'
-    _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
-                }
-    
-stock_move()
+#class stock_move(osv.osv):
+#    '''
+#    corresponding picking subtype
+#    '''
+#    _inherit = 'stock.move'
+#    _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
+#                }
+#    
+#stock_move()
