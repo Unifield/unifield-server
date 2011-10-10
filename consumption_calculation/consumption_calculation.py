@@ -61,7 +61,7 @@ class real_average_consumption(osv.osv):
     
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-        'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'msf_customer_location')[1],
+        'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_cust')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'valid_ok': lambda *a: True,
     }

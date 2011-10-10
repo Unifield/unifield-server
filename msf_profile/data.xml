@@ -60,7 +60,7 @@
          <field name="location_category">stock</field>
     </record>
     <record id="stock_location_internal_suppliers" model="stock.location">
-        <field name="name">Internal Suppliers</field>
+        <field name="name">MSF Supplier</field>
         <field name="location_id" ref="stock.stock_location_suppliers"/>
         <field name="usage">supplier</field>
         <field name="company_id"></field>
@@ -88,7 +88,7 @@
         <field name="location_category">stock</field>
     </record>
     <record id="stock.stock_location_internal_cust" model="stock.location">
-        <field name="name">Internal Customer</field>
+        <field name="name">MSF Customer</field>
         <field name="location_id" ref="stock.stock_location_customers"/>
         <field name="usage">customer</field>
         <field name="company_id"></field>
@@ -131,9 +131,6 @@
     </record>
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
-    </record>
-    <record id="consumption_calculation.msf_customer_location" model="stock.location">
-    	<field name="location_id" ref="stock.stock_location_internal_cust" />
     </record>
     </data>
 </openerp>
