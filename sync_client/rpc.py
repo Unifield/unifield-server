@@ -27,7 +27,7 @@ import logging
 
 #logging.config.fileConfig('logging.cfg')
 
-TIMEOUT = 250
+TIMEOUT = 3600
 
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
 
