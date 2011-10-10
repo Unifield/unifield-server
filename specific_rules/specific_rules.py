@@ -427,7 +427,7 @@ class stock_production_lot(osv.osv):
         if default is None:
             default = {}
         
-        default.update(name='', date=time.strftime('%Y-%m-%d'))
+        default.update(name='new code', date=time.strftime('%Y-%m-%d'))
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
     
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -621,7 +621,7 @@ class stock_production_lot(osv.osv):
     
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
-                 'name': '',
+                 'name': 'new code',
                  'life_date':time.strftime('%Y-%m-%d')}
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
