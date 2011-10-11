@@ -475,7 +475,7 @@ class product_product(osv.osv):
                 location_ids = context.get('location_id', [])
             
             # Update the domain of research
-            rac_domain.append(('location_id', 'in', location_ids))
+            rac_domain.append(('cons_location_id', 'in', location_ids))
         
         
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
