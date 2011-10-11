@@ -482,10 +482,23 @@ class BarChart(GraphData):
             yopts['y_max'] = 9
             yopts['y_min'] = 0
             y_grid_color = False
-
+        _3d = 3
+        _type = "bar_3d"
         if y_grid_color:
             axis_y = {"steps": yopts['y_steps'], "max": yopts['y_max'], "min": yopts['y_min'],
                       "stroke": 2 , "grid-colour": "#F0EEEE"}
+                    
+            if axis_y['min'] < 0 and axis_y['max'] > 0:
+                _3d = 0
+                _type = "bar"
+                axis_y['labels'] = {'labels': []}
+                i = axis_y['min']
+                while i <= axis_y['max']:
+                    y_label_data = {'y': i}
+                    if i == 0:
+                        y_label_data.update({"grid-colour": "#000000", "stroke": 50, "3d": 3, "tick-height":30})
+                    axis_y['labels']['labels'].append(y_label_data)
+                    i += axis_y['steps']
         else:
             axis_y = {"steps": yopts['y_steps'], "max": yopts['y_max'], "min": yopts['y_min'],
                       'stroke': 2 , "grid-colour": "#F0EEEE"}
@@ -535,7 +548,7 @@ class BarChart(GraphData):
                     allvalues.append(d)
 
                 dataset.append({"text": axis_data[x]['string'],
-                                "type": "bar_3d",
+                                "type": _type,
                                 "colour": ChartColors[i],
                                 "values": datas,
                             "font-size": 10})
@@ -548,7 +561,7 @@ class BarChart(GraphData):
                                  "stroke": 1,
                                  "tick-height": 5,
                                  "steps": 1, "labels": { "rotate": "diagonal", "colour": "#ff0000", "labels": [l for l in temp_lbl]},
-                                 "3d": 3,
+                                 "3d": _3d,
                                  "grid-colour": "#F0EEEE"
                                  }
                       }
