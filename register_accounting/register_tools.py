@@ -209,7 +209,7 @@ def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
                     return False
     return True
 
-def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
+def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context={}):
     """
     Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
     """
@@ -232,15 +232,20 @@ def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
             # Search lines from current register ending balance
             cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
             # Unlink all previously cashbox lines for the next register
-            old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', next_reg_id)], context=context)
-            cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
-            for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
-                new_vals = {
-                    'starting_id': next_reg_id,
-                    'pieces': line.pieces,
-                    'number': line.number,
-                }
-                cashbox_line_obj.create(cr, uid, new_vals, context=context)
+            elements = ['starting_id']
+            # Add ending_id if demand
+            if ending:
+                elements.append('ending_id')
+            for el in elements:
+                old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [(el, '=', next_reg_id)], context=context)
+                cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
+                for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
+                    starting_vals = {
+                        el: next_reg_id,
+                        'pieces': line.pieces,
+                        'number': line.number,
+                    }
+                    cashbox_line_obj.create(cr, uid, starting_vals, context=context)
             # update new register balance_end
             balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
             if balance:
