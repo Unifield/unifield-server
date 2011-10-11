@@ -251,8 +251,10 @@ class product_likely_expire_report(osv.osv_memory):
                     products[lot.product_id.id]['total_expired'] += lot.stock_available
             
             # Get all dates
-            if lot.life_date not in dates and lot.life_date >= report.date_from:
+            if lot.life_date not in dates and lot.life_date >= report.date_from and lot.life_date <= report.date_to:
                 dates.append(lot.life_date)
+            if report.date_to not in dates:
+                dates.append(report.date_to)
                 
         dates.sort()
         
@@ -292,7 +294,7 @@ class product_likely_expire_report(osv.osv_memory):
                                 continue
                             lot_info = products[prod_id]['lots'][lot]
                               
-                            if theo and lot_info['life_date'] >= date and lot_info['remaind'] and theo < lot_info['remaind']:
+                            if lot_info['life_date'] >= date and lot_info['remaind'] and theo < lot_info['remaind']:
                                 lot_info['consumed'] += theo
                                 lot_info['remaind'] -= theo
                                 products[prod_id]['dates'][date]['in_stock'] -= theo
