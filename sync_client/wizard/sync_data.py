@@ -145,7 +145,10 @@ class update_to_send(osv.osv):
         else:
             domain = []
             
+        print "domain", domain
+            
         ids = eval_poc_domain(obj, cr, uid, domain, context=context)
+        print "ids that match the domain salut", ids
         for id in ids:
             xml_id = link_with_ir_model(obj, cr, uid, id, context=context)
             if not obj.need_to_push(cr, uid, id, included_fields, context=context):
@@ -269,18 +272,22 @@ class update_received(osv.osv):
         values = self._check_and_replace_missing_id(cr, uid, values, fields, fallback, message, context=context)
         #5 import data : report error
         try:
+            rollback = False
             run = True
             res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
             if res and res[2]:
                 if res[0] != 1:
                     message.append(res[2])
                     run = False
+            if res and res[0] == -1:
+                rollback = True
+                
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             print e
             message.append(str(e))
             run = False
-            
+        #TODO problem
         #6 set version and sync_date
         try:
             xml_id = values[fields.index('id')]
@@ -290,13 +297,15 @@ class update_received(osv.osv):
                 
         message_str = "\n".join(message)
         self.write(cr, uid, update.id, {'run' : run, 'log' : message_str}, context=context)
+        return rollback
     
     def run(self, cr, uid, ids, context=None):
         for update in self.browse(cr, uid, ids, context=context):
             try:
                 cr.execute("SAVEPOINT exec_update")
-                self.single_update_execution(cr, uid, update, context)
-                cr.execute("RELEASE SAVEPOINT exec_update")
+                rollback = self.single_update_execution(cr, uid, update, context)
+                if not rollback:
+                    cr.execute("RELEASE SAVEPOINT exec_update")
             except Exception, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_update")
                 

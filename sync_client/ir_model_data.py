@@ -323,6 +323,7 @@ def log_o2m_write(model, cr, uid, id, relation, parent_id, context=None):
             model.pool.get('sync.client.write_info').log_write(cr, uid, model._name, id, {key : parent_id}, context=context)
     
 def link_with_ir_model(model, cr, uid, id, context=None):
+    model.get_xml_id(cr, uid, [id], context={'sync' : True})
     model_data_pool = model.pool.get('ir.model.data')
     res_id = model_data_pool.get(cr, uid, model, id, context=context)
     if res_id:
@@ -333,7 +334,7 @@ def link_with_ir_model(model, cr, uid, id, context=None):
         'noupdate' : False, # don't set to True otherwise import won't work
         'model' : model._name,
         'module' : 'sd',#model._module,
-        'name' : entity_uuid + '/' + model._table + '/' + str(id),
+        'name' : model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id),
         'res_id' : id,
         'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
@@ -517,5 +518,23 @@ class dict_to_obj(object):
 
 
 
+def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+    print "generate xml name"
+    return uuid + '/' + table_name + '/' + str(res_id)
 
+osv.osv.get_unique_xml_name = get_unique_xml_name
+
+
+
+
+"""
+class address(osv.osv):
+    _inherit = "res.partner.address"
+    
+    def get_unique_xml_name(self, uuid, table_name, res_id):
+        print "generate_xml_id"
+        return uuid + '/' + "res/partner/address/custom" + '/' + str(res_id)
+        
+address()
+"""
 
