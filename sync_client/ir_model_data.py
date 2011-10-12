@@ -254,14 +254,14 @@ def version(self, cr, uid, id, context=None):
 osv.osv.version = version
 
 
-def need_to_push(self, cr, uid, id, included_fields, context=None):
+def need_to_push(self, cr, uid, res_id, included_fields, context=None):
     """
         @return True if last modification date is greater than last sync date
     """
     
     model_data_pool = self.pool.get('ir.model.data')
-    id = model_data_pool.get(cr, uid, self, id, context=context)
-    return  model_data_pool.need_to_push(cr, uid, id, included_fields, context=context)
+    xml_id = model_data_pool.get(cr, uid, self, res_id, context=context)
+    return  model_data_pool.need_to_push(cr, uid, xml_id, included_fields, context=context)
     
 osv.osv.need_to_push = need_to_push    
 
@@ -406,16 +406,6 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
         if not context:
             context = {}
     
-        def get_xml_id(row):
-            model_data = self.pool.get('ir.model.data')
-            data_ids = model_data.search(cr, uid, [('model', '=', row._table_name), ('res_id', '=', row['id'])])
-            if data_ids:
-                d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
-                if d['module']:
-                    return '%s.%s' % (d['module'], d['name'])
-                else:
-                    return d['name']
-            return ''
         
         def get_name(row):
             name_relation = self.pool.get(row._table_name)._rec_name
@@ -456,7 +446,7 @@ def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
                 
             """
             if field[0] == 'id':
-                json_data[field[0]] = get_xml_id(row)
+                json_data[field[0]] = self.get_xml_id(cr, uid, [row.id]).get(row.id)
             elif field[0] == '.id':
                 json_data[field[0]] = row.id
             else: #TODO manage more case maybe selection or reference
