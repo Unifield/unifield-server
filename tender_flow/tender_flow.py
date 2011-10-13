@@ -38,6 +38,24 @@ class tender(osv.osv):
     _name = 'tender'
     _description = 'Tender'
     
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        return function values
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {'rfq_name_list': '',
+                              }
+            
+            rfq_names = []
+            for rfq in obj.rfq_ids:
+                rfq_names.append(rfq.name)
+            # generate string
+            rfq_names.sort()
+            result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
+            
+        return result
+    
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
@@ -53,8 +71,9 @@ class tender(osv.osv):
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
-                'requested_date': fields.date(string="Requested Date", states={'draft':[('readonly',False)],}, readonly=True),
+                'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
+                'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',)
                 }
     
     _defaults = {'state': 'draft',
@@ -62,7 +81,11 @@ class tender(osv.osv):
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+                 'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
+                 'priority': 'normal',
                  }
+    
+    _order = 'name desc'
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
@@ -116,14 +139,14 @@ class tender(osv.osv):
                 for line in tender.tender_line_ids:
                     # create an order line for each tender line
                     price = pricelist_obj.price_get(cr, uid, [pricelist_id], line.product_id.id, line.qty, supplier.id, {'uom': line.product_uom.id})[pricelist_id]
-                    newdate = datetime.strptime(line.date_planned, '%Y-%m-%d %H:%M:%S')
-                    newdate = (newdate - relativedelta(days=tender.company_id.po_lead)) - relativedelta(days=int(supplier.default_delay))
+                    newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
+                    #newdate = (newdate - relativedelta(days=tender.company_id.po_lead)) - relativedelta(days=int(supplier.default_delay)) # requested by Magali uf-489
                     values = {'name': line.product_id.partner_ref,
                               'product_qty': line.qty,
                               'product_id': line.product_id.id,
                               'product_uom': line.product_uom.id,
                               'price_unit': price,
-                              'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
+                              'date_planned': newdate.strftime('%Y-%m-%d'),
                               'notes': line.product_id.description_purchase,
                               'order_id': po_id,
                               }
@@ -404,7 +427,7 @@ class tender_line(osv.osv):
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
                 'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-                'date_planned': fields.datetime('Scheduled date', required=True),
+                'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
@@ -413,6 +436,8 @@ class tender_line(osv.osv):
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 }
+    _defaults = {'qty': 1.0,
+                 }
     
 tender_line()
 
@@ -481,8 +506,7 @@ class procurement_order(osv.osv):
                 'sale_order_line_ids': fields.one2many('sale.order.line', 'procurement_id', string="Sale Order Lines"),
                 'tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'is_tender_done': fields.boolean(string="Tender Done"),
-                'state': fields.selection([
-                                           ('draft','Draft'),
+                'state': fields.selection([('draft','Draft'),
                                            ('confirmed','Confirmed'),
                                            ('exception','Exception'),
                                            ('running','Running'),
@@ -531,7 +555,8 @@ class procurement_order(osv.osv):
                                              'sale_order_line_id': sale_order_line.id,
                                              'location_id': proc.location_id.id,
                                              'product_uom': proc.product_uom.id,
-                                             'date_planned': proc.date_planned,}, context=context)
+                                             #'date_planned': proc.date_planned, # function at line level
+                                             }, context=context)
             
             self.write(cr, uid, ids, {'tender_id': tender_id}, context=context)
             
@@ -618,6 +643,7 @@ class purchase_order_line(osv.osv):
     
 purchase_order_line()
 
+
 class sale_order_line(osv.osv):
     '''
     add link one2many to tender.line
@@ -636,7 +662,9 @@ class pricelist_partnerinfo(osv.osv):
     _inherit = 'pricelist.partnerinfo'
     _columns = {'currency_id': fields.many2one('res.currency', string='Currency',),
                 'valid_till': fields.date(string="Valid Till",),
+                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="RfQ Line Ref",),
+                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 }
 pricelist_partnerinfo()
 

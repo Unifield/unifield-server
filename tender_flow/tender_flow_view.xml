@@ -16,7 +16,7 @@
                         <field name="sale_order_id"/>
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" />
                         <field name="location_id" />
-                        <field name="company_id" />
+                        <field name="company_id" invisible="True" />
                         <field name="categ" />
                         <field name="priority" />
                         <field name="details" />
@@ -25,7 +25,7 @@
                         <page string="Tender Lines">
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top">
-                                	<field name="date_planned" />
+                                	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id)" />
                                     <field name="qty" />
                                     <field name="product_uom" />
@@ -84,6 +84,7 @@
                 <tree string="Tender">
                     <field name="name" />
                     <field name="sale_order_id" />
+                    <field name="rfq_name_list" />
                     <field name="state" />
                 </tree>
             </field>
@@ -97,6 +98,7 @@
 				<search string="Tender">
 					<field name="name" />
 					<field name="sale_order_id" />
+					<field name="rfq_ids" />
 					<field name="state" />
 					<newline />
 					<group expand="0" string="Group By..." colspan="11" col="11"
@@ -154,6 +156,35 @@
             	</data>
             </field>
        	</record>
+       	
+       	<record id="product_supplierinfo_form_view" model="ir.ui.view">
+            <field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
+            			<field name="currency_id" />
+            			<field name="valid_till" />
+            			<field name="purchase_order_id" />
+            			<field name="purchase_order_line_number" />
+            			<field name="purchase_order_line_id" />
+            		</xpath>
+            		
+            		<xpath expr="//form/field[@name='price']" position="after">
+            			<field name="currency_id" />
+            			<field name="valid_till" />
+            			<field name="purchase_order_id" />
+            			<field name="purchase_order_line_number" />
+            			<field name="purchase_order_line_id" />
+            		</xpath>
+            	
+            	</data>
+                
+            </field>
+        </record>
             
 
 	</data>
