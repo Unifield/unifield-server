@@ -649,9 +649,9 @@ function onChange(caller){
                     case 'boolean':
                         obj = openobject.dom.get(prefix + k + '_checkbox_')
                         if (obj) {
-                            obj.checked = value || false;
+                            obj.checked = value || 0;
                         } else {
-                            openobject.dom.get(prefix + k).value = value || false;
+                            openobject.dom.get(prefix + k).value = value || 0;
                         }
                         break;
                     case 'text_html':
