@@ -808,7 +808,7 @@ class product_supplierinfo(osv.osv):
           result[id] = False
         return result
     
-    def _get_product_ids(self, cr, uid, obj, name, args, domain=None, context=None):
+    def _get_product_ids(self, cr, uid, obj, name, args, context=None):
         '''
         from the product.template id returns the corresponding product.product
         '''
@@ -823,7 +823,7 @@ class product_supplierinfo(osv.osv):
         # search filter on product_id of supplierinfo
         return [('product_id', '=', templateId)]
     
-    _columns = {'product_product_ids': fields.function(_get_false, type='one2many',relation='product.product', string="Products",fnct_search=_get_product_ids),
+    _columns = {'product_product_ids': fields.function(_get_false, method=True, type='one2many',relation='product.product', string="Products",fnct_search=_get_product_ids),
                 }
 
     def name_get(self, cr, uid, ids, context=None):
