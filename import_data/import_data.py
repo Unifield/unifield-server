@@ -47,8 +47,16 @@ class import_data(osv.osv_memory):
             if v['value']['level']:
                 data['level'] = v['value']['level']
 
+    def _set_nomen_code(self, cr, uid, data, row):
+        for n in ['manda_0', 'manda_1', 'manda_2', 'manda_3', 'sub_0', 'sub_1', 'sub_2', 'sub_3', 'sub_4', 'sub_5']:
+            if data.get('nomen_%s'%n) and not data.get('nomen_c_%s'%n):
+                if data.get('nomen_%s'%n) not in self._cache:
+                    self._cache[data.get('nomen_%s'%n)] = self.pool.get('product.nomenclature').read(cr, uid, data.get('nomen_%s'%n), ['code'])['code']
+                data['nomen_c_%s'%n] = self._cache[data.get('nomen_%s'%n)]
+
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
+            self._cache = {}
             # modify headers if needed
             for n,h in enumerate(headers):
                 m = re.match("^nomen_manda_([0123]).name$", h)
@@ -62,14 +70,23 @@ class import_data(osv.osv_memory):
                     row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
         return col
 
+    def _del_product_cache(self, cr, uid):
+        self._cache = {}
+
     post_hook = {
         'account.budget.post': _set_code_name,
-        'product.nomenclature': _set_nomen_level, 
+        'product.nomenclature': _set_nomen_level,
+        'product.product': _set_nomen_code,
     }
 
     pre_hook = {
         'product.product': _set_full_path_nomen, 
     }
+
+    post_load_hook = {
+        'product.product': _del_product_cache,
+    }
+
     def _get_image(self, cr, uid, context=None):
         return self.pool.get('ir.wizard.screen')._get_image(cr, uid)
 
@@ -239,6 +256,8 @@ class import_data(osv.osv_memory):
                 writer.writerow(row)
                 nb_error += 1
 
+        if self.post_load_hook.get(impobj._name):
+            self.post_load_hook[impobj._name](impobj, cr, uid)
         fileobj.close()
         summary = '''Datas Import Summary: 
 Object: %s
