@@ -344,6 +344,32 @@ class stock_move(osv.osv):
     add kc/dg
     '''
     _inherit = 'stock.move'
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prodlot_id=False)
+        
+        result = super(stock_move, self).create(cr, uid, vals, context=context)
+        return result
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        write function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prodlot_id=False)
+        
+        result = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+        return result
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -388,20 +414,50 @@ class stock_move(osv.osv):
     
     def _get_checks_batch(self, cr, uid, ids, name, arg, context=None):
         '''
-        todo should be merged with 'multi'
+        get values
         '''
         result = {}
         for id in ids:
-            result[id] = False
+            result[id] = {'batch_number_check': False,
+                          'expiry_date_check': False,
+                          }
             
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
-                result[move.id] = move.product_id.batch_management
+                result[move.id] = {'batch_number_check': move.product_id.batch_management,
+                                   'expiry_date_check': move.product_id.perishable,
+                                   }
+            
+        return result
+    
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
+                            loc_dest_id=False, address_id=False):
+        '''
+        the product changes, set the hidden flag if necessary
+        '''
+        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
+                                                             loc_dest_id, address_id)
+        
+        # product changes, prodlot is always cleared
+        result.setdefault('value', {})['prodlot_id'] = False
+        if prod_id:
+            product = self.pool.get('product.product').browse(cr, uid, prod_id)
+            if product.batch_management or product.perishable:
+                result.setdefault('value', {})['hidden_prod_mandatory'] = True
+            else:
+                result.setdefault('value', {})['hidden_prod_mandatory'] = False
+        
+        else:
+            result.setdefault('value', {})['hidden_prod_mandatory'] = False
             
         return result
         
+        
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
-                'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True),}
+                'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True, multi='vals_get',),
+                'expiry_date_check': fields.function(_get_checks_batch, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi='vals_get',),
+                'hidden_prod_mandatory': fields.boolean(string='Hidden Flag for Prod lot and expired date',),
+                }
     _constraints = [
                     (_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
