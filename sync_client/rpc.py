@@ -28,8 +28,8 @@ import logging
 #logging.config.fileConfig('logging.cfg')
 
 TIMEOUT = 3600
-
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
+NB_RETRY = 20
 
 # Safer Unpickler, in case the server is untrusted, from Nadia Alramli
 # http://nadiana.com/python-pickle-insecure#How_to_Make_Unpickling_Safer
@@ -242,10 +242,23 @@ class NetRPCConnector(Connector):
         self.is_gzip = is_gzip
 
     def send(self, service_name, method, *args):
-        socket = NetRPC(is_gzip=self.is_gzip)
-        socket.connect(self.hostname, self.port)
-        socket.mysend((service_name, method, )+args)
-        result = socket.myreceive()
+        i = 0
+        retry = True
+        print "send rpc"
+        while retry:
+            try:
+                retry = False
+                socket = NetRPC(is_gzip=self.is_gzip)
+                socket.connect(self.hostname, self.port)
+                socket.mysend((service_name, method, )+args)
+                result = socket.myreceive()
+            except Exception:
+                if i < NB_RETRY:
+                    retry = True
+                    print "retry to connect", i
+                i += 1
+                
+            
         socket.disconnect()
         return result
 

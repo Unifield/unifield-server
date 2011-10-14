@@ -31,7 +31,10 @@ import time
 import sys
 import traceback
 
-class entity(osv.osv):
+from threading import Thread
+import pooler
+
+class entity(osv.osv, Thread):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Entity"
@@ -390,14 +393,29 @@ class entity(osv.osv):
         SYNC process : usefull for scheduling 
     """
     def sync(self, cr, uid, context=None):
+        
+        
         #TODO thread
         if not context:
             context = {}
+            
+        self.data = [cr, uid, context]
+        Thread.__init__(self)
+        self.start()
+        
+        return True
+        
+    def run(self):
+        print "start synchro in thread"
+        cr = self.data[0]
+        uid = self.data[1]
+        context = self.data[2]
+        cr = pooler.get_db(cr.dbname).cursor()
         self.pull_update(cr, uid, context)
         self.pull_message(cr, uid, context)
         self.push_update(cr, uid, context)
         self.push_message(cr, uid, context)
-        return True
+        print "synchro threaded finished"
 
 entity()
 
