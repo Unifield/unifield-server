@@ -151,6 +151,12 @@
 	        			<button type="object" string="Start Synchronization Process" name="sync" states="init"/>
 	        			<button type="object" string="Resume Synchronization Process" name="sync" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
 	        		</group>
+                    <newline />
+                    <group col="2" colspan="3">
+	        			<button type="object" string="Start Background Sync" name="sync_threaded" states="init"/>
+	        			<button type="object" string="Resume Background Sync" name="sync_threaded" attrs="{'invisible' : [('state', 'in', ['init', 'corrupted'])]}"/>
+	        		</group>
+                    <newline />
 	        		<group col="2" colspan="3">
 	        			<button type="object" string="Start Pushing Data" name="push_data" states="init"/>
 	        			<button type="object" string="Resume Pushing Data" name="push_data" states="update_send,update_validate" />

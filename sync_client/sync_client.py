@@ -392,9 +392,7 @@ class entity(osv.osv, Thread):
     """
         SYNC process : usefull for scheduling 
     """
-    def sync(self, cr, uid, context=None):
-        
-        
+    def sync_threaded(self, cr, uid, context=None):
         #TODO thread
         if not context:
             context = {}
@@ -404,6 +402,15 @@ class entity(osv.osv, Thread):
         self.start()
         
         return True
+        
+    def sync(self, cr, uid, context=None):
+        if not context:
+            context = {}
+            
+        self.pull_update(cr, uid, context)
+        self.pull_message(cr, uid, context)
+        self.push_update(cr, uid, context)
+        self.push_message(cr, uid, context)
         
     def run(self):
         print "start synchro in thread"
@@ -415,8 +422,9 @@ class entity(osv.osv, Thread):
         self.pull_message(cr, uid, context)
         self.push_update(cr, uid, context)
         self.push_message(cr, uid, context)
-        print "synchro threaded finished"
-
+        print "thread finished"
+        cr.commit()
+        cr.close()
 entity()
 
 
