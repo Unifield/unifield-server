@@ -10,14 +10,15 @@
             <field name="arch" type="xml">
                 <tree string="Account Entry Line">
                     <field name="journal_id" string="Journal Code"/>
-                    <field name="move_id"/>
+                    <field name="move_id" string="Entry Sequence"/>
                     <field name="instance"/>
                     <field name="ref"/>
                     <field name="date" string="Posting Date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="name"/>
                     <field name="account_id"/>
-                    <field name="partner_type"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
                     <field name="currency_id" string="Booking Currency"/>
@@ -29,7 +30,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="view_move_line_form" model="ir.ui.view">
             <field name="name">account.move.line.form</field>
             <field name="model">account.move.line</field>
@@ -84,7 +85,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line" editable="bottom">
+                <tree string="Account Entry Line" noteditable="True">
                     <field name="journal_id" string="Journal Code"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="instance"/>
@@ -93,7 +94,8 @@
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                     <field name="move_state" invisible="1"/>
-                    <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
