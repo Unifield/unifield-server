@@ -58,6 +58,10 @@ class sync_manager(osv.osv_memory):
         self.pool.get('sync.client.entity').sync(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
         
+    def sync_threaded(self, cr, uid, ids, context=None):
+        self.pool.get('sync.client.entity').sync_threaded(cr, uid, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+        
     def pull_data(self, cr, uid, ids, context=None):
         res = self.pool.get('sync.client.entity').pull_update(cr, uid, context=context)
         if not res:
