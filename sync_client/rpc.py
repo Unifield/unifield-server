@@ -27,9 +27,9 @@ import logging
 
 #logging.config.fileConfig('logging.cfg')
 
-TIMEOUT = 3600
+TIMEOUT = 30
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
-NB_RETRY = 20
+NB_RETRY = 100
 
 # Safer Unpickler, in case the server is untrusted, from Nadia Alramli
 # http://nadiana.com/python-pickle-insecure#How_to_Make_Unpickling_Safer
