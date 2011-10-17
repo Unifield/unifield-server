@@ -394,10 +394,31 @@ class sale_order(osv.osv):
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        
+        
+        return result
+    
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # new field representing selected partner from sourcing tool
+        proc_data = kwargs['proc_data']
         line = kwargs['line']
+        
+        # new field representing selected partner from sourcing tool
         result['supplier'] = line.supplier and line.supplier.id or False
+        
+        date_planned = None
+        if line.sourcing_line_ids:
+            for sourcing_line in line.sourcing_line_ids:
+                if not date_planned or sourcing_line.estimated_delivery_date < date_planned:
+                    date_planned = sourcing_line.estimated_delivery_date
+            if date_planned:
+                result['date_planned'] = date_planned
         
         return result
 
@@ -651,7 +672,7 @@ class procurement_order(osv.osv):
         values = kwargs['values']
         
         purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
-                                               ('delivery_requested_date', '=', values['order_line'][0][2].get('date_planned'))], context=context)
+                                               ('delivery_requested_date', '=', procurement.date_planned)], context=context)
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})

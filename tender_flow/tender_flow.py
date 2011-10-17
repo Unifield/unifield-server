@@ -580,6 +580,17 @@ class procurement_order(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
         return purchase_id
     
+    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        data for the purchase order creation
+        '''
+        values = kwargs['values']
+        procurement = kwargs['procurement']
+        
+        values['date_planned'] = procurement.date_planned 
+        
+        return values
+    
 procurement_order()
 
 
