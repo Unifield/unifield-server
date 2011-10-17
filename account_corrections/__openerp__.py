@@ -37,7 +37,10 @@
         'account_wizard_view.xml',
     ],
     "demo_xml" : [],
-    "test": [],
+    "test": [
+        'test/account_data.yml',
+        'test/invoice_correction.yml'
+    ],
     "installable": True,
     "active": False
 }
