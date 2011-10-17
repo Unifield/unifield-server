@@ -174,11 +174,12 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
+                            <field name="warehouse_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}">
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="asset_id" />
@@ -223,7 +224,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
                                             domain="[('product_id','=?',product_id)]"
@@ -346,7 +346,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-            <field name="context">{}</field>
+            <field name="context">{'picking_screen':True}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
@@ -433,6 +433,7 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
                             <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
@@ -484,7 +485,6 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-	                                <field name="type_id" />
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"
@@ -659,6 +659,7 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -713,7 +714,6 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                                <field name="type_id" />
 
                                         <field name="prodlot_id" groups="base.group_extended"
                                             context="{'location_id':location_id, 'product_id':product_id}"

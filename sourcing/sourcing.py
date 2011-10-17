@@ -562,24 +562,6 @@ class sale_order_line(osv.osv):
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
                     values.update({'supplier': False})
-                elif vals['type'] == 'make_to_order':
-                    if 'product_id' in vals:
-                        deliveryDate = self.pool.get('product.product').browse(cr, uid, vals['product_id'], 
-                                                                               context=context).seller_delay
-                    else:
-                        product_id = self.browse(cr, uid, ids[0], context=context).product_id
-                        if product_id:
-                            deliveryDate = self.pool.get('product.product').browse(cr, uid, product_id.id, 
-                                                                                   context=context).seller_delay
-                
-                    estDeliveryDate = False
-                    if deliveryDate:
-                        daysToAdd = deliveryDate
-                        estDeliveryDate = date.today()
-                        estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
-                        estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
-                        values.update({'estimated_delivery_date': estDeliveryDate})
-                    
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
                 

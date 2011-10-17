@@ -238,7 +238,7 @@
         	<field name="target">new</field>
         </record>
         
-        <menuitem id="sale_order_followup_from_menu"
+        <menuitem id="menuitem_sale_order_followup_from_menu"
         	  action="action_sale_order_followup_from_menu"
         	  parent="base.next_id_64" />
     

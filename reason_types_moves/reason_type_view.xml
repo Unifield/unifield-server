@@ -7,14 +7,35 @@
             id="menu_configuration_inventory"
             parent="stock.menu_stock_configuration" />
     
+        <record id="reason_type_move_admin_form_view" model="ir.ui.view">
+            <field name="name">reason.type.move.admin.form.view</field>
+            <field name="model">stock.reason.type</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Reason Types Move">
+                    <field name="name"/>
+                    <field name="code" />
+                    <field name="parent_id" />
+                    <field name="level" />
+                    <group colspan="2" col="2">
+                    	<field name="inventory_ok" attrs="{'invisible': [('parent_id', '!=', False)]}" />
+                    	<field name="is_inventory" attrs="{'invisible': [('parent_id', '=', False)]}" />
+                   </group>
+                </form>
+            </field>
+        </record>
+        
         <record id="reason_type_move_form_view" model="ir.ui.view">
             <field name="name">reason.type.move.form.view</field>
             <field name="model">stock.reason.type</field>
             <field name="type">form</field>
+            <field name="priority" eval="8" />
             <field name="arch" type="xml">
                 <form string="Reason Types Move">
                     <field name="name"/>
-                    <field name="parent_id" />
+                    <field name="code" />
+                    <field name="parent_id" required="1" />
                     <field name="level" />
                 </form>
             </field>
@@ -33,6 +54,32 @@
             </field>
         </record>
         
+        <record id="action_reason_type_move_admin_restrict" model="ir.actions.act_window">
+            <field name="name">Reason Types Moves (Admin access)</field>
+            <field name="res_model">stock.reason.type</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <record id="action_reason_type_move_admin_tree_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_reason_type_move_admin_restrict" />
+            <field name="sequence">2</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="reason_type_move_tree_view" />
+        </record>
+        
+        <record id="action_reason_type_move_admin_form_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_reason_type_move_admin_restrict" />
+            <field name="sequence">4</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="reason_type_move_admin_form_view" />
+        </record>
+        
+        
+        <menuitem id="menu_reason_type_move_admin"
+                  action="action_reason_type_move_admin_restrict"
+                  parent="menu_configuration_inventory" />
+        
         <record id="action_reason_type_move" model="ir.actions.act_window">
             <field name="name">Reason Types Moves</field>
             <field name="res_model">stock.reason.type</field>
@@ -43,6 +90,53 @@
         <menuitem id="menu_reason_type_move"
                   action="action_reason_type_move"
                   parent="menu_configuration_inventory" />
+                  
+                  
+    <!-- Overrirde Stock Inventory Lines -->
+        <record id="stock_inventory_line_tree_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.line.tree.type.id</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_inventory_line_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='product_uom']" position="after">
+                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_inventory_line_form_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.line.form.type.id</field>
+            <field name="model">stock.inventory.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_inventory_line_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/field[@name='product_uom']" position="after">
+                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                    <field name="comment" />
+                </xpath>
+            </field>
+        </record>
+        
+        <record id="stock_inventory_form_type_id" model="ir.ui.view">
+            <field name="name">stock.inventory.form.type.id</field>
+            <field name="model">stock.inventory</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_inventory_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='product_id']" position="after">
+                        <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                        <field name="comment" />
+                    </xpath>
+
+                    <xpath expr="/form/notebook/page[@string='Posted Inventory']/field[@name='move_ids']/tree/field[@name='prodlot_id']" position="after">
+                        <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
         
 	<record id="inherit_vpicktree" model="ir.ui.view">
 		<field name="name">inherit.vpicktree</field>
