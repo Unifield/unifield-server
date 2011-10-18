@@ -22,12 +22,13 @@
 from osv import fields, osv
 import decimal_precision as dp
 from tools.misc import flatten
+from time import strftime
 
 class analytic_distribution(osv.osv):
     _name = "analytic.distribution"
 
     _columns = {
-        'name': fields.char('Name', size=12, required=True),
+        'name': fields.char('Name', size=12),
         'global_distribution': fields.boolean('Is this distribution copied from the global distribution'),
         'analytic_lines': fields.one2many('account.analytic.line', 'distribution_id', 'Analytic Lines'),
         'invoice_ids': fields.one2many('account.invoice', 'analytic_distribution_id', string="Invoices"),
@@ -60,10 +61,10 @@ class distribution_line(osv.osv):
     _name = "distribution.line"
 
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade'),
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
-        "amount": fields.float('Amount', required=True),
+        "amount": fields.float('Amount'),
         "percentage": fields.float('Percentage'),
         "currency_id": fields.many2one('res.currency', 'Currency', required=True),
         "date": fields.date(string="Date"),
@@ -72,6 +73,8 @@ class distribution_line(osv.osv):
 
     _defaults ={
         'name': 'Distribution Line',
+        'date': lambda *a: strftime('%Y-%m-%d'),
+        'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
 distribution_line()

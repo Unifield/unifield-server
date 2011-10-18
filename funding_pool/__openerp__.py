@@ -37,6 +37,7 @@
         'wizard/wizard_fundingpool_distribution_view.xml',
         'wizard/wizard_free1_distribution_view.xml',
         'wizard/wizard_free2_distribution_view.xml',
+        'wizard/analytic_distribution_wizard_view.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
