@@ -20,32 +20,6 @@
     		</field>
     	</record>
     	
-    	<record id="expiry_quantity_report_processed_view" model="ir.ui.view">
-    		<field name="name">expiry.quantity.report.processed.view</field>
-    		<field name="model">expiry.quantity.report</field>
-    		<field name="type">form</field>
-    		<field name="priority" eval="99" />
-    		<field name="arch" type="xml">
-    			<form string="Expired quantity">
-    				<separator colspan="4" string="Location" />
-    				<field name="location_id" readonly="1" />
-    				<separator colspan="4" string="Period of calculation" />
-    				<field name="week_nb" readonly="1" />
-    				<field name="date_to" readonly="1" />
-    				<separator colspan="4" string="Expired products" />
-    				<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1" >
-    					<tree string="Expired products">
-    						<field name="product_code" />
-    						<field name="product_name" />
-    						<field name="real_stock" />
-    						<field name="expired_qty" />
-    						<field name="batch_number" />
-    					</tree>
-    				</field>
-    			</form>
-    		</field>
-    	</record>
-    	
     	<record id="expiry_quantity_report_processed_loc_view" model="ir.ui.view">
     		<field name="name">expiry.quantity.report.processed.loc.view</field>
     		<field name="model">expiry.quantity.report</field>
@@ -66,6 +40,7 @@
     						<field name="real_stock" />
     						<field name="expired_qty" />
     						<field name="batch_number" />
+    						<field name="expiry_date" widget="date" />
     						<field name="location_id" />
     					</tree>
     				</field>

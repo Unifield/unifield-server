@@ -68,14 +68,13 @@ class expiry_quantity_report(osv.osv_memory):
         domain_out = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
 
         if report.location_id:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_view')[1]
-            domain.append(('location_dest_id', '=', report.location_id.id))
-            domain_out.append(('location_id', '=', report.location_id.id))
+            loc_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', report.location_id.id)], context=context)
         else:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_loc_view')[1]
             loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
-            domain.append(('location_dest_id', 'in', loc_ids))
-            domain_out.append(('location_id', 'in', loc_ids))
+        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_loc_view')[1]
+        domain.append(('location_dest_id', 'in', loc_ids))
+        domain_out.append(('location_id', 'in', loc_ids))
 
         move_ids = move_obj.search(cr, uid, domain, context=context)
         for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -97,17 +96,17 @@ class expiry_quantity_report(osv.osv_memory):
                 lots[move.prodlot_id.id][move.location_dest_id.id] -= move.product_qty
                 
         for lot_location in lots:
-            product = lot_obj.browse(cr, uid, lot_location, context=context).product_id
-            lot_name = lot_obj.browse(cr, uid, lot_location, context=context).name
+            lot_brw = lot_obj.browse(cr, uid, lot_location, context=context)
             for location in lots[lot_location]:
                 if lots[lot_location][location] > 0.00:
-                    context.update({'location': location})
+                    context.update({'location': location, 'compute_child': False})
                     real_qty = lot_obj.browse(cr, uid, lot_location, context=context).product_id.qty_available
-                    self.pool.get('expiry.quantity.report.line').create(cr, uid, {'product_id': product.id,
-                                                                                  'uom_id': product.uom_id.id,
+                    self.pool.get('expiry.quantity.report.line').create(cr, uid, {'product_id': lot_brw.product_id.id,
+                                                                                  'uom_id': lot_brw.product_id.uom_id.id,
                                                                                   'real_stock': real_qty,
                                                                                   'expired_qty': lots[lot_location][location],
-                                                                                  'batch_number': lot_name,
+                                                                                  'batch_number': lot_brw.name,
+                                                                                  'expiry_date': lot_brw.life_date,
                                                                                   'location_id': location,
                                                                                   'report_id': ids[0],
                                                                                   })        
@@ -126,6 +125,7 @@ expiry_quantity_report()
 class expiry_quantity_report_line(osv.osv_memory):
     _name = 'expiry.quantity.report.line'
     _description = 'Products expired line'
+    _order = 'expiry_date, location_id, product_id'
     
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
@@ -136,6 +136,7 @@ class expiry_quantity_report_line(osv.osv_memory):
         'real_stock': fields.float(digits=(16, 2), string='Real stock'),
         'expired_qty': fields.float(digits=(16, 2), string='Expired quantity'),
         'batch_number': fields.many2one('production.lot', string='Batch number'),
+        'expiry_date': fields.date(string='Expiry date'),
         'location_id': fields.many2one('stock.location', string='SLoc'),
     }
     
