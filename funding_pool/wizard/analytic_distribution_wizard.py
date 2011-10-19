@@ -123,8 +123,6 @@ class analytic_distribution_wizard(osv.osv_memory):
 
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')], 
-            string="State", required=True, readonly=True),
         'entry_mode': fields.selection([('percentage','Percentage'), ('amount','Amount')], 'Entry Mode', select=1),
         'line_ids': fields.one2many('analytic.distribution.wizard.lines', 'wizard_id', string="Allocation"),
         'currency_id': fields.many2one('res.currency', string="Currency"),
@@ -133,7 +131,6 @@ class analytic_distribution_wizard(osv.osv_memory):
     }
 
     _defaults = {
-        'state': lambda *a: 'draft',
         'entry_mode': lambda *a: 'percentage',
     }
 

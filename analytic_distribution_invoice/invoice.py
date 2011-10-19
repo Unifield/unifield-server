@@ -25,26 +25,6 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
-    def _have_analytic_distribution(self, cr, uid, ids, name, arg, context={}):
-        """
-        If invoice have an analytic distribution, return True, else return False
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for inv in self.browse(cr, uid, ids, context=context):
-            res[inv.id] = False
-            if inv.analytic_distribution_id:
-                res[inv.id] = True
-        return res
-
-    _columns = {
-        'have_analytic_distribution': fields.function(_have_analytic_distribution, method=True, type='boolean', string='Have an analytic distribution?'),
-    }
-
     def copy(self, cr, uid, id, default={}, context={}):
         """
         Copy global distribution and give it to new invoice
