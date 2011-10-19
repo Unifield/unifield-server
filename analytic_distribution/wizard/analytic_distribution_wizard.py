@@ -37,11 +37,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line"),
+        'type': fields.selection([('cc', 'Cost Center Lines'), ('fp', 'Funding Pool Lines'), ('f1', 'Free 1 Lines'), 
+            ('f2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"),
     }
 
     _defaults = {
         'amount': lambda *a: 0.0,
         'percentage': lambda *a: 0.0,
+        'type': lambda *a: 'cc',
     }
 
     def onchange_percentage(self, cr, uid, ids, percentage, total_amount):
@@ -99,6 +102,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
             self.pool.get('analytic.distribution.wizard').validate(cr, uid, vals.get('wizard_id'), context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context={}):
         """
@@ -114,8 +118,46 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         wiz_id = data and data[0] and data[0].get('wizard_id')
         if wiz_id and not context.get('skip_validation', False):
             self.pool.get('analytic.distribution.wizard').validate(cr, uid, wiz_id, context=context)
+        return res
 
 analytic_distribution_wizard_lines()
+
+class analytic_distribution_wizard_fp_lines(osv.osv_memory):
+    _name = 'analytic.distribution.wizard.fp.lines'
+    _description = 'analytic.distribution.wizard.lines'
+    _inherit = 'analytic.distribution.wizard.lines'
+
+    _columns = {
+        'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True),
+    }
+
+    _defaults = {
+        'type': lambda *a: 'fp',
+    }
+
+analytic_distribution_wizard_fp_lines()
+
+class analytic_distribution_wizard_f1_lines(osv.osv_memory):
+    _name = 'analytic.distribution.wizard.f1.lines'
+    _description = 'analytic.distribution.wizard.lines'
+    _inherit = 'analytic.distribution.wizard.lines'
+
+    _defaults = {
+        'type': lambda *a: 'f1',
+    }
+
+analytic_distribution_wizard_f1_lines()
+
+class analytic_distribution_wizard_f2_lines(osv.osv_memory):
+    _name = 'analytic.distribution.wizard.f2.lines'
+    _description = 'analytic.distribution.wizard.lines'
+    _inherit = 'analytic.distribution.wizard.lines'
+
+    _defaults = {
+        'type': lambda *a: 'f2',
+    }
+
+analytic_distribution_wizard_f2_lines()
 
 class analytic_distribution_wizard(osv.osv_memory):
     _name = 'analytic.distribution.wizard'
@@ -123,14 +165,21 @@ class analytic_distribution_wizard(osv.osv_memory):
 
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')], 
+            string="State", required=True, readonly=True),
         'entry_mode': fields.selection([('percentage','Percentage'), ('amount','Amount')], 'Entry Mode', select=1),
-        'line_ids': fields.one2many('analytic.distribution.wizard.lines', 'wizard_id', string="Allocation"),
+        'line_ids': fields.one2many('analytic.distribution.wizard.lines', 'wizard_id', string="Cost Center Allocation"),
+        'fp_line_ids': fields.one2many('analytic.distribution.wizard.fp.lines', 'wizard_id', string="Funding Pool Allocation"),
+        'f1_line_ids': fields.one2many('analytic.distribution.wizard.f1.lines', 'wizard_id', string="Free 1 Allocation"),
+        'f2_line_ids': fields.one2many('analytic.distribution.wizard.f2.lines', 'wizard_id', string="Free 2 Allocation"),
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'purchase_id': fields.many2one('purchase.order', string="Purchase Order"),
+        'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
     }
 
     _defaults = {
+        'state': lambda *a: 'draft',
         'entry_mode': lambda *a: 'percentage',
     }
 
@@ -154,8 +203,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         Add distribution lines to the wizard
         """
+        # Some verifications
         if not context:
             context = {}
+        # Prepare some values
+        ana_obj = self.pool.get('account.analytic.account')
         res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
         wiz = self.browse(cr, uid, [res], context=context)[0]
         if wiz.distribution_id:
@@ -170,6 +222,16 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'distribution_line_id': line.id or False,
                 }
                 self.pool.get('analytic.distribution.wizard.lines').create(cr, uid, vals, context=context)
+                # Search MSF Private Fund
+                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
+                if pf_id:
+                    pf = ana_obj.browse(cr, uid, pf_id, context=context)[0]
+                    vals.update({'analytic_id': pf.id, 'cost_center_id': line.analytic_id and line.analytic_id.id or False, 'type': 'fp'})
+                    self.pool.get('analytic.distribution.wizard.fp.lines').create(cr, uid, vals, context=context)
+            if wiz.state == 'dispatch':
+                for lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+                    for line in lines:
+                        print line._name # FIXME this permits to retrieve line type
         return res
 
     def compare_and_write_modifications(self, cr, uid, wizard_id, context={}):
@@ -230,19 +292,25 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        total = 0.0
         for wiz in self.browse(cr, uid, ids, context=context):
             # Do some verification
             if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # First line's number
             if not wiz.line_ids:
                 raise osv.except_osv(_('Warning'), _('No allocation done.'))
-            # Then total of percentage
-            for line in wiz.line_ids:
-                total += line.percentage or 0.0
-            if abs(total - 100.0) > 10**-4:
-                raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
+            # Funding pool
+            if not wiz.fp_line_ids:
+                raise osv.except_osv(_('Warning'), _('No Funding Pool allocation done.'))
+            # Then total of percentage for each type
+            for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
+                total = 0.0
+                for line in lines:
+                    total += line.percentage or 0.0
+                if abs(total - 100.0) > 10**-4 and lines:
+                    raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
             # Compare and write modifications done on analytic lines
             res = self.compare_and_write_modifications(cr, uid, wiz.id, context=context)
             if not res:

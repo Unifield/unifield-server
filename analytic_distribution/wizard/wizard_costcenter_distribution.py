@@ -65,7 +65,7 @@ class wizard_costcenter_distribution_line(osv.osv_memory):
         if not context:
             context = {}
         view = super(wizard_costcenter_distribution_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
         if view_type=='tree' and context.get('mode'):
             view['arch'] = """<tree string="" editable="top">
     <field name="analytic_id" domain="[('type', '!=', 'view'), ('id', 'child_of', [%s]), ('state', '=', 'open')]"/>

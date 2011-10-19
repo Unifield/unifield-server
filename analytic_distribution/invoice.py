@@ -34,54 +34,47 @@ class account_invoice(osv.osv):
         res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)
         res['analytic_distribution_id'] = x.get('analytic_distribution_id', False)
         return res
-    
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
-        # we get the analytical distribution object linked to this line
-        distrib_id = False
-        negative_inv = False
-        invoice_obj = self.browse(cr, uid, ids[0], context=context)
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
-        amount_tot = 0.0
-        if invoice_obj.type in ['out_invoice', 'in_refund']:
-            negative_inv = True
-        if invoice_obj.analytic_distribution_id:
-            distrib_id = invoice_obj.analytic_distribution_id.id
-        else:
-            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
-            newvals = {'analytic_distribution_id': distrib_id}
-            super(account_invoice, self).write(cr, uid, ids, newvals, context=context)
-        child_distributions = []
-        for invoice_line in invoice_obj.invoice_line:
-            il_amount = invoice_line.price_subtotal
-            if negative_inv:
-                il_amount = -1 * il_amount
-            amount_tot += il_amount
-            if invoice_line.analytic_distribution_id:
-                if invoice_line.analytic_distribution_id.global_distribution \
-                or ('reset_all' in context and context['reset_all']):
-                    child_distributions.append((invoice_line.analytic_distribution_id.id, il_amount))
-            else:
-                child_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'global_distribution': True}, context=context)
-                child_vals = {'analytic_distribution_id': child_distrib_id}
-                self.pool.get('account.invoice.line').write(cr, uid, [invoice_line.id], child_vals, context=context)
-                child_distributions.append((child_distrib_id, il_amount))
-        wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount_tot, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
-        # we open a wizard
+        """
+        Launch analytic distribution wizard on an invoice
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ana_obj = self.pool.get('analytic.distribution')
+        invoice = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        for line in invoice.invoice_line:
+            amount += line.price_subtotal
+        # Get analytic_distribution_id
+        distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
+        # Create an analytic_distribution_id if no one exists
+        if not distrib_id:
+            res_id = ana_obj.create(cr, uid, {}, context=context)
+            super(account_invoice, self).write(cr, uid, ids, {'analytic_distribution_id': res_id}, context=context)
+            distrib_id = res_id
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'invoice_id': invoice.id, 'distribution_id': distrib_id,
+            'currency_id': invoice.currency_id and invoice.currency_id.id or False, 'state': 'dispatch'}, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
         return {
                 'type': 'ir.actions.act_window',
-                'res_model': 'wizard.costcenter.distribution',
+                'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': [wiz_id],
-                'context': {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-                    'wizard_ids': {'cost_center': wiz_id},
-                    'child_distributions': child_distributions
-               }
+                'context': context,
         }
 
 account_invoice()

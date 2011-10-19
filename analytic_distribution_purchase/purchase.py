@@ -72,7 +72,7 @@ class purchase_order(osv.osv):
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
         wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'purchase_id': purchase.id, 'distribution_id': distrib_id,
-            'currency_id': purchase.currency_id and purchase.currency_id.id or False}, context=context)
+            'currency_id': purchase.currency_id and purchase.currency_id.id or False, 'state': 'cc'}, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
