@@ -44,7 +44,7 @@
             <field name="name">inherit.wizard.costcenter.distribution.form1</field>
             <field name="model">wizard.costcenter.distribution</field>
             <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_costcenter_distribution_form1'/>
+            <field name='inherit_id' ref='analytic_distribution.wizard_costcenter_distribution_form1'/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/field[@name='total_amount']" position="before">
@@ -61,7 +61,7 @@
             <field name="name">inherit.wizard.fundingpool.distribution.form1</field>
             <field name="model">wizard.fundingpool.distribution</field>
             <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_fundingpool_distribution_form1'/>
+            <field name='inherit_id' ref='analytic_distribution.wizard_fundingpool_distribution_form1'/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/field[@name='total_amount']" position="before">
@@ -82,7 +82,7 @@
             <field name="name">inherit.wizard.free1.distribution.form1</field>
             <field name="model">wizard.free1.distribution</field>
             <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_free1_distribution_form1'/>
+            <field name='inherit_id' ref='analytic_distribution.wizard_free1_distribution_form1'/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/field[@name='total_amount']" position="before">
@@ -103,7 +103,7 @@
             <field name="name">inherit.wizard.free2.distribution.form1</field>
             <field name="model">wizard.free2.distribution</field>
             <field name="type">form</field>
-            <field name='inherit_id' ref='funding_pool.wizard_free2_distribution_form1'/>
+            <field name='inherit_id' ref='analytic_distribution.wizard_free2_distribution_form1'/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/field[@name='total_amount']" position="before">

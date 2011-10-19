@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-import funding_pool
+import analytic_distribution
 import account
 import account_bank_statement
 import account_move_line

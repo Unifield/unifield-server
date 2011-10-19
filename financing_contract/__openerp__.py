@@ -23,7 +23,7 @@
     "version": "1.1",
     "author" : "MSF: Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["funding_pool"],
+    "depends" : ["analytic_distribution"],
     "description": """Module for defining financing contract and donor objects.
     """,
     "init_xml" : [],

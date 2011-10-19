@@ -32,7 +32,6 @@
                         <button special='cancel' string='Cancel' icon='gtk-cancel' colspan="2"/>
                         <button name="button_confirm" string="Ok" type="object" icon="gtk-ok" colspan="2" />
                     </group>
-                    <field name="state" invisible="1"/>
                 </form>
             </field>
         </record>

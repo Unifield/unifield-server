@@ -73,7 +73,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not context:
             context = {}
         view = super(analytic_distribution_wizard_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
         if view_type=='tree':
             tree = etree.fromstring(view['arch'])
             # Change OC field
