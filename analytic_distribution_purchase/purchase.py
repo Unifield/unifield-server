@@ -33,6 +33,22 @@ class purchase_order(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
+    def action_invoice_create(self, cr, uid, ids, *args):
+        """
+        Take all new invoice lines and give them analytic distribution that was linked on each purchase order line (if exists)
+        """
+        # Retrieve some data
+        res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        # Set analytic distribution from purchase order to invoice
+        for po in self.browse(cr, uid, ids):
+            if not po.analytic_distribution_id:
+                raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
+            inv_ids = po.invoice_ids
+            for inv in inv_ids:
+                # Set invoice global distribution
+                self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': po.analytic_distribution_id.id,})
+        return res
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
         Launch analytic distribution wizard on a purchase order
