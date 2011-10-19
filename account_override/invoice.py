@@ -34,6 +34,8 @@ class account_invoice(osv.osv):
         """
         Give function to use when changing invoice to open state
         """
+        if not context:
+            context = {}
         if not self.action_date_assign(cr, uid, ids, context, args):
             return False
         if not self.action_move_create(cr, uid, ids, context, args):
