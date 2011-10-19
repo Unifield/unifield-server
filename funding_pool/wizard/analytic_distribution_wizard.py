@@ -236,6 +236,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         total = 0.0
         for wiz in self.browse(cr, uid, ids, context=context):
             # Do some verification
+            if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # First line's number
             if not wiz.line_ids:
                 raise osv.except_osv(_('Warning'), _('No allocation done.'))
