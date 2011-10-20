@@ -1631,8 +1631,8 @@ class stock_picking(osv.osv):
                 initial_qty = move.product_qty
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
-                    partial['product_id'] == move.product_id.id
-                    partial['product_uom'] == move.product_uom.id
+                    assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
+                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
                     # the quantity
                     count = count + partial['product_qty']
                     # copy the stock move and set the quantity
@@ -1711,8 +1711,8 @@ class stock_picking(osv.osv):
                 initial_qty = move.product_qty
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
-                    partial['product_id'] == move.product_id.id
-                    partial['product_uom'] == move.product_uom.id
+                    assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
+                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
                     # the quantity
                     count = count + partial['product_qty']
                     if first:

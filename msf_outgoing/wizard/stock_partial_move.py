@@ -30,6 +30,10 @@ class stock_partial_move_memory_picking(osv.osv_memory):
     _name = "stock.move.memory.picking"
     _inherit = "stock.move.memory.out"
     
+    _columns = {'integrity_status': fields.selection(string='Integrity Status', selection=[('ok', 'Ok'),('negative', 'Negative'),],),
+                }
+    _defaults = {'integrity_status': 'ok',}
+    
     def split(self, cr, uid, ids, context=None):
         '''
         open the split wizard, the user can select the qty to leave in the stock move

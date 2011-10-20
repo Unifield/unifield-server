@@ -385,6 +385,46 @@ class create_picking(osv.osv_memory):
                     for move in partial_datas_ppl1[picking_id][from_pack][to_pack]:
                         for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
                             partial.update(family)
+                            
+    def set_integrity_status(self, cr, uid, ids, status='ok', context=None):
+        '''
+        for all moves set the status to ok (default value) or other if specified
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for memory_move in wiz.product_moves_picking:
+                memory_move.write({'integrity_status': status,}, context=context)
+                            
+    def integrity_check_create_picking(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on create picking data
+        - no negative values (<0)
+        - at least one positive one (>0)
+        
+        return True/Fals
+        '''
+        memory_move_obj = self.pool.get('stock.move.memory.picking')
+        # total sum not including negative values
+        sum_qty = 0
+        # flag to detect negative values
+        negative_value = False
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, context=context)
+        # validate the data
+        for picking_data in data.values():
+            for move_data in picking_data.values():
+                for list_data in move_data:
+                    if list_data.get('product_qty', False) < 0.0:
+                        # a negative value has been selected, update the memory line
+                        # update the new value for integrity check with 'negative' value (selection field)
+                        negative_value = True
+                        memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
+                    else:
+                        sum_qty += list_data.get('product_qty', False)
+        
+        # if error, return False
+        if not sum_qty or negative_value:
+            return False
+        return True
         
     def do_create_picking(self, cr, uid, ids, context=None):
         '''
@@ -416,12 +456,18 @@ class create_picking(osv.osv_memory):
             for move in memory_moves_list:
                 # !!! only take into account if the quantity is greater than 0 !!!
                 if move.quantity:
-                    partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
+                    partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
+                                                                                   'product_id': move.product_id.id,
                                                                                    'product_qty': move.quantity,
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    })
+                    
+        # integrity check on wizard data
+        if not self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context):
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_create_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
         
@@ -483,13 +529,17 @@ class create_picking(osv.osv_memory):
             # organize data according to move id
             for move in memory_moves_list:
                 
-                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
+                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
+                                                                               'product_id': move.product_id.id,
                                                                                'product_qty': move.quantity,
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'asset_id': move.asset_id.id,
                                                                                })
-            
+        # integrity check on wizard data
+        if not self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context):
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_validate_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     
