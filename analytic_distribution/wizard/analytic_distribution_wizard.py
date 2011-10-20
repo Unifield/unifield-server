@@ -263,6 +263,44 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
         return res
 
+    def wizard_verifications(self, cr, uid, ids, context={}):
+        """
+        Do some verifications on wizard:
+         - Raise an exception if we come from a purchase order that have been approved 
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # Verify that purchase is in good state if necessary
+            if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that invoice is in good state if necessary
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that Cost Center are done
+            if not wiz.line_ids:
+                raise osv.except_osv(_('Warning'), _('No Cost Center Allocation done!'))
+            if wiz.invoice_id and not wiz.fp_line_ids:
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            # Verify that allocation is 100% on each type of distribution, but only if there some lines
+            for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
+                # Do nothing if there no lines for the current type
+                if not lines:
+                    continue
+                # Verify that allocation is 100% on each type
+                total = 0.0
+                line_type = ''
+                for line in lines:
+                    total += line.percentage or 0.0
+                    line_type = line.type
+                if abs(total - 100.0) > 10**-4:
+                    # Fancy name for user
+                    type_name = ' '.join([x.capitalize() for x in line_type.split('.')])
+                    raise osv.except_osv(_('Warning'), _('Allocation is not fully done for %s') % type_name)
+            return True
+
     def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context={}):
         """
         Compare wizard lines to database lines and write modifications done
@@ -312,7 +350,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             wiz_lines.append(wiz_lines_vals)
         
         processed_line_ids = []
-        # Delete wizard lines that have not change
+        # Delete wizard lines that have not changed
         for line in db_lines:
             if line in wiz_lines:
                 wiz_lines.remove(line)
@@ -352,17 +390,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
-            # Do some verification
-            if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
-                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
-                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
-            # First line's number
-            if not wiz.line_ids:
-                raise osv.except_osv(_('Warning'), _('No allocation done.'))
-            # Funding pool
-            if not wiz.fp_line_ids:
-                raise osv.except_osv(_('Warning'), _('No Funding Pool allocation done.'))
+            self.wizard_verifications(cr, uid, wiz.id, context=context)
+            # FIXME / TODO self.update_cost_center_lines
+            
             # Then total of percentage for each type
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
                 total = 0.0
@@ -370,7 +400,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     total += line.percentage or 0.0
                 if abs(total - 100.0) > 10**-4 and lines:
                     raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
-                # Get lines type in order to launch compare and write method
+                # Get lines type in order to launch a comparison between database lines and wizard lines
                 line_type = lines and lines[0] and lines[0].type or False
                 if line_type:
                     # Compare and write modifications done on analytic lines
