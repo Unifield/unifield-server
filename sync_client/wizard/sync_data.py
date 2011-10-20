@@ -90,7 +90,7 @@ class local_rule(osv.osv):
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
-                log(cr, uid, "Model %s does not exist" % model_name, data=data, context=context)
+                log(self, cr, uid, "Model %s does not exist" % model_name, data=data, context=context)
                 continue #do not save the rule if there is no valid model
             data['model'] = model_id[0]
             
