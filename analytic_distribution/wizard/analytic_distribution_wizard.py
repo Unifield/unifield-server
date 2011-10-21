@@ -214,6 +214,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         if wiz.distribution_id:
             distrib = self.pool.get('analytic.distribution').browse(cr, uid, wiz.distribution_id.id, context=context)
             # Retrieve Cost Center Lines values
+            cc_obj = self.pool.get('analytic.distribution.wizard.lines')
+            fp_obj = self.pool.get('analytic.distribution.wizard.fp.lines')
             for line in distrib.cost_center_lines:
                 vals = {
                     'analytic_id': line.analytic_id and line.analytic_id.id or False,
@@ -223,7 +225,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': line.currency_id and line.currency_id.id or False,
                     'distribution_line_id': line.id or False,
                 }
-                self.pool.get('analytic.distribution.wizard.lines').create(cr, uid, vals, context=context)
+                new_line_id = cc_obj.create(cr, uid, vals, context=context)
+                # update amount regarding percentage
+                cc_obj.onchange_percentage(cr, uid, new_line_id, line.percentage, wiz.total_amount)
                 # Create funding pool lines if no one exists and that we come from an invoice (wizard.state == 'dispatch')
                 if not distrib.funding_pool_lines and wiz.state == 'dispatch':
                     # Search MSF Private Fund
@@ -231,7 +235,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if pf_id:
                         pf = ana_obj.browse(cr, uid, pf_id, context=context)[0]
                         vals.update({'analytic_id': pf.id, 'cost_center_id': line.analytic_id and line.analytic_id.id or False, 'type': 'funding.pool'})
-                        self.pool.get('analytic.distribution.wizard.fp.lines').create(cr, uid, vals, context=context)
+                        new_pf_line_id = fp_obj.create(cr, uid, vals, context=context)
+                        fp_obj.onchange_percentage(cr, uid, new_pf_line_id, line.percentage, wiz.total_amount)
             # Retrieve all other elements if we come from a purchase (wizard.state == 'dispatch')
             if wiz.state == 'dispatch':
                 # Prepare some values
@@ -301,6 +306,46 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('Allocation is not fully done for %s') % type_name)
             return True
 
+    def update_cost_center_lines(self, cr, uid, wizard_id, context={}):
+        """
+        Update cost_center_lines from wizard regarding funding pool lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not wizard_id:
+            return False
+        # Prepare some values
+        wizard = self.browse(cr, uid, [wizard_id], context=context) and self.browse(cr, uid, [wizard_id], context=context)[0]
+        if not wizard or not wizard.fp_line_ids:
+            raise osv.except_osv(_('Warning'), _('No funding pool lines done.'))
+        # Process funding pool lines to retrieve cost centers and their total percentage
+        cc_data = {}
+        for line in wizard.fp_line_ids:
+            if not cc_data.get(line.cost_center_id.id, False):
+                cc_data[line.cost_center_id.id] = 0.0
+            cc_data[line.cost_center_id.id] += line.percentage
+        # Do update of cost center lines
+        update_lines = [] # lines that have been updated
+        cc_obj = self.pool.get('analytic.distribution.wizard.lines')
+        for el in cc_data:
+            res = False
+            search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el), ('wizard_id', '=', wizard.id)], context=context)
+            # Create a new entry if no one for this cost center
+            if not search_ids:
+                res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': int(cc_data[el]), 'type': 'cost.center',
+                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el,}, context=context)
+            # else change current cost center
+            else:
+                res = cc_obj.write(cr, uid, search_ids, {'percentage': int(cc_data[el])}, context=context)
+            if res:
+                update_lines.append(res)
+        # Delete useless cost center lines
+        for line_id in [x.id for x in wizard.line_ids]:
+            if line_id not in update_lines:
+                cc_obj.unlink(cr, uid, [line_id], context=context)
+        return True
+
     def compare_and_write_modifications(self, cr, uid, wizard_id, line_type=False, context={}):
         """
         Compare wizard lines to database lines and write modifications done
@@ -368,7 +413,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'analytic_id': line.get('analytic_id'),
                     'percentage': line.get('percentage'),
                     'distribution_id': distrib.id,
-                    'currency_id': line.get('currency_id'),
+                    'currency_id': wizard.currency_id and wizard.currency_id.id,
                     'cost_center_id': line.get('cost_center_id') or False,
                 }
                 new_line = line_obj.create(cr, uid, vals, context=context)
@@ -390,26 +435,18 @@ class analytic_distribution_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
+            # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
-            # FIXME / TODO self.update_cost_center_lines
-            
-            # Then total of percentage for each type
+            # Then update cost center lines
+            if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+                raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            # And finally do registration for each type
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
-                total = 0.0
-                for line in lines:
-                    total += line.percentage or 0.0
-                if abs(total - 100.0) > 10**-4 and lines:
-                    raise osv.except_osv(_('Not fully allocated !'),_("You have to allocate the whole amount!"))
                 # Get lines type in order to launch a comparison between database lines and wizard lines
                 line_type = lines and lines[0] and lines[0].type or False
                 if line_type:
                     # Compare and write modifications done on analytic lines
-                    res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
-                    # If no result raise an error
-                    if not res:
-                        # but only on cost center if we come from a purchase, and only on funding pool, free 1 and free 2 if we come from an invoice
-                        if (wiz.purchase_id and line_type == 'cost.center') or (wiz.invoice_id and line_type in ['funding.pool', 'free.1', 'free.2']):
-                            raise osv.except_osv(_('Error'), _('No modification seen!'))
+                    type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def validate(self, cr, uid, wizard_id, context=None):
@@ -420,7 +457,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = wizard_obj.currency_id and wizard_obj.currency_id.id or company_currency
         # Create a temporary object to keep track of values
-        sorted_wizard_lines = [{'id': x.id, 'amount': x.amount, 'percentage': x.percentage} for x in wizard_obj.line_ids]
+        sorted_wizard_lines = [{'id': x.id, 'amount': x.amount or 0.0, 'percentage': x.percentage or 0.0,} for x in wizard_obj.line_ids]
         # Re-evaluate all lines (to remove previous roundings)
         sorted_wizard_lines.sort(key=lambda x: x[wizard_obj.entry_mode], reverse=True)
         for wizard_line in sorted_wizard_lines:
