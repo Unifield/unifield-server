@@ -182,6 +182,7 @@ class message_received(osv.osv):
                 'source' : data['source'] }, context=context)
     
     def get_model_and_method(self, remote_call):
+        remote_call = remote_call.strip()
         call_list = remote_call.split('.')
         return '.'.join(call_list[:-1]), call_list[-1]
     
