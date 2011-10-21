@@ -95,7 +95,7 @@ class write_info(osv.osv):
         'create_date' :fields.datetime('Create Date'),
         'model' : fields.char('model', size=64), 
         'res_id' : fields.integer('Ressource Id'),
-        'fields_modif' : fields.char('Fields Modified', size=256),
+        'fields_modif' : fields.text('Fields Modified'),
     }
     
 
