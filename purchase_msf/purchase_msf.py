@@ -49,14 +49,15 @@ class purchase_order_line(osv.osv):
                                  'third_manufacturer_id': False,
                                 }
             po_supplier = record.order_id.partner_id
-            for seller_id in record.product_id.seller_ids:
-                if seller_id.name == po_supplier:
-                    result[record.id] = {
-                                         'manufacturer_id': seller_id.manufacturer_id.id,
-                                         'second_manufacturer_id': seller_id.second_manufacturer_id.id,
-                                         'third_manufacturer_id': seller_id.third_manufacturer_id.id,
-                                        }
-                    break
+            if record.product_id:
+                for seller_id in record.product_id.seller_ids:
+                    if seller_id.name == po_supplier:
+                        result[record.id] = {
+                                             'manufacturer_id': seller_id.manufacturer_id.id,
+                                             'second_manufacturer_id': seller_id.second_manufacturer_id.id,
+                                             'third_manufacturer_id': seller_id.third_manufacturer_id.id,
+                                             }
+                        break
 
         return result
     
