@@ -53,7 +53,7 @@
                         <field name="origin" />
                     </field>
                     <filter name="draft" position="replace">
-                        <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state', 'in', ('draft', 'rfq_done', 'rfq_sent', 'rfq_updated',))]" separator="1" help="Purchase order which are in draft state"/>
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ('draft', 'rfq_done', 'rfq_sent', 'rfq_updated',))]" separator="1" help="Purchase order which are in draft state"/>
                     </filter>
                     <xpath expr="/search/group/field[@name='create_uid']" position="after">
                     <newline />
@@ -94,6 +94,17 @@
                     </xpath>
                 </data>
             </field>
+        </record>
+        
+        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
+            <field name="name">Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
+            <field name="domain">[('tender_id', '=', False),]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
     
     </data>
