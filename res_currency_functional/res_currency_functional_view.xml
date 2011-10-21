@@ -54,7 +54,7 @@
             <field name="arch" type="xml">
                 <search string="Currencies">
                     <group>
-                        <filter name="active" icon="terp-check" string="Inactive" domain="[('active','=',False)]"/>
+                        <filter name="active" icon="terp-check" string="Active + Inactive" domain="[('active','in',['t','f'])]"/>
 	                    <separator orientation="vertical"/>
 	                    <field name="name"/>
                     </group>
