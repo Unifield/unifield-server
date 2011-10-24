@@ -493,8 +493,6 @@ class analytic_distribution_wizard(osv.osv_memory):
             if line in wiz_lines:
                 wiz_lines.remove(line)
                 processed_line_ids.append(line.get('id'))
-        if not wiz_lines:
-            return False
         # Write changes for line that already exists
         for i in range(0,len(wiz_lines)):
             line = wiz_lines[i]
@@ -534,12 +532,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
                 raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # And finally do registration for each type
-            for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
-                # Get lines type in order to launch a comparison between database lines and wizard lines
-                line_type = lines and lines[0] and lines[0].type or False
-                if line_type:
-                    # Compare and write modifications done on analytic lines
-                    type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+            for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
+                # Compare and write modifications done on analytic lines
+                type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def validate(self, cr, uid, wizard_id, context=None):
