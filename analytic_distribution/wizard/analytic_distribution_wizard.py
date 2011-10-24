@@ -198,6 +198,20 @@ class analytic_distribution_wizard(osv.osv_memory):
     _name = 'analytic.distribution.wizard'
     _description = 'analytic.distribution.wizard'
 
+    def _is_writable(self, cr, uid, ids, name, args, context={}):
+        """
+        Give possibility to write or not on this wizard
+        """
+        res = {}
+        # Browse all given wizard
+        for el in self.browse(cr, uid, ids, context=context):
+            res[el.id] = True
+            if el.purchase_id and el.purchase_id.state in ['approved', 'done']:
+                res[el.id] = False
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+                res[el.id] = False
+        return res
+
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')], 
@@ -211,6 +225,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'purchase_id': fields.many2one('purchase.order', string="Purchase Order"),
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
+        'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
+            help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
     }
 
     _defaults = {
