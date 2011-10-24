@@ -72,7 +72,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Rewrite view in order "entry_mode" works
+        Rewrite view in order "entry_mode" works and Analytic Account field display only cost_center
         """
         if not context:
             context = {}
@@ -136,6 +136,39 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         'type': lambda *a: 'funding.pool',
     }
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Rewrite view in order:
+         - "entry_mode" works
+         - Cost Center field only display cost_center
+         - Funding Pool field only display attached Funding Pool to this cost_center and those from "MSF Private Fund"
+        """
+        if not context:
+            context = {}
+        view = super(analytic_distribution_wizard_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree':
+            data_obj = self.pool.get('ir.model.data')
+            tree = etree.fromstring(view['arch'])
+            # Change OC field
+            oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+            fields = tree.xpath('/tree/field[@name="cost_center_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change FP field
+            fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
+            for field in fp_fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', 'in', cost_center_id), ('id', '=', %s)]" % fp_id)
+            # Change percentage and amount field
+            for el in ['percentage', 'amount']:
+                new_fields = tree.xpath('/tree/field[@name="%s"]' % el)
+                for field in new_fields:
+                    field.set('readonly', str(context['mode'] != el))
+                    if context['mode'] == el:
+                        field.set('on_change', "onchange_%s(%s, parent.total_amount)" % (el, el))
+            view['arch'] = etree.tostring(tree)
+        return view
+
 analytic_distribution_wizard_fp_lines()
 
 class analytic_distribution_wizard_f1_lines(osv.osv_memory):
@@ -147,6 +180,33 @@ class analytic_distribution_wizard_f1_lines(osv.osv_memory):
         'type': lambda *a: 'free.1',
     }
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Rewrite view in order:
+         - "entry_mode" works
+         - Analytic Account only display those from FREE1
+        """
+        if not context:
+            context = {}
+        view = super(analytic_distribution_wizard_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree':
+            data_obj = self.pool.get('ir.model.data')
+            tree = etree.fromstring(view['arch'])
+            # Change Analytic account field
+            f1_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
+            fields = tree.xpath('/tree/field[@name="analytic_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % f1_id)
+            # Change percentage and amount field
+            for el in ['percentage', 'amount']:
+                new_fields = tree.xpath('/tree/field[@name="%s"]' % el)
+                for field in new_fields:
+                    field.set('readonly', str(context['mode'] != el))
+                    if context['mode'] == el:
+                        field.set('on_change', "onchange_%s(%s, parent.total_amount)" % (el, el))
+            view['arch'] = etree.tostring(tree)
+        return view
+
 analytic_distribution_wizard_f1_lines()
 
 class analytic_distribution_wizard_f2_lines(osv.osv_memory):
@@ -157,6 +217,33 @@ class analytic_distribution_wizard_f2_lines(osv.osv_memory):
     _defaults = {
         'type': lambda *a: 'free.2',
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Rewrite view in order:
+         - "entry_mode" works
+         - Analytic Account only display those from FREE2
+        """
+        if not context:
+            context = {}
+        view = super(analytic_distribution_wizard_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree':
+            data_obj = self.pool.get('ir.model.data')
+            tree = etree.fromstring(view['arch'])
+            # Change Analytic account field
+            f2_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
+            fields = tree.xpath('/tree/field[@name="analytic_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % f2_id)
+            # Change percentage and amount field
+            for el in ['percentage', 'amount']:
+                new_fields = tree.xpath('/tree/field[@name="%s"]' % el)
+                for field in new_fields:
+                    field.set('readonly', str(context['mode'] != el))
+                    if context['mode'] == el:
+                        field.set('on_change', "onchange_%s(%s, parent.total_amount)" % (el, el))
+            view['arch'] = etree.tostring(tree)
+        return view
 
 analytic_distribution_wizard_f2_lines()
 
