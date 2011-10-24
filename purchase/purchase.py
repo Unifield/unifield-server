@@ -476,18 +476,25 @@ class purchase_order(osv.osv):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
         return picking_id
+    
+    def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        HOOK from purchase>purchase.py for COPY function. Modification of default copy values
+        define which name value will be used
+        '''
+        return {'state':'draft',
+                'shipped':False,
+                'invoiced':False,
+                'invoice_ids': [],
+                'picking_ids': [],
+                'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order'),
+                }
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({
-            'state':'draft',
-            'shipped':False,
-            'invoiced':False,
-            'invoice_ids': [],
-            'picking_ids': [],
-            'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order'),
-        })
+        update_values = self._hook_copy_name(cr, uid, [id], context=context, default=default)
+        default.update(update_values)
         return super(purchase_order, self).copy(cr, uid, id, default, context)
 
 
