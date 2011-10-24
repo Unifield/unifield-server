@@ -364,7 +364,10 @@ class analytic_distribution_wizard(osv.osv_memory):
     def wizard_verifications(self, cr, uid, ids, context={}):
         """
         Do some verifications on wizard:
-         - Raise an exception if we come from a purchase order that have been approved 
+         - Raise an exception if we come from a purchase order that have been approved
+         - Raise an exception if we come from an invoice that have been validated
+         - Verify that all mandatory allocations have been done
+         - Verify that all allocations have 100% from amount
         """
         if not context:
             context = {}
@@ -377,8 +380,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Verify that invoice is in good state if necessary
             if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
-            # Verify that Cost Center are done
-            if not wiz.line_ids:
+            # Verify that Cost Center are done if we come from a purchase order
+            if not wiz.line_ids and wiz.purchase_id:
                 raise osv.except_osv(_('Warning'), _('No Cost Center Allocation done!'))
             if wiz.invoice_id and not wiz.fp_line_ids:
                 raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
