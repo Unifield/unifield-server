@@ -20,6 +20,9 @@
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
                         <field name="analytic_distribution_state"/>
                     </xpath>
+                    <xpath expr="//tree[@string='Invoice lines']" position="attributes">
+                        <attribute name="colors">blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')</attribute>
+                    </xpath>
                 </data>
             </field>
         </record>
