@@ -245,14 +245,35 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         Give possibility to write or not on this wizard
         """
+        # Prepare some values
         res = {}
         # Browse all given wizard
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
+            # verify purchase state
             if el.purchase_id and el.purchase_id.state in ['approved', 'done']:
                 res[el.id] = False
+            # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
+        return res
+
+    def _have_invoice_line(self, cr, uid, ids, name, args, context={}):
+        """
+        Return true if this wizard come from an invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given wizard
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = False
+            if wiz.invoice_line_id:
+                res[wiz.id] = True
         return res
 
     _columns = {
@@ -271,6 +292,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
+        'have_invoice_line': fields.function(_have_invoice_line, method=True, string='Is this wizard come from an invoice line?', 
+            type='boolean', readonly=True, help="This informs the wizard if we come from an invoice line."),
     }
 
     _defaults = {
@@ -294,19 +317,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'context': context,
         }
 
-    def create(self, cr, uid, vals, context={}):
+    def _get_lines_from_distribution(self, cr, uid, ids, distrib_id=None, context={}):
         """
-        Add distribution lines to the wizard
+        Get lines from a distribution and copy them to the wizard
         """
         # Some verifications
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not distrib_id:
+            raise osv.except_osv(_('Error'), _('No analytic distribution'))
         # Prepare some values
         ana_obj = self.pool.get('account.analytic.account')
-        res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
-        wiz = self.browse(cr, uid, [res], context=context)[0]
-        if wiz.distribution_id:
-            distrib = self.pool.get('analytic.distribution').browse(cr, uid, wiz.distribution_id.id, context=context)
+        for wiz in self.browse(cr, uid, ids, context=context):
+            distrib = self.pool.get('analytic.distribution').browse(cr, uid, distrib_id, context=context)
             # Retrieve Cost Center Lines values
             cc_obj = self.pool.get('analytic.distribution.wizard.lines')
             fp_obj = self.pool.get('analytic.distribution.wizard.fp.lines')
@@ -360,6 +385,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 if line_type == 'funding.pool':
                                     vals.update({'cost_center_id': line.cost_center_id and line.cost_center_id.id or False})
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
+            return True
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Add distribution lines to the wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Prepare some values
+        res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
+        wiz = self.browse(cr, uid, [res], context=context)[0]
+        if wiz.distribution_id:
+            # Retrieve all lines
+            self._get_lines_from_distribution(cr, uid, [wiz.id], wiz.distribution_id.id, context=context)
         return res
 
     def wizard_verifications(self, cr, uid, ids, context={}):
@@ -582,6 +622,44 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.pool.get('analytic.distribution.wizard.lines').write(cr, uid, [wizard_line.get('id')], vals, 
                 context={'skip_validation': True})
         return True
+
+    def button_get_header_distribution(self, cr, uid, ids, context={}):
+        """
+        Get distribution from invoice or purchase
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        object_type = None
+        distrib = None
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.invoice_line_id:
+                il = wiz.invoice_line_id
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
+            # FIXME: Add same thing for purchase_line
+            #if wiz and wiz.purchase_line_id:
+            #    pol = wiz.purchase_line_id
+            #    distrib = pol.purchase_id and pol.purchase_id.analytic_distribution_id and pol.purchase_id.analytic_distribution_id
+            if distrib:
+                # First delete all current lines
+                self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
+                self.pool.get('analytic.distribution.wizard.fp.lines').unlink(cr, uid, [x.id for x in wiz.fp_line_ids], context=context)
+                self.pool.get('analytic.distribution.wizard.f1.lines').unlink(cr, uid, [x.id for x in wiz.f1_line_ids], context=context)
+                self.pool.get('analytic.distribution.wizard.f2.lines').unlink(cr, uid, [x.id for x in wiz.f2_line_ids], context=context)
+                # Then retrieve all lines
+                self._get_lines_from_distribution(cr, uid, [wiz.id], distrib.id, context=context)
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': ids[0],
+                'context': context,
+        }
 
 analytic_distribution_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

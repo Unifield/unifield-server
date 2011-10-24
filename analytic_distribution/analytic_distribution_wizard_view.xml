@@ -66,6 +66,11 @@
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1"/>
                     </group>
+                    <group colspan="4">
+                        <label string="" colspan="3"/>
+                        <button name="button_get_header_distribution" type="object" string="Get analytic distribution from header" icon='gtk-convert' colspan="1" attrs="{'invisible': [('have_invoice_line', '=', False)]}"/>
+                        <field name="have_invoice_line" invisible="1"/>
+                    </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
                         <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode}"/>
