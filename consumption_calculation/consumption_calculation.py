@@ -161,9 +161,63 @@ class real_average_consumption(osv.osv):
                 'target': 'new',
                 }
         
+    def fill_lines(self, cr, uid, ids, context={}):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+            
+            # Get all products for the defined nomenclature
+            if report.nomen_id:
+                nomen_id = report.nomen_id.id
+                nomen = self.pool.get('product.nomenclature').browse(cr, uid, nomen_id, context=context)
+                if nomen.type == 'mandatory':
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_0', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_1', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_2', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_3', '=', nomen_id)], context=context))
+                else:
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_0', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_1', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_2', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_3', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_4', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_5', '=', nomen_id)], context=context))
+            
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+                    
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in report.line_ids:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('real.average.consumption.line').unlink(cr, uid, line.id, context=context)
+                    
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    self.pool.get('real.average.consumption.line').create(cr, uid, {'product_id': product.id,
+                                                                                    'uom_id': product.uom_id.id,
+                                                                                    'consumed_qty': 0.00,
+                                                                                    'rac_id': report.id})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+        
     def nomen_change(self, cr, uid, ids, nomen_id, context={}):
         context.update({'test_id': nomen_id})
-        
+    
         return {}
     
 real_average_consumption()
@@ -283,6 +337,60 @@ class monthly_review_consumption(osv.osv):
                 'view_type': 'form',
                 'target': 'new',
                 }
+        
+    def fill_lines(self, cr, uid, ids, context={}):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+            
+            # Get all products for the defined nomenclature
+            if report.nomen_id:
+                nomen_id = report.nomen_id.id
+                nomen = self.pool.get('product.nomenclature').browse(cr, uid, nomen_id, context=context)
+                if nomen.type == 'mandatory':
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_0', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_1', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_2', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_3', '=', nomen_id)], context=context))
+                else:
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_0', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_1', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_2', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_3', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_4', '=', nomen_id)], context=context))
+                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_5', '=', nomen_id)], context=context))
+            
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+                    
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in report.line_ids:
+                if line.name.id in product_ids:
+                    products.append(line.name.id)
+                else:
+                    self.pool.get('monthly.review.consumption.line').unlink(cr, uid, line.id, context=context)
+                    
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    products.append(product.id)
+                    self.pool.get('monthly.review.consumption.line').create(cr, uid, {'name': product.id,
+                                                                                    'fmc': 0.00,
+                                                                                    'mrc_id': report.id})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'monthly.review.consumption',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
     
 monthly_review_consumption()
 
@@ -299,7 +407,7 @@ class monthly_review_consumption_line(osv.osv):
         
         for line in self.browse(cr, uid, ids, context=context):
             context.update({'from_date': line.mrc_id.period_from, 'to_date': line.mrc_id.period_to})
-            res[line.id] = self.pool.get('product.product').compute_amc(cr, uid, ids, context=context)
+            res[line.id] = self.pool.get('product.product').compute_amc(cr, uid, line.name.id, context=context)
             
         return res
     
@@ -376,7 +484,7 @@ class monthly_review_consumption_line(osv.osv):
                 last_fmc_reviewed = line.mrc_id.creation_date
                 
                     
-        amc = product_obj.compute_amc(cr, uid, ids, context=context)
+        amc = product_obj.compute_amc(cr, uid, product_id, context=context)
         
         return {'value': {'amc': amc,
                           'fmc': amc,

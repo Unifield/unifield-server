@@ -132,5 +132,8 @@
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
     </record>
+    <record id="consumption_calculation.msf_customer_location" model="stock.location">
+    	<field name="location_id" ref="stock_location_internal_cust" />
+    </record>
     </data>
 </openerp>
