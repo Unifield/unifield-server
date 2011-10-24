@@ -59,17 +59,19 @@
     % endif
     % if selector and not hide_delete_button:
         <td class="grid-cell selector">
+        % if not data['id'] or data['id'] not in notselectable:
             % if not m2m:
-            <%
-                selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
-                if selector == "radio":
-                    selector_click += " do_select();"
-            %>
-            <input type="${selector}" class="${selector} grid-record-selector"
-                id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
-                value="${data['id']}"
-                onclick="${selector_click}"/>
+                <%
+                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
+                    if selector == "radio":
+                        selector_click += " do_select();"
+                %>
+                <input type="${selector}" class="${selector} grid-record-selector"
+                    id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
+                    value="${data['id']}"
+                    onclick="${selector_click}"/>
             % endif
+        % endif
         </td>
     % endif
     % for field, field_attrs in hiddens:
