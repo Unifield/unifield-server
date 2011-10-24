@@ -42,12 +42,16 @@ class analytic_account(osv.osv):
     _defaults ={
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
+    
+    _sql_constraints = [
+        ('code_account_unique', 'unique (code, category)', 'The code of the analytic account must be unique!'),
+        ('name_account_unique', 'unique (name, category)', 'The name of the analytic account must be unique!')
+    ]
 
-    def set_category(self, cr, uid, vals):
-        if 'parent_id' in vals and vals['parent_id']:
-            parent = self.read(cr, uid, [vals['parent_id']], ['category'])[0]
-            if parent['category']:
-                vals['category'] = parent['category']
+    def set_funding_pool_parent(self, cr, uid, vals):
+        if 'category' in vals and vals['category'] and vals['category'] == 'FUNDING':
+            funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
+            vals['parent_id'] = funding_pool_parent
     
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
@@ -60,12 +64,12 @@ class analytic_account(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
-        self.set_category(cr, uid, vals)
+        self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         self._check_date(vals)
-        self.set_category(cr, uid, vals)
+        self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
@@ -86,6 +90,15 @@ class analytic_account(osv.osv):
             
         return super(analytic_account, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
+    
+    def on_change_category(self, cr, uid, id, category):
+        if not category:
+            return {}
+        res = {'value': {}, 'domain': {}}
+        parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
+        res['value']['parent_id'] = parent
+        res['domain']['parent_id'] = [('category', '=', category)]
+        return res
     
 analytic_account()
 

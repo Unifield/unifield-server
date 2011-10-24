@@ -117,6 +117,11 @@ class financing_contract_actual_line(osv.osv):
         'line_type': 'normal',
     }
     
+    _sql_constraints = [
+        ('code_reporting_line_unique', 'unique (code, format_id)', 'The code of the reporting line must be unique!'),
+        ('name_reporting_line_unique', 'unique (name, format_id)', 'The name of the reporting line must be unique!')
+    ]
+    
     def create(self, cr, uid, vals, context=None):
         if not context:
             context={}

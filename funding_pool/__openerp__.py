@@ -23,7 +23,7 @@
     "version": "1.1",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
+    "depends" : ["analytic", "account", "account_override", "account_budget"],
     "description": """Module for defining analytic accounting object.
     """,
     "init_xml" : [

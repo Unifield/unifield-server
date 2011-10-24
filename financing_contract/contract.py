@@ -248,6 +248,11 @@ class financing_contract_contract(osv.osv):
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
     
+    _sql_constraints = [
+        ('code_contract_unique', 'unique (code)', 'The code of the contract must be unique!'),
+        ('name_contract_unique', 'unique (name)', 'The name of the contract must be unique!')
+    ]
+    
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
         if donor_id and format_id:

@@ -52,7 +52,7 @@
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
                                             <field name="parent_id" colspan="2"
-                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('id', '!=', id)]"/>
                                         </group>
                                         <field name="line_type"/>
                                         <field name="allocated_amount" attrs="{'invisible': [('line_type', '=', 'view')]}" invisible="context.get('reporting_type')=='project'"/>

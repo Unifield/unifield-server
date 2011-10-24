@@ -37,6 +37,11 @@ class financing_contract_donor(osv.osv):
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
     
+    _sql_constraints = [
+        ('code_donor_unique', 'unique (code)', 'The code of the donor must be unique!'),
+        ('name_donor_unique', 'unique (name)', 'The name of the donor must be unique!')
+    ]
+    
     
 financing_contract_donor()
 
