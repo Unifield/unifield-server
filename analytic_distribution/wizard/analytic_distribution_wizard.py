@@ -267,6 +267,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'purchase_id': fields.many2one('purchase.order', string="Purchase Order"),
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),

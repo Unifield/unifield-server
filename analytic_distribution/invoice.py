@@ -48,6 +48,9 @@ class account_invoice(osv.osv):
         ana_obj = self.pool.get('analytic.distribution')
         invoice = self.browse(cr, uid, ids[0], context=context)
         amount = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = invoice.currency_id and invoice.currency_id.id or company_currency
         for line in invoice.invoice_line:
             amount += line.price_subtotal
         # Get analytic_distribution_id
@@ -60,7 +63,7 @@ class account_invoice(osv.osv):
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
         wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'invoice_id': invoice.id, 'distribution_id': distrib_id,
-            'currency_id': invoice.currency_id and invoice.currency_id.id or False, 'state': 'dispatch'}, context=context)
+            'currency_id': currency or False, 'state': 'dispatch'}, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
@@ -88,33 +91,48 @@ class account_invoice_line(osv.osv):
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
-        # we get the analytical distribution object linked to this line
+        """
+        Launch analytic distribution wizard on an invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ana_obj = self.pool.get('analytic.distribution')
+        invoice_line = self.browse(cr, uid, ids[0], context=context)
         distrib_id = False
         negative_inv = False
-        invoice_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = invoice_line_obj.price_subtotal or 0.0
+        amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency = invoice_line_obj.invoice_id.currency_id and invoice_line_obj.invoice_id.currency_id.id or company_currency
-        if invoice_line_obj.invoice_id.type in ['out_invoice', 'in_refund']:
+        currency = invoice_line.invoice_id.currency_id and invoice_line.invoice_id.currency_id.id or company_currency
+        # Change amount sign if necessary
+        if invoice_line.invoice_id.type in ['out_invoice', 'in_refund']:
             negative_inv = True
         if negative_inv:
             amount = -1 * amount
-        if invoice_line_obj.analytic_distribution_id:
-            distrib_id = invoice_line_obj.analytic_distribution_id.id
-        else:
-            raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution for the whole invoice first!"))
-        wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency, 'invoice_line': ids[0]}, context=context)
-        # we open a wizard
+        # Get analytic distribution id from this line
+        distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
+        # if no one, create a new one
+        if not distrib_id:
+            res_id = ana_obj.create(cr, uid, {}, context=context)
+            super(account_invoice_line, self).write(cr, uid, ids, {'analytic_distribution_id': res_id}, context=context)
+            distrib_id = res_id
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'invoice_line_id': invoice_line.id, 'distribution_id': distrib_id,
+            'currency_id': currency or False, 'state': 'dispatch'}, context=context)
+        # Update some context values
         context.update({
-          'active_id': ids[0],
-          'active_ids': ids,
-          'wizard_ids': {'cost_center': wiz_id}
+            'active_id': ids[0],
+            'active_ids': ids,
         })
+        # Open it!
         return {
                 'type': 'ir.actions.act_window',
-                'res_model': 'wizard.costcenter.distribution',
+                'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',
