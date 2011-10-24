@@ -128,13 +128,52 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             view['arch'] = etree.tostring(tree)
         return view
 
+    def verify_analytic_account(self, cr, uid, vals, line_type=None, context={}):
+        """
+        Verify that analytic account match with line_type
+        """
+        # Some verifications
+        if not context:
+            context={}
+        if not vals:
+            return False
+        if not line_type:
+            return False
+        # Prepare some values
+        ana_obj = self.pool.get('account.analytic.account')
+        data = {
+            'analytic.distribution.wizard.lines': ('OC', 'Cost Center'),
+            'analytic.distribution.wizard.fp.lines': ('FUNDING', 'Funding Pool'),
+            'analytic.distribution.wizard.f1.lines': ('FREE1', 'Free 1'),
+            'analytic.distribution.wizard.f2.lines': ('FREE2', 'Free 2'),
+        }
+        # Verify analytic account regarding line_type
+        if vals.get('analytic_id', False):
+            ana_acc = ana_obj.browse(cr, uid, vals.get('analytic_id'), context=context)
+            if ana_acc and ana_acc.category and data[line_type] and data[line_type][0]:
+                if not ana_acc.category == data[line_type][0] and line_type != 'analytic.distribution.wizard.fp.lines':
+                    raise osv.except_osv(_('Error'), _("Given account '%s' doesn't match with the type '%s'." % (ana_acc.name, data[line_type][1])))
+        # Verify cost_center_id if given
+        if vals.get('cost_center_id', False):
+            cc = ana_obj.browse(cr, uid, vals.get('cost_center_id'), context=context)
+            if cc and cc.category:
+                if not cc.category == 'OC':
+                    raise osv.except_osv(_('Error'), _("Choosen cost center '%s' is not from OC Category." % cc.name))
+        return True
+
     def create(self, cr, uid, vals, context={}):
         """
         Calculate amount and percentage regarding context content
         """
+        # Some verifications
         if not context:
             context = {}
+        # Launch verifications on given analytic_account
+        if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
+            raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
+        # Create wizard line
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
+        # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
             self.pool.get('analytic.distribution.wizard').validate(cr, uid, vals.get('wizard_id'), context=context)
         return res
@@ -143,10 +182,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         Calculate amount and percentage regarding context content
         """
+        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Launch verifications on given analytic_account
+        if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
+            raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
