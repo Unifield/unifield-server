@@ -430,6 +430,7 @@ class stock_production_lot(osv.osv):
         lot_name = self.read(cr, uid, id, ['name'])['name']
         
         default.update(name='%s (copy)'%lot_name, date=time.strftime('%Y-%m-%d'))
+
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
     
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -627,6 +628,7 @@ class stock_production_lot(osv.osv):
                  'name': False,
                  'life_date':time.strftime('%Y-%m-%d'),
                  }
+    
     _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
                         ]
     
