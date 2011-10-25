@@ -100,8 +100,8 @@
     				<field name="date_to" />
     				<separator colspan="4" string="Consumption parameters" />
     				<field name="consumption_type" colspan="4" />
-    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', '=', 'fmc')], 'required': [('consumption_type', '!=', 'fmc')]}" />
-    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', '=', 'fmc')], 'required': [('consumption_type', '!=', 'fmc')]}" />
+    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
+    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />

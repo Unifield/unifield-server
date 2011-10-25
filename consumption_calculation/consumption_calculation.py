@@ -459,11 +459,11 @@ class product_product(osv.osv):
         # Read if a interval is defined
         if context.get('from_date', False):
             from_date = context.get('from_date')
-            rac_domain.append(('period_to', '>', from_date))
+            rac_domain.append(('period_to', '=>', from_date))
         
         if context.get('to_date', False):
             to_date = context.get('to_date')
-            rac_domain.append(('period_to', '<', to_date))
+            rac_domain.append(('period_to', '<=', to_date))
         
         # Filter for one or some locations    
         if context.get('location_id', False):
@@ -548,6 +548,10 @@ class product_product(osv.osv):
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
+        if to_date:
+            domain.append(('date_expected', '<=', to_date))
+        if from_date:
+            domain.append(('date_expected', '>=', from_date))
         
         # Add locations filters in domain if locations are passed in context
         if context.get('location_id', False):
