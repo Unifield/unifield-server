@@ -37,7 +37,6 @@
                             <button name="action_set_state" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" context="{'state': 'field-closed'}" colspan="1"/>
                             <button name="action_set_state" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" context="{'state': 'mission-closed'}" colspan="1"/>
                             <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
-                            <button name="button_overdue_invoice" type="object" string="Open overdue invoices" icon="gtk-open" colspan="1" states="draft"/>
                         </group>
                     </button>
                 </data>
