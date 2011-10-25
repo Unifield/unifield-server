@@ -177,7 +177,8 @@ class product_likely_expire_report(osv.osv_memory):
         
         new_context = context.copy()
         new_context.update({'from_date': date_from,
-                            'to_date': date_to})
+                            'to_date': date_to,
+                            'average': True})
         
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
