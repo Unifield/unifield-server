@@ -69,11 +69,12 @@ class account_period_closing_level(osv.osv):
                 FROM account_move_line
                 WHERE period_id = %s""" % period.id
                 cr.execute(sql)
+                comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 res = [x[0] for x in cr.fetchall()]
                 # for each currency do a verification about fx rate
                 for id in res:
                     # search for company currency_id if ID is None
-                    if id == None:
+                    if id == None or id == comp_curr_id:
                         continue
                     rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', id), ('name', '>=', period.date_start), 
                         ('name', '<=', period.date_stop)], context=context)
