@@ -155,13 +155,17 @@ class product_likely_expire_report(osv.osv_memory):
                                               ('amc', 'AMC -- Average Monthly Consumption'), 
                                               ('rac', 'RAC -- Real Average Consumption')], string='Consumption', required=True),
         'line_ids': fields.one2many('product.likely.expire.report.line', 'report_id', string='Lines', readonly=True),
+        'consumption_from': fields.date(string='From'),
+        'consumption_to': fields.date(string='To'),
     }
     
     _defaults = {
         'date_from': lambda *a: time.strftime('%Y-%m-%d'),
+        'consumption_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'consumption_type': lambda *a: 'fmc',
     }
     
-    def _get_average_consumption(self, cr, uid, product_id, consumption_type, location_ids, date_from, date_to, context={}):
+    def _get_average_consumption(self, cr, uid, product_id, consumption_type, context={}):
         '''
         Return the average consumption for all locations
         '''
@@ -172,10 +176,6 @@ class product_likely_expire_report(osv.osv_memory):
         res = 0.00
         
         new_context = context.copy()
-        
-        new_context.update({'location_id': location_ids,
-                            'date_from': date_from,
-                            'date_to': date_to})
         
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
@@ -208,8 +208,16 @@ class product_likely_expire_report(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'product_likely_expire_report_form_processed')[1]
         report = self.browse(cr, uid, ids[0], context=context)
         
-        if report.location_id:
-            context.update({'location_id': report.location_id.id})
+        if report.date_to <= report.date_from:
+            raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
+        
+        if report.consumption_type != 'fmc' and report.consumption_from > report.consumption_to:
+            raise osv.except_osv(_('Error'), _('You cannot have \'To date\' older than \'From date\''))
+            
+        if report.consumption_type != 'fmc':
+            context.update({'from_date': report.consumption_from, 'to_date': report.consumption_to})
+        else:
+            context.update({'from_date': report.date_from, 'to_date': report.date_to})
         
         location_ids = []
         
@@ -225,6 +233,8 @@ class product_likely_expire_report(osv.osv_memory):
                 if move.location_dest_id.id not in location_ids:
                     if move.location_dest_id.usage == 'internal':
                         location_ids.append(move.location_dest_id.id)
+                        
+        context.update({'location_id': location_ids})
         
         lot_ids = lot_obj.search(cr, uid, [('stock_available', '>', 0.00)], order='product_id, life_date', context=context)
         
@@ -243,10 +253,7 @@ class product_likely_expire_report(osv.osv_memory):
             if lot.product_id and lot.product_id.id not in products:
                 products.update({lot.product_id.id: {}})
                 consumption = self._get_average_consumption(cr, uid, lot.product_id.id, 
-                                                                     report.consumption_type, 
-                                                                     location_ids, 
-                                                                     report.date_from, 
-                                                                     report.date_to, 
+                                                                     report.consumption_type,
                                                                      context=context)
                 
                 products[lot.product_id.id].update({'line_id': line_obj.create(cr, uid, {'report_id': report.id,

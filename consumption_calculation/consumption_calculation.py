@@ -565,9 +565,9 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            if move.reason_type_id.id == return_id and move.type == 'in':
+            if move.reason_type_id.id == return_id and move.location_id.usage == 'customer':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
-            elif move.type == 'out':
+            elif move.location_dest_id.usage == 'customer':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             
             # Update the limit in time
