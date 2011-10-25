@@ -28,7 +28,7 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
-from register_tools import create_starting_cashbox_lines
+from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
@@ -359,7 +359,7 @@ class account_bank_statement(osv.osv):
                 res.append(res_id)
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
-                create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
+                create_cashbox_lines(self, cr, uid, reg.id, context=context)
             # For bank register, give balance_end
             elif reg.journal_id.type == 'bank':
                 # Verify that another bank statement exists

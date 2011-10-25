@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import create_starting_cashbox_lines
+from register_tools import create_cashbox_lines
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -51,8 +51,8 @@ class account_cash_statement(osv.osv):
                        if end[2]['pieces'] == dict_val['pieces']:
                            end[2]['number'] += dict_val['number']
             vals.update({
-                 'ending_details_ids': open_close['start'],
-                'starting_details_ids': open_close['end']
+#                'ending_details_ids': open_close['start'],
+                'starting_details_ids': open_close['end'],
             })
         else:
             vals.update({
@@ -71,7 +71,7 @@ class account_cash_statement(osv.osv):
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
-            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
+            create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
