@@ -124,5 +124,7 @@
             </field>
         </record>
 
+        <delete model="ir.values" id="account.action_idea_post_vote_values"/>
+
     </data>
 </openerp>
