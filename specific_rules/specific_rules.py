@@ -606,13 +606,32 @@ class stock_production_lot(osv.osv):
         
         return result
     
+    def _stock_search(self, cr, uid, obj, name, args, context=None):
+        """ Searches Ids of products
+        @return: Ids of locations
+        """
+        locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+        if context.get('location_id', False):
+            locations = context['location_id'] and [context['location_id']] or []
+        cr.execute('''select
+                prodlot_id,
+                sum(qty)
+            from
+                stock_report_prodlots
+            where
+                location_id IN %s group by prodlot_id
+            having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+        res = cr.fetchall()
+        ids = [('id', 'in', map(lambda x: x[0], res))]
+        return ids
+    
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
                 #'expiry_date': fields.date('Expiry Date'),
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique production lot, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
                 'sequence_id': fields.many2one('ir.sequence', 'Lot Sequence', required=True,),
-                'stock_available': fields.function(_get_stock, method=True, type="float", string="Available", select=True,
+                'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Available", select=True,
                                                    help="Current quantity of products with this Production Lot Number available in company warehouses",
                                                    digits_compute=dp.get_precision('Product UoM'), readonly=True,),
                 'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,

@@ -266,7 +266,7 @@ class product_likely_expire_report(osv.osv_memory):
                     days = Age(month + RelativeDateTime(months=1, day=1, days=-1), DateFrom(report.date_from))
                     coeff = (days.years*365.0 + days.months*30.0 + days.days)/30.0
                     total_cons = coeff*consumption
-                    rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(rest + total_cons - already_cons,2), lot.product_id.uom_id.id)
+                    rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(total_cons - already_cons,2), lot.product_id.uom_id.id)
                     
                     item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%Y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
@@ -275,11 +275,15 @@ class product_likely_expire_report(osv.osv_memory):
                     seq += 1
                     
                     # Create a line for each lot which expired in this month
-                    product_lot_ids = lot_obj.search(cr, uid, [('product_id', '=', lot.product_id.id), 
+                    product_lot_ids = lot_obj.search(cr, uid, [('product_id', '=', lot.product_id.id),
                                                                ('life_date', '>=', month.strftime('%Y-%m-%d')),
+                                                               ('stock_available', '>', 0.00),
                                                                ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))],
                                                      order='life_date',
                                                      context=context)
+                    if not product_lot_ids:
+                        last_rest = rest
+                        #last_rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(last_rest + total_cons - already_cons,2), lot.product_id.uom_id.id)
                     
                     # Create an item line for each lot and each location
                     for product_lot in lot_obj.browse(cr, uid, product_lot_ids, context=context):
@@ -291,25 +295,40 @@ class product_likely_expire_report(osv.osv_memory):
                             if lot_cons >= product_lot.stock_available:
                                 already_cons += product_lot.stock_available
                                 rest -= product_lot.stock_available
-                            else:
-                                expired_qty = product_lot.stock_available - lot_cons
+                            elif rest >= lot_cons:
+                                l_expired_qty = product_lot.stock_available - lot_cons
                                 rest -= lot_cons
                                 already_cons += lot_cons
+                            else:
+                                l_expired_qty = product_lot.stock_available - rest
+                                already_cons += rest
+                                rest = 0.00
                         else:
-                            expired_qty = product_lot.stock_available
+                            l_expired_qty = product_lot.stock_available
                         last_rest = rest
+                        expired_qty += l_expired_qty
                         
                         lot_context = context.copy()
                         lot_context.update({'prodlot_id': product_lot.id})
+                        product = product_obj.browse(cr, uid, lot.product_id.id, context=lot_context)
+                        lot_expired_qty = l_expired_qty
                         for location in location_ids:
-                            lot_context.update({'location_id': location})
-                            product = product_obj.browse(cr, uid, lot.product_id.id, context=lot_context)
-                            # Create the item line
-                            item_line_obj.create(cr, uid, {'item_id': item_id,
-                                                           'lot_id': product_lot.id,
-                                                           'location_id': location,
-                                                           'available_qty': product.qty_available,
-                                                           'expired_qty': expired_qty})
+                            new_lot_context = lot_context.copy()
+                            new_lot_context.update({'location': location, 'compute_child': False})
+                            product2 = product_obj.browse(cr, uid, lot.product_id.id, context=new_lot_context)
+                            if product2.qty_available > 0.00:
+                                # Create the item line
+                                if product2.qty_available <= lot_expired_qty:
+                                    new_lot_expired = product2.qty_available
+                                    lot_expired_qty -= product2.qty_available
+                                else:
+                                    new_lot_expired = lot_expired_qty
+                                    lot_expired_qty = 0.00
+                                item_line_obj.create(cr, uid, {'item_id': item_id,
+                                                               'lot_id': product_lot.id,
+                                                               'location_id': location,
+                                                               'available_qty': product2.qty_available,
+                                                               'expired_qty': new_lot_expired})
                             
                         available_qty += product.qty_available
                             
@@ -348,7 +367,7 @@ class product_likely_expire_report(osv.osv_memory):
         dates = context.get('dates', [])
         for month in dates:
             line_view += '<field name="%s" />' % month
-            line_view += '<button name="go_to_item" type="object" string="Go to item" icon="gtk-info" context="{item_date: %s}" />' % month
+            line_view += '<button name="go_to_item_%s" type="object" string="Go to item" icon="gtk-info" context="{item_date: %s}" />' % (month, month)
             
         line_view += """<field name="in_stock"/>
                         <field name="total_expired" />
@@ -373,6 +392,14 @@ class product_likely_expire_report_line(osv.osv_memory):
             'total_expired': fields.float(digits=(16,2), string='Total expired'),
     }
     
+    def __getattr__(self, name, *args, **kwargs):
+        if name[:11] == 'go_to_item_':
+            date = name[11:]
+            self.date = date
+            return self.go_to_item
+        else:
+            return self.name
+    
     def fields_get(self, cr, uid, fields=None, context={}):
         if not context:
             context = {}
@@ -392,10 +419,10 @@ class product_likely_expire_report_line(osv.osv_memory):
         if not context:
             context = {}
             
-        if not context.get('item_date', False):
+        if not context.get('item_date', self.date):
             raise osv.except_osv(_('Error'), _('You haven\'t choose an item to open'))
         
-        item_date = context.get('item_date')
+        item_date = context.get('item_date', self.date)
         item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('name', '=', item_date), ('line_id', '=', ids[0])], context=context)
         if not item_ids:
             raise osv.except_osv(_('Error'), _('You haven\'t choose an item to open'))
@@ -451,6 +478,7 @@ product_likely_expire_report_item()
 
 class product_likely_expire_report_item_line(osv.osv_memory):
     _name = 'product.likely.expire.report.item.line'
+    _order = 'expired_date, location_id'
     
     _columns = {
             'item_id': fields.many2one('product.likely.expire.report.item', strig='Item'),
@@ -458,7 +486,7 @@ class product_likely_expire_report_item_line(osv.osv_memory):
             'location_id': fields.many2one('stock.location', string='Location'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-            'expired_date': fields.related('lot_id', 'life_date', type='date'),
+            'expired_date': fields.related('lot_id', 'life_date', type='date', string='Expiry date'),
     }
     
 product_likely_expire_report_item_line()
