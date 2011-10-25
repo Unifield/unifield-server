@@ -17,6 +17,7 @@
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="name"/>
                     <field name="account_id"/>
+                    <field name="partner_id" invisible="1"/>
                     <field name="partner_type"/>
                     <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
@@ -93,6 +94,7 @@
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                     <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
                     <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
