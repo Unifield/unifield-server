@@ -23,7 +23,7 @@
                             
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
-                            <field name="balance_start" attrs="{'readonly': [('prev_reg_id', '!=', False)]}"/>
+                            <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
