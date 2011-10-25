@@ -98,6 +98,7 @@
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
     				<field name="date_to" />
+    				<field name="only_non_zero" />
     				<separator colspan="4" string="Consumption parameters" />
     				<field name="consumption_type" colspan="4" />
     				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />

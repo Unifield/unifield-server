@@ -157,6 +157,7 @@ class product_likely_expire_report(osv.osv_memory):
         'line_ids': fields.one2many('product.likely.expire.report.line', 'report_id', string='Lines', readonly=True),
         'consumption_from': fields.date(string='From'),
         'consumption_to': fields.date(string='To'),
+        'only_non_zero': fields.boolean(string='Only products with expired quantities'),
     }
     
     _defaults = {
@@ -348,6 +349,10 @@ class product_likely_expire_report(osv.osv_memory):
                     item_obj.write(cr, uid, [item_id], {'available_qty': available_qty,
                                                         'expired_qty': expired_qty}, context=context)
                     total_expired += expired_qty
+                    
+                if report.only_non_zero and total_expired <= 0.00:
+                    line_obj.unlink(cr, uid, [products[lot.product_id.id]['line_id']], context=context)
+                else:
                     line_obj.write(cr, uid, [products[lot.product_id.id]['line_id']], {'total_expired': total_expired}, context=context)
             
         new_date = []        
@@ -398,7 +403,7 @@ class product_likely_expire_report_line(osv.osv_memory):
     _name = 'product.likely.expire.report.line'
     
     _columns = {
-            'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True),
+            'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
             'product_id': fields.many2one('product.product', string='Product', required=True),
             'consumption': fields.float(digits=(16,2), string='Monthly Consumption', required=True),
             'in_stock': fields.float(digits=(16,2), string='In stock'),
@@ -479,7 +484,7 @@ class product_likely_expire_report_item(osv.osv_memory):
     _name = 'product.likely.expire.report.item'
     
     _columns = {
-            'line_id': fields.many2one('product.likely.expire.report.line', string='Line'),
+            'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
             'name': fields.char(size=64, string='Date'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
@@ -494,7 +499,7 @@ class product_likely_expire_report_item_line(osv.osv_memory):
     _order = 'expired_date, location_id'
     
     _columns = {
-            'item_id': fields.many2one('product.likely.expire.report.item', strig='Item'),
+            'item_id': fields.many2one('product.likely.expire.report.item', strig='Item', ondelete='cascade'),
             'lot_id': fields.many2one('stock.production.lot', string='Lot'),
             'location_id': fields.many2one('stock.location', string='Location'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
