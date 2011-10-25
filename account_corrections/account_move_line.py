@@ -124,6 +124,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ids = [ids]
         # Prepare some values
         res = {}
+        move_obj = self.pool.get('account.move')
         # Browse all given lines
         for ml in self.browse(cr, uid, ids, context=context):
             upstream_line_ids = []
@@ -132,7 +133,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
             line = ml
             while line != None:
                 if line:
+                    # Add line to result
                     upstream_line_ids.append(line.id)
+                    # Add reversal line to result
+                    reversal_ids = self.search(cr, uid, [('move_id', '=', line.move_id.id), ('reversal', '=', True)], context=context)
+                    if reversal_ids:
+                        upstream_line_ids.append(reversal_ids)
                 if line.corrected_line_id:
                     line = line.corrected_line_id
                 else:
@@ -145,12 +151,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     operator = '='
                 search_ids = self.search(cr, uid, [('corrected_line_id', operator, sline_ids)], context=context)
                 if search_ids:
+                    # Add line to result
                     downstream_line_ids.append(search_ids)
+                    # Add reversal line to result
+                    for dl in self.browse(cr, uid, search_ids, context=context):
+                        reversal_ids = self.search(cr, uid, [('move_id', '=', dl.move_id.id), ('reversal', '=', True)], context=context)
+                        downstream_line_ids.append(reversal_ids)
                     sline_ids = search_ids
                 else:
                     sline_ids = None
             # Add search result to res
-            res[str(ml.id)] = list(set(upstream_line_ids + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
+            res[str(ml.id)] = list(set(flatten(upstream_line_ids) + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
         return res
 
     def get_first_corrected_line(self, cr, uid, ids, context={}):
@@ -234,7 +245,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if not domain_ids:
             domain_ids = ids
         # Create domain
-        domain = [('id', 'in', flatten(domain_ids)), ('reversal', '=', False)]
+        domain = [('id', 'in', flatten(domain_ids))]#, ('reversal', '=', False)]
         # Update context
         context.update({
             'active_id': ids[0],
