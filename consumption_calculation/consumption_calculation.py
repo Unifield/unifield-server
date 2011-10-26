@@ -263,7 +263,7 @@ class real_average_consumption_line(osv.osv):
         return super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
     
     def create(self, cr, uid, vals, context={}):
-        if vals['batch_mandatory'] == True and vals['prodlot_id']:
+        if vals.get('batch_mandatory', False) == True and 'prodlot_id' in vals:
             life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
             vals.update({'expiry_date': life_date})
                 
