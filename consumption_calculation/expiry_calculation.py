@@ -226,15 +226,23 @@ class product_likely_expire_report(osv.osv_memory):
         location_ids = []
         
         if report.location_id:
-            location_ids = [report.location_id.id]
+            location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', report.location_id.id)], context=context)
         else:
             location_ids = []
+            wh_location_ids = []
+            warehouse_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+            for warehouse in self.pool.get('stock.warehouse').browse(cr, uid, warehouse_ids, context=context):
+                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_stock_id.id)], context=context))
+                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_input_id.id)], context=context))
+                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_output_id.id)], context=context))
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.location_id.id not in location_ids:
-                    if move.location_id.usage == 'internal':
+                    print move.location_id.quarantine_location, move.location_id.name
+                    if move.location_id.usage == 'internal' and not move.location_id.quarantine_location and move.location_id.id in wh_location_ids:
                         location_ids.append(move.location_id.id)
-                if move.location_dest_id.id not in location_ids:
+                if move.location_dest_id.id not in location_ids and not move.location_dest_id.quarantine_location and move.location_dest_id.id in wh_location_ids:
+                    print move.location_dest_id.quarantine_location, move.location_dest_id.name
                     if move.location_dest_id.usage == 'internal':
                         location_ids.append(move.location_dest_id.id)
             
