@@ -105,7 +105,7 @@ class financing_contract_actual_line(osv.osv):
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
         'account_ids': fields.many2many('account.account', 'financing_contract_actual_accounts', 'actual_line_id', 'account_id', string='Accounts'),
-        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line', ondelete='cascade'),
+        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.actual.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal')], 'Line type', required=True),
