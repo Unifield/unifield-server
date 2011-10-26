@@ -273,7 +273,7 @@ class real_average_consumption_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=False),
+        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
