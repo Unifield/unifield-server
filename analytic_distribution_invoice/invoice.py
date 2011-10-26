@@ -60,4 +60,31 @@ class account_invoice(osv.osv):
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
 account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
+        """
+        Return analytic distribution line count (given by analytic distribution)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given invoices
+        for invl in self.browse(cr, uid, ids, context=context):
+            res[invl.id] = invl.analytic_distribution_id and invl.analytic_distribution_id.lines_count or 'None'
+        return res
+
+    _columns = {
+        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
+            string="Analytic distribution count", readonly=True, store=False),
+    }
+
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

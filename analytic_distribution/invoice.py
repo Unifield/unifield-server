@@ -190,58 +190,58 @@ class account_invoice_line(osv.osv):
                 'context': context,
         }
 
-    def create(self, cr, uid, vals, context=None):
-        res_id = False
-        analytic_obj = self.pool.get('analytic.distribution')
-        if 'invoice_id' in vals and vals['invoice_id']:
-            #new line, we add the global distribution
-            if self._name == 'wizard.account.invoice.line':
-                obj_name = 'wizard.account.invoice'
-            else:
-                obj_name = 'account.invoice'
-            invoice_obj = self.pool.get(obj_name).browse(cr, uid, vals['invoice_id'], context=context)
-            if invoice_obj.analytic_distribution_id:
-                child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
-                vals['analytic_distribution_id'] = child_distrib_id
-                res_id =  super(account_invoice_line, self).create(cr, uid, vals, context=context)
-                amount = self._amount_line(cr, uid, [res_id], None, None, {})[res_id] or 0.0
-                if invoice_obj.type in ['out_invoice', 'in_refund']:
-                    amount = -1 * amount
-                company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
-                analytic_obj.copy_from_global_distribution(cr,
-                                                           uid,
-                                                           invoice_obj.analytic_distribution_id.id,
-                                                           child_distrib_id,
-                                                           amount,
-                                                           currency,
-                                                           context=context)
-        if res_id:
-            return res_id
-        else:
-            return super(account_invoice_line, self).create(cr, uid, vals, context=context)
+#    def create(self, cr, uid, vals, context=None):
+#        res_id = False
+#        analytic_obj = self.pool.get('analytic.distribution')
+#        if 'invoice_id' in vals and vals['invoice_id']:
+#            #new line, we add the global distribution
+#            if self._name == 'wizard.account.invoice.line':
+#                obj_name = 'wizard.account.invoice'
+#            else:
+#                obj_name = 'account.invoice'
+#            invoice_obj = self.pool.get(obj_name).browse(cr, uid, vals['invoice_id'], context=context)
+#            if invoice_obj.analytic_distribution_id:
+#                child_distrib_id = analytic_obj.create(cr, uid, {'global_distribution': True}, context=context)
+#                vals['analytic_distribution_id'] = child_distrib_id
+#                res_id =  super(account_invoice_line, self).create(cr, uid, vals, context=context)
+#                amount = self._amount_line(cr, uid, [res_id], None, None, {})[res_id] or 0.0
+#                if invoice_obj.type in ['out_invoice', 'in_refund']:
+#                    amount = -1 * amount
+#                company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+#                currency = invoice_obj.currency_id and invoice_obj.currency_id.id or company_currency
+#                analytic_obj.copy_from_global_distribution(cr,
+#                                                           uid,
+#                                                           invoice_obj.analytic_distribution_id.id,
+#                                                           child_distrib_id,
+#                                                           amount,
+#                                                           currency,
+#                                                           context=context)
+#        if res_id:
+#            return res_id
+#        else:
+#            return super(account_invoice_line, self).create(cr, uid, vals, context=context)
         
-    def write(self, cr, uid, ids, vals, context=None):
-        # Update values from invoice line
-        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
-        # Browse invoice lines
-        for line in self.browse(cr, uid, ids, context=context):
-            # Do some update if this line have an analytic distribution
-            if line.analytic_distribution_id:
-                if 'price_unit' in vals or 'quantity' in vals or 'discount' in vals or context.get('reset_all', False):
-                    amount = line.price_subtotal or 0.0
-                    if line.invoice_id.type in ['out_invoice', 'in_refund']:
-                        amount = -1 * amount
-                    company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    currency = line.invoice_id.currency_id and line.invoice_id.currency_id.id or company_currency
-                    distrib_obj = self.pool.get('analytic.distribution')
-                    if line.analytic_distribution_id.global_distribution:
-                        source = line.invoice_id.analytic_distribution_id.id
-                        dest = line.analytic_distribution_id.id
-                        distrib_obj.copy_from_global_distribution(cr, uid, source, dest, amount, currency, context=context)
-                    else:
-                        distrib_obj.update_distribution_line_amount(cr, uid, [line.analytic_distribution_id.id], amount, context=context)
-        return res
+#    def write(self, cr, uid, ids, vals, context=None):
+#        # Update values from invoice line
+#        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
+#        # Browse invoice lines
+#        for line in self.browse(cr, uid, ids, context=context):
+#            # Do some update if this line have an analytic distribution
+#            if line.analytic_distribution_id:
+#                if 'price_unit' in vals or 'quantity' in vals or 'discount' in vals or context.get('reset_all', False):
+#                    amount = line.price_subtotal or 0.0
+#                    if line.invoice_id.type in ['out_invoice', 'in_refund']:
+#                        amount = -1 * amount
+#                    company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+#                    currency = line.invoice_id.currency_id and line.invoice_id.currency_id.id or company_currency
+#                    distrib_obj = self.pool.get('analytic.distribution')
+#                    if line.analytic_distribution_id.global_distribution:
+#                        source = line.invoice_id.analytic_distribution_id.id
+#                        dest = line.analytic_distribution_id.id
+#                        distrib_obj.copy_from_global_distribution(cr, uid, source, dest, amount, currency, context=context)
+#                    else:
+#                        distrib_obj.update_distribution_line_amount(cr, uid, [line.analytic_distribution_id.id], amount, context=context)
+#        return res
 
     def move_line_get_item(self, cr, uid, line, context=None):
         res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
