@@ -25,6 +25,27 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
+        """
+        Return analytic distribution line count (given by analytic distribution)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given invoices
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = inv.analytic_distribution_id and inv.analytic_distribution_id.lines_count or 'None'
+        return res
+
+    _columns = {
+        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
+            string="Analytic distribution count", readonly=True, store=False),
+    }
+
     def copy(self, cr, uid, id, default={}, context={}):
         """
         Copy global distribution and give it to new invoice
