@@ -154,6 +154,11 @@
             	</data>
             </field>
        	</record>
+
+
+	<record id="purchase.purchase_rfq" model="ir.actions.act_window">
+		<field name="context">{'search_default_draft': 1, 'rfq_ok': True}</field>
+	</record>
             
 
 	</data>
