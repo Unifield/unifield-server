@@ -183,11 +183,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'rfq_done'):
+                if line.procurement_id.purchase_id and not line.procurement_id.purchase_id.rfq_ok:
                     purchase_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state not in ('draft', 'rfq_done'):
+                        if not rfq.rfq_ok:
                             purchase_ids.append(rfq.id)
         
         return purchase_ids
@@ -205,11 +205,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state in ('draft', 'rfq_done'):
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.rfq_ok:
                     quotation_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state in ('draft', 'rfq_done', 'rfq_updated', 'rfq_sent'):
+                        if rfq.rfq_ok:
                             quotation_ids.append(rfq.id)
                 
         
@@ -356,7 +356,9 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             for order in line.purchase_ids:
-                if order.state in ('confirmed', 'wait'):
+                if order.state == 'draft':
+                    res[line.id]['purchase_status'] = 'Draft'
+                if order.state in ('confirmed', 'wait') and res[line.id]['purchase_status'] not in ('Draft'):
                     res[line.id]['purchase_status'] = 'Confirmed'
                 if order.state == 'approved' and res[line.id]['purchase_status'] not in ('Confirmed', 'Exception'):
                     res[line.id]['purchase_status'] = 'Approved'

@@ -38,7 +38,7 @@
 		                    <field name="qty_ordered" />
 		                    <field name="uom_id" />
 		                    <field name="tender_ids" />
-		                    <field name="quotation_ids" />
+		                    <!--<field name="quotation_ids" />-->
 		                    <field name="purchase_ids" />
 		                    <field name="incoming_ids" />
 		                    <field name="available_qty" />
@@ -77,7 +77,7 @@
                             <field name="uom_id" />
                             <field name="sourced_ok" />
                             <field name="tender_status" />
-                            <field name="quotation_status" />
+                            <!--<field name="quotation_status" />-->
                             <field name="purchase_status" />
                             <field name="incoming_status" />
                             <field name="product_available" />
@@ -106,8 +106,8 @@
                     <field name="uom_id" />
                     <field name="sourced_ok" />
                     <field name="tender_ids" />
-                    <field name="quotation_ids" />
-                    <field name="quotation_status" />
+                    <!--<field name="quotation_ids" />-->
+                    <!--<field name="quotation_status" />-->
                     <field name="purchase_ids" />
                     <field name="purchase_status" />
                     <field name="incoming_ids" />
@@ -140,7 +140,7 @@
                     		<button name="go_to_tender_info" type="object" string="Go to tender form" icon="terp-stock_zoom" />
                 		</tree>
                     </field>
-                    <field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
+                    <!--<field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
                     	<tree string="Request for Quotation"
                     		colors="red: state in ('rfq_sent');blue: state in ('rfq_updated');green: state in ('rfq_done')">
                     		<field name="name" />
@@ -152,7 +152,7 @@
                     		<field name="state" />
                     		<button name="go_to_rfq_info" type="object" string="Go to RfQ form" icon="terp-stock_zoom" />
                     	</tree>
-                    </field>
+                    </field>-->
                     <field name="purchase_ids" nolabel="1" colspan="4" string="Purchase Orders">
                     	<tree string="Purchase Orders"
                     		colors="grey: state in ('cancel', 'done');green: state in ('approved');blue: state in ('confirmed')">
