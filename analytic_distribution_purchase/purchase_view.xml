@@ -15,6 +15,7 @@
                         <group colspan="6">
                             <button name="button_analytic_distribution" string="Set a global analytical distribution" type="object" 
                                 icon="terp-stock_symbol-selection" context="context" colspan="2"/>
+                            <field name="analytic_distribution_line_count" nolabel="1" colspan="1"/>
                             <label string="" colspan="4"/>
                         </group>
                     </xpath>

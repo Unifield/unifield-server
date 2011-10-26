@@ -29,8 +29,26 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
+    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
+        """
+        Return analytic distribution line count (given by analytic distribution)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given invoices
+        for po in self.browse(cr, uid, ids, context=context):
+            res[po.id] = po.analytic_distribution_id and po.analytic_distribution_id.lines_count or 'None'
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
+            string="Analytic distribution count", readonly=True, store=False),
     }
 
     def action_invoice_create(self, cr, uid, ids, *args):
