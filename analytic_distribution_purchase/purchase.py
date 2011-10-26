@@ -77,20 +77,25 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        ana_obj = self.pool.get('analytic.distribution')
         purchase = self.browse(cr, uid, ids[0], context=context)
         amount = purchase.amount_total or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = purchase.currency_id and purchase.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = purchase.analytic_distribution_id and purchase.analytic_distribution_id.id
-        # Create an analytic_distribution_id if no one exists
-        if not distrib_id:
-            res_id = ana_obj.create(cr, uid, {}, context=context)
-            super(purchase_order, self).write(cr, uid, ids, {'analytic_distribution_id': res_id}, context=context)
-            distrib_id = res_id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'purchase_id': purchase.id,
+            'currency_id': currency or False,
+            'state': 'cc',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'purchase_id': purchase.id, 'distribution_id': distrib_id,
-            'currency_id': purchase.currency_id and purchase.currency_id.id or False, 'state': 'cc'}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
@@ -108,4 +113,32 @@ class purchase_order(osv.osv):
         }
 
 purchase_order()
+
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+
+    def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
+        """
+        Return analytic distribution line count (given by analytic distribution)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse given invoices
+        for pol in self.browse(cr, uid, ids, context=context):
+            res[pol.id] = pol.analytic_distribution_id and pol.analytic_distribution_id.lines_count or 'None'
+        return res
+
+    _columns = {
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
+            string="Analytic distribution count", readonly=True, store=False),
+    }
+
+purchase_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

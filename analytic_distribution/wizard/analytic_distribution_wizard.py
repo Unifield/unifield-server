@@ -287,6 +287,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'f2_line_ids': fields.one2many('analytic.distribution.wizard.f2.lines', 'wizard_id', string="Free 2 Allocation"),
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'purchase_id': fields.many2one('purchase.order', string="Purchase Order"),
+        'purchase_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line"),
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
@@ -454,8 +455,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             return False
         # Prepare some values
         wizard = self.browse(cr, uid, [wizard_id], context=context) and self.browse(cr, uid, [wizard_id], context=context)[0]
-        if not wizard or not wizard.fp_line_ids:
+        if not wizard:
+            raise osv.except_osv(_('Warning'), _('No wizard found.'))
+        # If no funding pool lines, raise an error, except when we come from a purchase order or a purchase order line ('cc' state)
+        if not wizard.fp_line_ids and wizard.state == 'dispatch':
             raise osv.except_osv(_('Warning'), _('No funding pool lines done.'))
+        # If we come from 'cc' state, no need to update cost center lines
+        elif not wizard.fp_line_ids and wizard.state == 'cc':
+            return True
         # Process funding pool lines to retrieve cost centers and their total percentage
         cc_data = {}
         for line in wizard.fp_line_ids:
@@ -583,7 +590,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 ## FIXME: add purchase_id and purchase_line_id
-                for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line')]:
+                for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
+                    ('purchase_line_id', 'purchase.order.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)

@@ -30,6 +30,7 @@ class analytic_distribution(osv.osv):
 
     _columns = {
         'purchase_ids': fields.one2many('purchase.order', 'analytic_distribution_id', string="Purchases"),
+        'purchase_line_ids': fields.one2many('purchase.order.line', 'analytic_distribution_id', string="Purchase Lines"),
     }
 
 analytic_distribution()
