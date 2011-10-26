@@ -121,7 +121,7 @@ class account_invoice_line(osv.osv):
                 for fp_line in line.invoice_id.analytic_distribution_id.funding_pool_lines:
                     total = 0.0
                     # If account don't be on ONLY ONE funding_pool, then continue
-                    if line.account_id.id not in [x.id for x in fp_line.invoice_id.analytic_id.account_ids]:
+                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
                         continue
                     else:
                         total += 1
@@ -149,6 +149,8 @@ class account_invoice_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))
         # Prepare some values
         ana_obj = self.pool.get('analytic.distribution')
         invoice_line = self.browse(cr, uid, ids[0], context=context)
