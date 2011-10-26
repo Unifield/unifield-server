@@ -40,7 +40,6 @@
             <field name="type">normal</field>
             <field name="active">True</field>
             <field name="category">FUNDING</field>
-            <field name="parent_id" ref="funding_pool.analytic_account_funding_pool"/>
         </record>
         
     </data>

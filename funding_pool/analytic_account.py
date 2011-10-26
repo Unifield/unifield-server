@@ -49,7 +49,11 @@ class analytic_account(osv.osv):
     ]
 
     def set_funding_pool_parent(self, cr, uid, vals):
-        if 'category' in vals and vals['category'] and vals['category'] == 'FUNDING':
+        if 'category' in vals and \
+           'code' in vals and \
+            vals['category'] == 'FUNDING' and \
+            vals['code'] != 'FUNDING':
+            # for all accounts except the parent one
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
     
