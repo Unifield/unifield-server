@@ -253,8 +253,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase state
             if el.purchase_id and el.purchase_id.state in ['approved', 'done']:
                 res[el.id] = False
+            # verify purchase line state
+            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['approved', 'done']:
+                res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+                res[el.id] = False
+            # verify invoice line state
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
         return res
 
@@ -419,8 +425,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Verify that purchase is in good state if necessary
             if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that purchase from purchase line is in good state if necessary
+            if wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.state in ['approved', 'done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
             if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that invoice from invoice line is in good state if necessary
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and wiz.purchase_id:
