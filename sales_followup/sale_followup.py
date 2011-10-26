@@ -151,12 +151,12 @@ class sale_order_followup(osv.osv_memory):
                 incoming_ids = self.get_incoming_ids(cr, uid, line.id, purchase_ids, context=context)
                 outgoing_ids = self.get_outgoing_ids(cr, uid, line.id, context=context)
                 tender_ids = self.get_tender_ids(cr, uid, line.id, context=context)
-                quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
+#                quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
                 
                 line_obj.create(cr, uid, {'followup_id': followup_id,
                                           'line_id': line.id,
                                           'tender_ids': [(6,0,tender_ids)],
-                                          'quotation_ids': [(6,0,quotation_ids)],
+#                                          'quotation_ids': [(6,0,quotation_ids)],
                                           'purchase_ids': [(6,0,purchase_ids)],
                                           'incoming_ids': [(6,0,incoming_ids)],
                                           'outgoing_ids': [(6,0,outgoing_ids)],})
@@ -290,7 +290,7 @@ class sale_order_line_followup(osv.osv_memory):
         
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'sourced_ok': 'Waiting',
-                            'quotation_status': 'No quotation',
+#                            'quotation_status': 'No quotation',
                             'tender_status': 'N/A',
                             'purchase_status': 'No order',
                             'incoming_status': 'No shipment',
@@ -309,45 +309,58 @@ class sale_order_line_followup(osv.osv_memory):
             
             # Get information about the availability of the product
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
+            move_state = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-                # Change the state to Done only when all stock moves are done
                 if move.state in ('assigned', 'done'):
                     res[line.id]['available_qty'] += move.product_qty
-                    if res[line.id]['product_available'] == 'Waiting':
-                        res[line.id]['product_available'] = 'Done'
-                # If at least one stock move is not done, change the state to 'In Progress'
-                if move.state in ('draft', 'confirmed') and res[line.id]['product_available'] == 'Done':
-                    res[line.id]['product_available'] = 'In Progress'
-                # If at least one stock move was cancelled, the state is Exception
-                # TODO : See with Magali if we need to take care about cancelled associated stock moves
-                if move.state == 'cancel':
-                    res[line.id]['product_available'] = 'Exception'
-            
+                if not move_state:
+                    move_state = move.state
+
+                if move.state != move_state:
+                    move_state = 'sf_partial'
+
+            if move_state == 'sf_partial':
+                res[line.id]['product_available'] = 'Partial'
+            elif move_state in ('assigned', 'done'):
+                res[line.id]['product_available'] = 'Done'
+            elif move_state in ('draft', 'confirmed'):
+                res[line.id]['product_available'] = 'In Progress'
+            elif move_state == 'cancel':
+                res[line.id]['product_available'] = 'Exception'
+
             # Get information about the status of the RfQ
-            for quotation in line.quotation_ids:
-                if quotation.state == 'draft':
-                    res[line.id]['quotation_status'] = 'Waiting'
-                if quotation.state == 'rfq_sent' and res[line.id]['quotation_status'] not in ('Waiting'):
-                    res[line.id]['quotation_status'] = 'Sent'
-                elif quotation.state == 'rfq_updated' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent'):
-                    res[line.id]['quotation_status'] = 'Updated'
-                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
-                    res[line.id]['quotation_status'] = 'Done'
+#            for quotation in line.quotation_ids:
+#                if quotation.state == 'draft':
+#                    res[line.id]['quotation_status'] = 'Waiting'
+#                if quotation.state == 'rfq_sent' and res[line.id]['quotation_status'] not in ('Waiting'):
+#                    res[line.id]['quotation_status'] = 'Sent'
+#                elif quotation.state == 'rfq_updated' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent'):
+#                    res[line.id]['quotation_status'] = 'Updated'
+#                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
+#                    res[line.id]['quotation_status'] = 'Done'
                     
             # Get information about the state of all call for tender
+            tender_state = False
             for tender in line.tender_ids:
-                if tender.state == 'draft':
-                    res[line.id]['tender_status'] = 'Waiting'
-                elif tender.state == 'comparison' and res[line.id]['tender_status'] != 'Waiting':
-                    res[line.id]['tender_status'] = 'In Progress'
-                elif tender.state == 'done' and res[line.id]['tender_status'] not in ('Waiting', 'In Progress'):
-                    res[line.id]['tender_status'] = 'Done'
-                elif tender.state == 'cancel':
-                    res[line.id]['tender_status'] = 'Exception'
+                if not tender_state:
+                    tender_state = tender.state
+                if tender_state != tender.state:
+                    tender_state = 'sf_partial'
+
+            if tender_state == 'sf_partial':
+                res[line.id]['tender_status'] = 'Partial'
+            elif tender_state == 'draft':
+                res[line.id]['tender_status'] = 'Waiting'
+            elif tender_state == 'comparison':
+                res[line.id]['tender_status'] = 'In Progress'
+            elif tender_state == 'done':
+                res[line.id]['tender_status'] = 'Done'
+            elif tender_state == 'cancel':
+                res[line.id]['tender_status'] = 'Exception'
             
             # Get information about the state of all purchase order
             if line.line_id.type == 'make_to_stock':
-                res[line.id]['quotation_status'] = 'N/A'
+#                res[line.id]['quotation_status'] = 'N/A'
                 res[line.id]['purchase_status'] = 'N/A'
                 res[line.id]['incoming_status'] = 'N/A'
                 if line.line_id.product_id:
@@ -355,39 +368,63 @@ class sale_order_line_followup(osv.osv_memory):
                                     'uom_id': line.line_id.product_uom.id})
                     res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
+            purchase_state = False
             for order in line.purchase_ids:
-                if order.state == 'draft':
-                    res[line.id]['purchase_status'] = 'Draft'
-                if order.state in ('confirmed', 'wait') and res[line.id]['purchase_status'] not in ('Draft'):
-                    res[line.id]['purchase_status'] = 'Confirmed'
-                if order.state == 'approved' and res[line.id]['purchase_status'] not in ('Confirmed', 'Exception'):
-                    res[line.id]['purchase_status'] = 'Approved'
-                if order.state == 'done' and res[line.id]['purchase_status'] not in ('Confirmed', 'Approved', 'Exception'):
-                    res[line.id]['purchase_status'] = 'Done'
-                if order.state in ('cancel', 'except_picking', 'except_invoice'):
-                    res[line.id]['purchase_status'] = 'Exception'
+                if not purchase_state:
+                    purchase_state = order.state
+                if purchase_state != order.state:
+                    purchase_state = 'sf_partial'
+
+            if purchase_state == 'sf_partial':
+                res[line.id]['purchase_status'] = 'Partial'
+            elif purchase_state == 'draft':
+                res[line.id]['purchase_status'] = 'Draft'
+            elif purchase_state in ('confirmed', 'wait'):
+                res[line.id]['purchase_status'] = 'Confirmed'
+            elif purchase_state == 'approved':
+                res[line.id]['purchase_status'] = 'Approved'
+            elif purchase_state == 'done':
+                res[line.id]['purchase_status'] = 'Done'
+            elif purchase_state in ('cancel', 'except_picking', 'except_invoice'):
+                res[line.id]['purchase_status'] = 'Exception'
                     
             # Get information about the state of all incoming shipments
+            shipment_state = False
             for shipment in line.incoming_ids:
-                if shipment.state in ('draft', 'confirmed'):
-                    res[line.id]['incoming_status'] = 'Waiting'
-                if shipment.state in ('assigned') and res[line.id]['incoming_status'] not in ('Waiting'):
-                    res[line.id]['incoming_status'] = 'In Progress'
-                if shipment.state in ('done') and res[line.id]['incoming_status'] not in ('Waiting', 'In Progress'):
-                    res[line.id]['incoming_status'] = 'Done'
-                if shipment.state == 'cancel':
-                    res[line.id]['incoming_status'] = 'Exception' 
+                if not shipment_state:
+                    shipment_state = shipment.state
+                if shipment_state != shipment.state:
+                    shipment_state = 'sf_partial'
+
+            if shipment_state == 'sf_partial':
+                res[line.id]['incoming_status'] = 'Partial'
+            elif shipment_state in ('draft', 'confirmed'):
+                 res[line.id]['incoming_status'] = 'Waiting'
+            elif shipment_state == 'assigned':
+                res[line.id]['incoming_status'] = 'In Progress'
+            elif shipment_state == 'done':
+                res[line.id]['incoming_status'] = 'Done'
+            elif shipment_state == 'cancel':
+                res[line.id]['incoming_status'] = 'Exception' 
             
             # Get information about the state of all outgoing deliveries
+            outgoing_state = False
             for outgoing in line.outgoing_ids:
-                if outgoing.state in ('draft', 'confirmed'):
-                    res[line.id]['outgoing_status'] = 'Waiting'
-                if outgoing.state in ('assigned') and res[line.id]['outgoing_status'] not in ('Waiting'):
-                    res[line.id]['outgoing_status'] = 'Assigned'
-                if outgoing.state in ('done') and res[line.id]['outgoing_status'] not in ('Waiting', 'Assigned'):
-                    res[line.id]['outgoing_status'] = 'Done'
-                if outgoing.state == 'cancel':
-                    res[line.id]['outgoing_status'] = 'Exception'
+                if not outgoing_state:
+                    outgoing_state = outgoing.state
+                if outgoing_state != outgoing.state:
+                    outgoing_state = 'sf_partial'
+
+            if outgoing_state == 'sf_partial':
+                res[line.id]['outgoing_status'] = 'Partial'
+            elif outgoing_state in ('draft', 'confirmed'):
+                res[line.id]['outgoing_status'] = 'Waiting'
+            elif outgoing_state == 'assigned':
+                res[line.id]['outgoing_status'] = 'Assigned'
+            elif outgoing_state == 'done':
+                res[line.id]['outgoing_status'] = 'Done'
+            elif outgoing_state == 'cancel':
+                res[line.id]['outgoing_status'] = 'Exception'
             
         return res
     
@@ -405,10 +442,10 @@ class sale_order_line_followup(osv.osv_memory):
                                        'follow_line_id', 'tender_id', string='Call for tender'),
         'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
                                          readonly=True, multi='status'),
-        'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
-                                          'quotation_id', string='Requests for Quotation', readonly=True),
-        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
-                                            type='char', readonly=True, multi='status'),
+#        'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
+#                                          'quotation_id', string='Requests for Quotation', readonly=True),
+#        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
+#                                            type='char', readonly=True, multi='status'),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
                                          'purchase_id', string='Purchase Orders', readonly=True),
         'purchase_status': fields.function(_get_status, method=True, string='Purchase Order',
