@@ -140,5 +140,50 @@ class purchase_order_line(osv.osv):
             string="Analytic distribution count", readonly=True, store=False),
     }
 
+    def button_analytic_distribution(self, cr, uid, ids, context={}):
+        """
+        Launch analytic distribution wizard on a purchase order
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        purchase_line = self.browse(cr, uid, ids[0], context=context)
+        amount = purchase_line.price_subtotal or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
+        # Get analytic_distribution_id
+        distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'purchase_line_id': purchase_line.id,
+            'currency_id': currency or False,
+            'state': 'cc',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
 purchase_order_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

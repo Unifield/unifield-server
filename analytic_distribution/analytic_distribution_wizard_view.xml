@@ -68,8 +68,8 @@
                     </group>
                     <group colspan="4">
                         <label string="" colspan="3"/>
-                        <button name="button_get_header_distribution" type="object" string="Get analytic distribution from header" icon='gtk-convert' colspan="1" attrs="{'invisible': [('have_invoice_line', '=', False)]}"/>
-                        <field name="have_invoice_line" invisible="1"/>
+                        <button name="button_get_header_distribution" type="object" string="Get analytic distribution from header" icon='gtk-convert' colspan="1" attrs="{'invisible': [('have_header', '=', False)]}"/>
+                        <field name="have_header" invisible="1"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>

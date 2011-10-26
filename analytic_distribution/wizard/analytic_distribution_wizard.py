@@ -258,9 +258,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
         return res
 
-    def _have_invoice_line(self, cr, uid, ids, name, args, context={}):
+    def _have_header(self, cr, uid, ids, name, args, context={}):
         """
-        Return true if this wizard come from an invoice line
+        Return true if this wizard come from an invoice line OR a purchase line
         """
         # Some verifications
         if not context:
@@ -272,7 +272,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Browse given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
-            if wiz.invoice_line_id:
+            if wiz.invoice_line_id or wiz.purchase_line_id:
                 res[wiz.id] = True
         return res
 
@@ -293,7 +293,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
-        'have_invoice_line': fields.function(_have_invoice_line, method=True, string='Is this wizard come from an invoice line?', 
+        'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?', 
             type='boolean', readonly=True, help="This informs the wizard if we come from an invoice line."),
     }
 
@@ -656,13 +656,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         object_type = None
         distrib = None
         for wiz in self.browse(cr, uid, ids, context=context):
+            # Take distribution from invoice if we come from an invoice line
             if wiz.invoice_line_id:
                 il = wiz.invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
-            # FIXME: Add same thing for purchase_line
-            #if wiz and wiz.purchase_line_id:
-            #    pol = wiz.purchase_line_id
-            #    distrib = pol.purchase_id and pol.purchase_id.analytic_distribution_id and pol.purchase_id.analytic_distribution_id
+            # Same thing for purchase order line
+            if wiz.purchase_line_id:
+                pl = wiz.purchase_line_id
+                distrib = pl.order_id and pl.order_id.analytic_distribution_id and pl.order_id.analytic_distribution_id or False
             if distrib:
                 # First delete all current lines
                 self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
