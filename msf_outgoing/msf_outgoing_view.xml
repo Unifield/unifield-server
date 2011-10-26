@@ -228,7 +228,7 @@
 					                    	context="{'location_id':location_id, 'product_id':product_id}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'required': [('hidden_prod_mandatory','=',True)], 'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_dg" />
@@ -494,7 +494,7 @@
 					                    	context="{'location_id':location_id, 'product_id':product_id}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'required': [('hidden_prod_mandatory','=',True)], 'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_dg" />
@@ -726,7 +726,7 @@
 					                    	context="{'location_id':location_id, 'product_id':product_id}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'required': [('hidden_prod_mandatory','=',True)], 'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_dg" />
