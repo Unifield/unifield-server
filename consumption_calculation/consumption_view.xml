@@ -24,7 +24,7 @@
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
 						<tree string="Products" editable="top">
-                            <field name="product_id" on_change="product_onchange(product_id)"
+                            <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id)"
                             	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" />
                             <field name="product_qty" />
