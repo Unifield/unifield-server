@@ -174,6 +174,7 @@ class account_invoice_line(osv.osv):
             'invoice_line_id': invoice_line.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

@@ -102,7 +102,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', 'in', cost_center_id), ('id', '=', %s)]" % fp_id)
+                    field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', 'in', cost_center_id), ('account_ids', 'in', parent.account_id), ('id', '=', %s)]" % fp_id)
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
                 # Change Analytic Account field
@@ -301,6 +301,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
         'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?', 
             type='boolean', readonly=True, help="This informs the wizard if we come from an invoice line."),
+        'account_id': fields.many2one('account.account', string="Account from invoice", readonly=True,
+            help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
     }
 
     _defaults = {

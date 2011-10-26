@@ -26,6 +26,8 @@ class account_account(osv.osv):
 
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
+        'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
+            string='Funding Pools'),
     }
     
 account_account()
