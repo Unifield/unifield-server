@@ -237,17 +237,89 @@ class real_average_consumption_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = line.product_id.qty_available
             
-        return res 
+        return res
+    
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        result = {}
+        for id in ids:
+            result[id] = {'batch_number_check': False, 'expiry_date_check': False, 'type_check': False}
+            
+        for out in self.browse(cr, uid, ids, context=context):
+            if out.product_id:
+                result[out.id]['batch_number_check'] = out.product_id.batch_management
+                result[out.id]['expiry_date_check'] = out.product_id.perishable
+            
+        return result
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.batch_mandatory and 'prodlot_id' in vals:
+                vals.update({'expiry_date': line.prodlot_id.life_date})
+                
+        return super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def create(self, cr, uid, vals, context={}):
+        if vals['batch_mandatory'] == True and vals['prodlot_id']:
+            life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
+            vals.update({'expiry_date': life_date})
+                
+        return super(real_average_consumption_line, self).create(cr, uid, vals, context=context)               
+        
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=False),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
+        'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
+        'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
+        'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
+        'batch_mandatory': fields.boolean(string='BM'),
+        'expiry_date': fields.date(string='Expiry date'),
+        'date_mandatory': fields.boolean(string='DM'),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
+
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, context=None):
+        '''
+        expiry date changes, find the corresponding internal prod lot
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        
+        if expiry_date and product_id:
+            prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', product_id)], context=context)
+            if not prod_ids:
+                    # display warning
+                    result['warning'] = {'title': _('Error'),
+                                         'message': _('The selected Expiry Date does not exist in the system.')}
+                    # clear date
+                    result['value'].update(expiry_date=False, prodlot_id=False)
+            else:
+                # return first prodlot
+                result['value'].update(prodlot_id=prod_ids[0])
+                
+        else:
+            # clear expiry date, we clear production lot
+            result['value'].update(prodlot_id=False)
+        
+        return result
+
+    def change_prodlot(self, cr, uid, ids, prodlot_id, expiry_date, context={}):
+        '''
+        Set the expiry date according to the prodlot
+        '''
+        res = {'value': {}}
+        if prodlot_id and not expiry_date:
+            res['value'].update({'expiry_date': self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).life_date})
+        elif not prodlot_id and expiry_date:
+            res['value'].update({'expiry_date': False})
+
+        return res
     
     def product_onchange(self, cr, uid, ids, product_id, context={}):
         '''
@@ -256,7 +328,12 @@ class real_average_consumption_line(osv.osv):
         v = {}
         
         if product_id:
-            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            uom = product.uom_id.id
+            if product.batch_management:
+                v.update({'batch_mandatory': True})
+            elif product.perishable:
+                v.update({'date_mandatory': True})
             v.update({'uom_id': uom})
         else:
             v.update({'uom_id': False})

@@ -28,8 +28,16 @@
                             	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" />
                             <field name="product_qty" />
+                            <field name="prodlot_id" 
+				   on_change="change_prodlot(prodlot_id, expiry_date)"
+				   attrs="{'required': [('batch_mandatory', '=', True)]}"/>
+                            <field name="expiry_date"
+				   on_change="change_expiry(expiry_date, product_id)"
+			 	   attrs="{'required': [('date_mandatory', '=', True)], 'readonly': [('batch_mandatory', '=', True)]}"/>
                             <field name="consumed_qty" />
                             <field name="remark" />
+			    <field name="batch_mandatory" invisible="1" />
+			    <field name="date_mandatory" invisible="1" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
