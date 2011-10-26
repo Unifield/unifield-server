@@ -575,7 +575,19 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Then update cost center lines
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
                 raise osv.except_osv(_('Error'), _('Cost center update failure.'))
-            # And finally do registration for each type
+            # And do distribution creation if necessary
+            if not wiz.distribution_id:
+                # create a new analytic distribution
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+                # link it to the wizard
+                self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
+                # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
+                ## FIXME: add purchase_id and purchase_line_id
+                for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line')]:
+                    if getattr(wiz, el[0], False):
+                        id = getattr(wiz, el[0], False).id
+                        self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
+            # Finally do registration for each type
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)

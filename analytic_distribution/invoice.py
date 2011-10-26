@@ -45,7 +45,6 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        ana_obj = self.pool.get('analytic.distribution')
         invoice = self.browse(cr, uid, ids[0], context=context)
         amount = 0.0
         # Search elements for currency
@@ -55,15 +54,18 @@ class account_invoice(osv.osv):
             amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
-        # Create an analytic_distribution_id if no one exists
-        if not distrib_id:
-            res_id = ana_obj.create(cr, uid, {}, context=context)
-            super(account_invoice, self).write(cr, uid, ids, {'analytic_distribution_id': res_id}, context=context)
-            distrib_id = res_id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'invoice_id': invoice.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'invoice_id': invoice.id, 'distribution_id': distrib_id,
-            'currency_id': currency or False, 'state': 'dispatch'}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
@@ -152,7 +154,6 @@ class account_invoice_line(osv.osv):
         if not ids:
             raise osv.except_osv(_('Error'), _('No invoice line given. Please save your invoice line before.'))
         # Prepare some values
-        ana_obj = self.pool.get('analytic.distribution')
         invoice_line = self.browse(cr, uid, ids[0], context=context)
         distrib_id = False
         negative_inv = False
@@ -167,15 +168,18 @@ class account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
-        # if no one, create a new one
-        if not distrib_id:
-            res_id = ana_obj.create(cr, uid, {}, context=context)
-            super(account_invoice_line, self).write(cr, uid, ids, {'analytic_distribution_id': res_id}, context=context)
-            distrib_id = res_id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'invoice_line_id': invoice_line.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'invoice_line_id': invoice_line.id, 'distribution_id': distrib_id,
-            'currency_id': currency or False, 'state': 'dispatch'}, context=context)
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
