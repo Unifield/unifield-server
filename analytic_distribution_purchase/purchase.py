@@ -51,6 +51,18 @@ class purchase_order(osv.osv):
             string="Analytic distribution count", readonly=True, store=False),
     }
 
+    def inv_line_create(self, cr, uid, account_id, order_line):
+        """
+        Add a link between the new invoice line and the order line that it come from
+        """
+        # Retrieve data
+        res = super(purchase_order, self).inv_line_create(cr, uid, account_id, order_line)
+        # Add order_line_id to data
+        if res and res[2]:
+            res[2].update({'order_line_id': order_line.id,})
+        # Return result
+        return res
+
     def action_invoice_create(self, cr, uid, ids, *args):
         """
         Take all new invoice lines and give them analytic distribution that was linked on each purchase order line (if exists)
@@ -58,13 +70,20 @@ class purchase_order(osv.osv):
         # Retrieve some data
         res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
         # Set analytic distribution from purchase order to invoice
+        invl_obj = self.pool.get('account.invoice.line') # invoice line object
         for po in self.browse(cr, uid, ids):
             if not po.analytic_distribution_id:
                 raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
             inv_ids = po.invoice_ids
             for inv in inv_ids:
-                # Set invoice global distribution
+                # First set invoice global distribution
                 self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': po.analytic_distribution_id.id,})
+                # Search all invoice lines
+                invl_ids = invl_obj.search(cr, uid, [('invoice_id', '=', inv.id)])
+                # Then set distribution on invoice line regarding purchase order line distribution
+                for invl in invl_obj.browse(cr, uid, invl_ids):
+                    if invl.order_line_id and invl.order_line_id.analytic_distribution_id:
+                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': invl.order_line_id.analytic_distribution_id.id})
         return res
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):

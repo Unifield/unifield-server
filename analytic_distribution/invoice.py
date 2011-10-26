@@ -109,8 +109,8 @@ class account_invoice_line(osv.osv):
             res[line.id] = 'invalid'
             # Verify that the distribution is compatible with line account
             if line.analytic_distribution_id:
+                total = 0.0
                 for fp_line in line.analytic_distribution_id.funding_pool_lines:
-                    total = 0.0
                     # If account don't be on ONLY ONE funding_pool, then continue
                     if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
                         continue

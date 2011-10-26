@@ -21,6 +21,7 @@
 #
 ##############################################################################
 
+import invoice
 import purchase
 import analytic_distribution
 
