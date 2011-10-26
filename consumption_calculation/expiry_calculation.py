@@ -238,11 +238,9 @@ class product_likely_expire_report(osv.osv_memory):
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.location_id.id not in location_ids:
-                    print move.location_id.quarantine_location, move.location_id.name
                     if move.location_id.usage == 'internal' and not move.location_id.quarantine_location and move.location_id.id in wh_location_ids:
                         location_ids.append(move.location_id.id)
                 if move.location_dest_id.id not in location_ids and not move.location_dest_id.quarantine_location and move.location_dest_id.id in wh_location_ids:
-                    print move.location_dest_id.quarantine_location, move.location_dest_id.name
                     if move.location_dest_id.usage == 'internal':
                         location_ids.append(move.location_dest_id.id)
             
