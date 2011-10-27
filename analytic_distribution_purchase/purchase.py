@@ -42,7 +42,10 @@ class purchase_order(osv.osv):
         res = {}
         # Browse given invoices
         for po in self.browse(cr, uid, ids, context=context):
-            res[po.id] = po.analytic_distribution_id and po.analytic_distribution_id.lines_count or 'None'
+            tmp = po.analytic_distribution_id and po.analytic_distribution_id.lines_count or ''
+            # Transform result with just CC line count
+            if tmp != '':
+                res[po.id] = tmp.split(';')[0]
         return res
 
     _columns = {
@@ -150,7 +153,10 @@ class purchase_order_line(osv.osv):
         res = {}
         # Browse given invoices
         for pol in self.browse(cr, uid, ids, context=context):
-            res[pol.id] = pol.analytic_distribution_id and pol.analytic_distribution_id.lines_count or 'None'
+            tmp = pol.analytic_distribution_id and pol.analytic_distribution_id.lines_count or ''
+            # Transform result with just CC line count
+            if tmp != '':
+                res[pol.id] = tmp.split(';')[0]
         return res
 
     _columns = {

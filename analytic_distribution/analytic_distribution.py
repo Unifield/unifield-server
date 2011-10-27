@@ -131,7 +131,7 @@ class analytic_distribution(osv.osv):
             txt += str(len(distrib.free_1_lines) or '0') + ' F1; '
             txt += str(len(distrib.free_2_lines) or '0') + ' F2; '
             if not txt:
-                txt = 'None'
+                txt = ''
             res[distrib.id] = txt
         return res
 

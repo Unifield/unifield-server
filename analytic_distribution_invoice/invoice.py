@@ -156,7 +156,7 @@ class account_invoice_line(osv.osv):
         res = {}
         # Browse given invoices
         for invl in self.browse(cr, uid, ids, context=context):
-            res[invl.id] = invl.analytic_distribution_id and invl.analytic_distribution_id.lines_count or 'None'
+            res[invl.id] = invl.analytic_distribution_id and invl.analytic_distribution_id.lines_count or ''
         return res
 
     _columns = {
