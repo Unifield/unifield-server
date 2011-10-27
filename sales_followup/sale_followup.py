@@ -244,15 +244,43 @@ class sale_order_followup(osv.osv_memory):
         Returns a list of outgoing deliveries related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
                 
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
             
         outgoing_ids = []
-        
-        for line in line_obj.browse(cr, uid, line_id, context=context):
-            for move in line.move_ids:
-                outgoing_ids.append(move.id)
+
+        msf_out = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
+
+        # If msf_outgoing is not installed
+        if len(msf_out) == 0:
+            for line in line_obj.browse(cr, uid, line_id, context=context):
+                for move in line.move_ids:
+                    if move.location_dest_id.usage == 'customer':
+                        outgoing_ids.append(move.id)
+        else:
+            first_moves = move_obj.search(cr, uid, [('sale_line_id', 'in', line_id), ('picking_id.subtype', '=', 'picking'), ('backmove_id', '=', False)], context=context)
+            picking_moves = move_obj.search(cr, uid, [('backmove_id', 'in', first_moves)], context=context)
+            packing_moves = move_obj.search(cr, uid, [('backmove_id', 'in', picking_moves)], context=context)
+
+            if packing_moves:
+                for pack in move_obj.browse(cr, uid, packing_moves, context=context):
+                    if pack.location_dest_id.usage == 'customer' or (pack.product_qty > 0.00 and pack.state != 'done'):
+                       outgoing_ids.append(pack.id)
+            if picking_moves:
+                status = 'picking'
+                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
+                    if pick.picking_id.subtype == 'ppl' and status != 'packing':
+                        status = 'ppl'
+                    if pick.picking_id.subtype == 'packing':
+                        status = 'packing'
+                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
+                    if ((pick.product_qty > 0.00 and pick.picking_id.subtype == status) or pick.product_qty > 0.00) and pick.state != 'done':
+                        outgoing_ids.append(pick.id)
+            for first in move_obj.browse(cr, uid, first_moves, context=context):
+                if first.product_qty > 0.00: 
+                    outgoing_ids.append(first.id)
         
         return outgoing_ids
     
@@ -311,13 +339,14 @@ class sale_order_line_followup(osv.osv_memory):
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
             move_state = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-                if move.state in ('assigned', 'done'):
-                    res[line.id]['available_qty'] += move.product_qty
-                if not move_state:
-                    move_state = move.state
+                if move.location_dest_id.usage == 'customer':
+                    if move.state in ('assigned', 'done'):
+                        res[line.id]['available_qty'] += move.product_qty
+                    if not move_state:
+                        move_state = move.state
 
-                if move.state != move_state:
-                    move_state = 'sf_partial'
+                    if move.state != move_state:
+                        move_state = 'sf_partial'
 
             if move_state == 'sf_partial':
                 res[line.id]['product_available'] = 'Partial'
@@ -417,14 +446,12 @@ class sale_order_line_followup(osv.osv_memory):
 
             if outgoing_state == 'sf_partial':
                 res[line.id]['outgoing_status'] = 'Partial'
-            elif outgoing_state in ('draft', 'confirmed'):
-                res[line.id]['outgoing_status'] = 'Waiting'
-            elif outgoing_state == 'assigned':
+            elif outgoing_state and outgoing_state == 'assigned':
                 res[line.id]['outgoing_status'] = 'Assigned'
-            elif outgoing_state == 'done':
+            elif outgoing_state and outgoing_state not in ('assigned', 'done'):
+                res[line.id]['outgoing_status'] = 'In Progress'
+            elif outgoing_state and outgoing_state == 'done':
                 res[line.id]['outgoing_status'] = 'Done'
-            elif outgoing_state == 'cancel':
-                res[line.id]['outgoing_status'] = 'Exception'
             
         return res
     
