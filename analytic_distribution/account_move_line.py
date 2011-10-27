@@ -34,6 +34,8 @@ class account_move_line(osv.osv):
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
@@ -48,8 +50,8 @@ class account_move_line(osv.osv):
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
                                      'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
-                                        distrib_line.amount or 0.0, round=False, context=context),
-                                     'amount_currency': -1 * distrib_line.amount,
+                                        amount or 0.0, round=False, context=context),
+                                     'amount_currency': -1 * amount,
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,

@@ -200,9 +200,26 @@ class account_invoice_line(osv.osv):
 #                        distrib_obj.update_distribution_line_amount(cr, uid, [line.analytic_distribution_id.id], amount, context=context)
 #        return res
 
-    def move_line_get_item(self, cr, uid, line, context=None):
+    def move_line_get_item(self, cr, uid, line, context={}):
+        """
+        Give right analytic distribution when creating move lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Default result
         res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
-        res['analytic_distribution_id'] = line.analytic_distribution_id.id
+        # Update result by copying analytic distribution from invoice line
+        ana_obj = self.pool.get('analytic.distribution')
+        if line.analytic_distribution_id:
+            new_distrib_id = ana_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                res['analytic_distribution_id'] = new_distrib_id
+        # If no distribution on invoice line, take those from invoice and copy it!
+        elif line.invoice_id and line.invoice_id.analytic_distribution_id:
+            new_distrib_id = ana_obj.copy(cr, uid, line.invoice_id.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                res['analytic_distribution_id'] = new_distrib_id
         return res
 
 account_invoice_line()
