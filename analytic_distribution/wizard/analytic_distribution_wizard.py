@@ -102,8 +102,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
-                    print context
-                    field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', 'in', cost_center_id), ('account_ids', 'in', parent.account_id), ('id', '=', %s)]" % fp_id)
+                    # If context with 'from' exist AND its content is an integer (so an invoice_id)
+                    if context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int):
+                        # Filter is only on cost_center and MSF Private Fund on invoice header
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', 'in', cost_center_id), ('id', '=', %s)]" % fp_id)
+                    else:
+                        # Add account_id constraints for invoice lines
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', 'in', cost_center_id), ('account_ids', 'in', parent.account_id), ('id', '=', %s)]" % fp_id)
+                    
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
                 # Change Analytic Account field
@@ -123,8 +129,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             for el in ['percentage', 'amount']:
                 new_fields = tree.xpath('/tree/field[@name="%s"]' % el)
                 for field in new_fields:
-                    field.set('readonly', str(context['mode'] != el))
-                    if context['mode'] == el:
+                    field.set('readonly', str(context.get('mode', False) != el))
+                    if context.get('mode', False) == el:
                         field.set('on_change', "onchange_%s(%s, parent.total_amount)" % (el, el))
             view['arch'] = etree.tostring(tree)
         return view
@@ -276,7 +282,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         res = {}
-        # Browse given wizard
+        # Browse given wizards
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
             if wiz.invoice_line_id or wiz.purchase_line_id:

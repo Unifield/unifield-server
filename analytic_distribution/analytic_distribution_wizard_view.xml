@@ -62,6 +62,7 @@
             <field name="arch" type="xml">
                 <form string="Analytic Wizard Distribution">
                     <field colspan="2" name="total_amount" readonly="1"/>
+                    <field name="invoice_id" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1"/>
@@ -77,7 +78,7 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Funding Pool"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from': invoice_id}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">
@@ -97,7 +98,6 @@
                     <field name="state" invisible="1"/>
                     <field name="is_writable" invisible="1"/>
                     <field name="account_id" invisible="1"/>
-                    <field name="invoice_id"/>
                 </form>
             </field>
         </record>
