@@ -102,6 +102,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
+                    print context
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', 'in', cost_center_id), ('account_ids', 'in', parent.account_id), ('id', '=', %s)]" % fp_id)
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
