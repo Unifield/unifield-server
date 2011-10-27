@@ -1306,3 +1306,22 @@ class account_bank_statement_line(osv.osv):
         return res
 
 account_bank_statement_line()
+
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        if context.get('type_posting') and key == 'action' and key2 == 'client_action_multi' and 'account.bank.statement.line' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[1] != 'act_wizard_temp_posting' and context['type_posting'] == 'hard' or v[1] != 'act_wizard_hard_posting' and context['type_posting'] == 'temp':
+                    new_act.append(v)
+            values = new_act
+        return values
+
+ir_values()
