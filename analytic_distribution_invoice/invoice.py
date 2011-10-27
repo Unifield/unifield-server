@@ -185,5 +185,20 @@ class account_invoice_line(osv.osv):
             string='Header Distrib.?'),
     }
 
+    def copy_data(self, cr, uid, id, default={}, context={}):
+        """
+        Copy global distribution and give it to new invoice line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Copy analytic distribution
+        invl = self.browse(cr, uid, [id], context=context)[0]
+        if invl.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, invl.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
+        return super(account_invoice_line, self).copy_data(cr, uid, id, default, context)
+
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
