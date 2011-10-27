@@ -88,58 +88,8 @@ class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
 
-    def _get_distribution_state(self, cr, uid, ids, name, args, context={}):
-        """
-        Get state of distribution:
-         - if compatible with the invoice line, then "valid"
-         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
-         - if no distribution on invoice line and invoice, then "none"
-         - all other case are "invalid"
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-            # Default value is invalid
-            res[line.id] = 'invalid'
-            # Verify that the distribution is compatible with line account
-            if line.analytic_distribution_id:
-                total = 0.0
-                for fp_line in line.analytic_distribution_id.funding_pool_lines:
-                    # If account don't be on ONLY ONE funding_pool, then continue
-                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
-                        continue
-                    else:
-                        total += 1
-                if total and total == len(line.analytic_distribution_id.funding_pool_lines):
-                    res[line.id] = 'valid'
-            # If no analytic_distribution on invoice line, check with invoice distribution
-            elif line.invoice_id.analytic_distribution_id:
-                for fp_line in line.invoice_id.analytic_distribution_id.funding_pool_lines:
-                    total = 0.0
-                    # If account don't be on ONLY ONE funding_pool, then continue
-                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
-                        continue
-                    else:
-                        total += 1
-                if total and total == len(line.analytic_distribution_id.funding_pool_lines):
-                    res[line.id] = 'valid'
-            # If no analytic distribution on invoice line and on invoice, then give 'none' state
-            else:
-                # no analytic distribution on invoice line or invoice => 'none'
-                res[line.id] = 'none'
-        return res
-
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):

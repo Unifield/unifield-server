@@ -19,7 +19,9 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
+from osv import fields
+from tools.translate import _
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -59,11 +61,76 @@ class account_invoice(osv.osv):
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Add verification on all lines for analytic_distribution_id to be present and valid !
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse invoice and all invoice lines to detect a non-valid line
+        for inv in self.browse(cr, uid, ids, context=context):
+            for invl in inv.invoice_line:
+                if invl.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"' % invl.name))
+        # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
+        # FIXME: what about analytic accountancy?
+        return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
     _inherit = 'account.invoice.line'
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context={}):
+        """
+        Get state of distribution:
+         - if compatible with the invoice line, then "valid"
+         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
+         - if no distribution on invoice line and invoice, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            # Default value is invalid
+            res[line.id] = 'invalid'
+            # Verify that the distribution is compatible with line account
+            if line.analytic_distribution_id:
+                total = 0.0
+                for fp_line in line.analytic_distribution_id.funding_pool_lines:
+                    # If account don't be on ONLY ONE funding_pool, then continue
+                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
+                        continue
+                    else:
+                        total += 1
+                if total and total == len(line.analytic_distribution_id.funding_pool_lines):
+                    res[line.id] = 'valid'
+            # If no analytic_distribution on invoice line, check with invoice distribution
+            elif line.invoice_id.analytic_distribution_id:
+                total = 0.0
+                for fp_line in line.invoice_id.analytic_distribution_id.funding_pool_lines:
+                    # If account don't be on ONLY ONE funding_pool, then continue
+                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
+                        continue
+                    else:
+                        total += 1
+                if total and total == len(line.analytic_distribution_id.funding_pool_lines):
+                    res[line.id] = 'valid'
+            # If no analytic distribution on invoice line and on invoice, then give 'none' state
+            else:
+                # no analytic distribution on invoice line or invoice => 'none'
+                res[line.id] = 'none'
+        return res
 
     def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
         """
@@ -84,6 +151,9 @@ class account_invoice_line(osv.osv):
     _columns = {
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
 account_invoice_line()
