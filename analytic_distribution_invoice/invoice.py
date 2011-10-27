@@ -159,12 +159,30 @@ class account_invoice_line(osv.osv):
             res[invl.id] = invl.analytic_distribution_id and invl.analytic_distribution_id.lines_count or ''
         return res
 
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+        """
+        If invoice have an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, context=context):
+            res[inv.id] = True
+            if inv.analytic_distribution_id:
+                res[inv.id] = False
+        return res
+
     _columns = {
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+            string='Header Distrib.?'),
     }
 
 account_invoice_line()
