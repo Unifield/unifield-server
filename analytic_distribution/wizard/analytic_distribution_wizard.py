@@ -363,15 +363,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 new_line_id = cc_obj.create(cr, uid, vals, context=context)
                 # update amount regarding percentage
                 cc_obj.onchange_percentage(cr, uid, new_line_id, line.percentage, wiz.total_amount)
-                # Create funding pool lines if no one exists and that we come from an invoice (wizard.state == 'dispatch')
-                if not distrib.funding_pool_lines and wiz.state == 'dispatch':
-                    # Search MSF Private Fund
-                    pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
-                    if pf_id:
-                        pf = ana_obj.browse(cr, uid, pf_id, context=context)[0]
-                        vals.update({'analytic_id': pf.id, 'cost_center_id': line.analytic_id and line.analytic_id.id or False, 'type': 'funding.pool'})
-                        new_pf_line_id = fp_obj.create(cr, uid, vals, context=context)
-                        fp_obj.onchange_percentage(cr, uid, new_pf_line_id, line.percentage, wiz.total_amount)
             # Retrieve all other elements if we come from a purchase (wizard.state == 'dispatch')
             if wiz.state == 'dispatch':
                 # Prepare some values

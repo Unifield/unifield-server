@@ -240,5 +240,40 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
         return True
 
+    def create_funding_pool_lines(self, cr, uid, ids, context={}):
+        """
+        Create funding pool lines regarding cost_center_lines from analytic distribution.
+        If funding_pool_lines exists, then nothing appends.
+        By default, add funding_pool_lines with MSF Private Fund element (written in an OpenERP demo file).
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse distributions
+        for distrib in self.browse(cr, uid, ids, context=context):
+            if distrib.funding_pool_lines:
+                res[distrib.id] = False
+                continue
+            # Browse cost center lines
+            for line in distrib.cost_center_lines:
+                # Search MSF Private Fund
+                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
+                if pf_id:
+                    vals = {
+                        'analytic_id': pf_id[0],
+                        'amount': line.amount or 0.0,
+                        'percentage': line.percentage or 0.0,
+                        'currency_id': line.currency_id and line.currency_id.id or False,
+                        'distribution_id': distrib.id or False,
+                        'cost_center_id': line.analytic_id and line.analytic_id.id or False,
+                    }
+                    new_pf_line_id = self.pool.get('funding.pool.distribution.line').create(cr, uid, vals, context=context)
+            res[distrib.id] = True
+        return res
+
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
