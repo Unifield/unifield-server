@@ -610,7 +610,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # link it to the wizard
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
-                ## FIXME: add purchase_id and purchase_line_id
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
                     ('purchase_line_id', 'purchase.order.line')]:
                     if getattr(wiz, el[0], False):
