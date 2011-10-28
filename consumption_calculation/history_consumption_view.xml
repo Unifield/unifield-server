@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="product_history_consumption_form" model="ir.ui.view">
+	    <field name="name">product.history.consumption.form</field>
+	    <field name="model">product.history.consumption</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+		<form string="Product historical consumption">
+		    <field name="date_from" on_change="date_change(date_from, date_to)" />
+		    <field name="date_to" on_change="date_change(date_from, date_to)" />
+
+		    <button name="create_lines" type="object" string="cnietrnui" />
+
+		    <field name="month_ids" >
+			<tree string="Months" hide_new_button="1" noteditable="True" editable="top">
+			    <field name="name" />
+			</tree>
+		    </field>
+		</form>
+	    </field>
+	</record>
+
+	<menuitem id="menu_product_history_consumption"
+		  name="Historical consumption"
+		  parent="base.menu_product" />
+
+	<record id="action_open_history_consumption_view" model="ir.actions.server">
+            <field name="name">History consumption</field>
+            <field name="model_id" ref="model_product_history_consumption"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_history_consumption(context=context)</field>
+        </record>
+
+        <record id="ir_open_history consumption_view" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">ir.ui.menu</field>
+            <field name="name">Historical consumptions</field>
+	    <field name="res_id" ref="menu_product_history_consumption" />
+            <field eval="'ir.actions.server,%d'%action_open_history_consumption_view" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+	<record id="product_history_consumption_line" model="ir.ui.view">
+	    <field name="name">product.history.consumption.line</field>
+	    <field name="model">product.history.consumption.line</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+		<tree string="Historical consumption">
+		    <field name="product_id" />
+		    <field name="amc_value" />
+		    <field name="fmc_value" />
+		</tree>
+	    </field>
+	</record>
+
+    </data>	
+</openerp>
