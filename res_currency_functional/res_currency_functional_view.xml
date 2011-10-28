@@ -54,7 +54,7 @@
             <field name="arch" type="xml">
                 <search string="Currencies">
                     <group>
-                        <filter name="active" icon="terp-check" string="Inactive" domain="[('active','=',False)]"/>
+                        <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
 	                    <separator orientation="vertical"/>
 	                    <field name="name"/>
                     </group>
@@ -68,7 +68,8 @@
             <field name="inherit_id" ref="base.action_currency_form"/>
             <field name="search_view_id" ref="view_currency_functional_search"/>
             <field name="view_id" ref="view_currency_functional_tree"/>
-            <field name="context">{}</field>
+            <field name="domain">[('active','in',['t','f'])]</field>
+            <field name="context">{'search_default_active': 1}</field>
         </record>
         
         <menuitem action="action_currency_functional_form" id="base.menu_action_currency_form" parent="account.menu_configuration_misc"/>
