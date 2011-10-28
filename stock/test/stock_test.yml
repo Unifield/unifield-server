@@ -281,7 +281,8 @@
     product_id=product_obj.search(cr,uid,[('name','=','HP CD writers')])
     move_ids=move_obj.search(cr,uid,[('product_id','in',product_id)])
     self.split_lot(cr, uid, [ref("stock_move_split_0")], {"lang": 'en_US', "active_model":
-      "stock.move", "active_ids": move_ids, "tz": False, "active_id":move_ids[0]
+      "stock.move", "active_ids": move_ids, "tz": False, "active_id":move_ids[0],
+      'update_mode': 'init',
       })
 -
 
