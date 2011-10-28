@@ -117,6 +117,7 @@ class real_average_consumption(osv.osv):
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
                 'view_mode': 'form,tree',
+                'target': 'dummy',
                 'res_id': ids[0],
                 }
         
@@ -181,14 +182,16 @@ class real_average_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.product_id.qty_available
+            context.update({'location': line.rac_id.cons_location_id and line.rac_id.cons_location_id.id})
+            product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
+            res[line.id] = product.qty_available
             
         return res 
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=False),
+        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
