@@ -635,6 +635,17 @@ class purchase_order(osv.osv):
                  'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
                  }
     
+    def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        HOOK from purchase>purchase.py for COPY function. Modification of default copy values
+        define which name value will be used
+        '''
+        result = super(purchase_order, self)._hook_copy_name(cr, uid, ids, context=context, *args, **kwargs)
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.rfq_ok:
+                result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
+        return result
+    
 purchase_order()
 
 
