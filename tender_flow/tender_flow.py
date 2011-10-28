@@ -146,7 +146,7 @@ class tender(osv.osv):
                               'product_qty': line.qty,
                               'product_id': line.product_id.id,
                               'product_uom': line.product_uom.id,
-                              'price_unit': price,
+                              'price_unit': 0.0, # was price variable - uf-607
                               'date_planned': newdate.strftime('%Y-%m-%d'),
                               'notes': line.product_id.description_purchase,
                               'order_id': po_id,
