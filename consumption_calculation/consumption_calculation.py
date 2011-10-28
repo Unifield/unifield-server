@@ -203,9 +203,9 @@ class real_average_consumption_line(osv.osv):
         
         if product_id:
             if location_id:
-                context.update({'location_id': location_id})
-                
-            product =self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
+                context.update({'location': location_id})
+
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
             uom = product.uom_id.id
             v.update({'uom_id': uom})
 
