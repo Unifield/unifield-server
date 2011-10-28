@@ -101,6 +101,16 @@ class stock_location(osv.osv):
                     return False
         return True
     
+    def _check_chained(self, cr, uid, ids, context=None):
+        """ Checks if location is quarantine and chained loc
+        @return: True or False
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.quarantine_location:
+                if obj.chained_location_type != 'none':
+                    return False
+        return True
+    
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),
                 'location_category': fields.selection([('stock', 'Stock'),
@@ -114,10 +124,13 @@ class stock_location(osv.osv):
        'location_category': 'stock',
     }
     
-    _constraints = [
-        (_check_parent,
-            'Quarantine Location can only have Quarantine Location or Views as parent location.',
-            ['location_id']),]
+    _constraints = [(_check_parent,
+                     'Quarantine Location can only have Quarantine Location or Views as parent location.',
+                     ['location_id'],),
+                    (_check_chained,
+                     'You cannot define a quarantine location as chained location.',
+                     ['quarantine_location', 'chained_location_type'],),
+                    ]
 
 stock_location()
 
