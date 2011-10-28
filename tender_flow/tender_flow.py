@@ -120,6 +120,7 @@ class tender(osv.osv):
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
                           'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
+                          'rfq_ok': True,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
                           'location_id': tender.location_id.id,
@@ -611,8 +612,7 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
     
-    STATE_SELECTION = [
-                       ('draft', 'Request for Quotation'),
+    STATE_SELECTION = [('draft', 'Draft'),
                        ('wait', 'Waiting'),
                        ('confirmed', 'Waiting Approval'),
                        ('approved', 'Approved'),
@@ -626,9 +626,14 @@ class purchase_order(osv.osv):
     ]
     
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+                'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'draft':[('readonly',False)]}, readonly=True,),
                 }
+
+    _defaults = {'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
+                 'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
+                 }
     
 purchase_order()
 
