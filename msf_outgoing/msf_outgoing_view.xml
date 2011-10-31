@@ -73,9 +73,9 @@
                 <data>
                 
                 	<field name="lot_stock_id" position="after">
-	                	<field name="lot_packing_id" />
-	                	<field name="lot_dispatch_id" />
-	                	<field name="lot_distribution_id" />
+	                	<field name="lot_packing_id" domain="[('quarantine_location', '=', False)]" />
+	                	<field name="lot_dispatch_id" domain="[('quarantine_location', '=', False)]" />
+	                	<field name="lot_distribution_id" domain="[('quarantine_location', '=', False)]" />
                 	</field>
                 
                 </data>
