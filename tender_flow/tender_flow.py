@@ -61,7 +61,8 @@ class tender(osv.osv):
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
-                                                 domain=[('supplier','=', True)],),
+                                                 #domain=[('supplier','=', True)], # replaced by default filter
+                                                 context={'search_default_supplier': 1,}),
                 'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft':[('readonly',False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
                 'company_id': fields.many2one('res.company','Company',required=True, states={'draft':[('readonly',False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
@@ -83,6 +84,7 @@ class tender(osv.osv):
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'priority': 'normal',
+                 'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
                  }
     
     _order = 'name desc'
