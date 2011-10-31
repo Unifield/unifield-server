@@ -328,7 +328,7 @@ class monthly_review_consumption(osv.osv):
         file = base64.encodestring(export.encode("utf-8"))
         
         export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
-                                                                        'filename': 'fmc_%s.csv' % (strftime('%Y_%m_%d')), 
+                                                                        'filename': 'fmc_%s.csv' % (time.strftime('%Y_%m_%d')), 
                                                                         'message': 'The FMC lines has been exported. Please click on Save As button to download the file'})
         
         return {'type': 'ir.actions.act_window',
@@ -649,11 +649,10 @@ class product_product(osv.osv):
         if from_date:
             domain.append(('date_expected', '>=', from_date))
         
-        internal_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
-        partner_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context)
+        locations = self.pool.get('stock.location').search(cr, uid, [('usage', 'in', ('internal', 'customer'))], context=context)
         # Add locations filters in domain if locations are passed in context
-        domain.append(('location_id', 'in', internal_loc))
-        domain.append(('location_dest_id', 'in', partner_loc))
+        domain.append(('location_id', 'in', locations))
+        domain.append(('location_dest_id', 'in', locations))
         
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
