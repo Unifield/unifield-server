@@ -100,16 +100,19 @@ class real_average_consumption(osv.osv):
                 return {'type': 'ir.actions.close_window'}
             
             for line in rac.line_ids:
-                move_id = move_obj.create(cr, uid, {'name': 'RAC/%s' % (line.product_id.name),
-                                                    'product_uom': line.uom_id.id,
-                                                    'product_id': line.product_id.id,
-                                                    'date_expected': rac.period_to,
-                                                    'date': rac.creation_date,
-                                                    'product_qty': line.consumed_qty,
-                                                    'location_id': rac.cons_location_id.id,
-                                                    'location_dest_id': rac.activity_id.id,
-                                                    'reason_type_id': reason_type_id})
-                line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                if line.consumed_qty > 0.00:
+                    move_id = move_obj.create(cr, uid, {'name': 'RAC/%s' % (line.product_id.name),
+                                                        'product_uom': line.uom_id.id,
+                                                        'product_id': line.product_id.id,
+                                                        'date_expected': rac.period_to,
+                                                        'date': rac.creation_date,
+                                                        'product_qty': line.consumed_qty,
+                                                        'location_id': rac.cons_location_id.id,
+                                                        'location_dest_id': rac.activity_id.id,
+                                                        'reason_type_id': reason_type_id})
+                    line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                elif line.consumed_qty < 0.00:
+                    raise osv.except_osv(_('Error'), _('You cannot proccess lines with negative quantity !'))
                 
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
@@ -567,11 +570,11 @@ class product_product(osv.osv):
         # Read if a interval is defined
         if context.get('from_date', False):
             from_date = context.get('from_date')
-            rac_domain.append(('period_to', '>', from_date))
+            rac_domain.append(('period_to', '>=', from_date))
         
         if context.get('to_date', False):
             to_date = context.get('to_date')
-            rac_domain.append(('period_to', '<', to_date))
+            rac_domain.append(('period_to', '<=', to_date))
         
         # Filter for one or some locations    
         if context.get('location_id', False):
@@ -584,10 +587,9 @@ class product_product(osv.osv):
             
             # Update the domain of research
             rac_domain.append(('cons_location_id', 'in', location_ids))
-        
-        
+
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
-        
+       
         for id in ids:
             res[id] = 0.00
             line_ids = line_obj.search(cr, uid, [('rac_id', 'in', rac_ids), ('product_id', '=', id)], context=context)
@@ -598,7 +600,7 @@ class product_product(osv.osv):
                     from_date = line.rac_id.period_to
                 if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
                     to_date = line.rac_id.period_to
-                
+
             # We want the average for the entire period
             if context.get('average', False):
                 if to_date < from_date:
@@ -657,6 +659,11 @@ class product_product(osv.osv):
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
         
+        if from_date:
+            domain.append(('date_expected', '>=', from_date))
+        if to_date:
+            domain.append(('date_expected', '<=', to_date))
+
         # Add locations filters in domain if locations are passed in context
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
@@ -673,9 +680,9 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            if move.reason_type_id.id == return_id and move.type == 'in':
+            if move.reason_type_id.id == return_id and move.location_dest_id.usage == 'customer':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
-            elif move.type == 'out':
+            elif move.location_dest_id.usage == 'customer':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             
             # Update the limit in time
@@ -700,7 +707,7 @@ class product_product(osv.osv):
             from_date_str = strptime(from_date, '%Y-%m-%d')
         except ValueError:
             from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
-       
+
         date_diff = Age(to_date_str, from_date_str)
         nb_months = date_diff.years*12 + date_diff.months + (date_diff.days/30)
         

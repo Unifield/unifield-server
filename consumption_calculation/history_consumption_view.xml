@@ -8,16 +8,28 @@
 	    <field name="type">form</field>
 	    <field name="arch" type="xml">
 		<form string="Product historical consumption">
-		    <field name="date_from" on_change="date_change(date_from, date_to)" />
-		    <field name="date_to" on_change="date_change(date_from, date_to)" />
+		    <group colspan="2" col="2">
+			<separator colspan="2" string="Period parameters" />
+		    	<field name="date_from" on_change="date_change(date_from, date_to)" />
+   		    	<field name="date_to" on_change="date_change(date_from, date_to)" />
+		    	<field name="month_ids" nolabel="1" colspan="2">
+			    <tree string="Months" hide_new_button="1" noteditable="True" editable="top">
+			        <field name="name" />
+			    </tree>
+		        </field>
+		    </group>
 
-		    <button name="create_lines" type="object" string="cnietrnui" />
+		    <group colspan="2" col="2">
+			<separator colspan="2" string="Consumption parameters" />
+		    	<field name="consumption_type" />
+		    	<field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')]}" />
+			<separator colspan="2" string="Product parameters" />
+			<field name="nomen_id" />
+			<field name="sublist_id" />
+		    </group>
 
-		    <field name="month_ids" >
-			<tree string="Months" hide_new_button="1" noteditable="True" editable="top">
-			    <field name="name" />
-			</tree>
-		    </field>
+		    <label colspan="2" string="" />
+		    <button name="create_lines" type="object" string="View historical data" icon="gtk-execute" colspan="2" />
 		</form>
 	    </field>
 	</record>
@@ -42,6 +54,17 @@
             <field eval="True" name="object"/>
         </record>
 
+	<record id="product_history_consumption_line_search" model="ir.ui.view">
+	    <field name="name">product.history.consumption.line.search</field>
+	    <field name="model">product.history.consumption.line</field>
+	    <field name="type">search</field>
+	    <field name="arch" type="xml">
+		<search string="Product history consumption">
+		    <field name="product_id" />
+		</search>
+	    </field>
+	</record>
+
 	<record id="product_history_consumption_line" model="ir.ui.view">
 	    <field name="name">product.history.consumption.line</field>
 	    <field name="model">product.history.consumption.line</field>
@@ -49,7 +72,6 @@
 	    <field name="arch" type="xml">
 		<tree string="Historical consumption">
 		    <field name="product_id" />
-		    <field name="amc_value" />
 		    <field name="fmc_value" />
 		</tree>
 	    </field>
