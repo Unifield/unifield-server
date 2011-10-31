@@ -398,6 +398,9 @@ class sale_order(osv.osv):
         # new field representing selected partner from sourcing tool
         line = kwargs['line']
         result['supplier'] = line.supplier and line.supplier.id or False
+        # uf-583 - the location defined for the procurementis input instead of stock
+        order = kwargs['order']
+        result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
         
         return result
 
