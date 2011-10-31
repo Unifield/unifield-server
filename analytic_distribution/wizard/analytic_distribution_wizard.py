@@ -303,6 +303,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'purchase_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line"),
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
+        'register_line_id': fields.many2one('account.bank.statement.line', string="Register Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -602,7 +603,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
-                    ('purchase_line_id', 'purchase.order.line')]:
+                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)

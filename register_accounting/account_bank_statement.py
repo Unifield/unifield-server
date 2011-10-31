@@ -1024,6 +1024,23 @@ class account_bank_statement_line(osv.osv):
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
+    def analytic_distribution_is_mandatory(self, cr, uid, id, context={}):
+        """
+        Verify that no analytic distribution is mandatory. It's not until one of test is true
+        """
+        # Some verifications
+        if isinstance(id, (list)):
+            id = id[0]
+        if not context:
+            context = {}
+        # Tests
+        absl = self.browse(cr, uid, id, context=context)
+        if absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id:
+            return True
+        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.cost_center_lines:
+            return True
+        return False
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -1086,7 +1103,7 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
-                if not absl.analytic_distribution_id and absl.account_id.user_type.code in ['expense'] and not context.get('from_yml'):
+                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
