@@ -38,6 +38,7 @@
                         <field name="date_order" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                         <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
+			<field name="requested_date" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                         <field name="origin" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                     </group>
                     <notebook colspan="5">

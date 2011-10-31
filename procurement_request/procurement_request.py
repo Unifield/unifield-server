@@ -70,6 +70,7 @@ class procurement_request(osv.osv):
     _columns = {
         'requestor': fields.char(size=128, string='Requestor'),
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'requested_date': fields.date(string='Requested date', required=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
         'notes': fields.text(string='Notes'),
