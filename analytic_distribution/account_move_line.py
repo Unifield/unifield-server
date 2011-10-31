@@ -68,44 +68,5 @@ class account_move_line(osv.osv):
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
 
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
-        """
-        Launch the analytic distribution wizard from a journal item (account_move_line)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # we get the analytical distribution object linked to this line
-        distrib_id = False
-        move_line_obj = self.browse(cr, uid, ids[0], context=context)
-        # Get amount using account_move_line amount_currency field
-        amount = move_line_obj.amount_currency and move_line_obj.amount_currency or 0.0
-        # Search elements for currency
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency = move_line_obj.currency_id and move_line_obj.currency_id.id or company_currency
-        if move_line_obj.analytic_distribution_id:
-            distrib_id = move_line_obj.analytic_distribution_id.id
-        else:
-            raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the move line!"))
-        wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
-        # we open a wizard
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-            'wizard_ids': {'cost_center': wiz_id},
-        })
-        return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.costcenter.distribution',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
-        }
-
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -304,6 +304,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'register_line_id': fields.many2one('account.bank.statement.line', string="Register Line"),
+        'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -603,7 +604,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
-                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line')]:
+                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
+                    ('move_line_id', 'account.move.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
@@ -611,6 +613,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+        # Update analytic lines
+        self.update_analytic_lines(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def validate(self, cr, uid, wizard_id, context=None):
@@ -693,6 +697,49 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'res_id': ids[0],
                 'context': context,
         }
+
+    def button_cancel(self, cr, uid, ids, context={}):
+        """
+        Close the wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type' : 'ir.actions.act_window_close'}
+
+    def update_analytic_lines(self, cr, uid, ids, context={}):
+        """
+        Update analytic lines with an ugly method: delete old lines and create new ones
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Process all given wizards
+        for wizard in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            distrib = wizard.distribution_id or False
+            move_lines = [x.id for x in distrib.move_line_ids]
+            aal_obj = self.pool.get('account.analytic.line')
+            ml_obj = self.pool.get('account.move.line')
+            if not distrib:
+                return False
+            # Search account analytic lines attached to this move lines
+            operator = 'in'
+            if len(move_lines) == 1:
+                operator = '='
+            aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
+            if aal_ids:
+                # delete old analytic lines
+                aal_obj.unlink(cr, uid, aal_ids, context=context)
+                # create new analytic lines
+                ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+
+            if not move_lines and distrib.wizard.invoice_line_id:
+                wizard.invoice_line_id.create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
+        return True
 
 analytic_distribution_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

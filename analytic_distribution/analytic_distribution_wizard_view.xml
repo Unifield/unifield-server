@@ -92,7 +92,7 @@
                     </group>
                     <group colspan="4">
                         <label string="" colspan="2"/>
-                        <button special='cancel' string='Cancel' icon='gtk-cancel' colspan="1"/>
+                        <button name="button_cancel" string='Cancel' type='object' icon='gtk-cancel' colspan="1"/>
                         <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <field name="state" invisible="1"/>
