@@ -53,7 +53,7 @@
                         <newline/>
                     </xpath>
                     <xpath expr="/form//button[@name='button_confirm']" position="replace">
-                        <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')]}"/>
+                        <button name="button_confirm" string="Save" type="object" icon="gtk-ok" colspan="1" attrs="{'invisible': [('state', '=', 'correction')], 'readonly': [('is_writable', '=', False)]}"/>
                         <button name="button_confirm" string="Correct it!" type="object" icon="gtk-edit" colspan="1" attrs="{'invisible': [('state', '!=', 'correction')]}"/>
                     </xpath>
                 </data>
