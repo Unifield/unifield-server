@@ -225,7 +225,7 @@
 -
   !record {model: stock.location, id: activity1}:
     name: Activity 1
-    location_id: consumption_calculation.msf_customer_location
+    location_id: stock.stock_location_internal_cust
     usage: customer
 -
   I create all batch for products
