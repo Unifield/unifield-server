@@ -817,7 +817,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # create new analytic lines
                 ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
 
-            if not move_lines and distrib.wizard.invoice_line_id:
+            if not move_lines and wizard.invoice_line_id:
                 wizard.invoice_line_id.create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
         return True
 
