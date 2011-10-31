@@ -74,20 +74,20 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
-                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode}"/>
+                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Funding Pool"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'parent_id':active_id}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">
                             <separator string="Free 1"/>
-                            <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode}"/>
+                            <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
                         </group>
                         <group colspan="2">
                             <separator string="Free 2"/>
-                            <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode}"/>
+                            <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
                         </group>
                     </group>
                     <group colspan="4">

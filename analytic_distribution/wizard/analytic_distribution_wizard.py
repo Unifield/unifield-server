@@ -30,9 +30,27 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.lines'
     _description = 'analytic.distribution.wizard.lines'
 
+    def _get_amount(self, cr, uid, ids, name, args, context={}):
+        """
+        Give amount regarding percentage and wizard's total_amount
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse elements
+        for line in self.browse(cr, uid, ids, context=context):
+            wizard = line.wizard_id
+            if wizard and wizard.total_amount:
+                res[line.id] = (wizard.total_amount * line.percentage) / 100.0
+        return res
+
     _columns = {
         'analytic_id': fields.many2one('account.analytic.account', string="Analytic account", required=True),
-        'amount': fields.float(string="Amount"),
+        'amount': fields.function(_get_amount, method=True, type='float', string="Amount", readonly=True),
         'percentage': fields.float(string="Percentage", required=True),
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
@@ -42,9 +60,62 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             #+ to construct object research !
     }
 
+    def default_get(self, cr, uid, fields, context={}):
+        """
+        Verify that percentage or amount are correctly set
+        """
+        res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context)
+        # Fetch some values
+        if not context or not context.get('mode', False) or not context.get('parent_id', False):
+            return res
+        if not 'percentage' in fields or not 'amount' in fields:
+            return res
+        mode = context.get('mode')
+        parent_id = context.get('parent_id')
+        percentage = res.get('percentage', 0.0)
+        amount = res.get('amount', 0.0)
+        wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
+        if wiz and wiz[0] and wiz[0].total_amount:
+            total_amount = wiz[0].total_amount
+            if mode == 'percentage':
+                res['amount'] = (total_amount * percentage) / 100.0
+            elif mode == 'amount':
+                res['percentage'] = (amount / total_amount) * 100.0
+        return res
+
+    def _get_remaining_allocation(self, cr, uid, context={}):
+        """
+        Get remaining allocation for this object
+        """
+        # Some verifications
+        id = None
+        mode = None
+        if context and context.get('parent_id', False):
+            id = context.get('parent_id')
+        if context and context.get('mode', False):
+            mode = context.get('mode')
+        if not id or not mode:
+            return 0.0
+        # Prepare some values
+        res = 0.0
+        allocated = 0.0
+        wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [id], context=context)[0]
+        amount = wiz and wiz.total_amount or 0.0
+        search_ids = self.pool.get(self._name).search(cr, uid, [('wizard_id', '=', id)], context=context)
+        for line in self.pool.get(self._name).browse(cr, uid, search_ids, context=context):
+            if mode == 'percentage':
+                allocated += line.percentage
+            elif mode == 'amount':
+                allocated += line.amount
+        if mode == 'percentage':
+            res = 100.0 - allocated
+        elif mode == 'amount':
+            res = amount - allocated
+        return res
+
     _defaults = {
-        'amount': lambda *a: 0.0,
-        'percentage': lambda *a: 0.0,
+        'percentage': _get_remaining_allocation,
+        'amount': _get_remaining_allocation,
         'type': lambda *a: 'cost.center',
     }
 
@@ -178,7 +249,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         # Launch verifications on given analytic_account
         if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
             raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
-        # Create wizard line
+        # Verify that percentage is present, otherwise calculate it
+        if not vals.get('percentage', False) and vals.get('amount', False) and vals.get('wizard_id', False):
+            wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [vals.get('wizard_id')], context=context)
+            if wiz and wiz[0] and wiz[0].total_amount:
+                vals.update({'percentage': (vals.get('amount') / wiz[0].total_amount) * 100.0})
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -197,6 +272,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         # Launch verifications on given analytic_account
         if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
             raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
+        # If amount present in vals, change percentage
+        if 'amount' in vals:
+            wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, ids, context=context)
+            if wiz and wiz[0] and wiz[0].total_amount:
+                vals.update({'percentage': (vals.get('amount') / wiz[0].total_amount) * 100.0})
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
@@ -356,7 +436,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line in distrib.cost_center_lines:
                 vals = {
                     'analytic_id': line.analytic_id and line.analytic_id.id or False,
-                    'amount': line.amount or 0.0,
+                    'amount': (wiz.total_amount * line.percentage) / 100.0 or 0.0,
                     'percentage': line.percentage or 0.0,
                     'wizard_id': wiz.id,
                     'currency_id': line.currency_id and line.currency_id.id or False,
@@ -384,7 +464,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 wiz_line_obj = '.'.join(['analytic.distribution.wizard', contraction, 'lines'])
                                 vals = {
                                     'analytic_id': line.analytic_id and line.analytic_id.id or False,
-                                    'amount': line.amount or 0.0,
+                                    'amount': (wiz.total_amount * line.percentage) / 100.0 or 0.0,
                                     'percentage': line.percentage or 0.0,
                                     'wizard_id': wiz.id,
                                     'currency_id': line.currency_id and line.currency_id.id or False,
