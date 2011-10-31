@@ -61,7 +61,6 @@ class tender(osv.osv):
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
-                                                 #domain=[('supplier','=', True)], # replaced by default filter
                                                  context={'search_default_supplier': 1,}),
                 'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft':[('readonly',False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
                 'company_id': fields.many2one('res.company','Company',required=True, states={'draft':[('readonly',False)]}, readonly=True),
