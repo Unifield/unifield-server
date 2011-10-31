@@ -2090,8 +2090,8 @@ class orm_memory(orm_template):
             for id, data in self.datas.items():
                 counter = counter + 1
                 data['id'] = id
-                if limit and (counter > int(limit)):
-                    break
+#                if limit and (counter > int(limit)):
+#                    break
                 f = True
                 for arg in result:
                     if arg[1] == '=':
@@ -2107,6 +2107,16 @@ class orm_memory(orm_template):
                     res.append(id)
         if count:
             return len(res)
+    
+        if offset:
+            off = 0
+            while off < offset:
+                res.pop(0)
+                off += 1
+        
+        if limit and len(res) > limit:
+            return res[:limit]
+        
         return res or []
 
     def unlink(self, cr, uid, ids, context=None):
