@@ -192,9 +192,9 @@ class tender(osv.osv):
         check the state of corresponding RfQs
         '''
         po_obj = self.pool.get('purchase.order')
-        # no rfq in rfq_done state
+        # no rfq in done state
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
-                                          ('state', 'in', ('rfq_done',)),], context=context)
+                                          ('state', 'in', ('done',)),], context=context)
         if rfq_ids:
             raise osv.except_osv(_('Error !'), _("Some RfQ are already Done. Integrity failure."))
         # all rfqs must have been treated
@@ -622,18 +622,34 @@ class purchase_order(osv.osv):
                        ('cancel', 'Cancelled'),
                        ('rfq_sent', 'RfQ Sent'),
                        ('rfq_updated', 'RfQ Updated'),
-                       ('rfq_done', 'RfQ Done'),
-    ]
+                       #('rfq_done', 'RfQ Done'),
+                       ]
     
-    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+    def _check_valid_till(self, cr, uid, ids, context=None):
+        """ Checks if valid till has been completed
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state == 'rfq_updated' and not obj.valid_till:
+                return False
+        return True
+    
+    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True,),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
-                'valid_till': fields.date(string='Valid Till', states={'draft':[('readonly',False)]}, readonly=True,),
+                'valid_till': fields.date(string='Valid Till', states={'rfq_sent':[('required',True), ('readonly', False),]}, readonly=True,),
+                # add readonly when state is Done
+                'name': fields.char('Order Reference', size=64, required=True, states={'done':[('readonly',True)],}, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
+                'date_order':fields.date('Date Ordered', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)],}, select=True, help="Date on which this document has been created."),
                 }
 
     _defaults = {'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
                  'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
                  }
+    
+    _constraints = [
+        (_check_valid_till,
+            'You must specify a Valid Till date.',
+            ['valid_till']),]
     
     def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''

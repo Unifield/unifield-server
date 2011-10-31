@@ -33,7 +33,7 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
-                     ('cft', 'Call for Tender'),
+                     ('cft', 'Tender'),
                      ]
 
 class sourcing_line(osv.osv):
