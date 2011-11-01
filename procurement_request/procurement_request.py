@@ -237,6 +237,7 @@ class procurement_request_line(osv.osv):
     
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'requested_date': fields.related('procurement_request', 'requested_date', string='Requested date', store=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
