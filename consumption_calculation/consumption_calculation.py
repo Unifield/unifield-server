@@ -317,11 +317,11 @@ class monthly_review_consumption(osv.osv):
         '''
         fmc = self.browse(cr, uid, ids[0], context=context)
         
-        export = 'Product reference;Product name;FMC;Valid until'
+        export = 'Product reference;Product name;AMC;FMC;Valid until'
         export += '\n'
         
         for line in fmc.line_ids:
-            export += '%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.fmc, line.valid_until or '')
+            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.amc, line.fmc, line.valid_until or '')
             export += '\n'
             
         file = base64.encodestring(export.encode("utf-8"))
