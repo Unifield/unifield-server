@@ -30,6 +30,7 @@ import formencode.api
 
 from openobject.validators import BaseValidator
 from openobject.i18n import format
+from babel import numbers
 
 class String(BaseValidator):
     if_empty = False
@@ -60,6 +61,19 @@ class Bool(BaseValidator):
 
 class Int(formencode.validators.Int):
     if_empty = False
+
+class IntFinance(formencode.validators.Int):
+    if_empty = False
+
+    def _from_python(self, value, state):
+        return numbers.format_number(int(value) or 0)
+
+    def _to_python(self, value, state):
+        try:
+            value = numbers.parse_number(value)
+        except ValueError:
+            raise formencode.api.Invalid(_('Invalid literal for int'), value, state)
+        return value
 
 class Float(formencode.validators.Number):
     if_empty = False
