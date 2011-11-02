@@ -134,6 +134,7 @@ class procurement_request(osv.osv):
             vals['partner_order_id'] = address_id
             vals['partner_invoice_id'] = address_id
             vals['partner_shipping_id'] = address_id
+            vals['delivery_requested_date'] = vals.get('requested_date')
             pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
             vals['pricelist_id'] = pl
 
@@ -235,15 +236,28 @@ class procurement_request_line(osv.osv):
         
         return res
     
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Adds the date_planned value
+        '''
+        if not 'date_planned' in vals:
+            if 'date_planned' in context:
+                vals.update({'date_planned': context.get('date_planned')})
+            else:
+                date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
+                vals.update({'date_planned': date_planned})
+                
+        return super(procurement_request_line, self).create(cr, uid, vals, context=context)
+    
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
-        'requested_date': fields.related('procurement_request', 'requested_date', string='Requested date', store=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
     
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
+        'date_planned': lambda self, cr, uid, c: c.get('date_planned', False),
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):
