@@ -80,10 +80,13 @@ class account_cash_statement(osv.osv):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
+        # Some verifications
         if not context:
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Prepare some values
+        st = self.browse(cr, uid, ids)[0]
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
@@ -93,9 +96,23 @@ class account_cash_statement(osv.osv):
             if register and not register.prev_reg_id:
                 if not register.balance_start > 0:
                     raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+        # Complete closing balance with all elements of starting balance
+        cashbox_line_obj = self.pool.get('account.cashbox.line')
+        # Search lines from current register starting balance
+        cashbox_line_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', st.id)], context=context)
+        # Search lines from current register ending balance and delete them
+        cashbox_line_end_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
+        cashbox_line_obj.unlink(cr, uid, cashbox_line_end_ids, context=context)
+        # Recreate all lines from starting to ending
+        for line in cashbox_line_obj.browse(cr, uid, cashbox_line_ids, context=context):
+            vals = {
+                'ending_id': st.id,
+                'pieces': line.pieces,
+                'number': line.number,
+            }
+            cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
-        st = self.browse(cr, uid, ids)[0]
         if st.journal_id and st.journal_id.code:
             seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
             name = st.journal_id.code + seq
