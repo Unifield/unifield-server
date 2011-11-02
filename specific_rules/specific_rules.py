@@ -115,7 +115,6 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     
-    
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
         return 'KC' if cold chain or 'DG' if dangerous goods
@@ -484,7 +483,8 @@ class stock_production_lot(osv.osv):
         """
         if context is None:
             context = {}
-        if view_type == 'tree' and context.get('expiry_date_check', False) and not context.get('batch_number_check', False):
+        # warehouse wizards or inventory screen
+        if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory')):
             view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
             if view:
                 view_id = view[1]
