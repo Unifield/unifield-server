@@ -1,4 +1,19 @@
 -
+  I create an analytic Correction Journal
+-
+  !record {model: account.analytic.journal, id: analytic_journal_correction}:
+    name: Analytic Correction Journal
+    code: ACOR
+    type: correction
+-
+  I create a Correction Journal
+-
+  !record {model: account.journal, id: journal_correction}:
+    name: Correction Journal
+    code: CORR
+    type: correction
+    analytic_journal_id: analytic_journal_correction
+-
   I create an analytic account attached to OC (Operation Center) named Gabon
 -
   !record {model: account.analytic.account, id: analytic_account_gabon}:
