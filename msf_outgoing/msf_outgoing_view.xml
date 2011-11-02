@@ -62,7 +62,7 @@
         <menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
     
     	<!-- delete outgoing delivery menuitem -->
-    	<delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/>
+    	<!-- <delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/> -->
     	
     	<record id="view_warehouse" model="ir.ui.view">
             <field name="name">stock.warehouse</field>

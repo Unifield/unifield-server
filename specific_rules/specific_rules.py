@@ -419,6 +419,19 @@ class stock_production_lot(osv.osv):
     '''
     _inherit = 'stock.production.lot'
     
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Correct fields in order to have those from account_statement_from_invoice_lines (in case where account_statement_from_invoice is used)
+        """
+        if context is None:
+            context = {}
+        if view_type == 'tree' and context.get('expiry_date_check', False) and not context.get('batch_number_check', False):
+            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
+            if view:
+                view_id = view[1]
+        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return result
+    
     def copy(self, cr, uid, id, default=None, context=None):
         '''
         increase the batch number

@@ -13,7 +13,7 @@
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
                     		domain="[('product_id', '=', product_id), ('check_type','=', True),]"
-                    		context="{'product_id': product_id,}"
+                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
                     		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False),], }"
                     		on_change="change_lot(prodlot_id)" />
                     		
@@ -39,7 +39,7 @@
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
                     		domain="[('product_id', '=', product_id), ('check_type','=', True),]"
-                    		context="{'product_id': product_id,}"
+                    		context="{'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
                     		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False),], }"
                     		on_change="change_lot(prodlot_id)" />
                     		
