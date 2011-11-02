@@ -225,9 +225,13 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-                                            context="{'location_id':location_id, 'product_id':product_id}"
-                                            domain="[('product_id','=?',product_id)]"
-                                            on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"/>
+					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    <field name="hidden_prod_mandatory" invisible="True" />
+										<field name="expired_date" />
+										<field name="kc_dg" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -487,9 +491,13 @@
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-                                            context="{'location_id':location_id, 'product_id':product_id}"
-                                            domain="[('product_id','=?',product_id)]"
-                                            on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"/>
+					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    <field name="hidden_prod_mandatory" invisible="True" />
+										<field name="expired_date" />
+										<field name="kc_dg" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -714,11 +722,14 @@
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-
                                         <field name="prodlot_id" groups="base.group_extended"
-                                            context="{'location_id':location_id, 'product_id':product_id}"
-                                            domain="[('product_id','=?',product_id)]"
-                                            on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"/>
+					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
+					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
+					                    <field name="hidden_prod_mandatory" invisible="True" />
+										<field name="expired_date" />
+										<field name="kc_dg" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
