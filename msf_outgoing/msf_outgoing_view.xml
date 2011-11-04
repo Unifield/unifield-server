@@ -194,6 +194,10 @@
                                     <field name="virtual_available" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -231,7 +235,10 @@
 					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -460,6 +467,10 @@
                                     <field name="to_pack" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -497,7 +508,10 @@
 					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -692,6 +706,10 @@
                                     <field name="currency_id" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -729,7 +747,10 @@
 					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
 					                    <field name="hidden_prod_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>

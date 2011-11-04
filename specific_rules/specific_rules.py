@@ -336,6 +336,10 @@ class stock_picking(osv.osv):
             defaults.update({'asset_id': assetId})
         
         return defaults
+    
+    _columns = {}
+    
+stock_picking()
 
 
 class stock_move(osv.osv):
@@ -453,13 +457,44 @@ class stock_move(osv.osv):
                                      'message': _('The selected product is Perishable.')}
             
         return result
+    
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        '''
+        function for KC/SSL/DG/NP products
+        '''
+        result = {}
+        for id in ids:
+            result[id] = {}
+            for f in name:
+                result[id].update({f: False})
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            # keep cool
+            if obj.product_id.heat_sensitive_item:
+                result[obj.id]['kc_check'] = True
+            # ssl
+            if obj.product_id.short_shelf_life:
+                result[obj.id]['ssl_check'] = True
+            # dangerous goods
+            if obj.product_id.dangerous_goods:
+                result[obj.id]['dg_check'] = True
+            # narcotic
+            if obj.product_id.narcotic:
+                result[obj.id]['np_check'] = True
+            
+        return result
         
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
                 'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True, multi='vals_get',),
                 'expiry_date_check': fields.function(_get_checks_batch, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi='vals_get',),
                 # if prodlot needs to be mandatory, add 'required': [('hidden_prod_mandatory','=',True)] in attrs
                 'hidden_prod_mandatory': fields.boolean(string='Hidden Flag for Prod lot and expired date',),
+                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
                 }
+    
     _constraints = [
                     (_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
@@ -678,6 +713,32 @@ class stock_production_lot(osv.osv):
         
         return result
     
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        '''
+        function for KC/SSL/DG/NP products
+        '''
+        result = {}
+        for id in ids:
+            result[id] = {}
+            for f in name:
+                result[id].update({f: False})
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            # keep cool
+            if obj.product_id.heat_sensitive_item:
+                result[obj.id]['kc_check'] = True
+            # ssl
+            if obj.product_id.short_shelf_life:
+                result[obj.id]['ssl_check'] = True
+            # dangerous goods
+            if obj.product_id.dangerous_goods:
+                result[obj.id]['dg_check'] = True
+            # narcotic
+            if obj.product_id.narcotic:
+                result[obj.id]['np_check'] = True
+            
+        return result
+    
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
                 #'expiry_date': fields.date('Expiry Date'),
@@ -689,7 +750,12 @@ class stock_production_lot(osv.osv):
                                                    digits_compute=dp.get_precision('Product UoM'), readonly=True,),
                 'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
                                                    help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),}
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+                }
     
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
@@ -828,10 +894,40 @@ class stock_inventory_line(osv.osv):
         
         return result
     
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        '''
+        function for KC/SSL/DG/NP products
+        '''
+        result = {}
+        for id in ids:
+            result[id] = {}
+            for f in name:
+                result[id].update({f: False})
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            # keep cool
+            if obj.product_id.heat_sensitive_item:
+                result[obj.id]['kc_check'] = True
+            # ssl
+            if obj.product_id.short_shelf_life:
+                result[obj.id]['ssl_check'] = True
+            # dangerous goods
+            if obj.product_id.dangerous_goods:
+                result[obj.id]['dg_check'] = True
+            # narcotic
+            if obj.product_id.narcotic:
+                result[obj.id]['np_check'] = True
+            
+        return result
+    
     _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
                 'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
                 'expiry_date': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024,),
+                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
                 }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
