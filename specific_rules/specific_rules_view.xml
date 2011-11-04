@@ -63,7 +63,7 @@
 					
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
@@ -98,7 +98,7 @@
             	
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
@@ -134,7 +134,7 @@
             	
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
@@ -285,7 +285,7 @@
             	
 	                <field name="prodlot_id" position="replace">
 	                	<field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
@@ -312,7 +312,7 @@
             	
 	                <field name="prodlot_id" position="replace">
 	                	<field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />

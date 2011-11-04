@@ -229,11 +229,13 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+					                    <field name="hidden_prod_mandatory" invisible="False" />
+					                    <field name="expiry_date_check" invisible="False" />
+					                    <field name="batch_number_check" invisible="False" />
 										<field name="expired_date" />
 										<field name="kc_check" />
 				            			<field name="ssl_check" />

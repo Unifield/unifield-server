@@ -415,6 +415,36 @@ class stock_move(osv.osv):
                         return False
         return True
     
+    def _check_prodlot_need(self, cr, uid, ids, context=None):
+        """
+        If the move has a prodlot but does not need one, return False.
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.prodlot_id:
+                if not move.product_id.perishable and not move.product_id.batch_management:
+                    return False
+        return True
+    
+    def _check_prodlot_need_batch_management(self, cr, uid, ids, context=None):
+        """
+        If the product is batch management while the selected prodlot is 'internal'.
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.prodlot_id:
+                if move.prodlot_id.type == 'internal' and move.product_id.batch_management:
+                    return False
+        return True
+    
+    def _check_prodlot_need_perishable(self, cr, uid, ids, context=None):
+        """
+        If the product is perishable ONLY while the selected prodlot is 'standard'.
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.prodlot_id:
+                if move.prodlot_id.type == 'standard' and not move.product_id.batch_management and move.product_id.perishable:
+                    return False
+        return True
+    
     def _get_checks_batch(self, cr, uid, ids, name, arg, context=None):
         '''
         get values
@@ -489,19 +519,29 @@ class stock_move(osv.osv):
                 'expiry_date_check': fields.function(_get_checks_batch, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi='vals_get',),
                 # if prodlot needs to be mandatory, add 'required': [('hidden_prod_mandatory','=',True)] in attrs
                 'hidden_prod_mandatory': fields.boolean(string='Hidden Flag for Prod lot and expired date',),
+                'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
                 'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
                 }
     
-    _constraints = [
-                    (_check_batch_management,
+    _constraints = [(_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
                      ['prodlot_id']),
                     (_check_perishable,
                      'You must assign an Expiry Date for this product (Expiry Date Mandatory)',
-                     ['prodlot_id'])]
+                     ['prodlot_id']),
+                    (_check_prodlot_need,
+                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
+                     ['prodlot_id']),
+                    (_check_prodlot_need_batch_management,
+                     'The selected product is Batch Number Mandatory while the selected Production Lot corresponds to Expiry Date Mandatory.',
+                     ['prodlot_id']),
+                    (_check_prodlot_need_perishable,
+                     'The selected product is Expiry Date Mandatory while the selected Production Lot corresponds to Batch Number Mandatory.',
+                     ['prodlot_id']),
+                    ]
 
 stock_move()
 
@@ -682,7 +722,7 @@ class stock_production_lot(osv.osv):
             ids = [ids]
             
         product_obj = self.pool.get('product.product')
-            
+        
         result = {}
         for id in ids:
             result[id] = 0.0
@@ -760,10 +800,11 @@ class stock_production_lot(osv.osv):
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
                  'name': 'new code',
-                 'life_date':time.strftime('%Y-%m-%d')}
-    _sql_constraints = [
-        ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
-    ]
+                 'life_date':time.strftime('%Y-%m-%d'),
+                 }
+    
+    _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
+                        ]
     
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
@@ -902,7 +943,7 @@ class stock_inventory_line(osv.osv):
         for id in ids:
             result[id] = {}
             for f in name:
-                result[id].update({f: False})
+                result[id].update({f: False,})
             
         for obj in self.browse(cr, uid, ids, context=context):
             # keep cool
@@ -920,6 +961,36 @@ class stock_inventory_line(osv.osv):
             
         return result
     
+    def _check_batch_management(self, cr, uid, ids, context=None):
+        '''
+        check for batch management
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.batch_management:
+                if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
+                    return False
+        return True
+    
+    def _check_perishable(self, cr, uid, ids, context=None):
+        """
+        check for perishable ONLY
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.perishable and not obj.product_id.batch_management:
+                if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
+                    return False
+        return True
+    
+    def _check_prodlot_need(self, cr, uid, ids, context=None):
+        """
+        If the inv line has a prodlot but does not need one, return False.
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.prod_lot_id:
+                if not obj.product_id.perishable and not obj.product_id.batch_management:
+                    return False
+        return True
+    
     _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
                 'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
                 'expiry_date': fields.date(string='Expiry Date'),
@@ -933,6 +1004,17 @@ class stock_inventory_line(osv.osv):
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
                  }
+    
+    _constraints = [(_check_batch_management,
+                     'You must assign a Production Lot which corresponds to Batch Number Mandatory Products.',
+                     ['prod_lot_id']),
+                    (_check_perishable,
+                     'You must assign a Production Lot which corresponds to Expiry Date Mandatory Products.',
+                     ['prod_lot_id']),
+                    (_check_prodlot_need,
+                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
+                     ['prod_lot_id']),
+                    ]
     
     def on_change_product_id(self, cr, uid, ids, location_id, product, uom=False, to_date=False):
         '''
@@ -957,16 +1039,23 @@ class stock_inventory_line(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         '''
-        create function clears prodlot if not (batch_number_check or expiry_date_check)
+        complete info normally generated by javascript on_change function
         '''
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
-            if not(product.batch_management or product.perishable):
-                vals.update(prod_lot_id=False)
-                
+            if product.batch_management:
+                vals.update(hidden_batch_management_mandatory=True)
+            elif product.perishable:
+                vals.update(hidden_perishable_mandatory=True)
+            else:
+                vals.update(hidden_batch_management_mandatory=False,
+                            hidden_perishable_mandatory=False,
+                            )
+        # complete expiry date from production lot - needed if not created from GUI
         prodlot_obj = self.pool.get('stock.production.lot')
-        if vals.get('prod_lot_id', False) and not vals.get('expiry_date', False):
+        if vals.get('prod_lot_id', False):
             vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
         
         result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
@@ -974,16 +1063,23 @@ class stock_inventory_line(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
-        write function clears prodlot if not (batch_number_check or expiry_date_check)
+        complete info normally generated by javascript on_change function
         '''
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
-            if not(product.batch_management or product.perishable):
-                vals.update(prod_lot_id=False)
-                
+            if product.batch_management:
+                vals.update(hidden_batch_management_mandatory=True)
+            elif product.perishable:
+                vals.update(hidden_perishable_mandatory=True)
+            else:
+                vals.update(hidden_batch_management_mandatory=False,
+                            hidden_perishable_mandatory=False,
+                            )
+        # complete expiry date from production lot - needed if not created from GUI
         prodlot_obj = self.pool.get('stock.production.lot')
-        if vals.get('prod_lot_id', False) and not vals.get('expiry_date', False):
+        if vals.get('prod_lot_id', False):
             vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
         
         result = super(stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
