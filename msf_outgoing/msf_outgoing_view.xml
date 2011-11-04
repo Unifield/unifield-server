@@ -61,6 +61,18 @@
         </record>
         <menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
     
+    
+    	<record id="stock.action_picking_tree" model="ir.actions.act_window">
+            <field name="name">Delivery Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+            <field name="search_view_id" ref="stock.view_picking_out_search"/>
+            <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
+        </record>
     	<!-- delete outgoing delivery menuitem -->
     	<!-- <delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/> -->
     	
@@ -229,13 +241,12 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check,}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="False" />
-					                    <field name="expiry_date_check" invisible="False" />
-					                    <field name="batch_number_check" invisible="False" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    				<field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_check" />
 				            			<field name="ssl_check" />
@@ -504,11 +515,12 @@
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    				<field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_check" />
 				            			<field name="ssl_check" />
@@ -743,11 +755,12 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    				<field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
 										<field name="kc_check" />
 				            			<field name="ssl_check" />
