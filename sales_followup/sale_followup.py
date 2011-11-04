@@ -340,7 +340,7 @@ class sale_order_line_followup(osv.osv_memory):
             move_state = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.location_dest_id.usage == 'customer':
-                    if move.state in ('assigned', 'done'):
+                    if move.state == 'assigned':
                         res[line.id]['available_qty'] += move.product_qty
                     if not move_state:
                         move_state = move.state

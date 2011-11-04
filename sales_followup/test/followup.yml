@@ -427,6 +427,8 @@
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (5/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P3)"
               assert line.outgoing_status == 'Assigned', "Outgoing status is different than 'Assigned' (5/P3)"
+              for out in line.outgoing_ids:
+                 self.pool.get('stock.move').action_done(cr, uid, out.id)
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'Done' (5/P4)"
@@ -441,3 +443,28 @@
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P4)"
         
     self.unlink(cr, uid, wiz_ids)
+-
+  I create again a wizard
+-
+  !python {model: ir.actions.server}: |
+    context = {'active_id':  ref('sales_followup.so1'),
+               'active_ids': [ref('sales_followup.so1')]}
+    res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
+    assert res != False, "Error on ir.actions.server launching"
+-
+  I check if the wizard is related to the sale order and if the information is ok
+-
+  !python {model: sale.order.followup}: |
+    import netsvc
+    wiz_ids = self.search(cr, uid, [])
+    for wiz in self.browse(cr, uid, wiz_ids):
+        assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (5)"
+        assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (5)"
+
+        for line in wiz.line_ids:
+            if line.product_id.id == ref('product3'):
+              print line.available_qty
+              assert line.available_qty == 1997.0, "The available qty is not equal to 1997.00 (5/P3)"
+              assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P3)"
+              assert line.outgoing_status == 'Done', "Outgoing status is different than 'Assigned' (5/P3)"
+
