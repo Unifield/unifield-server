@@ -27,12 +27,12 @@ from tools.translate import _
 
 import time
 import base64
+import netsvc
 
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
     _description = 'Real Average Consumption'
-    _rec_name = 'period_from'
     
     def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
         '''
@@ -46,6 +46,7 @@ class real_average_consumption(osv.osv):
         return res
     
     _columns = {
+        'name': fields.char(size=64, string='Reference'),
         'creation_date': fields.date(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')]),
@@ -54,12 +55,14 @@ class real_average_consumption(osv.osv):
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
+        'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
         'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
     }
     
     _defaults = {
+        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_cust')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
@@ -90,31 +93,51 @@ class real_average_consumption(osv.osv):
         
         move_obj = self.pool.get('stock.move')
         line_obj = self.pool.get('real.average.consumption.line')
+        wf_service = netsvc.LocalService("workflow")
         
         reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
+
+        move_ids = []
         
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
                 raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
-            
+
+            picking_id = self.pool.get('stock.picking').create(cr, uid, {'name': 'OUT-%s' % rac.name,
+                                                                         'origin': rac.name,
+                                                                         'type': 'out',
+                                                                         'state': 'auto',
+                                                                         'move_type': 'one',
+                                                                         'invoice_state': 'none',
+                                                                         'date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                                         'reason_type_id': reason_type_id}, context=context)
+
             for line in rac.line_ids:
-                move_id = move_obj.create(cr, uid, {'name': 'RAC/%s' % (line.product_id.name),
+                move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
+                                                    'picking_id': picking_id,
                                                     'product_uom': line.uom_id.id,
                                                     'product_id': line.product_id.id,
                                                     'date_expected': rac.period_to,
                                                     'date': rac.creation_date,
                                                     'product_qty': line.consumed_qty,
+                                                    'prodlot_id': line.prodlot_id.id,
+                                                    'expiry_date': line.expiry_date,
                                                     'location_id': rac.cons_location_id.id,
                                                     'location_dest_id': rac.activity_id.id,
                                                     'state': 'done',
                                                     'reason_type_id': reason_type_id})
+                move_ids.append(move_id)
                 line_obj.write(cr, uid, [line.id], {'move_id': move_id})
-                
-                
-                
-            self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
+
+            # Confirm the picking
+            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+
+            # Confirm all moves
+            move_obj.action_done(cr, uid, move_ids, context=context)
+            
+            self.write(cr, uid, [rac.id], {'created_ok': True, 'picking_id': picking_id}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',

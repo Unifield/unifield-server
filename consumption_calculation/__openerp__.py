@@ -34,6 +34,7 @@
     ],
     'update_xml': [
         'consumption_data.xml',
+        'consumption_sequence.xml',
         'consumption_view.xml',
         'expiry_calculation_view.xml',
         'wizard/wizard_import_fmc_view.xml',
