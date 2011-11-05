@@ -186,7 +186,9 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -446,7 +448,9 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                             <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
@@ -672,7 +676,9 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
