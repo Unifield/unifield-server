@@ -74,7 +74,7 @@
             <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
         </record>
     	<!-- delete outgoing delivery menuitem -->
-    	<!-- <delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/> -->
+    	<delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/>
     	
     	<record id="view_warehouse" model="ir.ui.view">
             <field name="name">stock.warehouse</field>
