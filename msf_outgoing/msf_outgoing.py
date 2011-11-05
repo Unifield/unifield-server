@@ -1152,7 +1152,7 @@ class stock_picking(osv.osv):
             tools.convert_xml_import(cr, 'msf_outgoing', file, {}, mode='init', noupdate=False)
     
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
-                'subtype': fields.selection([('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
+                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
@@ -1178,7 +1178,7 @@ class stock_picking(osv.osv):
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
-                 'subtype': 'picking',
+                 'subtype': 'standard',
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'address_id': lambda obj, cr, uid, c: len(obj.pool.get('res.partner.address').search(cr, uid, [], context=c)) and obj.pool.get('res.partner.address').search(cr, uid, [], context=c)[0] or False,
@@ -1584,6 +1584,36 @@ class stock_picking(osv.osv):
         '''
         res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
         return res and False
+    
+    def convert_to_standard(self, cr, uid, ids, context=None):
+        '''
+        check of back orders exists, if not, convert to standard: change subtype to standard, and trigger workflow
+        
+        only one picking object at a time
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.backorder_ids:
+                raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
+            
+            # change subtype
+            obj.write({'subtype': 'standard',})
+            # trigger workflow
+            self.draft_force_assign(cr, uid, [obj.id])
+        
+            # TODO which behavior
+            data_obj = self.pool.get('ir.model.data')
+            view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
+            view_id = view_id and view_id[1] or False
+            # display newly created picking ticket
+            return {'name':_("Delivery Orders"),
+                    'view_mode': 'form,tree',
+                    'view_id': [view_id],
+                    'view_type': 'form',
+                    'res_model': 'stock.picking',
+                    'res_id': obj.id,
+                    'type': 'ir.actions.act_window',
+                    'target': 'crush',
+                    }
     
     def create_picking(self, cr, uid, ids, context=None):
         '''
