@@ -2306,17 +2306,6 @@ class stock_move(osv.osv):
                     
         return result
     
-    def _check_weight(self, cr, uid, ids, context=None):
-        """ Checks if weight is assigned to stock move or not. (only for full mode)
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done':
-                if move.picking_id.subtype in ('ppl', 'packing',) and move.picking_id.flow_type != 'quick':
-                    if not move.weight:
-                        return False
-        return True
-    
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -2340,12 +2329,6 @@ class stock_move(osv.osv):
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',), # old_multi get_vals
                 }
-    
-    _constraints = [
-        (_check_weight,
-            'You must specify a weight for each pack family.',
-            ['weight']),]
-
 
 stock_move()
 
