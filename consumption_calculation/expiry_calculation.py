@@ -47,6 +47,7 @@ class expiry_quantity_report(osv.osv_memory):
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
+        'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'week_nb': fields.integer(string='Period of calculation (Today till XX weeks)', required=True),
         'date_to': fields.function(_get_date_to, method=True, type='date', string='Limit date', readonly=True),
         'line_ids': fields.one2many('expiry.quantity.report.line', 'report_id', string='Products', readonly=True),
@@ -61,22 +62,35 @@ class expiry_quantity_report(osv.osv_memory):
         
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
+        loc_obj = self.pool.get('stock.location')
         lots = {}
+        loc_ids = []
         
         report = self.browse(cr, uid, ids[0], context=context)
         lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])
         domain = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
         domain_out = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+            
+        not_loc_ids = []
+        # Remove input and output location
+        if report.input_output_ok:
+            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+            for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids, context=context):
+                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
+                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
 
         if report.location_id:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_view')[1]
-            domain.append(('location_dest_id', '=', report.location_id.id))
-            domain_out.append(('location_id', '=', report.location_id.id))
+            # Search all children locations of the report location
+            loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('usage', '=', 'internal'), ('id', 'not in', not_loc_ids)], context=context)
         else:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_loc_view')[1]
-            loc_ids = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
-            domain.append(('location_dest_id', 'in', loc_ids))
-            domain_out.append(('location_id', 'in', loc_ids))
+            # Search all locations according to parameters
+            loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
+        
+        # Return the good view
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'expiry_quantity_report_processed_loc_view')[1]
+        
+        domain.append(('location_dest_id', 'in', loc_ids))
+        domain_out.append(('location_id', 'in', loc_ids))
 
         move_ids = move_obj.search(cr, uid, domain, context=context)
         for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -89,13 +103,14 @@ class expiry_quantity_report(osv.osv_memory):
                 # Add the location in the lot list
                 if move.location_dest_id.id not in lots[lot_id]:
                     lots[lot_id][move.location_dest_id.id] = 0.00
-                    
+
                 lots[lot_id][move.location_dest_id.id] += move.product_qty
-        
+
+
         move_out_ids = move_obj.search(cr, uid, domain_out, context=context)
         for move in move_obj.browse(cr, uid, move_out_ids, context=context):
-            if move.prodlot_id and move.prodlot_id.id in lots and move.location_dest_id.id in lots[move.prodlot_id.id]:
-                lots[move.prodlot_id.id][move.location_dest_id.id] -= move.product_qty
+            if move.prodlot_id and move.prodlot_id.id in lots and move.location_id.id in lots[move.prodlot_id.id]:
+                lots[move.prodlot_id.id][move.location_id.id] -= move.product_qty
                 
         for lot_location in lots:
             product = lot_obj.browse(cr, uid, lot_location, context=context).product_id
@@ -149,6 +164,7 @@ class product_likely_expire_report(osv.osv_memory):
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
+        'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True),
         'date_to': fields.date(string='To', required=True),
         'consumption_type': fields.selection([('fmc', 'FMC -- Forecasted Monthly Consumption'), 
@@ -204,6 +220,7 @@ class product_likely_expire_report(osv.osv_memory):
             
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
+        loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('product.likely.expire.report.line')
         item_obj = self.pool.get('product.likely.expire.report.item')
@@ -224,17 +241,21 @@ class product_likely_expire_report(osv.osv_memory):
             context.update({'from': report.date_from, 'to': report.date_to})
         
         location_ids = []
+        not_loc_ids = []
+
+        if report.input_output_ok:
+            wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+            for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids, context=context):
+                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_input_id.id)], context=context))
+                not_loc_ids.extend(loc_obj.search(cr, uid, [('location_id', 'child_of', wh.lot_output_id.id)], context=context))
         
         if report.location_id:
-            location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', report.location_id.id)], context=context)
+            # Get all locations
+            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
         else:
-            location_ids = []
-            wh_location_ids = []
-            warehouse_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
-            for warehouse in self.pool.get('stock.warehouse').browse(cr, uid, warehouse_ids, context=context):
-                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_stock_id.id)], context=context))
-                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_input_id.id)], context=context))
-                wh_location_ids.extend(self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', warehouse.lot_output_id.id)], context=context))
+            # Get all locations
+            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
+
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 if move.location_id.id not in location_ids:

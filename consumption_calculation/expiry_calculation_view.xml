@@ -11,6 +11,7 @@
     			<form string="Expiry Quantities">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" />
+				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="week_nb" />
     				<separator colspan="4" string="Actions" />
@@ -55,6 +56,7 @@
     			<form string="Expired quantity">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" readonly="1" />
+				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="week_nb" readonly="1" />
     				<field name="date_to" readonly="1" />
@@ -95,6 +97,7 @@
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
     				<field name="date_to" />
@@ -119,6 +122,7 @@
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" readonly="1" />
+				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" readonly="1" />
     				<field name="date_to" readonly="1" />
