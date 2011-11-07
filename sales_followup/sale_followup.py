@@ -183,13 +183,13 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'rfq_done'):
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'rfq_done') and line.procurement_id.purchase_id.id not in purchase_ids:
                     purchase_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state not in ('draft', 'rfq_done'):
+                        if rfq.state not in ('draft', 'rfq_done') and rfq.id not in purchase.ids:
                             purchase_ids.append(rfq.id)
-        
+
         return purchase_ids
     
     def get_quotation_ids(self, cr, uid, line_id, context={}):
@@ -229,7 +229,7 @@ class sale_order_followup(osv.osv_memory):
             purchase_ids= [purchase_ids]
             
         incoming_ids = []
-        
+
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for po in purchase_obj.browse(cr, uid, purchase_ids, context=context):
                 for po_line in po.order_line:
