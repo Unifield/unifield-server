@@ -257,8 +257,8 @@
                                 <field name="state" readonly="1"/>
                                 <field name="flow_type" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
-                                <button name="convert_to_standard" states="draft" string="Convert to Basic Delivery" type="object" icon="gtk-convert" />
                                 <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+                                <button name="convert_to_standard" states="draft" string="Convert to Basic Delivery" type="object" icon="gtk-convert" />
                                 <button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
@@ -361,7 +361,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-            <field name="context">{'picking_screen':True}</field>
+            <field name="context">{'picking_screen':True, 'test':True}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
@@ -591,7 +591,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
-            <field name="context">{'contact_display': 'partner_address'}</field>
+            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True}</field>
             <field name="search_view_id" ref="view_ppl_search"/>
             <field name="help">This is the list of all ppl that have been picked.</field>
         </record>
@@ -844,7 +844,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_packing"/>
         </record>
-        <!-- <menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/> -->
+        <menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
         
         
 		<!-- Shipment -->

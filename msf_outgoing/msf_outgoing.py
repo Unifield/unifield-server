@@ -22,7 +22,8 @@
 from osv import osv, fields
 from tools.translate import _
 import netsvc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
 import netsvc
@@ -72,6 +73,12 @@ class shipment(osv.osv):
     _name = 'shipment'
     _description = 'represents a group of pack families'
     
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        prevent copy
+        '''
+        raise osv.except_osv(_('Error !'), _('Shipment copy is forbidden.'))
+    
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset one2many fields
@@ -104,7 +111,8 @@ class shipment(osv.osv):
                       'backshipment_id': False,
                       }
             result[shipment.id] = values
-            # gather the state from packing objects, all packing must have the same state
+            # gather the state from packing objects, all packing must have the same state for shipment
+            # for draft shipment, we can have done packing and draft packing
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
             # fields to check and get
             state = None
@@ -114,7 +122,9 @@ class shipment(osv.osv):
             for packing in picking_obj.browse(cr, uid, packing_ids, context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
-                state = packing.state
+                # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
+                if state != 'draft':
+                    state = packing.state
                 
                 # first_shipment_packing_id check - no check for the same reason
                 first_shipment_packing_id = packing.first_shipment_packing_id.id
@@ -122,7 +132,7 @@ class shipment(osv.osv):
                 # backshipment_id check
                 if backshipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
                     assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s'%(backshipment_id, packing.backorder_id.shipment_id.id)
-                backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or None
+                backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or False
             
             # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
@@ -277,7 +287,7 @@ class shipment(osv.osv):
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
-                                                'move_lines': []}, context=dict(context, keep_prodlot=True))
+                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True,))
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -643,7 +653,7 @@ class shipment(osv.osv):
                 # copy each packing
                 new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
                                                                      'first_shipment_packing_id': packing.id,
-                                                                     'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True))
+                                                                     'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True, allow_copy=True,))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update locations of stock moves
@@ -698,8 +708,8 @@ class shipment(osv.osv):
                 # this will possibly validate the draft shipment, if everything is finished and corresponding draft picking
                 shipment = shipment.backshipment_id
                 
-            # draft packing for this shipment
-            draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
+            # draft packing for this shipment - some draft packing can already be done for this shipment, so we filter according to state
+            draft_packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'draft'),], context=context)
             for draft_packing in pick_obj.browse(cr, uid, draft_packing_ids, context=context):
                 assert draft_packing.subtype == 'packing', 'draft packing which is not packing subtype - %s'%draft_packing.subtype
                 assert draft_packing.state == 'draft', 'draft packing which is not draft state - %s'%draft_packing.state
@@ -754,8 +764,6 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             # validate should only be called on shipped shipments
             assert shipment.state in ('shipped',), 'shipment state is not shipped'
-            # for each shipment update shipment status
-            self.write(cr, uid, [shipment.id], {'state': 'done'}, context=context)
             # corresponding packing objects - only the distribution -> customer ones
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
             
@@ -980,6 +988,50 @@ class stock_picking(osv.osv):
         pick = kwargs['pick']
         if pick.subtype == 'packing':
             return False
+        return result
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        set the name corresponding to object subtype
+        '''
+        if default is None:
+            default = {}
+        obj = self.browse(cr, uid, id, context=context)
+        if not context.get('allow_copy', False):
+            if obj.subtype == 'picking':
+                if not obj.backorder_id:
+                    # draft, new ref
+                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
+                                   origin=False,
+                                   date=date.today().strftime('%Y-%m-%d'),
+                                   sale_id=False,
+                                   )
+                else:
+                    # picking ticket, use draft sequence, keep other fields
+                    base = obj.name
+                    base = base.split('-')[0] + '-'
+                    default.update(name=base + obj.backorder_id.sequence_id.get_id(test='id', context=context),
+                                   date=date.today().strftime('%Y-%m-%d'),
+                                   )
+                    
+            elif obj.subtype == 'ppl':
+                raise osv.except_osv(_('Error !'), _('Pre-Packing List copy is forbidden.'))
+                # ppl, use the draft picking ticket sequence
+#                if obj.previous_step_id and obj.previous_step_id.backorder_id:
+#                    base = obj.name
+#                    base = base.split('-')[0] + '-'
+#                    default.update(name=base + obj.previous_step_id.backorder_id.sequence_id.get_id(test='id', context=context))
+#                else:
+#                    default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'ppl'))
+                
+        result = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
+        if not context.get('allow_copy', False):
+            if obj.subtype == 'picking' and obj.backorder_id:
+                # confirm the new picking ticket - the picking ticket should not stay in draft state !
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', result, 'button_confirm', cr)
+                # we force availability
+                self.force_assign(cr, uid, [result])
         return result
     
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -1431,13 +1483,21 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         # the action adds subtype in the context depending from which screen it is created
-        # for now only implemented in picking screen
         if context.get('picking_screen', False) and not vals.get('name', False):
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
             vals.update(subtype='picking',
                         backorder_id=False,
                         name=pick_name,
-                        flow_type='full',)
+                        flow_type='full',
+                        )
+        
+        if context.get('ppl_screen', False) and not vals.get('name', False):
+            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'ppl')
+            vals.update(subtype='ppl',
+                        backorder_id=False,
+                        name=pick_name,
+                        flow_type='full',
+                        )
         # shipment object
         shipment_obj = self.pool.get('shipment')
         # move object
@@ -1649,7 +1709,7 @@ class stock_picking(osv.osv):
             ticket_number = sequence.get_id(test='id', context=context)
             new_pick_id = self.copy(cr, uid, pick.id, {'name': pick.name + '-' + ticket_number,
                                                        'backorder_id': pick.id,
-                                                       'move_lines': []}, context=context)
+                                                       'move_lines': []}, context=dict(context, allow_copy=True,))
             # create stock moves corresponding to partial datas
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
@@ -1783,7 +1843,7 @@ class stock_picking(osv.osv):
             new_ppl_id = self.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
                                                       'subtype': 'ppl',
                                                       'previous_step_id': pick.id,
-                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True))
+                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves - if the move quantity is equal to zero, the stock move is removed
             for move in new_ppl.move_lines:
@@ -1925,7 +1985,7 @@ class stock_picking(osv.osv):
                                                           'subtype': 'packing',
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
-                                                          'shipment_id': False}, context=dict(context, keep_prodlot=True))
+                                                          'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
 
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.
