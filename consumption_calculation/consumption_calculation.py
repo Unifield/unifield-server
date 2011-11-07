@@ -269,6 +269,7 @@ real_average_consumption_line()
 class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
     _description = 'Monthly review consumption'
+    _rec_name = 'creation_date'
     
     def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
         '''
@@ -391,6 +392,19 @@ class monthly_review_consumption(osv.osv):
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
+
+    def valid_multiple_lines(self, cr, uid, ids, context={}):
+        '''
+        Open the wizard to valid multiple lines
+        '''
+        wiz_id = self.pool.get('wizard.valid.line').create(cr, uid, {'mrc_id': ids[0]}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.valid.line',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': wiz_id,
+                'target': 'new',}
     
 monthly_review_consumption()
 

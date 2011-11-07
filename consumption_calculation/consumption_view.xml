@@ -156,6 +156,7 @@
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
                         </tree>
                     </field>
+                    <button colspan="4" icon="gtk-execute" string="Valid multiple lines" type="object" name="valid_multiple_lines" />
                 </form>
             </field>
         </record>
