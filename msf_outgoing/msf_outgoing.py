@@ -349,7 +349,6 @@ class shipment(osv.osv):
                     for to_pack in partial_datas[draft_shipment_id][draft_packing.id][from_pack]:
                         # partial data for one sequence of one draft packing
                         data = partial_datas[draft_shipment_id][draft_packing.id][from_pack][to_pack][0]
-                        
                         # total number of packs
                         total_num = to_pack - from_pack + 1
                         # number of returned packs
@@ -366,17 +365,14 @@ class shipment(osv.osv):
                         else:
                             initial_from_pack = from_pack
                             initial_to_pack = to_pack - selected_number
-                        
-                        
                         # find the concerned stock moves
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', draft_packing.id),
                                                              ('from_pack', '=', from_pack),
                                                              ('to_pack', '=', to_pack)])
-                        
                         # update the moves, decrease the quantities
                         for move in move_obj.browse(cr, uid, move_ids, context=context):
                             # stock move are not canceled as for ppl return process
-                            # beacause this represents a draft packing, meaning some shipment could be canceled and
+                            # because this represents a draft packing, meaning some shipment could be canceled and
                             # returned to this stock move
                             # initial quantity
                             initial_qty = move.product_qty
@@ -392,12 +388,11 @@ class shipment(osv.osv):
                             
                             # create a back move with the quantity to return to the good location
                             # the good location is stored in the 'initial_location' field
-                            move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
+                            copy_id = move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
                                                              'location_dest_id': move.initial_location.id,
                                                              'from_pack': selected_from_pack,
                                                              'to_pack': selected_to_pack,
-                                                             'state': 'done'})
-                            
+                                                             'state': 'done'}, context=context)
                             # find the corresponding move in draft in the draft picking
                             draft_move = move.backmove_id
                             # increase the draft move with the move quantity
@@ -408,7 +403,7 @@ class shipment(osv.osv):
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
         result = self.complete_finished(cr, uid, partial_datas.keys(), context=context)
-            
+        
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
     
@@ -806,7 +801,10 @@ class pack_family_memory(osv.osv_memory):
                       }
             result[pf_memory.id] = values
             # pack family related fields
-            num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
+            if pf_memory.to_pack == 0:
+                num_of_packs = 0
+            else:
+                num_of_packs = pf_memory.to_pack - pf_memory.from_pack + 1
             values['num_of_packs'] = num_of_packs
             values['total_weight'] = pf_memory.weight * num_of_packs
             
@@ -1562,7 +1560,6 @@ class stock_picking(osv.osv):
                 # - create the pack families
                 for from_pack in data:
                     for to_pack in data[from_pack]:
-                        
                         # total number of packs
                         total_num = to_pack - from_pack + 1
                         # number of selected packs to ship
@@ -1593,8 +1590,7 @@ class stock_picking(osv.osv):
                             new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
                                                                         'product_qty': selected_qty,
                                                                         'from_pack': selected_from_pack,
-                                                                        'to_pack': selected_to_pack,
-                                                                        'backmove_id': move.id,}, context=context)
+                                                                        'to_pack': selected_to_pack,}, context=context)
                             
                             # update corresponding initial move
                             initial_qty = move.product_qty
@@ -2343,15 +2339,24 @@ class stock_move(osv.osv):
                       }
             result[move.id] = values
             # number of packs with from/to values (integer)
-            num_of_packs = move.to_pack - move.from_pack + 1
+            if move.to_pack == 0:
+                num_of_packs = 0
+            else:
+                num_of_packs = move.to_pack - move.from_pack + 1
             values['num_of_packs'] = num_of_packs
             # quantity per pack
-            values['qty_per_pack'] = move.product_qty / num_of_packs
+            if num_of_packs:
+                values['qty_per_pack'] = move.product_qty / num_of_packs
+            else:
+                values['qty_per_pack'] = 0
             # total amount (float)
             total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
             values['total_amount'] = total_amount
             # amount for one pack
-            amount = total_amount / num_of_packs
+            if num_of_packs:
+                amount = total_amount / num_of_packs
+            else:
+                amount = 0
             values['amount'] = amount
             # currency
             values['currency_id'] = move.sale_line_id and move.sale_line_id.currency_id and move.sale_line_id.currency_id.id or False
