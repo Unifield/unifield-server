@@ -157,7 +157,7 @@ class product_likely_expire_report(osv.osv_memory):
         'line_ids': fields.one2many('product.likely.expire.report.line', 'report_id', string='Lines', readonly=True),
         'consumption_from': fields.date(string='From'),
         'consumption_to': fields.date(string='To'),
-        'only_non_zero': fields.boolean(string='Only products with expired quantities'),
+        'only_non_zero': fields.boolean(string='Only products with total expired > 0'),
     }
     
     _defaults = {
