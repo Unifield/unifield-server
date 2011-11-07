@@ -262,7 +262,11 @@ class real_average_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.product_id.qty_available
+            context.update({'location': line.rac_id.cons_location_id.id})
+            if line.prodlot_id:
+                context.update({'prodlot_id': line.prodlot_id.id})
+            product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
+            res[line.id] = product.qty_available
             
         return res
     
@@ -309,12 +313,13 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
 
-    def change_expiry(self, cr, uid, id, expiry_date, product_id, context=None):
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, context={}):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}}
+        context.update({'location': location_id})
         
         if expiry_date and product_id:
             prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
@@ -329,26 +334,36 @@ class real_average_consumption_line(osv.osv):
             else:
                 # return first prodlot
                 result['value'].update(prodlot_id=prod_ids[0])
+                context.update({'prodlot_id': prod_ids[0]})
                 
         else:
             # clear expiry date, we clear production lot
             result['value'].update(prodlot_id=False)
+    
+        product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+        res['value'].update({'product_qty': product.qty_available})
         
         return result
 
-    def change_prodlot(self, cr, uid, ids, prodlot_id, expiry_date, context={}):
+    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, context={}):
         '''
         Set the expiry date according to the prodlot
         '''
         res = {'value': {}}
+        context.update({'location': location_id})
         if prodlot_id and not expiry_date:
             res['value'].update({'expiry_date': self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).life_date})
+            context.update({'prodlot_id':prodlot_id})
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            res['value'].update({'product_qty': product.qty_available})
         elif not prodlot_id and expiry_date:
             res['value'].update({'expiry_date': False})
+        product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+        res['value'].update({'product_qty': product.qty_available})
 
         return res
     
-    def product_onchange(self, cr, uid, ids, product_id, location_id=False, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, prodlot_id=False, context={}):
         '''
         Set the product uom when the product change
         '''
@@ -371,7 +386,7 @@ class real_average_consumption_line(osv.osv):
             if location_id:
                 v.update({'product_qty': product.qty_available})
         else:
-            v.update({'uom_id': False, 'product_qty': 0.00})
+            v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
         
         return {'value': v}
     
