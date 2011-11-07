@@ -39,7 +39,6 @@ class sale_order_line(osv.osv):
     '''
     _inherit = 'sale.order.line'
     
-    
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
         return 'KC' if cold chain or 'DG' if dangerous goods
@@ -426,8 +425,12 @@ class stock_production_lot(osv.osv):
         '''
         if default is None:
             default = {}
+            
+        # original reference
+        lot_name = self.read(cr, uid, id, ['name'])['name']
         
-        default.update(name='', date=time.strftime('%Y-%m-%d'))
+        default.update(name='%s (copy)'%lot_name, date=time.strftime('%Y-%m-%d'))
+
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
     
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -617,15 +620,17 @@ class stock_production_lot(osv.osv):
                                                    digits_compute=dp.get_precision('Product UoM'), readonly=True,),
                 'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
                                                    help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),}
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                }
     
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
-                 'name': '',
-                 'life_date':time.strftime('%Y-%m-%d')}
-    _sql_constraints = [
-        ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
-    ]
+                 'name': False,
+                 'life_date':time.strftime('%Y-%m-%d'),
+                 }
+    
+    _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
+                        ]
     
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         '''
@@ -646,6 +651,7 @@ class stock_production_lot(osv.osv):
         return res
     
 stock_production_lot()
+
 
 class stock_production_lot_revision(osv.osv):
     _inherit = 'stock.production.lot.revision'
