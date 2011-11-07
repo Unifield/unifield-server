@@ -287,7 +287,7 @@ class product_likely_expire_report(osv.osv_memory):
                     total_cons = coeff*consumption
                     rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(total_cons - already_cons,2), lot.product_id.uom_id.id)
                     
-                    item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%Y'), 
+                    item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
                     available_qty = 0.00
                     expired_qty = 0.00
@@ -363,7 +363,7 @@ class product_likely_expire_report(osv.osv_memory):
             
         new_date = []        
         for date in dates:
-            new_date.append(date.strftime('%m/%Y'))
+            new_date.append(date.strftime('%m/%y'))
             
         context.update({'dates': new_date})
                     
