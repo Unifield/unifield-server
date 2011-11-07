@@ -200,7 +200,7 @@ class journal_items_corrections(osv.osv_memory):
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
-                if not wiz.date > wiz.move_line_id.date:
+                if not wiz.date >= wiz.move_line_id.date:
                     raise osv.except_osv(_('Warning'), _('Given date is inferior to those of selected line. Please choose another date!'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
@@ -221,7 +221,7 @@ class journal_items_corrections(osv.osv_memory):
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
-                if not wiz.date > wiz.move_line_id.date:
+                if not wiz.date >= wiz.move_line_id.date:
                     raise osv.except_osv(_('Warning'), _('Given date is inferior to those of selected line. Please choose another date!'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
