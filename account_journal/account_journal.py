@@ -110,7 +110,10 @@ class account_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         
         # TODO: add default accounts
-        
+       
+        if context is None:
+            context = {}
+
         # Create associated sequence
         seq_pool = self.pool.get('ir.sequence')
         seq_typ_pool = self.pool.get('ir.sequence.type')
