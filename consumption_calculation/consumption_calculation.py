@@ -131,13 +131,15 @@ class real_average_consumption(osv.osv):
                 move_ids.append(move_id)
                 line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
+            self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
+
             # Confirm the picking
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
 
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
             
-            self.write(cr, uid, [rac.id], {'created_ok': True, 'picking_id': picking_id}, context=context)
+            self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
@@ -860,3 +862,21 @@ class product_product(osv.osv):
 
     
 product_product()
+
+
+class stock_picking(osv.osv):
+    _inherit = 'stock.picking'
+    _name = 'stock.picking'
+
+    def _hook_log_message_picking(self, cr, uid, ids, context=None, pick=False, message=''):
+        '''
+        Possibility to change the message
+        '''
+	report_ids = self.pool.get('real.average.consumption').search(cr, uid, [('picking_id', '=', pick.id)], context=context)
+	if report_ids:
+	    return 'Delivery Order \'OUT-CONSO/00010\' generated from the consumption report is done.'
+	else:
+	    res = super(stock_picking, self)._hook_log_message_picking(cr, uid, ids, context=context, pick=pick, message=message)
+            return res
+
+stock_picking()
