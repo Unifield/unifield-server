@@ -40,7 +40,7 @@ class tender(osv.osv):
     
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
-                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
+                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Close'), ('cancel', 'Cancelled'),], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
                                                  domain=[('supplier','=', True)],),
@@ -485,10 +485,10 @@ class procurement_order(osv.osv):
                                            ('draft','Draft'),
                                            ('confirmed','Confirmed'),
                                            ('exception','Exception'),
-                                           ('running','Running'),
-                                           ('cancel','Cancel'),
+                                           ('running','Converted'),
+                                           ('cancel','Cancelled'),
                                            ('ready','Ready'),
-                                           ('done','Done'),
+                                           ('done','Closed'),
                                            ('tender', 'Tender'),
                                            ('waiting','Waiting'),], 'State', required=True,
                                           help='When a procurement is created the state is set to \'Draft\'.\n If the procurement is confirmed, the state is set to \'Confirmed\'.\
@@ -587,17 +587,17 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
     
     STATE_SELECTION = [
-                       ('draft', 'Request for Quotation'),
+                       ('draft', 'Drafet'),
                        ('wait', 'Waiting'),
-                       ('confirmed', 'Waiting Approval'),
-                       ('approved', 'Approved'),
-                       ('except_picking', 'Shipping Exception'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
                        ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Done'),
+                       ('done', 'Closed'),
                        ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'RfQ Sent'),
-                       ('rfq_updated', 'RfQ Updated'),
-                       ('rfq_done', 'RfQ Done'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
+                       ('rfq_done', 'Closed'),
     ]
     
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
