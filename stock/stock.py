@@ -1324,6 +1324,12 @@ class stock_picking(osv.osv):
         }
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form')) 
     
+    def _hook_log_message_picking(self, cr, uid, ids, context=None, pick=False, message=''):
+        '''
+        Allow the modification of the logged message
+        '''
+        return message
+    
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         specify if we display a log or not
@@ -1367,6 +1373,7 @@ class stock_picking(osv.osv):
             res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
+            message = self._hook_log_message_picking(cr, uid, ids, context=context, pick=pick, message=message)
             # conditional test for message log
             if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
                 self.log(cr, uid, pick.id, message, context=context)
@@ -1426,6 +1433,8 @@ class stock_production_lot(osv.osv):
         @return: Ids of locations
         """
         locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+        if context.get('location_id', False):
+            locations = context['location_id'] and [context['location_id']] or []
         cr.execute('''select
                 prodlot_id,
                 sum(qty)
