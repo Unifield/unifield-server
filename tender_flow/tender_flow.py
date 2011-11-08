@@ -587,7 +587,7 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
     
     STATE_SELECTION = [
-                       ('draft', 'Drafet'),
+                       ('draft', 'Draft'),
                        ('wait', 'Waiting'),
                        ('confirmed', 'Validated'),
                        ('approved', 'Confirmed'),
