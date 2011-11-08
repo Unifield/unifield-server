@@ -499,19 +499,6 @@ class stock_production_lot(osv.osv):
         default.update(revisions=[])
         return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
     
-    def product_id_change(self, cr, uid, ids, product_id, context=None):
-        '''
-        complete the life_date attribute
-        '''
-        product_obj = self.pool.get('product.product')
-        values = {}
-        if product_id:
-            duration = product_obj.browse(cr, uid, product_id, context=context).life_time
-            date = datetime.today() + relativedelta(months=duration)
-            values.update(life_date=date.strftime('%Y-%m-%d'))
-            
-        return {'value':values}
-    
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new order
