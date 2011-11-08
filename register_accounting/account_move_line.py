@@ -279,20 +279,28 @@ class account_move_line(osv.osv):
         """
         Add partner_txt to vals regarding partner_id, employee_id and register_id
         """
+        # Some verifications
         if not context:
             context = {}
-        vals.update({'partner_txt': _get_third_parties_name(self, cr, uid, vals, context=context)})
+        # Retrieve third party name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context={}, check=True, update_check=True):
         """
         Add partner_txt to vals
         """
+        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        vals.update({'partner_txt': _get_third_parties_name(self, cr, uid, vals, context=context)})
+        # Get third_parties_name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
