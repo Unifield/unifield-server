@@ -360,7 +360,7 @@ class real_average_consumption_line(osv.osv):
             result['value'].update(prodlot_id=False)
     
         product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-        res['value'].update({'product_qty': product.qty_available})
+        result['value'].update({'product_qty': product.qty_available})
         
         return result
 
