@@ -1011,6 +1011,8 @@ class stock_picking(osv.osv):
         '''
         if default is None:
             default = {}
+        if context is None:
+            context = {}
         obj = self.browse(cr, uid, id, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking':
