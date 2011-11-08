@@ -97,8 +97,8 @@ class wizard_account_invoice(osv.osv):
             elif inv[val]:
                 vals[val] = inv[val]
         vals['invoice_line'] = []
+        amount = 0
         if inv['invoice_line']:
-            amount = 0
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
                 ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id']):
                 vals['invoice_line'].append( (0, 0,

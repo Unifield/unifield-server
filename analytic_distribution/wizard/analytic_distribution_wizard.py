@@ -343,8 +343,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase line state
             if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['approved', 'done']:
                 res[el.id] = False
-            # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+            # verify invoice state but only for non direct invoice (no field register_line_ids)
+            if el.invoice_id and context.get('from', False) != 'direct_invoice' and el.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
             # verify invoice line state
             if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
@@ -511,8 +511,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.state in ['approved', 'done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
-                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            if wiz.invoice_id:
+                # Pay attention to direct_invoice
+                if context.get('from', False) != 'direct_invoice' and wiz.invoice_id.state in ['open', 'paid']:
+                    raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
             if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
@@ -687,6 +689,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
                     ('move_line_id', 'account.move.line')]:
                     if getattr(wiz, el[0], False):
+                        # Pay attention to direct invoice
+                        if context.get('from', False) and context.get('from') == 'direct_invoice':
+                            # if 'from' is 'direct_invoice', so we have to change account.invoice into wizard.account.invoice
+                            el = (el[0], '.'.join(['wizard', el[1]]))
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
             # Finally do registration for each type
@@ -818,7 +824,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
 
             if not move_lines and wizard.invoice_line_id:
-                wizard.invoice_line_id.create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
+                self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
         return True
 
 analytic_distribution_wizard()
