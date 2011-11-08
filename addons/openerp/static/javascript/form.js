@@ -619,6 +619,7 @@ function onChange(caller){
                         var old_m2m = jQuery(idSelector(fld_name)).closest('.list-a');
                         jQuery.ajax({
                             url: '/openerp/listgrid/get_m2m',
+                            context: old_m2m,
                             data: {
                                 'name': fld_name,
                                 'model': jQuery(fld).attr('relation'),
@@ -629,7 +630,7 @@ function onChange(caller){
                             dataType: 'json',
                             error: loadingError(),
                             success: function(obj){
-                                jQuery(old_m2m).replaceWith(obj.m2m_view);
+                                $(this).replaceWith(obj.m2m_view);
                             }
                         });
                         break;
