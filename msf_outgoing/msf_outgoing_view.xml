@@ -391,7 +391,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
+                <tree hide_new_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
@@ -433,7 +433,7 @@
             <!-- but then other form view also use it... -->
             <!-- <field eval="11" name="priority"/> -->
             <field name="arch" type="xml">
-                <form string="Pre-Packing List">
+                <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
@@ -998,6 +998,7 @@
             <field name="arch" type="xml">
                 <search string="Shipment">
                     <group col="8" colspan="4">
+                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" help="Draft Delivery Orders"/>
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
                         <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
