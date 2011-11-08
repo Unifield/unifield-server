@@ -24,7 +24,7 @@
                     <separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
 						<tree string="Products" editable="top">
@@ -34,6 +34,7 @@
                             <field name="product_qty" />
                             <field name="prodlot_id" 
 				   on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id)"
+				   domain="[('product_id', '=', product_id)]"
 				   attrs="{'required': [('batch_mandatory', '=', True)]}"/>
                             <field name="expiry_date"
 				   on_change="change_expiry(expiry_date, product_id, parent.cons_location_id)"
