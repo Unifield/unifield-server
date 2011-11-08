@@ -333,6 +333,7 @@ class shipment(osv.osv):
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
+        obj_data = self.pool.get('ir.model.data')
         
         # data from wizard
         partial_datas = context['partial_datas']
@@ -340,9 +341,12 @@ class shipment(osv.osv):
         assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
         
         for draft_shipment_id in partial_datas:
+            # log flag - log for draft shipment is displayed only one time for each draft shipment
+            log_flag = False
             # for each draft packing
             for draft_packing in pick_obj.browse(cr, uid, partial_datas[draft_shipment_id].keys(), context=context):
                 # corresponding draft picking ticket -> draft_packing - ppl - picking_ticket - draft_picking_ticket
+                draft_picking = draft_packing.previous_step_id.previous_step_id.backorder_id
                 draft_picking_id = draft_packing.previous_step_id.previous_step_id.backorder_id.id
                 # for each sequence
                 for from_pack in partial_datas[draft_shipment_id][draft_packing.id]:
@@ -393,13 +397,21 @@ class shipment(osv.osv):
                                                              'from_pack': selected_from_pack,
                                                              'to_pack': selected_to_pack,
                                                              'state': 'done'}, context=context)
-                            # find the corresponding move in draft in the draft picking
+                            # find the corresponding move in draft in the draft **picking**
                             draft_move = move.backmove_id
                             # increase the draft move with the move quantity
                             draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                             draft_initial_qty += return_qty
                             move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
-                
+            
+                # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
+                if not log_flag:
+                    draft_shipment_name = self.read(cr, uid, draft_shipment_id, ['name'], context=context)['name']
+                    self.log(cr, uid, draft_shipment_id, _("Packs from the draft Shipment (%s) have been returned to stock."%draft_shipment_name),)
+                    log_flag = True
+                res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+                self.pool.get('stock.picking').log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%draft_picking.name), context={'view_id': res,})
+            
         # call complete_finished on the shipment object
         # if everything is alright (all draft packing are finished) the shipment is done also 
         result = self.complete_finished(cr, uid, partial_datas.keys(), context=context)
@@ -588,6 +600,11 @@ class shipment(osv.osv):
                             # cancel move or 0 qty + done ?
                             #move_obj.action_cancel(cr, uid, [move.id], context=context)
                             move_obj.write(cr, uid, [move.id], {'product_qty': 0.0, 'state': 'done', 'from_pack': 0, 'to_pack': 0,}, context=context)
+            
+            # log corresponding action
+            shipment_name = self.read(cr, uid, shipment_id, ['name'], context=context)['name']
+            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to dispatch location."%shipment_name),)
+            self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated."%packing.backorder_id.shipment_id.name),)
                             
         # call complete_finished on the shipment object
         # if everything is allright (all draft packing are finished) the shipment is done also 
@@ -610,13 +627,13 @@ class shipment(osv.osv):
         for shipment in self.browse(cr, uid, ids, context=context):
             # for each shipment
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
-            
+            # call cancel workflow on corresponding packing objects
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 # we cancel each picking object - action_cancel is overriden at stock_picking level for stock_picking of subtype == 'packing'
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_cancel', cr)
-            
-        # cancel all shipments
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+            # log corresponding action
+            self.log(cr, uid, shipment.id, _("The Shipment (%s) has been canceled."%shipment.name),)
+            self.log(cr, uid, shipment.backshipment_id.id, _("The corresponding Draft Shipment (%s) has been updated."%shipment.backshipment_id.name),)
                 
         return True
     
@@ -965,7 +982,7 @@ class stock_picking(osv.osv):
                      'internal': ('stock', 'view_picking_form'),
                      'picking': ('msf_outgoing', 'view_picking_ticket_form'),
                      'ppl': ('msf_outgoing', 'view_ppl_form'),
-                     'packing': ('msf_outgoing', 'view_packing_form')
+                     'packing': ('msf_outgoing', 'view_packing_form'),
                      }
         if pick.type == 'out':
             module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
@@ -1586,11 +1603,12 @@ class stock_picking(osv.osv):
                         for move in move_obj.browse(cr, uid, moves_ids, context=context):
                             # we compute the selected quantity
                             selected_qty = move.qty_per_pack * selected_number
-                            # create the new move
+                            # create the new move - store the back move from draft **packing** object
                             new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
                                                                         'product_qty': selected_qty,
                                                                         'from_pack': selected_from_pack,
-                                                                        'to_pack': selected_to_pack,}, context=context)
+                                                                        'to_pack': selected_to_pack,
+                                                                        'backmove_packing_id': move.id,}, context=context)
                             
                             # update corresponding initial move
                             initial_qty = move.product_qty
@@ -2080,6 +2098,13 @@ class stock_picking(osv.osv):
                 draft_initial_qty += return_qty
                 move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_initial_qty}, context=context)
                 
+            # log the increase action - display the picking ticket view form
+            # TODO refactoring needed
+            obj_data = self.pool.get('ir.model.data')
+            res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
+            self.log(cr, uid, picking.id, _("Products from Pre-Packing List (%s) have been returned to stock."%picking.name), context={'view_id': res,})
+            res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+            self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%picking.previous_step_id.backorder_id.name), context={'view_id': res,})
             # if all moves are done or canceled, the ppl is canceled
             cancel_ppl = True
             for move in picking.move_lines:
@@ -2125,7 +2150,10 @@ class stock_picking(osv.osv):
         
         state is not taken into account as picking is canceled before
         '''
+        if context is None:
+            context = {}
         move_obj = self.pool.get('stock.move')
+        obj_data = self.pool.get('ir.model.data')
         
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
@@ -2158,6 +2186,11 @@ class stock_picking(osv.osv):
                     initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                     initial_qty += move.product_qty
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+                    # log the increase action
+                    # TODO refactoring needed
+                    obj_data = self.pool.get('ir.model.data')
+                    res = obj_data.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1]
+                    self.log(cr, uid, draft_picking_id, _("The corresponding Draft Picking Ticket (%s) has been updated."%picking.backorder_id.name), context={'view_id': res,})
                     
             if picking.subtype == 'packing':
                 # for each packing we get the draft packing
@@ -2165,8 +2198,8 @@ class stock_picking(osv.osv):
                 
                 # for each move from the packing
                 for move in picking.move_lines:
-                    # corresponding draft move
-                    draft_move_id = move.backmove_id.id
+                    # corresponding draft move from draft **packing** object
+                    draft_move_id = move.backmove_packing_id.id
                     # check the to_pack of draft move
                     # if equal to draft to_pack = move from_pack - 1 (as we always take the pack with the highest number available)
                     # we can increase the qty and update draft to_pack
@@ -2380,8 +2413,10 @@ class stock_move(osv.osv):
                 'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
                 #'pack_family_id': fields.many2one('pack.family', string='Pack Family'),
                 'initial_location': fields.many2one('stock.location', string='Initial Picking Location'),
-                # relation to the corresponding move from draft object
+                # relation to the corresponding move from draft **picking** ticket object
                 'backmove_id': fields.many2one('stock.move', string='Corresponding move of previous step'),
+                # relation to the corresponding move from draft **packing** ticket object
+                'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
