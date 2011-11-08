@@ -158,7 +158,7 @@
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
                         <tree string="Products" editable="top"> 
-                            <field name="name" on_change="product_onchange(name)" 
+                            <field name="name" on_change="product_onchange(name, parent.period_from, parent.period_to)" 
                             	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
                             <field name="fmc" />

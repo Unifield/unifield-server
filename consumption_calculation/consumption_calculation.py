@@ -599,12 +599,18 @@ class monthly_review_consumption_line(osv.osv):
         '''
         raise osv.except_osv('Error !', 'Not implemented yet !')
     
-    def product_onchange(self, cr, uid, ids, product_id, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, from_date, to_date, context={}):
         '''
         Fill data in the line
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not context:
+            context = {}
+
+        # Compute the AMC on the period of the consumption report
+        context.update({'from_date': from_date, 'to_date': to_date})
         
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('monthly.review.consumption.line')
@@ -673,7 +679,7 @@ class product_product(osv.osv):
                     res[product] = line.fmc
                 elif line.mrc_id.period_to > last_date:
                     last_date = line.mrc_id.period_to
-                    res[product] = line.fmc                
+                    res[product] = line.fmc
         
         return res
     
