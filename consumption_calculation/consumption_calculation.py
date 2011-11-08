@@ -599,7 +599,7 @@ class monthly_review_consumption_line(osv.osv):
         '''
         raise osv.except_osv('Error !', 'Not implemented yet !')
     
-    def product_onchange(self, cr, uid, ids, product_id, mrc_id, from_date=False, to_date=False, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, mrc_id=False, from_date=False, to_date=False, context={}):
         '''
         Fill data in the line
         '''
@@ -624,10 +624,12 @@ class monthly_review_consumption_line(osv.osv):
                               'valid_until': False,
                               'valid_ok': False}}
         
-
-        line_ids = line_obj.search(cr, uid, [('name', '=', product_id), ('mrc_id', '!=', mrc_id)], order='valid_until desc', context=context)
+        domain = [('name', '=', product_id)]
+	if mrc_id:
+	    domain = [('name', '=', product_id), ('mrc_id', '!=', mrc_id)]
+        line_ids = line_obj.search(cr, uid, domain, order='valid_until desc', context=context)
             
-        if line_ids and line_ids[0] != ids[0]:
+        if line_ids:
             for line in self.browse(cr, uid, [line_ids[0]], context=context):
                 last_fmc_reviewed = line.mrc_id.creation_date
                 
