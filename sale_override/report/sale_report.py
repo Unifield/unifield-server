@@ -81,7 +81,7 @@ class sale_report(osv.osv):
             ('progress', 'Confirmed'),
             ('shipping_except', 'Shipping Exception'),
             ('invoice_except', 'Invoice Exception'),
-            ('done', 'Close'),
+            ('done', 'Closed'),
             ('cancel', 'Cancelled')
             ], 'Order State', readonly=True),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', readonly=True),
