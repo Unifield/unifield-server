@@ -22,6 +22,11 @@
                         <field name="register_posting_date" />
                         <field name="state" invisible="1" />
                         <field name="amount_total"/>
+                        <group colspan="6">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="2"/>
+                            <field name="analytic_distribution_line_count" nolabel="1" colspan="1"/>
+                            <label string="" colspan="4"/>
+                        </group>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
@@ -98,6 +103,11 @@
                             string="Posting Period"/>
                         <group colspan="2" col="1" groups="account.group_account_user">
                             <label align="0.0" string="(keep empty to use the current period)"/>
+                        </group>
+                        <group colspan="6">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="2"/>
+                            <field name="analytic_distribution_line_count" nolabel="1" colspan="1"/>
+                            <label string="" colspan="4"/>
                         </group>
                     </group>
                     <notebook colspan="4">
