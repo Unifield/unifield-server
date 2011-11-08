@@ -92,7 +92,10 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         view = super(analytic_account, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        try:
+            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'funding_pool', 'analytic_account_project')[1]
+        except ValueError:
+            oc_id = 0
         if view_type=='form':
             tree = etree.fromstring(view['arch'])
             fields = tree.xpath('/form/field[@name="cost_center_ids"]')
