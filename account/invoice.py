@@ -1074,8 +1074,33 @@ class account_invoice(osv.osv):
                 line['invoice_line_tax_id'] = [(6,0, line.get('invoice_line_tax_id', [])) ]
         return map(lambda x: (0,0,x), lines)
 
+    def _hook_fields_for_refund(self, cr, uid, *args):
+        """
+        Permits to change fields list to be use for creating invoice refund from an invoice.
+        """
+        res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id', 
+            'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line', 'journal_id']
+        return res
+
+    def _hook_fields_m2o_for_refund(self, cr, uid, *args):
+        """
+        Permits to change field that would be use for invoice refund.
+        NB: This fields should be many2one fields.
+        """
+        res = ['address_contact_id', 'address_invoice_id', 'partner_id',
+                    'account_id', 'currency_id', 'payment_term', 'journal_id']
+        return res
+
+    def _hook_refund_data(self, cr, uid, data, *args):
+        """
+        Permits to change data for new refund before their creation
+        """
+        if not data:
+            return False
+        return data
+
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
-        invoices = self.read(cr, uid, ids, ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id', 'partner_contact', 'partner_insite', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line', 'journal_id'])
+        invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
         obj_journal = self.pool.get('account.journal')
@@ -1123,9 +1148,9 @@ class account_invoice(osv.osv):
                     'name': description,
                 })
             # take the id part of the tuple returned for many2one fields
-            for field in ('address_contact_id', 'address_invoice_id', 'partner_id',
-                    'account_id', 'currency_id', 'payment_term', 'journal_id'):
+            for field in self._hook_fields_m2o_for_refund(cr, uid):
                 invoice[field] = invoice[field] and invoice[field][0]
+            invoice = self._hook_refund_data(cr, uid, invoice) or invoice
             # create the new invoice
             new_ids.append(self.create(cr, uid, invoice))
 
