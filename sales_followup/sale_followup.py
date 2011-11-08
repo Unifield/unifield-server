@@ -339,14 +339,13 @@ class sale_order_line_followup(osv.osv_memory):
             move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
             move_state = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
-                if move.location_dest_id.usage == 'customer':
-                    if move.state == 'assigned':
-                        res[line.id]['available_qty'] += move.product_qty
-                    if not move_state:
-                        move_state = move.state
-
-                    if move.state != move_state:
-                        move_state = 'sf_partial'
+#                if move.location_dest_id.usage == 'customer':
+                if move.state == 'assigned':
+                    res[line.id]['available_qty'] += move.product_qty
+                if not move_state:
+                    move_state = move.state
+                if move.state != move_state:
+                    move_state = 'sf_partial'
 
             if move_state == 'sf_partial':
                 res[line.id]['product_available'] = 'Partial'
@@ -395,7 +394,8 @@ class sale_order_line_followup(osv.osv_memory):
                 if line.line_id.product_id:
                     context.update({'shop_id': line.line_id.order_id.shop_id.id,
                                     'uom_id': line.line_id.product_uom.id})
-                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+	            if res[line.id]['available_qty'] == 0.00:
+                        res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             purchase_state = False
             for order in line.purchase_ids:
@@ -448,10 +448,12 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['outgoing_status'] = 'Partial'
             elif outgoing_state and outgoing_state == 'assigned':
                 res[line.id]['outgoing_status'] = 'Assigned'
+		res[line.id]['product_available'] = 'Available'
             elif outgoing_state and outgoing_state not in ('assigned', 'done'):
                 res[line.id]['outgoing_status'] = 'In Progress'
             elif outgoing_state and outgoing_state == 'done':
                 res[line.id]['outgoing_status'] = 'Done'
+		res[line.id]['product_available'] = 'Done'
             
         return res
     
