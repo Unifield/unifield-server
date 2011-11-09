@@ -148,15 +148,17 @@
                             <field name="name" on_change="product_onchange(name)" 
                             	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
-                            <field name="fmc" />
+                            <field name="fmc" on_change="fmc_change(amc, fmc)" attrs="{'readonly': [('valid_ok', '=', True)]}" />
                             <field name="last_reviewed" />
                             <field name="valid_ok" />
                             <field name="valid_until" />
-                            <button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />
+			    <field name="fmc2" invisible="1" />
+			    <field name="last_reviewed2" invisible="1" />
+                            <!--<button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />-->
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
                         </tree>
                     </field>
-                    <button colspan="4" icon="gtk-execute" string="Valid multiple lines" type="object" name="valid_multiple_lines" />
+                    <button colspan="4" icon="gtk-execute" string="Valid all lines" type="object" name="valid_multiple_lines" />
                 </form>
             </field>
         </record>
