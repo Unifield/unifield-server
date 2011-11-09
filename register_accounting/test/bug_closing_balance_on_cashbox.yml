@@ -125,8 +125,8 @@
             assert line.number == 8, "Number should be 8. It's %s" % line.number
     for line in bs.ending_details_ids:
         if line.pieces == 2.0:
-            assert line.number == 3, "Number should be 3. It's %s" % line.number
+            assert line.number == 0, "Number should be 0. It's %s" % line.number
         if line.pieces == 10.0:
-            assert line.number == 5, "Number should be 5. It's %s" % line.number
+            assert line.number == 0, "Number should be 0. It's %s" % line.number
         if line.pieces == 50.0:
-            assert line.number == 8, "Number should be 8. It's %s" % line.number
+            assert line.number == 0, "Number should be 0. It's %s" % line.number
