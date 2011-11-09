@@ -29,6 +29,7 @@ import decimal_precision as dp
 import time
 import netsvc
 from ..register_tools import open_register_view
+from ..register_tools import _get_date_in_period
 
 class wizard_account_invoice(osv.osv):
     _name = 'wizard.account.invoice'
@@ -120,6 +121,10 @@ class wizard_account_invoice(osv.osv):
         # Prepare some value
         inv_obj = self.pool.get('account.invoice')
         absl_obj = self.pool.get('account.bank.statement.line')
+        # Retrieve period
+        register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
+        period = register and register.period_id and register.period_id.id or False
+        vals.update({'date_invoice': _get_date_in_period(cr, uid, time.strftime('%Y-%m-%d'), context=context)})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
@@ -134,7 +139,7 @@ class wizard_account_invoice(osv.osv):
         reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
             'currency_id': vals['currency_id'],
-            'date': time.strftime('%Y-%m-%d'),
+            'date': _get_date_in_period(self, cr, uid, time.strftime('%Y-%m-%d'), period, context=context),
             'direct_invoice': True,
             'amount_out': amount,
             'invoice_id': inv_id,
