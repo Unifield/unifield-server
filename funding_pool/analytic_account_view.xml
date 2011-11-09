@@ -13,7 +13,7 @@
                     </field>
                     <field name="code" position="replace">
                         <field name="code" select="1" required="1"/>
-                        <field name="category" select="1" on_change="on_change_category(category)" />
+                        <field name="category" select="1" required="1" on_change="on_change_category(category)" />
                     </field>
 	                <page string="Account Data" position="replace">
 	                    <page string="Activation period">
@@ -65,6 +65,7 @@
                         <field name="name"/>
                         <field name="code"/>
                         <field name="description"/>
+                        <field name="category"/>
                         <field name="type"/>
                         <field name="date_start"/>
                         <field name="date"/>

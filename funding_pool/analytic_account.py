@@ -42,11 +42,28 @@ class analytic_account(osv.osv):
     _defaults ={
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
-    
-    _sql_constraints = [
-        ('code_account_unique', 'unique (code, category)', 'The code of the analytic account must be unique!'),
-        ('name_account_unique', 'unique (name, category)', 'The name of the analytic account must be unique!')
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for account in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
     ]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        account = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (account['code'] or '') + '(copy)'
+        default['name'] = (account['name'] or '') + '(copy)'
+        return super(analytic_account, self).copy(cr, uid, id, default, context=context)
 
     def set_funding_pool_parent(self, cr, uid, vals):
         if 'category' in vals and \

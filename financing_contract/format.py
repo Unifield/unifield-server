@@ -116,10 +116,18 @@ class financing_contract_actual_line(osv.osv):
     _defaults = {
         'line_type': 'normal',
     }
-    
-    _sql_constraints = [
-        ('code_reporting_line_unique', 'unique (code, format_id)', 'The code of the reporting line must be unique!'),
-        ('name_reporting_line_unique', 'unique (name, format_id)', 'The name of the reporting line must be unique!')
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for reporting_line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('format_id', '=', reporting_line.format_id.id),('|'),('name', '=ilike', reporting_line.name),('code', '=ilike', reporting_line.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between reporting lines!', ['code', 'name']),
     ]
     
     def create(self, cr, uid, vals, context=None):

@@ -245,11 +245,28 @@ class financing_contract_contract(osv.osv):
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
-    
-    _sql_constraints = [
-        ('code_contract_unique', 'unique (code)', 'The code of the contract must be unique!'),
-        ('name_contract_unique', 'unique (name)', 'The name of the contract must be unique!')
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for contract in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', contract.name),('code', '=ilike', contract.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
     ]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        contract = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (contract['code'] or '') + '(copy)'
+        default['name'] = (contract['name'] or '') + '(copy)'
+        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
     
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
