@@ -108,7 +108,7 @@ class account_cash_statement(osv.osv):
             vals = {
                 'ending_id': st.id,
                 'pieces': line.pieces,
-                'number': line.number,
+                'number': 0.0,
             }
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition : 
