@@ -436,8 +436,7 @@ class monthly_review_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            context.update({'sloc_id': line.mrc_id.cons_location_id.id})
-            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, context=context).get('value', None).get('last_reviewed', None)
+            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, line.mrc_id.id, context=context).get('value', None).get('last_reviewed', None)
             
         return res
     
@@ -445,7 +444,7 @@ class monthly_review_consumption_line(osv.osv):
         'name': fields.many2one('product.product', string='Product', required=True),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
         'fmc': fields.float(digits=(16,2), string='FMC'),
-        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True),
+        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),
         'valid_until': fields.date(string='Valid until'),
         'valid_ok': fields.boolean(string='OK', readonly=True),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
@@ -494,12 +493,11 @@ class monthly_review_consumption_line(osv.osv):
                               'valid_until': False,
                               'valid_ok': False}}
         
-        if context.get('sloc_id', False):
-            mrc_ids = self.pool.get('monthly.review.consumption').search(cr, uid, [('cons_location_id', '=', context.get('sloc_id'))], context=context)
-            line_ids = line_obj.search(cr, uid, [('name', '=', product_id), ('mrc_id', 'in', mrc_ids)], order='valid_until desc', context=context)
+        domain = [('name', '=', product_id)]
+        line_ids = line_obj.search(cr, uid, [('name', '=', product_id), ('mrc_id', 'in', mrc_ids)], order='valid_until desc', context=context)
             
-            for line in self.browse(cr, uid, [line_ids[0]], context=context):
-                last_fmc_reviewed = line.mrc_id.creation_date
+        for line in self.browse(cr, uid, [line_ids[0]], context=context):
+            last_fmc_reviewed = line.mrc_id.creation_date
                 
                     
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
