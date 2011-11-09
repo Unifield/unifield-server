@@ -230,7 +230,7 @@ class procurement_order(osv.osv):
         monthly_consumption = 0.00
         
         if 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
-            review_ids = review_obj.search(cr, uid, [('cons_location_id', '=', location_id)], context=context)
+            review_ids = review_obj.search(cr, uid, [], order='period_to', context=context)
             review_line_ids = review_line_obj.search(cr, uid, [('mrc_id', 'in', review_ids), ('name', '=', product_id)], context=context)
             for line in review_line_obj.browse(cr, uid, review_line_ids, context=context):
                 last_date = False
@@ -247,7 +247,9 @@ class procurement_order(osv.osv):
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
         
-        return (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
+        qty_to_order = (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
+        
+        return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
         
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
