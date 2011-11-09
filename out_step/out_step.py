@@ -36,9 +36,17 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
 
-    _columns = {'delivered': fields.boolean(string='Delivered'),
+    _columns = {'delivered': fields.boolean(string='Delivered', readonly=True,),
                 }
+    
     _defaults = {'delivered': False,
                  }
+    
+    def set_delivered(self, cr, uid, ids, context=None):
+        '''
+        set the delivered flag
+        '''
+        self.write(cr, uid, ids, {'delivered': True,}, context=context)
+        return True
      
 stock_picking()

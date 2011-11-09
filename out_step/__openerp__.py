@@ -32,7 +32,7 @@
     'update_xml': ['out_step_view.xml',
                    ],
     "demo_xml": [],
-    'test': [#'test/msf_outgoing.yml'
+    'test': ['test/out_step.yml'
              ],
     'installable': True,
 }

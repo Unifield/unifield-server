@@ -10,9 +10,13 @@
             <field name="arch" type="xml">
             	<data>
             	
-            		<field name="state" position="after">
-						<field name="delivered" />
-					</field>
+            		<xpath expr="//page[@string='Products']/group[@col='12']/field[@name='state']" position="after">
+            			<field name="subtype" invisible="True" />
+            			<group col="2" colspan="1">
+            				<field name="delivered" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', False),]}" />
+            				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True),]}" />
+            			</group>
+					</xpath>
             	
             	</data>
             </field>
