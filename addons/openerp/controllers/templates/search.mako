@@ -125,7 +125,9 @@
                                     <a class="button-a select-link" href="javascript: void(0)" onclick="do_select()">${_("Select")}</a>
                                 % endif
                             	<a class="button-a" href="javascript: void(0)" onclick="search_filter()" >${_("Search")}</a>
+                                % if not form.screen.widget.hide_new_button:
                            	    <a class="button-a" href="javascript: void(0)" onclick="do_create()">${_("New")}</a>
+                                % endif
                             	<a class="button-a" href="javascript: void(0)" onclick="close_dialog();">${_("Close")}</a>
 	                            
                             </td>
@@ -141,9 +143,11 @@
                         % if not params.ids and 'default_name' in params.context:
                             <div id="no-record-warning" class="no-record-warning">
                                 <p>${_("No record found : '%(searched_string)s'.", searched_string=params.context['default_name'])}</p>
+                                % if not form.screen.widget.hide_new_button:
                                 <p>
                                     <a class="button-a" href="javascript: void(0)" onclick="do_create()">${_("Create")}</a>
                                 </p>
+                                % endif
                             </div>
                         % endif 
                     </div>
