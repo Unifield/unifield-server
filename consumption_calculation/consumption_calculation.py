@@ -381,9 +381,13 @@ class monthly_review_consumption(osv.osv):
                 # Check if the product is not already on the report
                 if product.id not in products:
                     products.append(product.id)
+                    amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=context)
+                    
                     self.pool.get('monthly.review.consumption.line').create(cr, uid, {'name': product.id,
-                                                                                    'fmc': 0.00,
-                                                                                    'mrc_id': report.id})
+                                                                                      'amc': amc,
+                                                                                      'fmc': amc,
+                                                                                      'last_reviewed_date': reviewed_date,
+                                                                                      'mrc_id': report.id})
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'monthly.review.consumption',
