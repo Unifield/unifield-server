@@ -80,6 +80,7 @@
     				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
     				<separator colspan="4" string="Location" />
     				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+				<newline />
 				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
@@ -134,7 +135,7 @@
     	 	<field name="arch" type="xml">
     	 		<form string="Lot likely to expire">
     	 			<separator string="General information" colspan="4" />
-    	 			<field name="name" string="Date" readonly="1" />
+    	 			<field name="name" string="Month" readonly="1" />
     	 			<newline />
     	 			<field name="available_qty" readonly="1" />
     	 			<field name="expired_qty" readonly="1" />
