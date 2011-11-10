@@ -70,9 +70,6 @@
     		<field name="priority" eval="16" />
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
-    				<separator colspan="4" string="Location" />
-    				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
-				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
     				<field name="date_to" />
@@ -81,6 +78,9 @@
     				<field name="consumption_type" colspan="4" />
     				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
     				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
+    				<separator colspan="4" string="Location" />
+    				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
