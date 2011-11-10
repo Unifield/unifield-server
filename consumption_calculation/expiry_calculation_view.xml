@@ -71,7 +71,7 @@
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
-    				<field name="location_id" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+    				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
 				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
