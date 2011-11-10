@@ -138,9 +138,9 @@
     	 			<newline />
     	 			<field name="available_qty" readonly="1" />
     	 			<field name="expired_qty" readonly="1" />
-    	 			<separator string="Lots" colspan="4" />
+    	 			<separator string="Batchs" colspan="4" />
     	 			<field name="line_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
-    	 				<tree string="Lot">
+    	 				<tree string="Batch">
     	 					<field name="lot_id" />
     	 					<field name="expired_date" />
     	 					<field name="location_id" />

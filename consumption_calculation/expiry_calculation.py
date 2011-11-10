@@ -524,7 +524,7 @@ class product_likely_expire_report_item(osv.osv_memory):
             'name': fields.char(size=64, string='Month'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-            'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Lots'),
+            'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Batchs'),
     }
     
 product_likely_expire_report_item()
