@@ -8,7 +8,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line">
+                <tree string="Account Entry Line" noteditable="1">
                     <field name="journal_id" string="Journal Code"/>
                     <field name="move_id" string="Entry Sequence"/>
                     <field name="instance"/>
@@ -87,7 +87,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line" noteditable="True">
+                <tree string="Account Entry Line" editable="bottom" noteditable="1">
                     <field name="journal_id" string="Journal Code"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="instance"/>
