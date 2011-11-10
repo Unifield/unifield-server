@@ -165,6 +165,7 @@ class product_likely_expire_report(osv.osv_memory):
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
+        'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True),
         'date_to': fields.date(string='To', required=True),
@@ -181,6 +182,7 @@ class product_likely_expire_report(osv.osv_memory):
         'date_from': lambda *a: time.strftime('%Y-%m-%d'),
         'consumption_to': lambda *a: time.strftime('%Y-%m-%d'),
         'consumption_type': lambda *a: 'fmc',
+        'msf_instance': lambda *a: 'MSF Instance',
     }
     
     def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context={}):
@@ -252,10 +254,10 @@ class product_likely_expire_report(osv.osv_memory):
         
         if report.location_id:
             # Get all locations
-            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
+            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id desc', context=context)
         else:
             # Get all locations
-            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], context=context)
+            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id desc', context=context)
 
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -303,6 +305,7 @@ class product_likely_expire_report(osv.osv_memory):
                 rest = 0.00
                 last_rest = 0.00
                 total_expired = 0.00
+                start_month_flag = True
                 for month in dates:
                     days = Age(month + RelativeDateTime(months=1, day=1, days=-1), DateFrom(report.date_from))
                     coeff = (days.years*365.0 + days.months*30.0 + days.days)/30.0
@@ -316,12 +319,18 @@ class product_likely_expire_report(osv.osv_memory):
                     seq += 1
                     
                     # Create a line for each lot which expired in this month
-                    product_lot_ids = lot_obj.search(cr, uid, [('product_id', '=', lot.product_id.id),
-                                                               ('life_date', '>=', month.strftime('%Y-%m-%d')),
-                                                               ('stock_available', '>', 0.00),
-                                                               ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))],
-                                                     order='life_date',
-                                                     context=context)
+                    domain = [('product_id', '=', lot.product_id.id),
+                             ('stock_available', '>', 0.00),
+                             ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
+
+                    # If we are not in the first month of the period, displayed all products already expired
+                    if not start_month_flag:
+                        domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+
+                    # Remove the token after the first month processing
+                    start_month_flag = False
+
+                    product_lot_ids = lot_obj.search(cr, uid, domain, order='life_date', context=context)
                     if not product_lot_ids:
                         last_rest = rest
                         #last_rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(last_rest + total_cons - already_cons,2), lot.product_id.uom_id.id)
@@ -330,6 +339,7 @@ class product_likely_expire_report(osv.osv_memory):
                     for product_lot in lot_obj.browse(cr, uid, product_lot_ids, context=context):
                         lot_days = Age(DateFrom(product_lot.life_date), month)
                         lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
+                        if lot_coeff < 0.00: lot_coeff = 0.00
                         lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + last_rest 
                         
                         if rest > 0.00:
@@ -513,10 +523,10 @@ class product_likely_expire_report_item(osv.osv_memory):
     
     _columns = {
             'line_id': fields.many2one('product.likely.expire.report.line', string='Line', ondelete='cascade'),
-            'name': fields.char(size=64, string='Date'),
+            'name': fields.char(size=64, string='Month'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
-            'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Lots'),
+            'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Batchs'),
     }
     
 product_likely_expire_report_item()

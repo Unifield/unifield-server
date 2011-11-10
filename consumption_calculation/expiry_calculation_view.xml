@@ -70,9 +70,6 @@
     		<field name="priority" eval="16" />
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
-    				<separator colspan="4" string="Location" />
-    				<field name="location_id" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
-				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
     				<field name="date_to" />
@@ -81,6 +78,10 @@
     				<field name="consumption_type" colspan="4" />
     				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
     				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
+    				<separator colspan="4" string="Location" />
+    				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+				<newline />
+				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
@@ -96,7 +97,10 @@
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
-    				<field name="location_id" readonly="1" />
+				<group colspan="2" col="2">
+	    				<field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
+    					<field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
+				</group>
 				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" readonly="1" />
@@ -134,13 +138,13 @@
     	 	<field name="arch" type="xml">
     	 		<form string="Lot likely to expire">
     	 			<separator string="General information" colspan="4" />
-    	 			<field name="name" string="Date" readonly="1" />
+    	 			<field name="name" string="Month" readonly="1" />
     	 			<newline />
     	 			<field name="available_qty" readonly="1" />
     	 			<field name="expired_qty" readonly="1" />
-    	 			<separator string="Lots" colspan="4" />
+    	 			<separator string="Batchs" colspan="4" />
     	 			<field name="line_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
-    	 				<tree string="Lot">
+    	 				<tree string="Batch">
     	 					<field name="lot_id" />
     	 					<field name="expired_date" />
     	 					<field name="location_id" />
