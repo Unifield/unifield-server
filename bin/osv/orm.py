@@ -2088,10 +2088,14 @@ class orm_memory(orm_template):
         f = False
         if result:
             for id, data in self.datas.items():
-                counter = counter + 1
                 data['id'] = id
-#                if limit and (counter > int(limit)):
-#                    break
+                # If no offset, give the first entries between 0 and the limit
+                if not offset and limit and (counter > int(limit)):
+                    break
+                # If offset, give only entries between offset and the offset+limit
+                elif offset and limit and (counter > int(limit + offset)):
+                    break
+
                 f = True
                 for arg in result:
                     if arg[1] == '=':
@@ -2104,7 +2108,11 @@ class orm_memory(orm_template):
                     f = f and val
 
                 if f:
-                    res.append(id)
+                    # Increment the counter only if the data matches with the domain
+                    counter = counter + 1
+                    if counter > offset:
+                        res.append(id)
+
         if count:
             return len(res)
     
