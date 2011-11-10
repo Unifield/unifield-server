@@ -97,7 +97,10 @@
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
-    				<field name="location_id" readonly="1" />
+				<group colspan="2" col="2">
+	    				<field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
+    					<field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
+				</group>
 				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" readonly="1" />

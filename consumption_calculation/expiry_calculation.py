@@ -165,6 +165,7 @@ class product_likely_expire_report(osv.osv_memory):
     
     _columns = {
         'location_id': fields.many2one('stock.location', string='Location'),
+        'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
         'date_from': fields.date(string='From', required=True),
         'date_to': fields.date(string='To', required=True),
@@ -181,6 +182,7 @@ class product_likely_expire_report(osv.osv_memory):
         'date_from': lambda *a: time.strftime('%Y-%m-%d'),
         'consumption_to': lambda *a: time.strftime('%Y-%m-%d'),
         'consumption_type': lambda *a: 'fmc',
+        'msf_instance': lambda *a: 'MSF Instance',
     }
     
     def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context={}):
