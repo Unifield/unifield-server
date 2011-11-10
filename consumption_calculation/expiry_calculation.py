@@ -303,6 +303,7 @@ class product_likely_expire_report(osv.osv_memory):
                 rest = 0.00
                 last_rest = 0.00
                 total_expired = 0.00
+                start_month_flag = True
                 for month in dates:
                     days = Age(month + RelativeDateTime(months=1, day=1, days=-1), DateFrom(report.date_from))
                     coeff = (days.years*365.0 + days.months*30.0 + days.days)/30.0
@@ -316,12 +317,18 @@ class product_likely_expire_report(osv.osv_memory):
                     seq += 1
                     
                     # Create a line for each lot which expired in this month
-                    product_lot_ids = lot_obj.search(cr, uid, [('product_id', '=', lot.product_id.id),
-                                                               ('life_date', '>=', month.strftime('%Y-%m-%d')),
-                                                               ('stock_available', '>', 0.00),
-                                                               ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))],
-                                                     order='life_date',
-                                                     context=context)
+                    domain = [('product_id', '=', lot.product_id.id),
+                             ('stock_available', '>', 0.00),
+                             ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
+
+                    # If we are not in the first month of the period, displayed all products already expired
+                    if not start_month_flag:
+                        domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+
+                    # Remove the token after the first month processing
+                    start_month_flag = False
+
+                    product_lot_ids = lot_obj.search(cr, uid, domain, order='life_date', context=context)
                     if not product_lot_ids:
                         last_rest = rest
                         #last_rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(last_rest + total_cons - already_cons,2), lot.product_id.uom_id.id)
