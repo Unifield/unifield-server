@@ -337,6 +337,7 @@ class product_likely_expire_report(osv.osv_memory):
                     for product_lot in lot_obj.browse(cr, uid, product_lot_ids, context=context):
                         lot_days = Age(DateFrom(product_lot.life_date), month)
                         lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
+                        if lot_coeff < 0.00: lot_coeff = 0.00
                         lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + last_rest 
                         
                         if rest > 0.00:
