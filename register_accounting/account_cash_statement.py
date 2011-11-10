@@ -190,6 +190,9 @@ class account_cash_statement(osv.osv):
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
+        if context is None:
+            context = {}
+        context['type_posting'] = 'temp'
         return {
             'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
@@ -206,6 +209,9 @@ class account_cash_statement(osv.osv):
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
+        if context is None:
+            context = {}
+        context['type_posting'] = 'hard'
         return {
             'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
