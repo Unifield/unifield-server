@@ -87,6 +87,7 @@
 	                    <field name="name"/>
 	                    <field name="code"/>
 	                    <field name="description"/>
+                        <field name="category"/>
 	                    <field name="type"/>
 	                    <field name="date_start"/>
 	                    <field name="date"/>
