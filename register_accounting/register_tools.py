@@ -81,6 +81,38 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             cr.execute(sql)
     return True
 
+def _get_third_parties_name(self, cr, uid, vals, context={}):
+    """
+    Get third parties name from vals that could contain:
+     - partner_type: displayed as "object,id"
+     - partner_id: the id of res.partner
+     - register_id: the id of account.bank.statement
+     - employee_id: the id of hr.employee
+    """
+    # Prepare some values
+    res = ''
+    # Some verifications
+    if not context:
+        context = {}
+    if not vals:
+        return res
+    if 'partner_type' in vals and vals.get('partner_type', False):
+        a = vals.get('partner_type').split(',')
+        if len(a) and len(a) > 1:
+            b = self.pool.get(a[0]).browse(cr, uid, [int(a[1])], context=context)
+            res = b and b[0] and b[0].name or ''
+            return res
+    if 'partner_id' in vals and vals.get('partner_id', False):
+        partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')], context=context)
+        res = partner and partner[0] and partner[0].name or ''
+    if 'employee_id' in vals and vals.get('employee_id', False):
+        employee = self.pool.get('hr.employee').browse(cr, uid, [vals.get('employee_id')], context=context)
+        res = employee and employee[0] and employee[0].name or ''
+    if 'register_id' in vals and vals.get('register_id', False):
+        register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
+        res = register and register[0] and register[0].name or ''
+    return res
+
 def open_register_view(self, cr, uid, register_id, context={}): 
     """
     Return the necessary object in order to return on the register we come from
