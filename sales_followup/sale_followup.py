@@ -285,23 +285,28 @@ class sale_order_followup(osv.osv_memory):
             picking_moves = move_obj.search(cr, uid, [('backmove_id', 'in', first_moves)], context=context)
             packing_moves = move_obj.search(cr, uid, [('backmove_id', 'in', picking_moves)], context=context)
 
-            if packing_moves:
-                for pack in move_obj.browse(cr, uid, packing_moves, context=context):
-                    if pack.location_dest_id.usage == 'customer' or (pack.product_qty > 0.00 and pack.state != 'done'):
-                       outgoing_ids.append(pack.id)
-            if picking_moves:
-                status = 'picking'
-                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
-                    if pick.picking_id.subtype == 'ppl' and status != 'packing':
-                        status = 'ppl'
-                    if pick.picking_id.subtype == 'packing':
-                        status = 'packing'
-                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
-                    if ((pick.product_qty > 0.00 and pick.picking_id.subtype == status) or pick.product_qty > 0.00) and pick.state != 'done':
-                        outgoing_ids.append(pick.id)
             for first in move_obj.browse(cr, uid, first_moves, context=context):
                 if first.product_qty > 0.00: 
                     outgoing_ids.append(first.id)
+
+            if picking_moves:
+                status = 'picking'
+#                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
+#                    if pick.picking_id.subtype == 'ppl' and status != 'packing':
+#                        status = 'ppl'
+#                    if pick.picking_id.subtype == 'packing':
+#                        status = 'packing'
+                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
+                    if pick.product_qty > 0.00:
+#                    if ((pick.product_qty > 0.00 and pick.picking_id.subtype == status) or pick.product_qty > 0.00) and pick.state != 'done':
+                        outgoing_ids.append(pick.id)
+
+            if packing_moves:
+                for pack in move_obj.browse(cr, uid, packing_moves, context=context):
+                    if pack.product_qty > 0.00:
+                        outgoing_ids.append(pack.id)
+#                    if pack.location_dest_id.usage == 'customer' or (pack.product_qty > 0.00 and pack.state != 'done'):
+#                       outgoing_ids.append(pack.id)
         
         return outgoing_ids
     
@@ -334,6 +339,20 @@ class sale_order_line_followup(osv.osv_memory):
         Get all status about the line
         '''
         move_obj = self.pool.get('stock.move')
+        wh_obj = self.pool.get('stock.warehouse')
+
+        packing_loc_ids = []
+        dispatch_loc_ids = []
+        distrib_loc_ids = []
+
+        wh_ids = wh_obj.search(cr, uid, [], context=context)
+        for wh in wh_obj.browse(cr, uid, wh_ids, context=context):
+            if wh.lot_packing_id.id not in packing_loc_ids:
+                packing_loc_ids.append(wh.lot_packing_id.id)
+            if wh.lot_dispatch_id.id not in dispatch_loc_ids:
+                dispatch_loc_ids.append(wh.lot_dispatch_id.id)
+            if wh.lot_distribution_id.id not in distrib_loc_ids:
+                distrib_loc_ids.append(wh.lot_distribution_id.id)
         
         res = {}
         
@@ -390,16 +409,6 @@ class sale_order_line_followup(osv.osv_memory):
             elif move_state == 'cancel':
                 res[line.id]['product_available'] = 'Exception'
 
-            # Get information about the status of the RfQ
-#            for quotation in line.quotation_ids:
-#                if quotation.state == 'draft':
-#                    res[line.id]['quotation_status'] = 'Waiting'
-#                if quotation.state == 'rfq_sent' and res[line.id]['quotation_status'] not in ('Waiting'):
-#                    res[line.id]['quotation_status'] = 'Sent'
-#                elif quotation.state == 'rfq_updated' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent'):
-#                    res[line.id]['quotation_status'] = 'Updated'
-#                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
-#                    res[line.id]['quotation_status'] = 'Done'
                     
             # Get information about the state of all call for tender
             tender_state = False
@@ -463,26 +472,82 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['incoming_status'] = 'Done'
             elif shipment_state == 'cancel':
                 res[line.id]['incoming_status'] = 'Exception' 
-            
-            # Get information about the state of all outgoing deliveries
-            outgoing_state = False
-            for outgoing in line.outgoing_ids:
-                if not outgoing_state:
-                    outgoing_state = outgoing.state
-                if outgoing_state != outgoing.state:
-                    outgoing_state = 'sf_partial'
 
-            if outgoing_state == 'sf_partial':
-                res[line.id]['outgoing_status'] = 'Partial'
-            elif outgoing_state and outgoing_state == 'assigned':
-                res[line.id]['outgoing_status'] = 'Available'
-                res[line.id]['product_available'] = 'Available'
-            elif outgoing_state and outgoing_state == 'confirmed':
-                res[line.id]['outgoing_status'] = 'Confirmed'
-            elif outgoing_state and outgoing_state == 'done':
-                res[line.id]['outgoing_status'] = 'Done'
+            outgoing_state = False
+            product_state = False
+            outgoing_partial = False
+            first_move_state = False
+            for outgoing in line.outgoing_ids:
+                # If the line is sent in many steps
                 res[line.id]['product_available'] = 'Done'
-            
+                if outgoing.product_qty < line.line_id.product_uom_qty:
+                    outgoing_partial = True
+
+                partial = True
+
+                if outgoing.location_dest_id.usage == 'customer':
+                    if outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Done'
+                        outgoing_state = 'Done'
+                        partial = False
+                    else:
+                        res[line.id]['outgoing_status'] = 'Shipped'
+                elif outgoing.location_dest_id.id in distrib_loc_ids and \
+                           res[line.id]['outgoing_status'] not in ('Done', 'Shipped'):
+                    if outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Shipped'
+                        partial = False
+                    else:
+                        res[line.id]['outgoing_status'] = 'Packed'
+                elif outgoing.location_dest_id.id in dispatch_loc_ids and \
+                           res[line.id]['outgoing_status'] not in ('Done', 'Shipped', 'Packed'):
+                    if outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Packed'
+                        partial = False
+                    else:
+                        res[line.id]['outgoing_status'] = 'Picked'
+                else:
+                    if outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Picked'
+                        partial = False
+                        first_move_state = 'Available'
+                    elif outgoing.state == 'assigned':
+                        res[line.id]['outgoing_status'] = 'Available'
+                        res[line.id]['product_available'] = 'Available'
+                        first_move_state = 'Available'
+                    else:
+                        res[line.id]['outgoing_status'] = 'Waiting'
+                        res[line.id]['product_available'] = 'Waiting'
+                        first_move_state = 'Waiting'
+                    
+                # Make partial state
+                if partial and outgoing_partial and not outgoing_state:
+                    outgoing_state = res[line.id]['outgoing_status']
+                elif partial and outgoing_partial and outgoing_state and outgoing_state != res[line.id]['outgoing_status']:
+                    res[line.id]['outgoing_status'] = 'Partial'
+                # Make partial availability
+                if outgoing_partial and not product_state:
+                    product_state = res[line.id]['product_available']
+                elif outgoing_partial and product_state and product_state != res[line.id]['product_available']:
+                    res[line.id]['product_available'] = 'Partial'
+
+            # In case of standard OUT (no msf_outgoing module installed)
+            msf_out = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
+            if not msf_out:
+                for outgoing in line.outgoing_ids:
+                    if outgoing.state == 'confirmed':
+                        res[line.id]['outgoing_status'] = 'Waiting'
+                        res[line.id]['product_available'] = 'Waiting'
+                    elif outgoing.state == 'assigned':
+                        res[line.id]['outgoing_status'] = 'Available'
+                        res[line.id]['product_available'] = 'Available'
+                    elif outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Done'
+                        res[line.id]['product_available'] = 'Done'
+                    elif outgoing.state == 'cancel':
+                        res[line.id]['outgoing_status'] = 'Cancelled'
+                        res[line.id]['product_available'] = 'Cancelled'
+
         return res
     
     _columns = {
