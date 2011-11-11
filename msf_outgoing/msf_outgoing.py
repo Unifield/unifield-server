@@ -1233,7 +1233,6 @@ class stock_picking(osv.osv):
                 'ppl_customize_label': fields.many2one('ppl.customize.label', string='Labels Customization',),
                 # warehouse info (locations) are gathered from here - allow shipment process without sale order
                 'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', required=True,),
-                'address_id': fields.many2one('res.partner.address', 'Address', help="Address of partner", required=True,),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
@@ -1244,13 +1243,15 @@ class stock_picking(osv.osv):
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
+                # flag for converted picking
+                'converted_to_standard': fields.boolean(string='Converted to Standard'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
                  'subtype': 'standard',
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
-                 'address_id': lambda obj, cr, uid, c: len(obj.pool.get('res.partner.address').search(cr, uid, [], context=c)) and obj.pool.get('res.partner.address').search(cr, uid, [], context=c)[0] or False,
+                 'converted_to_standard': False,
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
@@ -1671,8 +1672,17 @@ class stock_picking(osv.osv):
             if obj.backorder_ids:
                 raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
             
-            # change subtype
-            obj.write({'subtype': 'standard',})
+            # log a message concerning the conversion
+            new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+            self.log(cr, uid, obj.id, _('The Preparation Picking (%s) has been converted to simple Out (%s).'%(obj.name, new_name)))
+            # change subtype and name
+            obj.write({'name': new_name,
+                       'subtype': 'standard',
+                       'converted_to_standard': True,
+                       }, context=context)
+            # all destination location of the stock moves must be output location of warehouse - lot_output_id
+            for move in obj.move_lines:
+                move.write({'location_dest_id': obj.warehouse_id.lot_output_id.id,}, context=context)
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         

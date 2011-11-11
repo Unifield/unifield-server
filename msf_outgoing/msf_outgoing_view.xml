@@ -178,7 +178,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4"/>
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                         </group>
@@ -438,7 +438,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4"/>
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                             <field name="num_of_packs" />
