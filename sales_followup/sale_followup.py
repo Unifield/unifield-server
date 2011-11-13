@@ -374,8 +374,8 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['sourced_ok'] = 'Cancelled'
             if line.line_id.state == 'exception':
                 res[line.id]['sourced_ok'] = 'Exception'
-            
-            # Get information about the state of all purchase order
+                
+                            # Get information about the state of all purchase order
             if line.line_id.type == 'make_to_stock':
 #                res[line.id]['quotation_status'] = 'N/A'
                 res[line.id]['purchase_status'] = 'N/A'
@@ -383,31 +383,7 @@ class sale_order_line_followup(osv.osv_memory):
                 if line.line_id.product_id:
                     context.update({'shop_id': line.line_id.order_id.shop_id.id,
                                     'uom_id': line.line_id.product_uom.id})
-	            if res[line.id]['available_qty'] == 0.00:
-                        res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).virtual_available
-
-            # Get information about the availability of the product
-            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
-            move_state = False
-            for move in move_obj.browse(cr, uid, move_ids, context=context):
-#                if move.location_dest_id.usage == 'customer':
-                if move.state == 'assigned' and line.line_id.type != 'make_to_stock':
-                    res[line.id]['available_qty'] += move.product_qty
-                elif move.state in ('confirmed', 'waiting', 'assigned') and line.line_id.type == 'make_to_stock':
-                    res[line.id]['available_qty'] += move.product_qty
-                if not move_state:
-                    move_state = move.state
-                if move.state != move_state:
-                    move_state = 'sf_partial'
-
-            if move_state == 'sf_partial':
-                res[line.id]['product_available'] = 'Partial'
-            elif move_state in ('assigned', 'done'):
-                res[line.id]['product_available'] = 'Done'
-            elif move_state in ('draft', 'confirmed'):
-                res[line.id]['product_available'] = 'Waiting'
-            elif move_state == 'cancel':
-                res[line.id]['product_available'] = 'Exception'
+                res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
                     
             # Get information about the state of all call for tender
@@ -477,6 +453,8 @@ class sale_order_line_followup(osv.osv_memory):
             product_state = False
             outgoing_partial = False
             first_move_state = False
+            total_line = 0.00
+            total_out = 0
             for outgoing in line.outgoing_ids:
                 # If the line is sent in many steps
                 res[line.id]['product_available'] = 'Done'
@@ -507,10 +485,16 @@ class sale_order_line_followup(osv.osv_memory):
                     else:
                         res[line.id]['outgoing_status'] = 'Picked'
                 else:
+                    if outgoing_partial:
+                        if total_line < line.line_id.product_uom_qty:
+                            total_line += outgoing.product_qty
+                            total_out += 1
+                    else:
+                        total_out += 1
                     if outgoing.state == 'done':
                         res[line.id]['outgoing_status'] = 'Picked'
                         partial = False
-                        first_move_state = 'Available'
+                        first_move_state = 'Done'
                     elif outgoing.state == 'assigned':
                         res[line.id]['outgoing_status'] = 'Available'
                         res[line.id]['product_available'] = 'Available'
@@ -530,23 +514,67 @@ class sale_order_line_followup(osv.osv_memory):
                     product_state = res[line.id]['product_available']
                 elif outgoing_partial and product_state and product_state != res[line.id]['product_available']:
                     res[line.id]['product_available'] = 'Partial'
-
+                    
+                if outgoing_partial:
+                    res[line.id]['outgoing_nb'] = total_out
+                else:
+                    res[line.id]['outgoing_nb'] = total_out
+                    
             # In case of standard OUT (no msf_outgoing module installed)
             msf_out = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
             if not msf_out:
                 for outgoing in line.outgoing_ids:
                     if outgoing.state == 'confirmed':
+                        first_move_state = 'Waiting'
                         res[line.id]['outgoing_status'] = 'Waiting'
                         res[line.id]['product_available'] = 'Waiting'
                     elif outgoing.state == 'assigned':
+                        first_move_state = 'Available'
                         res[line.id]['outgoing_status'] = 'Available'
                         res[line.id]['product_available'] = 'Available'
                     elif outgoing.state == 'done':
+                        first_move_state = 'Done'
                         res[line.id]['outgoing_status'] = 'Done'
                         res[line.id]['product_available'] = 'Done'
                     elif outgoing.state == 'cancel':
+                        first_move_state = 'Exception'
                         res[line.id]['outgoing_status'] = 'Cancelled'
                         res[line.id]['product_available'] = 'Cancelled'
+                        
+                res[line.id]['outgoing_nb'] = len(line.outgoing_ids)
+                        
+            # Get information about the availability of the product
+            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
+            move_state = False
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
+#                if move.location_dest_id.usage == 'customer':
+                if move.state == 'assigned' and line.line_id.type != 'make_to_stock':
+                    res[line.id]['available_qty'] += move.product_qty
+                elif move.state == 'assigned' and line.line_id.type == 'make_to_stock' and (first_move_state not in ('Available', 'Done') or outgoing_partial):
+                    res[line.id]['available_qty'] += move.product_qty
+                elif first_move_state in ('Available', 'Done'):
+                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+#                if outgoing_state == 'Done':
+#                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+                if not move_state:
+                    move_state = move.state
+                if move.state != move_state:
+                    move_state = 'sf_partial'
+
+            if outgoing_partial and first_move_state == 'Done':
+                res[line.id]['product_available'] = 'Done'
+            elif outgoing_partial and first_move_state != 'Done':
+                res[line.id]['product_available'] = 'Partial'
+            elif first_move_state == 'Done':
+                res[line.id]['product_available'] = 'Done'
+            elif first_move_state == 'Available':
+                res[line.id]['product_available'] = 'Available'
+            elif first_move_state in ('Waiting'):
+                res[line.id]['product_available'] = 'Waiting'
+            elif first_move_state == 'Exception':
+                res[line.id]['product_available'] = 'Exception'
+                
+            
 
         return res
     
@@ -587,6 +615,8 @@ class sale_order_line_followup(osv.osv_memory):
         'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
                                          'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',
+                                            type='char', readonly=True, multi='status'),
+        'outgoing_nb': fields.function(_get_status, method=True, string='Outgoing delivery',
                                             type='char', readonly=True, multi='status'),
     }
     
