@@ -197,9 +197,14 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, context=context):
             # check if corresponding rfqs are in the good state
             rfq_ids = self.tender_integrity(cr, uid, tender, context=context)
+            # gather the product_id -> supplier_id relationship to display it back in the compare wizard
+            suppliers = {}
+            for line in tender.tender_line_ids:
+                if line.product_id and line.supplier_id:
+                    suppliers.update({line.product_id.id:line.supplier_id.id,})
             # rfq corresponding to this tender with done state (has been updated and not canceled)
             # the list of rfq which will be compared
-            c = dict(context, active_ids=rfq_ids, tender_id=tender.id, end_wizard=False)
+            c = dict(context, active_ids=rfq_ids, tender_id=tender.id, end_wizard=False, suppliers=suppliers,)
             # open the wizard
             action = wiz_obj.start_compare_rfq(cr, uid, ids, context=c)
         return action
