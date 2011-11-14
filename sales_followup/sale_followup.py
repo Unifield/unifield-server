@@ -569,7 +569,7 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['product_available'] = 'Done'
             elif first_move_state == 'Available':
                 res[line.id]['product_available'] = 'Available'
-            elif first_move_state in ('Waiting'):
+            elif first_move_state == 'Waiting':
                 res[line.id]['product_available'] = 'Waiting'
             elif first_move_state == 'Exception':
                 res[line.id]['product_available'] = 'Exception'
