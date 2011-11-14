@@ -111,6 +111,8 @@
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     invoice_ids = so.invoice_ids
+    # Avoir analytic distribution error
+    self.write(cr, uid, [x.id for x in invoice_ids], {'from_yml_test': True})
     for invoice in invoice_ids:
       wf_service.trg_validate(uid, 'account.invoice',invoice.id,'invoice_open', cr)
 -
