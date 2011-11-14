@@ -254,10 +254,10 @@ class product_likely_expire_report(osv.osv_memory):
         
         if report.location_id:
             # Get all locations
-            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id desc', context=context)
+            location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
         else:
             # Get all locations
-            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id desc', context=context)
+            wh_location_ids = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
 
             move_ids = move_obj.search(cr, uid, [('prodlot_id', '!=', False)], context=context)
             for move in move_obj.browse(cr, uid, move_ids, context=context):
@@ -303,10 +303,11 @@ class product_likely_expire_report(osv.osv_memory):
                 total_cons = 0.00
                 already_cons = 0.00
                 rest = 0.00
-                last_rest = 0.00
                 total_expired = 0.00
                 start_month_flag = True
+                last_expiry_date = False
                 for month in dates:
+                    if not last_expiry_date: last_expiry_date = month
                     days = Age(month + RelativeDateTime(months=1, day=1, days=-1), DateFrom(report.date_from))
                     coeff = (days.years*365.0 + days.months*30.0 + days.days)/30.0
                     total_cons = coeff*consumption
@@ -331,16 +332,14 @@ class product_likely_expire_report(osv.osv_memory):
                     start_month_flag = False
 
                     product_lot_ids = lot_obj.search(cr, uid, domain, order='life_date', context=context)
-                    if not product_lot_ids:
-                        last_rest = rest
-                        #last_rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(last_rest + total_cons - already_cons,2), lot.product_id.uom_id.id)
                     
                     # Create an item line for each lot and each location
                     for product_lot in lot_obj.browse(cr, uid, product_lot_ids, context=context):
-                        lot_days = Age(DateFrom(product_lot.life_date), month)
+                        lot_days = Age(DateFrom(product_lot.life_date), last_expiry_date)
                         lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
+                        if lot_coeff >= 0.00: last_expiry_date = DateFrom(product_lot.life_date)
                         if lot_coeff < 0.00: lot_coeff = 0.00
-                        lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + last_rest 
+                        lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id)
                         
                         if rest > 0.00:
                             if lot_cons >= product_lot.stock_available:
@@ -357,7 +356,6 @@ class product_likely_expire_report(osv.osv_memory):
                                 rest = 0.00
                         else:
                             l_expired_qty = product_lot.stock_available
-                        last_rest = rest
                         expired_qty += l_expired_qty
                         
                         lot_context = context.copy()
