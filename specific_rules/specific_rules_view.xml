@@ -198,9 +198,9 @@
             <field name="arch" type="xml">
                 <tree string="Expiry Dates">
                     <field name="prefix" invisible="True" />
-                    <field name="name" invisible="True" />
                     <field name="type" invisible="True" />
             		<field name="life_date" />
+            		<field name="name" />
                     <field name="product_id"/>
                     <field name="stock_available"/>
                     <field name="date"/>
