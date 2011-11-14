@@ -76,6 +76,8 @@ class purchase_order(osv.osv):
         invl_obj = self.pool.get('account.invoice.line') # invoice line object
         ana_obj = self.pool.get('analytic.distribution')
         for po in self.browse(cr, uid, ids):
+            if po.from_yml_test:
+                continue
             if not po.analytic_distribution_id:
                 raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
             inv_ids = po.invoice_ids

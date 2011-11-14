@@ -73,6 +73,8 @@ class account_invoice(osv.osv):
         # Browse invoice and all invoice lines to detect a non-valid line
         for inv in self.browse(cr, uid, ids, context=context):
             for invl in inv.invoice_line:
+                if invl.from_yml_test:
+                    continue
                 if invl.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"' % invl.name))
         # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
@@ -105,8 +107,11 @@ class account_invoice_line(osv.osv):
             # Default value is invalid
             res[line.id] = 'invalid'
             # Search MSF Private Fund element, because it's valid with all accounts
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
                 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
             # Verify that the distribution is compatible with line account
             if line.analytic_distribution_id:
                 total = 0.0

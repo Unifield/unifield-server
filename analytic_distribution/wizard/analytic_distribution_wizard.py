@@ -156,7 +156,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             tree = etree.fromstring(view['arch'])
             line_type = self._name
             data_obj = self.pool.get('ir.model.data')
-            oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+            try:
+                oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+            except ValueError:
+                oc_id = 0
             ## COST CENTER
             if line_type == 'analytic.distribution.wizard.lines':
                 # Change OC field
@@ -170,7 +173,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
                 # Change FP field
-                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                try:
+                    fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
@@ -184,14 +190,20 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
                 # Change Analytic Account field
-                f1_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
+                try:
+                    f1_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
+                except ValueError:
+                    f1_id = 0
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % f1_id)
             ## FREE 2
             if line_type == 'analytic.distribution.wizard.f2.lines':
                 # Change Analytic Account field
-                f2_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_2')[1]
+                try:
+                    f2_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_2')[1]
+                except ValueError:
+                    f2_id = 0
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % f2_id)

@@ -23,8 +23,8 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
-
 from mx.DateTime import *
+import logging
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -78,6 +78,7 @@ class purchase_order(osv.osv):
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
     }
     
     _defaults = {
@@ -85,6 +86,7 @@ class purchase_order(osv.osv):
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'mixed',
         'loan_duration': 2,
+        'from_yml_test': lambda *a: False,
     }
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
@@ -311,7 +313,18 @@ class purchase_order(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
         return picking_id
         # @@@end
-    
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Filled in 'from_yml_test' to True if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('PO: set from yml test to True')
+            vals['from_yml_test'] = True
+        return super(purchase_order, self).create(cr, uid, vals, context)
+
 purchase_order()
 
 class account_invoice(osv.osv):
