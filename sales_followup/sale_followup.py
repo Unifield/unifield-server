@@ -380,10 +380,10 @@ class sale_order_line_followup(osv.osv_memory):
 #                res[line.id]['quotation_status'] = 'N/A'
                 res[line.id]['purchase_status'] = 'N/A'
                 res[line.id]['incoming_status'] = 'N/A'
-                if line.line_id.product_id:
-                    context.update({'shop_id': line.line_id.order_id.shop_id.id,
-                                    'uom_id': line.line_id.product_uom.id})
-                res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+#                if line.line_id.product_id:
+#                    context.update({'shop_id': line.line_id.order_id.shop_id.id,
+#                                    'uom_id': line.line_id.product_uom.id})
+#                res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
                     
             # Get information about the state of all call for tender
@@ -447,133 +447,52 @@ class sale_order_line_followup(osv.osv_memory):
             elif shipment_state == 'done':
                 res[line.id]['incoming_status'] = 'Done'
             elif shipment_state == 'cancel':
-                res[line.id]['incoming_status'] = 'Exception' 
+                res[line.id]['incoming_status'] = 'Exception'
+                
+                
+            res[line.id]['outgoing_status'] = 'Blabla'
+            res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
-            outgoing_state = False
-            product_state = False
             outgoing_partial = False
-            first_move_state = False
-            total_line = 0.00
-            total_out = 0
+            outgoing_partial_state = []
+            outgoing_partial_qty = 0.00
             for outgoing in line.outgoing_ids:
-                # If the line is sent in many steps
-                res[line.id]['product_available'] = 'Done'
-                if outgoing.product_qty < line.line_id.product_uom_qty:
-                    outgoing_partial = True
-
-                partial = True
-
                 if outgoing.location_dest_id.usage == 'customer':
-                    if outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Done'
-                        outgoing_state = 'Done'
-                        partial = False
-                    else:
-                        res[line.id]['outgoing_status'] = 'Shipped'
-                elif outgoing.location_dest_id.id in distrib_loc_ids and \
-                           res[line.id]['outgoing_status'] not in ('Done', 'Shipped'):
-                    if outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Shipped'
-                        partial = False
-                    else:
-                        res[line.id]['outgoing_status'] = 'Packed'
-                elif outgoing.location_dest_id.id in dispatch_loc_ids and \
-                           res[line.id]['outgoing_status'] not in ('Done', 'Shipped', 'Packed'):
-                    if outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Packed'
-                        partial = False
-                    else:
-                        res[line.id]['outgoing_status'] = 'Picked'
+                    pass
+                elif outgoing.location_dest_id in distrib_loc_ids:
+                    pass
+                elif outgoing.location_dest_id in dispatch_loc_ids:
+                    pass
                 else:
-                    if outgoing_partial:
-                        if total_line < line.line_id.product_uom_qty:
-                            total_line += outgoing.product_qty
-                            total_out += 1
-                    else:
-                        total_out += 1
-                    if outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Picked'
-                        partial = False
-                        first_move_state = 'Done'
+                    # Check if the picking ticket is splitted or not
+                    if outgoing.product_qty < line.line_id.product_uom_qty:
+                        outgoing_partial = True
+                        outgoing_partial_state.append(outgoing.state)
+                        if outgoing.state == 'done':
+                            outgoing_partial_qty += outgoing.product_qty
+                    # If not splitted, change the product available status of the line to it matches with the
+                    # state of the stock move
                     elif outgoing.state == 'assigned':
-                        res[line.id]['outgoing_status'] = 'Available'
-                        res[line.id]['product_available'] = 'Available'
-                        first_move_state = 'Available'
-                    else:
-                        res[line.id]['outgoing_status'] = 'Waiting'
-                        res[line.id]['product_available'] = 'Waiting'
-                        first_move_state = 'Waiting'
-                    
-                # Make partial state
-                if partial and outgoing_partial and not outgoing_state:
-                    outgoing_state = res[line.id]['outgoing_status']
-                elif partial and outgoing_partial and outgoing_state and outgoing_state != res[line.id]['outgoing_status']:
-                    res[line.id]['outgoing_status'] = 'Partial'
-                # Make partial availability
-                if outgoing_partial and not product_state:
-                    product_state = res[line.id]['product_available']
-                elif outgoing_partial and product_state and product_state != res[line.id]['product_available']:
-                    res[line.id]['product_available'] = 'Partial'
-                    
-                if outgoing_partial:
-                    res[line.id]['outgoing_nb'] = total_out
-                else:
-                    res[line.id]['outgoing_nb'] = total_out
-                    
-            # In case of standard OUT (no msf_outgoing module installed)
-            msf_out = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
-            if not msf_out:
-                for outgoing in line.outgoing_ids:
-                    if outgoing.state == 'confirmed':
-                        first_move_state = 'Waiting'
-                        res[line.id]['outgoing_status'] = 'Waiting'
-                        res[line.id]['product_available'] = 'Waiting'
-                    elif outgoing.state == 'assigned':
-                        first_move_state = 'Available'
-                        res[line.id]['outgoing_status'] = 'Available'
                         res[line.id]['product_available'] = 'Available'
                     elif outgoing.state == 'done':
-                        first_move_state = 'Done'
-                        res[line.id]['outgoing_status'] = 'Done'
                         res[line.id]['product_available'] = 'Done'
-                    elif outgoing.state == 'cancel':
-                        first_move_state = 'Exception'
-                        res[line.id]['outgoing_status'] = 'Cancelled'
-                        res[line.id]['product_available'] = 'Cancelled'
+                        res[line.id]['available_qty'] -= outgoing.product_qty
                         
-                res[line.id]['outgoing_nb'] = len(line.outgoing_ids)
-                        
-            # Get information about the availability of the product
-            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.line_id.id)])
-            move_state = False
-            for move in move_obj.browse(cr, uid, move_ids, context=context):
-#                if move.location_dest_id.usage == 'customer':
-                if move.state == 'assigned' and line.line_id.type != 'make_to_stock':
-                    res[line.id]['available_qty'] += move.product_qty
-                elif move.state == 'assigned' and line.line_id.type == 'make_to_stock' and (first_move_state not in ('Available', 'Done') or outgoing_partial):
-                    res[line.id]['available_qty'] += move.product_qty
-                elif first_move_state in ('Available', 'Done'):
-                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
-#                if outgoing_state == 'Done':
-#                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
-                if not move_state:
-                    move_state = move.state
-                if move.state != move_state:
-                    move_state = 'sf_partial'
-
-            if outgoing_partial and first_move_state == 'Done':
-                res[line.id]['product_available'] = 'Done'
-            elif outgoing_partial and first_move_state != 'Done':
-                res[line.id]['product_available'] = 'Partial'
-            elif first_move_state == 'Done':
-                res[line.id]['product_available'] = 'Done'
-            elif first_move_state == 'Available':
-                res[line.id]['product_available'] = 'Available'
-            elif first_move_state == 'Waiting':
-                res[line.id]['product_available'] = 'Waiting'
-            elif first_move_state == 'Exception':
-                res[line.id]['product_available'] = 'Exception'
+            # If the outgoing is split, check if all products are totally or partially available/done
+            if outgoing_partial:
+                end_state = outgoing_partial_state[0]
+                for state in outgoing_partial_state:
+                    if end_state != state:
+                        end_state = False
                 
+                if not end_state:
+                    res[line.id]['product_available'] = 'Partial'
+                    res[line.id]['available_qty'] -= outgoing_partial_qty
+                elif end_state == 'assigned':
+                    res[line.id]['product_available'] = 'Available'
+                elif end_state == 'done':
+                    res[line.id]['available_qty'] -= outgoing_partial_qty
+                    res[line.id]['product_available'] = 'Done'
             
 
         return res
