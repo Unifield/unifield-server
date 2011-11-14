@@ -977,9 +977,7 @@ class stock_picking(osv.osv):
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
         obj_data = self.pool.get('ir.model.data')
-        view_list = {'out': ('stock', 'view_picking_out_form'),
-                     'in': ('stock', 'view_picking_in_form'),
-                     'internal': ('stock', 'view_picking_form'),
+        view_list = {'standard': ('stock', 'view_picking_out_form'),
                      'picking': ('msf_outgoing', 'view_picking_ticket_form'),
                      'ppl': ('msf_outgoing', 'view_ppl_form'),
                      'packing': ('msf_outgoing', 'view_packing_form'),
@@ -1661,6 +1659,18 @@ class stock_picking(osv.osv):
         '''
         res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
         return res and False
+    
+    def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        stock>stock.py>log_picking
+        update the message to be displayed by the function
+        '''
+        pick = kwargs['pick']
+        message = kwargs['message']
+        # if the picking is converted to standard, and state is confirmed
+        if pick.converted_to_standard and pick.state == 'confirmed':
+            message = 'The Preparation Picking has been converted to simple Out. ' + message
+        return message
     
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
