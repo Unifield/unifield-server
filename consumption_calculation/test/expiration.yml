@@ -38,7 +38,7 @@
     line_ids = self.search(cr, uid, [('product_id', '=', ref('product5')), ('report_id', '=', ref('pler1'))], context=context)
     for line in self.browse(cr, uid, line_ids, context=context):
       assert line.in_stock == 80.00, "In stock is not correct for the product P5"
-      assert line.total_expired == 45.00, "Expired quantity is not correct for product P5"
+      assert line.total_expired == 55.00, "Expired quantity is not correct for product P5"
       assert line.consumption == 15.00, "Consumption is not correct for product P5"
       item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('line_id', '=', line.id)])
       first_month = False
@@ -53,24 +53,24 @@
         
       item1 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[0])
       if not first_month:
-        assert item1.expired_qty == 0.00
+        assert item1.expired_qty == 0.00, "1"
       else:
-        assert item1.expired_qty == 19.00
+        assert item1.expired_qty == 29.00, "2"
       
       item2 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[1])
       if not first_month:
-        assert item2.expired_qty == 19.00
+        assert item2.expired_qty == 29.00, "3"
       else:
-        assert item2.expired_qty == 26.00
+        assert item2.expired_qty == 0.00, "4"
         
       item3 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[2])
       if not first_month:
-        assert item3.expired_qty == 26.00
+        assert item3.expired_qty == 26.00, "5"
       else:
-        assert item3.expired_qty == 0.00
+        assert item3.expired_qty == 26.00, "6"
         
       item4 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[3])
       if not first_month:
-        assert item4.expired_qty == 0.00
+        assert item4.expired_qty == 0.00, "7"
       else:
-        assert item4.expired_qty == 0.00
+        assert item4.expired_qty == 0.00, "8"
