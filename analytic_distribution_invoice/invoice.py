@@ -73,7 +73,7 @@ class account_invoice(osv.osv):
         # Browse invoice and all invoice lines to detect a non-valid line
         for inv in self.browse(cr, uid, ids, context=context):
             for invl in inv.invoice_line:
-                if invl.from_yml_test:
+                if inv.from_yml_test or invl.from_yml_test:
                     continue
                 if invl.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"' % invl.name))
@@ -142,6 +142,9 @@ class account_invoice_line(osv.osv):
                         total += 1
                 if total and total == len(line.invoice_id.analytic_distribution_id.funding_pool_lines):
                     res[line.id] = 'valid'
+            # If no analytic distribution on invoice line, but come from a yaml test, then set to 'valid'
+            elif line.from_yml_test:
+                res[line.id] = 'valid'
             # If no analytic distribution on invoice line and on invoice, then give 'none' state
             else:
                 # no analytic distribution on invoice line or invoice => 'none'
