@@ -1329,6 +1329,14 @@ class stock_picking(osv.osv):
         specify if we display a log or not
         '''
         return True
+    
+    def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        stock>stock.py>log_picking
+        update the message to be displayed by the function
+        '''
+        message = kwargs['message']
+        return message
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1367,6 +1375,8 @@ class stock_picking(osv.osv):
             res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
+            # modify the message to be displayed
+            message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick,)
             # conditional test for message log
             if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
                 self.log(cr, uid, pick.id, message, context=context)
