@@ -44,6 +44,24 @@ class real_average_consumption(osv.osv):
             res[mrc.id] = len(mrc.line_ids)
             
         return res
+
+
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Display a message to the user if the report has been confirmed
+        and stock moves has been generated
+        '''
+        for report in self.browse(cr, uid, ids, context=context):
+            if report.created_ok and report.picking_id:
+                if report.picking_id.state != 'cancel':
+                    raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+                else:
+                    for move in report.picking_id.move_lines:
+                        if move.state != 'cancel':
+                            raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
+
+        return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
+
     
     _columns = {
         'name': fields.char(size=64, string='Reference'),
