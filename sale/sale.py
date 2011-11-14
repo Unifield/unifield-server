@@ -791,7 +791,7 @@ class sale_order(osv.osv):
                                  'property_ids': [(6, 0, [x.id for x in line.property_ids])],
                                  'company_id': order.company_id.id,
                                  }
-                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line,)
+                    proc_data = self._hook_ship_create_procurement_order(cr, uid, ids, context=context, proc_data=proc_data, line=line, order=order,)
                     proc_id = self.pool.get('procurement.order').create(cr, uid, proc_data)
                     proc_ids.append(proc_id)
                     self.pool.get('sale.order.line').write(cr, uid, [line.id], {'procurement_id': proc_id})
