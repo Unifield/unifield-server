@@ -343,8 +343,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase line state
             if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state in ['approved', 'done']:
                 res[el.id] = False
-            # verify invoice state but only for non direct invoice (no field register_line_ids)
-            if el.invoice_id and context.get('from', False) != 'direct_invoice' and el.invoice_id.state in ['open', 'paid']:
+            # verify invoice state
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
             # verify invoice line state
             if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
@@ -392,6 +392,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             type='boolean', readonly=True, help="This informs the wizard if we come from an invoice line."),
         'account_id': fields.many2one('account.account', string="Account from invoice", readonly=True,
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
+        'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
+        'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
     }
 
     _defaults = {
@@ -511,10 +513,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.state in ['approved', 'done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id:
-                # Pay attention to direct_invoice
-                if context.get('from', False) != 'direct_invoice' and wiz.invoice_id.state in ['open', 'paid']:
-                    raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
             if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
@@ -687,18 +687,40 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
-                    ('move_line_id', 'account.move.line')]:
+                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), ('direct_invoice_line_id', 'wizard.account.invoice.line')]:
                     if getattr(wiz, el[0], False):
-                        # Pay attention to direct invoice
-                        if context.get('from', False) and context.get('from') == 'direct_invoice':
-                            # if 'from' is 'direct_invoice', so we have to change account.invoice into wizard.account.invoice
-                            el = (el[0], '.'.join(['wizard', el[1]]))
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
             # Finally do registration for each type
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
                 # Compare and write modifications done on analytic lines
                 type_res = self.compare_and_write_modifications(cr, uid, wiz.id, line_type, context=context)
+        # Return on direct invoice if we come from this one
+        wiz = self.browse(cr, uid, ids, context=context)[0]
+        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
+                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                return {
+                    'name': "Supplier Invoice",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.account.invoice',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': direct_invoice_id,
+                    'context':
+                    {
+                        'active_id': register_id,
+                        'type': 'in_invoice',
+                        'journal_type': 'purchase',
+                        'active_ids': register_id,
+                    }
+                }
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -786,13 +808,39 @@ class analytic_distribution_wizard(osv.osv_memory):
 
     def button_cancel(self, cr, uid, ids, context={}):
         """
-        Close the wizard
+        Close the wizard or return on Direct Invoice wizard if we come from this one.
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Retrieve some values to verify if we come from a direct invoice
+        wiz = self.browse(cr, uid, ids, context=context)[0]
+        if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
+            # Get direct_invoice id
+            direct_invoice_id = (wiz.direct_invoice_id and wiz.direct_invoice_id.id) or \
+                (wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id.id) or False
+            # Get register from which we come from
+            direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
+            register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
+            if register_id:
+                return {
+                    'name': "Supplier Invoice",
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.account.invoice',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': direct_invoice_id,
+                    'context':
+                    {
+                        'active_id': register_id,
+                        'type': 'in_invoice',
+                        'journal_type': 'purchase',
+                        'active_ids': register_id,
+                    }
+                }
         return {'type' : 'ir.actions.act_window_close'}
 
     def update_analytic_lines(self, cr, uid, ids, context={}):

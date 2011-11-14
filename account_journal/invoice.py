@@ -157,7 +157,7 @@ class account_invoice_line(osv.osv):
                         # Prepare some values
                         invoice_currency = inv_line.invoice_id.currency_id.id
                         amount = round(distrib_line.percentage * 
-                            self.pool.get('account.invoice.line')._amount_line(cr, uid, [inv_line.id], None, None, {})[inv_line.id]) / 100.0
+                            self._amount_line(cr, uid, [inv_line.id], None, None, {})[inv_line.id]) / 100.0
                         if inv_line.invoice_id.type in ['in_invoice', 'out_refund']:
                             amount = -1 * amount
                         context.update({'date': date})
@@ -215,11 +215,14 @@ class account_invoice_line(osv.osv):
         analytic_line_obj = self.pool.get('account.analytic.line')
         # Write object
         res = super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
+        # No update if we come from a direct invoice
+        if self._name == 'wizard.account.invoice' or self._name == 'wizard.account.invoice.line':
+            return res
         # Search analytic lines to remove
         to_remove = analytic_line_obj.search(cr, uid, [('invoice_line_id', 'in', ids)], context=context)
         # Search analytic line to create
         to_create = []
-        for inv_line in self.pool.get('account.invoice.line').browse(cr, uid, ids, context=context):
+        for inv_line in self.browse(cr, uid, ids, context=context):
             # Don't create any line if state not draft
             if inv_line.invoice_id.state != 'draft':
                 continue
