@@ -327,6 +327,9 @@ class product_likely_expire_report(osv.osv_memory):
                     # If we are not in the first month of the period, displayed all products already expired
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        item_obj.write(cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
+                    else:
+                        item_obj.write(cr, uid, [item_id], {'period_start': report.date_from}, context=context)
 
                     # Remove the token after the first month processing
                     start_month_flag = False
@@ -524,6 +527,7 @@ class product_likely_expire_report_item(osv.osv_memory):
             'name': fields.char(size=64, string='Month'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
+            'period_start': fields.date(string='Period start', readonly=True),
             'line_ids': fields.one2many('product.likely.expire.report.item.line', 'item_id', string='Batchs'),
     }
     
