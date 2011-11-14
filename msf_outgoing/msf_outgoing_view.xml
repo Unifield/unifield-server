@@ -73,9 +73,9 @@
                 <data>
                 
                 	<field name="lot_stock_id" position="after">
-	                	<field name="lot_packing_id" />
-	                	<field name="lot_dispatch_id" />
-	                	<field name="lot_distribution_id" />
+	                	<field name="lot_packing_id" domain="[('quarantine_location', '=', False)]" />
+	                	<field name="lot_dispatch_id" domain="[('quarantine_location', '=', False)]" />
+	                	<field name="lot_distribution_id" domain="[('quarantine_location', '=', False)]" />
                 	</field>
                 
                 </data>
@@ -210,7 +210,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal')]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -472,7 +472,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal')]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -700,7 +700,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal')]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
