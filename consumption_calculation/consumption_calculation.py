@@ -46,11 +46,11 @@ class real_average_consumption(osv.osv):
         return res
     
     _columns = {
-        'creation_date': fields.date(string='Creation date'),
+        'creation_date': fields.datetime(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
         'activity_id': fields.many2one('stock.location', string='Activity'),
         'period_from': fields.date(string='Period from', required=True),
-        'period_to': fields.date(string='Period to', required=True),
+        'period_to': fields.datetime(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
@@ -60,9 +60,9 @@ class real_average_consumption(osv.osv):
     }
     
     _defaults = {
-        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_cust')[1],
-        'period_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'period_to': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'valid_ok': lambda *a: True,
     }
     
