@@ -74,6 +74,8 @@ class real_average_consumption(osv.osv):
         if not 'valid_ok' in defaults:
             defaults['valid_ok'] = False
 
+        defaults['name'] = self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')
+
         # Copy the report
         res = super(real_average_consumption, self).copy(cr, uid, ids, defaults, context=context)
 
