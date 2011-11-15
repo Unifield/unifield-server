@@ -44,7 +44,7 @@
     rec = False
     # Find the account move line reconciled
     rec_line = filter(lambda a:a.reconcile_id, line_id.move_ids[0].line_id)
-
+    
     # Check this line is reconciled with the invoice
     for move_rec in rec_line[0].reconcile_id.line_id:
         if move_rec.invoice and move_rec.invoice.id == inv.id:

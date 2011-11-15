@@ -259,7 +259,7 @@
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
     search_ids = po_obj.search(cr, uid, [('origin', '=', so.name),])
     if search_ids:
-        self.pool.get('purchase.order').write(cr, uid, ids, {'from_yml_test': True})
+        self.pool.get('purchase.order').write(cr, uid, search_ids, {'from_yml_test': True})
     
     import netsvc
     wf_service = netsvc.LocalService("workflow")
