@@ -562,7 +562,7 @@
 
         <record model="account.account" id="msf_chart_of_account.4203">
             <field name="code">4203</field>
-            <field name="type_for_register">advance</field>
+            <field name="type_for_register">none</field>
             <field name="type">receivable</field>
             <field name="name">advances to suppliers and various advances (including other MSF section &lt; €10.000)</field>
             <field name="parent_id" ref="msf_chart_of_account.420" />
@@ -1108,7 +1108,7 @@
             <field name="type">other</field>
             <field name="name">Bank transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1118,7 +1118,7 @@
             <field name="type">other</field>
             <field name="name">cash transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1128,7 +1128,7 @@
             <field name="type">other</field>
             <field name="name">transfer to another financial mission: Same section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1138,7 +1138,7 @@
             <field name="type">other</field>
             <field name="name">transfer to another MSF section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1148,7 +1148,7 @@
             <field name="type">other</field>
             <field name="name">Internal transfer same currency</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1158,7 +1158,7 @@
             <field name="type">other</field>
             <field name="name">Internal transfer with currency exchange</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 

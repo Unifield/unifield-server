@@ -289,16 +289,16 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
         min_confirmed = line.order_id.delivery_confirmed_date
         min_requested = line.order_id.delivery_requested_date
         
-    if min_confirmed and confirmed_date:
-        if min_confirmed > confirmed_date:
-            return {'warning': {'title': _('Warning'),
-                                'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
+#    if min_confirmed and confirmed_date:
+#        if min_confirmed > confirmed_date:
+#            return {'warning': {'title': _('Warning'),
+#                                'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
     
-    if min_requested and requested_date:
-        if min_requested > requested_date:
-            return {'warning': {'title': _('Warning'),
-                                'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
-    
+#    if min_requested and requested_date:
+#        if min_requested > requested_date:
+#            return {'warning': {'title': _('Warning'),
+#                                'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
+#    
     return {'value': {'date_planned': requested_date,}}
 #                      'confirmed_delivery_date': confirmed_date}}
         

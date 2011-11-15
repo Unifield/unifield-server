@@ -456,6 +456,7 @@ real_average_consumption_line()
 class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
     _description = 'Monthly review consumption'
+    _rec_name = 'creation_date'
     
     def _get_nb_lines(self, cr, uid, ids, field_name, args, context={}):
         '''
@@ -530,6 +531,7 @@ class monthly_review_consumption(osv.osv):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        line_obj = self.pool.get('monthly.review.consumption.line')
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
@@ -568,10 +570,50 @@ class monthly_review_consumption(osv.osv):
                 # Check if the product is not already on the report
                 if product.id not in products:
                     products.append(product.id)
+                    amc = self.pool.get('product.product').compute_amc(cr, uid, product.id, context=context)
+                    last_fmc_reviewed = False
+                    line_ids = line_obj.search(cr, uid, [('name', '=', product.id), ('valid_ok', '=', True)], order='valid_until desc, id desc', context=context)
+                    if line_ids:
+                        for line in line_obj.browse(cr, uid, [line_ids[0]], context=context):
+                            last_fmc_reviewed = line.mrc_id.creation_date
                     self.pool.get('monthly.review.consumption.line').create(cr, uid, {'name': product.id,
-                                                                                    'fmc': 0.00,
-                                                                                    'mrc_id': report.id})
+                                                                                      'amc': amc,
+                                                                                      'fmc': amc,
+                                                                                      'fmc2': amc,
+                                                                                      'last_reviewed': last_fmc_reviewed,
+                                                                                      'last_reviewed2': last_fmc_reviewed,
+                                                                                      'mrc_id': report.id})
         
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'monthly.review.consumption',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+
+#    def valid_multiple_lines(self, cr, uid, ids, context={}):
+#        '''
+#        Open the wizard to valid multiple lines
+#        '''
+#        wiz_id = self.pool.get('wizard.valid.line').create(cr, uid, {'mrc_id': ids[0]}, context=context)
+#
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'wizard.valid.line',
+#                'view_type': 'form',
+#                'view_mode': 'form',
+#                'res_id': wiz_id,
+#                'target': 'new',}
+
+    def valid_multiple_lines(self, cr, uid, ids, context={}):
+        '''
+        Validate multiple lines
+        '''
+        for report in self.browse(cr, uid, ids, context=context):
+            for line in report.line_ids:
+                if not line.valid_ok:
+                    self.pool.get('monthly.review.consumption.line').valid_line(cr, uid, line.id, context=context)
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'monthly.review.consumption',
                 'view_type': 'form',
@@ -606,18 +648,46 @@ class monthly_review_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, line.mrc_id.id, context=context).get('value', {}).get('last_reviewed', False)
+            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, line.mrc_id.id, context=context).get('value', {}).get('last_reviewed', None)
             
         return res
+
+    def create(self, cr, uid, vals, context={}):
+        if 'fmc2' in vals:
+            vals.update({'fmc': vals.get('fmc2')})
+        if 'last_reviewed2' in vals:
+            vals.update({'last_reviewed': vals.get('last_reviewed2')})
+
+        if vals.get('valid_ok') and not vals.get('last_reviewed'):
+            vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
+                         'last_reviewed2': time.strftime('%Y-%m-%d')})
+
+        return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        if 'fmc2' in vals:
+            vals.update({'fmc': vals.get('fmc2')})
+        if 'last_reviewed2' in vals:
+            vals.update({'last_reviewed': vals.get('last_reviewed2')})
+
+        if vals.get('valid_ok') and not vals.get('last_reviewed'):
+            vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
+                         'last_reviewed2': time.strftime('%Y-%m-%d')})
+
+        return super(monthly_review_consumption_line, self).write(cr, uid, ids, vals, context=context)
     
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
-        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
+        'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, store=True),
         'fmc': fields.float(digits=(16,2), string='FMC'),
-        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True),
+        'fmc2': fields.float(digits=(16,2), string='FMC (hidden)'),
+        #'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),
+	'last_reviewed': fields.date(string='Last reviewed on', readonly=True),
+	'last_reviewed2': fields.date(string='Last reviewed on (hidden)'),
         'valid_until': fields.date(string='Valid until'),
-        'valid_ok': fields.boolean(string='OK', readonly=True),
+        'valid_ok': fields.boolean(string='Validated', readonly=False),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
+        'mrc_creation_date': fields.related('mrc_id', 'creation_date', type='date', store=True),
     }
     
     def valid_line(self, cr, uid, ids, context={}):
@@ -634,7 +704,9 @@ class monthly_review_consumption_line(osv.osv):
             if line.valid_ok:
                 raise osv.except_osv(_('Error'), _('The line is already validated !'))
             
-            self.write(cr, uid, [line.id], {'valid_ok': True}, context=context)
+            self.write(cr, uid, [line.id], {'valid_ok': True, 
+                                            'last_reviewed': time.strftime('%Y-%m-%d'),
+                                            'last_reviewed2': time.strftime('%Y-%m-%d')}, context=context)
             
         return
     
@@ -643,6 +715,27 @@ class monthly_review_consumption_line(osv.osv):
         Display the graph view of the line
         '''
         raise osv.except_osv('Error !', 'Not implemented yet !')
+
+    def fmc_change(self, cr, uid, ids, amc, fmc, product_id, context={}):
+        '''
+        Valid the line if the FMC is manually changed
+        '''
+        res = {}
+
+        if fmc != amc:
+            res.update({'valid_ok': True, 'last_reviewed': time.strftime('%Y-%m-%d'), 'fmc2': fmc, 'last_reviewed2': time.strftime('%Y-%m-%d')})
+        else:
+            last_fmc_reviewed = False
+            domain = [('name', '=', product_id), ('valid_ok', '=', True)]
+            line_ids = self.search(cr, uid, domain, order='valid_until desc, mrc_creation_date desc', context=context)
+            
+            if line_ids:
+                for line in self.browse(cr, uid, [line_ids[0]], context=context):
+                    last_fmc_reviewed = line.mrc_id.creation_date
+
+            res.update({'last_reviewed': last_fmc_reviewed, 'last_reviewed2': last_fmc_reviewed, 'fmc2': fmc})
+
+        return {'value': res}
     
     def product_onchange(self, cr, uid, ids, product_id, mrc_id=False, from_date=False, to_date=False, context={}):
         '''
@@ -665,13 +758,15 @@ class monthly_review_consumption_line(osv.osv):
         if not product_id:
             return {'value': {'amc': 0.00,
                               'fmc': 0.00,
+                              'fmc2': 0.00,
+                              'last_reviewed2': 0.00,
                               'last_reviewed': None,
                               'valid_until': False,
                               'valid_ok': False}}
         
         domain = [('name', '=', product_id), ('valid_ok', '=', True)]
         
-        line_ids = line_obj.search(cr, uid, domain, order='valid_until desc', context=context)
+        line_ids = line_obj.search(cr, uid, domain, order='valid_until desc, mrc_creation_date desc', context=context)
             
         if line_ids:
             for line in self.browse(cr, uid, [line_ids[0]], context=context):
@@ -680,12 +775,11 @@ class monthly_review_consumption_line(osv.osv):
                     
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
 
-        if not last_fmc_reviewed:
-            last_fmc_reviewed = time.strftime('%Y-%m-%d')
-        
         return {'value': {'amc': amc,
                           'fmc': amc,
+                          'fmc2': amc,
                           'last_reviewed': last_fmc_reviewed,
+                          'last_reviewed2': last_fmc_reviewed,
                           'valid_until': False,
                           'valid_ok': False}}
         
