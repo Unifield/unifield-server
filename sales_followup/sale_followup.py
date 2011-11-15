@@ -450,49 +450,110 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['incoming_status'] = 'Exception'
                 
                 
-            res[line.id]['outgoing_status'] = 'Blabla'
+            res[line.id]['outgoing_status'] = 'Waiting'
+            res[line.id]['outgoing_nb'] = 0
             res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             outgoing_partial = False
-            outgoing_partial_state = []
+            outgoing_partial_step_state = {'picking': [], 'dispatch': [], 'distrib': [], 'sending': []}
             outgoing_partial_qty = 0.00
+            nb_return_from_dispatch = 0
             for outgoing in line.outgoing_ids:
                 if outgoing.location_dest_id.usage == 'customer':
-                    pass
-                elif outgoing.location_dest_id in distrib_loc_ids:
-                    pass
-                elif outgoing.location_dest_id in dispatch_loc_ids:
-                    pass
+                    ## Sending goods
+                    outgoing_partial_step_state['sending'].append(outgoing.state)
+                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Done'
+                elif outgoing.location_dest_id.id in distrib_loc_ids:
+                    ## Distribution step
+                    outgoing_partial_step_state['distrib'].append(outgoing.state)
+                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Shipped'
+                elif outgoing.location_dest_id.id in dispatch_loc_ids:
+                    ## Dispatch step
+                    outgoing_partial_step_state['dispatch'].append(outgoing.state)
+                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
+                        res[line.id]['outgoing_status'] = 'Packed'
+                elif outgoing.location_id.id in dispatch_loc_ids and outgoing.location_dest_id.id:
+                    nb_return_from_dispatch += 1
                 else:
+                    ## Picking step
+                    if outgoing.product_qty > 0.00:
+                        outgoing_partial_step_state['picking'].append(outgoing.state)
                     # Check if the picking ticket is splitted or not
                     if outgoing.product_qty < line.line_id.product_uom_qty:
                         outgoing_partial = True
-                        outgoing_partial_state.append(outgoing.state)
                         if outgoing.state == 'done':
                             outgoing_partial_qty += outgoing.product_qty
                     # If not splitted, change the product available status of the line to it matches with the
                     # state of the stock move
                     elif outgoing.state == 'assigned':
                         res[line.id]['product_available'] = 'Available'
+                        res[line.id]['outgoing_status'] = 'Available'
                     elif outgoing.state == 'done':
                         res[line.id]['product_available'] = 'Done'
-                        res[line.id]['available_qty'] -= outgoing.product_qty
+                        res[line.id]['outgoing_status'] = 'Picked'
                         
+            res[line.id]['outgoing_nb'] -= nb_return_from_dispatch
             # If the outgoing is split, check if all products are totally or partially available/done
             if outgoing_partial:
-                end_state = outgoing_partial_state[0]
-                for state in outgoing_partial_state:
+                end_state = outgoing_partial_step_state['picking'][0]
+                end_step = False
+                for state in outgoing_partial_step_state['picking']:
+                    res[line.id]['outgoing_nb'] += 1
                     if end_state != state:
                         end_state = False
                 
                 if not end_state:
                     res[line.id]['product_available'] = 'Partial'
-                    res[line.id]['available_qty'] -= outgoing_partial_qty
+                    res[line.id]['outgoing_status'] = 'Partial'
+                    #res[line.id]['available_qty'] -= outgoing_partial_qty
                 elif end_state == 'assigned':
                     res[line.id]['product_available'] = 'Available'
+                    res[line.id]['outgoing_status'] = 'Available'
                 elif end_state == 'done':
-                    res[line.id]['available_qty'] -= outgoing_partial_qty
+                    #res[line.id]['available_qty'] -= outgoing_partial_qty
                     res[line.id]['product_available'] = 'Done'
+                    res[line.id]['outgoing_status'] = 'Done'
+                
+                if len(outgoing_partial_step_state['dispatch']) == res[line.id]['outgoing_nb']: 
+                    end_step = 'dispatch'
+                    end_state = outgoing_partial_step_state['dispatch'][0]
+                    for state in outgoing_partial_step_state['dispatch']:
+                        if state != end_state:
+                            end_state = False
+                            
+                if len(outgoing_partial_step_state['distrib']) == res[line.id]['outgoing_nb']: 
+                    end_step = 'distrib'
+                    end_state = outgoing_partial_step_state['distrib'][0]
+                    for state in outgoing_partial_step_state['distrib']:
+                        if state != end_state:
+                            end_state = False
+                            
+                if len(outgoing_partial_step_state['sending']) == res[line.id]['outgoing_nb']: 
+                    end_step = 'sending'
+                    end_state = outgoing_partial_step_state['sending'][0]
+                    for state in outgoing_partial_step_state['sending']:
+                        if state != end_state:
+                            end_state = False
+
+                    
+                if not end_step or not end_state:
+                    res[line.id]['outgoing_status'] = 'Partial'
+                elif end_step == 'picking' and end_state == 'confirmed':
+                    res[line.id]['outgoing_status'] = 'Waiting'
+                elif end_step == 'picking' and end_state == 'assigned':
+                    res[line.id]['outgoing_status'] = 'Available'
+                elif (end_step == 'picking' and end_state == 'done') or (end_step == 'dispatch' and end_state != 'done'):
+                    res[line.id]['outgoing_status'] = 'Picked'
+                elif (end_step == 'dispatch' and end_state == 'done') or (end_step == 'distrib' and end_state != 'done'):
+                    res[line.id]['outgoing_status'] = 'Packed'
+                elif (end_step == 'distrib' and end_state == 'done') or (end_step == 'sending' and end_state != 'done'):
+                    res[line.id]['outgoing_status'] = 'Shipped'
+                elif (end_step == 'sending' and end_state == 'done'):
+                    res[line.id]['outgoing_status'] = 'Done'
+            else:
+                res[line.id]['outgoing_nb'] = 1
             
 
         return res
