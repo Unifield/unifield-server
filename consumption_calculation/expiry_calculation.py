@@ -308,10 +308,6 @@ class product_likely_expire_report(osv.osv_memory):
                 last_expiry_date = False
                 for month in dates:
                     if not last_expiry_date: last_expiry_date = month
-                    days = Age(month + RelativeDateTime(months=1, day=1, days=-1), DateFrom(report.date_from))
-                    coeff = (days.years*365.0 + days.months*30.0 + days.days)/30.0
-                    total_cons = coeff*consumption
-                    rest = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(total_cons - already_cons,2), lot.product_id.uom_id.id)
                     
                     item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
@@ -342,20 +338,16 @@ class product_likely_expire_report(osv.osv_memory):
                         lot_coeff = (lot_days.years*365.0 + lot_days.months*30.0 + lot_days.days)/30.0
                         if lot_coeff >= 0.00: last_expiry_date = DateFrom(product_lot.life_date)
                         if lot_coeff < 0.00: lot_coeff = 0.00
-                        lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id)
+                        lot_cons = self.pool.get('product.uom')._compute_qty(cr, uid, lot.product_id.uom_id.id, round(lot_coeff*consumption,2), lot.product_id.uom_id.id) + rest
                         
-                        if rest > 0.00:
+                        if lot_cons > 0.00:
                             if lot_cons >= product_lot.stock_available:
                                 already_cons += product_lot.stock_available
-                                rest -= product_lot.stock_available
+                                rest = lot_cons - product_lot.stock_available
                                 l_expired_qty = 0.00
-                            elif rest >= lot_cons:
+                            else :
                                 l_expired_qty = product_lot.stock_available - lot_cons
-                                rest -= lot_cons
                                 already_cons += lot_cons
-                            else:
-                                l_expired_qty = product_lot.stock_available - rest
-                                already_cons += rest
                                 rest = 0.00
                         else:
                             l_expired_qty = product_lot.stock_available
