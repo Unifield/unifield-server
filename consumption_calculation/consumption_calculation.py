@@ -62,6 +62,31 @@ class real_average_consumption(osv.osv):
 
         return super(real_average_consumption, self).unlink(cr, uid, ids, context=context)
 
+    def copy(self, cr, uid, ids, defaults={}, context={}):
+        '''
+        Unvalidate all lines of the duplicate report
+        '''
+        # Change default values
+        if not 'picking_id' in defaults:
+            defaults['picking_id'] = False
+        if not 'created_ok' in defaults:
+            defaults['created_ok'] = False
+        if not 'valid_ok' in defaults:
+            defaults['valid_ok'] = False
+
+        # Copy the report
+        res = super(real_average_consumption, self).copy(cr, uid, ids, defaults, context=context)
+
+        # Unvalidate all lines of the report
+        for report in self.browse(cr, uid, [res], context=context):
+            lines = []
+            for line in report.line_ids:
+                lines.append(line.id)
+
+            self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
+
+        return res
+
     
     _columns = {
         'name': fields.char(size=64, string='Reference'),
