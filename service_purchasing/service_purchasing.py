@@ -1,0 +1,158 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 MSF, TeMPO Consulting
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv, fields
+from tools.translate import _
+import netsvc
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import decimal_precision as dp
+import netsvc
+import logging
+import tools
+from os import path
+
+class product_template(osv.osv):
+    '''
+    add the new service with reception type
+    '''
+    _inherit = "product.template"
+    
+    _columns = {'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service'), ('service_recep', 'Service with Reception'),], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+                }
+    
+product_template()
+
+class product_product(osv.osv):
+    '''
+    add on change on type
+    '''
+    _inherit = 'product.product'
+    
+    def on_change_type(self, cr, uid, ids, type, context=None):
+        '''
+        if type is service_with_reception, procure_method is set to make_to_order
+        '''
+        if context is None:
+            context={}
+        
+        if type == 'service_recep':
+            return {'value': {'procure_method': 'make_to_order', 'supply_method': 'buy',}}
+        return {}
+    
+product_product()
+
+
+class purchase_order(osv.osv):
+    '''
+    the function is modified to take into account the new service with reception as stockable product
+    '''
+    _inherit = 'purchase.order'
+    
+    def has_stockable_product(self,cr, uid, ids, *args):
+        '''
+        service with reception is considered as stockable product and produce therefore an incoming shipment and corresponding stock moves
+        '''
+        result = super(purchase_order, self).has_stockable_product(cr, uid, ids, *args)
+        for order in self.browse(cr, uid, ids):
+            for order_line in order.order_line:
+                if order_line.product_id and order_line.product_id.product_tmpl_id.type in ('service_recep',) and order.order_type != 'direct':
+                    return True
+                
+        return result
+
+purchase_order()
+
+
+class stock_location(osv.osv):
+    '''
+    override stock location to add:
+    - service location (checkbox - boolean)
+    '''
+    _inherit = 'stock.location'
+    
+    _columns = {'service_location': fields.boolean(string='Service Location', readonly=True,),
+                }
+    
+stock_location()
+
+
+class stock_move(osv.osv):
+    '''
+    add constraints:
+        - source location cannot be a Service location
+        - if picking_id is not type 'in', cannot select a product service with reception
+        - if product is service with reception, the destination location must be Service location
+        - if destination location is Service, the product must be service with reception
+    '''
+    _inherit = 'stock.move'
+    
+    def _check_source_location_service(self, cr, uid, ids, context=None):
+        """
+        You cannot select Service Location as Source Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.location_id.service_location:
+                return False
+        return True
+    
+    def _check_picking_type_for_service(self, cr, uid, ids, context=None):
+        """
+        Only Incoming Shipment can manipulate Service with reception Products.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type == 'service_recep' and (not obj.picking_id or obj.picking_id.type != 'in'):
+                return False
+        return True
+    
+    def _check_dest_location_for_service_product(self, cr, uid, ids, context=None):
+        """
+        Service with reception Products must have Service Location as Destination Location.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type == 'service_recep' and not obj.location_dest_id.service_location:
+                return False
+        return True
+    
+    def _check_product_for_service_location(self, cr, uid, ids, context=None):
+        """
+        Service Location cannot be used for non Service with Reception Products.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type != 'service_recep' and obj.location_dest_id.service_location:
+                return False
+        return True
+    
+    _constraints = [(_check_source_location_service, 'You cannot select Service Location as Source Location.', ['location_id']),
+                    (_check_picking_type_for_service, 'Only Incoming Shipment can manipulate Service with reception Products.', []),
+                    (_check_dest_location_for_service_product, 'Service with reception Products must have Service Location as Destination Location.', ['product_id', 'location_dest_id']),
+                    (_check_product_for_service_location, 'Service Location cannot be used for non Service with Reception Products.', ['product_id', 'location_dest_id']),
+                    ]
+
+stock_move()
