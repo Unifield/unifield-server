@@ -173,3 +173,52 @@ class stock_move(osv.osv):
                     ]
 
 stock_move()
+
+
+class purchase_order(osv.osv):
+    '''
+    add constraint
+    '''
+    _inherit = 'purchase.order'
+    
+    def _check_purchase_category(self, cr, uid, ids, context=None):
+        """
+        Purchase Order of type Category Service should contain only Service with Reception Products.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.categ == 'service':
+                for line in obj.order_line:
+                    if not line.product_id or line.product_id.type != 'service_recep':
+                        return False
+        return True
+    
+    _constraints = [(_check_purchase_category, 'Purchase Order of type Category Service should contain only Service with Reception Products.', ['categ']),
+                    ]
+    
+purchase_order()
+
+
+class purchase_order_line(osv.osv):
+    '''
+    add constraint
+    '''
+    _inherit = 'purchase.order.line'
+    
+    def _check_purchase_order_category(self, cr, uid, ids, context=None):
+        """
+        Purchase Order of type Category Service should contain only Service with Reception Products.
+        """
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id.type != 'service_recep' and obj.order_id.categ == 'service':
+                return False
+        return True
+    
+    _constraints = [(_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service with Reception Products.', ['product_id']),
+                    ]
+    
+purchase_order_line()
+
