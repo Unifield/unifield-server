@@ -35,7 +35,7 @@ class product_history_consumption(osv.osv_memory):
         'month_ids': fields.one2many('product.history.consumption.month', 'history_id', string='Months'),
         'consumption_type': fields.selection([('rac', 'Real Average Consumption'), ('amc', 'Average Monthly Consumption')],
                                              string='Consumption type', required=True),
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'location_id': fields.many2one('stock.location', string='Location', domain="[('usage', '=', 'internal')]"),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
     }
@@ -82,6 +82,8 @@ class product_history_consumption(osv.osv_memory):
                 else:
                     res['value']['month_ids'].extend(search_ids)
                 current_date = current_date + RelativeDateTime(months=1)
+        else:
+            res['value'] = {'month_ids': [False]}
 
         # Delete all months out of the period
         del_months = []
@@ -101,14 +103,19 @@ class product_history_consumption(osv.osv_memory):
         if not context:
             context = {}
 
+        print time.strftime('%H-%M-%S')
+
         obj = self.browse(cr, uid, ids[0], context=context)
         new_context = context.copy()
-        new_context.update({'months': [], 'amc': obj.consumption_type == 'amc', 'obj_id': obj.id})
+        new_context.update({'months': [], 'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id})
         products = []
         product_ids = []
         if obj.consumption_type == 'rac':
-            context.update({'location_id': obj.location_id and obj.location_id.id or False})
-        months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='name', context=context)
+            location_ids = []
+            if obj.location_id:
+                location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
+            context.update({'location_id': location_ids})
+        months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
         nb_months = len(months)
         total_consumption = {}
 
@@ -136,7 +143,7 @@ class product_history_consumption(osv.osv_memory):
 
         # For each month, compute the RAC
         for month in self.pool.get('product.history.consumption.month').browse(cr, uid, months, context=context):
-            new_context['months'].append(month.name)
+            new_context['months'].append(DateFrom(month.date_from).strftime('%Y-%m'))
             month_context = context.copy()
             month_context.update({'from_date': month.date_from, 'to_date': month.date_to})
             if obj.consumption_type == 'rac':
@@ -166,13 +173,12 @@ class product_history_consumption(osv.osv_memory):
                                                                                    'unique_id': obj.id,
                                                                                    'value': monthly_consumption}, context=context)
 
-        if obj.consumption_type == 'amc':
-            for product in self.pool.get('product.product').browse(cr, uid, products, context=month_context):
-                self.pool.get('product.history.consumption.data').create(cr, uid, {'product_id': product.id,
-                                                                                   'name': 'average',
-                                                                                   'unique_id': obj.id,
-                                                                                   'value': float(total_consumption[product.id])/float(nb_months)})
-
+    #    if obj.consumption_type == 'amc':
+        for product in self.pool.get('product.product').browse(cr, uid, products, context=month_context):
+            self.pool.get('product.history.consumption.data').create(cr, uid, {'product_id': product.id,
+                                                                               'name': 'average',
+                                                                               'unique_id': obj.id,
+                                                                               'value': float(total_consumption[product.id])/float(nb_months)})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.history.consumption.line',
@@ -215,16 +221,16 @@ class product_history_consumption_line(osv.osv_memory):
         res = super(product_history_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context)
 
         line_view = """<tree string="Historical consumption">
-               <field name="product_id"/>
-               <field name="fmc_value"/>"""
-
-        months = context.get('months', [])
-
-        for month in months:
-            line_view += """<field name="%s" />""" % month
+               <field name="product_id"/>"""
 
         if context.get('amc', False):
             line_view += """<field name="average" />"""
+
+        months = context.get('months', [])
+        months.sort()
+
+        for month in months:
+            line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m/%Y')
 
         line_view += "</tree>"
 
@@ -241,16 +247,16 @@ class product_history_consumption_line(osv.osv_memory):
         months = context.get('months', [])
 
         for month in months:
-            res.update({month: {'digits': (16,2),
+            res.update({DateFrom(month).strftime('%m/%Y'): {'digits': (16,2),
                                'selectable': True,
                                'type': 'float',
-                               'string': '%s' % month}})
+                               'string': '%s' % DateFrom(month).strftime('%m/%Y')}})
 
         if context.get('amc', False):
             res.update({'average': {'digits': (16,2),
                                     'selectable': True,
                                     'type': 'float',
-                                    'string': 'Average'}})
+                                    'string': 'Av. %s' %context.get('amc')}})
 
         return res
 

@@ -36,7 +36,7 @@
 
 	<menuitem id="menu_product_history_consumption"
 		  name="Historical consumption"
-		  parent="stock.next_id_61" />
+		  parent="warehouse_consumption_menu" />
 
 	<record id="action_open_history_consumption_view" model="ir.actions.server">
             <field name="name">History consumption</field>
