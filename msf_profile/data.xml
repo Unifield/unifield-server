@@ -138,5 +138,12 @@
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
     </record>
+    <record id="uom_category_percentage" model="product.uom.categ">
+        <field name="name">Percentage</field>
+    </record>
+    <record id="uom_percentage" model="product.uom">
+        <field name="name">%</field>
+        <field name="category_id" ref="uom_category_percentage" />
+    </record>
     </data>
 </openerp>

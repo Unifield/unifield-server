@@ -28,7 +28,7 @@
             	<data>
 	                
 	                <field name="scrap_location" position="after">
-	                	<field name="service_location" />
+	                	<field name="service_location" invisible="True" />
 	                </field>
 	                
 	            </data>
