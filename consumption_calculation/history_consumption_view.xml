@@ -26,10 +26,10 @@
 			<separator colspan="2" string="Product parameters" />
 			<field name="nomen_id" />
 			<field name="sublist_id" />
+			<separator colspan="2" string="Actions" />
+			<button name="create_lines" type="object" string="View historical data" icon="gtk-execute" colspan="2" />
 		    </group>
 
-		    <label colspan="2" string="" />
-		    <button name="create_lines" type="object" string="View historical data" icon="gtk-execute" colspan="2" />
 		</form>
 	    </field>
 	</record>
@@ -53,29 +53,6 @@
             <field eval="'ir.actions.server,%d'%action_open_history_consumption_view" name="value"/>
             <field eval="True" name="object"/>
         </record>
-
-	<record id="product_history_consumption_line_search" model="ir.ui.view">
-	    <field name="name">product.history.consumption.line.search</field>
-	    <field name="model">product.history.consumption.line</field>
-	    <field name="type">search</field>
-	    <field name="arch" type="xml">
-		<search string="Product history consumption">
-		    <field name="product_id" />
-		</search>
-	    </field>
-	</record>
-
-	<record id="product_history_consumption_line" model="ir.ui.view">
-	    <field name="name">product.history.consumption.line</field>
-	    <field name="model">product.history.consumption.line</field>
-	    <field name="type">tree</field>
-	    <field name="arch" type="xml">
-		<tree string="Historical consumption">
-		    <field name="product_id" />
-		    <field name="fmc_value" />
-		</tree>
-	    </field>
-	</record>
 
     </data>	
 </openerp>

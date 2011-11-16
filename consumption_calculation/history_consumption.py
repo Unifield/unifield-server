@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 from mx.DateTime import *
+from lxml import etree
 
 import time
 
@@ -103,24 +104,20 @@ class product_history_consumption(osv.osv_memory):
         if not context:
             context = {}
 
-        print time.strftime('%H-%M-%S')
-
         obj = self.browse(cr, uid, ids[0], context=context)
-        new_context = context.copy()
-        new_context.update({'months': [], 'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id})
         products = []
         product_ids = []
+
+        # Update the locations in context
         if obj.consumption_type == 'rac':
             location_ids = []
             if obj.location_id:
                 location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', obj.location_id.id), ('usage', '=', 'internal')], context=context)
             context.update({'location_id': location_ids})
+
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
         nb_months = len(months)
         total_consumption = {}
-
-        if not obj.nomen_id and not obj.sublist_id:
-            product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
 
         if obj.nomen_id:
             nomen_id = obj.nomen_id.id
@@ -130,6 +127,18 @@ class product_history_consumption(osv.osv_memory):
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_1', '=', nomen_id)], context=context))
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_2', '=', nomen_id)], context=context))
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_3', '=', nomen_id)], context=context))
+                # Prefill the search view
+                tmp_nomen = [nomen]
+                while nomen.parent_id:
+                    tmp_nomen.append(nomen.parent_id.id)
+                    nomen = nomen.parent_id
+
+                tmp_nomen.reverse()
+
+                i = 0
+                while i < len(tmp_nomen):
+                    context.update({'search_default_nomen_manda_%s' %i: obj.sublist_id.id})
+                    i += 1
             else:
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_0', '=', nomen_id)], context=context))
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_1', '=', nomen_id)], context=context))
@@ -137,54 +146,45 @@ class product_history_consumption(osv.osv_memory):
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_3', '=', nomen_id)], context=context))
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_4', '=', nomen_id)], context=context))
                 product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_5', '=', nomen_id)], context=context))
+                # Prefill the search view
+                tmp_nomen = [nomen]
+                while nomen.parent_id:
+                    tmp_nomen.append(nomen.parent_id.id)
+                    nomen = nomen.parent_id
+
+                tmp_nomen.reverse()
+
+                i = 0
+                while i < len(tmp_nomen):
+                    if i > 3:
+                        context.update({'search_default_nomen_sub_%s' % i-3: obj.sublist_id.id})
+                    else:
+                        context.update({'search_default_nomen_manda_%s' % i: obj.sublist_id.id})
+                    i += 1
+
         if obj.sublist_id:
+            context.update({'search_default_list_ids': obj.sublist_id.id})
             for line in obj.sublist_id.product_ids:
                 product_ids.append(line.name.id)
 
+        domain = [('id', 'in', product_ids)]
+
+        if not obj.nomen_id and not obj.sublist_id:
+            domain = []
+
+        new_context = context.copy()
+        new_context.update({'months': [], 'amc': obj.consumption_type == 'amc' and 'AMC' or 'RAC', 'obj_id': obj.id, 'history_cons': True})
+
         # For each month, compute the RAC
         for month in self.pool.get('product.history.consumption.month').browse(cr, uid, months, context=context):
-            new_context['months'].append(DateFrom(month.date_from).strftime('%Y-%m'))
-            month_context = context.copy()
-            month_context.update({'from_date': month.date_from, 'to_date': month.date_to})
-            if obj.consumption_type == 'rac':
-                month_context.update({'location': obj.location_id and obj.location_id.id or False})
-            # For each product, compute the data for all months
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=month_context):
-                if product.id not in products:
-                    self.pool.get('product.history.consumption.line').create(cr, uid, {'unique_id': obj.id, 
-                                                                                       'product_id': product.id,
-                                                                                       'fmc_value': product.reviewed_consumption}, context=context)
-                    products.append(product.id)
+            new_context['months'].append({'date_from': month.date_from, 'date_to': month.date_to})
 
-                if product.id not in total_consumption:
-                    total_consumption.update({product.id: 0.00})
-
-                if obj.consumption_type == 'rac':
-                    monthly_consumption = product.monthly_consumption
-                elif obj.consumption_type == 'amc':
-                    monthly_consumption = self.pool.get('product.product').compute_amc(cr, uid, product.id, context=month_context)
-                else:
-                    monthly_consumption = 0.00
-
-                total_consumption[product.id] =  total_consumption[product.id] + monthly_consumption
-                # Create a value for this month and this product
-                self.pool.get('product.history.consumption.data').create(cr, uid, {'product_id': product.id,
-                                                                                   'name': month.name,
-                                                                                   'unique_id': obj.id,
-                                                                                   'value': monthly_consumption}, context=context)
-
-    #    if obj.consumption_type == 'amc':
-        for product in self.pool.get('product.product').browse(cr, uid, products, context=month_context):
-            self.pool.get('product.history.consumption.data').create(cr, uid, {'product_id': product.id,
-                                                                               'name': 'average',
-                                                                               'unique_id': obj.id,
-                                                                               'value': float(total_consumption[product.id])/float(nb_months)})
 
         return {'type': 'ir.actions.act_window',
-                'res_model': 'product.history.consumption.line',
-                'domain': [('unique_id', '=', obj.id)],
+                'res_model': 'product.product',
+                'domain': domain,
                 'view_type': 'form',
-                'view_mode': 'tree',
+                'view_mode': 'tree,form',
                 'context': new_context,
                 'target': 'dummy'}
 
@@ -205,37 +205,46 @@ class product_history_consumption_month(osv.osv_memory):
 product_history_consumption_month()
 
 
-class product_history_consumption_line(osv.osv_memory):
-    _name = 'product.history.consumption.line'
-
-    _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True),
-        'fmc_value': fields.float(string='FMC'),
-        'unique_id': fields.integer(string='Unique ID', required=True),
-    }
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
         if not context:
            context={}
 
-        res = super(product_history_consumption_line, self).fields_view_get(cr, uid, view_id, view_type, context=context)
+        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context)
 
-        line_view = """<tree string="Historical consumption">
-               <field name="product_id"/>"""
+        if context.get('history_cons', False) and view_type == 'tree':
+            line_view = """<tree string="Historical consumption">
+                   <field name="default_code"/>
+                   <field name="name" />"""
 
-        if context.get('amc', False):
-            line_view += """<field name="average" />"""
+            if context.get('amc', False):
+                line_view += """<field name="average" />"""
 
-        months = context.get('months', [])
-        months.sort()
+            months = context.get('months', [])
+            tmp_months = []
+            for month in months:
+                tmp_months.append(DateFrom(month.get('date_from')).strftime('%Y-%m'))
 
-        for month in months:
-            line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m/%Y')
+            tmp_months.sort()
 
-        line_view += "</tree>"
+            for month in tmp_months:
+                line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m/%Y')
 
-        if res['type'] == 'tree':
-            res['arch'] = line_view
+            line_view += "</tree>"
+
+            if res['type'] == 'tree':
+                res['arch'] = line_view
+        elif context.get('history_cons', False) and view_type == 'search':
+            # Hard method !!!!!!
+            # Remove the Group by group from the product view
+            xml_view = etree.fromstring(res['arch'])
+            for element in xml_view.iter("group"):
+                if element.get('string', '') == 'Group by...':
+                    xml_view.remove(element)
+            res['arch'] = etree.tostring(xml_view)
 
         return res
 
@@ -243,20 +252,22 @@ class product_history_consumption_line(osv.osv_memory):
         if not context:
             context = {}
 
-        res = super(product_history_consumption_line, self).fields_get(cr, uid, fields, context)
-        months = context.get('months', [])
+        res = super(product_product, self).fields_get(cr, uid, fields, context=context)
+        
+        if context.get('history_cons', False):
+            months = context.get('months', [])
 
-        for month in months:
-            res.update({DateFrom(month).strftime('%m/%Y'): {'digits': (16,2),
-                               'selectable': True,
-                               'type': 'float',
-                               'string': '%s' % DateFrom(month).strftime('%m/%Y')}})
+            for month in months:
+                res.update({DateFrom(month.get('date_from')).strftime('%m/%Y'): {'digits': (16,2),
+                                                                                 'selectable': True,
+                                                                                 'type': 'float',
+                                                                                 'string': '%s' % DateFrom(month.get('date_from')).strftime('%m/%Y')}})
 
-        if context.get('amc', False):
-            res.update({'average': {'digits': (16,2),
-                                    'selectable': True,
-                                    'type': 'float',
-                                    'string': 'Av. %s' %context.get('amc')}})
+            if context.get('amc', False):
+                res.update({'average': {'digits': (16,2),
+                                        'selectable': True,
+                                        'type': 'float',
+                                        'string': 'Av. %s' %context.get('amc')}})
 
         return res
 
@@ -264,35 +275,46 @@ class product_history_consumption_line(osv.osv_memory):
         '''
         Set value for each month
         '''
-        data_obj = self.pool.get('product.history.consumption.data')
-        vals.append('unique_id')
-        res = super(product_history_consumption_line, self).read(cr, uid, ids, vals, context=context, load=load)
-        
-        obj_id = context.get('obj_id', False)
 
-        for r in res:
-            if not obj_id and 'unique_id' in r:
-                obj_id = r['unique_id']
+        if context.get('history_cons', False):
+            vals = ['default_code', 'name']
+            for month in context.get('months'):
+                vals.append(DateFrom(month.get('date_from')).strftime('%m/%Y'))
 
-            data_ids = data_obj.search(cr, uid, [('product_id', '=', r['product_id']), ('unique_id', '=', obj_id)], context=context)
-            for data in data_obj.browse(cr, uid, data_ids, context=context):
-                r.update({data.name: data.value})
+            res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
+
+            if not context.get('amc'):
+                raise osv.except_osv(_('Error'), _('No Consumption type has been choosen !'))
+
+            if not context.get('obj_id'):
+                raise osv.except_osv(_('Error'), _('No history consumption report found !'))
+
+            if not context.get('months') or len(context.get('months')) == 0:
+                raise osv.except_osv(_('Error'), _('No months found !'))
+
+            obj_id = context.get('obj_id')
+
+            for r in res:
+                total_consumption = 0.00
+                for month in context.get('months'):
+                    field_name = DateFrom(month.get('date_from')).strftime('%m/%Y')
+                    cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
+                    consumption = 0.00
+                    if context.get('amc') == 'AMC':
+                        consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)
+                    else:
+                        consumption = self.pool.get('product.product').browse(cr, uid, r['id'], context=cons_context).monthly_consumption
+                    total_consumption += consumption
+                    # Update the value for the month
+                    r.update({field_name: consumption})
+
+                # Update the average field
+                r.update({'average': round(total_consumption/float(len(context.get('months'))),2)})
+        else:
+            res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 
         return res
 
-product_history_consumption_line()
-
-
-class product_history_consumption_data(osv.osv_memory):
-    _name = 'product.history.consumption.data'
-
-    _columns = {
-        'name': fields.char(size=64, string='Name', required=True),
-        'product_id': fields.many2one('product.product', string='Product', required=True),
-        'value': fields.float(digits=(16,2), string='Value', required=True),
-        'unique_id': fields.integer(string='Unique ID', required=True),
-    }
-
-product_history_consumption_data()
+product_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
