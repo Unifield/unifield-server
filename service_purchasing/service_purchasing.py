@@ -29,6 +29,7 @@ import netsvc
 import logging
 import tools
 from os import path
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 class product_template(osv.osv):
     '''
@@ -41,6 +42,7 @@ class product_template(osv.osv):
     
 product_template()
 
+
 class product_product(osv.osv):
     '''
     add on change on type
@@ -52,34 +54,13 @@ class product_product(osv.osv):
         if type is service_with_reception, procure_method is set to make_to_order
         '''
         if context is None:
-            context={}
+            context = {}
         
         if type == 'service_recep':
             return {'value': {'procure_method': 'make_to_order', 'supply_method': 'buy',}}
         return {}
     
 product_product()
-
-
-class purchase_order(osv.osv):
-    '''
-    the function is modified to take into account the new service with reception as stockable product
-    '''
-    _inherit = 'purchase.order'
-    
-    def has_stockable_product(self,cr, uid, ids, *args):
-        '''
-        service with reception is considered as stockable product and produce therefore an incoming shipment and corresponding stock moves
-        '''
-        result = super(purchase_order, self).has_stockable_product(cr, uid, ids, *args)
-        for order in self.browse(cr, uid, ids):
-            for order_line in order.order_line:
-                if order_line.product_id and order_line.product_id.product_tmpl_id.type in ('service_recep',) and order.order_type != 'direct':
-                    return True
-                
-        return result
-
-purchase_order()
 
 
 class stock_location(osv.osv):
@@ -140,7 +121,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type == 'service_recep' and (not obj.picking_id or obj.picking_id.type != 'in'):
+            if obj.product_id.type in ('service_recep', 'service',) and (not obj.picking_id or obj.picking_id.type != 'in'):
                 return False
         return True
     
@@ -151,7 +132,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type == 'service_recep' and not obj.location_dest_id.service_location:
+            if obj.product_id.type in ('service_recep', 'service',) and not obj.location_dest_id.service_location:
                 return False
         return True
     
@@ -162,7 +143,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type != 'service_recep' and obj.location_dest_id.service_location:
+            if obj.product_id.type not in ('service_recep', 'service',) and obj.location_dest_id.service_location:
                 return False
         return True
     
@@ -178,6 +159,7 @@ stock_move()
 class purchase_order(osv.osv):
     '''
     add constraint
+    the function is modified to take into account the new service with reception as stockable product
     '''
     _inherit = 'purchase.order'
     
@@ -190,9 +172,21 @@ class purchase_order(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.categ == 'service':
                 for line in obj.order_line:
-                    if not line.product_id or line.product_id.type != 'service_recep':
+                    if not line.product_id or line.product_id.type not in ('service_recep', 'service',):
                         return False
         return True
+    
+    def has_stockable_product(self,cr, uid, ids, *args):
+        '''
+        service with reception is considered as stockable product and produce therefore an incoming shipment and corresponding stock moves
+        '''
+        result = super(purchase_order, self).has_stockable_product(cr, uid, ids, *args)
+        for order in self.browse(cr, uid, ids):
+            for order_line in order.order_line:
+                if order_line.product_id and order_line.product_id.product_tmpl_id.type in ('service_recep',) and order.order_type != 'direct':
+                    return True
+                
+        return result
     
     _constraints = [(_check_purchase_category, 'Purchase Order of type Category Service should contain only Service with Reception Products.', ['categ']),
                     ]
@@ -213,7 +207,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type != 'service_recep' and obj.order_id.categ == 'service':
+            if obj.product_id.type not in ('service_recep', 'service',) and obj.order_id.categ == 'service':
                 return False
         return True
     
@@ -222,3 +216,69 @@ class purchase_order_line(osv.osv):
     
 purchase_order_line()
 
+
+class stock_picking(osv.osv):
+    '''
+    add a new field order_category, which reflects the order_category of corresponding sale order/purchase order
+    '''
+    _inherit = 'stock.picking'
+    
+    def _vals_get23(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get the order category if sale_id or purchase_id exists
+        '''
+        if context is None:
+            context = {}
+        
+        result = {}
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # initialize the dic
+            for f in fields:
+                result[obj.id].update({f:False,})
+            # a sale order is linked, we gather the categ
+            if obj.sale_id:
+                result[obj.id]['order_category'] = obj.sale_id.categ
+            # a purchase order is linked, we gather the categ    
+            elif obj.purchase_id:
+                result[obj.id]['order_category'] = obj.purchase_id.categ
+                
+        return result
+    
+    def _get_purchase_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of purchase order objects for which categ has changed
+        
+        return the list of ids of stock picking object which need to get their category field updated
+        '''
+        if context is None:
+            context = {}
+        picking_obj = self.pool.get('stock.picking')
+        # all stock picking which are linked to the changing purchase order
+        result = picking_obj.search(cr, uid, [('purchase_id', 'in', ids)], context=context)
+        return result
+    
+    def _get_sale_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of sale order objects for which categ has changed
+        
+        return the list of ids of stock picking object which need to get their category field updated
+        '''
+        if context is None:
+            context = {}
+        picking_obj = self.pool.get('stock.picking')
+        # all stock picking which are linked to the changing sale order
+        result = picking_obj.search(cr, uid, [('sale_id', 'in', ids)], context=context)
+        return result
+    
+    _columns = {'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
+                                                  store={'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id',], 10),
+                                                         'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['sale_id',], 10),
+                                                         'purchase.order': (_get_purchase_ids, ['categ',], 10),
+                                                         'sale.order': (_get_sale_ids, ['categ',], 10),
+                                                         },
+                                                  ),
+                }
+
+stock_picking()

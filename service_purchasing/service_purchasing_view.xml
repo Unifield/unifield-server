@@ -33,7 +33,283 @@
 	                
 	            </data>
 	        </field>
-	    </record>	                
+	    </record>
+	    
+	    <!-- OUT -->
+	    <record id="view_picking_out_tree" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+            	<data>
+	                
+	                <xpath expr="//field[@name='origin']" position="after">
+	                	<field name="order_category" />
+	                </xpath>
+	                
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            			<field name="order_category" />
+            		</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_picking_out_search" model="ir.ui.view">
+            <field name="name">stock.picking.out.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_out_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="stock_journal_id" position="after">
+            			<field name="order_category" />
+            		</field>
+            		
+            		<filter string="Journal" position="after">
+            			<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+            		</filter>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <!-- IN -->
+        <record id="view_picking_in_tree" model="ir.ui.view">
+            <field name="name">stock.picking.in.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_in_tree" />
+            <field name="arch" type="xml">
+            	<data>
+                	
+                	<xpath expr="//field[@name='origin']" position="after">
+                		<field name="order_category" />
+                	</xpath>
+                	
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_picking_in_form" model="ir.ui.view">
+            <field name="name">stock.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+            	<data>
+
+					<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            			<field name="order_category" />
+            		</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_picking_in_search" model="ir.ui.view">
+            <field name="name">stock.picking.in.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_in_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="stock_journal_id" position="after">
+            			<field name="order_category" />
+            		</field>
+            		
+            		<filter string="Journal" position="after">
+            			<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+            		</filter>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <!-- INTERNAL -->
+       <record id="vpicktree" model="ir.ui.view">
+            <field name="name">stock.picking.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.vpicktree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='origin']" position="after">
+                		<field name="order_category" />
+                	</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field eval="12" name="priority"/>
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            			<field name="order_category" />
+            		</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_stock_picking_filter" model="ir.ui.view">
+            <field name="name">stock.picking.list.select</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_stock_picking_filter" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="stock_journal_id" position="after">
+            			<field name="order_category" />
+            		</field>
+            		
+            		<filter string="Journal" position="after">
+            			<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+            		</filter>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <!-- PICKING -->
+       <record id="view_picking_ticket_tree" model="ir.ui.view">
+            <field name="name">picking.ticket.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='origin']" position="after">
+                		<field name="order_category" />
+                	</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_picking_ticket_form" model="ir.ui.view">
+            <field name="name">picking.ticket.form</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            			<field name="order_category" />
+            		</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_picking_ticket_search" model="ir.ui.view">
+            <field name="name">picking.ticket.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="stock_journal_id" position="after">
+            			<field name="order_category" />
+            		</field>
+            		
+            		<filter string="Journal" position="after">
+            			<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+            		</filter>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <!-- PPL -->
+       <record id="view_ppl_tree" model="ir.ui.view">
+            <field name="name">ppl.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="msf_outgoing.view_ppl_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='origin']" position="after">
+                		<field name="order_category" />
+                	</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_ppl_form" model="ir.ui.view">
+            <field name="name">ppl.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+			<field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="/form/group/group/field[@name='stock_journal_id']" position="after">
+            			<field name="order_category" />
+            		</xpath>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <record id="view_ppl_search" model="ir.ui.view">
+            <field name="name">ppl.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="msf_outgoing.view_ppl_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="stock_journal_id" position="after">
+            			<field name="order_category" />
+            		</field>
+            		
+            		<filter string="Journal" position="after">
+            			<separator orientation="vertical" />
+                        <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
+            		</filter>
+            	
+            	</data>
+            </field>
+       </record>
+       
+       <!-- PACKING no need -->
+       
+       
+       <!-- TODO GLOBAL OUT after merge with shipment v2 -->
     
     </data>
 </openerp>

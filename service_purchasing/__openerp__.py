@@ -28,11 +28,11 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "product_attributes", "purchase_override",],
+    "depends" : ["stock", "product_attributes", "purchase_override", "order_types", "msf_outgoing",],
     'update_xml': ['service_purchasing_view.xml',
                    ],
     "demo_xml": [],
-    'test': [#'test/service_purchasing.yml'
+    'test': ['test/service_purchasing.yml'
              ],
     'installable': True,
 }

@@ -83,7 +83,7 @@ class purchase_order(osv.osv):
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'mixed',
+        'categ': lambda *a: 'medical',
         'loan_duration': 2,
     }
     
