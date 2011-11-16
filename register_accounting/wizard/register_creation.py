@@ -125,7 +125,9 @@ class register_creation(osv.osv_memory):
                     currency_id = register.journal_id.currency.id
                     journal_id = register.journal_id and register.journal_id.id or False
                     # verify that this register is not present in our wizard
-                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id), ('wizard_id', '=', wizard.id)], context=context):
+                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id), 
+                        ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id), 
+                        ('journal_id', '=', journal_id)]):
                         vals = {
                             'period_id': period_id,
                             'currency_id': currency_id,
@@ -135,13 +137,13 @@ class register_creation(osv.osv_memory):
                         }
                         reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
                         reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
-
+        
         # Delete lines that have no previous_register_id
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
             if not line.prev_reg_id:
                 reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
-
+        
         # Verify that there is some lines to treat
         remaining_lines = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         if not len(remaining_lines):

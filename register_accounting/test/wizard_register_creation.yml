@@ -77,3 +77,19 @@
       st_obj = self.pool.get('account.bank.statement')
       st_ids = st_obj.search(cr, uid, [('period_id', '=', ref('register_creation_wiz_period_02')), ('journal_id', '=', ref('register_creation_wiz_cheque_journal_0'))])
       assert len(st_ids) == 1, "A problem occured for register creation. You should be have ONE register created. You have: %s" % st_ids
+-
+  I create a second wizard "Register Creation" with the second period
+-
+  !record {model: wizard.register.creation, id: wiz_register_creation1}:
+    period_id: register_creation_wiz_period_02
+-
+  I confirm the period with the "Confirm Period" button
+-
+  !python {model: wizard.register.creation}: |
+      # Verification that the wizard raise an exception
+      try:
+        res = self.button_confirm_period(cr, uid, [ref('wiz_register_creation0')], {"lang": "en_US", "tz": False})
+        assert False, "The wizard shouldn't have any line!"
+      except:
+        # Wizard have done an exception, all is ok. Normal behaviour
+        pass
