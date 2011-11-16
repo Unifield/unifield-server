@@ -144,8 +144,8 @@
     <record id="uom_percentage" model="product.uom">
         <field name="name">%</field>
         <field name="category_id" ref="uom_category_percentage" />
-        <field name="factor">1.0</field>
-        <field name="factor_inv">1.0</field>
+        <field name="factor" eval="1.0" />
+        <field name="factor_inv" eval="1.0" />
     </record>
     </data>
 </openerp>
