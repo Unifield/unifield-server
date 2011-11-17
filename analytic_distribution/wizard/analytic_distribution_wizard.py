@@ -562,7 +562,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if not wizard_id:
             return False
         # Prepare some values
-        wizard = self.browse(cr, uid, [wizard_id], context=context) and self.browse(cr, uid, [wizard_id], context=context)[0]
+        wizard = self.browse(cr, uid, wizard_id, context=context)
         if not wizard:
             raise osv.except_osv(_('Warning'), _('No wizard found.'))
         # If no funding pool lines, raise an error, except when we come from a purchase order or a purchase order line ('cc' state)
@@ -685,11 +685,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
-            # First do some verifications before writing elements
-            self.wizard_verifications(cr, uid, wiz.id, context=context)
             # Then update cost center lines
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
                 raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            # First do some verifications before writing elements
+            self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
             if not wiz.distribution_id:
                 # create a new analytic distribution
