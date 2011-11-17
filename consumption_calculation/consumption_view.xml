@@ -72,6 +72,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Real consumption reports">
+		    <field name="name" />
                     <field name="cons_location_id" />
                     <field name="activity_id" />
                     <field name="period_from" />
