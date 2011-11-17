@@ -220,7 +220,20 @@
     uom_po_id: product.product_uom_unit
     property_account_expense: account_account_productpurchase0
     property_account_income: account_account_productsale0
-
+-
+  I set batch mandatory if needed
+-
+  !python {model: product.product}: | 
+    modules = self.pool.get('ir.module.module')
+    mod_pur = modules.search(cr, uid, [('name','=','specific_rules'), ('state', 'in', ['installed', 'to upgrade', 'to install'])])
+    if mod_pur:
+        self.write(cr, uid, ref('product_product_hpcdwriters0'), {'batch_management': True})
+-
+  I create a production lot
+-
+  !record {model: stock.production.lot, id: lot}:
+    name: lot abcd
+    product_id: product_product_hpcdwriters0
 -
   I create Physical Inventory for the products.
 -
@@ -233,6 +246,7 @@
         location_id: stock.stock_location_stock
         product_id: stock.product_product_hpcdwriters0
         product_qty: 10.0
+        prod_lot_id: lot
         product_uom: product.product_uom_unit
       - company_id: base.main_company
         location_id: stock.stock_location_stock
@@ -267,11 +281,13 @@
   I create stock.move.split record.
 -
   !record {model: stock.move.split, id: stock_move_split_0}:
+    use_exist: True
     line_ids:
       - name: '00001-stock-test'
         quantity: 5
+        use_exist: True
+        lot_id: lot
     product_id: stock.product_product_hpcdwriters0
-
 -
   I Split into production line.
 -
