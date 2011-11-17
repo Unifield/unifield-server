@@ -1688,7 +1688,6 @@ class stock_picking(osv.osv):
             # change subtype and name
             obj.write({'name': new_name,
                        'subtype': 'standard',
-                       'flow_type': 'quick',
                        'converted_to_standard': True,
                        }, context=context)
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
