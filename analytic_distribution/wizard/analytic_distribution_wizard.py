@@ -286,9 +286,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
         # If amount present in vals, change percentage
         if 'amount' in vals:
-            wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, ids, context=context)
-            if wiz and wiz[0] and wiz[0].total_amount:
-                vals.update({'percentage': (vals.get('amount') / wiz[0].total_amount) * 100.0})
+            wiz = self.browse(cr, uid, ids, context=context)
+            if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
+                vals.update({'percentage': (vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0})
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
