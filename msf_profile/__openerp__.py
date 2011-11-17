@@ -75,6 +75,7 @@
         "threshold_value",
         "analytic_distribution_invoice",
 #        "analytic_distribution_purchase",
+        "account_reconciliation",
     ],
     "update_xml": [
         "report.xml",
