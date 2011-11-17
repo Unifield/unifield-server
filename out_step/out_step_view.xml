@@ -23,6 +23,23 @@
 		</record>
 		
 		
+		<record id="view_picking_out_tree" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+                    <field name="state" position="after">
+                    	<field name="delivered" />
+                    </field>
+                    
+                </data>
+            </field>
+        </record>
+		
+		
 		<record id="view_picking_out_search" model="ir.ui.view">
             <field name="name">stock.picking.out.search</field>
             <field name="model">stock.picking</field>
