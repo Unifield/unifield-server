@@ -1014,7 +1014,8 @@ class stock_picking(osv.osv):
         '''
 	report_ids = self.pool.get('real.average.consumption').search(cr, uid, [('picking_id', '=', pick.id)], context=context)
 	if report_ids:
-	    return 'Delivery Order \'OUT-CONSO/00010\' generated from the consumption report is done.'
+	    name = self.pool.get('real.average.consumption').browse(cr, uid, report_ids[0], context=context).picking_id.name
+	    return 'Delivery Order %s generated from the consumption report is done.' % name
 	else:
 	    res = super(stock_picking, self)._hook_log_message_picking(cr, uid, ids, context=context, pick=pick, message=message)
             return res
