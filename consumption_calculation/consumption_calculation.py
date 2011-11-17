@@ -48,7 +48,7 @@ class real_average_consumption(osv.osv):
     _columns = {
         'creation_date': fields.datetime(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
-        'activity_id': fields.many2one('stock.location', string='Activity'),
+        'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')]),
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
