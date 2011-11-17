@@ -152,7 +152,8 @@ class real_average_consumption(osv.osv):
 
             picking_id = self.pool.get('stock.picking').create(cr, uid, {'name': 'OUT-%s' % rac.name,
                                                                          'origin': rac.name,
-                                                                         'type': 'out',
+                                                                         'type': 'out',                                                                         
+									 'subtype': 'standard',
                                                                          'state': 'auto',
                                                                          'move_type': 'one',
                                                                          'invoice_state': 'none',
