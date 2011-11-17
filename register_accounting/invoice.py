@@ -89,10 +89,17 @@ class account_invoice(osv.osv):
         """
         wf_service = netsvc.LocalService("workflow")
         for inv in self.browse(cr, uid, ids):
+            values = {}
             if not inv.date_invoice:
-                wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, {'invoice_id': inv.id, 'date': time.strftime('%Y-%m-%d'), 'period_id': inv.period_id and inv.period_id.id or False})
+                values = {'date': time.strftime('%Y-%m-%d'), 'period_id': inv.period_id and inv.period_id.id or False, 'state': 'date'}
+            if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
+                state = values and 'both' or 'amount'
+                values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})
+            if values:
+                values['invoice_id'] = inv.id
+                wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, values)
                 return {
-                    'name': "Invoice Date",
+                    'name': "Missing Information",
                     'type': 'ir.actions.act_window',
                     'res_model': 'wizard.invoice.date',
                     'target': 'new',

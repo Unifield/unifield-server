@@ -18,6 +18,7 @@
 #
 ##############################################################################
 
+import tools
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta, relativedelta
 from osv import osv, fields
@@ -38,7 +39,6 @@ class sale_order_line(osv.osv):
     override to add message at sale order creation and update
     '''
     _inherit = 'sale.order.line'
-    
     
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -344,6 +344,32 @@ class stock_move(osv.osv):
     add kc/dg
     '''
     _inherit = 'stock.move'
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prodlot_id=False)
+        
+        result = super(stock_move, self).create(cr, uid, vals, context=context)
+        return result
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        write function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prodlot_id=False)
+        
+        result = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+        return result
 
     def _kc_dg(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -388,20 +414,53 @@ class stock_move(osv.osv):
     
     def _get_checks_batch(self, cr, uid, ids, name, arg, context=None):
         '''
-        todo should be merged with 'multi'
+        get values
         '''
         result = {}
         for id in ids:
-            result[id] = False
+            result[id] = {'batch_number_check': False,
+                          'expiry_date_check': False,
+                          }
             
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
-                result[move.id] = move.product_id.batch_management
+                result[move.id] = {'batch_number_check': move.product_id.batch_management,
+                                   'expiry_date_check': move.product_id.perishable,
+                                   }
+            
+        return result
+    
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False):
+        '''
+        the product changes, set the hidden flag if necessary
+        '''
+        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
+                                                             loc_dest_id, address_id)
+        
+        # product changes, prodlot is always cleared
+        result.setdefault('value', {})['prodlot_id'] = False
+        # reset the hidden flag
+        result.setdefault('value', {})['hidden_prod_mandatory'] = False
+        if prod_id:
+            product = self.pool.get('product.product').browse(cr, uid, prod_id)
+            if product.batch_management:
+                result.setdefault('value', {})['hidden_prod_mandatory'] = True
+                result['warning'] = {'title': _('Warning'),
+                                     'message': _('The selected product is Batch Management.')}
+            
+            elif product.perishable:
+                result.setdefault('value', {})['hidden_prod_mandatory'] = True
+                result['warning'] = {'title': _('Warning'),
+                                     'message': _('The selected product is Perishable.')}
             
         return result
         
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
-                'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True),}
+                'batch_number_check': fields.function(_get_checks_batch, method=True, string='Batch Number Check', type='boolean', readonly=True, multi='vals_get',),
+                'expiry_date_check': fields.function(_get_checks_batch, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi='vals_get',),
+                # if prodlot needs to be mandatory, add 'required': [('hidden_prod_mandatory','=',True)] in attrs
+                'hidden_prod_mandatory': fields.boolean(string='Hidden Flag for Prod lot and expired date',),
+                }
     _constraints = [
                     (_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
@@ -426,8 +485,10 @@ class stock_production_lot(osv.osv):
         '''
         if default is None:
             default = {}
-        
-        default.update(name='', date=time.strftime('%Y-%m-%d'))
+            
+        # original reference
+        lot_name = self.read(cr, uid, id, ['name'])['name']
+        default.update(name='%s (copy)'%lot_name, date=time.strftime('%Y-%m-%d'))
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
     
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -438,19 +499,6 @@ class stock_production_lot(osv.osv):
             default = {}
         default.update(revisions=[])
         return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
-    
-    def product_id_change(self, cr, uid, ids, product_id, context=None):
-        '''
-        complete the life_date attribute
-        '''
-        product_obj = self.pool.get('product.product')
-        values = {}
-        if product_id:
-            duration = product_obj.browse(cr, uid, product_id, context=context).life_time
-            date = datetime.today() + relativedelta(months=duration)
-            values.update(life_date=date.strftime('%Y-%m-%d'))
-            
-        return {'value':values}
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -485,8 +533,16 @@ class stock_production_lot(osv.osv):
         '''
         create the sequence for the version management
         '''
+        if context is None:
+            context = {}
+            
         sequence = self.create_sequence(cr, uid, vals, context=context)
         vals.update({'sequence_id': sequence,})
+        
+        if context.get('update_mode') in ['init', 'update']:
+            if not vals.get('life_date'):
+                # default value to today
+                vals.update(life_date=time.strftime('%Y-%m-%d'))
         
         return super(stock_production_lot, self).create(cr, uid, vals, context=context)
     
@@ -617,12 +673,14 @@ class stock_production_lot(osv.osv):
                                                    digits_compute=dp.get_precision('Product UoM'), readonly=True,),
                 'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
                                                    help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),}
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                }
     
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
-                 'name': '',
-                 'life_date':time.strftime('%Y-%m-%d')}
+                 'name': False,
+                 'life_date': False,
+                 }
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
     ]
@@ -647,8 +705,247 @@ class stock_production_lot(osv.osv):
     
 stock_production_lot()
 
+
 class stock_production_lot_revision(osv.osv):
     _inherit = 'stock.production.lot.revision'
     _order = 'indice desc'
     
 stock_production_lot_revision()
+
+
+class stock_inventory(osv.osv):
+    '''
+    override the action_confirm to create the production lot if needed
+    '''
+    _inherit = 'stock.inventory'
+    
+    def action_confirm(self, cr, uid, ids, context=None):
+        '''
+        if the line is perishable without prodlot, we create the prodlot
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        # treat the needed production lot
+        for obj in self.browse(cr, uid, ids, context=context):
+            for line in obj.inventory_line_id:
+                # if perishable product
+                if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
+                    # integrity test
+                    assert line.product_id.perishable, 'product is not perishable but line is'
+                    assert line.expiry_date, 'expiry date is not set'
+                    # if no production lot, we create a new one
+                    if not line.prod_lot_id:
+                        # double check to find the corresponding prodlot
+                        prodlot_ids = prodlot_obj.search(cr, uid, [('life_date', '=', line.expiry_date),
+                                                                   ('type', '=', 'internal'),
+                                                                   ('product_id', '=', line.product_id.id)], context=context)
+                        # no prodlot, create a new one
+                        if not prodlot_ids:
+                            vals = {'product_id': line.product_id.id,
+                                    'life_date': line.expiry_date,
+                                    'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
+                                    'type': 'internal',
+                                    }
+                            prodlot_id = prodlot_obj.create(cr, uid, vals, context=context)
+                        else:
+                            prodlot_id = prodlot_ids[0]
+                        # update the line
+                        line.write({'prod_lot_id': prodlot_id,},)
+        
+        # super function after production lot creation - production lot are therefore taken into account at stock move creation
+        result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)      
+        return result
+                        
+stock_inventory()
+
+
+class stock_inventory_line(osv.osv):
+    '''
+    add mandatory or readonly behavior to prodlot
+    '''
+    _inherit = 'stock.inventory.line'
+    
+    def change_lot(self, cr, uid, id, prod_lot_id, context=None):
+        '''
+        prod lot changes, update the expiry date
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        
+        if prod_lot_id:
+            result['value'].update(expiry_date=prodlot_obj.browse(cr, uid, prod_lot_id, context).life_date)
+        else:
+            result['value'].update(expiry_date=False)
+        
+        return result
+    
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, type_check, context=None):
+        '''
+        expiry date changes, find the corresponding internal prod lot
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        
+        if expiry_date and product_id:
+            prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', product_id)], context=context)
+            if not prod_ids:
+                if type_check == 'in':
+                    # the corresponding production lot will be created afterwards
+                    result['warning'] = {'title': _('Info'),
+                                     'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                    # clear prod lot
+                    result['value'].update(prod_lot_id=False)
+                else:
+                    # display warning
+                    result['warning'] = {'title': _('Error'),
+                                         'message': _('The selected Expiry Date does not exist in the system.')}
+                    # clear date
+                    result['value'].update(expiry_date=False, prod_lot_id=False)
+            else:
+                # return first prodlot
+                result['value'].update(prod_lot_id=prod_ids[0])
+                
+        else:
+            # clear expiry date, we clear production lot
+            result['value'].update(prod_lot_id=False,
+                                   expiry_date=False,
+                                   )
+        
+        return result
+    
+    _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+                'expiry_date': fields.date(string='Expiry Date'),
+                'type_check': fields.char(string='Type Check', size=1024,),
+                }
+    
+    _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
+                 'type_check': 'in',
+                 }
+    
+    def on_change_product_id(self, cr, uid, ids, location_id, product, uom=False, to_date=False):
+        '''
+        the product changes, set the hidden flag if necessary
+        '''
+        result = super(stock_inventory_line, self).on_change_product_id(cr, uid, ids, location_id, product, uom, to_date)
+        
+        # product changes, prodlot is always cleared
+        result.setdefault('value', {})['prod_lot_id'] = False
+        result.setdefault('value', {})['expiry_date'] = False
+        # reset the flags
+        result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
+        result.setdefault('value', {})['hidden_perishable_mandatory'] = False
+        if product:
+            product_obj = self.pool.get('product.product').browse(cr, uid, product)
+            if product_obj.batch_management:
+                result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
+            elif product_obj.perishable:
+                result.setdefault('value', {})['hidden_perishable_mandatory'] = True
+            
+        return result
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prod_lot_id=False)
+                
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if vals.get('prod_lot_id', False) and not vals.get('expiry_date', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
+        
+        result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
+        return result
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        write function clears prodlot if not (batch_number_check or expiry_date_check)
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if not(product.batch_management or product.perishable):
+                vals.update(prod_lot_id=False)
+                
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if vals.get('prod_lot_id', False) and not vals.get('expiry_date', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
+        
+        result = super(stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
+        return result
+
+stock_inventory_line()
+
+
+class report_stock_inventory(osv.osv):
+    '''
+    UF-565: add group by expired_date
+    '''
+    _inherit = "report.stock.inventory"
+    
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'report_stock_inventory')
+        cr.execute("""
+CREATE OR REPLACE view report_stock_inventory AS (
+    (SELECT
+        min(m.id) as id, m.date as date,
+        m.expired_date as expired_date,
+        m.address_id as partner_id, m.location_id as location_id,
+        m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
+        m.company_id,
+        m.state as state, m.prodlot_id as prodlot_id,
+        coalesce(sum(-pt.standard_price * m.product_qty)::decimal, 0.0) as value,
+        CASE when pt.uom_id = m.product_uom
+        THEN
+        coalesce(sum(-m.product_qty)::decimal, 0.0)
+        ELSE
+        coalesce(sum(-m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
+    FROM
+        stock_move m
+            LEFT JOIN stock_picking p ON (m.picking_id=p.id)
+            LEFT JOIN product_product pp ON (m.product_id=pp.id)
+                LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
+                LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
+            LEFT JOIN product_uom u ON (m.product_uom=u.id)
+            LEFT JOIN stock_location l ON (m.location_id=l.id)
+    GROUP BY
+        m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
+        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
+) UNION ALL (
+    SELECT
+        -m.id as id, m.date as date,
+        m.expired_date as expired_date,
+        m.address_id as partner_id, m.location_dest_id as location_id,
+        m.product_id as product_id, pt.categ_id as product_categ_id, l.usage as location_type,
+        m.company_id,
+        m.state as state, m.prodlot_id as prodlot_id,
+        coalesce(sum(pt.standard_price * m.product_qty )::decimal, 0.0) as value,
+        CASE when pt.uom_id = m.product_uom
+        THEN
+        coalesce(sum(m.product_qty)::decimal, 0.0)
+        ELSE
+        coalesce(sum(m.product_qty * pu.factor)::decimal, 0.0) END as product_qty
+    FROM
+        stock_move m
+            LEFT JOIN stock_picking p ON (m.picking_id=p.id)
+            LEFT JOIN product_product pp ON (m.product_id=pp.id)
+                LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
+                LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
+            LEFT JOIN product_uom u ON (m.product_uom=u.id)
+            LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
+    GROUP BY
+        m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
+        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
+    )
+);
+        """)
+    
+    _columns = {'expired_date': fields.date(string='Expiry Date'),
+                }
+    
+report_stock_inventory()

@@ -153,6 +153,10 @@ class wizard_import_cheque(osv.osv_memory):
             absl_lines.append(absl_id)
             # post the register line
             absl_obj.posting(cr, uid, [absl_id], 'temp', context=context)
+
+        if not len(absl_lines):
+            raise osv.except_osv(_('Warning'), _('No line created!'))
+
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines}
 
 wizard_import_cheque()

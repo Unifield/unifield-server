@@ -8,8 +8,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Products lists">
-                    <field name="ref" />
                     <field name="name" />
+                    <field name="ref" />
                     <field name="type" />
                     <field name="nb_products" />
                 </tree>
@@ -74,7 +74,7 @@
                     <field name="product_ids" mode="tree" colspan="4" nolabel="1">
                         <tree string="Products" editable="top">
                             <field name="ref" />
-                            <field name="name" />
+                            <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
                             <field name="comment" />
                         </tree>
                     </field>

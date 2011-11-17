@@ -51,5 +51,27 @@ class account_analytic_line(osv.osv):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
     }
 
+    def reverse(self, cr, uid, ids, context={}):
+        """
+        Reverse an analytic line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = []
+        for al in self.browse(cr, uid, ids, context=context):
+            vals = {
+                'name': self.join_without_redundancy(al.name, 'REV'),
+                'amount': al.amount * -1,
+                'date': al.source_date or al.date,
+                'reversal_origin': al.id,
+                'amount_currency': al.amount_currency * -1,
+                'currency_id': al.currency_id.id,
+            }
+            new_al = self.copy(cr, uid, al.id, vals, context=context)
+            res.append(new_al)
+        return res
+
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

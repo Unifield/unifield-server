@@ -82,6 +82,11 @@ class wizard_import_invoice(osv.osv_memory):
         'statement_id': fields.many2one('account.bank.statement', string='Register', required=True, help="Register that we come from."),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, help="Help to filter invoices regarding currency."),
         'date': fields.date('Date'),
+        'state': fields.selection( (('draft', 'Draft'), ('open', 'Open')), string="State", required=True),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'draft',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -149,7 +154,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'amount_currency': total,
                 'currency_id': ordered_lines[key][0].currency_id.id,
             })
-        self.write(cr, uid, [wizard.id], {'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]})
+        self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]})
         return {
          'type': 'ir.actions.act_window',
          'res_model': 'wizard.import.invoice',
@@ -208,6 +213,8 @@ class wizard_import_invoice(osv.osv_memory):
             # Add id of register line in the exit of this function
             st_line_ids.append(absl_id)
         
+        if not len(st_line_ids):
+            raise osv.except_osv(_('Warning'), _('No line created!'))
         # Close Wizard
         # st_line_ids could be necessary for some tests
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': st_line_ids}

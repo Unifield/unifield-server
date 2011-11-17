@@ -21,6 +21,16 @@
 from osv import osv, fields
 from tools.translate import _
 
+class stock_warehouse(osv.osv):
+    '''
+    add a new field quarantine which is not mandatory
+    '''
+    _inherit = 'stock.warehouse'
+    _columns = {'lot_quarantine_id': fields.many2one('stock.location', 'Location Quarantine', domain=[('usage','<>','view'), ('quarantine_location', '=', True),]),
+                }
+    
+stock_warehouse()
+
 class stock_location(osv.osv):
     '''
     override stock location to add:
@@ -81,6 +91,26 @@ class stock_location(osv.osv):
           result[id] = False
         return result
     
+    def _check_parent(self, cr, uid, ids, context=None):
+        """ 
+        Quarantine Location can only have Quarantine Location or Views as parent location.
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.quarantine_location and obj.location_id:
+                if obj.location_id.usage not in ('view',) and not obj.location_id.quarantine_location:
+                    return False
+        return True
+    
+    def _check_chained(self, cr, uid, ids, context=None):
+        """ Checks if location is quarantine and chained loc
+        @return: True or False
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.quarantine_location:
+                if obj.chained_location_type != 'none':
+                    return False
+        return True
+    
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),
                 'location_category': fields.selection([('stock', 'Stock'),
@@ -93,6 +123,14 @@ class stock_location(osv.osv):
     _defaults = { 
        'location_category': 'stock',
     }
+    
+    _constraints = [(_check_parent,
+                     'Quarantine Location can only have Quarantine Location or Views as parent location.',
+                     ['location_id'],),
+                    (_check_chained,
+                     'You cannot define a quarantine location as chained location.',
+                     ['quarantine_location', 'chained_location_type'],),
+                    ]
 
 stock_location()
 

@@ -117,6 +117,7 @@ class real_average_consumption(osv.osv):
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
                 'view_mode': 'form,tree',
+                'target': 'dummy',
                 'res_id': ids[0],
                 }
         
@@ -235,31 +236,40 @@ class real_average_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.product_id.qty_available
+            context.update({'location': line.rac_id.cons_location_id and line.rac_id.cons_location_id.id})
+            product = self.pool.get('product.product').browse(cr, uid, line.product_id.id, context=context)
+            res[line.id] = product.qty_available
             
         return res 
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=False),
+        'product_qty': fields.function(_in_stock, method=True, string='Indicative stock', readonly=True, store=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
     
-    def product_onchange(self, cr, uid, ids, product_id, context={}):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, context={}):
         '''
         Set the product uom when the product change
         '''
         v = {}
         
         if product_id:
-            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+            if location_id:
+                context.update({'location': location_id})
+
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
+            uom = product.uom_id.id
             v.update({'uom_id': uom})
+
+            if location_id:
+                v.update({'product_qty': product.qty_available})
         else:
-            v.update({'uom_id': False})
+            v.update({'uom_id': False, 'product_qty': 0.00})
         
         return {'value': v}
     
@@ -317,11 +327,11 @@ class monthly_review_consumption(osv.osv):
         '''
         fmc = self.browse(cr, uid, ids[0], context=context)
         
-        export = 'Product reference;Product name;FMC;Valid until'
+        export = 'Product reference;Product name;AMC;FMC;Valid until'
         export += '\n'
         
         for line in fmc.line_ids:
-            export += '%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.fmc, line.valid_until or '')
+            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.amc, line.fmc, line.valid_until or '')
             export += '\n'
             
         file = base64.encodestring(export.encode("utf-8"))

@@ -267,10 +267,10 @@
               assert line.purchase_status == 'N/A', "The purchase status is not 'N/A' (3/P3)"              
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (3/P3)"
               assert line.incoming_status == 'N/A', "The incoming status is not 'N/A' (3/P3)"
-              assert line.product_available == 'Available', "The product availability is not 'Available' (3/P3)"
+              assert line.product_available == 'Waiting', "The product availability is not 'Waiting' (3/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (3/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (3/P3)"
-              assert line.outgoing_status == 'Available', "Outgoing status is different than 'Available' (3/P3)"
+              assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (3/P3)"
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'Done' (3/P4)"
@@ -347,10 +347,12 @@
               assert line.purchase_status == 'N/A', "The purchase status is not 'N/A' (4/P3)"              
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (4/P3)"
               assert line.incoming_status == 'N/A', "The incoming status is not 'N/A' (4/P3)"
-              assert line.product_available == 'Available', "The product availability is not 'Available' (4/P3)"
+              assert line.product_available == 'Waiting', "The product availability is not 'Waiting' (4/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (4/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P3)"
-              assert line.outgoing_status == 'Available', "Outgoing status is different than 'Available' (4/P3)"
+              assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (4/P3)"
+              for move in line.outgoing_ids:
+                  self.pool.get('stock.move').action_assign(cr, uid, [move.id])
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'Done' (4/P4)"
@@ -423,6 +425,7 @@
               assert line.purchase_status == 'N/A', "The purchase status is not 'N/A' (5/P3)"              
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (5/P3)"
               assert line.incoming_status == 'N/A', "The incoming status is not 'N/A' (5/P3)"
+              print line.product_available
               assert line.product_available == 'Available', "The product availability is not 'Available' (5/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (5/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (5/P3)"

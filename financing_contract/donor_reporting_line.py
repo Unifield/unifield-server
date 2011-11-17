@@ -98,18 +98,26 @@ class financing_contract_donor_reporting_line(osv.osv):
                     }
                 elif line.computation_type == 'analytic_sum':
                     # sum of analytic lines, determined by the domain
-                    analytic_line_obj = self.pool.get('account.analytic.line')
-                    date_domain = eval(line.date_domain)
-                    analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_domain)]
-                    analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
-                    allocated_real_sum = 0.0
-                    for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                        allocated_real_sum += analytic_line.amount
-                    allocated_real_sum = abs(allocated_real_sum)
-                    res[line.id] = {
-                        'allocated_budget': line.allocated_budget_value,
-                        'allocated_real': allocated_real_sum,
-                    }
+                    if 'reporting_currency' in context:
+                        analytic_line_obj = self.pool.get('account.analytic.line')
+                        date_domain = eval(line.date_domain)
+                        analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_domain)]
+                        analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
+                        allocated_real_sum = 0.0
+                        for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
+                            date_context = {'date': analytic_line.source_date or analytic_line.date}
+                            allocated_real_sum += self.pool.get('res.currency').compute(cr,
+                                                                                      uid,
+                                                                                      analytic_line.currency_id.id,
+                                                                                      context['reporting_currency'], 
+                                                                                      analytic_line.amount_currency or 0.0,
+                                                                                      round=False,
+                                                                                      context=date_context)
+                        allocated_real_sum = abs(allocated_real_sum)
+                        res[line.id] = {
+                            'allocated_budget': line.allocated_budget_value,
+                            'allocated_real': allocated_real_sum,
+                        }
         return res
 
     def _get_project_amounts(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -154,14 +162,21 @@ class financing_contract_donor_reporting_line(osv.osv):
                 elif line.computation_type == 'analytic_sum':
                     # sum of analytic lines, determined by the domain
                     private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
-                    if private_funds_id:
+                    if private_funds_id and 'reporting_currency' in context:
                         analytic_line_obj = self.pool.get('account.analytic.line')
                         date_domain = eval(line.date_domain)
                         analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.cost_center_domain), ('account_id', '!=', private_funds_id)]
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         project_real_sum = 0.0
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            project_real_sum += analytic_line.amount
+                            date_context = {'date': analytic_line.source_date or analytic_line.date}
+                            project_real_sum += self.pool.get('res.currency').compute(cr,
+                                                                                      uid,
+                                                                                      analytic_line.currency_id.id,
+                                                                                      context['reporting_currency'], 
+                                                                                      analytic_line.amount_currency or 0.0,
+                                                                                      round=False,
+                                                                                      context=date_context)
                         project_real_sum = abs(project_real_sum)
                         res[line.id] = {
                             'project_budget': line.project_budget_value,

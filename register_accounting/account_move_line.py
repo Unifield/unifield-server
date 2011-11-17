@@ -27,6 +27,7 @@ from tools.translate import _
 from operator import itemgetter
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
+from register_tools import _get_third_parties_name
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -177,6 +178,11 @@ class account_move_line(osv.osv):
                           'account.move.reconcile': (_get_reconciles, None, 10),
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
+        'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+    }
+
+    _defaults = {
+        'partner_txt': lambda *a: '',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -268,6 +274,34 @@ class account_move_line(osv.osv):
         if isinstance(partner_type, dict):
             partner_type = partner_type.get('selection')
         return self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, ids, partner_type, credit, debit, context=context)
+
+    def create(self, cr, uid, vals, context={}, check=True):
+        """
+        Add partner_txt to vals regarding partner_id, employee_id and register_id
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Retrieve third party name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
+        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+
+    def write(self, cr, uid, ids, vals, context={}, check=True, update_check=True):
+        """
+        Add partner_txt to vals
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Get third_parties_name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
+        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
 

@@ -272,42 +272,14 @@ class sale_order_followup(osv.osv_memory):
             
         outgoing_ids = []
 
-        msf_out = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
+        # Get all stock.picking associated to the sale order line
+        for line in line_obj.browse(cr, uid, line_id, context=context):
+            for move in line.move_ids:
+                if move.id not in outgoing_ids:
+                    outgoing_ids.append(move.id)
+#                if move.picking_id and move.picking_id.id not in outgoing_ids:
+#                    outgoing_ids.append(move.picking_id.id)
 
-        # If msf_outgoing is not installed
-        if len(msf_out) == 0:
-            for line in line_obj.browse(cr, uid, line_id, context=context):
-                for move in line.move_ids:
-                    if move.location_dest_id.usage == 'customer':
-                        outgoing_ids.append(move.id)
-        else:
-            first_moves = move_obj.search(cr, uid, [('sale_line_id', 'in', line_id), ('picking_id.subtype', '=', 'picking'), ('backmove_id', '=', False)], context=context)
-            picking_moves = move_obj.search(cr, uid, [('backmove_id', 'in', first_moves)], context=context)
-            packing_moves = move_obj.search(cr, uid, [('backmove_id', 'in', picking_moves)], context=context)
-
-            for first in move_obj.browse(cr, uid, first_moves, context=context):
-                if first.product_qty > 0.00: 
-                    outgoing_ids.append(first.id)
-
-            if picking_moves:
-                status = 'picking'
-#                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
-#                    if pick.picking_id.subtype == 'ppl' and status != 'packing':
-#                        status = 'ppl'
-#                    if pick.picking_id.subtype == 'packing':
-#                        status = 'packing'
-                for pick in move_obj.browse(cr, uid, picking_moves, context=context):
-                    if pick.product_qty > 0.00:
-#                    if ((pick.product_qty > 0.00 and pick.picking_id.subtype == status) or pick.product_qty > 0.00) and pick.state != 'done':
-                        outgoing_ids.append(pick.id)
-
-            if packing_moves:
-                for pack in move_obj.browse(cr, uid, packing_moves, context=context):
-                    if pack.product_qty > 0.00:
-                        outgoing_ids.append(pack.id)
-#                    if pack.location_dest_id.usage == 'customer' or (pack.product_qty > 0.00 and pack.state != 'done'):
-#                       outgoing_ids.append(pack.id)
-        
         return outgoing_ids
     
     def get_tender_ids(self, cr, uid, line_id, context={}):
@@ -339,33 +311,24 @@ class sale_order_line_followup(osv.osv_memory):
         Get all status about the line
         '''
         move_obj = self.pool.get('stock.move')
-        wh_obj = self.pool.get('stock.warehouse')
-
-        packing_loc_ids = []
-        dispatch_loc_ids = []
-        distrib_loc_ids = []
-
-        wh_ids = wh_obj.search(cr, uid, [], context=context)
-        for wh in wh_obj.browse(cr, uid, wh_ids, context=context):
-            if wh.lot_packing_id.id not in packing_loc_ids:
-                packing_loc_ids.append(wh.lot_packing_id.id)
-            if wh.lot_dispatch_id.id not in dispatch_loc_ids:
-                dispatch_loc_ids.append(wh.lot_dispatch_id.id)
-            if wh.lot_distribution_id.id not in distrib_loc_ids:
-                distrib_loc_ids.append(wh.lot_distribution_id.id)
         
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'sourced_ok': 'Waiting',
+            res[line.id] = {'sourced_ok': 'No',
 #                            'quotation_status': 'No quotation',
                             'tender_status': 'N/A',
-                            'purchase_status': 'No order',
-                            'incoming_status': 'No shipment',
+                            'purchase_status': 'N/A',
+                            'incoming_status': 'N/A',
                             'outgoing_status': 'No deliveries',
                             'product_available': 'Waiting',
+                            'outgoing_nb': 0,
                             'available_qty': 0.00}
-            
+
+            # Set the available qty in stock
+            res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+
+            # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
                 res[line.id]['sourced_ok'] = 'No'
             if line.line_id.state in ('confirmed', 'done'):
@@ -374,187 +337,135 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['sourced_ok'] = 'Cancelled'
             if line.line_id.state == 'exception':
                 res[line.id]['sourced_ok'] = 'Exception'
-                
-                            # Get information about the state of all purchase order
-            if line.line_id.type == 'make_to_stock':
-#                res[line.id]['quotation_status'] = 'N/A'
-                res[line.id]['purchase_status'] = 'N/A'
-                res[line.id]['incoming_status'] = 'N/A'
-#                if line.line_id.product_id:
-#                    context.update({'shop_id': line.line_id.order_id.shop_id.id,
-#                                    'uom_id': line.line_id.product_uom.id})
-#                res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
-
-                    
-            # Get information about the state of all call for tender
-            tender_state = False
-            if line.line_id.po_cft == 'cft' and not line.tender_ids:
-                tender_state = 'no_tender'
-
-            for tender in line.tender_ids:
-                if not tender_state:
-                    tender_state = tender.state
-                if tender_state != tender.state:
-                    tender_state = 'sf_partial'
-
-            if tender_state == 'sf_partial':
-                res[line.id]['tender_status'] = 'Partial'
-            elif tender_state == 'draft':
-                res[line.id]['tender_status'] = 'Waiting'
-            elif tender_state == 'comparison':
-                res[line.id]['tender_status'] = 'In Progress'
-            elif tender_state == 'done':
-                res[line.id]['tender_status'] = 'Done'
-            elif tender_state == 'cancel':
-                res[line.id]['tender_status'] = 'Exception'
-            elif tender_state == 'no_tender':
-                res[line.id]['tender_status'] = 'No tender'
-
-            purchase_state = False
-            for order in line.purchase_ids:
-                if not purchase_state:
-                    purchase_state = order.state
-                if purchase_state != order.state:
-                    purchase_state = 'sf_partial'
-
-            if purchase_state == 'sf_partial':
-                res[line.id]['purchase_status'] = 'Partial'
-            elif purchase_state == 'draft':
-                res[line.id]['purchase_status'] = 'Draft'
-            elif purchase_state in ('confirmed', 'wait'):
-                res[line.id]['purchase_status'] = 'Confirmed'
-            elif purchase_state == 'approved':
-                res[line.id]['purchase_status'] = 'Approved'
-            elif purchase_state == 'done':
-                res[line.id]['purchase_status'] = 'Done'
-            elif purchase_state in ('cancel', 'except_picking', 'except_invoice'):
-                res[line.id]['purchase_status'] = 'Exception'
-                    
-            # Get information about the state of all incoming shipments
-            shipment_state = False
-            for shipment in line.incoming_ids:
-                if not shipment_state:
-                    shipment_state = shipment.state
-                if shipment_state != shipment.state:
-                    shipment_state = 'sf_partial'
-
-            if shipment_state == 'sf_partial':
-                res[line.id]['incoming_status'] = 'Partial'
-            elif shipment_state in ('draft', 'confirmed'):
-                 res[line.id]['incoming_status'] = 'Waiting'
-            elif shipment_state == 'assigned':
-                res[line.id]['incoming_status'] = 'Available'
-            elif shipment_state == 'done':
-                res[line.id]['incoming_status'] = 'Done'
-            elif shipment_state == 'cancel':
-                res[line.id]['incoming_status'] = 'Exception'
-                
-                
-            res[line.id]['outgoing_status'] = 'Waiting'
-            res[line.id]['outgoing_nb'] = 0
-            res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
-
-            outgoing_partial = False
-            outgoing_partial_step_state = {'picking': [], 'dispatch': [], 'distrib': [], 'sending': []}
-            outgoing_partial_qty = 0.00
-            nb_return_from_dispatch = 0
-            for outgoing in line.outgoing_ids:
-                if outgoing.location_dest_id.usage == 'customer':
-                    ## Sending goods
-                    outgoing_partial_step_state['sending'].append(outgoing.state)
-                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Done'
-                elif outgoing.location_dest_id.id in distrib_loc_ids:
-                    ## Distribution step
-                    outgoing_partial_step_state['distrib'].append(outgoing.state)
-                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Shipped'
-                elif outgoing.location_dest_id.id in dispatch_loc_ids:
-                    ## Dispatch step
-                    outgoing_partial_step_state['dispatch'].append(outgoing.state)
-                    if outgoing.product_qty > 0.00 and outgoing.state == 'done':
-                        res[line.id]['outgoing_status'] = 'Packed'
-                elif outgoing.location_id.id in dispatch_loc_ids and outgoing.location_dest_id.id:
-                    nb_return_from_dispatch += 1
-                else:
-                    ## Picking step
-                    if outgoing.product_qty > 0.00:
-                        outgoing_partial_step_state['picking'].append(outgoing.state)
-                    # Check if the picking ticket is splitted or not
-                    if outgoing.product_qty < line.line_id.product_uom_qty:
-                        outgoing_partial = True
-                        if outgoing.state == 'done':
-                            outgoing_partial_qty += outgoing.product_qty
-                    # If not splitted, change the product available status of the line to it matches with the
-                    # state of the stock move
-                    elif outgoing.state == 'assigned':
-                        res[line.id]['product_available'] = 'Available'
-                        res[line.id]['outgoing_status'] = 'Available'
-                    elif outgoing.state == 'done':
-                        res[line.id]['product_available'] = 'Done'
-                        res[line.id]['outgoing_status'] = 'Picked'
-                        
-            res[line.id]['outgoing_nb'] -= nb_return_from_dispatch
-            # If the outgoing is split, check if all products are totally or partially available/done
-            if outgoing_partial:
-                end_state = outgoing_partial_step_state['picking'][0]
-                end_step = False
-                for state in outgoing_partial_step_state['picking']:
-                    res[line.id]['outgoing_nb'] += 1
-                    if end_state != state:
-                        end_state = False
-                
-                if not end_state:
-                    res[line.id]['product_available'] = 'Partial'
-                    res[line.id]['outgoing_status'] = 'Partial'
-                    #res[line.id]['available_qty'] -= outgoing_partial_qty
-                elif end_state == 'assigned':
-                    res[line.id]['product_available'] = 'Available'
-                    res[line.id]['outgoing_status'] = 'Available'
-                elif end_state == 'done':
-                    #res[line.id]['available_qty'] -= outgoing_partial_qty
-                    res[line.id]['product_available'] = 'Done'
-                    res[line.id]['outgoing_status'] = 'Done'
-                
-                if len(outgoing_partial_step_state['dispatch']) == res[line.id]['outgoing_nb']: 
-                    end_step = 'dispatch'
-                    end_state = outgoing_partial_step_state['dispatch'][0]
-                    for state in outgoing_partial_step_state['dispatch']:
-                        if state != end_state:
-                            end_state = False
-                            
-                if len(outgoing_partial_step_state['distrib']) == res[line.id]['outgoing_nb']: 
-                    end_step = 'distrib'
-                    end_state = outgoing_partial_step_state['distrib'][0]
-                    for state in outgoing_partial_step_state['distrib']:
-                        if state != end_state:
-                            end_state = False
-                            
-                if len(outgoing_partial_step_state['sending']) == res[line.id]['outgoing_nb']: 
-                    end_step = 'sending'
-                    end_state = outgoing_partial_step_state['sending'][0]
-                    for state in outgoing_partial_step_state['sending']:
-                        if state != end_state:
-                            end_state = False
-
-                    
-                if not end_step or not end_state:
-                    res[line.id]['outgoing_status'] = 'Partial'
-                elif end_step == 'picking' and end_state == 'confirmed':
-                    res[line.id]['outgoing_status'] = 'Waiting'
-                elif end_step == 'picking' and end_state == 'assigned':
-                    res[line.id]['outgoing_status'] = 'Available'
-                elif (end_step == 'picking' and end_state == 'done') or (end_step == 'dispatch' and end_state != 'done'):
-                    res[line.id]['outgoing_status'] = 'Picked'
-                elif (end_step == 'dispatch' and end_state == 'done') or (end_step == 'distrib' and end_state != 'done'):
-                    res[line.id]['outgoing_status'] = 'Packed'
-                elif (end_step == 'distrib' and end_state == 'done') or (end_step == 'sending' and end_state != 'done'):
-                    res[line.id]['outgoing_status'] = 'Shipped'
-                elif (end_step == 'sending' and end_state == 'done'):
-                    res[line.id]['outgoing_status'] = 'Done'
-            else:
-                res[line.id]['outgoing_nb'] = 1
             
+            ####################################################
+            # Get information about the state of call for tender
+            ####################################################
+            tender_status = {'n_a': 'N/A',
+                             'no_tender': 'No tender',
+                             'partial': 'Partial',
+                             'draft': 'Waiting',
+                             'comparison': 'In Progress',
+                             'done': 'Done',
+                             'cancel': 'Cancelled'}
+
+            if line.line_id.type == 'make_to_stock' or line.line_id.po_cft == 'po':
+                res[line.id]['tender_status'] = tender_status.get('n_a', 'Error on state !')
+            elif line.line_id.po_cft == 'cft' and not line.tender_ids:
+                res[line.id]['tender_status'] = tender_status.get('no_tender', 'Error on state !')
+            else:
+                # Check if all generated tenders are in the same state
+                tender_state = False
+                for tender in line.tender_ids:
+                    if not tender_state:
+                        tender_state = tender.state
+                    if tender_state != tender.state:
+                        tender_state = 'partial'
+
+                res[line.id]['tender_status'] = tender_status.get(tender_state, 'Error on state !')
+
+            ####################################################
+            # Get information about the state of purchase orders
+            ####################################################
+            purchase_status = {'n_a': 'N/A',
+                               'no_order': 'No order',
+                               'partial': 'Partial',
+                               'draft': 'Draft',
+                               'confirmed': 'Confirmed',
+                               'wait': 'Confirmed',
+                               'approved': 'Approved',
+                               'done': 'Done',
+                               'cancel': 'Cancelled',
+                               'except_picking': 'Exception',
+                               'except_invoice': 'Exception',}
+
+            if line.line_id.type == 'make_to_stock':
+                res[line.id]['purchase_status'] = purchase_status.get('n_a', 'Error on state !')
+            elif not line.purchase_ids:
+                res[line.id]['purchase_status'] = purchase_status.get('no_order', 'Error on state !')
+            else:
+                # Check if all generated PO are in the same state
+                purchase_state = False
+                for order in line.purchase_ids:
+                    if not purchase_state:
+                        purchase_state = order.state
+                    if purchase_state != order.state:
+                        purchase_state = 'partial'
+
+                res[line.id]['purchase_status'] = purchase_status.get(purchase_state, 'Error on state !')
+
+            ###########################################################
+            # Get information about the state of all incoming shipments
+            ###########################################################
+            incoming_status = {'n_a': 'N/A',
+                               'no_incoming': 'No shipment',
+                               'partial': 'Partial',
+                               'draft': 'Waiting',
+                               'confirmed': 'Waiting',
+                               'assigned': 'Available',
+                               'done': 'Done',
+                               'cancel': 'Cancelled'}
+
+            if line.line_id.type == 'make_to_stock':
+                res[line.id]['incoming_status'] = incoming_status.get('n_a', 'Error on state !')
+            elif not line.incoming_ids:
+                res[line.id]['incoming_status'] = incoming_status.get('no_incoming', 'Error on state !')
+            else:
+                shipment_state = False
+                for shipment in line.incoming_ids:
+                    if not shipment_state:
+                        shipment_state = shipment.state
+                    if shipment_state != shipment.state:
+                        shipment_state = 'partial'
+
+                res[line.id]['incoming_status'] = incoming_status.get(shipment_state, 'Error on state !')
+
+            #######################################################################
+            # Get information about the step and the state of all outgoing delivery
+            #######################################################################
+            out_status = {'no_out': 'No deliveries',
+                          'partial': 'Partial',
+                          'draft': 'Waiting',
+                          'confirmed': 'Waiting',
+                          'assigned': 'Available',
+                          'done': 'Done',
+                          'cancel': 'Cancelled',}
+
+            if not line.outgoing_ids:
+                res[line.id]['outgoing_status'] = out_status.get('no_out', 'Error on state !')
+                res[line.id]['outgoing_nb'] = 0
+            else:
+                # Get the first stock.picking
+                first_out = False
+                moves_first_out = []
+                moves_first_out_ids = []
+                for out in line.outgoing_ids:
+                    if out.picking_id and not out.picking_id.previous_step_id:
+                        first_out = out.picking_id
+                        moves_first_out.append(out)
+                        moves_first_out_ids.append(out.id)
+
+                # Check the flow type of the first picking (full or quick)
+                if first_out.subtype == 'standard':
+                    res[line.id]['outgoing_nb'] = len(moves_first_out)
+                    out_state = False
+                    for out in moves_first_out:
+                        if not out_state:
+                            out_state = out.state
+                        if out.state != out_state:
+                            out_state = 'partial'
+
+                    res[line.id]['outgoing_status'] = out_status.get(out_state, 'Error on state !')
+                    res[line.id]['product_available'] = out_status.get(out_state, 'Error on state !')
+                else:
+                    # Full mode
+                    # Begin from the first out moves
+                    for out in line.outgoing_ids:
+                        print out
+                    
+                    res[line.id]['outgoing_status'] = 'Waiting'
+                    res[line.id]['outgoing_nb'] = 0
+                    res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
         return res
     
@@ -608,18 +519,30 @@ class sale_order_followup_from_menu(osv.osv_memory):
     _description = 'Sale order followup menu entry'
     
     _columns = {
-        'order_id': fields.many2one('sale.order', string='Sale Order', required=True),
+        'order_id': fields.many2one('sale.order', string='Internal reference', required=True),
+        'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True),
     }
     
     def go_to_followup(self, cr, uid, ids, context={}):
         new_context = context.copy()
         new_ids = []
         for menu in self.browse(cr, uid, ids, context=context):
-            new_ids.append(menu.order_id.id)
+            new_ids.append(menu.order_id and menu.order_id.id or menu.cust_order_id.id)
             
         new_context['active_ids'] = new_ids
         
         return self.pool.get('sale.order.followup').start_order_followup(cr, uid, ids, context=new_context)
+
+    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, type='order_id'):
+        res = {}
+
+        if type == 'cust_order_id' and cust_order_id:
+            res.update({'order_id': False})
+        elif order_id:
+            res.update({'cust_order_id': False})
+
+        return {'value': res}
+
             
 sale_order_followup_from_menu()
 
@@ -786,3 +709,38 @@ class purchase_order_line(osv.osv):
                 'res_id': po_id,}
 
 purchase_order_line()
+
+
+class sale_order(osv.osv):
+    _name = 'sale.order'
+    _inherit = 'sale.order'
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context={}, limit=80):
+        '''
+        Search all SO by internal or customer reference
+        '''
+        if context.get('from_followup'):
+            ids = []
+            if name and len(name) > 1:
+                ids.extend(self.search(cr, uid, [('client_order_ref', operator, name)], context=context))
+
+            return self.name_get(cr, uid, ids, context=context)
+        else:
+            return super(sale_order, self).name_search(cr, uid, name, args, operator, context, limit)
+
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        If the method is called from followup wizard, set the customer ref in brackets
+        '''
+        if context.get('from_followup'):
+            res = []
+            for r in self.browse(cr, uid, ids, context=context):
+                if r.client_order_ref:
+                    res.append((r.id, '%s' % r.client_order_ref))
+                else:
+                    res.append((r.id, '%s' % r.name))
+            return res
+        else:
+            return super(sale_order, self).name_get(cr, uid, ids, context=context)
+
+sale_order()
