@@ -569,50 +569,101 @@ class sale_order_line_followup(osv.osv_memory):
                             nb_out += 1
                             out_step['general']['state'] = general.state
                     
-                    # Write the sale order followup line according to picking state (will be overrided if steps are made after)
-                    if out_step['picking']['state'] and (not out_step['general']['state'] or out_step['picking']['state'] == out_step['general']['state']):
-                        res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get(out_step['picking']['state'], 'Error on state !')
-                        if out_step['picking']['state'] == 'done':
-                            res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
-                    elif out_step['picking']['state'] and out_step['picking']['state'] not in ('cancel', 'done') and out_step['picking']['state'] != out_step['general']['state']:
-                        res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                    else:
+                    if not out_step['picking']['state']:
                         res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
-                           
-                    # Write the sale order followup line according to packing state (will be overrided if steps are made after) 
-                    if out_step['packing']['moves'] and out_step['packing']['state'] and out_step['picking']['state'] != 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                    elif out_step['packing']['state'] and out_step['packing']['state'] == 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
-                    
-                    # Write the sale order followup line according to dispatch state (will be overrided if steps are made after)
-                    if out_step['dispatch']['moves'] and out_step['dispatch']['state'] and out_step['packing']['state'] != 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                    elif out_step['dispatch']['moves'] and not out_step['dispatch']['state']:
-                        res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'] or out_step['picking']['state'], 'Error on state !')
-                    elif out_step['dispatch']['state'] == 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
-                    
-                    # Write the sale order followup line according to distrib state (will be overrided if steps are made after)
-                    if out_step['distrib']['moves'] and not out_step['dispatch']['state'] and out_step['distrib']['state'] != 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
-                    if out_step['distrib']['moves'] and out_step['dispatch']['state'] in ('done', 'assigned') and out_step['packing']['state'] == 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
-                    elif out_step['distrib']['moves'] and out_step['dispatch']['state'] and out_step['dispatch']['state'] != 'assigned':
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                    elif out_step['distrib']['state'] == 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
+                        
+                    if out_step['picking']['state']:
+                        if not out_step['general']['state'] or out_step['picking']['state'] == out_step['general']['state']:
+                            res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get(out_step['picking']['state'], 'Error on state !')
+                            if out_step['picking']['state'] == 'done':
+                                res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
+                        elif out_step['picking']['state'] not in ('cancel', 'done') and out_step['picking']['state'] != out_step['general']['state']:
+                            res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        else:
+                            res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
                             
-                    # Write the sale order followup line according to sending state (will be overrided if steps are made after)        
-                    if out_step['customer']['moves'] and out_step['customer']['state'] and out_step['distrib']['state'] and out_step['distrib']['state'] != 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                    elif out_step['customer']['moves'] and out_step['customer']['state'] != 'done' and out_step['distrib']['state'] != 'done':
-                        res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
-                    elif out_step['customer']['state'] == 'done':
-                        res[line.id]['outgoing_status'] = out_status.get(out_step['customer']['state'], 'Error on state !')
+                    if out_step['packing']['state']:
+                        if out_step['picking']['state'] != 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        elif out_step['packing']['state'] == 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
+                            
+                    if out_step['dispatch']['state']:
+                        if out_step['packing']['state'] and out_step['packing']['state'] != 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        elif not out_step['packing']['state']:
+                            res[line.id]['outgoing_status'] = out_status.get('einuetauiten', 'Pas de packing state')
+                        elif out_step['dispatch']['state'] == 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+                            
+                    if out_step['distrib']['state']:
+                        if out_step['dispatch']['state'] and out_step['dispatch']['state'] != 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        elif out_step['distrib']['state'] == 'assigned':
+                            res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+                        elif out_step['distrib']['state'] == 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
+                            
+                    if out_step['customer']['state']:
+                        if out_step['distrib']['state'] != 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        elif out_step['customer']['state'] == 'done' \
+                                and out_step['distrib']['state'] and out_step['distrib']['state'] == 'done' \
+                                and out_step['picking']['state'] and out_step['packing']['state'] == 'done' \
+                                and out_step['picking']['state'] and out_step['picking']['state'] == 'done':
+                            res[line.id]['outgoing_status'] = out_status.get('done', 'Error on state !')
+                        else:
+                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                    
+#                    # Write the sale order followup line according to picking state (will be overrided if steps are made after)
+#                    if out_step['picking']['state'] and (not out_step['general']['state'] or out_step['picking']['state'] == out_step['general']['state']):
+#                        res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], 'Error on state !')
+#                        res[line.id]['outgoing_status'] = out_status.get(out_step['picking']['state'], 'Error on state !')
+#                        if out_step['picking']['state'] == 'done':
+#                            res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
+#                    elif out_step['picking']['state'] and out_step['picking']['state'] not in ('cancel', 'done') and out_step['picking']['state'] != out_step['general']['state']:
+#                        res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
+#                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+#                    else:
+#                        res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
+#                        res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
+#                           
+#                    # Write the sale order followup line according to packing state (will be overrided if steps are made after) 
+#                    if out_step['packing']['moves'] and out_step['packing']['state'] and out_step['picking']['state'] != 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+#                    elif out_step['packing']['state'] and out_step['packing']['state'] == 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+#                    
+#                    # Write the sale order followup line according to dispatch state (will be overrided if steps are made after)
+#                    if out_step['dispatch']['moves'] and out_step['dispatch']['state'] and out_step['packing']['state'] != 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+#                    elif out_step['dispatch']['moves'] and not out_step['dispatch']['state']:
+#                        res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'] or out_step['picking']['state'], 'Error on state !')
+#                    elif out_step['dispatch']['state'] == 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+#                    
+#                    # Write the sale order followup line according to distrib state (will be overrided if steps are made after)
+#                    if out_step['distrib']['moves'] and not out_step['dispatch']['state'] and not out_step['packing']['state']\
+#                                and out_step['distrib']['state'] != 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+#                    if out_step['distrib']['moves'] and out_step['dispatch']['state'] in ('done', 'assigned') and out_step['packing']['state'] == 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
+#                    elif out_step['distrib']['moves'] and out_step['dispatch']['state'] and out_step['dispatch']['state'] != 'assigned':
+#                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+#                    elif out_step['distrib']['state'] == 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
+#                            
+#                    # Write the sale order followup line according to sending state (will be overrided if steps are made after)        
+#                    if out_step['customer']['moves'] and out_step['customer']['state'] and out_step['distrib']['state'] and out_step['distrib']['state'] != 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+#                    elif out_step['customer']['moves'] and out_step['customer']['state'] != 'done' and out_step['distrib']['state'] != 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
+#                    elif out_step['customer']['state'] == 'done':
+#                        res[line.id]['outgoing_status'] = out_status.get(out_step['customer']['state'], 'Error on state !')
                         
                     # Set the number of the outgoing deliveries
                     res[line.id]['outgoing_nb'] = '%s' %nb_out
