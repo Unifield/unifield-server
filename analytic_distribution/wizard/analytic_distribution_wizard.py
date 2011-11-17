@@ -285,7 +285,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not self.verify_analytic_account(cr, uid, vals, self._name, context=context):
             raise osv.except_osv(_('Error'), _('Analytic account validation error.'))
         # If amount present in vals, change percentage
-        if 'amount' in vals:
+        if 'amount' in vals and 'percentage' not in vals:
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': (vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0})
@@ -585,11 +585,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el), ('wizard_id', '=', wizard.id)], context=context)
             # Create a new entry if no one for this cost center
             if not search_ids:
-                res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': int(cc_data[el]), 'type': 'cost.center',
+                res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': cc_data[el], 'type': 'cost.center',
                     'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el,}, context=context)
             # else change current cost center
             else:
-                res = cc_obj.write(cr, uid, search_ids, {'percentage': int(cc_data[el])}, context=context)
+                res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
             if res:
                 update_lines.append(res)
         # Delete useless cost center lines
