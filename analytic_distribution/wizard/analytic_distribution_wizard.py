@@ -44,6 +44,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         # Browse elements
         for line in self.browse(cr, uid, ids, context=context):
             wizard = line.wizard_id
+            res[line.id] = 0
             if wizard and wizard.total_amount:
                 res[line.id] = (wizard.total_amount * line.percentage) / 100.0
         return res
@@ -126,7 +127,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not percentage or not total_amount:
-            return False
+            return {'value': {'amount': 0}}
         amount = (total_amount * percentage) / 100
         return {'value': {'amount': amount}}
 
@@ -137,7 +138,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not amount or not total_amount:
-            return False
+            return {'value': {'percentage': 0}}
         percentage = (amount / total_amount) * 100
         return {'value': {'percentage': percentage}}
 
