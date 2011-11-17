@@ -79,16 +79,19 @@ class purchase_order(osv.osv):
             if po.from_yml_test:
                 continue
             if not po.analytic_distribution_id:
-                raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
+                for line in po.order_line:
+                    if not line.analytic_distribution_id:
+                        raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
             inv_ids = po.invoice_ids
             for inv in inv_ids:
                 # First set invoice global distribution
-                new_distrib_id = ana_obj.copy(cr, uid, po.analytic_distribution_id.id, {})
-                if not new_distrib_id:
-                    raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                # create default funding pool lines
-                ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+                if po.analytic_distribution_id:
+                    new_distrib_id = ana_obj.copy(cr, uid, po.analytic_distribution_id.id, {})
+                    if not new_distrib_id:
+                        raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                    # create default funding pool lines
+                    ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+                    self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
                 # Search all invoice lines
                 invl_ids = invl_obj.search(cr, uid, [('invoice_id', '=', inv.id)])
                 # Then set distribution on invoice line regarding purchase order line distribution
