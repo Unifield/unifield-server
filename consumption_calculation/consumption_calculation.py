@@ -46,7 +46,7 @@ class real_average_consumption(osv.osv):
         return res
     
     _columns = {
-        'creation_date': fields.date(string='Creation date'),
+        'creation_date': fields.datetime(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
         'activity_id': fields.many2one('stock.location', string='Activity'),
         'period_from': fields.date(string='Period from', required=True),
@@ -60,7 +60,7 @@ class real_average_consumption(osv.osv):
     }
     
     _defaults = {
-        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_cust')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'valid_ok': lambda *a: True,
@@ -103,7 +103,7 @@ class real_average_consumption(osv.osv):
                 move_id = move_obj.create(cr, uid, {'name': 'RAC/%s' % (line.product_id.name),
                                                     'product_uom': line.uom_id.id,
                                                     'product_id': line.product_id.id,
-                                                    'date_expected': rac.period_to,
+                                                    'date_expected': '%s %s'%(rac.period_to, time.strftime('%H:%M:%S')),
                                                     'date': rac.creation_date,
                                                     'product_qty': line.consumed_qty,
                                                     'location_id': rac.cons_location_id.id,
