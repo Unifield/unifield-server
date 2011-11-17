@@ -8,29 +8,30 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Financing Contract">
-                        <field name="code" colspan="1"/>
-                        <field name="name" colspan="1"/>
-                        <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"/>
-                        <field name="reporting_type"/>
+                        <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
+                               attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
-                        <field name="eligibility_from_date"/>
-                        <field name="eligibility_to_date"/>
+                        <field name="eligibility_from_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_to_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <notebook colspan="4">
                             <page string="Contract information">
                                 <group colspan="4" col="6">
-			                        <field name="grant_name" colspan="2"/>
-			                        <field name="donor_grant_reference" colspan="2"/>
-			                        <field name="hq_grant_reference" colspan="2"/>
+			                        <field name="grant_name" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="donor_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 		                        </group>
                                 <group colspan="4" col="6">
-			                        <field name="grant_amount" colspan="2"/>
-			                        <field name="reporting_currency" colspan="2"/>
-			                        <field name="contract_type" colspan="2"/>
+			                        <field name="grant_amount" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="contract_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
                             </page>
                             <page string="Funding pools">
                                 <field colspan="4" name="funding_pool_ids" nolabel="1"
-                                       domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]">
+                                       domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Funding pools" >
                                         <field name="code"/>
                                         <field name="name"/>
@@ -39,7 +40,7 @@
                             </page>
                             <page string="Reporting lines">
                                 <field name="format_id" invisible="1"/>
-                                <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type}">
+                                <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
                                     <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
@@ -65,25 +66,25 @@
                             </page>
                             <page string="Other lines">
                                 <separator colspan="4" string="Overhead"/>
-                                <field name="overhead_type" colspan="2"/>
-                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')]}"/>
-                                <field name="budget_allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')]}"/>
-                                <field name="budget_project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')]}"/>
-                                <field name="allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')]}"/>
-                                <field name="project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')]}"/>
+                                <field name="overhead_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="budget_allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="budget_project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 <separator colspan="4" string="Lump sum"/>
-                                <field name="budget_allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
-                                <field name="budget_project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
-                                <field name="allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
-                                <field name="project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
+                                <field name="budget_allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="budget_project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 <separator colspan="4" string="Consumption"/>
-                                <field name="budget_allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
-                                <field name="budget_project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')]}"/>
-                                <field name="allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')]}"/>
-                                <field name="project_consumption" colspan="2"/>
+                                <field name="budget_allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="budget_project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                <field name="project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                             </page>
                             <page string="Comments">
-	                           <field name="notes" nolabel="1"/>
+	                           <field name="notes" nolabel="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                             </page>
                         </notebook>
                         <group col="8" colspan="4">
@@ -92,6 +93,10 @@
 	                        <field name="hard_closed_date" colspan="2" readonly="1"/>
 	                        <field name="state" colspan="2" readonly="1"/>
                         </group>
+                        <button name="contract_open" states="draft" string="Open" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_soft_closed" states="open" string="Soft-close" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_reopen" states="soft_closed" string="Re-Open" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_hard_closed" states="soft_closed" string="Hard-close" type="workflow" icon="gtk-ok"/>
                     </form>
                 </field>
             </record>

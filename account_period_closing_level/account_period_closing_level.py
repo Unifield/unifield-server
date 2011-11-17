@@ -70,10 +70,11 @@ class account_period_closing_level(osv.osv):
                 WHERE period_id = %s""" % period.id
                 cr.execute(sql)
                 res = [x[0] for x in cr.fetchall()]
+                comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 # for each currency do a verification about fx rate
                 for id in res:
                     # search for company currency_id if ID is None
-                    if id == None:
+                    if id == None or id == comp_curr_id:
                         continue
                     rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', id), ('name', '>=', period.date_start), 
                         ('name', '<=', period.date_stop)], context=context)
@@ -81,16 +82,18 @@ class account_period_closing_level(osv.osv):
                     if not rate_ids:
                         curr_name = curr_obj.read(cr, uid, id, ['name']).get('name', False)
                         raise osv.except_osv(_('Warning'), _("No FX rate found for currency '%s'") % curr_name)
-                # finally check supplier invoice for this period and display those of them that have due date to contened in this period
-                inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
-                    ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
-                inv_to_display = []
-                for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
-                    if not inv.date_due or inv.date_due <= period.date_stop:
-                        inv_to_display.append(inv.id)
-                if inv_to_display:
-                    raise osv.except_osv(_('Warning'), _('Some invoices are not paid and have an overdue date. Please verify this with \
-"Open overdue invoice" button and fix the problem.'))
+## This block could be reused later
+#                # finally check supplier invoice for this period and display those of them that have due date to contened in this period
+#                inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
+#                    ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
+#                inv_to_display = []
+#                for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
+#                    if not inv.date_due or inv.date_due <= period.date_stop:
+#                        inv_to_display.append(inv.id)
+#                if inv_to_display:
+#                    raise osv.except_osv(_('Warning'), _('Some invoices are not paid and have an overdue date. Please verify this with \
+#"Open overdue invoice" button and fix the problem.'))
+                
                 # Display a wizard to inform user all kind of verifications he have to verify in order to close period
                 return {
                     'name': "Period closing confirmation wizard",

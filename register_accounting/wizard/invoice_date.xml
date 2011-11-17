@@ -8,9 +8,22 @@
             <field name='model'>wizard.invoice.date</field>
             <field name='type'>form</field>
             <field name='arch' type='xml'>
-                <form string="Please indicate an invoice date before approving the invoice">
-                    <field name="date" />
-                    <field name="period_id" />
+                <form string="Missing information">
+                    <field name="state" invisible="1"/>
+                    <group colspan="4" attrs="{'invisible': [('state','=','amount')]}">
+                        <separator colspan="4" string="Please indicate an invoice date before approving the invoice:" />
+                        <field name="date" attrs="{'required': [('state','!=','amount')]}"/>
+                        <field name="period_id" />
+                        <label string=" " colspan="4" />
+                        <label string=" " colspan="4" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state','=','date')]}">
+                        <separator colspan="4" string="Please verify the price of the invoice ! The real total does not match the computed total:" />
+                        <field name="check_total" attrs="{'required': [('state','!=','date')]}"/>
+                        <field name="amount_total" />
+                        <label string=" " colspan="4" />
+                        <label string=" " colspan="4" />
+                    </group>
                     <group colspan="4">
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button name="validate" type="object" string="Validate" icon="gtk-ok" />

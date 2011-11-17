@@ -150,6 +150,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 30
+    batch_management: True
     seller_ids:
       - sequence: 10
         min_qty: 0.00
@@ -309,6 +310,13 @@
     req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(years=2)).strftime('%Y-%m-%d')
     self.write(cr, uid, ref('lot5'), {'life_date': req_date}, context=context)
 -
+  !record {model: stock.production.lot, id: lot22}:
+    name: '00022'
+    ref: '00022'
+    product_id: product3
+    life_date: !eval "(DateTime.now()+DateTime.RelativeDateTime(years=10)).strftime('%Y-%m-%d')"
+
+-
   I create an inventory to add products in stock
 -
   !record {model: stock.inventory, id: inv1}:
@@ -345,6 +353,7 @@
       - company_id: base.main_company
         location_id: cycle_sloc1
         product_id: product3
+        prod_lot_id: lot22
         product_qty: 15.0
         product_uom: product.product_uom_unit
       - company_id: base.main_company
@@ -600,6 +609,7 @@
     location_id: cycle_sloc1
     location_dest_id: stock.stock_location_customers
     type: out
+    prodlot_id: lot22
     reason_type_id: reason_types_moves.reason_type_deliver_partner
     product_qty: 12
 -

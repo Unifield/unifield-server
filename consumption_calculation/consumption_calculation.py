@@ -361,7 +361,6 @@ class real_average_consumption_line(osv.osv):
         
         return super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
 
-    
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
@@ -508,11 +507,11 @@ class monthly_review_consumption(osv.osv):
         '''
         fmc = self.browse(cr, uid, ids[0], context=context)
         
-        export = 'Product reference;Product name;FMC;Valid until'
+        export = 'Product reference;Product name;AMC;FMC;Valid until'
         export += '\n'
         
         for line in fmc.line_ids:
-            export += '%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.fmc, line.valid_until or '')
+            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.amc, line.fmc, line.valid_until or '')
             export += '\n'
             
         file = base64.encodestring(export.encode("utf-8"))
@@ -594,18 +593,6 @@ class monthly_review_consumption(osv.osv):
                 'target': 'dummy',
                 'context': context}
 
-#    def valid_multiple_lines(self, cr, uid, ids, context={}):
-#        '''
-#        Open the wizard to valid multiple lines
-#        '''
-#        wiz_id = self.pool.get('wizard.valid.line').create(cr, uid, {'mrc_id': ids[0]}, context=context)
-#
-#        return {'type': 'ir.actions.act_window',
-#                'res_model': 'wizard.valid.line',
-#                'view_type': 'form',
-#                'view_mode': 'form',
-#                'res_id': wiz_id,
-#                'target': 'new',}
 
     def valid_multiple_lines(self, cr, uid, ids, context={}):
         '''
@@ -776,7 +763,6 @@ class monthly_review_consumption_line(osv.osv):
                 
                     
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
-
         return {'value': {'amc': amc,
                           'fmc': amc,
                           'fmc2': amc,
@@ -865,7 +851,6 @@ class product_product(osv.osv):
             
             # Update the domain of research
             rac_domain.append(('cons_location_id', 'in', location_ids))
-
         rac_ids = rac_obj.search(cr, uid, rac_domain, context=context)
        
         for id in ids:

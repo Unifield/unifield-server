@@ -197,6 +197,11 @@ class journal_items_corrections(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Verify that date is superior to line's date
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.move_line_id and wiz.move_line_id.date:
+                if not wiz.date >= wiz.move_line_id.date:
+                    raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
         aml_obj = self.pool.get('account.move.line')
@@ -213,6 +218,11 @@ class journal_items_corrections(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Verify that date is superior to line's date
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.move_line_id and wiz.move_line_id.date:
+                if not wiz.date >= wiz.move_line_id.date:
+                    raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
         wiz_line_obj = self.pool.get('wizard.journal.items.corrections.lines')
