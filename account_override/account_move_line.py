@@ -56,5 +56,26 @@ class account_move_line(osv.osv):
             help="This indicates the state of the Journal Entry."),
     }
 
+    def _accounting_balance(self, cr, uid, ids, context={}):
+        """
+        Get the accounting balance of given lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Create an sql query
+        sql =  """
+            SELECT SUM(debit - credit)
+            FROM account_move_line
+            WHERE id in %s
+        """
+        cr.execute(sql, [tuple(ids)])
+        res = cr.fetchall()
+        if isinstance(ids, list):
+            res = res[0]
+        return res
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
