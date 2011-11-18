@@ -306,7 +306,7 @@ class sale_order_followup(osv.osv_memory):
 
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for tender in line.tender_line_ids:
-                tender_ids.append(tender.tender_id.id)
+                tender_ids.append(tender.id)
         
         return tender_ids
         
@@ -645,7 +645,7 @@ class sale_order_line_followup(osv.osv_memory):
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                    readonly=True, multi='status'),
-        'tender_ids': fields.many2many('tender', 'call_tender_follow_rel',
+        'tender_ids': fields.many2many('tender.line', 'call_tender_follow_rel',
                                        'follow_line_id', 'tender_id', string='Call for tender'),
         'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
                                          readonly=True, multi='status'),
@@ -711,23 +711,24 @@ class sale_order_followup_from_menu(osv.osv_memory):
 sale_order_followup_from_menu()
 
 
-class tender(osv.osv):
-    _name = 'tender'
-    _inherit = 'tender'
+class tender_line(osv.osv):
+    _name = 'tender.line'
+    _inherit = 'tender.line'
     
     def go_to_tender_info(self, cr, uid, ids, context={}):
         '''
         Return the form of the object
         '''
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'tender_form')[1]
+        tender_id = self.pool.get('tender.line').browse(cr, uid, ids[0], context=context).tender_id.id
         return {'type': 'ir.actions.act_window',
                 'res_model': 'tender',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [view_id],
-                'res_id': ids[0],}
+                'res_id': tender_id,}
     
-tender()
+tender_line()
 
 
 class purchase_order(osv.osv):
@@ -792,9 +793,9 @@ class stock_move(osv.osv):
                      'packing': ('msf_outgoing', 'view_packing_form')
                      }
         if pick.type == 'out':
-            module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))[1], pick.id
+            module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
             try:
-                return obj_data.get_object_reference(cr, uid, module, view)
+                return obj_data.get_object_reference(cr, uid, module, view)[1], pick.id
             except ValueError, e:
                 pass
         

@@ -142,8 +142,11 @@
                     <separator colspan="4" string="Associated documents" />
                     <field name="tender_ids" nolabel="1" string="Tenders" colspan="4">
                     	<tree string="Tender" colors="green:state in ('done');grey: state in ('cancel')">
-                    		<field name="name" />
-                    		<field name="sale_order_id" />
+                    		<field name="product_id" />
+                    		<field name="tender_id" />
+                    		<field name="qty" />
+                    		<field name="product_uom" />
+                    		<field name="date_planned" />
                     		<field name="state" />
                     		<button name="go_to_tender_info" type="object" string="Go to tender form" icon="terp-stock_zoom" />
                 		</tree>
