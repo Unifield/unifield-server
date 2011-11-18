@@ -20,13 +20,13 @@
                 <field name="location_dest_id" invisible="1"/>
                 <field name="product_id" invisible="0"/>
                 <field name="categ_id" invisible="1"/>
-                <field name="stock_journal" invisible="1"/>
                 <field name="state" invisible="1"/>
                 <field name="comment" invisible="1"/>
                 <field name="order_type" invisible="1"/>
                 <field name="origin" invisible="1"/>
                 <field name="prodlot_id" invisible="1"/>
                 <field name="tracking_id" invisible="1"/>
+		<field name="reason_type_id" invisible="1" />
                 <field name="product_qty" sum="Total quantity"/>
                 <field name="product_qty_in" sum="Total incoming quantity" />
                 <field name="product_qty_out" sum="Total outgoing quantity"/>
@@ -89,7 +89,7 @@
                     <field name="location_id" />
                     <field name="location_dest_id" />
                     <field name="categ_id"/>
-                    <field name="stock_journal"/>
+                    <field name="reason_type_id"/>
                     <separator orientation="vertical"/>
                     <field name="company_id" groups="base.group_multi_company" widget = "selection"/>
                     <newline/>
@@ -110,7 +110,7 @@
                     <separator orientation="vertical"/>
                     <filter string="Type" name="group_type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}" help="Shipping type specify, goods coming in or going out"/>
                     <filter string="State" name="group_state" icon="terp-stock_effects-object-colorize" context="{'group_by':'state'}"/>
-                    <filter string="Stock journal" name="group_stock_journal" icon="terp-folder-orange" context="{'group_by':'stock_journal'}"/>
+                    <filter string="Reason Type" name="group_reason_type_id" icon="terp-folder-orange" context="{'group_by':'reason_type_id'}"/>
                     <separator orientation="vertical"/>
                     <filter string="Company" name="group_state" icon="terp-stock_effects-object-colorize" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
                     <separator orientation="vertical"/>

@@ -97,4 +97,61 @@ class product_list_line(osv.osv):
 
 product_list_line()
 
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+
+    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns all lists/sublists where the product is in
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (long,int)):
+            ids = [ids]
+            
+        res = {}
+            
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = []
+            line_ids = self.pool.get('product.list.line').search(cr, uid, [('name', '=', product.id)], context=context)
+            for line in self.pool.get('product.list.line').browse(cr, uid, line_ids, context=context):
+                if line.list_id and line.list_id.id not in res[product.id]:
+                    res[product.id].append(line.list_id.id)
+                    
+        return res
+    
+    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if not context:
+            context = {}
+            
+        ids = []
+            
+        for arg in args:
+            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
+                list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
+                for line in list.product_ids:
+                    ids.append(line.name.id)
+            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
+                for list in self.pool.get('product.list').browse(cr, uid, arg[2], context=context):
+                    for line in list.product_ids:
+                        ids.append(line.name.id)
+            else:
+                return []
+            
+        return [('id', 'in', ids)]
+
+    _columns = {
+        'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
+                                    type='many2many', relation='product.list', method=True, string='Lists'),
+    }
+
+product_product()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -161,6 +161,7 @@
     volume : 0.0
     warranty: 0.0
     weight: 0.0
+    batch_management: True
     weight_net: 0.0
     seller_ids:
       - sequence: 10
@@ -187,6 +188,7 @@
     uom_po_id: product.product_uom_unit
     volume : 0.0
     warranty: 0.0
+    batch_management: True
     weight: 0.0
     weight_net: 0.0
     seller_ids:
@@ -208,6 +210,7 @@
     property_stock_production: stock.location_production
     seller_delay: '1'
     standard_price: 120.0
+    batch_management: True
     supply_method: buy
     type: product
     uom_id: product.product_uom_unit
@@ -373,6 +376,14 @@
     from dateutil.relativedelta import relativedelta
     req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=-20)).strftime('%Y-%m-%d')
     self.write(cr, uid, ref('lot3_3'), {'life_date': req_date}, context=context)
+-   
+  I create a batch for product 7 with today + 10 years as expiry date
+-
+  !record {model: stock.production.lot, id: lot3_4}:
+    name: '0004_4'
+    ref: '0004_4'
+    product_id: product7
+    life_date: !eval "(DateTime.now()+DateTime.RelativeDateTime(years=10)).strftime('%Y-%m-%d')"
 -
   I create an inventory to enter these products into the stock
 -
@@ -429,6 +440,7 @@
         product_uom: product.product_uom_unit
         product_id: product7
         product_qty: 10
+        prod_lot_id: lot3_4
 -
   I confirm the inventory
 -

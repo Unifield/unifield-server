@@ -64,6 +64,9 @@
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
+		    <xpath expr="/search/field[@name='name']" position="after">
+			<field name="client_order_ref" />
+		    </xpath>
                     <xpath expr="/search/field[@name='user_id']" position="after">
                     	<newline />
                         <group string="Type" expand="0">
