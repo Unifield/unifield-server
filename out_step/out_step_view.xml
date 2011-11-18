@@ -31,6 +31,10 @@
             <field name="arch" type="xml">
             	<data>
             	
+            		<tree position="attributes">
+                       <attribute name="colors">green:delivered==True;blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date</attribute>
+                    </tree>
+            	
                     <field name="state" position="after">
                     	<field name="state_hidden" invisible="True" />
                     	<field name="delivered" attrs="{'invisible': [('state_hidden', '!=', 'done'),],}" />
@@ -51,8 +55,8 @@
 
                     <filter name="done" position="after">
                         <separator orientation="vertical"/>
-                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('delivered', '=', True)]" help="Delivered Delivery Orders" />
-                        <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('delivered', '=', False)]" help="Not Delivered Delivery Orders" />
+                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state', '=', 'done'), ('delivered', '=', True)]" help="Delivered Delivery Orders" />
+                        <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('state', '=', 'done'), ('delivered', '=', False)]" help="Not Delivered Delivery Orders" />
                         <separator orientation="vertical"/>
 					</filter>
 					
