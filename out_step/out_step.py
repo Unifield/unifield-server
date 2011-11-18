@@ -35,8 +35,35 @@ class stock_picking(osv.osv):
     add a check boolean for confirmation of delivery
     '''
     _inherit = 'stock.picking'
+    
+    PICKING_STATE = [('draft', 'Draft'),
+                     ('auto', 'Waiting'),
+                     ('confirmed', 'Confirmed'),
+                     ('assigned', 'Available'),
+                     ('done', 'Done'),
+                     ('cancel', 'Cancelled'),
+                     ]
+
+    def _vals_get_out_step(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get function values
+        '''
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False,})
+                
+            # delivered_hidden
+            result[obj.id]['delivered_hidden'] = obj.delivered
+            # state_hidden
+            result[obj.id]['state_hidden'] = obj.state
+            
+        return result
 
     _columns = {'delivered': fields.boolean(string='Delivered', readonly=True,),
+                'delivered_hidden': fields.function(_vals_get_out_step, method=True, type='boolean', string='Delivered Hidden', multi='get_vals_out_step',),
+                'state_hidden': fields.function(_vals_get_out_step, method=True, type='selection', selection=PICKING_STATE, string='State Hidden', multi='get_vals_out_step',),
                 }
     
     _defaults = {'delivered': False,

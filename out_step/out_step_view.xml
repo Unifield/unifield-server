@@ -32,7 +32,8 @@
             	<data>
             	
                     <field name="state" position="after">
-                    	<field name="delivered" />
+                    	<field name="state_hidden" invisible="True" />
+                    	<field name="delivered" attrs="{'invisible': [('state_hidden', '!=', 'done'),],}" />
                     </field>
                     
                 </data>
