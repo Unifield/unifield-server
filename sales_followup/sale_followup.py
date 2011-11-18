@@ -563,14 +563,19 @@ class sale_order_line_followup(osv.osv_memory):
                         if out_step['packing']['state'] != pack.state:
                             out_step['packing']['state'] = 'partial'
                             
-                    # Set the state for the step 'picking'  
-                    ret_iter = 0
+                    # Set the state for the step 'picking'
+                    ret_iter = 0  
+                    ret_iter2 = 0
                     for pick in out_step['picking']['moves']:
                         if pick.state == 'cancel':
                             nb_out -= 1
                             continue
                         if pick.state == 'done' and ret_iter != nb_return_pack:
+                            nb_out -= 1
                             ret_iter += 1
+                            continue
+                        elif pick.state == 'done' and ret_iter2 != nb_return_pack2:
+                            ret_iter2 += 1
 #                            nb_out -= 1
                             continue
                         if not out_step['picking']['state']:
