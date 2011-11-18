@@ -46,6 +46,9 @@ class wizard_compare_rfq(osv.osv_memory):
         # tender reference
         tender_id = context.get('tender_id', False)
         
+        # already compared values
+        suppliers = context.get('suppliers', False)
+        
         if not ids:
             raise osv.except_osv(_('Error'), _('No quotation found !'))
 #        if len(ids) < 2:
@@ -70,7 +73,9 @@ class wizard_compare_rfq(osv.osv_memory):
                 po_line_ids.append(po_line)
             cmp_line_ids = compare_line_obj.search(cr, uid, [('product_id', '=', p.get('product_id'))])
             if not cmp_line_ids or not context.get('end_wizard', False):
-                line_ids.append((0, 0, {'product_id': p.get('product_id'), 'po_line_ids': [(6,0,po_line_ids)]}))
+                product_id = p.get('product_id')
+                values = {'product_id': product_id, 'po_line_ids': [(6,0,po_line_ids)], 'supplier_id': suppliers and suppliers.get(product_id, False) or False,}
+                line_ids.append((0, 0, values))
 
             else:
                 line_ids.append((0, 0, cmp_line_ids[0]))

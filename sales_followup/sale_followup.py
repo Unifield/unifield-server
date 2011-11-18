@@ -433,18 +433,30 @@ class sale_order_followup_from_menu(osv.osv_memory):
     _description = 'Sale order followup menu entry'
     
     _columns = {
-        'order_id': fields.many2one('sale.order', string='Sale Order', required=True),
+        'order_id': fields.many2one('sale.order', string='Internal reference', required=True),
+        'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True),
     }
     
     def go_to_followup(self, cr, uid, ids, context={}):
         new_context = context.copy()
         new_ids = []
         for menu in self.browse(cr, uid, ids, context=context):
-            new_ids.append(menu.order_id.id)
+            new_ids.append(menu.order_id and menu.order_id.id or menu.cust_order_id.id)
             
         new_context['active_ids'] = new_ids
         
         return self.pool.get('sale.order.followup').start_order_followup(cr, uid, ids, context=new_context)
+
+    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, type='order_id'):
+        res = {}
+
+        if type == 'cust_order_id' and cust_order_id:
+            res.update({'order_id': False})
+        elif order_id:
+            res.update({'cust_order_id': False})
+
+        return {'value': res}
+
             
 sale_order_followup_from_menu()
 
@@ -535,3 +547,38 @@ class stock_move(osv.osv):
                 'res_id': ids[0],}
     
 stock_move()
+
+
+class sale_order(osv.osv):
+    _name = 'sale.order'
+    _inherit = 'sale.order'
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context={}, limit=80):
+        '''
+        Search all SO by internal or customer reference
+        '''
+        if context.get('from_followup'):
+            ids = []
+            if name and len(name) > 1:
+                ids.extend(self.search(cr, uid, [('client_order_ref', operator, name)], context=context))
+
+            return self.name_get(cr, uid, ids, context=context)
+        else:
+            return super(sale_order, self).name_search(cr, uid, name, args, operator, context, limit)
+
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        If the method is called from followup wizard, set the customer ref in brackets
+        '''
+        if context.get('from_followup'):
+            res = []
+            for r in self.browse(cr, uid, ids, context=context):
+                if r.client_order_ref:
+                    res.append((r.id, '%s' % r.client_order_ref))
+                else:
+                    res.append((r.id, '%s' % r.name))
+            return res
+        else:
+            return super(sale_order, self).name_get(cr, uid, ids, context=context)
+
+sale_order()

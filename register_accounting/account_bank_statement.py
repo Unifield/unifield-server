@@ -28,7 +28,7 @@ from tools.translate import _
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
-from register_tools import create_starting_cashbox_lines
+from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
 import time
 from datetime import datetime
@@ -359,7 +359,7 @@ class account_bank_statement(osv.osv):
                 res.append(res_id)
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
-                create_starting_cashbox_lines(self, cr, uid, reg.id, context=context)
+                create_cashbox_lines(self, cr, uid, reg.id, context=context)
             # For bank register, give balance_end
             elif reg.journal_id.type == 'bank':
                 # Verify that another bank statement exists
@@ -1024,6 +1024,23 @@ class account_bank_statement_line(osv.osv):
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
+    def analytic_distribution_is_mandatory(self, cr, uid, id, context={}):
+        """
+        Verify that no analytic distribution is mandatory. It's not until one of test is true
+        """
+        # Some verifications
+        if isinstance(id, (list)):
+            id = id[0]
+        if not context:
+            context = {}
+        # Tests
+        absl = self.browse(cr, uid, id, context=context)
+        if absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id:
+            return True
+        elif absl.account_id.user_type.code in ['expense'] and not absl.analytic_distribution_id.cost_center_lines:
+            return True
+        return False
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -1086,7 +1103,7 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
-                if not absl.analytic_distribution_id and absl.account_id.user_type.code in ['expense'] and not context.get('from_yml'):
+                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
@@ -1306,3 +1323,22 @@ class account_bank_statement_line(osv.osv):
         return res
 
 account_bank_statement_line()
+
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        if context.get('type_posting') and key == 'action' and key2 == 'client_action_multi' and 'account.bank.statement.line' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[1] != 'act_wizard_temp_posting' and context['type_posting'] == 'hard' or v[1] != 'act_wizard_hard_posting' and context['type_posting'] == 'temp':
+                    new_act.append(v)
+            values = new_act
+        return values
+
+ir_values()
