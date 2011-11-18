@@ -563,7 +563,7 @@ class monthly_review_consumption_line(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, line.mrc_id.id, context=context).get('value', None).get('last_reviewed', None)
+            res[line.id] = self.product_onchange(cr, uid, line.id, line.name.id, line.mrc_id.id, context=context).get('value', {}).get('last_reviewed', False)
             
         return res
     
@@ -571,7 +571,7 @@ class monthly_review_consumption_line(osv.osv):
         'name': fields.many2one('product.product', string='Product', required=True),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True),
         'fmc': fields.float(digits=(16,2), string='FMC'),
-        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),
+        'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True),
         'valid_until': fields.date(string='Valid until'),
         'valid_ok': fields.boolean(string='OK', readonly=True),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
@@ -626,9 +626,8 @@ class monthly_review_consumption_line(osv.osv):
                               'valid_until': False,
                               'valid_ok': False}}
         
-        domain = [('name', '=', product_id)]
-	if mrc_id:
-	    domain = [('name', '=', product_id), ('mrc_id', '!=', mrc_id)]
+        domain = [('name', '=', product_id), ('valid_ok', '=', True)]
+        
         line_ids = line_obj.search(cr, uid, domain, order='valid_until desc', context=context)
             
         if line_ids:
@@ -637,6 +636,9 @@ class monthly_review_consumption_line(osv.osv):
                 
                     
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
+
+        if not last_fmc_reviewed:
+            last_fmc_reviewed = time.strftime('%Y-%m-%d')
         
         return {'value': {'amc': amc,
                           'fmc': amc,
