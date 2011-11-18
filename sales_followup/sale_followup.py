@@ -447,7 +447,7 @@ class sale_order_line_followup(osv.osv_memory):
 
             if not line.outgoing_ids:
                 res[line.id]['outgoing_status'] = out_status.get('no_out', 'Error on state !')
-                res[line.id]['outgoing_nb'] = 0
+                res[line.id]['outgoing_nb'] = '0'
             else:
                 # Get the first stock.picking
                 first_out = False
