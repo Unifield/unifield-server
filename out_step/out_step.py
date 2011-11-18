@@ -41,6 +41,7 @@ class stock_picking(osv.osv):
                      ('confirmed', 'Confirmed'),
                      ('assigned', 'Available'),
                      ('done', 'Done'),
+                     ('delivered', 'Delivered'),
                      ('cancel', 'Cancelled'),
                      ]
 
@@ -58,12 +59,14 @@ class stock_picking(osv.osv):
             result[obj.id]['delivered_hidden'] = obj.delivered
             # state_hidden
             result[obj.id]['state_hidden'] = obj.state
+            if obj.state == 'done' and obj.delivered:
+                result[obj.id]['state_hidden'] = 'delivered'
             
         return result
 
     _columns = {'delivered': fields.boolean(string='Delivered', readonly=True,),
                 'delivered_hidden': fields.function(_vals_get_out_step, method=True, type='boolean', string='Delivered Hidden', multi='get_vals_out_step',),
-                'state_hidden': fields.function(_vals_get_out_step, method=True, type='selection', selection=PICKING_STATE, string='State Hidden', multi='get_vals_out_step',),
+                'state_hidden': fields.function(_vals_get_out_step, method=True, type='selection', selection=PICKING_STATE, string='State', multi='get_vals_out_step',),
                 }
     
     _defaults = {'delivered': False,
