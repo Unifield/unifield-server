@@ -139,7 +139,7 @@ class sale_order(osv.osv):
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'mixed',
+        'categ': lambda *a: 'other',
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
     }
