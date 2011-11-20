@@ -67,6 +67,7 @@ class purchase_order(osv.osv):
     # @@@end
     
     _columns = {
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),

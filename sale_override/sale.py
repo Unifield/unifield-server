@@ -121,6 +121,7 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -134,6 +135,7 @@ class sale_order(osv.osv):
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'company_id2': fields.many2one('res.company','Company',select=1),
     }
     
     _defaults = {
@@ -142,6 +144,7 @@ class sale_order(osv.osv):
         'categ': lambda *a: 'mixed',
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
+        'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def create(self, cr, uid, vals, context={}):

@@ -59,7 +59,7 @@ class tender(osv.osv):
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
-                'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers",
+                'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
                                                  context={'search_default_supplier': 1,}),
                 'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft':[('readonly',False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
