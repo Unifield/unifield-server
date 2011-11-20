@@ -366,7 +366,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
     def _have_header(self, cr, uid, ids, name, args, context={}):
         """
-        Return true if this wizard come from an invoice line OR a purchase line
+        Return true if this wizard is on a line and if the parent has a distrib
         """
         # Some verifications
         if not context:
@@ -378,8 +378,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Browse given wizards
         for wiz in self.browse(cr, uid, ids, context=context):
             res[wiz.id] = False
-            if wiz.invoice_line_id or wiz.purchase_line_id:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.analytic_distribution_id:
+                res[wiz.id] = True
+            elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
+                res[wiz.id] = True
+
         return res
 
     _columns = {
@@ -402,7 +407,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
         'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?', 
-            type='boolean', readonly=True, help="This informs the wizard if we come from an invoice line."),
+            type='boolean', readonly=True, help="This informs the wizard if we are on a line and if the parent has an distrib."),
         'account_id': fields.many2one('account.account', string="Account from invoice", readonly=True,
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
