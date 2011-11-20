@@ -65,29 +65,29 @@
                     <field name="invoice_id" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
-                        <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1"/>
+                        <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="4">
                         <label string="" colspan="3"/>
-                        <button name="button_get_header_distribution" type="object" string="Get analytic distribution from header" icon='gtk-convert' colspan="1" attrs="{'invisible': [('have_header', '=', False)]}"/>
                         <field name="have_header" invisible="1"/>
+                        <button name="button_get_header_distribution" type="object" string="Get analytic distribution from header" icon='gtk-convert' colspan="1" attrs="{'invisible': ['|', ('have_header', '=', False), ('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
-                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
+                        <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Funding Pool"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'parent_id':active_id}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">
                             <separator string="Free 1"/>
-                            <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
+                            <field colspan="4" name="f1_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                         <group colspan="2">
                             <separator string="Free 2"/>
-                            <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}"/>
+                            <field colspan="4" name="f2_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                         </group>
                     </group>
                     <group colspan="4">
