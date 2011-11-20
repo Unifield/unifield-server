@@ -44,14 +44,15 @@ class account_move_line(osv.osv):
                 for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.source_date or obj_line.date})
+                        anal_amount = distrib_line.percentage*amount/100
                         line_vals = {
                                      'name': obj_line.name,
                                      'date': obj_line.date,
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
                                      'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
-                                        amount or 0.0, round=False, context=context),
-                                     'amount_currency': -1 * amount,
+                                        anal_amount, round=False, context=context),
+                                     'amount_currency': -1 * anal_amount,
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
