@@ -78,6 +78,7 @@ class stock_batch_recall(osv.osv_memory):
 
         result['domain'] = domain
         result['context'] = context
+        result['target'] = 'crush'
         
         return result
         

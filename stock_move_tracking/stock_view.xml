@@ -52,7 +52,6 @@
                     <field name="origin" />
                     <field name="name" />
                     <field name="date_expected" />
-                    <field name="type" />
                     <field name="partner_id" />
                     <field name="location_id" />
                     <field name="location_dest_id" />
