@@ -183,10 +183,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     if context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', 'in', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', 'in', cost_center_id), ('account_ids', 'in', parent.account_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('account_ids', '=', parent.account_id), ('id', '=', %s)]" % fp_id)
                     
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':

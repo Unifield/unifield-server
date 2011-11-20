@@ -22,7 +22,7 @@
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
                     <field name="cost_center_id"/>
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', 'in', cost_center_id)]" string="Funding Pool"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool"/>
                     <field name="percentage" sum="Total Percentage"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
