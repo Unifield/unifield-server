@@ -20,7 +20,7 @@
                         <newline/>
                         <field name="date_invoice" required="1"/>
                         <field name="register_posting_date" />
-                        <field name="state" invisible="1" />
+                        <field name="state" invisible="1"/>
                         <field name="amount_total"/>
                         <group colspan="6">
                             <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context.update({'from': 'direct_invoice'})" colspan="2"/>
@@ -57,7 +57,6 @@
                                 <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
                                 <group col="6" colspan="4">
                                     <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
-                                    <button name="invoice_cancel_wizard" string="Delete Invoice" icon="gtk-cancel" type="object"/>
                                     <button name="invoice_create_wizard" string="Approve" icon="terp-camera_test" type="object"/>
                                 </group>
                             </group>
