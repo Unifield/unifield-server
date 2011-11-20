@@ -234,6 +234,17 @@ class wizard_account_invoice_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No direct invoice line given. Please save your direct invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
+        
+        fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date', 
+            'account_id', 'partner_bank_id', 'payment_term', 'name',
+            'origin', 'address_contact_id', 'user_id', 'comment']
+        to_write = {}
+        for f in fields_to_write:
+            if 'd_%s'%(f,) in context:
+                to_write[f] = context['d_%s'%(f,)]
+        if to_write:
+            self.pool.get('wizard.account.invoice').write(cr, uid, [invoice_line.invoice_id.id], to_write)
+        
         distrib_id = False
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
