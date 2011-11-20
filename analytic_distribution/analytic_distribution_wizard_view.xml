@@ -8,7 +8,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]" string="Cost Center"/>
                     <field name="percentage" sum="Total Percentage"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
