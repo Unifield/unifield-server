@@ -193,10 +193,22 @@ class purchase_order_line(osv.osv):
                 res[pol.id] = tmp.split(';')[0]
         return res
 
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id']):
+            if line['analytic_distribution_id']:
+                res[line['id']] = True
+            else:
+                res[line['id']] = False
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):

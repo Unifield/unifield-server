@@ -14,14 +14,15 @@
                         <newline />
                         <group colspan="6">
                             <button name="button_analytic_distribution" string="Set a global analytical distribution" type="object" 
-                                icon="terp-stock_symbol-selection" context="context" colspan="2"/>
+                                icon="terp-stock_symbol-selection" colspan="2"/>
                             <field name="analytic_distribution_line_count" nolabel="1" colspan="1"/>
                             <label string="" colspan="4"/>
                         </group>
                     </xpath>
                     <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_qty']" position="before">
                         <button name="button_analytic_distribution" string="Analytical distribution" type="object" 
-                            icon="terp-stock_symbol-selection" context="context"/>
+                            icon="terp-stock_symbol-selection" />
+                        <field name="have_analytic_distribution_from_header"/>
                     </xpath>
                 </data>
             </field>
@@ -37,7 +38,7 @@
                 <field name="account_analytic_id" position="replace">
                     <group colspan="6">
                         <field name="analytic_distribution_line_count" string="Analytic distribution" colspan="2"/>
-                        <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="1"/>
+                        <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-stock_symbol-selection" colspan="1"/>
                         <label string="" colspan="1"/>
                     </group>
                 </field>
