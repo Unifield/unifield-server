@@ -216,5 +216,31 @@ class account_move_line(osv.osv):
         # @@@end
         return r_id
 
+    def _remove_move_reconcile(self, cr, uid, move_ids=[], context={}):
+        """
+        Delete reconciliation object from given move lines ids (move_ids)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(move_ids, (int, long)):
+            move_ids = [move_ids]
+        # Retrieve default behaviour
+        res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
+        # If success, verify that no addendum line exists
+        if res and move_ids:
+            # Search addendum lines
+            to_delete = []
+            for line in self.browse(cr, uid, move_ids, context=context):
+                if line.is_addendum_line:
+                    to_delete.append(line.move_id and line.move_id.id)
+            # Delete doublons
+            to_delete = list(set(to_delete))
+            # First cancel moves
+            self.pool.get('account.move').button_cancel(cr, uid, to_delete, context=context)
+            # Then delete moves
+            self.pool.get('account.move').unlink(cr, uid, to_delete, context=context)
+        return res
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
