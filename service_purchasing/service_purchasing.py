@@ -80,9 +80,9 @@ class stock_move(osv.osv):
     '''
     add constraints:
         - source location cannot be a Service location
-        - if picking_id is not type 'in', cannot select a product service with reception
-        - if product is service with reception, the destination location must be Service location
-        - if destination location is Service, the product must be service with reception
+        - if picking_id is not type 'in', cannot select a product service
+        - if product is service, the destination location must be Service location
+        - if destination location is Service, the product must be service
     
     on_change on product id
     '''
@@ -148,9 +148,9 @@ class stock_move(osv.osv):
         return True
     
     _constraints = [(_check_source_location_service, 'You cannot select Service Location as Source Location.', ['location_id']),
-                    (_check_picking_type_for_service, 'Only Incoming Shipment can manipulate Service with reception Products.', []),
-                    (_check_dest_location_for_service_product, 'Service with reception Products must have Service Location as Destination Location.', ['product_id', 'location_dest_id']),
-                    (_check_product_for_service_location, 'Service Location cannot be used for non Service with Reception Products.', ['product_id', 'location_dest_id']),
+                    (_check_picking_type_for_service, 'Only Incoming Shipment can manipulate Service Products.', []),
+                    (_check_dest_location_for_service_product, 'Service Products must have Service Location as Destination Location.', ['product_id', 'location_dest_id']),
+                    (_check_product_for_service_location, 'Service Location cannot be used for non Service Products.', ['product_id', 'location_dest_id']),
                     ]
 
 stock_move()
@@ -165,7 +165,7 @@ class purchase_order(osv.osv):
     
     def _check_purchase_category(self, cr, uid, ids, context=None):
         """
-        Purchase Order of type Category Service should contain only Service with Reception Products.
+        Purchase Order of type Category Service should contain only Service Products.
         """
         if context is None:
             context = {}
@@ -188,7 +188,7 @@ class purchase_order(osv.osv):
                 
         return result
     
-    _constraints = [(_check_purchase_category, 'Purchase Order of type Category Service should contain only Service with Reception Products.', ['categ']),
+    _constraints = [(_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
                     ]
     
 purchase_order()
@@ -202,7 +202,7 @@ class purchase_order_line(osv.osv):
     
     def _check_purchase_order_category(self, cr, uid, ids, context=None):
         """
-        Purchase Order of type Category Service should contain only Service with Reception Products.
+        Purchase Order of type Category Service should contain only Service Products.
         """
         if context is None:
             context = {}
@@ -211,7 +211,7 @@ class purchase_order_line(osv.osv):
                 return False
         return True
     
-    _constraints = [(_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service with Reception Products.', ['product_id']),
+    _constraints = [(_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
                     ]
     
 purchase_order_line()
