@@ -1435,7 +1435,11 @@ class stock_production_lot(osv.osv):
         """ Searches Ids of products
         @return: Ids of locations
         """
-        locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+        if context.get('location_id', False):
+            locations = context['location_id'] and [context['location_id']] or []
+        else:
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+
         cr.execute('''select
                 prodlot_id,
                 sum(qty)
