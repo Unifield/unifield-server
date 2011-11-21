@@ -94,7 +94,7 @@ class purchase_order(osv.osv):
         '''
         user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         if company_id == user_company_id:
-            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+            raise osv.except_osv(_('Error'), _('You cannot made a purchase order to your own company !'))
 
         return True
 
