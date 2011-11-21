@@ -303,20 +303,6 @@ class real_average_consumption_line(osv.osv):
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
     
-#    def _in_stock(self, cr, uid, ids, field_name, arg, context={}):
-    def create(self, cr, uid, vals, context={}):
-        '''
-        Return the quantity of product in the Consumer location
-        '''
-        line_id = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
-
-        context.update({'location': line.rac_id.cons_location_id.id})
-        if vals.get('prodlot_id'):
-            context.update({'prodlot_id': vals.get('prodlot_id')})
-        product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
-        vals.update({'product_qty': product.qty_available})
-            
-    
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
@@ -336,7 +322,8 @@ class real_average_consumption_line(osv.osv):
         '''
         for line in self.browse(cr, uid, ids, context=context):
             if line.batch_mandatory and 'prodlot_id' in vals:
-                vals.update({'expiry_date': line.prodlot_id.life_date})
+                life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
+                vals.update({'expiry_date': life_date})
 
             rac = self.pool.get('real.average.consumption').browse(cr, uid, vals.get('rac_id', line.rac_id.id), context=context)
             context.update({'location': rac.cons_location_id.id})
