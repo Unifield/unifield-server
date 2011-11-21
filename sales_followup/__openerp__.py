@@ -48,7 +48,6 @@
     "test": [
         "test/data.yml",
         "test/followup.yml",
-        "test/normal_flow.yml",
     ],
     "installable": True,
     "active": False,
