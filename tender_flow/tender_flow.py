@@ -603,10 +603,11 @@ class procurement_order(osv.osv):
         po_obj = self.pool.get('purchase.order')
         procurement = kwargs['procurement']
         purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-        # if tender
-        if procurement.is_tender:
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
+        if purchase_id:
+            # if tender
+            if procurement.is_tender:
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
         return purchase_id
     
 procurement_order()

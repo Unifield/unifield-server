@@ -685,3 +685,22 @@
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular11')])
     assert invoice_ids, ('No invoice created from Regular PO with internal supplier')
+-
+  Try to create a PO to the main company
+-
+  !python {model: purchase.order}: |
+    import time
+    data = {'name': 'Main company',
+            'partner_id': ref('base.main_company'),
+            'company_id': ref('base.main_company'),
+            'date_order': time.strftime('%Y-%m-%d'),
+            'invoice_method': 'order',
+            'location_id': ref('stock.stock_location_stock'),
+            'partner_address_id': ref('base.main_address'),
+            'pricelist_id': ref('purchase.list0'),
+           }
+    try:
+      self.create(cr, uid, data, context=context)
+      assert False, "The PO creation shouldn't allow a partner = main company"
+    except:
+      assert True

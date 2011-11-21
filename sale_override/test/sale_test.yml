@@ -343,3 +343,28 @@
 -
   !assert {model: sale.order, id: loan5}:
     - state == 'done', ('Loan order is not in done state')
+-
+  Try to create a SO to the main company
+-
+  !python {model: sale.order}: |
+    import time
+    data = {'name': 'Main company',
+            'partner_id': ref('base.main_company'),
+            'company_id': ref('base.main_company'),
+            'picking_policy': 'direct',
+            'order_policy': 'manual',
+            'invoice_quantity': 'order',
+            'order_type': 'regular', 
+            'date_order': time.strftime('%Y-%m-%d'),
+            'invoice_method': 'order',
+            'location_id': ref('stock.stock_location_stock'),
+            'partner_order_id': ref('base.main_address'),
+            'partner_invoice_id': ref('base.main_address'),
+            'partner_shipping_id': ref('base.main_address'),
+            'pricelist_id': ref('purchase.list0'),
+           }
+    try:
+      self.create(cr, uid, data, context=context)
+      assert False, "The SO creation shouldn't allow a partner = main company"
+    except:
+      assert True

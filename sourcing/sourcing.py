@@ -680,6 +680,9 @@ class procurement_order(osv.osv):
         procurement = kwargs['procurement']
         # the specified supplier in sourcing tool has priority over suppinfo
         partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
+        if partner.id == self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id:
+            cr.execute('update procurement_order set message=%s where id=%s',
+                           (_('Impossible to make a Purchase Order to your own company !'), procurement.id))
         return partner
     
     def get_delay_qty(self, cr, uid, ids, partner, product, context=None):
