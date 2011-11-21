@@ -160,23 +160,17 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
-def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+def previous_period_id(self, cr, uid, period_id, context={}):
     """
-    Give the previous register id regarding some criteria:
-     - period_id: the period of current register
-     - currency_id: currency of the current register
-     - register_type: type of register
-     - fiscalyear_id: current fiscalyear
+    Give previous period of those given
     """
-    # TIP - Use this postgresql query to verify current registers:
-    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
-    # from account_bank_statement as s, account_journal as j, res_currency as c 
-    # where s.journal_id = j.id and j.currency = c.id;
-
+    # Some verifications
+    if not context:
+        context = {}
+    if not period_id:
+        raise osv.except_osv(_('Error'), _('No period given.'))
     # Prepare some values
     p_obj = self.pool.get('account.period')
-    j_obj = self.pool.get('account.journal')
-    st_obj = self.pool.get('account.bank.statement')
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
@@ -192,9 +186,28 @@ def previous_register_id(self, cr, uid, period_id, currency_id, register_type, c
         previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
             limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
             # and "Period 15"
+    if previous_period_ids:
+        return previous_period_ids[0]
+    return False
+
+def previous_register_id(self, cr, uid, period_id, journal_id, context={}):
+    """
+    Give the previous register id regarding some criteria:
+     - period_id: the period of current register
+     - journal_id: this include same currency and same type
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    st_obj = self.pool.get('account.bank.statement')
+    prev_period_id = False
     # Search journal_ids that have the type we search
-    journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
-    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
     if len(previous_reg_ids) != 1:
         return False
     return previous_reg_ids[0]
