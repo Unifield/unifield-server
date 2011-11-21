@@ -205,6 +205,7 @@ class stock_picking(osv.osv):
         if ids:
             for pick in self.browse(cr, uid, ids, context=context):
                 res.update({'reason_type_id': pick.reason_type_id.id})
+
         return {'value': res}
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
@@ -292,6 +293,7 @@ class stock_move(osv.osv):
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
                 
+        # Change the reason type of the picking if it is not the same
         if 'picking_id' in vals:
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
             if pick_id.reason_type_id.id != vals['reason_type_id']:
@@ -311,6 +313,7 @@ class stock_move(osv.osv):
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
                 
+        # Change the reason type of the picking if it is not the same
         if 'reason_type_id' in vals:
             for pick_id in self.browse(cr, uid, ids, context=context):
                 if pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
