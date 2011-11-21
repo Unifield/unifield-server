@@ -199,9 +199,9 @@ class purchase_order_line(osv.osv):
         res = {}
         for line in self.read(cr, uid, ids, ['analytic_distribution_id']):
             if line['analytic_distribution_id']:
-                res[line['id']] = True
-            else:
                 res[line['id']] = False
+            else:
+                res[line['id']] = True
         return res
 
     _columns = {
