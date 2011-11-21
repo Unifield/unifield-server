@@ -1003,7 +1003,6 @@ class stock_picking(osv.osv):
             name = self.pool.get('real.average.consumption').browse(cr, uid, report_ids[0], context=context).picking_id.name
             return 'Delivery Order %s generated from the consumption report is done.' % name
         else:
-            res = super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
-            return res
+            return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
 
 stock_picking()

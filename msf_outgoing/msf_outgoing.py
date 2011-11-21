@@ -1669,8 +1669,8 @@ class stock_picking(osv.osv):
         message = kwargs['message']
         # if the picking is converted to standard, and state is confirmed
         if pick.converted_to_standard and pick.state == 'confirmed':
-            message = 'The Preparation Picking has been converted to simple Out. ' + message
-        return message
+            return 'The Preparation Picking has been converted to simple Out. ' + message
+        return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
     
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
