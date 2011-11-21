@@ -26,6 +26,37 @@ from tools.translate import _
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
 
+    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
+        """
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        ret = {}
+        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
+            if line['reconcile_id']:
+                ret[line['id']] = line['reconcile_id']
+            elif line['reconcile_partial_id']:
+                ret[line['id']] = line['reconcile_partial_id']
+            else:
+                ret[line['id']] = False
+        return ret
+
+    _columns = {
+        'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
+        'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        # Those fields are for UF-173: Accounting Journals.
+        # Since they are used in the move line view, they are added in Multi-Currency.
+        'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
+        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
+    }
+
+    _defaults = {
+        'debit_currency': 0.0,
+        'credit_currency': 0.0,
+    }
+
     def reconciliation_update(self, cr, uid, ids, context={}):
         """
         Update addendum line for reconciled lines
@@ -208,8 +239,9 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['currency_id'] = account.currency_id.id
             else:
                 newvals['currency_id'] = curr_fun
-        newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
-        
+        # Don't update values for addendum lines that come from a reconciliation
+        if not newvals.get('is_addendum_line', False):
+            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context={}, check=True, update_check=True):
@@ -237,34 +269,6 @@ class account_move_line_compute_currency(osv.osv):
             if line.reconcile_id:
                 self.reconciliation_update(cr, uid, [line.id], context=context)
         return res
-
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
-            if line['reconcile_id']:
-                ret[line['id']] = line['reconcile_id']
-            elif line['reconcile_partial_id']:
-                ret[line['id']] = line['reconcile_partial_id']
-            else:
-                ret[line['id']] = False
-        return ret
-
-    _columns = {
-        'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
-        # Those fields are for UF-173: Accounting Journals.
-        # Since they are used in the move line view, they are added in Multi-Currency.
-        'instance': fields.related('journal_id', 'instance_id', type="char", string="Proprietary instance", store=False),
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
-    }
-
-    _defaults = {
-        'debit_currency': 0.0,
-        'credit_currency': 0.0,
-    }
 
 account_move_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
