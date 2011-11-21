@@ -32,7 +32,7 @@
                 <form string="Currency Table">
                     <field name="name"/>
                     <field name="code"/>
-                    <field colspan="4" name="currency_ids" nolabel="1" widget="one2many_list"/>
+                    <field colspan="4" name="currency_ids" nolabel="1" widget="one2many_list" context="{'search_default_active': False}"/>
                 </form>
             </field>
         </record>

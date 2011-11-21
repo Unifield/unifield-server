@@ -239,7 +239,8 @@ class financing_contract_contract(osv.osv):
                                     ('open','Open'),
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
-        'report_line': fields.many2one('financing.contract.donor.reporting.line', 'Parent Report Line')
+        'report_line': fields.many2one('financing.contract.donor.reporting.line', 'Parent Report Line'),
+        'currency_table': fields.many2one('res.currency.table', 'Currency Table')
     }
     
     _defaults = {
