@@ -297,6 +297,7 @@ class purchase_order(osv.osv):
                         'company_id': order.company_id.id,
                         'price_unit': order_line.price_unit
                     }
+                    print move_values
                     
                     if reason_type_id:
                         move_values.update({'reason_type_id': reason_type_id})

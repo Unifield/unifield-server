@@ -37,6 +37,7 @@
         "purchase",
         "msf_order_date",
         "purchase_double_validation",
+        "procurement",
         "tender_flow",
     ],
     "update_xml": [
@@ -47,6 +48,7 @@
     "test": [
         "test/data.yml",
         "test/followup.yml",
+        "test/normal_flow.yml",
     ],
     "installable": True,
     "active": False,

@@ -618,7 +618,8 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
     
-    STATE_SELECTION = [('draft', 'Draft'),
+    STATE_SELECTION = [
+                       ('draft', 'Draft'),
                        ('wait', 'Waiting'),
                        ('confirmed', 'Waiting Approval'),
                        ('approved', 'Approved'),
@@ -639,7 +640,8 @@ class purchase_order(osv.osv):
                 return False
         return True
     
-    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True,),
+    
+    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_sent':[('required',True), ('readonly', False),]}, readonly=True,),
@@ -648,8 +650,9 @@ class purchase_order(osv.osv):
                 'date_order':fields.date('Date Ordered', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)],}, select=True, help="Date on which this document has been created."),
                 }
 
-    _defaults = {'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
-                 'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
+    _defaults = {
+                'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
+                'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
                  }
     
     _constraints = [
