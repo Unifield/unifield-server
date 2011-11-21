@@ -183,11 +183,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'rfq_done'):
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('draft', 'done'):
                     purchase_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state not in ('draft', 'rfq_done'):
+                        if rfq.state not in ('draft', 'done'):
                             purchase_ids.append(rfq.id)
         
         return purchase_ids
@@ -205,11 +205,11 @@ class sale_order_followup(osv.osv_memory):
         
         for line in line_obj.browse(cr, uid, line_id, context=context):
             if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state in ('draft', 'rfq_done'):
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state in ('draft', 'done'):
                     quotation_ids.append(line.procurement_id.purchase_id.id)
                 elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
                     for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state in ('draft', 'rfq_done', 'rfq_updated', 'rfq_sent'):
+                        if rfq.state in ('draft', 'done', 'rfq_updated', 'rfq_sent'):
                             quotation_ids.append(rfq.id)
                 
         
@@ -331,7 +331,7 @@ class sale_order_line_followup(osv.osv_memory):
                     res[line.id]['quotation_status'] = 'Sent'
                 elif quotation.state == 'rfq_updated' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent'):
                     res[line.id]['quotation_status'] = 'Updated'
-                if quotation.state == 'rfq_done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
+                if quotation.state == 'done' and res[line.id]['quotation_status'] not in ('Waiting', 'Sent', 'Updated'):
                     res[line.id]['quotation_status'] = 'Done'
                     
             # Get information about the state of all call for tender
@@ -400,7 +400,7 @@ class sale_order_line_followup(osv.osv_memory):
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                    readonly=True, multi='status'),
         'tender_ids': fields.many2many('tender', 'call_tender_follow_rel',
-                                       'follow_line_id', 'tender_id', string='Call for tender'),
+                                       'follow_line_id', 'tender_id', string='Tender'),
         'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
                                          readonly=True, multi='status'),
         'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',

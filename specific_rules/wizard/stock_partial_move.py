@@ -49,15 +49,34 @@ class stock_partial_move_memory_out(osv.osv_memory):
         return super(stock_partial_move_memory_out, self).write(cr, uid, ids, vals, context=context)
     
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        '''
+        out memory moves
+        compute function fields
+        '''
         result = {}
         for id in ids:
-            result[id] = {'batch_number_check': False, 'expiry_date_check': False, 'type_check': False}
+            result[id] = {}
+            for f in name:
+                result[id].update({f: False})
             
-        for out in self.browse(cr, uid, ids, context=context):
-            if out.product_id:
-                result[out.id]['batch_number_check'] = out.product_id.batch_management
-                result[out.id]['expiry_date_check'] = out.product_id.perishable
-            result[out.id]['type_check'] = out.move_id.type
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.product_id:
+                result[obj.id]['batch_number_check'] = obj.product_id.batch_management
+                result[obj.id]['expiry_date_check'] = obj.product_id.perishable
+            # keep cool
+            if obj.product_id.heat_sensitive_item:
+                result[obj.id]['kc_check'] = True
+            # ssl
+            if obj.product_id.short_shelf_life:
+                result[obj.id]['ssl_check'] = True
+            # dangerous goods
+            if obj.product_id.dangerous_goods:
+                result[obj.id]['dg_check'] = True
+            # narcotic
+            if obj.product_id.narcotic:
+                result[obj.id]['np_check'] = True
+            # type of picking
+            result[obj.id]['type_check'] = obj.move_id.type
             
         return result
     
@@ -114,6 +133,10 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
         'type_check': fields.function(_get_checks_all, method=True, string='Picking Type Check', type='char', readonly=True, multi="m"),
         'expiry_date': fields.date('Expiry Date'),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
     }
 
 stock_partial_move_memory_out()

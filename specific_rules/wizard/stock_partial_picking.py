@@ -23,6 +23,7 @@
 from osv import fields, osv
 from tools.translate import _
 import time
+import datetime
 
 class stock_partial_picking(osv.osv_memory):
     '''
@@ -131,6 +132,7 @@ class stock_partial_picking(osv.osv_memory):
                         if not prodlot_ids:
                             vals = {'product_id': move.product_id.id,
                                     'life_date': move.expiry_date,
+                                    #'name': datetime.datetime.strptime(move.expiry_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                                     'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
                                     'type': 'internal',
                                     }

@@ -92,6 +92,7 @@ class report_stock_move(osv.osv):
         'tracking_id': fields.many2one('stock.tracking', 'Pack', select=True, states={'done': [('readonly', True)]}, help="Logistical shipping unit: pallet, box, pack ..."),
         'origin': fields.related('picking_id','origin',type='char', size=64, relation="stock.picking", string="Origin", store=True),
         'move': fields.many2one('stock.move', string='Move'),
+        'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
     }
 
     def init(self, cr):
@@ -124,6 +125,7 @@ class report_stock_move(osv.osv):
                         al.comment as comment,
                         al.prodlot_id as prodlot_id,
                         al.origin as origin,
+                        al.reason_type_id as reason_type_id,
                         coalesce(al.type, 'other') as type,
                         al.stock_journal as stock_journal,
                         sum(al.in_value - al.out_value) as value
@@ -162,6 +164,7 @@ class report_stock_move(osv.osv):
                         sm.address_id as address_id,
                         sm.product_id as product_id,
                         sm.origin as origin,
+                        sm.reason_type_id as reason_type_id,
                         sm.picking_id as picking_id,
                             sm.company_id as company_id,
                             sm.state as state,
@@ -180,14 +183,14 @@ class report_stock_move(osv.osv):
                         sm.id,sp.type, sm.date,sm.address_id,
                         sm.product_id,sm.state,sm.product_uom,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
-                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.categ_id, sp.stock_journal_id)
+                        sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.categ_id, sp.stock_journal_id, sm.reason_type_id)
                     AS al
 
                     GROUP BY
                         al.out_qty,al.in_qty,al.curr_year,al.curr_month,
                         al.curr_day,al.curr_day_diff,al.curr_day_diff1,al.curr_day_diff2,al.dp,al.location_id,al.location_dest_id,
                         al.address_id,al.product_id,al.state,al.product_uom, al.sm_id, al.origin,
-                        al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal, al.tracking_id, al.comment, al.prodlot_id
+                        al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal, al.tracking_id, al.comment, al.prodlot_id, al.reason_type_id
                )
         """)
 
