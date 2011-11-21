@@ -1285,6 +1285,9 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         # Browse lines
         for line in self.browse(cr, uid, ids, context=context):
+            if line.statement_id and line.statement_id.state != 'open':
+                raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
+
             default_vals = ({
                 'name': '(copy) ' + line.name,
             })
