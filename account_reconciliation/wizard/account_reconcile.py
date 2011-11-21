@@ -144,6 +144,8 @@ class account_move_line_reconcile(osv.osv_memory):
         partner_id = first_line.partner_id and first_line.partner_id.id or False
         employee_id = first_line.employee_id and first_line.employee_id.id or False
         register_id = first_line.register_id and first_line.register_id.id or False
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency_id = first_line.currency_id and first_line.currency_id.id or company_currency or False
         if addendum_line:
             # Get default account for addendum_line
             addendum_line_account_id = self._get_addendum_line_account_id(cr, uid, ids, context=context)
@@ -168,6 +170,7 @@ class account_move_line_reconcile(osv.osv_memory):
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'source_date': date,
                 'journal_id': journal_id,
                 'period_id': period_id,
                 'partner_id': partner_id,
@@ -177,6 +180,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 'debit': 0.0,
                 'name': 'Realised loss/gain',
                 'is_addendum_line': True,
+#                'currency_id': currency_id, #FIXME: add this field !
             }
             # Note that if total == 0.0 we are not in this loop (normal reconciliation)
             # If total inferior to 0, some amount is missing @debit for partner
@@ -188,10 +192,12 @@ class account_move_line_reconcile(osv.osv_memory):
             else:
                 partner_cr = addendum_db = abs(total)
             # Create partner line
-            vals.update({'account_id': account_id, 'debit_currency': partner_db or 0.0, 'credit_currency': partner_cr or 0.0})
+            vals.update({'account_id': account_id, 'debit_currency': partner_db or 0.0, 'credit_currency': partner_cr or 0.0, 
+                'amount_currency': 0.0,})
             partner_line_id = ml_obj.create(cr, uid, vals, context=context)
             # Create addendum_line
-            vals.update({'account_id': addendum_line_account_id, 'debit_currency': addendum_db or 0.0, 'credit_currency': addendum_cr or 0.0,})
+            vals.update({'account_id': addendum_line_account_id, 'debit_currency': addendum_db or 0.0, 'credit_currency': addendum_cr or 0.0, 
+                'amount_currency': 0.0,})
             addendum_line_id = ml_obj.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
