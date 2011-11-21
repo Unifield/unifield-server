@@ -91,7 +91,7 @@ class res_partner(osv.osv):
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection([('internal', 'Internal'), ('section', 'Inter-section'),
-                                          ('external', 'External')], string='Partner type', required=True),
+                                          ('external', 'External'), ('esc', 'ESC'),], string='Partner type', required=True),
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
