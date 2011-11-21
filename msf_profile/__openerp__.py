@@ -45,6 +45,7 @@
         "order_nomenclature",
         "product_nomenclature",
         "order_types",
+        "res_currency_rates",
         "res_currency_functional",
         "account_corrections",
         "order_line_number",
