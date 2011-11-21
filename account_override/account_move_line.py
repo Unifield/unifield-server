@@ -27,6 +27,7 @@ import re
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
+    _name = 'account.move.line'
     
     def join_without_redundancy(self, text='', string=''):
         """
@@ -54,6 +55,8 @@ class account_move_line(osv.osv):
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
             help="This indicates the state of the Journal Entry."),
+        'is_addendum_line': fields.boolean('Is an addendum line?', 
+            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
     }
 
     def _accounting_balance(self, cr, uid, ids, context={}):

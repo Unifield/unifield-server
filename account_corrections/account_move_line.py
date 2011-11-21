@@ -38,6 +38,7 @@ class account_move_line(osv.osv):
          - The account is not payable or receivable
          - Item have not been corrected
          - Item have not been reversed
+         - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
          - All items attached to the entry have no reconcile_id on reconciliable account
         """
@@ -55,6 +56,9 @@ class account_move_line(osv.osv):
                 res[ml.id] = False
             # False if line is a reversal
             if ml.reversal:
+                res[ml.id] = False
+            # False if this line is an addendum line
+            if ml.is_addendum_line:
                 res[ml.id] = False
             # False if line account and statement default debit/credit account are similar
             if ml.statement_id:

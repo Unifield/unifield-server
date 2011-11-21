@@ -176,6 +176,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 'credit': 0.0,
                 'debit': 0.0,
                 'name': 'Realised loss/gain',
+                'is_addendum_line': True,
             }
             # Note that if total == 0.0 we are not in this loop (normal reconciliation)
             # If total inferior to 0, some amount is missing @debit for partner
@@ -190,7 +191,7 @@ class account_move_line_reconcile(osv.osv_memory):
             vals.update({'account_id': account_id, 'debit_currency': partner_db or 0.0, 'credit_currency': partner_cr or 0.0})
             partner_line_id = ml_obj.create(cr, uid, vals, context=context)
             # Create addendum_line
-            vals.update({'account_id': addendum_line_account_id, 'debit_currency': addendum_db or 0.0, 'credit_currency': addendum_cr or 0.0})
+            vals.update({'account_id': addendum_line_account_id, 'debit_currency': addendum_db or 0.0, 'credit_currency': addendum_cr or 0.0,})
             addendum_line_id = ml_obj.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
