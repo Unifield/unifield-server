@@ -109,12 +109,19 @@ class stock_partial_move_memory_out(osv.osv_memory):
         
         return result
     
-    _columns = {
-        'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
-        'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
-        'type_check': fields.function(_get_checks_all, method=True, string='Picking Type Check', type='char', readonly=True, multi="m"),
-        'expiry_date': fields.date('Expiry Date'),
-    }
+    _columns = {'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
+                'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
+                'type_check': fields.function(_get_checks_all, method=True, string='Picking Type Check', type='char', readonly=True, multi="m"),
+                'expiry_date': fields.date('Expiry Date'),
+                'integrity_status': fields.selection(string='Integrity Status', selection=[('empty', ''),
+                                                                                           ('ok', 'Ok'),
+                                                                                           ('negative', 'Negative'),
+                                                                                           ('missing_lot', 'Production Lot is Missing'),
+                                                                                           ('no_lot_needed', 'No Production Lot Needed'),
+                                                                                           ('wrong_lot_type', 'Wrong Production Lot Type'),
+                                                                                           ],),
+                }
+    _defaults = {'integrity_status': 'empty',}
 
 stock_partial_move_memory_out()
 
