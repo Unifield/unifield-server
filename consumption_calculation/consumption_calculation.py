@@ -92,7 +92,7 @@ class real_average_consumption(osv.osv):
     
     _columns = {
         'name': fields.char(size=64, string='Reference'),
-        'creation_date': fields.date(string='Creation date'),
+        'creation_date': fields.datetime(string='Creation date'),
         'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True),
         'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')]),
         'period_from': fields.date(string='Period from', required=True),
@@ -108,7 +108,7 @@ class real_average_consumption(osv.osv):
     
     _defaults = {
         'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
-        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_cust')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'valid_ok': lambda *a: True,
