@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+import time
 
 class object_query_object(osv.osv):
     _name = 'object.query.object'
@@ -192,7 +193,8 @@ class object_query(osv.osv):
                     'search_view_id': [search_view_id],
                     'view_id': [tree_view_id],
                     'view_mode': 'tree,form',
-                    'view_type': 'form'}
+                    'view_type': 'form',
+                    'context': {'disable_cache': time.time()}}
         
         return {'type': 'ir.actions.act_window_close'}
    
