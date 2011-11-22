@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        
-        <record id="action_currency_form" model="ir.actions.act_window">
-            <field name="name">Currencies</field>
-            <field name="res_model">res.currency</field>
-            <field name="inherit_id" ref="base.action_currency_form"/>
-            <field name="domain">[('active','in',['t','f']), ('currency_table_id', '=', False)]</field>
-            <field name="context">{'search_default_active': 1}</field>
-        </record>
-        
-        <menuitem action="action_currency_form" id="base.menu_action_currency_form" parent="account.menu_configuration_misc"/>
-        
+    
         <record id="view_currency_table_tree" model="ir.ui.view">
             <field name="name">res.currency.table.tree</field>
             <field name="model">res.currency.table</field>

@@ -53,6 +53,7 @@
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="date" string="Posting Date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="sequence_for_reference" />
@@ -174,6 +175,7 @@
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
                                             icon="terp-stock_effects-object-colorize" context="context" 
@@ -567,6 +569,7 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                    <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
                                     <field name="cheque_number" required="1"/>

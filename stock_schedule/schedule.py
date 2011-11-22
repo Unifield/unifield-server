@@ -256,8 +256,8 @@ class stock_frequence(osv.osv):
                     if start_date < today():
                         start_date = today()
                     next_date = start_date + RelativeDate(weekday=(day,frequence.monthly_choose_freq))
-                    if next_date < start_date:
-                        next_date = start_date + RelativeDate(months=1, weekday=(day,frequence.monthly_choose_freq))
+                    while next_date < start_date:
+                        next_date = next_date + RelativeDate(months=1, weekday=(day,frequence.monthly_choose_freq))
                     return next_date
 
             elif frequence.monthly_repeating_ok:

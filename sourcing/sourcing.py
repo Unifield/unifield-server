@@ -33,7 +33,7 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
-                     ('cft', 'Call for Tender'),
+                     ('cft', 'Tender'),
                      ]
 
 class sourcing_line(osv.osv):
@@ -398,6 +398,9 @@ class sale_order(osv.osv):
         # new field representing selected partner from sourcing tool
         line = kwargs['line']
         result['supplier'] = line.supplier and line.supplier.id or False
+        # uf-583 - the location defined for the procurementis input instead of stock
+        order = kwargs['order']
+        result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
         
         return result
 

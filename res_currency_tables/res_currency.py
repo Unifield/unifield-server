@@ -34,22 +34,40 @@ class res_currency(osv.osv):
         ('name_uniq', 'unique (name, currency_table_id)', 'The currency name exists already in the system!')
     ]
     
+    def _get_table_currency(self, cr, uid, currency_id, table_id, context=None):
+        source_currency = self.browse(cr, uid, currency_id, context=context)
+        if not source_currency.reference_currency_id or not source_currency.currency_table_id :
+            # "Real" currency; the one from the table is retrieved
+            return self.search(cr, uid, [('currency_table_id', '=', table_id),
+                                         ('reference_currency_id', '=', currency_id)], context=context)[0]
+        elif source_currency.currency_table_id.id != table_id:
+            # Reference currency defined, not the wanted table
+            return self.search(cr, uid, [('currency_table_id', '=', table_id),
+                                         ('reference_currency_id', '=', source_currency.reference_currency_id.id)], context=context)[0]
+        else:
+            # already ok
+            return currency_id
+    
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+        # add argument to discard table currencies by default
+        table_in_args = False
+        for a in args:
+            if a[0] == 'currency_table_id':
+                table_in_args = True
+        if not table_in_args:
+            args.insert(0, ('currency_table_id', '=', False))
         return super(res_currency, self).search(cr, uid, args, offset, limit, order, context, count=count)
     
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
-        return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
-    
-    def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None, table_id=None):
-        if table_id is None:
-            return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
-        else:
+        if context is None:
+            context={}
+        if 'currency_table_id' in context and context['currency_table_id']:
             # A currency table is set, retrieve the correct currency ids
-            new_from_currency_id = self.search(cr, uid, [('currency_table_id', '=', table_id),
-                                                         ('reference_currency_id', '=', from_currency_id)], context=context)
-            new_to_currency_id = self.search(cr, uid, [('currency_table_id', '=', table_id),
-                                                       ('reference_currency_id', '=', to_currency_id)], context=context)
+            new_from_currency_id = self._get_table_currency(cr, uid, from_currency_id, context['currency_table_id'], context=context)
+            new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
             return super(res_currency, self).compute(cr, uid, new_from_currency_id, new_to_currency_id, from_amount, round, context=context)
+        else:
+            return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

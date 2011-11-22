@@ -27,6 +27,7 @@ from tools.translate import _
 from time import strftime
 from ..register_tools import previous_register_id
 from ..register_tools import open_register_view
+from ..register_tools import previous_period_id
 
 class register_creation_lines(osv.osv_memory):
     _name = 'wizard.register.creation.lines'
@@ -42,13 +43,14 @@ class register_creation_lines(osv.osv_memory):
             ids = [ids]
         res = {}
         for el in self.browse(cr, uid, ids, context=context):
-            prev_reg_id = previous_register_id(self, cr, uid, el.period_id.id, el.currency_id.id, el.register_type)
+            prev_reg_id = previous_register_id(self, cr, uid, el.period_id.id, el.journal_id.id)
             res[el.id] = prev_reg_id
         return res
 
     _columns = {
         'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
+        'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement", 
             required=False, readonly=True, string="Previous register", store=False),
@@ -109,49 +111,43 @@ class register_creation(osv.osv_memory):
         curr_obj = self.pool.get('res.currency')
         reg_to_create_obj = self.pool.get('wizard.register.creation.lines')
         period_id = wizard.period_id.id
+        prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
         reg_type = ['bank', 'cheque', 'cash']
         
-        # Search active currencies
-        curr_ids = curr_obj.search(cr, uid, [('active', '=', True)], context=context)
-        
-        # For each currency, do a list of registers that should be created
-        register_list = {}
-        for curr_id in curr_ids:
-            register_list[curr_id] = []
-            for r_type in reg_type:
-                register_list[curr_id].append(r_type)
-        
-        # Fill in wizard.register.creation.line
-        for currency_id in register_list:
-            for reg_type in register_list[currency_id]:
-                # Search journals that are in the same type
-                journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', currency_id), ('type', '=', reg_type)], 
-                    context=context)
-                if isinstance(journal_ids, (int, long)):
-                    journal_ids = [journal_ids]
-                current_register_ids = abs_obj.search(cr, uid, [('currency', '=', currency_id), 
-                    ('period_id', '=', period_id), ('journal_id', 'in', journal_ids)], context=context)
-                if not current_register_ids:
+        for rtype in reg_type:
+            # Search all register from previous period
+            abs_ids = abs_obj.search(cr, uid, [('journal_id.type', '=', rtype), ('period_id', '=', prev_period_id)], context=context)
+            if isinstance(abs_ids, (int, long)):
+                abs_ids = [abs_ids]
+            # Browse all registers in order to filter those which doesn't have an active currency
+            for register in abs_obj.browse(cr, uid, abs_ids, context=context):
+                if register.journal_id and register.journal_id.currency and register.journal_id.currency.active:
+                    currency_id = register.journal_id.currency.id
+                    journal_id = register.journal_id and register.journal_id.id or False
                     # verify that this register is not present in our wizard
-                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('currency_id', '=', currency_id), 
-                        ('register_type', '=', reg_type), ('wizard_id', '=', wizard.id)], context=context):
+                    if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id), 
+                        ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id), 
+                        ('journal_id', '=', journal_id)]):
                         vals = {
                             'period_id': period_id,
                             'currency_id': currency_id,
-                            'register_type': reg_type,
+                            'journal_id': journal_id,
+                            'register_type': rtype,
                             'wizard_id': wizard.id,
                         }
                         reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
                         reg = reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
+        
         # Delete lines that have no previous_register_id
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
             if not line.prev_reg_id:
                 reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
+        
         # Verify that there is some lines to treat
         remaining_lines = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         if not len(remaining_lines):
-            raise osv.except_osv(_('Warning'), _('No register to create. Please verify that previous period have some open registers.'))
+            raise osv.except_osv(_('Warning'), _('No register to create. Please verify that previous period have some registers.'))
         else:
             # Change state to activate the "Create Registers" confirm button
             self.write(cr, uid, ids, {'state': 'open'}, context=context)

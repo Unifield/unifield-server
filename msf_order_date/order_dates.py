@@ -527,10 +527,10 @@ class purchase_order_line(osv.osv):
         '''
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-        
-        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
-        if po:
-            res = po.delivery_confirmed_date
+       
+        if context.get('purchase_id', []): 
+            po_id = context.get('purchase_id', [])
+            res = order_obj.browse(cr, uid, po_id, context=context).delivery_confirmed_date
         
         return res
 
