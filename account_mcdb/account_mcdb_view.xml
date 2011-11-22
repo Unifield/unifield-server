@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Account Multi-Criteria Data Browser Form -->
+        <record model="ir.ui.view" id="account_mcdb_form">
+            <field name="name">account.mcdb.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Multi-Criteria Data Browser">
+                    <separator string="General"/>
+                    <group col="4" colspan="6">
+                        <field name="company_id" widget="selection" colspan="2"/><label string="" colspan="4"/>
+                        <field name="posting_date" colspan="2"/>
+                        <field name="document_date" colspan="2"/>
+                    </group>
+                    <separator string="Accounting"/>
+                    <group col="4" colspan="6">
+                        <field name="journal_id" widget="selection"/>
+                        <field name="abs_id" widget="selection"/>
+                        <field name="period_id" widget="selection"/><label string="" colspan="4"/>
+                        <field name="account_ids" colspan="2" nolabel="1">
+                            <tree string="Accounts">
+                                <field name="code"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+                        <field name="account_type_ids" colspan="2" nolabel="1">
+                            <tree string="Account type">
+                                <field name="code"/>
+                                <field name="name"/>
+                            </tree>
+                        </field>
+                        <field name="reconciled"/><field name="reconcile_id"/>
+                    </group>
+                    <separator string="Amount &amp; Currency"/>
+                    <group col="6" colspan="6">
+                        <field name="booking_currency_id" widget="selection"/><label string="" colspan="4"/>
+                        <field name="amount_func_from" colspan="2"/><label string=" - " colspan="1"/><field name="amount_func_to" nolabel="1"/><label string="in Functional Currency" colspan="2"/>
+                        <field name="amount_book_from" colspan="2"/><label string=" - " colspan="1"/><field name="amount_book_to" nolabel="1"/><label string="in Booking Currency" colspan="2"/>
+                    </group>
+                    <separator string="Third Party"/>
+                    <group col="6" colspan="6">
+                        <field name="partner_id" colspan="2"/>
+                        <field name="employee_id" colspan="2"/>
+                        <field name="register_id" widget="selection" colspan="2"/>
+                    </group>
+                    <separator string="Others"/>
+                    <group col="4" colspan="6">
+                        <field name="ref" colspan="2"/>
+                        <field name="name" colspan="2"/>
+                    </group>
+                    <separator string=" "/>
+                    <group col="4" colspan="6">
+                        <label string="" colspan="2"/>
+                        <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
+                    </group>
+                    <field name="type" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_mcdb_form" model="ir.actions.act_window">
+            <field name="name">Multi-Criteria Data Browser</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+        </record>
+
+    <!-- Account Multi-Criteria Data Browser Menu -->
+        <menuitem string="MCDB" action="action_account_mcdb_form" id="menu_mcdb" parent="account.menu_finance_entries" sequence="1"/>
+
+    </data>
+</openerp>
