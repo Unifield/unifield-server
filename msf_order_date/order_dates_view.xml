@@ -19,9 +19,15 @@
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group" position="before">
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
-                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
-                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
-                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+                            <group colspan="2" col="3">
+	                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested'}" icon="gtk-indent" />
+                            </group>
+                            <group colspan="2" col="3">
+	                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}"
+	                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed'}" icon="gtk-indent" />
+                            </group>
                             <field name="transport_type" />
                             <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
                             <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />

@@ -41,6 +41,7 @@
         'security/msf_order_date_groups.xml',
         'security/ir.model.access.csv',
         'order_dates_view.xml',
+        'wizard/update_lines_view.xml',
     ],
     'demo_xml': [
     ],

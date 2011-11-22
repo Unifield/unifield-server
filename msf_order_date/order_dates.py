@@ -380,7 +380,7 @@ class purchase_order(osv.osv):
     _columns = {
         'date_order': fields.date('Creation Date', select=True, readonly=True, 
                                   required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, 
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True,
                                             states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', 
                                                help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
@@ -401,6 +401,7 @@ class purchase_order(osv.osv):
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
+        'delivery_requested_date': lambda *a: time.strftime('%Y-%m-%d'),
         'internal_type': lambda *a: 'national',
     }
     
@@ -473,6 +474,36 @@ class purchase_order(osv.osv):
         
         return common_onchange_partner_id(self, cr, uid, ids, part, res)
         return res
+    
+    def requested_data(self, cr, uid, ids, context=None):
+        '''
+        data for requested
+        '''
+        return {'name': _('Do you want to update the Requested Date of all order lines ?'),}
+    
+    def confirmed_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed
+        '''
+        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'),}
+    
+    def update_date(self, cr, uid, ids, context=None):
+        '''
+        open the update lines wizard
+        '''
+        # we need the context
+        if context is None:
+            context = {}
+        # field name
+        field_name = context.get('field_name', False)
+        # data
+        data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
+        name = data['name']
+        model = 'update.lines'
+        obj = self.pool.get(model)
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
     
 purchase_order()
 
