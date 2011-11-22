@@ -90,7 +90,7 @@ class account_mcdb(osv.osv_memory):
             # Then many2one fields
             for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), 
                 ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
-                ('functional_currency_id', 'functional_currency_id'), ('reconcile_id', 'reconcile_id')]:
+                ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
@@ -109,6 +109,7 @@ class account_mcdb(osv.osv_memory):
             # Special fields
             # FIXME: add special fields here
             print domain
+            # Return result in a search view
             return {
                 'name': _('Multi-criteria data browser result'),
                 'type': 'ir.actions.act_window',
@@ -121,6 +122,26 @@ class account_mcdb(osv.osv_memory):
                 'target': 'current',
             }
         return False
+
+    def button_clear(self, cr, uid, ids, context={}):
+        """
+        Delete all fields from this object
+        """
+        # Some verification
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search all fields
+        vals = {}
+        for el in self._columns:
+            # exceptions (m2m or fields that shouldn't be deleted)
+            if el.__str__() not in ['functional_currency_id', 'account_ids', 'account_type_ids']:
+                vals.update({el.__str__(): False,})
+        # Delete m2m links
+        vals.update({'account_ids': [(6,0,[])], 'account_type_ids': [(6,0,[])]})
+        self.write(cr, uid, ids, vals, context=context)
+        return True
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

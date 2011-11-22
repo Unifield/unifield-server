@@ -75,7 +75,7 @@
                     </group>
                     <separator string=" "/>
                     <group col="4" colspan="6">
-                        <button name="button_reset" type="object" string="Reset" icon="gtk-cancel" colspan="2"/>
+                        <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
                         <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
                     </group>
                     <field name="model" invisible="1"/>
