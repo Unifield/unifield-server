@@ -56,7 +56,7 @@
                         <label string="" colspan="2"/>
                         <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
                     </group>
-                    <field name="type" invisible="1"/>
+                    <field name="model" invisible="1"/>
                 </form>
             </field>
         </record>

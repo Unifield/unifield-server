@@ -49,11 +49,11 @@ class account_mcdb(osv.osv_memory):
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
-        'type': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type")
+        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type")
     }
 
     _defaults = {
-        'type': lambda *a: 'account.move.line'
+        'model': lambda *a: 'account.move.line'
     }
 
     def button_validate(self, cr, uid, ids, context={}):
@@ -68,11 +68,19 @@ class account_mcdb(osv.osv_memory):
         # Prepare some values
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
-        res_model = wiz and wiz.type or False
+        res_model = wiz and wiz.model or False
         if res_model:
             # Prepare domain values
-            if wiz.account_ids:
-                domain.append(('account_id', 'in', tuple([x.id for x in wiz.account_ids])),)
+            # First many2many fields
+            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type')]:
+                if getattr(wiz, m2m[0]):
+                    domain.append((m2m[1], 'in', tuple([x.id for x in getattr(wiz, m2m[0])])))
+            # Then many2one fields
+            for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('period_id', 'period_id'), 
+                ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
+                ('reconcile_id', 'reconcile_id')]:
+                if getattr(wiz, m2o[0]):
+                    domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             return {
                 'name': _('Multi-criteria data browser result'),
                 'type': 'ir.actions.act_window',
