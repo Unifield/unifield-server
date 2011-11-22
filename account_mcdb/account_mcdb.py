@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from tools import flatten
 
 class account_mcdb(osv.osv_memory):
     _name = 'account.mcdb'
@@ -86,6 +87,20 @@ class account_mcdb(osv.osv_memory):
                     # Special field : account_ids with reversal
                     if m2m[0] == 'account_ids' and wiz.rev_account_ids:
                         operator = 'not in'
+                    # Search if a view account is given
+                    if m2m[0] == 'account_ids':
+                        account_ids = []
+                        for account in getattr(wiz, m2m[0]):
+                            if account.type == 'view':
+                                search_ids = self.pool.get('account.account').search(cr, uid, [('id', 'child_of', [account.id])])
+                                account_ids.append(search_ids)
+                        if account_ids:
+                            # Add default account_ids from wizard
+                            account_ids.append([x.id for x in getattr(wiz, m2m[0])])
+                            # Convert list in a readable list for openerp
+                            account_ids = flatten(account_ids)
+                            domain.append((m2m[1], operator, tuple(account_ids)))
+                            continue
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then many2one fields
             for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), 
@@ -106,9 +121,6 @@ class account_mcdb(osv.osv_memory):
             for inf in [('posting_date_to', 'date'), ('amount_book_to', 'amount_currency')]:
                 if getattr(wiz, inf[0]):
                     domain.append((inf[1], '<=', getattr(wiz, inf[0])))
-            # Special fields
-            # FIXME: add special fields here
-            print domain
             # Return result in a search view
             return {
                 'name': _('Multi-criteria data browser result'),
