@@ -32,28 +32,36 @@ class account_mcdb(osv.osv_memory):
         'journal_id': fields.many2one('account.journal', string="Journal Code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
         'company_id': fields.many2one('res.company', string="Proprietary instance"),
-        'posting_date': fields.date('Posting date'),
-        'document_date': fields.date('Document date'),
-        'period_id': fields.many2one('account.period', string="Accounting Period"),
+        'posting_date_from': fields.date('First posting date'),
+        'posting_date_to': fields.date('Ending posting date'),
+        'document_date_from': fields.date('First document date', readonly=True),
+        'document_date_to': fields.date('Ending document date', readonly=True),
+        'period_id': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
         'employee_id': fields.many2one('hr.employee', string="Employee"),
         'register_id': fields.many2one('account.bank.statement', string="Register"),
-        'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciliation'),
+        'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
+        'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
+        'amount_func_from': fields.float('Begin amount in functional currency', readonly=True),
+        'amount_func_to': fields.float('Ending amount in functional currency', readonly=True),
         'booking_currency_id': fields.many2one('res.currency', string="Booking currency"),
-        'amount_func_from': fields.float('Amount'),
-        'amount_func_to': fields.float('to'),
-        'amount_book_from': fields.float('Amount'),
-        'amount_book_to': fields.float('to'),
+        'amount_book_from': fields.float('Begin amount in booking currency'),
+        'amount_book_to': fields.float('Ending amount in booking currency'),
+        'output_currency_id': fields.many2one('res.currency', string="Output currency", readonly=True),
+        'amount_out_from': fields.float('Begin amount in output currency', readonly=True),
+        'amount_out_to': fields.float('Ending amount in output currency', readonly=True),
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id', string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
+        'rev_account_ids': fields.boolean('Reverse account selection'),
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type")
     }
 
     _defaults = {
-        'model': lambda *a: 'account.move.line'
+        'model': lambda *a: 'account.move.line',
+        'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
 
     def button_validate(self, cr, uid, ids, context={}):
@@ -72,15 +80,35 @@ class account_mcdb(osv.osv_memory):
         if res_model:
             # Prepare domain values
             # First many2many fields
-            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type')]:
+            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_id', 'period_id')]:
                 if getattr(wiz, m2m[0]):
-                    domain.append((m2m[1], 'in', tuple([x.id for x in getattr(wiz, m2m[0])])))
+                    operator = 'in'
+                    # Special field : account_ids with reversal
+                    if m2m[0] == 'account_ids' and wiz.rev_account_ids:
+                        operator = 'not in'
+                    domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then many2one fields
-            for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('period_id', 'period_id'), 
-                ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
-                ('reconcile_id', 'reconcile_id')]:
+            for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), 
+                ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
+                ('functional_currency_id', 'functional_currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
+            # Finally others fields
+            # look like fields
+            for ll in [('ref', 'ref'), ('name', 'name')]:
+                if getattr(wiz, ll[0]):
+                    domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
+            # superior fields
+            for sup in [('posting_date_from', 'date'), ('amount_book_from', 'amount_currency')]:
+                if getattr(wiz, sup[0]):
+                    domain.append((sup[1], '>=', getattr(wiz, sup[0])))
+            # inferior fields
+            for inf in [('posting_date_to', 'date'), ('amount_book_to', 'amount_currency')]:
+                if getattr(wiz, inf[0]):
+                    domain.append((inf[1], '<=', getattr(wiz, inf[0])))
+            # Special fields
+            # FIXME: add special fields here
+            print domain
             return {
                 'name': _('Multi-criteria data browser result'),
                 'type': 'ir.actions.act_window',

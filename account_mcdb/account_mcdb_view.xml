@@ -12,39 +12,61 @@
                     <separator string="General"/>
                     <group col="4" colspan="6">
                         <field name="company_id" widget="selection" colspan="2"/><label string="" colspan="4"/>
-                        <field name="posting_date" colspan="2"/>
-                        <field name="document_date" colspan="2"/>
+                        <field name="posting_date_from" colspan="1" string="Posting date"/>
+                        <field name="posting_date_to" colspan="1" string="to"/>
+                        <field name="document_date_from" colspan="1" string="Document date"/>
+                        <field name="document_date_to" colspan="1" string="to"/>
                     </group>
                     <separator string="Accounting"/>
                     <group col="4" colspan="6">
-                        <field name="journal_id" widget="selection"/>
-                        <field name="abs_id" widget="selection"/>
-                        <field name="period_id" widget="selection"/><label string="" colspan="4"/>
-                        <field name="account_ids" colspan="2" nolabel="1">
-                            <tree string="Accounts">
-                                <field name="code"/>
-                                <field name="name"/>
-                            </tree>
-                        </field>
-                        <field name="account_type_ids" colspan="2" nolabel="1">
-                            <tree string="Account type">
-                                <field name="code"/>
-                                <field name="name"/>
-                            </tree>
-                        </field>
+                        <field name="journal_id" widget="selection" colspan="2"/>
+                        <field name="abs_id" colspan="2"/>
+                        <field name="period_id" colspan="2" nolabel="1"/>
+                    </group>
+                    <group col="4" colspan="6">
+                        <group col="2" colspan="2">
+                            <separator string="Account"/>
+                            <newline/>
+                            <field name="rev_account_ids"/>
+                            <newline/>
+                            <field name="account_ids" colspan="2" nolabel="1">
+                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="type" string="Type"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Account type"/>
+                            <field name="account_type_ids" colspan="2" nolabel="1">
+                                <tree string="Account type">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <separator string="Reconciliation"/>
                         <field name="reconciled"/><field name="reconcile_id"/>
+                        
                     </group>
                     <separator string="Amount &amp; Currency"/>
                     <group col="6" colspan="6">
-                        <field name="booking_currency_id" widget="selection"/><label string="" colspan="4"/>
-                        <field name="amount_func_from" colspan="2"/><label string=" - " colspan="1"/><field name="amount_func_to" nolabel="1"/><label string="in Functional Currency" colspan="2"/>
-                        <field name="amount_book_from" colspan="2"/><label string=" - " colspan="1"/><field name="amount_book_to" nolabel="1"/><label string="in Booking Currency" colspan="2"/>
+                        <field name="functional_currency_id" widget="selection"/>
+                        <field name="amount_func_from" string="Amount"/>
+                        <field name="amount_func_to" string="to"/>
+                        <field name="booking_currency_id" widget="selection"/>
+                        <field name="amount_book_from" string="Amount"/>
+                        <field name="amount_book_to" string="to"/>
+                        <field name="output_currency_id" widget="selection"/>
+                        <field name="amount_out_from" string="Amount"/>
+                        <field name="amount_out_to" string="to"/>
                     </group>
                     <separator string="Third Party"/>
                     <group col="6" colspan="6">
                         <field name="partner_id" colspan="2"/>
                         <field name="employee_id" colspan="2"/>
-                        <field name="register_id" widget="selection" colspan="2"/>
+                        <field name="register_id" colspan="2"/>
                     </group>
                     <separator string="Others"/>
                     <group col="4" colspan="6">
@@ -53,7 +75,7 @@
                     </group>
                     <separator string=" "/>
                     <group col="4" colspan="6">
-                        <label string="" colspan="2"/>
+                        <button name="button_reset" type="object" string="Reset" icon="gtk-cancel" colspan="2"/>
                         <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
                     </group>
                     <field name="model" invisible="1"/>
