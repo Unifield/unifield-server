@@ -44,8 +44,8 @@ class account_mcdb(osv.osv_memory):
         'register_id': fields.many2one('account.bank.statement', string="Register"),
         'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
         'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
-        'amount_func_from': fields.float('Begin amount in functional currency', readonly=True),
-        'amount_func_to': fields.float('Ending amount in functional currency', readonly=True),
+        'amount_func_from': fields.float('Begin amount in functional currency'),
+        'amount_func_to': fields.float('Ending amount in functional currency'),
         'booking_currency_id': fields.many2one('res.currency', string="Booking currency"),
         'amount_book_from': fields.float('Begin amount in booking currency'),
         'amount_book_to': fields.float('Ending amount in booking currency'),
@@ -142,23 +142,26 @@ class account_mcdb(osv.osv_memory):
             # prepare tuples that would be processed
             booking = ('amount_book_from', 'amount_book_to', 'amount_currency')
             functional = ('amount_func_from', 'amount_func_to', 'balance')
-            for curr in [booking]: #FIXME:add functional when possible
-                mnt_from = getattr(wiz, curr[0])
-                mnt_to = getattr(wiz, curr[1])
-                if mnt_from or mnt_to:
-                    if mnt_from:
-                        domain.append('|')
-                    if mnt_to:
-                        domain.append('&')
-                        domain.append((curr[2], '>=', -1 * abs(mnt_to)))
-                    if mnt_from:
-                        domain.append((curr[2], '<=', -1 * abs(mnt_from)))
-                    if mnt_from and mnt_to:
-                        domain.append('&')
-                    if mnt_from:
-                        domain.append((curr[2], '>=', abs(mnt_from)))
-                    if mnt_to:
-                        domain.append((curr[2], '<=', abs(mnt_to)))
+            for curr in [booking, functional]: #FIXME:add functional when possible
+                # Prepare some values
+                mnt_from = getattr(wiz, curr[0]) or False
+                mnt_to = getattr(wiz, curr[1]) or False
+                field = curr[2]
+                abs_from = abs(mnt_from)
+                min_from = -1 * abs_from
+                abs_to = abs(mnt_to)
+                min_to = -1 * abs_to
+                # domain elements initialisation
+                domain_elements = []
+                if mnt_from and mnt_to:
+                    domain_elements = ['|', '&', (field, '>=', min_to), (field, '<=', min_from), '&', (field, '>=', abs_from), (field, '<=', abs_to)]
+                elif mnt_from:
+                    domain_elements = ['|', (field, '<=', min_from), (field, '>=', abs_from)]
+                elif mnt_to:
+                    domain_elements = ['&', (field, '>=', min_to), (field, '<=', abs_to)]
+                # Add elements to domain which would be use for filtering
+                for el in domain_elements:
+                    domain.append(el)
             # Return result in a search view
             return {
                 'name': _('Multi-criteria data browser result'),
