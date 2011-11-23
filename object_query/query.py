@@ -21,6 +21,8 @@
 
 from osv import osv, fields
 import time
+from datetime import datetime
+from tools.translate import _
 
 class object_query_object(osv.osv):
     _name = 'object.query.object'
@@ -53,6 +55,7 @@ class object_query(osv.osv):
         'object_id': fields.many2one('object.query.object', string='Object', required=True),
         'selection_ids': fields.many2many('ir.model.fields', 'query_fields_sel', 
                                           'query_id', 'field_id', string='Selection fields'),
+        'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'), 
         'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group', 
                                           'query_id', 'field_id', string='Group by fields'),
         'result_ids': fields.one2many('object.query.result.fields', 'object_id', 
@@ -127,10 +130,28 @@ class object_query(osv.osv):
             
             export_id = self.pool.get('ir.exports').create(cr, uid, {'name': query.name,
                                                                      'resource': query.object_id.model_id.model,})
-            
-            for filter in query.selection_ids:
-                search_filters += "<field name='%s' />" % (filter.name)
-                search_filters += "\n"
+    
+            domain = []
+            if not query.selection_data:
+                for filter in query.selection_ids:
+                    search_filters += "<field name='%s' />" % (filter.name)
+                    search_filters += "\n"
+            else:
+                for filter_v in query.selection_data:
+                    if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+                        if filter_v.value1:
+                            domain.append((filter_v.field_id.name, '>=', filter_v.value1))
+                        if filter_v.value2:
+                            domain.append((filter_v.field_id.name, '<=', filter_v.value2))
+                    elif filter_v.field_id.ttype == 'boolean':
+                        if filter_v.value1 == 't':
+                            domain.append((filter_v.field_id.name, '=', 't'))
+                        elif filter_v.value1 == 'f':
+                            domain.append((filter_v.field_id.name, '=', 'f'))
+                    elif filter_v.field_id.ttype == 'many2one':
+                        domain.append((filter_v.field_id.name, 'in', [int(filter_v.value1)]))
+                    else:
+                        domain.append((filter_v.field_id.name, '=', filter_v.value1))
                 
             for result in query.result_ids:
                 tree_fields += "<field name='%s' />" % (result.field_id.name)
@@ -165,6 +186,7 @@ class object_query(osv.osv):
                                 'priority': 250,
                                 'type': 'search',
                                 'arch': search_arch,
+                                'context': "{'search_default_create_date': '2011-01-01', 'search_default_name': 'oo'}",
                                 'xmd_id': 'object_query.query_search_%s_%s' %(query.object_id.model_id.model, query.id)}
             
             tree_view_data = {'name': 'query.tree.%s.%s' %(query.object_id.model_id.model, query.id),
@@ -187,17 +209,30 @@ class object_query(osv.osv):
             
             self.write(cr, uid, query.id, {'search_view_id': search_view_id,
                                            'tree_view_id': tree_view_id}, context=context)
-            
+           
             return {'type': 'ir.actions.act_window',
                     'res_model': query.object_id.model_id.model,
                     'search_view_id': [search_view_id],
                     'view_id': [tree_view_id],
                     'view_mode': 'tree,form',
                     'view_type': 'form',
+                    'domain': domain,
                     'context': {'disable_cache': time.time()}}
         
         return {'type': 'ir.actions.act_window_close'}
-   
+
+    def open_wizard(self, cr, uid, ids, context={}):
+        return {
+                'name': 'Search Values',
+                'type': 'ir.actions.act_window',
+                'res_model': 'object.query.wizard.values',
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': [],
+                'context': {'disable_cache': time.time(), 'query_id': ids[0]}
+                }
+
     def unlink(self, cr, uid, ids, context={}):
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -211,7 +246,86 @@ class object_query(osv.osv):
         if todel:
             self.pool.get('ir.ui.view').unlink(cr, uid, todel, context=context)
         return super(object_query, self).unlink(cr, uid, ids, context)
+
+    def _coherence_search_value(self, cr, uid, ids, context={}):
+        if isinstance(id, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids):
+            if obj.selection_ids:
+                search = [x.id for x in obj.selection_ids]
+                to_del = []
+                if obj.selection_data:
+                    to_del = [ x.id for x in obj.selection_data  if x.field_id.id not in search]
+                if to_del:
+                    self.pool.get('object.query.selection_data').unlink(cr, uid, to_del)
+        return True
+
+    _constraints = [
+        (_coherence_search_value, 'Always True', []),
+    ]
+
 object_query()
+
+
+class object_query_selection_data(osv.osv):
+    _name = 'object.query.selection_data'
+    _description = 'Selection Values'
+    _rec_name = 'field_id'
+
+    def _get_text(self, cr, uid, ids, field, arg, context={}):
+        if context is None:
+            context = {}
+        ret = {}
+        user_obj = self.pool.get('res.users')
+        lang_obj = self.pool.get('res.lang')
+        user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+        lang_id = lang_obj.search(cr, uid, [('code','=',user_lang)])
+        date_format = lang_id and lang_obj.read(cr, uid, lang_id[0], ['date_format'], context=context)['date_format'] or '%m/%d/%Y'
+        time_format = lang_id and lang_obj.read(cr, uid, lang_id[0], ['time_format'], context=context)['time_format'] or '%H:%M'
+
+        from_format = {'date': '%Y-%m-%d', 'datetime': '%Y-%m-%d %H:%M:%S'}
+        to_format = {'date': date_format, 'datetime': '%s %s'%(date_format, time_format)}
+
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids):
+            ret[obj.id] = ''
+            if obj.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+                if obj.value1:
+                    if obj.field_id.ttype in ('date', 'datetime'):
+                        obj.value1 = datetime.strptime(obj.value1, from_format[obj.field_id.ttype]).strftime(to_format[obj.field_id.ttype])
+                    ret[obj.id] = "%s <= x"%(obj.value1,)
+                else:
+                    ret[obj.id] ="x"
+                if obj.value2:
+                    if obj.field_id.ttype in ('date', 'datetime'):
+                        obj.value2 = datetime.strptime(obj.value2, from_format[obj.field_id.ttype]).strftime(to_format[obj.field_id.ttype])
+                    ret[obj.id] += "<= %s"%(obj.value2,)
+            elif obj.field_id.ttype == 'many2one':
+                if obj.value1:
+                    relation = self.pool.get(obj.field_id.model_id.model)._columns[obj.field_id.name]._obj
+                    ret[obj.id] = self.pool.get(relation).name_get(cr, uid, [int(obj.value1)])[0][1]
+            elif obj.field_id.ttype == 'selection':
+                selection = self.pool.get(obj.field_id.model_id.model)._columns[obj.field_id.name].selection
+                ret[obj.id] = dict(selection).get(obj.value1, '')
+            elif obj.field_id.ttype == 'boolean':
+                if obj.value1 == 't':
+                    ret[obj.id] = _('Yes')
+                if obj.value1 == 'f':
+                    ret[obj.id] =  _('No')
+            else:
+                ret[obj.id] = obj.value1
+
+        return ret
+
+    _columns = {
+        'query_id': fields.many2one('object.query', 'Query', required=True, ondelete='cascade'),
+        'field_id': fields.many2one('ir.model.fields', 'Fields', required=True, ondelete='cascade'),
+        'value1': fields.char('Value', size=2048),
+        'value2': fields.char('Value2', size=2048),
+        'text': fields.function(_get_text, type='char', method=True, string='Filtre'),
+    }
+object_query_selection_data()
 
 
 class object_query_result_fields(osv.osv):
