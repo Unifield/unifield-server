@@ -38,12 +38,11 @@
                             </field>
                         </group>
                     </group>
+                    <separator string="Account"/>
                     <group col="4" colspan="6">
-                        <group col="2" colspan="2">
-                            <separator string="Account"/>
-                            <newline/>
-                            <field name="rev_account_ids"/>
-                            <newline/>
+                        <field name="rev_account_ids"/>
+                        <newline/>
+                        <group col="4" colspan="6">
                             <field name="account_ids" colspan="2" nolabel="1">
                                 <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
                                     <field name="code"/>
@@ -51,9 +50,6 @@
                                     <field name="type" string="Type"/>
                                 </tree>
                             </field>
-                        </group>
-                        <group col="2" colspan="2">
-                            <separator string="Account type"/>
                             <field name="account_type_ids" colspan="2" nolabel="1">
                                 <tree string="Account type">
                                     <field name="code"/>

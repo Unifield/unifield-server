@@ -56,7 +56,7 @@ class account_mcdb(osv.osv_memory):
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
-        'rev_account_ids': fields.boolean('Reverse account selection'),
+        'rev_account_ids': fields.boolean('Reverse account(s) selection'),
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type")
     }
 
