@@ -19,9 +19,24 @@
                     </group>
                     <separator string="Accounting"/>
                     <group col="4" colspan="6">
-                        <field name="journal_id" widget="selection" colspan="2"/>
                         <field name="abs_id" colspan="2"/>
-                        <field name="period_id" colspan="2" nolabel="1"/>
+                        <group col="4" colspan="6">
+                            <field name="journal_id" colspan="2" nolabel="1">
+                                <tree string="Journal">
+                                    <field name="code"/>
+                                    <field name="name" string="Name"/>
+                                    <field name="type"/>
+                                </tree>
+                            </field>
+                            <field name="period_id" colspan="2" nolabel="1">
+                                <tree string="Period">
+                                    <field name="name" string="Name"/>
+                                    <field name="date_start" string="Start"/>
+                                    <field name="date_stop" string="Stop"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </group>
                     </group>
                     <group col="4" colspan="6">
                         <group col="2" colspan="2">

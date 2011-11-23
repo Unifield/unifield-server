@@ -30,7 +30,7 @@ class account_mcdb(osv.osv_memory):
     _name = 'account.mcdb'
 
     _columns = {
-        'journal_id': fields.many2one('account.journal', string="Journal Code"),
+        'journal_id': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
         'company_id': fields.many2one('res.company', string="Proprietary instance"),
         'posting_date_from': fields.date('First posting date'),
@@ -81,7 +81,8 @@ class account_mcdb(osv.osv_memory):
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
-            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_id', 'period_id')]:
+            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_id', 'period_id'), 
+                ('journal_id', 'journal_id')]:
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
                     # Special field : account_ids with reversal
@@ -99,13 +100,13 @@ class account_mcdb(osv.osv_memory):
                             account_ids.append([x.id for x in getattr(wiz, m2m[0])])
                             # Convert list in a readable list for openerp
                             account_ids = flatten(account_ids)
+                            # Create domain and NEXT element (otherwise this give a bad domain)
                             domain.append((m2m[1], operator, tuple(account_ids)))
                             continue
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
-            for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), 
-                ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
-                ('reconcile_id', 'reconcile_id')]:
+            for m2o in [('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
+                ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
