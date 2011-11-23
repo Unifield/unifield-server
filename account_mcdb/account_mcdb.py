@@ -52,18 +52,94 @@ class account_mcdb(osv.osv_memory):
         'output_currency_id': fields.many2one('res.currency', string="Output currency", readonly=True),
         'amount_out_from': fields.float('Begin amount in output currency', readonly=True),
         'amount_out_to': fields.float('Ending amount in output currency', readonly=True),
+        'currency_choice': fields.selection([('booking', 'Booking'), ('functional', 'Functional'), ('output', 'Output')], string="Currency type"),
+        'currency_id': fields.many2one('res.currency', string="Currency"),
+        'amount_from': fields.float('Begin amount in given currency type'),
+        'amount_to': fields.float('Ending amount in given currency type'),
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id', string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Reverse account(s) selection'),
-        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type")
+        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
+        'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency', readonly=True),
     }
 
     _defaults = {
         'model': lambda *a: 'account.move.line',
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'currency_choice': lambda *a: 'booking',
     }
+
+    def onchange_currency_choice(self, cr, uid, ids, choice, currency=False, func_curr=False, book_curr=False, mnt_func_from=0.0, mnt_func_to=0.0, mnt_book_from=0.0, mnt_book_to=0.0, context={}):
+        """
+        Permit to give default company currency if 'functional' has been choosen.
+        Delete all currency and amount fields (to not disturb normal mechanism)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not choice:
+            return {}
+        # Prepare some values
+        vals = {}
+        # Reset fields
+        for field in ['amount_book_from', 'amount_book_to', 'amount_func_from', 'amount_func_to', 'booking_currency_id', 'output_currency_id']:
+            vals[field] = False
+        # Fill in values
+        if choice == 'functional':
+            vals['currency_id'] = func_curr or False
+        elif choice == 'booking':
+            vals['currency_id'] = False
+        elif choice == 'output':
+            vals['output_currency_id'] = False
+        return {'value': vals}
+
+    def onchange_currency(self, cr, uid, ids, choice, currency, context={}):
+        """
+        Fill in right field regarding choice and currency
+        """
+        # Prepare some values
+        vals = {}
+        # Some verifications
+        if not choice or not currency:
+            return {}
+        # Fill in field
+        if choice == 'functional':
+            vals['functional_currency_id'] = currency
+        elif choice == 'booking':
+            vals['booking_currency_id'] = currency
+        elif choice == 'output':
+            vals['output_currency_id'] = currency
+        return {'value': vals}
+
+    def onchange_amount(self, cr, uid, ids, choice, amount, amount_type=None, context={}):
+        """
+        Fill in right amount field regarding choice
+        """
+        # Prepare some values
+        vals = {}
+        # Some verifications
+        if not choice:
+            return {}
+        if not amount:
+            amount = 0.0
+        if choice == 'functional':
+            if amount_type == 'from':
+                vals['amount_func_from'] = amount
+            elif amount_type == 'to':
+                vals ['amount_func_to'] = amount
+        elif choice == 'booking':
+            if amount_type == 'from':
+                vals['amount_book_from'] = amount
+            elif amount_type == 'to':
+                vals['amount_book_to'] = amount
+        elif choice == 'output':
+            if amount_type == 'from':
+                vals['amount_out_from'] = amount
+            elif amount_type == 'to':
+                vals['amount_out_to'] = amount
+        return {'value': vals}
 
     def button_validate(self, cr, uid, ids, context={}):
         """

@@ -62,16 +62,24 @@
                         
                     </group>
                     <separator string="Amount &amp; Currency"/>
-                    <group col="6" colspan="6">
-                        <field name="functional_currency_id" widget="selection"/>
-                        <field name="amount_func_from" string="Amount"/>
-                        <field name="amount_func_to" string="to"/>
-                        <field name="booking_currency_id" widget="selection"/>
-                        <field name="amount_book_from" string="Amount"/>
-                        <field name="amount_book_to" string="to"/>
-                        <field name="output_currency_id" widget="selection"/>
-                        <field name="amount_out_from" string="Amount"/>
-                        <field name="amount_out_to" string="to"/>
+                    <group col="8" colspan="6">
+                        <field name="currency_choice" colspan="2" on_change="onchange_currency_choice(currency_choice, currency_id, functional_currency_id, booking_currency_id, amount_func_from, amount, func_to, amount_book_from, amount_book_to)"/>
+                        <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" colspan="2" on_change="onchange_currency(currency_choice, currency_id)"/>
+                        <field name="amount_from" string="Amount" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
+                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
+                        <newline/>
+                        <field name="display_in_output_currency" colspan="2"/>
+                    </group>
+                    <group col="4" colspan="6">
+                        <field name="functional_currency_id" invisible="1"/>
+                        <field name="amount_func_from" string="Amount" invisible="1"/>
+                        <field name="amount_func_to" string="to" invisible="1"/>
+                        <field name="booking_currency_id" widget="selection" invisible="1"/>
+                        <field name="amount_book_from" string="Amount" invisible="1"/>
+                        <field name="amount_book_to" string="to" invisible="1"/>
+                        <field name="output_currency_id" widget="selection" invisible="1"/>
+                        <field name="amount_out_from" string="Amount" invisible="1"/>
+                        <field name="amount_out_to" string="to" invisible="1"/>
                     </group>
                     <separator string="Third Party"/>
                     <group col="6" colspan="6">
