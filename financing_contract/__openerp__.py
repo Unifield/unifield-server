@@ -32,7 +32,9 @@
         'financing_contract_view.xml',
         'financing_contract_workflow.xml',
     ],
-    'test': [],
+    'test': [
+        'test/financing_contract.yml'
+    ],
     'demo_xml': [
     ],
     'installable': True,
