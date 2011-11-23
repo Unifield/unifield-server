@@ -270,7 +270,24 @@ class account_mcdb(osv.osv_memory):
         # Delete m2m links
         vals.update({'account_ids': [(6,0,[])], 'account_type_ids': [(6,0,[])]})
         self.write(cr, uid, ids, vals, context=context)
-        return True
+        # Update context
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Search view_id
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_mcdb_form')
+        view_id = view_id and view_id[1] or False
+        return {
+            'name': _('Multi-Criteria Data Browser'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'context': context,
+            'target': 'crush',
+        }
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
