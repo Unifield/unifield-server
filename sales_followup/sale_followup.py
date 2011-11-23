@@ -650,7 +650,7 @@ class sale_order_line_followup(osv.osv_memory):
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
                                    readonly=True, multi='status'),
-        'tender_ids': fields.many2many('tender', 'call_tender_follow_rel',
+        'tender_ids': fields.many2many('tender.line', 'call_tender_follow_rel',
                                        'follow_line_id', 'tender_id', string='Tender'),
         'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
                                          readonly=True, multi='status'),
