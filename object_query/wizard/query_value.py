@@ -91,7 +91,7 @@ class search_values(osv.osv_memory):
                 elif sel.ttype == 'many2one':
                     quest_fields[field_name].update({'type': sel.ttype, 'relation': sel.relation, 'default':int(values.get(sel.id, 0))})
                 elif sel.ttype == 'boolean':
-                    quest_fields[field_name].update({'type': 'selection', 'selection': [('t','Yes'), ('f', 'No')]})
+                    quest_fields[field_name].update({'type': 'selection', 'selection': [('', ''), ('t','Yes'), ('f', 'No')]})
                 else:
                     quest_fields[field_name].update({'type': 'char', 'size':1024})
         return quest_fields
