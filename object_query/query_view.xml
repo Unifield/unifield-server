@@ -63,15 +63,6 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Selection values">
-                           <button name="open_wizard" type="object" string="Open Selection"  icon="gtk-justify-fill" colspan="2"/>
-                           <field name="selection_data" readonly="1" colspan="4" nolabel="1">
-                                <tree>
-                                    <field name="field_id" />
-                                    <field name="text" />
-                                </tree>
-                           </field>
-                        </page>
                         <page string="Group by fields">
                             <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'one2many', 'many2many')), ('is_function', '=', False)]" 
                                    nolabel="1" mode="tree,search" context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
