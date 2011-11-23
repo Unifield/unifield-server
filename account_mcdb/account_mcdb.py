@@ -80,7 +80,7 @@ class account_mcdb(osv.osv_memory):
         res_model = wiz and wiz.model or False
         if res_model:
             # Prepare domain values
-            # First many2many fields
+            # First MANY2MANY fields
             for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_id', 'period_id')]:
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
@@ -102,25 +102,62 @@ class account_mcdb(osv.osv_memory):
                             domain.append((m2m[1], operator, tuple(account_ids)))
                             continue
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
-            # Then many2one fields
+            # Then MANY2ONE fields
             for m2o in [('journal_id', 'journal_id'), ('abs_id', 'statement_id'), ('company_id', 'company_id'), ('partner_id', 'partner_id'), 
                 ('employee_id', 'employee_id'), ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), 
                 ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
-            # look like fields
+            # LOOKS LIKE fields
             for ll in [('ref', 'ref'), ('name', 'name')]:
                 if getattr(wiz, ll[0]):
                     domain.append((ll[1], 'ilike', '%%%s%%' % getattr(wiz, ll[0])))
-            # superior fields
-            for sup in [('posting_date_from', 'date'), ('amount_book_from', 'amount_currency')]:
+            # DATE fields
+            for sup in [('posting_date_from', 'date')]:
                 if getattr(wiz, sup[0]):
                     domain.append((sup[1], '>=', getattr(wiz, sup[0])))
-            # inferior fields
-            for inf in [('posting_date_to', 'date'), ('amount_book_to', 'amount_currency')]:
+            for inf in [('posting_date_to', 'date')]:
                 if getattr(wiz, inf[0]):
                     domain.append((inf[1], '<=', getattr(wiz, inf[0])))
+            ## SPECIAL fields
+            #
+            # AMOUNTS fields
+            #
+            # NB: Amount problem has been resolved as this
+            #+ There is 4 possibilities for amounts:
+            #+ 1/ NO amount given: nothing to do
+            #+ 2/ amount FROM AND amount TO is given
+            #+ 3/ amount FROM is filled in but NOT amount TO
+            #+ 4/ amount TO is filled in but NOT amount FROM
+            #+
+            #+ For each case, here is what domain should be look like:
+            #+ 1/ FROM is 0.0, TO is 0,0. Domain is []
+            #+ 2/ FROM is 400, TO is 600. Domain is
+            #+ ['|', '&', ('balance', '>=', -600), ('balance', '<=', -400), '&', ('balance', '>=', 400), ('balance', '<=', '600')]
+            #+ 3/ FROM is 400, TO is 0.0. Domain is ['|', ('balance', '<=', -400), ('balance', '>=', 400)]
+            #+ 4/ FROM is 0.0, TO is 600. Domain is ['&', ('balance', '>=', -600), ('balance', '<=', 600)]
+            
+            # prepare tuples that would be processed
+            booking = ('amount_book_from', 'amount_book_to', 'amount_currency')
+            functional = ('amount_func_from', 'amount_func_to', 'balance')
+            for curr in [booking]: #FIXME:add functional when possible
+                mnt_from = getattr(wiz, curr[0])
+                mnt_to = getattr(wiz, curr[1])
+                if mnt_from or mnt_to:
+                    if mnt_from:
+                        domain.append('|')
+                    if mnt_to:
+                        domain.append('&')
+                        domain.append((curr[2], '>=', -1 * abs(mnt_to)))
+                    if mnt_from:
+                        domain.append((curr[2], '<=', -1 * abs(mnt_from)))
+                    if mnt_from and mnt_to:
+                        domain.append('&')
+                    if mnt_from:
+                        domain.append((curr[2], '>=', abs(mnt_from)))
+                    if mnt_to:
+                        domain.append((curr[2], '<=', abs(mnt_to)))
             # Return result in a search view
             return {
                 'name': _('Multi-criteria data browser result'),
