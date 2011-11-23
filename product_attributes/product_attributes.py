@@ -168,7 +168,7 @@ class product_attributes(osv.osv):
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
         'heat_sensitive_item': fields.selection([('',''),
-            ('_','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
+            ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
             ('*','Keep Cool'),
             ('**','Keep Cool, airfreight'),
             ('***','Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),

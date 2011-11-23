@@ -2342,7 +2342,7 @@ class product_product(osv.osv):
                       }
             result[product.id] = values
             # keep cool
-            is_keep_cool = product.heat_sensitive_item# in ('*', '**', '***',)
+            is_keep_cool = bool(product.heat_sensitive_item)# in ('*', '**', '***',)
             values['is_keep_cool'] = is_keep_cool
                     
         return result
