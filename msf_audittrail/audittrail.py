@@ -36,8 +36,6 @@ class audittrail_rule(osv.osv):
     _columns = {
         "name": fields.char("Rule Name", size=32, required=True),
         "object_id": fields.many2one('ir.model', 'Object', required=True, help="Select object for which you want to generate log."),
-        "user_id": fields.many2many('res.users', 'audittail_rules_users',
-                                            'user_id', 'rule_id', 'Users', help="if  User is not added then it will applicable for all users"),
         "log_read": fields.boolean("Log Reads", help="Select this if you want to keep track of read/open on any record of the object of this rule"),
         "log_write": fields.boolean("Log Writes", help="Select this if you want to keep track of modification on any record of the object of this rule"),
         "log_unlink": fields.boolean("Log Deletes", help="Select this if you want to keep track of deletion on any record of the object of this rule"),
@@ -83,7 +81,7 @@ class audittrail_rule(osv.osv):
                 self.write(cr, uid, [thisrule.id], {"state": "draft"})
             val = {
                  "name": 'View Log',
-                 "res_model": 'audittrail.log',
+                 "res_model": 'audittrail.log.line',
                  "src_model": thisrule.object_id.model,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
 
@@ -112,7 +110,7 @@ class audittrail_rule(osv.osv):
             if thisrule.id in self.__functions:
                 for function in self.__functions[thisrule.id]:
                     setattr(function[0], function[1], function[2])
-            w_id = obj_action.search(cr, uid, [('name', '=', 'View Log'), ('res_model', '=', 'audittrail.log'), ('src_model', '=', thisrule.object_id.model)])
+            w_id = obj_action.search(cr, uid, [('name', '=', 'View Log'), ('res_model', '=', 'audittrail.log.line'), ('src_model', '=', thisrule.object_id.model)])
             if w_id:
                 obj_action.unlink(cr, uid, w_id)
                 value = "ir.actions.act_window" + ',' + str(w_id[0])
@@ -126,53 +124,21 @@ class audittrail_rule(osv.osv):
 audittrail_rule()
 
 
-class audittrail_log(osv.osv):
-    """
-    For Audittrail Log
-    """
-    _name = 'audittrail.log'
-    _description = "Audittrail Log"
-
-    def _name_get_resname(self, cr, uid, ids, *args):
-        data = {}
-        for resname in self.browse(cr, uid, ids,[]):
-            model_object = resname.object_id
-            res_id = resname.res_id
-            if model_object and res_id:
-                model_pool = self.pool.get(model_object.model)
-                res = model_pool.read(cr, uid, res_id, ['name'])
-                data[resname.id] = res['name']
-            else:
-                 data[resname.id] = False
-        return data
-
-    _columns = {
-        "name": fields.char("Resource Name",size=64),
-        "object_id": fields.many2one('ir.model', 'Object'),
-        "user_id": fields.many2one('res.users', 'User'),
-        "method": fields.char("Method", size=64),
-        "timestamp": fields.datetime("Date"),
-        "res_id": fields.integer('Resource Id'),
-        "line_ids": fields.one2many('audittrail.log.line', 'log_id', 'Log lines'),
-    }
-
-    _defaults = {
-        "timestamp": lambda *a: time.strftime("%Y-%m-%d %H:%M:%S")
-    }
-    _order = "timestamp desc"
-
-audittrail_log()
-
-
 class audittrail_log_line(osv.osv):
     """
     Audittrail Log Line.
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
+    _order = 'timestamp asc'
     _columns = {
-          'field_id': fields.many2one('ir.model.fields', 'Fields', required=True),
-          'log_id': fields.many2one('audittrail.log', 'Log'),
+          'name': fields.char(size=256, string='Description', required=True),
+          'object_id': fields.many2one('ir.model', string='Object'),
+          'user_id': fields.many2one('res.users', string='User'),
+          'method': fields.char(size=64, string='Method'),
+          'timestamp': fields.datetime(string='Date'),
+          'res_id': fields.integer(string='Resource Id'),
+          'field_id': fields.many2one('ir.model.fields', 'Fields'),
           'log': fields.integer("Log ID"),
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
@@ -212,31 +178,31 @@ class audittrail_objects_proxy(object_proxy):
         else:
             field_ids = field_pool.search(cr, uid, [('name', '=', field_name), ('model_id', '=', model.id)])
         field_id = field_ids and field_ids[0] or False
-        assert field_id, _("'%s' field does not exist in '%s' model" %(field_name, model.model))
 
-        field = field_pool.read(cr, uid, field_id)
-        relation_model = field['relation']
-        relation_model_pool = relation_model and pool.get(relation_model) or False
+        if field_id:
+            field = field_pool.read(cr, uid, field_id)
+            relation_model = field['relation']
+            relation_model_pool = relation_model and pool.get(relation_model) or False
 
-        if field['ttype'] == 'many2one':
-            res = False
-            relation_id = False
-            if values and type(values) == tuple:
-                relation_id = values[0]
-                if relation_id and relation_model_pool:
-                    relation_model_object = relation_model_pool.read(cr, uid, relation_id, [relation_model_pool._rec_name])
-                    res = relation_model_object[relation_model_pool._rec_name]
-            return res
+            if field['ttype'] == 'many2one':
+                res = False
+                relation_id = False
+                if values and type(values) == tuple:
+                    relation_id = values[0]
+                    if relation_id and relation_model_pool:
+                        relation_model_object = relation_model_pool.read(cr, uid, relation_id, [relation_model_pool._rec_name])
+                        res = relation_model_object[relation_model_pool._rec_name]
+                return res
 
-        elif field['ttype'] in ('many2many','one2many'):
-            res = []
-            for relation_model_object in relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name]):
-                res.append(relation_model_object[relation_model_pool._rec_name])
-            return res
+            elif field['ttype'] in ('many2many','one2many'):
+                res = []
+                for relation_model_object in relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name]):
+                    res.append(relation_model_object[relation_model_pool._rec_name])
+                return res
 
         return values
 
-    def create_log_line(self, cr, uid, log_id, model, lines=[]):
+    def create_log_line(self, cr, uid, model, lines=[]):
         """
         Creates lines for changed fields with its old and new values
 
@@ -260,29 +226,59 @@ class audittrail_objects_proxy(object_proxy):
             else:
                 field_ids = field_pool.search(cr, uid, [('name', '=', line['name']), ('model_id', '=', model.id)])
             field_id = field_ids and field_ids[0] or False
-            assert field_id, _("'%s' field does not exist in '%s' model" %(line['name'], model.model))
 
-            field = field_pool.read(cr, uid, field_id)
+            if field_id:
+                field = field_pool.read(cr, uid, field_id)
+
+            # Get the values
             old_value = 'old_value' in line and  line['old_value'] or ''
             new_value = 'new_value' in line and  line['new_value'] or ''
             old_value_text = 'old_value_text' in line and  line['old_value_text'] or ''
             new_value_text = 'new_value_text' in line and  line['new_value_text'] or ''
+            res_id = 'res_id' in line and line['res_id'] or False
+            name = 'name' in line and line['name'] or ''
+            object_id = 'object_id' in line and line['object_id'] or False
+            user_id = 'user_id' in line and line['user_id'] or False
+            method = 'method' in line and line['method'] or ''
+            timestamp = 'timestamp' in line and line['timestamp'] or time.strftime('%Y-%m-%d %H:%M:%S')
+            log = 'log' in line and line['log'] or ''
+            field_description = 'name' in line and line['name'] or ''
 
-            if old_value_text == new_value_text:
+            if old_value_text == new_value_text and method not in ('create', 'unlink'):
                 continue
-            if field['ttype'] == 'many2one':
-                if type(old_value) == tuple:
-                    old_value = old_value[0]
-                if type(new_value) == tuple:
-                    new_value = new_value[0]
+            if field_id:
+                field_description = field['field_description']
+                if method == 'write':
+                    field_description = 'Change %s'%field_description
+                elif method == 'create':
+                    field_description = '%s creation'%field_description
+                elif method == 'unlink':
+                    field_description = '%s deletion'%field_description
+
+                if field['ttype'] == 'many2one':
+                    if type(old_value) == tuple:
+                        old_value = old_value[0]
+                    # Get the readable name of the related field
+                    old_value = pool.get(field['relation']).name_get(cr, uid, [old_value])[0][1]
+                    if type(new_value) == tuple:
+                        new_value = new_value[0]
+                    # Get the readable name of the related field
+                    new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
+
             vals = {
-                    "log_id": log_id,
                     "field_id": field_id,
                     "old_value": old_value,
                     "new_value": new_value,
                     "old_value_text": old_value_text,
                     "new_value_text": new_value_text,
-                    "field_description": field['field_description']
+                    "field_description": field_description,
+                    "res_id": res_id,
+                    "name": name,
+                    "object_id": object_id,
+                    "user_id": user_id,
+                    "method": method,
+                    "timestamp": timestamp,
+                    "log": log,
                     }
             line_id = log_line_pool.create(cr, uid, vals)
             cr.commit()
@@ -307,7 +303,6 @@ class audittrail_objects_proxy(object_proxy):
         pool = pooler.get_pool(db)
         cr = pooler.get_db(db).cursor()
         resource_pool = pool.get(model)
-        log_pool = pool.get('audittrail.log')
         model_pool = pool.get('ir.model')
 
         model_ids = model_pool.search(cr, uid, [('model', '=', model)])
@@ -320,62 +315,22 @@ class audittrail_objects_proxy(object_proxy):
             cr.commit()
             resource = resource_pool.read(cr, uid, res_id, args[0].keys())
             vals = {
+                    "name": "%s creation" %model.name,
                     "method": method,
                     "object_id": model.id,
                     "user_id": uid_orig,
                     "res_id": resource['id'],
+                    "field_description": model.name,
             }
             if 'id' in resource:
                 del resource['id']
-            log_id = log_pool.create(cr, uid, vals)
-            lines = []
-            for field in resource:
-                # If the field is not in the fields to trace of the rule
-                if field not in fields_to_trace:
-                    continue
-                line = {
-                      'name': field,
-                      'new_value': resource[field],
-                      'new_value_text': self.get_value_text(cr, uid, field, resource[field], model)
-                      }
-                lines.append(line)
-            self.create_log_line(cr, uid, log_id, model, lines)
+
+            # We create only one line on creation (not one line by field)
+            self.create_log_line(cr, uid, model, [vals])
 
             cr.commit()
             cr.close()
             return res_id
-
-        elif method in ('read'):
-            res_ids = args[0]
-            old_values = {}
-            res = fct_src(db, uid_orig, model.model, method, *args)
-            if type(res) == list:
-                for v in res:
-                    old_values[v['id']] = v
-            else:
-                old_values[res['id']] = res
-            for res_id in old_values:
-                vals = {
-                    "method": method,
-                    "object_id": model.id,
-                    "user_id": uid_orig,
-                    "res_id": res_id,
-
-                }
-                log_id = log_pool.create(cr, uid, vals)
-                lines = []
-                for field in old_values[res_id]:
-                    line = {
-                              'name': field,
-                              'old_value': old_values[res_id][field],
-                              'old_value_text': self.get_value_text(cr, uid, field, old_values[res_id][field], model)
-                              }
-                    lines.append(line)
-
-                self.create_log_line(cr, uid, log_id, model, lines)
-            cr.commit()
-            cr.close()
-            return res
 
         elif method in ('unlink'):
             res_ids = args[0]
@@ -385,26 +340,16 @@ class audittrail_objects_proxy(object_proxy):
 
             for res_id in res_ids:
                 vals = {
+                    "name": "%s deletion" %model.name,
                     "method": method,
                     "object_id": model.id,
                     "user_id": uid_orig,
                     "res_id": res_id,
-
+                    "field_description": model.name,
                 }
-                log_id = log_pool.create(cr, uid, vals)
-                lines = []
-                for field in old_values[res_id]:
-                    # If the field is not in the fields to trace of the rule
-                    if field in ('id') or field not in fields_to_trace:
-                        continue
-                    line = {
-                          'name': field,
-                          'old_value': old_values[res_id][field],
-                          'old_value_text': self.get_value_text(cr, uid, field, old_values[res_id][field], model)
-                          }
-                    lines.append(line)
 
-                self.create_log_line(cr, uid, log_id, model, lines)
+                # We create only one line when deleting a record
+                self.create_log_line(cr, uid, model, [vals])
             res = fct_src(db, uid_orig, model.model, method, *args)
             cr.commit()
             cr.close()
@@ -453,21 +398,21 @@ class audittrail_objects_proxy(object_proxy):
                         vals.update({'name': resource['name']})
 
 
-                    log_id = log_pool.create(cr, uid, vals)
                     lines = []
                     for field in resource.keys():
                         if field not in fields_to_trace:
                             continue
-                        line = {
+                        line = vals.copy()
+                        line.update({
                               'name': field,
                               'new_value': resource[field],
                               'old_value': old_values[resource_id]['value'][field],
                               'new_value_text': self.get_value_text(cr, uid, field, resource[field], model),
                               'old_value_text': old_values[resource_id]['text'][field]
-                              }
+                              })
                         lines.append(line)
 
-                    self.create_log_line(cr, uid, log_id, model, lines)
+                    self.create_log_line(cr, uid, model, lines)
                 cr.commit()
             cr.close()
             return res
@@ -516,8 +461,6 @@ class audittrail_objects_proxy(object_proxy):
                 fields_to_trace = []
                 for field in thisrule.field_ids:
                     fields_to_trace.append(field.name)
-                for user in thisrule.user_id:
-                    logged_uids.append(user.id)
                 if not logged_uids or uid in logged_uids:
                     if method in ('read', 'write', 'create', 'unlink'):
                         if getattr(thisrule, 'log_' + method):
@@ -564,8 +507,6 @@ class audittrail_objects_proxy(object_proxy):
                 fields_to_trace = []
                 for field in thisrule.field_ids:
                     fields_to_trace.append(field.name)
-                for user in thisrule.user_id:
-                    logged_uids.append(user.id)
                 if not logged_uids or uid in logged_uids:
                     if thisrule.log_workflow:
                         return self.log_fct(db, uid_orig, model, method, fct_src, field_to_trace, *args)

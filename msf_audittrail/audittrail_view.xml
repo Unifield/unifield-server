@@ -86,103 +86,65 @@
             action="action_audittrail_rule_tree" parent="base.menu_audit" />
         <!-- AuditTrail Log form -->
 
-        <record model="ir.ui.view" id="view_audittrail_log_form">
-            <field name="name">audittrail.log.form</field>
-            <field name="model">audittrail.log</field>
-            <field name="type">form</field>
+        <record id="view_audittrail_log_line_search" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.search</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">search</field>
             <field name="arch" type="xml">
-                <form string="AuditTrail Logs">
-                    <field name="timestamp" select="1" required="1" readonly="1"/>
-                    <field name="user_id" select="1" readonly="1"/>
-                    <field name="method" select="1" readonly="1"/>
-                    <field name="name" readonly="1" select="1"/>
-                    <field name="res_id" readonly="1"/>
-                    <field name="object_id" select="1" readonly="1"/>
-                    <field name="line_ids" colspan="4" mode="tree,form"
-                        widget="one2many_list" readonly="1" nolabel="1">
-                        <form string="Log Lines">
-                            <field name="field_id" colspan="4"
-                                readonly="1" />
-                            <newline />
-                            <field name="field_description" colspan="4"
-                                readonly="1" />
-                            <newline />
-                            <separator string="Old Value : "
-                                colspan="2" />
-                            <separator string="New Value : "
-                                colspan="2" />
-                            <newline />
-                            <field name="old_value" nolabel="1"
-                                colspan="2" readonly="1" />
-                            <field name="new_value" nolabel="1"
-                                colspan="2" readonly="1" />
-                            <newline />
-                            <separator string="Old Value Text : "
-                                colspan="2" />
-                            <separator string="New Value Text: "
-                                colspan="2" />
-                            <newline />
-                            <field name="old_value_text" nolabel="1"
-                                colspan="2" readonly="1" />
-                            <field name="new_value_text" nolabel="1"
-                                colspan="2" readonly="1" />
-                        </form>
-                        <tree string="Log Lines">
-                            <field name="field_description" />
-                            <field name="old_value_text" />
-                            <field name="new_value_text" />
-                        </tree>
-                    </field>
-                </form>
+                <search string="Search Log">
+                    <group col="8" colspan="4">
+                        <field name="log" />
+                        <field name="timestamp" />
+                        <!-- TODO <field name="order_line" />-->
+                        <field name="method" />
+                        <field name="field_description" />
+                        <field name="old_value" />
+                        <field name="new_value" />
+                        <field name="user_id" />
+                    </group>
+                </search>
             </field>
         </record>
 
-        <record model="ir.ui.view" id="view_audittrail_log_tree">
-            <field name="name">audittrail.log.tree</field>
-            <field name="model">audittrail.log</field>
+        <record id="view_audittrail_log_line_tree" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.tree</field>
+            <field name="model">audittrail.log.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="AuditTrail Logs">
+                <tree string="Logs">
+                    <field name="log" />
                     <field name="timestamp" />
-                    <field name="name" />
-                    <field name="object_id" />
+                    <!-- TODO <field name="order_line" />-->
                     <field name="method" />
+                    <field name="field_description" />
+                    <field name="old_value" />
+                    <field name="new_value" />
                     <field name="user_id" />
                 </tree>
             </field>
         </record>
-        
-       <record id="view_audittrail_log_search" model="ir.ui.view">
-            <field name="name">audittrail.log.search</field>
-            <field name="model">audittrail.log</field>
-            <field name="type">search</field>
+
+        <!-- TODO: Définir une form view pour les log lines
+        <record id="view_audittrail_log_line_form" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.form</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">form</field>
             <field name="arch" type="xml">
-                <search string="Search Audittrail Log">
-                 <group col="8" colspan="4">
-                    <field name="name"/>
-                    <field name="object_id"/>
-                    <field name="user_id"  widget="selection"/>
-                </group>
-                <newline/>
-                  <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
-                    <filter string="User" icon="terp-personal" domain="[]" context="{'group_by':'user_id'}"/>
-   					<separator orientation="vertical"/>                    
-                    <filter string="Object" icon="terp-stock_align_left_24" domain="[]" context="{'group_by':'object_id'}"/>
-					<filter string="Date" icon="terp-go-month" domain="[]" context="{'group_by':'timestamp'}"/>
-                </group>
-                </search>
+                <form string="Log">
+                    <field name="name" />
+                </form>
             </field>
-        </record>
+        </record>-->
 <!--  Action for Audittrail Log  -->
 
-        <record model="ir.actions.act_window" id="action_audittrail_log_tree">
+        <record model="ir.actions.act_window" id="action_audittrail_log_line_tree">
             <field name="name">Audit Logs</field>
-            <field name="res_model">audittrail.log</field>
-            <field name="view_type">form</field>
-            <field name="search_view_id" ref="view_audittrail_log_search"/>
+            <field name="res_model">audittrail.log.line</field>
+            <field name="view_type">tree</field>
+            <field name="search_view_id" ref="view_audittrail_log_line_search"/>
         </record>
-        <menuitem name="Audit Logs" id="menu_action_audittrail_log_tree"
-            action="action_audittrail_log_tree" parent="base.menu_audit" />
+        <menuitem name="Audit Logs" id="menu_action_audittrail_log_line_tree"
+            action="action_audittrail_log_line_tree" parent="base.menu_audit" />
 
     </data>
 </openerp>
