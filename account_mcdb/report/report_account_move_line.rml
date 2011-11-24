@@ -248,7 +248,7 @@
           <para style="P2">[[ o.name or '' ]]</para>
         </td>
         <td>
-          <para style="P2">[[ o.account_id and o.account_id.code + ' ' + o.account_id.name) or '' ]]</para>
+          <para style="P2">[[ o.account_id and o.account_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P2">[[ o.partner_txt or '' ]]</para>
