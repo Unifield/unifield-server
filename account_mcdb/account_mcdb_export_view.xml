@@ -3,6 +3,7 @@
     <data>
 
     <!-- Actions to export -->
+        <!-- Account move line -->
         <record id="action_account_move_line_csv_export_view" model="ir.actions.server">
             <field name="name">Export to CSV</field>
             <field name="model_id" ref="model_account_move_line_csv_export"/>
@@ -18,13 +19,46 @@
             <field eval="True" name="object"/>
         </record>
 
+        <!-- Account Analytic Line -->
+        <record id="action_account_analytic_line_csv_export_view" model="ir.actions.server">
+            <field name="name">Export to CSV</field>
+            <field name="model_id" ref="model_account_analytic_line_csv_export"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.export_to_csv(context=context)</field>
+        </record>
+        
+        <record id="ir_open_account_analytic_line_csv_export_view" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.line</field>
+            <field name="name">Export to CSV</field>
+            <field eval="'ir.actions.server,%d'%action_account_analytic_line_csv_export_view" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
     <!-- CSV Export view -->
+        <!-- Account move lines -->
         <record id="account_move_line_csv_export_form" model="ir.ui.view">
             <field name="name">account.move.line.csv.export.form</field>
             <field name="model">account.move.line.csv.export</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Account Entries CSV Export">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to download" />
+                    <field name="file" colspan="4" nolabel="1" filename="filename" />
+                    <field name="filename" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+        <!-- Account analytic lines -->
+        <record id="account_analytic_line_csv_export_form" model="ir.ui.view">
+            <field name="name">account.analytic.line.csv.export.form</field>
+            <field name="model">account.analytic.line.csv.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Lines CSV Export">
                     <separator colspan="4" string="Message" />
                     <field name="message" colspan="4" nolabel="1" />
                     <separator colspan="4" string="File to download" />

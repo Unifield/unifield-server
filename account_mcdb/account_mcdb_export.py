@@ -150,4 +150,109 @@ class account_move_line_csv_export(osv.osv_memory):
         }
 
 account_move_line_csv_export()
+
+
+class account_analytic_line_csv_export(osv.osv_memory):
+    _name = 'account.analytic.line.csv.export'
+    _description = 'Account Analytic Lines CSV Export'
+
+    _columns = {
+        'file': fields.binary(string='File to export', required=True, readonly=True),
+        'filename': fields.char(size=128, string='Filename', required=True),
+        'message': fields.char(size=256, string='Message', readonly=True),
+    }
+
+    def _account_analytic_line_to_csv(self, cr, uid, ids, context={}):
+        """
+        Take account_analytic_line and return a csv string
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not fields:
+            raise osv.except_osv(_('Error'), _('No export fields. Please add them to the code.'))
+        # Prepare some value
+        string = ""
+        # String creation
+        # Prepare csv head
+        string += "Journal Code;Date;Instance;Description;Reference;Amount;Amount currency;Currency;Analytic Account\n"
+        for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
+            # journal_id
+            string += ustr(al.journal_id and al.journal_id.code or '')
+            #date
+            string += ';' + ustr(al.date or '')
+            #instance
+            string += ';' + ustr(al.company_id and al.company_id.name or '')
+            #name
+            string += ';' + ustr(al.name or '')
+            #ref
+            string += ';' + ustr(al.ref or '')
+            #amount
+            string += ';' + ustr(al.amount or 0.0)
+            #amount_currency
+            string += ';' + ustr(al.amount_currency or 0.0)
+            #currency_id
+            string += ';' + ustr(al.currency_id and al.currency_id.name or '')
+            #account_id name
+            string += ';' + ustr(al.account_id and al.account_id.name or '')
+            # EOL
+            string += '\n'
+            #############################
+            ###
+            # This function could be used with a fields parameter in this method in order to create a CSV with field that could change
+            ###
+            #        for i, field in enumerate(fields):
+            #            if i != 0:
+            #                res += ';'
+            #            res += str(field)
+            #        res+= '\n'
+            #        for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
+            #            for i, field in enumerate(fields):
+            #                if i != 0:
+            #                    res += ';'
+            #                print field
+            #                res+= ustr(getattr(ml, field, ''))
+            #            res+= '\n'
+            #############################
+        return ustr(string)
+
+    def export_to_csv(self, cr, uid, ids, context={}):
+        """
+        Return a CSV file containing all given analytic line
+        """
+        # Some verifications
+        if not context or not context.get('active_ids', False):
+            raise osv.except_osv(_('Error'), _('No entry selected!'))
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        ml_ids = context.get('active_ids')
+        today = strftime('%Y-%m-%d_%H-%M-%S')
+        name = 'mcdb_analytic_result' + '_' + today
+        ext = '.csv'
+        filename = str(name + ext)
+        
+        string = self._account_analytic_line_to_csv(cr, uid, ml_ids, context=context) or ''
+        
+        # String unicode tranformation then to file
+        file = encodestring(string.encode("utf-8"))
+        
+        export_id = self.create(cr, uid, 
+            {
+                'file': file,
+                'filename': filename,
+                'message': "The list has been exported. Please click on 'Save As' button to download the file.",
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line.csv.export',
+            'res_id': export_id,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'target': 'new',
+        }
+
+account_analytic_line_csv_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
