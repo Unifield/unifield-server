@@ -242,7 +242,7 @@ class account_mcdb(osv.osv_memory):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_move_line_mcdb_search_result')
             view_id = view_id and view_id[1] or False
             return {
-                'name': _('Multi-criteria data browser result'),
+                'name': _('Journal Items MCDB result'),
                 'type': 'ir.actions.act_window',
                 'res_model': res_model,
                 'view_type': 'form',
