@@ -239,13 +239,15 @@ class account_mcdb(osv.osv_memory):
                 for el in domain_elements:
                     domain.append(el)
             # Return result in a search view
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_move_line_mcdb_search_result')
+            view_id = view_id and view_id[1] or False
             return {
                 'name': _('Multi-criteria data browser result'),
                 'type': 'ir.actions.act_window',
                 'res_model': res_model,
                 'view_type': 'form',
-                'view_mode': 'tree',
-                'view_id': False,
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
                 'domain': domain,
                 'context': context,
                 'target': 'current',
