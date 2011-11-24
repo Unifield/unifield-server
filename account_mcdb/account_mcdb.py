@@ -62,7 +62,7 @@ class account_mcdb(osv.osv_memory):
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Reverse account(s) selection'),
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
-        'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency', readonly=True),
+        'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
     }
 
     _defaults = {
@@ -238,6 +238,9 @@ class account_mcdb(osv.osv_memory):
                 # Add elements to domain which would be use for filtering
                 for el in domain_elements:
                     domain.append(el)
+            # Output currency display
+            if wiz.display_in_output_currency:
+                context.update({'output_currency_id': wiz.display_in_output_currency.id})
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
             if res_model == 'account.analytic.line':
