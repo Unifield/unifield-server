@@ -413,7 +413,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done':
                 if move.product_id.batch_management:
-                    if not move.prodlot_id:
+                    if not move.prodlot_id and move.product_qty:
                         return False
         return True
     
@@ -425,7 +425,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done':
                 if move.product_id.perishable:
-                    if not move.prodlot_id:
+                    if not move.prodlot_id and move.product_qty:
                         return False
         return True
     
