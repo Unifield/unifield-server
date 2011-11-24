@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_account_move_line"
+            string="Journal Items"
+            model="account.move.line"
+            name="account.move.line"
+            rml="account_mcdb/report/report_account_move_line.rml"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+    </data>
+</openerp>

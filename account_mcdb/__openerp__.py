@@ -32,7 +32,8 @@
     "update_xml" : [
         'account_mcdb_view.xml',
         'account_view.xml',
-        'account_mcdb_export_view.xml'
+        'account_mcdb_export_view.xml',
+        'account_mcdb_report.xml',
     ],
     "demo_xml" : [],
     "test": [],
