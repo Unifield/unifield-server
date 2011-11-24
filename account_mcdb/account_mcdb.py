@@ -66,7 +66,7 @@ class account_mcdb(osv.osv_memory):
     }
 
     _defaults = {
-        'model': lambda *a: 'account.move.line',
+        'model': lambda self, cr, uid, c: c.get('from', 'account.move.line'),
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'currency_choice': lambda *a: 'booking',
     }
@@ -239,7 +239,10 @@ class account_mcdb(osv.osv_memory):
                 for el in domain_elements:
                     domain.append(el)
             # Return result in a search view
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'account_move_line_mcdb_search_result')
+            view = 'account_move_line_mcdb_search_result'
+            if res_model == 'account.analytic.line':
+                view = 'account_analytic_line_mcdb_search_result'
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
             return {
                 'name': _('Journal Items MCDB result'),

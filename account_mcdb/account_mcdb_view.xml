@@ -102,6 +102,7 @@
             </field>
         </record>
 
+    <!-- Actions -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
             <field name="name">Journal Items MCDB</field>
             <field name="res_model">account.mcdb</field>
@@ -110,9 +111,19 @@
             <field name="view_id" ref="account_mcdb_form"/>
         </record>
 
-    <!-- Account Multi-Criteria Data Browser Menu -->
+        <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items MCDB</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+            <field name="context">{'from': 'account.analytic.line'}</field>
+        </record>
+
+    <!-- Menu -->
         <menuitem id="menu_finance_mcdb" name="Multi-Criteria Data Browser" parent="account.menu_finance" sequence="12"/>
         <menuitem string="Journal Items MCDB" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
+        <menuitem string="Analytic Journal Items MCDB" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
 
     </data>
 </openerp>

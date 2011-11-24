@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-    <!-- Account Multi-Criteria Data Browser Search Result -->
+    <!-- Account Move Line search view -->
         <record model="ir.ui.view" id="account_move_line_mcdb_search_result">
-            <field name="name">account.move.line.mcdb.search</field>
+            <field name="name">account.move.line.mcdb.search.result</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
@@ -29,6 +29,25 @@
                     <field name="functional_currency_id" string="Func. Currency"/>
                     <field name="state"/>
                     <field name="reconcile_total_partial_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="account_analytic_line_mcdb_search_result">
+            <field name="name">account.analytic.line.mcdb.search.result</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Analytic Line">
+                    <field name="journal_id" string="Journal Code"/>
+                    <field name="date"/>
+                    <field name="company_id" string="Proprietary Instance"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="amount"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                    <field name="account_id"/>
                 </tree>
             </field>
         </record>
