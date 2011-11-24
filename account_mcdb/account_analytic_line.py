@@ -26,9 +26,9 @@ from osv import fields
 from time import strftime
 from lxml import etree
 
-class account_move_line(osv.osv):
-    _name = 'account.move.line'
-    _inherit = 'account.move.line'
+class account_analytic_line(osv.osv):
+    _name = 'account.analytic.line'
+    _inherit = 'account.analytic.line'
 
     def _get_output(self, cr, uid, ids, field_name, arg, context={}):
         """
@@ -70,7 +70,7 @@ class account_move_line(osv.osv):
         Remove output_amount and output_currency field if context doesn't have 'output_currency_id'
         """
         # Some verifications
-        view = super(account_move_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        view = super(account_analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type == 'tree' and (not context or not context.get('output_currency_id', False)):
             tree = etree.fromstring(view['arch'])
             amount_fields = tree.xpath('/tree/field[@name="output_amount"]')
@@ -82,5 +82,5 @@ class account_move_line(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
-account_move_line()
+account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

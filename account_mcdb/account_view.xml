@@ -48,6 +48,8 @@
                     <field name="ref"/>
                     <field name="amount"/>
                     <field name="amount_currency"/>
+                    <field name="output_amount"/>
+                    <field name="output_currency"/>
                     <field name="currency_id"/>
                     <field name="account_id"/>
                 </tree>
