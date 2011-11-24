@@ -53,9 +53,17 @@
             row_class = 'grid-row-odd'
     %>
     % if editors:
-        <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}">
+        <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}"
+        % if data['id'] in notselectable: 
+            notselectable=1 
+        % endif 
+        >
     % else:
-        <tr class="grid-row ${row_class}" record="${data['id']}">
+        <tr class="grid-row ${row_class}" record="${data['id']}" 
+        % if data['id'] in notselectable: 
+            notselectable=1 
+        % endif 
+        >
     % endif
     % if selector and not hide_delete_button:
         <td class="grid-cell selector">
@@ -367,7 +375,8 @@
                                     var $this = jQuery(this);
                                     if(jQuery(event.target).is('img, input, a.listImage-container')
                                      || view_type != 'tree'
-                                     || !$this.attr('record')) {
+                                     || !$this.attr('record')
+                                     || $this.attr('notselectable') ) {
                                         return;
                                     }
                                     do_select($this.attr('record'), '${name}');
