@@ -143,12 +143,17 @@ class real_average_consumption(osv.osv):
         reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
 
         move_ids = []
-        
+       
+        # check and update lines
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
                 raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
+            line_obj._check_qty(cr, uid, [x.id for x in rac.line_ids])
+
+
+        for rac in self.browse(cr, uid, ids, context=context):
 
             picking_id = self.pool.get('stock.picking').create(cr, uid, {'name': 'OUT-%s' % rac.name,
                                                                          'origin': rac.name,
