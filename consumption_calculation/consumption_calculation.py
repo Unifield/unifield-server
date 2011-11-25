@@ -315,23 +315,35 @@ class real_average_consumption_line(osv.osv):
             
         return result
     
+    def update_qty(self, cr, uid, ids):
+        
+        for obj in self.browse(cr, uid, ids):
+            loc = obj.rac_id.cons_location_id.id
+            context = {'location_id': loc, 'location': loc}
+            if not obj.prodlot_id:
+                product_qty = self.pool.get('product.product').read(cr, uid, obj.product_id.id, ['qty_available'], context=context)['qty_available']
+            else:
+                product_qty = self.pool.get('stock.production.lot').read(cr, uid, obj.prodlot_id.id, ['stock_real'], context=context)['stock_real']
+            
+            #recursion: can't use write
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s where id=%s', (product_qty, obj.id))
+
+
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Change the expiry date according to the prodlot_id
         Change the product_qty if the product is changed
         '''
+        if isinstance(ids, (long, int)):
+            ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if line.batch_mandatory and 'prodlot_id' in vals:
                 life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
                 vals.update({'expiry_date': life_date})
 
-            rac = self.pool.get('real.average.consumption').browse(cr, uid, vals.get('rac_id', line.rac_id.id), context=context)
-            context.update({'location': rac.cons_location_id.id})
-            if 'product_id' in vals and vals.get('product_id') != line.product_id.id:
-                product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
-                vals.update({'product_qty': product.qty_available})
-                
-        return super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        ret = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        self.update_qty(cr, uid, ids)
+        return ret
     
     def create(self, cr, uid, vals, context={}):
         '''
@@ -341,13 +353,9 @@ class real_average_consumption_line(osv.osv):
             life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
             vals.update({'expiry_date': life_date})
 
-        rac = self.pool.get('real.average.consumption').browse(cr, uid, vals.get('rac_id'), context=context)
-
-        context.update({'location': rac.cons_location_id.id})
-        product = self.pool.get('product.product').browse(cr, uid, vals.get('product_id'), context=context)
-        vals.update({'product_qty': product.qty_available})
-        
-        return super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        ret = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        self.update_qty(cr, uid, [ret])
+        return ret
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -407,8 +415,12 @@ class real_average_consumption_line(osv.osv):
         elif not prodlot_id and expiry_date:
             res['value'].update({'expiry_date': False})
 
-        product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-        res['value'].update({'product_qty': product.qty_available})
+        if not prodlot_id:
+            product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
+        else:
+            context.update({'location_id': location_id})
+            product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_real
+        res['value'].update({'product_qty': product_qty})
 
         return res
     
