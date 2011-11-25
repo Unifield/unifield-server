@@ -703,7 +703,10 @@ class stock_production_lot(osv.osv):
         for id in ids:
           result[id] = False
         return result
-    
+
+    def _stock_search(self, cr, uid, obj, name, args, context=None):
+        return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
+
     def _get_stock(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
         @return: Dictionary of values
@@ -730,7 +733,6 @@ class stock_production_lot(osv.osv):
                       #'warehouse': warehouse_id,
                       #'uom': product_uom_id
                       })
-            
             if field_name == 'stock_available':
                 # available stock
                 c.update(states=('confirmed','waiting','assigned','done'))
@@ -783,7 +785,8 @@ class stock_production_lot(osv.osv):
                                                    digits_compute=dp.get_precision('Product UoM'), readonly=True,),
                 'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
                                                    help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,
+                                                   fnct_search=_stock_search),
                 'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
