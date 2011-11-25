@@ -2160,6 +2160,13 @@ class stock_move(osv.osv):
                          'line_id': move_lines,
                          'ref': move.picking_id and move.picking_id.name})
 
+    def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        choose if the corresponding out stock move must be updated
+        '''
+        move = kwargs['move']
+        result = move.move_dest_id.id and (move.state != 'done')
+        return result
 
     def action_done(self, cr, uid, ids, context=None):
         """ Makes the move done and if all moves are done, it will finish the picking.
@@ -2193,7 +2200,7 @@ class stock_move(osv.osv):
 
             if move.picking_id:
                 picking_ids.append(move.picking_id.id)
-            if move.move_dest_id.id and (move.state != 'done'):
+            if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 self.write(cr, uid, [move.id], {'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))
                 if move.move_dest_id.state in ('waiting', 'confirmed'):
