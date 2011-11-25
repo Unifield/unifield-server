@@ -164,7 +164,8 @@ class real_average_consumption(osv.osv):
                                                                          'invoice_state': 'none',
                                                                          'date': time.strftime('%Y-%m-%d %H:%M:%S'),
                                                                          'reason_type_id': reason_type_id}, context=context)
-
+            
+            self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
             for line in rac.line_ids:
                 move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
                                                     'picking_id': picking_id,
@@ -190,7 +191,6 @@ class real_average_consumption(osv.osv):
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
             
-            self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
@@ -332,6 +332,9 @@ class real_average_consumption_line(osv.osv):
     def _check_qty(self, cr, uid, ids):
         
         for obj in self.browse(cr, uid, ids):
+            if obj.rac_id.created_ok:
+                continue
+
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
             expiry_date = None
