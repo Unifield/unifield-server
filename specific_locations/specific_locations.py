@@ -175,3 +175,20 @@ class purchase_order(osv.osv):
         return False
     
 purchase_order()
+
+
+class stock_move(osv.osv):
+    '''
+    add _hook_action_done_update_out_move_check
+    '''
+    _inherit = 'stock.move'
+    
+    def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        choose if the corresponding out stock move must be updated
+        '''
+        result = super(stock_move, self)._hook_action_done_update_out_move_check(cr, uid, ids, context=context, *args, **kwargs)
+        # we never update the corresponding out stock move
+        return False
+
+stock_move()
