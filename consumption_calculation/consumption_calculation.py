@@ -314,48 +314,54 @@ class real_average_consumption_line(osv.osv):
                 result[out.id]['expiry_date_check'] = out.product_id.perishable
             
         return result
-    
-    def update_qty(self, cr, uid, ids):
+
+    def _get_qty(self, cr, uid, product, lot, location):
+        if not product and not lot:
+            return False
+        context = {'location_id': location, 'location': location}
+        if not lot:
+            return self.pool.get('product.product').read(cr, uid, product, ['qty_available'], context=context)['qty_available']
+            
+        return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_real'], context=context)['stock_real']
+
+    def _check_qty(self, cr, uid, ids):
         
         for obj in self.browse(cr, uid, ids):
-            loc = obj.rac_id.cons_location_id.id
-            context = {'location_id': loc, 'location': loc}
-            if not obj.prodlot_id:
-                product_qty = self.pool.get('product.product').read(cr, uid, obj.product_id.id, ['qty_available'], context=context)['qty_available']
-            else:
-                product_qty = self.pool.get('stock.production.lot').read(cr, uid, obj.prodlot_id.id, ['stock_real'], context=context)['stock_real']
+            location = obj.rac_id.cons_location_id.id
+            prodlot_id = None
+            expiry_date = None
+
+            batch_mandatory = obj.product_id.batch_management
+            date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
+        
+            if batch_mandatory:
+                if not obj.prodlot_id:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, You must assign a Batch Number"%(obj.product_id.name, )))
+
+                prodlot_id = obj.prodlot_id.id
+                expiry_date = obj.prodlot_id.life_date
+
+            if date_mandatory:
+                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', obj.product_id.id)])
+                expiry_date = obj.expiry_date
+                if not prod_ids:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, no internal batch found for expiry (%s)"%(obj.product_id.name, obj.expiry_date)))
+                prodlot_id = prod_ids[0]
+
+            product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location)
+
+            if prodlot_id and obj.consumed_qty > product_qty:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"%(obj.product_id.name, obj.consumed_qty, product_qty)))
             
             #recursion: can't use write
-            cr.execute('UPDATE '+self._table+' SET product_qty=%s where id=%s', (product_qty, obj.id))
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, obj.id))
 
-
-    def write(self, cr, uid, ids, vals, context={}):
-        '''
-        Change the expiry date according to the prodlot_id
-        Change the product_qty if the product is changed
-        '''
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.batch_mandatory and 'prodlot_id' in vals:
-                life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
-                vals.update({'expiry_date': life_date})
-
-        ret = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
-        self.update_qty(cr, uid, ids)
-        return ret
-    
-    def create(self, cr, uid, vals, context={}):
-        '''
-        Add the expiry date if a lot is set
-        '''
-        if vals.get('batch_mandatory', False) == True and 'prodlot_id' in vals:
-            life_date = self.pool.get('stock.production.lot').browse(cr, uid, vals['prodlot_id'], context=context).life_date
-            vals.update({'expiry_date': life_date})
-
-        ret = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
-        self.update_qty(cr, uid, [ret])
-        return ret
+        return True
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -372,6 +378,14 @@ class real_average_consumption_line(osv.osv):
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
+
+    _constraints = [
+        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty'])
+    ]
+
+    _sql_constraints = [
+        ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
+    ]
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, context={}):
         '''
@@ -393,7 +407,9 @@ class real_average_consumption_line(osv.osv):
                     result['value'].update(expiry_date=False, prodlot_id=False)
             else:
                 # return first prodlot
-                result['value'].update(prodlot_id=prod_ids[0])
+                result = self.change_prodlot(cr, uid, id, product_id, prod_ids[0], expiry_date, location_id, context={})
+                result.setdefault('value',{}).update(prodlot_id=prod_ids[0])
+                return result
                 
         else:
             # clear expiry date, we clear production lot
@@ -403,6 +419,16 @@ class real_average_consumption_line(osv.osv):
         result['value'].update({'product_qty': product.qty_available})
         
         return result
+
+    def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, context={}):
+        result = {}
+        stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location)
+        warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
+        if prodlot_id and qty > stock_qty:
+            return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+        if qty > stock_qty:
+            return {'warning': warn_msg}
+        return {}
 
     def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, context={}):
         '''
@@ -428,7 +454,7 @@ class real_average_consumption_line(osv.osv):
         '''
         Set the product uom when the product change
         '''
-        v = {}
+        v = {'batch_mandatory': False, 'date_mandatory': False}
         
         if product_id:
             if location_id:

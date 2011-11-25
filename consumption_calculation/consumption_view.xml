@@ -36,14 +36,14 @@
                                 on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id)"
                                 domain="[('product_id', '=', product_id), ('stock_real', '>', 0)]"
                                 context="{'location': parent.cons_location_id, 'location_id': parent.cons_location_id}"
-                                attrs="{'required': [('batch_mandatory', '=', True)]}" />
+                                attrs="{'required': [('batch_mandatory', '=', True)], 'readonly': [('batch_mandatory', '=', False)]}" />
                             <field name="expiry_date"
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id)"
-                                attrs="{'required': [('date_mandatory', '=', True)], 'readonly': [('batch_mandatory', '=', True)]}"/>
-                            <field name="consumed_qty" />
+                                attrs="{'required': [('date_mandatory', '=', True)], 'readonly': [('date_mandatory', '=', False)]}"/>
+                            <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id)"/>
                             <field name="remark" />
-			    <field name="batch_mandatory" invisible="1" />
-			    <field name="date_mandatory" invisible="1" />
+                            <field name="batch_mandatory" invisible="1" />
+                            <field name="date_mandatory" invisible="1" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
