@@ -148,6 +148,53 @@ class audittrail_log_line(osv.osv):
     _name = 'audittrail.log.line'
     _description = "Log Line"
     _order = 'timestamp asc'
+
+    def _get_name_line(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Return the value of the field set in the rule
+        '''
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if not line.rule_id or not line.fct_res_id or not line.fct_object_id:
+                res[line.id] = False
+            else:
+                field = line.rule_id.name_get_field_id.name
+                res_id = line.fct_res_id
+                object_id = self.pool.get(line.fct_object_id.model)
+                res[line.id] = object_id.read(cr, uid, res_id, [field], context=context)[field]
+
+        return res
+
+    ####
+    # TODO : To validate
+    ####
+    def _search_name_line(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns all lines corresponding to the args
+        '''
+        ids = []
+
+        if not context:
+            return []
+
+        for arg in args:
+            if not arg[2]:
+                return []
+            if arg[0] == 'sub_obj_name' and arg[1] == 'ilike' and arg[2]:
+                line_ids = self.browse(cr, uid, context.get('active_ids'), context=context)
+                for line in line_ids:
+                    if line.rule_id and line.fct_res_id and line.fct_object_id:
+                        field = line.rule_id.name_get_field_id.name
+                        res_id = line.fct_res_id
+                        object_id = self.pool.get(line.fct_object_id.model)
+                        if str(object_id.read(cr, uid, res_id, [field], context=context)[field]) == arg[2]:
+                            ids.append(line.id)
+                
+                return [('id', 'in', ids)]
+
+        return []
+
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
@@ -162,7 +209,12 @@ class audittrail_log_line(osv.osv):
           'old_value_text': fields.text('Old value Text'),
           'new_value_text': fields.text('New value Text'),
           'field_description': fields.char('Field Description', size=64),
-          'sub_obj_name': fields.char(size=64, string='Order line'),
+#          'sub_obj_name': fields.char(size=64, string='Order line'),
+          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
+          # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
+          'rule_id': fields.many2one('audittrail.rule', string='Rule'),
+          'fct_res_id': fields.integer(string='Res. Id'),
+          'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
         }
 
 audittrail_log_line()
@@ -263,6 +315,9 @@ def create_log_line(self, cr, uid, model, lines=[]):
         log = 'log' in line and line['log'] or ''
         field_description = 'name' in line and line['name'] or ''
         sub_obj_name = 'sub_obj_name' in line and line['sub_obj_name'] or ''
+        rule_id = 'rule_id' in line and line['rule_id'] or False
+        fct_res_id = 'fct_res_id' in line and line['fct_res_id'] or False
+        fct_object_id = 'fct_object_id' in line and line['fct_object_id'] or False
 
         if field_id:
             field_description = field['field_description']
@@ -297,14 +352,18 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 "method": method,
                 "timestamp": timestamp,
                 "log": log,
+                "rule_id": rule_id,
+                "fct_res_id": fct_res_id,
+                "fct_object_id": fct_object_id,
                 "sub_obj_name": sub_obj_name,
                 }
+        print vals
         line_id = log_line_pool.create(cr, uid, vals)
     #End Loop
     return True
 
 
-def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], parent_field_id=False, name_get_field='name', *args, **kwargs):
+def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=False, parent_field_id=False, name_get_field='name', *args, **kwargs):
     """
     Logging function: This function is performs logging oprations according to method
     @param db: the current database
@@ -347,12 +406,15 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], parent_fi
                 "object_id": model_id,
                 "user_id": uid_orig,
                 "res_id": res_id2,
-                "field_description": model_name,
+                "field_description": model.name,
         }
 
         # Add the name of the created sub-object
         if parent_field_id:
-            vals.update({'sub_obj_name': resource[name_get_field]})
+            vals.update({'sub_obj_name': resource[name_get_field],
+                         'rule_id': rule_id,
+                         'fct_object_id': model.id,
+                         'fct_res_id': res_id})
 
         if 'id' in resource:
             del resource['id']
@@ -393,7 +455,10 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], parent_fi
 
             # Add the name of the created sub-object
             if parent_field_id:
-                vals.update({'sub_obj_name': old_values[tmp_res_id][name_get_field]})
+                vals.update({'sub_obj_name': old_values[tmp_res_id][name_get_field],
+                             'rule_id': rule_id,
+                             'fct_object_id': model.id,
+                             'fct_res_id': tmp_res_id})
 
             # We create only one line when deleting a record
             create_log_line(self, cr, uid, model, [vals])
@@ -459,8 +524,10 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], parent_fi
 
                 # Add the name of the created sub-object
                 if parent_field_id:
-                    vals.update({'sub_obj_name': resource[name_get_field]})
-
+                    vals.update({'sub_obj_name': resource[name_get_field],
+                                 'rule_id': rule_id,
+                                 'fct_object_id': model.id,
+                                 'fct_res_id': res_id})
 
                 lines = []
                 for field in resource.keys():
@@ -529,7 +596,7 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
             for field in thisrule.field_ids:
                 fields_to_trace.append(field.name)
             if getattr(thisrule, 'log_' + method_name):
-                return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, *args)
+                return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, *args)
             return old_method(*args, **kwargs)
     res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
     return res
