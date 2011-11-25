@@ -31,6 +31,7 @@ class stock_warehouse(osv.osv):
     
 stock_warehouse()
 
+
 class stock_location(osv.osv):
     '''
     override stock location to add:
@@ -153,3 +154,24 @@ class procurement_order(osv.osv):
         return values
 
 procurement_order()
+
+
+class purchase_order(osv.osv):
+    '''
+    override purchase order
+    - add hook _hook_action_picking_create_modify_out_source_loc_check
+    '''
+    _inherit = 'purchase.order'
+    
+    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
+        
+        - allow to choose whether or not the source location of the corresponding outgoing stock move should
+        match the destination location of incoming stock move
+        '''
+        # we do not want the corresponding out stock move to be updated
+        return False
+    
+purchase_order()
