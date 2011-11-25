@@ -510,6 +510,22 @@ class stock_move(osv.osv):
                 result[obj.id]['np_check'] = True
             
         return result
+    
+    def _check_tracking(self, cr, uid, ids, context=None):
+        """ Checks if production lot is assigned to stock move or not.
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if not move.prodlot_id and move.product_qty and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+               )):
+                return False
+        return True
             
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
                 # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
@@ -536,6 +552,9 @@ class stock_move(osv.osv):
                     (_check_prodlot_need_perishable,
                      'The selected product is Expiry Date Mandatory while the selected Production Lot corresponds to Batch Number Mandatory.',
                      ['prodlot_id']),
+                     (_check_tracking,
+                      'You must assign a production lot for this product',
+                      ['prodlot_id']),
                     ]
 
 stock_move()
