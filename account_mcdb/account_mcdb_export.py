@@ -38,7 +38,7 @@ class account_move_line_csv_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
 
-    def _account_move_line_to_csv(self, cr, uid, ids, context={}):
+    def _account_move_line_to_csv(self, cr, uid, ids, currency_id, context={}):
         """
         Take account_move_line and return a csv string
         """
@@ -47,14 +47,16 @@ class account_move_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not fields:
-            raise osv.except_osv(_('Error'), _('No export fields. Please add them to the code.'))
+        if not currency_id:
+            raise osv.except_osv(_('Error'), _('No currency. Please choose one.'))
         # Prepare some value
         string = ""
+        currency_obj = self.pool.get('res.currency')
+        currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # String creation
         # Prepare csv head
         string += "Journal Code;Sequence;Instance;Reference;Posting date;Period;Name;Account Code;Account Description;Third party;Book. Debit;Book. Credit;Book. currency;Func. Debit;"
-        string += "Func. Credit;Func. currency;State;Reconcile\n"
+        string += "Func. Credit;Func. currency;Output amount;Output currency;State;Reconcile\n"
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             # journal_id
             string += ustr(ml.journal_id and ml.journal_id.code or '')
@@ -88,6 +90,11 @@ class account_move_line_csv_export(osv.osv_memory):
             string += ';' + ustr(ml.credit or 0.0)
             #functional_currency_id
             string += ';' + ustr(ml.functional_currency_id and ml.functional_currency_id.name or '')
+            #output amount regarding booking currency
+            amount = currency_obj.compute(cr, uid, currency_id, ml.currency_id.id, ml.amount_currency, round=True, context=context)
+            string += ';' + ustr(amount or 0.0)
+            #output currency
+            string += ';' + ustr(currency_name or '')
             #state
             string += ';' + ustr(ml.state or '')
             #reconcile_total_partial_id
@@ -118,18 +125,19 @@ class account_move_line_csv_export(osv.osv_memory):
         Return a CSV file containing all given move line
         """
         # Some verifications
-        if not context or not context.get('active_ids', False):
-            raise osv.except_osv(_('Error'), _('No entry selected!'))
+        if not context or not context.get('active_ids', False) or not context.get('output_currency_id', False):
+            raise osv.except_osv(_('Error'), _('No entry selected or no currency given!'))
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
         ml_ids = context.get('active_ids')
+        currency_id = context.get('output_currency_id')
         today = strftime('%Y-%m-%d_%H-%M-%S')
         name = 'mcdb_result' + '_' + today
         ext = '.csv'
         filename = str(name + ext)
         
-        string = self._account_move_line_to_csv(cr, uid, ml_ids, context=context) or ''
+        string = self._account_move_line_to_csv(cr, uid, ml_ids, currency_id, context=context) or ''
         
         # String unicode tranformation then to file
         file = encodestring(string.encode("utf-8"))

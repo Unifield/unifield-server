@@ -46,6 +46,10 @@ class output_currency_for_export(osv.osv_memory):
         model = context.get('active_model')
         suffix = 'csv.export'
         export_obj = '.'.join([model, suffix])
+        wiz = self.browse(cr, uid, ids, context=context)[0]
+        currency_id = wiz and wiz.currency_id and wiz.currency_id.id or False
+        # update context with currency_id
+        context.update({'output_currency_id': currency_id})
         # Return good view
         return self.pool.get(export_obj).export_to_csv(cr, uid, ids, context=context) or False
 
