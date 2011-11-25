@@ -44,14 +44,13 @@ class output_currency_for_export(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         model = context.get('active_model')
-        suffix = 'csv.export'
-        export_obj = '.'.join([model, suffix])
+        line_ids = context.get('active_ids')
+        if isinstance(line_ids, (int, long)):
+            line_ids = [line_ids]
         wiz = self.browse(cr, uid, ids, context=context)[0]
         currency_id = wiz and wiz.currency_id and wiz.currency_id.id or False
-        # update context with currency_id
-        context.update({'output_currency_id': currency_id})
         # Return good view
-        return self.pool.get(export_obj).export_to_csv(cr, uid, ids, context=context) or False
+        return self.pool.get('account.line.csv.export').export_to_csv(cr, uid, line_ids, currency_id, model, context=context) or False
 
 output_currency_for_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

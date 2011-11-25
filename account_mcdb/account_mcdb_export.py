@@ -28,8 +28,8 @@ from base64 import encodestring
 from time import strftime
 from tools import ustr
 
-class account_move_line_csv_export(osv.osv_memory):
-    _name = 'account.move.line.csv.export'
+class account_line_csv_export(osv.osv_memory):
+    _name = 'account.line.csv.export'
     _description = 'Account Entries CSV Export'
 
     _columns = {
@@ -120,57 +120,7 @@ class account_move_line_csv_export(osv.osv_memory):
             #############################
         return ustr(string)
 
-    def export_to_csv(self, cr, uid, ids, context={}):
-        """
-        Return a CSV file containing all given move line
-        """
-        # Some verifications
-        if not context or not context.get('active_ids', False) or not context.get('output_currency_id', False):
-            raise osv.except_osv(_('Error'), _('No entry selected or no currency given!'))
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        ml_ids = context.get('active_ids')
-        currency_id = context.get('output_currency_id')
-        today = strftime('%Y-%m-%d_%H-%M-%S')
-        name = 'mcdb_result' + '_' + today
-        ext = '.csv'
-        filename = str(name + ext)
-        
-        string = self._account_move_line_to_csv(cr, uid, ml_ids, currency_id, context=context) or ''
-        
-        # String unicode tranformation then to file
-        file = encodestring(string.encode("utf-8"))
-        
-        export_id = self.create(cr, uid, 
-            {
-                'file': file,
-                'filename': filename,
-                'message': "The list has been exported. Please click on 'Save As' button to download the file.",
-        })
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move.line.csv.export',
-            'res_id': export_id,
-            'view_mode': 'form',
-            'view_type': 'form',
-            'target': 'new',
-        }
-
-account_move_line_csv_export()
-
-
-class account_analytic_line_csv_export(osv.osv_memory):
-    _name = 'account.analytic.line.csv.export'
-    _description = 'Account Analytic Lines CSV Export'
-
-    _columns = {
-        'file': fields.binary(string='File to export', required=True, readonly=True),
-        'filename': fields.char(size=128, string='Filename', required=True),
-        'message': fields.char(size=256, string='Message', readonly=True),
-    }
-
-    def _account_analytic_line_to_csv(self, cr, uid, ids, context={}):
+    def _account_analytic_line_to_csv(self, cr, uid, ids, currency_id, context={}):
         """
         Take account_analytic_line and return a csv string
         """
@@ -179,13 +129,15 @@ class account_analytic_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not fields:
-            raise osv.except_osv(_('Error'), _('No export fields. Please add them to the code.'))
+        if not currency_id:
+            raise osv.except_osv(_('Error'), _('No currency found.'))
         # Prepare some value
         string = ""
+        currency_obj = self.pool.get('res.currency')
+        currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # String creation
         # Prepare csv head
-        string += "Journal Code;Date;Instance;Description;Reference;Amount;Amount currency;Currency;Analytic Account\n"
+        string += "Journal Code;Date;Instance;Description;Reference;Amount;Amount currency;Currency;Output amount;Output currency;Analytic Account\n"
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             # journal_id
             string += ustr(al.journal_id and al.journal_id.code or '')
@@ -203,46 +155,43 @@ class account_analytic_line_csv_export(osv.osv_memory):
             string += ';' + ustr(al.amount_currency or 0.0)
             #currency_id
             string += ';' + ustr(al.currency_id and al.currency_id.name or '')
+            #output amount
+            amount = currency_obj.compute(cr, uid, currency_id, al.currency_id.id, al.amount_currency, round=True, context=context)
+            string += ';' + ustr(amount or 0.0)
+            #output currency
+            string += ';' + ustr(currency_name or '')
             #account_id name
             string += ';' + ustr(al.account_id and al.account_id.name or '')
             # EOL
             string += '\n'
-            #############################
-            ###
-            # This function could be used with a fields parameter in this method in order to create a CSV with field that could change
-            ###
-            #        for i, field in enumerate(fields):
-            #            if i != 0:
-            #                res += ';'
-            #            res += str(field)
-            #        res+= '\n'
-            #        for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
-            #            for i, field in enumerate(fields):
-            #                if i != 0:
-            #                    res += ';'
-            #                print field
-            #                res+= ustr(getattr(ml, field, ''))
-            #            res+= '\n'
-            #############################
         return ustr(string)
 
-    def export_to_csv(self, cr, uid, ids, context={}):
+    def export_to_csv(self, cr, uid, ids, currency_id, model, context={}):
         """
-        Return a CSV file containing all given analytic line
+        Return a CSV file containing all given line
         """
         # Some verifications
-        if not context or not context.get('active_ids', False):
-            raise osv.except_osv(_('Error'), _('No entry selected!'))
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not currency_id:
+            raise osv.except_osv(_('Error'), _('No currency. Please choose a currency.'))
+        if not model:
+            raise osv.except_osv(_('Error'), _('No model found.'))
         # Prepare some values
-        ml_ids = context.get('active_ids')
         today = strftime('%Y-%m-%d_%H-%M-%S')
-        name = 'mcdb_analytic_result' + '_' + today
+        mtype = model.split('.')[1]
+        name = '_'.join(['mcdb', mtype, 'result', today])
         ext = '.csv'
         filename = str(name + ext)
+        string = ''
         
-        string = self._account_analytic_line_to_csv(cr, uid, ml_ids, context=context) or ''
+        # Take string regarding model
+        if model == 'account.move.line':
+            string = self._account_move_line_to_csv(cr, uid, ids, currency_id, context=context) or ''
+        elif model == 'account.analytic.line':
+            string = self._account_analytic_line_to_csv(cr, uid, ids, currency_id, context=context) or ''
         
         # String unicode tranformation then to file
         file = encodestring(string.encode("utf-8"))
@@ -253,14 +202,22 @@ class account_analytic_line_csv_export(osv.osv_memory):
                 'filename': filename,
                 'message': "The list has been exported. Please click on 'Save As' button to download the file.",
         })
+        
+        # Search view
+        suffix = 'csv_export_form'
+        view = '_'.join([model.replace('.', '_'), suffix])
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
+        view_id = view_id and view_id[1] or False
+        
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'account.analytic.line.csv.export',
+            'res_model': 'account.line.csv.export',
             'res_id': export_id,
             'view_mode': 'form',
             'view_type': 'form',
+            'view_id': [view_id],
             'target': 'new',
         }
 
-account_analytic_line_csv_export()
+account_line_csv_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
