@@ -21,25 +21,6 @@
 #
 ##############################################################################
 
-{
-    "name" : "Multi-Criteria Data Browser",
-    "version" : "0.1",
-    "description" : "Ease data searching in Analytic Journal Items and Journal Items",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Accounting",
-    "depends" : ["base", "account", "register_accounting"],
-    "init_xml" : [],
-    "update_xml" : [
-        'wizard/output_currency_for_export_view.xml',
-        'account_mcdb_view.xml',
-        'account_view.xml',
-        'account_mcdb_export_view.xml',
-        'account_mcdb_report.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+import output_currency_for_export
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

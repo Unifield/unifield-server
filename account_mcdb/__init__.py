@@ -26,5 +26,6 @@ import account_mcdb_export
 import report
 import account_move_line
 import account_analytic_line
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
