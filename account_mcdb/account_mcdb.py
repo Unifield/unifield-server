@@ -243,10 +243,14 @@ class account_mcdb(osv.osv_memory):
                 context.update({'output_currency_id': wiz.display_in_output_currency.id})
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
+            search_view = 'mcdb_view_account_move_line_filter'
             if res_model == 'account.analytic.line':
                 view = 'account_analytic_line_mcdb_search_result'
+                search_view = 'mcdb_view_account_analytic_line_filter'
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
+            search_view_id = search_view_id and search_view_id[1] or False
             return {
                 'name': _('Journal Items MCDB result'),
                 'type': 'ir.actions.act_window',
@@ -254,6 +258,7 @@ class account_mcdb(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'tree,form',
                 'view_id': [view_id],
+                'search_view_id': search_view_id,
                 'domain': domain,
                 'context': context,
                 'target': 'current',
