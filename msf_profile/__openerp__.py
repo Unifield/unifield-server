@@ -31,6 +31,7 @@
         "data.xml",
     ],
     "depends" : [
+        "msf_audittrail",
         "base_report_designer",
         "msf_partner",
         "register_accounting",
@@ -74,7 +75,6 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
-        "msf_audittrail",
 #        "analytic_distribution_purchase",
     ],
     "update_xml": [
