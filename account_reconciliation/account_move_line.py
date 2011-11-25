@@ -24,53 +24,55 @@
 from osv import osv
 import time
 import netsvc
+from reconciliation_tools import _get_addendum_line_account_id
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     _name = 'account.move.line'
 
-#    def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
-#        """
-#        WARNING: This method has been taken from account module from OpenERP
-#        """
-#        # @@@override@account.account_move_line.py
-#        move_rec_obj = self.pool.get('account.move.reconcile')
-#        merges = []
-#        unmerge = []
-#        total = 0.0
-#        merges_rec = []
-#        company_list = []
-#        if context is None:
-#            context = {}
-#        for line in self.browse(cr, uid, ids, context=context):
-#            if company_list and not line.company_id.id in company_list:
-#                raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
-#            company_list.append(line.company_id.id)
+    def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
+        """
+        WARNING: This method has been taken from account module from OpenERP
+        """
+        # @@@override@account.account_move_line.py
+        move_rec_obj = self.pool.get('account.move.reconcile')
+        merges = []
+        unmerge = []
+        total = 0.0
+        merges_rec = []
+        company_list = []
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            if company_list and not line.company_id.id in company_list:
+                raise osv.except_osv(_('Warning !'), _('To reconcile the entries company should be the same for all entries'))
+            company_list.append(line.company_id.id)
 
-#        for line in self.browse(cr, uid, ids, context=context):
-#            company_currency_id = line.company_id.currency_id
-#            if line.reconcile_id:
-#                raise osv.except_osv(_('Warning'), _('Already Reconciled!'))
-#            if line.reconcile_partial_id:
-#                for line2 in line.reconcile_partial_id.line_partial_ids:
-#                    if not line2.reconcile_id:
-#                        if line2.id not in merges:
-#                            merges.append(line2.id)
-#                        total += (line2.debit or 0.0) - (line2.credit or 0.0)
-#                merges_rec.append(line.reconcile_partial_id.id)
-#            else:
-#                unmerge.append(line.id)
-#                total += (line.debit or 0.0) - (line.credit or 0.0)
-#        if self.pool.get('res.currency').is_zero(cr, uid, company_currency_id, total):
-#            res = self.reconcile(cr, uid, merges+unmerge, context=context)
-#            return res
-#        r_id = move_rec_obj.create(cr, uid, {
-#            'type': type,
-#            'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge)
-#        })
-#        move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
-#        # @@@end
-#        return True
+        for line in self.browse(cr, uid, ids, context=context):
+            company_currency_id = line.company_id.currency_id
+            if line.reconcile_id:
+                raise osv.except_osv(_('Warning'), _('Already Reconciled!'))
+            if line.reconcile_partial_id:
+                for line2 in line.reconcile_partial_id.line_partial_ids:
+                    if not line2.reconcile_id:
+                        if line2.id not in merges:
+                            merges.append(line2.id)
+                        # Next line have been modified from debit/credit to debit_currency/credit_currency
+                        total += (line2.debit_currency or 0.0) - (line2.credit_currency or 0.0)
+                merges_rec.append(line.reconcile_partial_id.id)
+            else:
+                unmerge.append(line.id)
+                total += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+        if self.pool.get('res.currency').is_zero(cr, uid, company_currency_id, total):
+            res = self.reconcile(cr, uid, merges+unmerge, context=context)
+            return res
+        r_id = move_rec_obj.create(cr, uid, {
+            'type': type,
+            'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge)
+        })
+        move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
+        # @@@end
+        return True
 
     def reconcile(self, cr, uid, ids, type='auto', writeoff_acc_id=False, writeoff_period_id=False, writeoff_journal_id=False, context=None):
         """
@@ -84,10 +86,8 @@ class account_move_line(osv.osv):
         currency_obj = self.pool.get('res.currency')
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
-        credit = debit = 0.0
-        currency = 0.0
-        account_id = False
-        partner_id = False
+        credit = debit = func_debit = func_credit = currency = 0.0
+        currency_id = account_id = partner_id = employee_id = register_id = functional_currency_id = False
         if context is None:
             context = {}
         company_list = []
@@ -101,10 +101,16 @@ class account_move_line(osv.osv):
                         _('Entry "%s" is not valid !') % line.name)
             credit += line['credit_currency']
             debit += line['debit_currency']
+            func_debit += line['debit']
+            func_credit += line['credit']
             currency += line['amount_currency'] or 0.0
+            currency_id = line['currency_id']['id']
+            functional_currency_id = line['functional_currency_id']['id']
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
-#        writeoff = debit - credit
+            employee_id = (line['employee_id'] and line['employee_id']['id']) or False
+            register_id = (line['register_id'] and line['register_id']['id']) or False
+        func_balance = func_debit - func_credit
 
         # Ifdate_p in context => take this date
         if context.has_key('date_p') and context['date_p']:
@@ -128,75 +134,67 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('The account is not defined to be reconciled !'))
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
-
-#        if (not currency_obj.is_zero(cr, uid, account.company_id.currency_id, writeoff)) or \
-#           (account.currency_id and (not currency_obj.is_zero(cr, uid, account.currency_id, currency))):
-#            if not writeoff_acc_id:
-#                raise osv.except_osv(_('Warning'), _('You have to provide an account for the write off entry !'))
-#            if writeoff > 0:
-#                debit = writeoff
-#                credit = 0.0
-#                self_credit = writeoff
-#                self_debit = 0.0
-#            else:
-#                debit = 0.0
-#                credit = -writeoff
-#                self_credit = 0.0
-#                self_debit = -writeoff
-#            # If comment exist in context, take it
-#            if 'comment' in context and context['comment']:
-#                libelle = context['comment']
-#            else:
-#                libelle = _('Write-Off')
-
-#            cur_obj = self.pool.get('res.currency')
-#            cur_id = False
-#            amount_currency_writeoff = 0.0
-#            if context.get('company_currency_id',False) != context.get('currency_id',False):
-#                cur_id = context.get('currency_id',False)
-#                for line in unrec_lines:
-#                    if line.currency_id and line.currency_id.id == context.get('currency_id',False):
-#                        amount_currency_writeoff += line.amount_currency
-#                    else:
-#                        tmp_amount = cur_obj.compute(cr, uid, line.account_id.company_id.currency_id.id, context.get('currency_id',False), abs(line.debit-line.credit), context={'date': line.date})
-#                        amount_currency_writeoff += (line.debit > 0) and tmp_amount or -tmp_amount
-
-#            writeoff_lines = [
-#                (0, 0, {
-#                    'name': libelle,
-#                    'debit': self_debit,
-#                    'credit': self_credit,
-#                    'account_id': account_id,
-#                    'date': date,
-#                    'partner_id': partner_id,
-#                    'currency_id': cur_id or (account.currency_id.id or False),
-#                    'amount_currency': amount_currency_writeoff and -1 * amount_currency_writeoff or (account.currency_id.id and -1 * currency or 0.0)
-#                }),
-#                (0, 0, {
-#                    'name': libelle,
-#                    'debit': debit,
-#                    'credit': credit,
-#                    'account_id': writeoff_acc_id,
-#                    'analytic_account_id': context.get('analytic_id', False),
-#                    'date': date,
-#                    'partner_id': partner_id,
-#                    'currency_id': cur_id or (account.currency_id.id or False),
-#                    'amount_currency': amount_currency_writeoff and amount_currency_writeoff or (account.currency_id.id and currency or 0.0)
-#                })
-#            ]
-
-#            writeoff_move_id = move_obj.create(cr, uid, {
-#                'period_id': writeoff_period_id,
-#                'journal_id': writeoff_journal_id,
-#                'date':date,
-#                'state': 'draft',
-#                'line_id': writeoff_lines
-#            })
-
-#            writeoff_line_ids = self.search(cr, uid, [('move_id', '=', writeoff_move_id), ('account_id', '=', account_id)])
-#            if account_id == writeoff_acc_id:
-#                writeoff_line_ids = [writeoff_line_ids[1]]
-#            ids += writeoff_line_ids
+        
+        ############################################################
+        ### Addendum line verification and creation if necessary ###
+        ############################################################
+        if func_balance != 0.0:
+            # Get default account for addendum_line
+            addendum_line_account_id = _get_addendum_line_account_id(self, cr, uid, ids, context=context)
+            # Prepare some values
+            date = time.strftime('%Y-%m-%d')
+            j_obj = self.pool.get('account.journal')
+            # Search Miscellaneous Transactions journal
+            j_ids = j_obj.search(cr, uid, [('type', '=', 'general'), ('code', '=', 'MT'), ('name', '=', 'Miscellaneous Transactions')], context=context)
+            if not j_ids:
+                raise osv.except_osv(_('Error'), ('No Miscellaneous Transactions journal found!'))
+            journal_id = j_ids[0]
+            # Search attached period
+            period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
+                limit=1, order='date_start, name')
+            if not period_ids:
+                raise osv.except_osv(_('Error'), _('No attached period found or current period not open!'))
+            period_id = period_ids[0]
+            # Create a new move
+            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': date}, 
+                context=context)
+            # Create default vals for the new two move lines
+            vals = {
+                'move_id': move_id,
+                'date': date,
+                'source_date': date,
+                'journal_id': journal_id,
+                'period_id': period_id,
+                'partner_id': partner_id,
+                'employee_id': employee_id,
+                'register_id': register_id,
+                'credit': 0.0,
+                'debit': 0.0,
+                'name': 'Realised loss/gain',
+                'is_addendum_line': True,
+                'currency_id': currency_id,
+                'functional_currency_id': functional_currency_id,
+            }
+            # Note that if func_balance == 0.0 we are not in this loop (normal reconciliation)
+            # If func_balance inferior to 0, some amount is missing @debit for partner
+            partner_db = partner_cr = addendum_db = addendum_cr = None
+            if func_balance < 0.0:
+                # data for partner line
+                partner_db = addendum_cr = abs(func_balance)
+            # Conversely some amount is missing @credit for partner
+            else:
+                partner_cr = addendum_db = abs(func_balance)
+            # Create partner line
+            vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
+            partner_line_id = self.create(cr, uid, vals, context=context)
+            # Create addendum_line
+            vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
+            addendum_line_id = self.create(cr, uid, vals, context=context)
+            # Validate move
+            self.pool.get('account.move').post(cr, uid, [move_id], context=context)
+            # Add partner_line to do total reconciliation
+            ids.append(partner_line_id)
+        ############################################################
 
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
@@ -225,15 +223,23 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
+        # Retrieve all addendum lines
+        # First search all reconciliation ids to find ALL move lines (some could be not selected but unreconciled after
+        reconcile_ids = [x.reconcile_id and x.reconcile_id.id for x in self.browse(cr, uid, move_ids, context=context)]
+        # Search all account move line for this reconcile_ids
+        operator = 'in'
+        if len(reconcile_ids) == 1:
+            operator = '='
+        ml_ids = self.search(cr, uid, [('reconcile_id', operator, reconcile_ids)])
+        # Search addendum line to delete
+        to_delete = []
+        for line in self.browse(cr, uid, ml_ids, context=context):
+            if line.is_addendum_line:
+                to_delete.append(line.move_id and line.move_id.id)
         # Retrieve default behaviour
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         # If success, verify that no addendum line exists
-        if res and move_ids:
-            # Search addendum lines
-            to_delete = []
-            for line in self.browse(cr, uid, move_ids, context=context):
-                if line.is_addendum_line:
-                    to_delete.append(line.move_id and line.move_id.id)
+        if res and to_delete:
             # Delete doublons
             to_delete = list(set(to_delete))
             # First cancel moves

@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
+from ..reconciliation_tools import _get_addendum_line_account_id
 
 class account_move_line_reconcile(osv.osv_memory):
     _inherit = 'account.move.line.reconcile'
@@ -38,19 +39,6 @@ class account_move_line_reconcile(osv.osv_memory):
     _defaults = {
         'state': lambda *a: 'total',
     }
-
-    def _get_addendum_line_account_id(self, cr, uid, ids, context={}):
-        """
-        Give addendum line account id.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Retrieve 6308 account
-        account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '6308')], context=context, limit=1)
-        return account_id and account_id[0] or False
 
     def default_get(self, cr, uid, fields, context={}):
         """
@@ -129,84 +117,9 @@ class account_move_line_reconcile(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some value
-        addendum_line = False
         to_reconcile = context['active_ids']
-        ml_obj = self.pool.get('account.move.line')
-        # Verify that balance in fonctional currency (debit/credit ) is correct, otherwise activate addendum_line
-        total = ml_obj._accounting_balance(cr, uid, context['active_ids'], context=context)[0]
-        if total != 0.0:
-            addendum_line = True
-        # Search first line for some values
-        first_line = ml_obj.browse(cr, uid, [context['active_ids'][0]], context=context)[0]
-        # Retrieve some values
-        account_id = first_line.account_id and first_line.account_id.id or False
-        # those for third party for an example
-        partner_id = first_line.partner_id and first_line.partner_id.id or False
-        employee_id = first_line.employee_id and first_line.employee_id.id or False
-        register_id = first_line.register_id and first_line.register_id.id or False
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency_id = first_line.currency_id and first_line.currency_id.id or company_currency
-        functional_currency_id = first_line.functional_currency_id and first_line.functional_currency_id.id or company_currency
-        if addendum_line:
-            # Get default account for addendum_line
-            addendum_line_account_id = self._get_addendum_line_account_id(cr, uid, ids, context=context)
-            # Prepare some values
-            date = time.strftime('%Y-%m-%d')
-            j_obj = self.pool.get('account.journal')
-            # Search Miscellaneous Transactions journal
-            j_ids = j_obj.search(cr, uid, [('type', '=', 'general'), ('code', '=', 'MT'), ('name', '=', 'Miscellaneous Transactions')], context=context)
-            if not j_ids:
-                raise osv.except_osv(_('Error'), ('No Miscellaneous Transactions journal found!'))
-            journal_id = j_ids[0]
-            # Search attached period
-            period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
-                limit=1, order='date_start, name')
-            if not period_ids:
-                raise osv.except_osv(_('Error'), _('No attached period found or current period not open!'))
-            period_id = period_ids[0]
-            # Create a new move
-            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': date}, 
-                context=context)
-            # Create default vals for the new two move lines
-            vals = {
-                'move_id': move_id,
-                'date': date,
-                'source_date': date,
-                'journal_id': journal_id,
-                'period_id': period_id,
-                'partner_id': partner_id,
-                'employee_id': employee_id,
-                'register_id': register_id,
-                'credit': 0.0,
-                'debit': 0.0,
-                'name': 'Realised loss/gain',
-                'is_addendum_line': True,
-                'currency_id': currency_id,
-                'functional_currency_id': functional_currency_id,
-            }
-            # Note that if total == 0.0 we are not in this loop (normal reconciliation)
-            # If total inferior to 0, some amount is missing @debit for partner
-            partner_db = partner_cr = addendum_db = addendum_cr = None
-            if total < 0.0:
-                # data for partner line
-                partner_db = addendum_cr = abs(total)
-            # Conversely some amount is missing @credit for partner
-            else:
-                partner_cr = addendum_db = abs(total)
-            # Create partner line
-            vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
-            partner_line_id = ml_obj.create(cr, uid, vals, context=context)
-            # Create addendum_line
-            vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
-            addendum_line_id = ml_obj.create(cr, uid, vals, context=context)
-            # Validate move
-            self.pool.get('account.move').post(cr, uid, [move_id], context=context)
-            # Add partner_line to do total reconciliation
-            to_reconcile.append(partner_line_id)
-        # Do reconciliation
-        ml_obj.reconcile(cr, uid, to_reconcile, 'manual', False, False, False, context=context)
+        self.pool.get('account.move.line').reconcile(cr, uid, to_reconcile, 'manual', False, False, False, context=context)
         return {'type': 'ir.actions.act_window_close'}
-
 
     def partial_reconcile(self, cr, uid, ids, context={}):
         """
@@ -218,7 +131,7 @@ class account_move_line_reconcile(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Do partial reconciliation
-        account_move_line_obj.reconcile_partial(cr, uid, context['active_ids'], 'manual', context=context)
+        self.pool.get('account.move.line').reconcile_partial(cr, uid, context['active_ids'], 'manual', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 account_move_line_reconcile()
