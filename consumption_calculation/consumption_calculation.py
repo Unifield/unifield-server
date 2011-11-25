@@ -69,8 +69,6 @@ class real_average_consumption(osv.osv):
         # Change default values
         if not 'picking_id' in defaults:
             defaults['picking_id'] = False
-        if not 'created_ok' in defaults:
-            defaults['created_ok'] = False
         if not 'valid_ok' in defaults:
             defaults['valid_ok'] = False
 
@@ -87,6 +85,8 @@ class real_average_consumption(osv.osv):
 
             self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
 
+        # update created_ok at this end to disable _check qty on line
+        self.write(cr, uid, res, {'created_ok': False})
         return res
 
     
