@@ -320,10 +320,10 @@ class real_average_consumption_line(osv.osv):
             
         return result
 
-    def _get_qty(self, cr, uid, product, lot, location):
+    def _get_qty(self, cr, uid, product, lot, location, uom):
         if not product and not lot:
             return False
-        context = {'location_id': location, 'location': location}
+        context = {'location_id': location, 'location': location, 'uom': uom}
         if not lot:
             return self.pool.get('product.product').read(cr, uid, product, ['qty_available'], context=context)['qty_available']
             
@@ -360,7 +360,7 @@ class real_average_consumption_line(osv.osv):
                         _("Product: %s, no internal batch found for expiry (%s)"%(obj.product_id.name, obj.expiry_date)))
                 prodlot_id = prod_ids[0]
 
-            product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location)
+            product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
             if prodlot_id and obj.consumed_qty > product_qty:
                     raise osv.except_osv(_('Error'), 
@@ -395,7 +395,7 @@ class real_average_consumption_line(osv.osv):
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
 
-    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, context={}):
+    def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context={}):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
@@ -415,35 +415,45 @@ class real_average_consumption_line(osv.osv):
                     result['value'].update(expiry_date=False, prodlot_id=False)
             else:
                 # return first prodlot
-                result = self.change_prodlot(cr, uid, id, product_id, prod_ids[0], expiry_date, location_id, context={})
+                result = self.change_prodlot(cr, uid, id, product_id, prod_ids[0], expiry_date, location_id, uom, context={})
                 result.setdefault('value',{}).update(prodlot_id=prod_ids[0])
                 return result
                 
         else:
             # clear expiry date, we clear production lot
             result['value'].update(prodlot_id=False)
-    
+   
+        context.update(uom=uom)
         product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
         result['value'].update({'product_qty': product.qty_available})
         
         return result
 
-    def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, context={}):
+    def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context={}):
         result = {}
-        stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location)
+        stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
+        if uom:
+            new_qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, uom)
+            if new_qty != qty:
+                warn_msg = {
+                    'title': _('Error'), 
+                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !"%(qty, new_qty))
+                }
+                return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+
         if prodlot_id and qty > stock_qty:
             return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
         if qty > stock_qty:
             return {'warning': warn_msg}
         return {}
 
-    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, context={}):
+    def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, context={}):
         '''
         Set the expiry date according to the prodlot
         '''
         res = {'value': {}}
-        context.update({'location': location_id})
+        context.update({'location': location_id, 'uom': uom})
         if prodlot_id and not expiry_date:
             res['value'].update({'expiry_date': self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).life_date})
         elif not prodlot_id and expiry_date:
@@ -457,33 +467,46 @@ class real_average_consumption_line(osv.osv):
         res['value'].update({'product_qty': product_qty})
 
         return res
-    
-    def product_onchange(self, cr, uid, ids, product_id, location_id=False, prodlot_id=False, context={}):
+   
+    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context={}):
+        qty_available = 0
+        d = {}
+        if uom and product_id:
+            qty_available = self._get_qty(cr, uid, product_id, lot, location_id, uom)
+
+        if not uom and product_id:
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
+
+        return {'value': {'product_qty': qty_available}, 'domain': d}
+
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context={}):
         '''
         Set the product uom when the product change
         '''
         v = {'batch_mandatory': False, 'date_mandatory': False}
-        
+        d = {'uom_id': []} 
         if product_id:
             if location_id:
-                context.update({'location': location_id})
+                context.update({'location': location_id, 'uom': uom})
 
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context) 
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            qty_available = product.qty_available
                 
-            uom = product.uom_id.id
             if product.batch_management:
                 v.update({'batch_mandatory': True})
             elif product.perishable:
                 v.update({'date_mandatory': True})
 
+            uom = product.uom_id.id
             v.update({'uom_id': uom})
-
+            d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
             if location_id:
-                v.update({'product_qty': product.qty_available})
+                v.update({'product_qty': qty_available})
         else:
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
         
-        return {'value': v}
+        return {'value': v, 'domain': d}
     
 real_average_consumption_line()
 
