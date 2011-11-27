@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
+import decimal_precision as dp
+
 
 class analytic_distribution_wizard_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.lines'
@@ -51,8 +53,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
 
     _columns = {
         'analytic_id': fields.many2one('account.analytic.account', string="Analytic account", required=True),
-        'amount': fields.function(_get_amount, method=True, type='float', string="Amount", readonly=True),
-        'percentage': fields.float(string="Percentage", required=True),
+        'amount': fields.function(_get_amount, method=True, type='float', string="Amount", readonly=True, digits_compute=dp.get_precision('Account')),
+        'percentage': fields.float(string="Percentage", required=True, digits=(16,4)),
         'wizard_id': fields.many2one('analytic.distribution.wizard', string="Analytic Distribution Wizard", required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line"),
@@ -76,11 +78,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         percentage = res.get('percentage', 0.0)
         amount = res.get('amount', 0.0)
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
-        if wiz and wiz[0] and wiz[0].total_amount:
+        if wiz and wiz[0]:
             total_amount = wiz[0].total_amount
             if mode == 'percentage':
                 res['amount'] = (total_amount * percentage) / 100.0
-            elif mode == 'amount':
+            elif mode == 'amount' and total_amount:
                 res['percentage'] = (amount / total_amount) * 100.0
         return res
 
@@ -127,7 +129,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not percentage or not total_amount:
-            return {'value': {'amount': 0}}
+            return {}
         amount = (total_amount * percentage) / 100
         return {'value': {'amount': amount}}
 
@@ -138,7 +140,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not amount or not total_amount:
-            return {'value': {'percentage': 0}}
+            return {}
         percentage = (amount / total_amount) * 100
         return {'value': {'percentage': percentage}}
 
@@ -552,7 +554,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 for line in lines:
                     total += line.percentage or 0.0
                     line_type = line.type
-                if abs(total - 100.0) > 10**-4:
+                if abs(total - 100.0) >= 10**-2:
                     # Fancy name for user
                     type_name = ' '.join([x.capitalize() for x in line_type.split('.')])
                     raise osv.except_osv(_('Warning'), _('Allocation is not fully done for %s') % type_name)
@@ -771,7 +773,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if amount < 0.0 or amount > wizard_obj.total_amount:
                     raise osv.except_osv(_('Amount not valid!'),_("Amount not valid!"))
                 # Fill the other value
-                percentage = round(amount * 10**4 / wizard_obj.total_amount) / 100.0
+                percentage = 0
+                if wizard_obj.total_amount:
+                    percentage = amount / wizard_obj.total_amount * 100.0
                 wizard_line['percentage'] = percentage
         # FIXME: do rounding
         # Writing values
