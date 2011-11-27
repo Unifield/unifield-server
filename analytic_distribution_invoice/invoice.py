@@ -191,7 +191,17 @@ class account_invoice_line(osv.osv):
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
+        'newline': fields.boolean('New line'),
     }
+    
+    _defaults = {
+        'newline': lambda *a: True,
+        'have_analytic_distribution_from_header': lambda *a: True,
+    }
+
+    def create(self, cr, uid, vals, context={}):
+        vals['newline'] = False
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
 
     def copy_data(self, cr, uid, id, default={}, context={}):
         """

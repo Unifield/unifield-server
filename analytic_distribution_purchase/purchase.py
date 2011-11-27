@@ -211,6 +211,9 @@ class purchase_order_line(osv.osv):
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
     }
 
+    _defaults = {
+        'have_analytic_distribution_from_header': lambda *a: True,
+    }
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
         Launch analytic distribution wizard on a purchase order
