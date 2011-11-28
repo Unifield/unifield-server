@@ -34,6 +34,8 @@ class account_move_line(osv.osv):
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         for obj_line in self.browse(cr, uid, ids, context=context):
+            # Prepare some values
+            amount = obj_line.debit_currency - obj_line.credit_currency
             if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
@@ -42,14 +44,15 @@ class account_move_line(osv.osv):
                 for distrib_lines in [distrib_obj.cost_center_lines, distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.source_date or obj_line.date})
+                        anal_amount = distrib_line.percentage*amount/100
                         line_vals = {
                                      'name': obj_line.name,
                                      'date': obj_line.date,
                                      'ref': obj_line.ref,
                                      'journal_id': obj_line.journal_id.analytic_journal_id.id,
                                      'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.currency_id.id, company_currency, 
-                                        distrib_line.amount or 0.0, round=False, context=context),
-                                     'amount_currency': -1 * distrib_line.amount,
+                                        anal_amount, round=False, context=context),
+                                     'amount_currency': -1 * anal_amount,
                                      'account_id': distrib_line.analytic_id.id,
                                      'general_account_id': obj_line.account_id.id,
                                      'move_id': obj_line.id,
@@ -65,45 +68,6 @@ class account_move_line(osv.osv):
                             line_vals.update({'source_date': obj_line.source_date})
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
-
-    def button_analytic_distribution(self, cr, uid, ids, context={}):
-        """
-        Launch the analytic distribution wizard from a journal item (account_move_line)
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # we get the analytical distribution object linked to this line
-        distrib_id = False
-        move_line_obj = self.browse(cr, uid, ids[0], context=context)
-        # Get amount using account_move_line amount_currency field
-        amount = move_line_obj.amount_currency and move_line_obj.amount_currency or 0.0
-        # Search elements for currency
-        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency = move_line_obj.currency_id and move_line_obj.currency_id.id or company_currency
-        if move_line_obj.analytic_distribution_id:
-            distrib_id = move_line_obj.analytic_distribution_id.id
-        else:
-            raise osv.except_osv(_('No Analytic Distribution !'),_("You have to define an analytic distribution on the move line!"))
-        wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
-        # we open a wizard
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-            'wizard_ids': {'cost_center': wiz_id},
-        })
-        return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.costcenter.distribution',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
-        }
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

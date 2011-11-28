@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,13 +21,17 @@
 #
 ##############################################################################
 
-import funding_pool
-import account
-import account_bank_statement
-import account_move_line
-import analytic_account
-import analytic_line
-import invoice
-import wizard
+from osv import osv
+from osv import fields
 
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    _columns = {
+        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
+            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
+    }
+
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

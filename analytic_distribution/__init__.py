@@ -18,33 +18,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Analytic Account for MSF",
-    "version": "1.1",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
-    "description": """Module for defining analytic accounting object.
-    """,
-    "init_xml" : [
-        'data/analytic_account_data.xml',
-    ],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'analytic_account_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-        'wizard/wizard_costcenter_distribution_view.xml',
-        'wizard/wizard_fundingpool_distribution_view.xml',
-        'wizard/wizard_free1_distribution_view.xml',
-        'wizard/wizard_free2_distribution_view.xml',
-    ],
-    'test': [
-        'test/analytic_account_activable.yml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import analytic_distribution
+import account
+import account_bank_statement
+import account_move_line
+import analytic_account
+import analytic_line
+import invoice
+import wizard
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

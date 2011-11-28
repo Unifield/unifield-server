@@ -58,34 +58,41 @@ class account_bank_statement_line(osv.osv):
         """
         Launch analytic distribution wizard from a statement line
         """
+        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # we get the analytical distribution object linked to this line
-        distrib_id = False
-        statement_line_obj = self.browse(cr, uid, ids[0], context=context)
-        amount = statement_line_obj.amount * -1 or 0.0
+        # Prepare some values
+        absl = self.browse(cr, uid, ids[0], context=context)
+        amount = absl.amount * -1 or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        currency = statement_line_obj.statement_id.journal_id.currency and statement_line_obj.statement_id.journal_id.currency.id or company_currency
-        if statement_line_obj.analytic_distribution_id:
-            distrib_id = statement_line_obj.analytic_distribution_id.id
-        else:
-            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
-            newvals={'analytic_distribution_id': distrib_id}
-            super(account_bank_statement_line, self).write(cr, uid, ids, newvals, context=context)
-        wiz_obj = self.pool.get('wizard.costcenter.distribution')
-        wiz_id = wiz_obj.create(cr, uid, {'total_amount': amount, 'distribution_id': distrib_id, 'currency_id': currency}, context=context)
-        # we open a wizard
+        currency = absl.statement_id.journal_id.currency and absl.statement_id.journal_id.currency.id or company_currency
+        # Get analytic distribution id from this line
+        distrib_id = absl.analytic_distribution_id and absl.analytic_distribution_id.id or False
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'register_line_id': absl.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': absl.account_id and absl.account_id.id or False,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
-            'wizard_ids': {'cost_center': wiz_id},
         })
+        # Open it!
         return {
                 'type': 'ir.actions.act_window',
-                'res_model': 'wizard.costcenter.distribution',
+                'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'new',

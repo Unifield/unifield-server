@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,16 +18,30 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from osv import fields, osv
-
-class account_account(osv.osv):
-    _inherit = 'account.account'
-
-    _columns = {
-        'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
-    }
-    
-account_account()
-
+{
+    "name" : "Analytic Account for MSF",
+    "version": "1.1",
+    "author" : "MSF - TeMPO Consulting",
+    "category" : "Generic Modules/Projects & Services",
+    "depends" : ["analytic", "account", "account_override"],
+    "description": """Module for defining analytic accounting object.
+    """,
+    "init_xml" : [
+        'data/analytic_account_data.xml',
+    ],
+    "update_xml": [
+        'security/ir.model.access.csv',
+        'analytic_account_view.xml',
+        'wizard/account_analytic_chart_view.xml',
+        'analytic_distribution_wizard_view.xml',
+    ],
+    'test': [
+        'test/analytic_account_activable.yml',
+    ],
+    'demo_xml': [
+    ],
+    'installable': True,
+    'active': False,
+#    'certificate': 'certificate',
+}
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
