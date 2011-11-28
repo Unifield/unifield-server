@@ -162,6 +162,7 @@ class sale_order_followup(osv.osv_memory):
                 purchase_line_ids = self.get_purchase_line_ids(cr, uid, line.id, purchase_ids, context=context)
                 incoming_ids = self.get_incoming_ids(cr, uid, line.id, purchase_ids, context=context)
                 outgoing_ids = self.get_outgoing_ids(cr, uid, line.id, context=context)
+                displayed_out_ids = self.get_outgoing_ids(cr, uid, line.id, non_zero=True, context=context)
                 tender_ids = self.get_tender_ids(cr, uid, line.id, context=context)
 #                quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
                 
@@ -172,7 +173,8 @@ class sale_order_followup(osv.osv_memory):
                                           'purchase_ids': [(6,0,purchase_ids)],
                                           'purchase_line_ids': [(6,0,purchase_line_ids)],
                                           'incoming_ids': [(6,0,incoming_ids)],
-                                          'outgoing_ids': [(6,0,outgoing_ids)],})
+                                          'outgoing_ids': [(6,0,outgoing_ids)],
+                                          'displayed_out_ids': [(6,0,displayed_out_ids)]})
                     
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_line_follow_choose_view')[1]
 
@@ -271,7 +273,7 @@ class sale_order_followup(osv.osv_memory):
         
         return incoming_ids
         
-    def get_outgoing_ids(self, cr, uid, line_id, context={}):
+    def get_outgoing_ids(self, cr, uid, line_id, non_zero=False, context={}):
         '''
         Returns a list of outgoing deliveries related to the sale order line
         '''
@@ -286,7 +288,7 @@ class sale_order_followup(osv.osv_memory):
         # Get all stock.picking associated to the sale order line
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for move in line.move_ids:
-                if move.id not in outgoing_ids:
+                if move.id not in outgoing_ids and (not non_zero or (non_zero and move.product_qty != 0.00)):
                     outgoing_ids.append(move.id)
 #                if move.picking_id and move.picking_id.id not in outgoing_ids:
 #                    outgoing_ids.append(move.picking_id.id)
@@ -679,6 +681,8 @@ class sale_order_line_followup(osv.osv_memory):
                                             type='float', readonly=True, multi='status'),
         'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
                                          'follow_line_id', string='Outgoing Deliveries', readonly=True),
+        'displayed_out_ids': fields.many2many('stock.move', 'displayed_out_follow_rel', 'diplayed_out_id', 
+                                         'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',
                                             type='char', readonly=True, multi='status'),
         'outgoing_nb': fields.function(_get_status, method=True, string='Outgoing delivery',
@@ -783,6 +787,25 @@ request_for_quotation()
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
+
+    def _get_parent_doc(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns the shipment id if exist or the picking id
+        '''
+        res = {}
+
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = False
+            if move.picking_id:
+                res[move.id] = move.picking_id.name
+                if move.picking_id.shipment_id:
+                    res[move.id] = move.picking_id.shipment_id.name
+
+        return res
+
+    _columns = {
+        'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
+    }
 
     def _get_view_id(self, cr, uid, ids, context={}):
         '''
