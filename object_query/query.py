@@ -170,7 +170,7 @@ class object_query(osv.osv):
                     if filter_v.value1 == 't':
                         dom = (filter_v.field_id.name, '=', True)
                     elif filter_v.value1 == 'f':
-                        dom = (filter_v.field_id.name, '=', '0')
+                        dom = (filter_v.field_id.name, '=', False)
                 elif filter_v.field_id.ttype == 'many2one':
                     dom = (filter_v.field_id.name, 'in', [int(filter_v.value1)])
                 else:
@@ -180,6 +180,10 @@ class object_query(osv.osv):
                     if not filter_v.forced:
                         search_filters += "<field name='%s' />" % (filter_v.field_id.name)
                         default_search['search_default_%s'%(dom[0], )] = dom[2]
+                        if filter_v.value1 == 'f':
+                            # OpenERP bug
+                            default_search['search_default_%s'%(dom[0], )] = '0'
+
                     else:
                         domain.append(dom)
             
