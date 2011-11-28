@@ -424,7 +424,7 @@ class Search(TinyInputWidget):
                                     domain = [(name, '>=', defval)]
                                     
                                 elif field.kind == 'boolean':
-                                    domain = [(name, '=', defval)]
+                                    domain = [(name, '=', defval!='0')]
                                                
                                 else:
                                     domain = [(name,fields[name].get('comparator','ilike'), defval)]
