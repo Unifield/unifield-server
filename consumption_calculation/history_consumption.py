@@ -277,11 +277,10 @@ class product_product(osv.osv):
         '''
 
         if context.get('history_cons', False):
-            vals = ['default_code', 'name']
-            for month in context.get('months'):
-                vals.append(DateFrom(month.get('date_from')).strftime('%m/%Y'))
-
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
+
+            if 'average' not in vals:
+                return res
 
             if not context.get('amc'):
                 raise osv.except_osv(_('Error'), _('No Consumption type has been choosen !'))
