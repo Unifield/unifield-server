@@ -503,7 +503,7 @@ class ir_fields(osv.osv):
                 for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
                     for field in obj.field_id:
                         all_fields_ids.append(field.id)
-                        if self.pool.get(obj.model)._columns[field.name]._properties:
+                        if hasattr(self.pool.get(obj.model)._columns[field.name], '_properties') and  self.pool.get(obj.model)._columns[field.name]._properties:
                             field_ids.append(field.id)
                 
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
