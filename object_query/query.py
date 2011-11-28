@@ -42,17 +42,26 @@ class object_query(osv.osv):
     
     def _get_model_ids(self, cr, uid, ids, field, arg, context={}):
         res = {}
-        
+        model_obj = self.pool.get('ir.model')
         for query in self.browse(cr, uid, ids, context=context):
-            tmp = self.on_change_object(cr, uid, query.id, query.object_id.id)
-            res[query.id] = tmp['value']['model_ids']
-            
+            res[query.id] = []
+            if not query.object_id:
+                continue
+            for model_name in self._get_inherits_model(cr, uid, query.object_id.model_id.model):
+                model_id = model_obj.search(cr, uid, [('model', '=', model_name)])
+                if model_id:
+                    res[query.id].append(model_id[0])
+               
+                # Insert the base model in the tab
+                if query.object_id.model_id.id not in res[query.id]:
+                    res[query.id].append(query.object_id.model_id.id)
         return res
+        
     
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'user_id': fields.many2one('res.users', string='Creator', required=True),
-        'object_id': fields.many2one('object.query.object', string='Object', required=True),
+        'object_id': fields.many2one('object.query.object', string='Object'),
         'selection_ids': fields.many2many('ir.model.fields', 'query_fields_sel', 
                                           'query_id', 'field_id', string='Selection fields'),
         'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'), 
@@ -66,14 +75,40 @@ class object_query(osv.osv):
                                      relation='ir.model', string='Models'),
         'search_view_id': fields.many2one('ir.ui.view', string='Search View'),
         'tree_view_id': fields.many2one('ir.ui.view', string='Tree View'),
-        'export_id': fields.many2one('ir.exports', string='Export')
+        'export_id': fields.many2one('ir.exports', string='Export'),
+        'newquery': fields.boolean('New Query', readonly=1),
         
     }
     
     _defaults = {
         'user_id': lambda obj, cr, uid, context: uid,
+        'newquery': lambda *a: True,
     }
-    
+  
+    def dummy(self, cr, uid, ids, context):
+        return True
+
+    def change_object(self, cr, uid, ids, context):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = self.pool.get('object.query.result.fields')
+        r1 = result.search(cr, uid, [('object_id', 'in', ids)])
+        if r1:
+            result.unlink(cr, uid, r1)
+        sel_date = self.pool.get('object.query.selection_data')
+        r1 = sel_date.search(cr, uid, [('query_id', 'in', ids)])
+        if r1:
+            sel_date.unlink(cr, uid, r1)
+
+        self.write(cr, uid, ids, {
+            'object_id': False, 
+            'selection_ids': [(6, 0, [])], 
+            'group_by_ids': [(6, 0, [])], 
+            'result_simple_ids': [(6, 0, [])],
+            'newquery': True,
+        })
+        return True
+
     def _get_inherits_model(self, cr, uid, model_name):
         '''
         Get all inherited ir.model of an object
@@ -91,29 +126,6 @@ class object_query(osv.osv):
                 
         return res
     
-    def on_change_object(self, cr, uid, ids, object_id):
-        '''
-        Change the value of model_id when the object changes
-        '''
-        res = {'selection_ids': [], 'model_ids': [],
-               'group_by_ids': [],'result_ids': [],
-               'result_simple_ids': [], 'selection_data':[]}
-        
-        obj = self.pool.get('object.query.object')
-        model_obj = self.pool.get('ir.model')
-        
-        if object_id:
-            model = obj.browse(cr, uid, object_id)
-            for model_name in self._get_inherits_model(cr, uid, model.model_id.model):
-                model_id = model_obj.search(cr, uid, [('model', '=', model_name)])
-                if model_id:
-                    res['model_ids'].append(model_id[0])
-                    
-            # Insert the base model in the tab
-            if model.model_id.id not in res['model_ids']:
-                res['model_ids'].append(model.model_id.id)
-            
-        return {'value': res}
     
     def create_view(self, cr, uid, ids, context={}):
         '''
@@ -288,6 +300,8 @@ class object_query(osv.osv):
                     to_del = [ x.id for x in obj.selection_data  if x.field_id.id not in search]
                 if to_del:
                     self.pool.get('object.query.selection_data').unlink(cr, uid, to_del)
+            if obj.object_id:
+                cr.execute("update "+self._table+" set newquery='f'");
         return True
 
     _constraints = [
