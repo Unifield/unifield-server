@@ -84,7 +84,7 @@
                            <button name="open_wizard" type="object" string="Edit search values"  icon="gtk-justify-fill" colspan="2"/>
                            <button name="reset_search_values" type="object" string="Reset search values"  icon="gtk-cancel" colspan="2" confirm="This will delete the filters."/>
                            <field name="selection_data" colspan="4" nolabel="1">
-                                <tree editable="top" string="Search values" noteditable="1">
+                                <tree editable="top" string="Search values" noteditable="1" hide_new_button="1">
                                     <field name="field_id" />
                                     <field name="text" />
                                     <field name="forced" />
