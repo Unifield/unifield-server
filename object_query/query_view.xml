@@ -72,8 +72,8 @@
                     <group colspan="4" attrs="{'invisible': [('newquery', '=', True)]}">
                     <notebook colspan="4">
                         <page string="Search fields">
-                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids)]" nolabel="1" mode="tree" 
-                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}">
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_function', '=', False)]" nolabel="1" mode="tree" 
+                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
                                 <tree string="Search fields" noteditable="1" editable="top">
                                     <field name="field_description" />
                                     <field name="help" />
@@ -83,8 +83,8 @@
                         <page string="Search values">
                            <button name="open_wizard" type="object" string="Edit search values"  icon="gtk-justify-fill" colspan="2"/>
                            <button name="reset_search_values" type="object" string="Reset search values"  icon="gtk-cancel" colspan="2" confirm="This will delete the filters."/>
-                           <field name="selection_data" readonly="1" colspan="4" nolabel="1">
-                                <tree editable="top" string="Search values">
+                           <field name="selection_data" colspan="4" nolabel="1">
+                                <tree editable="top" string="Search values" noteditable="1">
                                     <field name="field_id" />
                                     <field name="text" />
                                     <field name="forced" />

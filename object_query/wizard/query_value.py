@@ -59,11 +59,11 @@ class search_values(osv.osv_memory):
         obj_q = self.pool.get('object.query').browse(cr, uid, context['query_id'])
         values = {}
         for sel in obj_q.selection_ids:
-            if sel.ttype in ('date', 'datetime', 'int', 'float'):
+            if sel.ttype in ('date', 'datetime', 'integer', 'float'):
                 values['forced_%s'%sel.id] = True
 
         for v  in obj_q.selection_data:
-            if v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+            if v.field_id.ttype in ('date', 'datetime', 'integer', 'float'):
                 values['%s_from'%(v.field_id.id, )] = v.value1
                 values['%s_to'%(v.field_id.id, )] = v.value2
                 values['forced_%s'%v.field_id.id] = True
@@ -86,7 +86,7 @@ class search_values(osv.osv_memory):
 
         values = {}
         for v  in obj_q.selection_data:
-            if v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+            if v.field_id.ttype in ('date', 'datetime', 'integer', 'float'):
                 values['%s_from'%(v.field_id.id, )] = v.value1
                 values['%s_to'%(v.field_id.id, )] = v.value2
             else:
@@ -97,7 +97,7 @@ class search_values(osv.osv_memory):
             field_name = '%s'%(sel.id)
             quest_fields['forced_%s'%field_name] = {'type': 'boolean', 'string': 'forced value', 'default': values.get('forced_%s'%(field_name, ))}
 
-            if sel.ttype in ('date', 'datetime', 'int', 'float'):
+            if sel.ttype in ('date', 'datetime', 'integer', 'float'):
                 quest_fields['forced_%s'%field_name]['default'] = True
                 quest_fields[field_name+'_from'] = {'type': sel.ttype, 'string': sel.field_description, 'default':values.get(field_name+'_from', False)}
                 quest_fields[field_name+'_to'] = {'type': sel.ttype, 'string': sel.field_description, 'default':values.get(field_name+'_to', False)}
@@ -127,7 +127,7 @@ class search_values(osv.osv_memory):
         quest_form = '<form string="Values">'
         for sel in obj_q.selection_ids:
             field_name = '%s'%(sel.id)
-            if sel.ttype in ('date', 'datetime', 'int', 'float'):
+            if sel.ttype in ('date', 'datetime', 'integer', 'float'):
                 quest_form += '<group colspan="4" col="7"><field name="%s_from" /> <label string="-"/><field name="%s_to" nolabel="1" colspan="2"/><field name="forced_%s" readonly="1"/></group>'%(field_name, field_name, field_name)
             else:
                 quest_form += '<field name="%s" /><field name="forced_%s" /> <newline/>'%(field_name, field_name)

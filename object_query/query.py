@@ -161,11 +161,12 @@ class object_query(osv.osv):
                 dom = False
                 forced_values.append(filter_v.field_id.id)
 
-                if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+                if filter_v.field_id.ttype in ('date', 'datetime', 'integer', 'float'):
                     if filter_v.value1:
-                        dom = (filter_v.field_id.name, '>=', filter_v.value1)
+                        domain.append((filter_v.field_id.name, '>=', filter_v.value1))
                     if filter_v.value2:
-                        dom = (filter_v.field_id.name, '<=', filter_v.value2)
+                        domain.append((filter_v.field_id.name, '<=', filter_v.value2))
+                    continue
                 elif filter_v.field_id.ttype == 'boolean':
                     if filter_v.value1 == 't':
                         dom = (filter_v.field_id.name, '=', True)
@@ -183,10 +184,11 @@ class object_query(osv.osv):
                         if filter_v.value1 == 'f':
                             # OpenERP bug
                             default_search['search_default_%s'%(dom[0], )] = '0'
+                        elif isinstance(dom[2], list):
+                            default_search['search_default_%s'%(dom[0], )] = dom[2][0]
 
                     else:
                         domain.append(dom)
-            
             for filter in query.selection_ids:
                 if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
@@ -368,7 +370,7 @@ class object_query_selection_data(osv.osv):
             ids = [ids]
         for obj in self.browse(cr, uid, ids):
             ret[obj.id] = ''
-            if obj.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+            if obj.field_id.ttype in ('date', 'datetime', 'integer', 'float'):
                 if obj.value1:
                     if obj.field_id.ttype in ('date', 'datetime'):
                         obj.value1 = datetime.strptime(obj.value1, from_format[obj.field_id.ttype]).strftime(to_format[obj.field_id.ttype])
@@ -511,9 +513,22 @@ class ir_fields(osv.osv):
             
         
         return []
-        
     
+    def _get_help(self, cr, uid, ids, field_name, arg, context={}):
+        res = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids):
+            res[obj.id] = False
+            target_obj = self.pool.get(obj.model_id.model)
+            if target_obj and obj.name in target_obj._columns:
+                res[obj.id] = target_obj._columns[obj.name].help
+        return res
+
+
     _columns = {
+        'help': fields.function(_get_help, method=True, type='char', size='10000', string='Help'),
         'model_search_id': fields.function(_get_model_search,
                                            fnct_search=_search_model_search,
                                            method=True,
@@ -544,25 +559,4 @@ class ir_fields(osv.osv):
     
 ir_fields()
 
-class ir_model_fields(osv.osv):
-    _inherit = 'ir.model.fields'
-    _name = 'ir.model.fields'
-
-    def _get_help(self, cr, uid, ids, field_name, arg, context={}):
-        res = {}
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-
-        for obj in self.browse(cr, uid, ids):
-            res[obj.id] = False
-            target_obj = self.pool.get(obj.model_id.model)
-            if target_obj and obj.name in target_obj._columns:
-                res[obj.id] = target_obj._columns[obj.name].help
-        return res
-
-
-    _columns = {
-        'help': fields.function(_get_help, method=True, type='char', size='10000', string='Help'),
-    }
-ir_model_fields()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
