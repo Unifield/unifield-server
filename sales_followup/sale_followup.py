@@ -597,47 +597,63 @@ class sale_order_line_followup(osv.osv_memory):
                     for step in out_step:
                         if out_step[step]['state'] and out_step[step]['state'] != 'done':
                             all_done = False
+
+                    print total_line, out_step
                     
                     # If all products should be processed from the main picking ticket or if the main picking ticket is done
                     if total_line == line.line_id.product_uom_qty:
+                        print '1'
                         res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
                     elif total_line < line.line_id.product_uom_qty and out_step['general']['state']:
+                        print '2'
                         res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
                     elif out_step['customer']['state'] == 'done' and all_done:
+                        print '3'
                         res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get('done', 'Error on state !')
                     else:
                         # If not all products are sent to the supplier
                         if out_step['customer']['state'] and out_step['customer']['state'] == 'partial':
+                            print '4'
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
                             res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
                         # If all products are waiting to send to customer
                         elif out_step['customer']['state'] and out_step['customer']['state'] == 'assigned':
+                            print '5'
                             res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
                             res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
                         
                         # If all products are not in distribution
                         if out_step['distrib']['state'] and out_step['distrib']['state'] == 'partial':
+                            print '6'
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
                         elif out_step['distrib']['state'] and out_step['distrib']['state'] == 'assigned':
+                            print '7'
                             res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
                             res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
                             
                         # If all products are not in dispatch zone
                         if out_step['dispatch']['state'] == 'partial':
+                            print '8'
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
                         
                         # If all products are not picked
                         if out_step['picking']['state'] == 'partial' or out_step['packing']['state'] == 'partial':
+                            print '9'
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
                             res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], 'Error on state !')
                         elif out_step['picking']['state'] == 'assigned':
+                            print '10'
                             res[line.id]['outgoing_status'] = out_status.get('assigned', 'Error on state !')
                             res[line.id]['product_available'] = out_status.get('assigned', 'Error on state !')
                         elif out_step['picking']['state'] == 'done' and out_step['packing']['state'] == 'assigned':
+                            print '11'
                             res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
+                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+
+                        if out_step['picking']['state'] == 'done':
                             res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
                         
                     # Set the number of the outgoing deliveries
