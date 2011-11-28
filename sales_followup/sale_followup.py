@@ -590,17 +590,22 @@ class sale_order_line_followup(osv.osv_memory):
                             total_line += general.product_qty
                             nb_out += 1
                             out_step['general']['state'] = general.state
+
+                    all_done = True
+                    for step in out_step:
+                        if out_step[step]['state'] and out_step[step]['state'] != 'done':
+                            all_done = False
                     
                     # If all products should be processed from the main picking ticket or if the main picking ticket is done
                     if total_line == line.line_id.product_uom_qty:
                         res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
-                    elif out_step['customer']['state'] == 'done':
-                        res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get('done', 'Error on state !')
                     elif total_line < line.line_id.product_uom_qty and out_step['general']['state']:
                         res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
                         res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                    elif out_step['customer']['state'] == 'done' and all_done:
+                        res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                        res[line.id]['outgoing_status'] = out_status.get('done', 'Error on state !')
                     else:
                         # If not all products are sent to the supplier
                         if out_step['customer']['state'] and out_step['customer']['state'] == 'partial':
