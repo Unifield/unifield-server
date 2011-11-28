@@ -20,23 +20,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Account Commitment",
-    "version" : "0.1",
-    "description" : "Notion of Commitment voucher. A kind of engagement lines between PO and invoices",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Tools",
-    "depends" : ["base", "account_override", "purchase"],
-    "init_xml" : [],
-    "update_xml" : [
-        'security/ir.model.access.csv',
-        'account_commitment_workflow.xml',
-        'account_commitment_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+
+import account_commitment
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

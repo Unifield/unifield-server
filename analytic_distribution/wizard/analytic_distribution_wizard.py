@@ -364,6 +364,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify invoice line state
             if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
+            # verify commitment state
+            if el.commitment_id and el.commitment_id.state in ['done', 'cancel']:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context={}):
@@ -405,6 +408,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'register_line_id': fields.many2one('account.bank.statement.line', string="Register Line"),
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
+        'commitment_id': fields.many2one('account.commitment', string="Commitment Entry"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -537,6 +541,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
             if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that commitment is in good state if necessary
+            if wiz.commitment_id and wiz.commitment_id.state in ['done', 'cancel']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and wiz.purchase_id:
@@ -707,7 +714,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
-                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), ('direct_invoice_line_id', 'wizard.account.invoice.line')]:
+                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
+                    ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)

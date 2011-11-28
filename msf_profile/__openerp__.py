@@ -76,6 +76,7 @@
         "analytic_distribution_invoice",
         "analytic_distribution_purchase",
         "account_commitment",
+        "analytic_distribution_commitment",
     ],
     "update_xml": [
         "report.xml",

@@ -20,17 +20,16 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 {
-    "name" : "Account Commitment",
+    "name" : "Analytic Distribution On commitment",
     "version" : "0.1",
-    "description" : "Notion of Commitment voucher. A kind of engagement lines between PO and invoices",
-    "author" : "MSF - TeMPO Consulting",
+    "description" : "Add analytic distribution on commitment",
+    "author" : "TeMPO Consulting",
     "category" : "Tools",
-    "depends" : ["base", "account_override", "purchase"],
+    "depends" : ["base", "account_commitment", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
-        'security/ir.model.access.csv',
-        'account_commitment_workflow.xml',
         'account_commitment_view.xml',
     ],
     "demo_xml" : [],

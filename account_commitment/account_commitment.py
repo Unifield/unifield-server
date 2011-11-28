@@ -25,17 +25,43 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+import decimal_precision as dp
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
     _description = "Account Commitment"
     _order = "id desc"
 
+    def _get_total(self, cr, uid, ids, name, args, context={}):
+        """
+        Give total of given commitments
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse commitments
+        for co in self.browse(cr, uid, ids, context=context):
+            res[co.id] = 0.0
+            for line in co.line_ids:
+                res[co.id] += line.amount
+        return res
+
     _columns = {
+        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
         'name': fields.char(string="Number", size=64),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('done', 'Closed'), ('cancel', 'Cancel')]),
+        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
+        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True),
+        'period_id': fields.many2one('account.period', string="Period", readonly=True),
+        'ref': fields.char(string='Reference', size=64),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('done', 'Closed'), ('cancel', 'Cancel')], readonly=True, string="State"),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Items"),
+        'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
+        'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
     }
 
     _defaults = {
@@ -53,8 +79,12 @@ class account_commitment_line(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', string="Account"),
+        'amount': fields.float(string="Amount", digits_compute=dp.get_precision('Account')),
         'commit_id': fields.many2one('account.commitment', string="Commitment Entry"),
     }
 
+    _defaults = {
+        'amount': lambda *a: 0.0,
+    }
 account_commitment_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
