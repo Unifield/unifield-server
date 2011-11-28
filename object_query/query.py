@@ -158,6 +158,7 @@ class object_query(osv.osv):
             domain = []
             default_search = {}
             for filter_v in query.selection_data:
+                dom = False
                 forced_values.append(filter_v.field_id.id)
 
                 if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
@@ -167,20 +168,21 @@ class object_query(osv.osv):
                         dom = (filter_v.field_id.name, '<=', filter_v.value2)
                 elif filter_v.field_id.ttype == 'boolean':
                     if filter_v.value1 == 't':
-                        dom = (filter_v.field_id.name, '=', 't')
+                        dom = (filter_v.field_id.name, '=', True)
                     elif filter_v.value1 == 'f':
-                        dom = (filter_v.field_id.name, '=', 'f')
+                        dom = (filter_v.field_id.name, '=', '0')
                 elif filter_v.field_id.ttype == 'many2one':
                     dom = (filter_v.field_id.name, 'in', [int(filter_v.value1)])
                 else:
                     dom = (filter_v.field_id.name, 'ilike', filter_v.value1)
 
-                if not filter_v.forced:
-                    search_filters += "<field name='%s' />" % (filter_v.field_id.name)
-                    default_search['search_default_%s'%(dom[0], )] = dom[2]
-                else:
-                    domain.append(dom)
-           
+                if dom:
+                    if not filter_v.forced:
+                        search_filters += "<field name='%s' />" % (filter_v.field_id.name)
+                        default_search['search_default_%s'%(dom[0], )] = dom[2]
+                    else:
+                        domain.append(dom)
+            
             for filter in query.selection_ids:
                 if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
