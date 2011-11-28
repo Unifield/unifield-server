@@ -131,27 +131,30 @@ class object_query(osv.osv):
             export_id = self.pool.get('ir.exports').create(cr, uid, {'name': query.name,
                                                                      'resource': query.object_id.model_id.model,})
     
+
+            forced_values = []
             domain = []
-            if not query.selection_data:
-                for filter in query.selection_ids:
+            for filter_v in query.selection_data:
+                forced_values.append(filter_v.field_id.id)
+                if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
+                    if filter_v.value1:
+                        domain.append((filter_v.field_id.name, '>=', filter_v.value1))
+                    if filter_v.value2:
+                        domain.append((filter_v.field_id.name, '<=', filter_v.value2))
+                elif filter_v.field_id.ttype == 'boolean':
+                    if filter_v.value1 == 't':
+                        domain.append((filter_v.field_id.name, '=', 't'))
+                    elif filter_v.value1 == 'f':
+                        domain.append((filter_v.field_id.name, '=', 'f'))
+                elif filter_v.field_id.ttype == 'many2one':
+                    domain.append((filter_v.field_id.name, 'in', [int(filter_v.value1)]))
+                else:
+                    domain.append((filter_v.field_id.name, '=', filter_v.value1))
+            
+            for filter in query.selection_ids:
+                if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
                     search_filters += "\n"
-            else:
-                for filter_v in query.selection_data:
-                    if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
-                        if filter_v.value1:
-                            domain.append((filter_v.field_id.name, '>=', filter_v.value1))
-                        if filter_v.value2:
-                            domain.append((filter_v.field_id.name, '<=', filter_v.value2))
-                    elif filter_v.field_id.ttype == 'boolean':
-                        if filter_v.value1 == 't':
-                            domain.append((filter_v.field_id.name, '=', 't'))
-                        elif filter_v.value1 == 'f':
-                            domain.append((filter_v.field_id.name, '=', 'f'))
-                    elif filter_v.field_id.ttype == 'many2one':
-                        domain.append((filter_v.field_id.name, 'in', [int(filter_v.value1)]))
-                    else:
-                        domain.append((filter_v.field_id.name, '=', filter_v.value1))
                 
             for result in query.result_ids:
                 tree_fields += "<field name='%s' />" % (result.field_id.name)
