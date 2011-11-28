@@ -67,7 +67,7 @@ class stock_batch_recall(osv.osv_memory):
                    'group_by_no_leaf': 1}
         
         domain =self.get_ids(cr, uid, ids)
-        
+
         result = mod_obj._get_id(cr, uid, 'stock_batch_recall', 'action_report_batch_recall')
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
         
@@ -75,6 +75,9 @@ class stock_batch_recall(osv.osv_memory):
         
         for d in domain:
             context.update({'search_default_%s' %d[0]: d[2]})
+            context.update({'search_default_group_%s' %d[0]: 1})
+
+        context.update({'search_default_group_location': 1})
 
         result['domain'] = domain
         result['context'] = context
