@@ -58,8 +58,10 @@ class object_query(osv.osv):
         'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'), 
         'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group', 
                                           'query_id', 'field_id', string='Group by fields'),
-        'result_ids': fields.one2many('object.query.result.fields', 'object_id', 
+        'result_simple_ids': fields.many2many('ir.model.fields', 'result_simple_rel', 'query_id', 'field_id',
                                       string='Result fields'),
+        'result_ids': fields.one2many('object.query.result.fields', 'object_id', 
+                                      string='Result order'),
         'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
                                      relation='ir.model', string='Models'),
         'search_view_id': fields.many2one('ir.ui.view', string='Search View'),
@@ -94,7 +96,8 @@ class object_query(osv.osv):
         Change the value of model_id when the object changes
         '''
         res = {'selection_ids': [], 'model_ids': [],
-               'group_by_ids': [],'result_ids': []}
+               'group_by_ids': [],'result_ids': [],
+               'result_simple_ids': [], 'selection_data':[]}
         
         obj = self.pool.get('object.query.object')
         model_obj = self.pool.get('ir.model')
@@ -117,7 +120,7 @@ class object_query(osv.osv):
         Construct the view according to the user choices
         '''
         view_obj = self.pool.get('ir.ui.view')
-        
+        self.set_sequence(cr, uid, ids) 
         for query in self.browse(cr, uid, ids, context=context):
             search_view_id = query.search_view_id and query.search_view_id.id or False
             tree_view_id = query.tree_view_id and query.tree_view_id.id or False
@@ -223,6 +226,30 @@ class object_query(osv.osv):
                     'context': {'disable_cache': time.time()}}
         
         return {'type': 'ir.actions.act_window_close'}
+
+    def set_sequence(self, cr, uid, ids, context={}):
+        for obj in self.browse(cr, uid, ids):
+            existing = {}
+            max_seq = 0
+            for ex in obj.result_ids:
+                existing[ex.field_id.id] = ex.id
+                max_seq = max(ex.sequence, max_seq)
+            max_seq += 1
+            values = []
+            for field in obj.result_simple_ids:
+                if field.id not in existing:
+                    values.append((0, 0, {'sequence': max_seq, 'field_id': field.id}))
+                    max_seq += 1
+                else:
+                    del(existing[field.id])
+            
+            if existing:
+                for to_del in existing:
+                    values.append((2, existing[to_del]))
+
+            if values:
+                self.write(cr, uid, [obj.id], {'result_ids':values})
+        return True
 
     def open_wizard(self, cr, uid, ids, context={}):
         return {
@@ -335,7 +362,8 @@ class object_query_result_fields(osv.osv):
     _name = 'object.query.result.fields'
     _description = 'Result fields'
     _rec_name = 'field_id'
-    
+    _order = 'sequence'
+
     def _get_model_ids(self, cr, uid, ids, field, arg, context={}):
         res = {}
         

@@ -64,7 +64,7 @@
                             </field>
                         </page>
                         <page string="Selection values">
-                           <button name="open_wizard" type="object" string="Open Selection"  icon="gtk-justify-fill" colspan="2"/>
+                           <button name="open_wizard" type="object" string="Set search values"  icon="gtk-justify-fill" colspan="2"/>
                            <field name="selection_data" readonly="1" colspan="4" nolabel="1">
                                 <tree>
                                     <field name="field_id" />
@@ -81,8 +81,16 @@
                             </field>
                         </page>
                         <page string="Result fields">
-                            <field name="result_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids}">
+                            <field name="result_simple_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids, 'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" domain="[('model_search_id', 'in', model_ids)]">
                                 <tree string="Result fields" editable="top">
+                                    <field name="field_description" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Result fields order">
+                           <button name="set_sequence" type="object" string="Populate order"  icon="gtk-justify-fill" colspan="2"/>
+                            <field name="result_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids}">
+                                <tree string="Result fields" editable="top" hide_new_button="1">
                                     <field name="sequence" />
                                     <field name="field_id" domain="[('model_search_id', 'in', context.get('model_ids'))]"
                                            context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" />
