@@ -63,7 +63,7 @@ class object_query(osv.osv):
         'user_id': fields.many2one('res.users', string='Creator', required=True),
         'object_id': fields.many2one('object.query.object', string='Object'),
         'selection_ids': fields.many2many('ir.model.fields', 'query_fields_sel', 
-                                          'query_id', 'field_id', string='Selection fields'),
+                                          'query_id', 'field_id', string='Search Fields'),
         'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'), 
         'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group', 
                                           'query_id', 'field_id', string='Group by fields'),
@@ -88,17 +88,24 @@ class object_query(osv.osv):
     def dummy(self, cr, uid, ids, context):
         return True
 
-    def change_object(self, cr, uid, ids, context):
+    def reset_search_values(self, cr, uid, ids, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sel_date = self.pool.get('object.query.selection_data')
+        r1 = sel_date.search(cr, uid, [('query_id', 'in', ids)])
+        if r1:
+            sel_date.unlink(cr, uid, r1)
+        return True
+
+    def change_object(self, cr, uid, ids, context={}):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = self.pool.get('object.query.result.fields')
         r1 = result.search(cr, uid, [('object_id', 'in', ids)])
         if r1:
             result.unlink(cr, uid, r1)
-        sel_date = self.pool.get('object.query.selection_data')
-        r1 = sel_date.search(cr, uid, [('query_id', 'in', ids)])
-        if r1:
-            sel_date.unlink(cr, uid, r1)
+
+        self.reset_search_values(cr, uid, ids, context)
 
         self.write(cr, uid, ids, {
             'object_id': False, 
@@ -239,6 +246,19 @@ class object_query(osv.osv):
         
         return {'type': 'ir.actions.act_window_close'}
 
+    def populate_result(self, cr, uid, ids, context={}):
+        for obj in self.browse(cr, uid, ids):
+            existing = {}
+            for field in obj.result_simple_ids:
+                existing[field.id] = True
+            to_create = []
+            for search in obj.selection_ids:
+                if search.id not in existing:
+                    to_create.append((4, search.id))
+            if to_create:
+                self.write(cr, uid, obj.id, {'result_simple_ids': to_create })
+        return True
+
     def set_sequence(self, cr, uid, ids, context={}):
         for obj in self.browse(cr, uid, ids):
             existing = {}
@@ -313,7 +333,7 @@ object_query()
 
 class object_query_selection_data(osv.osv):
     _name = 'object.query.selection_data'
-    _description = 'Selection Values'
+    _description = 'Search Values'
     _rec_name = 'field_id'
 
     def _get_text(self, cr, uid, ids, field, arg, context={}):
@@ -509,4 +529,25 @@ class ir_fields(osv.osv):
     
 ir_fields()
 
+class ir_model_fields(osv.osv):
+    _inherit = 'ir.model.fields'
+    _name = 'ir.model.fields'
+
+    def _get_help(self, cr, uid, ids, field_name, arg, context={}):
+        res = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids):
+            res[obj.id] = False
+            target_obj = self.pool.get(obj.model_id.model)
+            if target_obj and obj.name in target_obj._columns:
+                res[obj.id] = target_obj._columns[obj.name].help
+        return res
+
+
+    _columns = {
+        'help': fields.function(_get_help, method=True, type='char', size='10000', string='Help'),
+    }
+ir_model_fields()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

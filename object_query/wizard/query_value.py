@@ -113,7 +113,7 @@ class search_values(osv.osv_memory):
                 quest_form += '<field name="%s" /> <newline/>'%(field_name,)
         quest_form += ''''<group colspan="4">
             <button special="cancel" string="Cancel" icon="gtk-cancel" type="object" colspan="2"/>
-            <button string="Save" icon="gtk-execute" name="compute" type="object" colspan="2"/>
+            <button string="Save" icon="gtk-save" name="compute" type="object" colspan="2"/>
         </group>
         </form>'''
         ret['arch'] = quest_form
