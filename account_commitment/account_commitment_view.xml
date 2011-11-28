@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Commitment -->
+        <record model="ir.ui.view" id="account_commitment_form">
+            <field name="name">account.commitment.form</field>
+            <field name="model">account.commitment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Commitment Entry">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="state"/>
+                    <field name="line_ids"/>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="account_commitment_tree">
+            <field name="name">account.commitment.tree</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Commitment Entries" colors="red:state == 'cancel';blue:state=='draft';black:state == 'black'">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="state"/>
+                    <button name="commitment_open" string="Open" icon="terp-camera_test" states="draft"/>
+                    <button name="commitment_validate" string="Validate" icon="terp-gtk-go-back-rtl" states="open"/>
+                    <button name="commitment_cancel" string="Cancel" icon="gtk-cancel" states="open"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Commitment Lines -->
+        <record model="ir.ui.view" id="account_commitment_line_tree">
+            <field name="name">account.commitment.line.tree</field>
+            <field name="model">account.commitment.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Commitment Items">
+                    <field name="account_id" nolabel="1"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <record model="ir.actions.act_window" id="action_account_commitment_tree">
+            <field name="res_model">account.commitment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_commitment_tree"/>
+        </record>
+
+    <!-- Menu -->
+        <menuitem id="menu_commitment" name="Commitment" parent="account.menu_finance" sequence="5"/>
+        <menuitem name="Commitment Entries" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
+
+    </data>
+</openerp>
