@@ -81,7 +81,7 @@
                             </field>
                         </page>
                         <page string="Search values">
-                           <button name="open_wizard" type="object" string="Set search values"  icon="gtk-justify-fill" colspan="2"/>
+                           <button name="open_wizard" type="object" string="Edit search values"  icon="gtk-justify-fill" colspan="2"/>
                            <button name="reset_search_values" type="object" string="Reset search values"  icon="gtk-cancel" colspan="2" confirm="This will delete the filters."/>
                            <field name="selection_data" readonly="1" colspan="4" nolabel="1">
                                 <tree editable="top" string="Search values">
@@ -123,7 +123,7 @@
                         </page>
                     </notebook>
                     <label colspan="2" />
-                    <button name="create_view" string="Run the query" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="create_view" string="Run the query" type="object" icon="gtk-go-forward" colspan="2" />
                     </group>
                 </form>
             </field>
@@ -138,6 +138,8 @@
                     <field name="name" />
                     <field name="user_id" />
                     <field name="object_id" />
+                    <field name="newquery" invisible="1" />
+                    <button name="create_view" type="object" icon="gtk-go-forward" attrs="{'invisible': [('newquery', '=', True)]}"/>
                 </tree>
             </field>
         </record>
