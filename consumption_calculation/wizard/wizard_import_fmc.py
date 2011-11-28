@@ -83,7 +83,7 @@ class wizard_import_fmc(osv.osv_memory):
         # now we determine the file format
         fileobj.seek(0)
 
-        reader = csv.reader(fileobj, quotechar='\'', delimiter=';')
+        reader = csv.reader(fileobj, quotechar='"', delimiter=';')
 
         error = ''
 
