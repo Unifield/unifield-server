@@ -87,6 +87,7 @@
                                 <tree editable="top" string="Search values">
                                     <field name="field_id" />
                                     <field name="text" />
+                                    <field name="forced" />
                                 </tree>
                            </field>
                         </page>

@@ -20,18 +20,22 @@ class search_values(osv.osv_memory):
         if old_lines:
             line_obj.unlink(cr, uid, old_lines)
         for v in data:
+            if v.startswith('forced'):
+                continue
             if '_' in v:
                 field_info, limit = v.split('_')
                 if limit == 'to':
                     continue
                 value = data[v]
                 value2 = data["%s_to"%(field_info, )]
+                forced = True
             else:
                 field_info = v
                 value = data[v]
                 value2 = False
+                forced = data.get('forced_%s'%(field_info,), False)
             if value or value2:
-                line_obj.create(cr, uid, {'query_id': datas['query_id'], 'field_id': field_info, 'value1': value, 'value2': value2})
+                line_obj.create(cr, uid, {'query_id': datas['query_id'], 'field_id': field_info, 'value1': value, 'value2': value2, 'forced': forced})
         return { 'type': 'ir.actions.act_window_close'}
 
     def create(self, cr, uid, vals, context={}):
@@ -48,11 +52,17 @@ class search_values(osv.osv_memory):
 
         obj_q = self.pool.get('object.query').browse(cr, uid, context['query_id'])
         values = {}
+        for sel in obj_q.selection_ids:
+            if sel.ttype in ('date', 'datetime', 'int', 'float'):
+                values['forced_%s'%sel.id] = True
+
         for v  in obj_q.selection_data:
             if v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
                 values['%s_from'%(v.field_id.id, )] = v.value1
                 values['%s_to'%(v.field_id.id, )] = v.value2
+                values['forced_%s'%v.field_id.id] = True
             else:
+                values['forced_%s'%v.field_id.id] = v.forced
                 if v.field_id.ttype == 'many2one':
                     values['%s'%v.field_id.id] = v.value1 and int(v.value1)
                 else:
@@ -75,10 +85,14 @@ class search_values(osv.osv_memory):
                 values['%s_to'%(v.field_id.id, )] = v.value2
             else:
                 values[v.field_id.id] = v.value1
-        
+                values['forced_%s'%v.field_id.id] = v.forced
+       
         for sel in obj_q.selection_ids:
             field_name = '%s'%(sel.id)
+            quest_fields['forced_%s'%field_name] = {'type': 'boolean', 'string': 'forced value', 'default': values.get('forced_%s'%(field_name, ))}
+
             if sel.ttype in ('date', 'datetime', 'int', 'float'):
+                quest_fields['forced_%s'%field_name]['default'] = True
                 quest_fields[field_name+'_from'] = {'type': sel.ttype, 'string': sel.field_description, 'default':values.get(field_name+'_from', False)}
                 quest_fields[field_name+'_to'] = {'type': sel.ttype, 'string': sel.field_description, 'default':values.get(field_name+'_to', False)}
 
@@ -108,9 +122,9 @@ class search_values(osv.osv_memory):
         for sel in obj_q.selection_ids:
             field_name = '%s'%(sel.id)
             if sel.ttype in ('date', 'datetime', 'int', 'float'):
-                quest_form += '<group colspan="4" col="5"><field name="%s_from" /> <label string="-"/><field name="%s_to" nolabel="1" colspan="2"/></group>'%(field_name, field_name)
+                quest_form += '<group colspan="4" col="7"><field name="%s_from" /> <label string="-"/><field name="%s_to" nolabel="1" colspan="2"/><field name="forced_%s" readonly="1"/></group>'%(field_name, field_name, field_name)
             else:
-                quest_form += '<field name="%s" /> <newline/>'%(field_name,)
+                quest_form += '<field name="%s" /><field name="forced_%s" /> <newline/>'%(field_name, field_name)
         quest_form += ''''<group colspan="4">
             <button special="cancel" string="Cancel" icon="gtk-cancel" type="object" colspan="2"/>
             <button string="Save" icon="gtk-save" name="compute" type="object" colspan="2"/>

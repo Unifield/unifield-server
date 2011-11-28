@@ -156,23 +156,31 @@ class object_query(osv.osv):
 
             forced_values = []
             domain = []
+            default_search = {}
             for filter_v in query.selection_data:
                 forced_values.append(filter_v.field_id.id)
+
                 if filter_v.field_id.ttype in ('date', 'datetime', 'int', 'float'):
                     if filter_v.value1:
-                        domain.append((filter_v.field_id.name, '>=', filter_v.value1))
+                        dom = (filter_v.field_id.name, '>=', filter_v.value1)
                     if filter_v.value2:
-                        domain.append((filter_v.field_id.name, '<=', filter_v.value2))
+                        dom = (filter_v.field_id.name, '<=', filter_v.value2)
                 elif filter_v.field_id.ttype == 'boolean':
                     if filter_v.value1 == 't':
-                        domain.append((filter_v.field_id.name, '=', 't'))
+                        dom = (filter_v.field_id.name, '=', 't')
                     elif filter_v.value1 == 'f':
-                        domain.append((filter_v.field_id.name, '=', 'f'))
+                        dom = (filter_v.field_id.name, '=', 'f')
                 elif filter_v.field_id.ttype == 'many2one':
-                    domain.append((filter_v.field_id.name, 'in', [int(filter_v.value1)]))
+                    dom = (filter_v.field_id.name, 'in', [int(filter_v.value1)])
                 else:
-                    domain.append((filter_v.field_id.name, '=', filter_v.value1))
-            
+                    dom = (filter_v.field_id.name, 'ilike', filter_v.value1)
+
+                if not filter_v.forced:
+                    search_filters += "<field name='%s' />" % (filter_v.field_id.name)
+                    default_search['search_default_%s'%(dom[0], )] = dom[2]
+                else:
+                    domain.append(dom)
+           
             for filter in query.selection_ids:
                 if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
@@ -211,7 +219,6 @@ class object_query(osv.osv):
                                 'priority': 250,
                                 'type': 'search',
                                 'arch': search_arch,
-                                'context': "{'search_default_create_date': '2011-01-01', 'search_default_name': 'oo'}",
                                 'xmd_id': 'object_query.query_search_%s_%s' %(query.object_id.model_id.model, query.id)}
             
             tree_view_data = {'name': 'query.tree.%s.%s' %(query.object_id.model_id.model, query.id),
@@ -220,7 +227,6 @@ class object_query(osv.osv):
                               'type': 'tree',
                               'arch': tree_arch,
                               'xmd_id': 'object_query.query_tree_%s_%s' %(query.object_id.model_id.model, query.id)}
-            
             # Create or update views
             if search_view_id:
                 view_obj.write(cr, uid, search_view_id, search_view_data, context=context)
@@ -234,7 +240,8 @@ class object_query(osv.osv):
             
             self.write(cr, uid, query.id, {'search_view_id': search_view_id,
                                            'tree_view_id': tree_view_id}, context=context)
-           
+          
+            default_search.update(disable_cache=time.time())
             return {'type': 'ir.actions.act_window',
                     'res_model': query.object_id.model_id.model,
                     'search_view_id': [search_view_id],
@@ -242,7 +249,8 @@ class object_query(osv.osv):
                     'view_mode': 'tree,form',
                     'view_type': 'form',
                     'domain': domain,
-                    'context': {'disable_cache': time.time()}}
+                    'context': default_search
+                }
         
         return {'type': 'ir.actions.act_window_close'}
 
@@ -387,6 +395,7 @@ class object_query_selection_data(osv.osv):
         'field_id': fields.many2one('ir.model.fields', 'Fields', required=True, ondelete='cascade'),
         'value1': fields.char('Value', size=2048),
         'value2': fields.char('Value2', size=2048),
+        'forced': fields.boolean('Forced value'),
         'text': fields.function(_get_text, type='char', method=True, string='Filtre'),
     }
 object_query_selection_data()
