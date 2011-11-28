@@ -22,6 +22,24 @@
 from osv import fields, osv
 import datetime
 
+class financing_contract_funding_pool_line(osv.osv):
+    # 
+    _name = "financing.contract.funding.pool.line"
+    
+    _columns = {
+        'contract_id': fields.many2one('account.analytic.account', 'Contract', required=True),
+        'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
+        'funded': fields.boolean('Funded'),
+        'total_project': fields.boolean('Total project'),
+    }
+        
+    _defaults = {
+        'funded': False,
+        'total_project': True,
+    }
+    
+financing_contract_funding_pool_line()
+
 class financing_contract_contract(osv.osv):
     
     _name = "financing.contract.contract"
@@ -65,7 +83,8 @@ class financing_contract_contract(osv.osv):
         # Unicity is important
         cost_center_ids = []
         if len(browse_contract.funding_pool_ids) > 0:
-            for funding_pool in browse_contract.funding_pool_ids:
+            for funding_pool_line in browse_contract.funding_pool_ids:
+                funding_pool = funding_pool_line.funding_pool_id
                 funding_pool_domain += str(funding_pool.id)
                 funding_pool_domain += ", "
                 for account in funding_pool.account_ids:
@@ -241,7 +260,7 @@ class financing_contract_contract(osv.osv):
         'grant_amount': fields.float('Grant amount', size=64, required=True),
         'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
         'notes': fields.text('Notes'),
-        'funding_pool_ids': fields.many2many('account.analytic.account', 'financing_contract_funding_pool', 'contract_id', 'funding_pool_id', string='Funding Pools'),
+        'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
         'open_date': fields.date('Open date'),
         'soft_closed_date': fields.date('Soft-closed date'),
         'hard_closed_date': fields.date('Hard-closed date'),
