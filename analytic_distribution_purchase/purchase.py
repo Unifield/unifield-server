@@ -196,21 +196,30 @@ class purchase_order(osv.osv):
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'ref': po.name or '',
                 'type': po.partner_id and po.partner_id.partner_type or 'manual',
-                'analytic_distribution_id': False,
             }
-            # prepare some other values
+            # prepare some values
             today = strftime('%Y-%m-%d')
             period_ids = get_period_from_date(self, cr, uid, po.delivery_requested_date or today, context=context)
             period_id = period_ids and period_ids[0] or False
             date = get_date_in_period(self, cr, uid, po.delivery_requested_date or today, period_id, context=context)
             po_lines = defaultdict(list)
-            # update final vals
+            # update period and date
             vals.update({
                 'date': date,
                 'period_id': period_id,
             })
             # Create commitment
             commit_id = commit_obj.create(cr, uid, vals, context=context)
+            # Add analytic distribution from purchase
+            if po.analytic_distribution_id:
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
+                # Update this distribution not to have a link with purchase but with new commitment
+                if new_distrib_id:
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    # Create funding pool lines if needed
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
+                    # Update commitment with new analytic distribution
+                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
@@ -226,11 +235,12 @@ class purchase_order(osv.osv):
                 a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
                 # Write
                 po_lines[a].append(pol)
-            # Create commitment lines
+            # Commitment lines process
             for account_id in po_lines:
                 total = 0.0
                 for line in po_lines[account_id]:
                     total += line.price_subtotal
+                # Create commitment lines
                 self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total, 'account_id': account_id}, context=context)
         return True
 
