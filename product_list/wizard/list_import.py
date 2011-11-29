@@ -100,7 +100,7 @@ class product_list_import(osv.osv_memory):
             
             for line in reader:
                 line_num += 1
-                if len(line) < 3:
+                if len(line) < 2:
                     error += 'Line %s is not valid !' % (line_num)
                     error += '\n'
                     continue
@@ -119,7 +119,7 @@ class product_list_import(osv.osv_memory):
                 product_id = product_ids[0]
                 
                 line_ids.append(line_obj.create(cr, uid, {'name': product_id,
-                                                          'comment': line[2],
+                                                          'comment': len(line) >_2 and line[2] or '',
                                                           'list_id': list_id}))
                 
             if error and error != '':
