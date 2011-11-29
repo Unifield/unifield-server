@@ -168,6 +168,57 @@ class purchase_order(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
+    def action_create_commitment(self, cr, uid, ids, type=False, context={}):
+        """
+        Create commitment from given PO, but only for external and esc partner_types
+        """
+        # Some verifications
+        if not type or type not in ['external', 'esc']:
+            return False
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        commit_obj = self.pool.get('account.commitment')
+        eng_ids = self.pool.get('account.journal').search(cr, uid, [('user_type', '=', 'engagement')], context=context)
+        for po in self.browse(cr, uid, ids, context=context):
+            # fetch analytic distribution, period from delivery date, currency, etc.
+            vals = {
+                'journal_id': eng_ids and eng_ids[0] or False,
+                'currency_id': po.currency_id and po.currency_id.id or False,
+                'partner_id': po.partner_id and po.partner_id.id or False,
+                'ref': po.name or '',
+                'type': po.partner_type or 'manual',
+            }
+            # Update some values
+            vals.update({
+                'date': False,
+                'line_ids': {},
+                'total': 0.0,
+                'analytic_distribution_id': False,
+                'period_id': False,
+            })
+        return True
+
+    def wkf_approve_order(self, cr, uid, ids, context={}):
+        """
+        Checks if a commitment voucher should be created after PO approbation
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Default behaviour
+        res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+        # For each PO, check if partner is external or ESC. If yes, create a commitment (either external or esc)
+        self.action_create_commitment(cr,)
+        for po in self.browse(cr, uid, ids, context=context):
+            # Create commitment
+            self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        return res
+
 purchase_order()
 
 class purchase_order_line(osv.osv):

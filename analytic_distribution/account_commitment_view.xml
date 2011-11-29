@@ -11,14 +11,16 @@
                 <form string="Commitment Voucher">
                     <group col="6" colspan="4">
                         <field name="journal_id"/>
+                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
+                        <newline/>
                         <field name="name"/>
                         <field name="ref"/>
                         <newline/>
                         <field name="date"/>
                         <field name="period_id"/>
-                        <field name="currency_id"/>
                         <newline/>
-                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
+                        <field name="currency_id"/>
+                        <field name="type"/>
                     </group>
                     <group colspan="6">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="2"/>
