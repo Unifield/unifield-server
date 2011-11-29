@@ -482,7 +482,11 @@ class stock_move(osv.osv):
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
                                      'message': _('The selected product is Perishable.')}
-            
+        
+        # quantities are set to False
+        result.setdefault('value', {}).update({'product_qty': False,
+                                               'product_uos_qty': False,
+                                               })
         return result
     
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
