@@ -21,8 +21,6 @@
 
 from osv import osv, fields
 import time
-from datetime import datetime
-from tools.translate import _
 
 class object_query_object(osv.osv):
     _name = 'object.query.object'

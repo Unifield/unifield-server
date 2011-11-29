@@ -213,7 +213,7 @@ class product_product(osv.osv):
         if not context:
            context={}
 
-        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context)
+        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
             line_view = """<tree string="Historical consumption">
