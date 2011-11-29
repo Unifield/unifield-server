@@ -33,4 +33,15 @@ class account_commitment(osv.osv):
     }
 
 account_commitment()
+
+class account_commitment_line(osv.osv):
+    _name = 'account.commitment.line'
+    _inherit = 'account.commitment.line'
+
+    _columns = {
+        'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id', 
+            string="Purchase Order Lines", readonly=True),
+    }
+
+account_commitment_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

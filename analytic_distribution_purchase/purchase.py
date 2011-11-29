@@ -237,11 +237,11 @@ class purchase_order(osv.osv):
                 po_lines[a].append(pol)
             # Commitment lines process
             for account_id in po_lines:
-                total = 0.0
+                total_amount = 0.0
                 for line in po_lines[account_id]:
-                    total += line.price_subtotal
+                    total_amount += line.price_subtotal
                 # Create commitment lines
-                self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total, 'account_id': account_id}, context=context)
+                self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
         return True
 
     def wkf_approve_order(self, cr, uid, ids, context={}):
