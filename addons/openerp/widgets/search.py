@@ -488,7 +488,15 @@ class Group(form.Group):
 
 class Integer(form.Integer): pass
 class NewLine(form.NewLine): pass
-class Selection(form.Selection): pass
+class Selection(form.Selection):
+    def __init__(self, **attrs):
+        super(Selection, self).__init__(**attrs)
+        found_empty = False
+        for opt in self.options:
+            if not opt[0]:
+                found_empty = True
+        if not found_empty:
+            self.options.insert(0, ('',''))
 class Separator(form.Separator): pass
 
 RANGE_WIDGETS = {
