@@ -27,5 +27,6 @@ import analytic_account
 import analytic_line
 import invoice
 import wizard
+import account_commitment
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
