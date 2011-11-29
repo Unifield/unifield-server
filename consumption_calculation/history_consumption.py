@@ -52,7 +52,7 @@ class product_history_consumption(osv.osv_memory):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.history.consumption',
                 'res_id': new_id,
-                'context': context,
+                'context': {'active_id': new_id, 'active_ids': [new_id]},
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'dummy'}
