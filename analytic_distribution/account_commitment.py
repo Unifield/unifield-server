@@ -67,20 +67,20 @@ class account_commitment(osv.osv):
         return res
 
     _columns = {
-        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True, required=True),
-        'name': fields.char(string="Number", size=64),
+        'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
+        'name': fields.char(string="Number", size=64, readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'ref': fields.char(string='Reference', size=64, readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('done', 'Closed')], readonly=True, string="State", required=True),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Validate'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
-        'type': fields.selection([('manual', 'Manual'), ('auto_ext', 'From external supplier'), ('auto_esc', 'From Esc supplier')], string="Type", readonly=True),
+        'type': fields.selection([('manual', 'Manual'), ('external', 'From external supplier'), ('esc', 'From Esc supplier')], string="Type", readonly=True),
     }
 
     _defaults = {

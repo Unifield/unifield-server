@@ -25,6 +25,12 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+from time import strftime
+from account_tools import get_period_from_date
+from account_tools import get_date_in_period
+
+from collections import defaultdict
+
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
@@ -181,7 +187,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Prepare some values
         commit_obj = self.pool.get('account.commitment')
-        eng_ids = self.pool.get('account.journal').search(cr, uid, [('user_type', '=', 'engagement')], context=context)
+        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
         for po in self.browse(cr, uid, ids, context=context):
             # fetch analytic distribution, period from delivery date, currency, etc.
             vals = {
@@ -189,16 +195,43 @@ class purchase_order(osv.osv):
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'ref': po.name or '',
-                'type': po.partner_type or 'manual',
-            }
-            # Update some values
-            vals.update({
-                'date': False,
-                'line_ids': {},
-                'total': 0.0,
+                'type': po.partner_id and po.partner_id.partner_type or 'manual',
                 'analytic_distribution_id': False,
-                'period_id': False,
+            }
+            # prepare some other values
+            today = strftime('%Y-%m-%d')
+            period_ids = get_period_from_date(self, cr, uid, po.delivery_requested_date or today, context=context)
+            period_id = period_ids and period_ids[0] or False
+            date = get_date_in_period(self, cr, uid, po.delivery_requested_date or today, period_id, context=context)
+            po_lines = defaultdict(list)
+            # update final vals
+            vals.update({
+                'date': date,
+                'period_id': period_id,
             })
+            # Create commitment
+            commit_id = commit_obj.create(cr, uid, vals, context=context)
+            # Browse purchase order lines and group by them by account_id
+            for pol in po.order_line:
+                # Search product account_id
+                if pol.product_id:
+                    a = pol.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = pol.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                fpos = po.fiscal_position or False
+                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                # Write
+                po_lines[a].append(pol)
+            # Create commitment lines
+            for account_id in po_lines:
+                total = 0.0
+                for line in po_lines[account_id]:
+                    total += line.price_subtotal
+                self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total, 'account_id': account_id}, context=context)
         return True
 
     def wkf_approve_order(self, cr, uid, ids, context={}):
@@ -212,10 +245,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
-        # For each PO, check if partner is external or ESC. If yes, create a commitment (either external or esc)
-        self.action_create_commitment(cr,)
+        # Create commitments for each PO
         for po in self.browse(cr, uid, ids, context=context):
-            # Create commitment
             self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 

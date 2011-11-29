@@ -10,16 +10,16 @@
             <field name="arch" type="xml">
                 <form string="Commitment Voucher">
                     <group col="6" colspan="4">
-                        <field name="journal_id"/>
-                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
+                        <field name="journal_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
+                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
                         <newline/>
                         <field name="name"/>
                         <field name="ref"/>
                         <newline/>
                         <field name="date"/>
-                        <field name="period_id"/>
+                        <field name="period_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
                         <newline/>
-                        <field name="currency_id"/>
+                        <field name="currency_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
                         <field name="type"/>
                     </group>
                     <group colspan="6">
@@ -34,8 +34,8 @@
                     </notebook>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
-                        <button name="commitment_open" string="Open" icon="terp-camera_test" states="draft" colspan="2"/>
-                        <button name="commitment_validate" string="Validate" icon="terp-gtk-go-back-rtl" states="open" colspan="2"/>
+                        <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
+                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" colspan="2" attrs="{'readonly': [('type', '=', 'external')]}"/>
                     </group>
                     <field name="state"/>
                     <field name="total"/>
@@ -57,9 +57,9 @@
                     <field name="currency_id"/>
                     <field name="total" digits="(16,2)"/>
                     <field name="state"/>
-                    <button name="commitment_open" string="Open" icon="terp-camera_test" states="draft"/>
-                    <button name="commitment_validate" string="Validate" icon="terp-gtk-go-back-rtl" states="open"/>
-                    <button name="commitment_cancel" string="Cancel" icon="gtk-cancel" states="open"/>
+                    <field name="type" invisible="1"/>
+                    <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft"/>
+                    <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" attrs="{'readonly': [('type', '=', 'external')]}"/>
                 </tree>
             </field>
         </record>
