@@ -72,8 +72,9 @@
                     <group colspan="4" attrs="{'invisible': [('newquery', '=', True)]}">
                     <notebook colspan="4">
                         <page string="Search fields">
-                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_function', '=', False)]" nolabel="1" mode="tree" 
-                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_unsearchable', '=', False)]" nolabel="1" mode="tree" 
+                                   context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}"
+                                >
                                 <tree string="Search fields" noteditable="1" editable="top">
                                     <field name="field_description" />
                                     <field name="help" />

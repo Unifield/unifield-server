@@ -419,8 +419,7 @@ class object_query_result_fields(osv.osv):
         res = {}
         
         for result in self.browse(cr, uid, ids, context=context):
-            res[result.id] = result.object_id.model_ids
-            
+            res[result.id] = [x.id for x in result.object_id.model_ids]
         return res
     
     _columns = {
@@ -492,7 +491,7 @@ class ir_fields(osv.osv):
             return []
         
         for a in args:
-            if a[0] == 'is_function':
+            if a[0] in ['is_function', 'is_unsearchable']:
                 field_ids = []
                 all_fields_ids = []
                 model_ids = context.get('model_ids', [(6,0,[])])[0][2]
@@ -501,10 +500,13 @@ class ir_fields(osv.osv):
                     model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
                     
                 for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
+                    model_obj = self.pool.get(obj.model)
                     for field in obj.field_id:
                         all_fields_ids.append(field.id)
-                        if hasattr(self.pool.get(obj.model)._columns[field.name], '_properties') and  self.pool.get(obj.model)._columns[field.name]._properties:
-                            field_ids.append(field.id)
+                        col = model_obj._columns[field.name]
+                        if hasattr(col, '_properties') and col._properties and not col.store:
+                            if a[0] == 'is_function' or not isinstance(col, fields.related):
+                                field_ids.append(field.id)
                 
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
                     return [('id', 'not in', field_ids)]
@@ -538,6 +540,10 @@ class ir_fields(osv.osv):
                                        fnct_search=_search_function, 
                                        method=True,
                                        type='boolean', string='Is function ?'),
+        'is_unsearchable': fields.function(_is_function, 
+                                       fnct_search=_search_function, 
+                                       method=True,
+                                       type='boolean', string='Is searchable ?'),
     }
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
