@@ -83,10 +83,10 @@ class sale_order_followup(osv.osv_memory):
         Launches the correct view according to the user's choice
         '''
         for followup in self.browse(cr, uid, ids, context=context):
-            if followup.choose_type == 'documents':
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
-            else:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
+#            if followup.choose_type == 'documents':
+#                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
+#            else:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
             
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
@@ -96,13 +96,13 @@ class sale_order_followup(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'dummy'}
         
-    def switch_documents(self, cr, uid, ids, context={}):
-        '''
-        Switch to documents view
-        '''
-        self.write(cr, uid, ids, {'choose_type': 'documents'})
-        
-        return self.go_to_view(cr, uid, ids, context=context)
+#    def switch_documents(self, cr, uid, ids, context={}):
+#        '''
+#        Switch to documents view
+#        '''
+#        self.write(cr, uid, ids, {'choose_type': 'documents'})
+#        
+#        return self.go_to_view(cr, uid, ids, context=context)
     
     def switch_progress(self, cr, uid, ids, context={}):
         '''
@@ -132,10 +132,10 @@ class sale_order_followup(osv.osv_memory):
             self.unlink(cr, uid, ids, context=new_context)
             
         # Returns the same view as before
-        if new_context.get('view_type') == 'documents':
-            return self.switch_documents(cr, uid, [result], context=new_context)
-        else:
-            return self.switch_progress(cr, uid, [result], context=new_context)
+        #if new_context.get('view_type') == 'documents':
+        #    return self.switch_documents(cr, uid, [result], context=new_context)
+        #else:
+        return self.switch_progress(cr, uid, [result], context=new_context)
     
     def start_order_followup(self, cr, uid, ids, context={}):
         '''
@@ -176,7 +176,7 @@ class sale_order_followup(osv.osv_memory):
                                           'outgoing_ids': [(6,0,outgoing_ids)],
                                           'displayed_out_ids': [(6,0,displayed_out_ids)]})
                     
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_line_follow_choose_view')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
@@ -377,6 +377,9 @@ class sale_order_line_followup(osv.osv_memory):
 
                 res[line.id]['tender_status'] = tender_status.get(tender_state, 'Error on state !')
 
+            # Add number of documents in brackets
+            res[line.id]['tender_status'] = '%s (%s)' % (res[line.id]['tender_status'], len(line.tender_ids))
+
             ####################################################
             # Get information about the state of purchase orders
             ####################################################
@@ -407,6 +410,9 @@ class sale_order_line_followup(osv.osv_memory):
 
                 res[line.id]['purchase_status'] = purchase_status.get(purchase_state, 'Error on state !')
 
+            # Add number of documents in brackets
+            res[line.id]['purchase_status'] = '%s (%s)' % (res[line.id]['purchase_status'], len(line.purchase_ids))
+
             ###########################################################
             # Get information about the state of all incoming shipments
             ###########################################################
@@ -432,6 +438,9 @@ class sale_order_line_followup(osv.osv_memory):
                         shipment_state = 'partial'
 
                 res[line.id]['incoming_status'] = incoming_status.get(shipment_state, 'Error on state !')
+
+            # Add number of documents in brackets
+            res[line.id]['incoming_status'] = '%s (%s)' % (res[line.id]['incoming_status'], len(line.incoming_ids))
 
             #######################################################################
             # Get information about the step and the state of all outgoing delivery
@@ -645,6 +654,10 @@ class sale_order_line_followup(osv.osv_memory):
                         
                     # Set the number of the outgoing deliveries
                     res[line.id]['outgoing_nb'] = '%s' %nb_out
+
+            # Add the namber of documents in brackets
+            res[line.id]['outgoing_status'] = '%s (%s)' % (res[line.id]['outgoing_status'], res[line.id]['outgoing_nb'])
+            res[line.id]['product_available'] = '%s (%s)' % (res[line.id]['product_available'], res[line.id]['available_qty'])
 
         return res
     
