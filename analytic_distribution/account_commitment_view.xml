@@ -14,7 +14,6 @@
                         <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
                         <newline/>
                         <field name="name"/>
-                        <field name="ref"/>
                         <newline/>
                         <field name="date"/>
                         <field name="period_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
@@ -52,8 +51,6 @@
                     <field name="date"/>
                     <field name="name"/>
                     <field name="partner_id"/>
-                    <field name="ref"/>
-                    <field name="purchase_id"/>
                     <field name="currency_id"/>
                     <field name="total" digits="(16,2)"/>
                     <field name="state"/>

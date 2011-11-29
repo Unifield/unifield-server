@@ -31,6 +31,7 @@
     "init_xml" : [],
     "update_xml" : [
             "purchase_view.xml",
+            "account_commitment_view.xml",
     ],
     "demo_xml" : [],
     "test": [],

@@ -194,7 +194,7 @@ class purchase_order(osv.osv):
                 'journal_id': eng_ids and eng_ids[0] or False,
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
-                'ref': po.name or '',
+                'purchase_id': po.id or False,
                 'type': po.partner_id and po.partner_id.partner_type or 'manual',
             }
             # prepare some values
