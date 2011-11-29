@@ -73,7 +73,7 @@ class account_commitment(osv.osv):
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'ref': fields.char(string='Reference', size=64),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('done', 'Closed'), ('cancel', 'Cancel')], readonly=True, string="State"),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('done', 'Closed')], readonly=True, string="State"),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),

@@ -34,7 +34,6 @@
                         <label string="" colspan="2"/>
                         <button name="commitment_open" string="Open" icon="terp-camera_test" states="draft" colspan="2"/>
                         <button name="commitment_validate" string="Validate" icon="terp-gtk-go-back-rtl" states="open" colspan="2"/>
-                        <button name="commitment_cancel" string="Cancel" icon="gtk-cancel" states="open" colspan="2"/>
                     </group>
                     <field name="state"/>
                     <field name="total"/>
