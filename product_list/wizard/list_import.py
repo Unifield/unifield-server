@@ -117,10 +117,16 @@ class product_list_import(osv.osv_memory):
                     continue
 
                 product_id = product_ids[0]
-                
-                line_ids.append(line_obj.create(cr, uid, {'name': product_id,
-                                                          'comment': len(line) >_2 and line[2] or '',
-                                                          'list_id': list_id}))
+
+                # Check if the product is already in list
+                prd_lines = line_obj.search(cr, uid, [('name', '=', product_id), ('list_id', '=', list_id)], context=context)
+
+                if not prd_lines:
+                    line_ids.append(line_obj.create(cr, uid, {'name': product_id,
+                                                              'comment': len(line) > 2 and line[2] or '',
+                                                              'list_id': list_id}, context=context))
+                elif len(line) > 2:
+                    line_obj.write(cr, uid, prd_lines, {'comment': line[2]})
                 
             if error and error != '':
                 self.write(cr, uid, ids, {'message': error})
