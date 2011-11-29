@@ -106,7 +106,8 @@ class search_values(osv.osv_memory):
                 quest_fields[field_name] = {'string': sel.field_description, 'default':values.get(sel.id, False)}
                 if sel.ttype == 'selection':
                     selection = list(self.pool.get(sel.model)._columns[sel.name].selection)
-                    selection.insert(0, ('',''))
+                    if '' not in [x[0] for x in selection]:
+                        selection.insert(0, ('',''))
                     quest_fields[field_name].update({'type': 'selection', 'selection': selection})
                 elif sel.ttype == 'many2one':
                     quest_fields[field_name].update({'type': sel.ttype, 'relation': sel.relation, 'default':int(values.get(sel.id, 0))})
