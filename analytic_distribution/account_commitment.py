@@ -68,7 +68,7 @@ class account_commitment(osv.osv):
 
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
-        'name': fields.char(string="Number", size=64, readonly=True),
+        'name': fields.char(string="Number", size=64, readonly=True, required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
@@ -84,7 +84,7 @@ class account_commitment(osv.osv):
     }
 
     _defaults = {
-        'name': lambda *a: '/',
+        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',

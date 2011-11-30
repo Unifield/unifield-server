@@ -35,6 +35,7 @@
         'wizard/account_analytic_chart_view.xml',
         'analytic_distribution_wizard_view.xml',
         'account_commitment_workflow.xml',
+        'account_commitment_sequence.xml',
         'account_commitment_view.xml',
     ],
     'test': [
