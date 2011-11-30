@@ -197,6 +197,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
+                            <field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
@@ -471,6 +472,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
+                            <field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
@@ -711,6 +713,7 @@
                         <group colspan="2" col="2">
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
+                            <field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />

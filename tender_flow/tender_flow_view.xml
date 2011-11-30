@@ -63,8 +63,8 @@
                         </page>
                     </notebook>
                     <group col="13" colspan="4">
-                        <field name="state"/>
-                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('sale_order_id','!=', False),],}" />
+                        <field name="state" />
+                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':['|', ('sale_order_id','!=', False), ('state', 'in', ('cancel', 'done',)),],}" />
                         <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" />
