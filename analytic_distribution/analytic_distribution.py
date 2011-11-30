@@ -35,6 +35,8 @@ class analytic_distribution(osv.osv):
         'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
         'register_line_ids': fields.one2many('account.bank.statement.line', 'analytic_distribution_id', string="Register Lines"),
         'move_line_ids': fields.one2many('account.move.line', 'analytic_distribution_id', string="Move Lines"),
+        'commitment_ids': fields.one2many('account.commitment', 'analytic_distribution_id', string="Commitments voucher"),
+        'commitment_line_ids': fields.one2many('account.commitment.line', 'analytic_distribution_id', string="Commitment voucher lines"),
     }
 
     _defaults ={
