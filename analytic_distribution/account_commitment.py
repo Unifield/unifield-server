@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 import decimal_precision as dp
+from account_tools import get_period_from_date
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -156,6 +157,22 @@ class account_commitment(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
+
+    def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
+        """
+        Update period regarding given date
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not date:
+            return False
+        # Prepare some values
+        vals = {}
+        periods = get_period_from_date(self, cr, uid, date, context=context)
+        if periods:
+            vals['period_id'] = periods[0]
+        return {'value': vals}
 
     def action_commitment_open(self, cr, uid, ids, context={}):
         """

@@ -15,8 +15,8 @@
                         <newline/>
                         <field name="name"/>
                         <newline/>
-                        <field name="date"/>
-                        <field name="period_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
+                        <field name="date" on_change="onchange_date(date, period_id)"/>
+                        <field name="period_id"/>
                         <newline/>
                         <field name="currency_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
                         <field name="type"/>
