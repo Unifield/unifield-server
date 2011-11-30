@@ -92,6 +92,26 @@ class account_commitment(osv.osv):
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
     }
 
+    def unlink(self, cr, uid, ids, context={}):
+        """
+        Delete a commitment is forbidden.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Raise an error to display unpossibility to delete a commitment
+        raise osv.except_osv(_('Error'), _('You cannot delete a Commitment Voucher!'))
+        return True
+
+    def copy(self, cr, uid, ids, context={}):
+        """
+        Copy a commitment is not available.
+        """
+        raise osv.except_osv(_('Error'), _('Duplicate a commitment voucher is not available yet.'))
+        return True
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
         Launch analytic distribution wizard on a commitment
