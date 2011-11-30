@@ -170,6 +170,13 @@ class account_commitment(osv.osv):
                 'context': context,
         }
 
+    def button_compute(self, cr, uid, ids, context={}):
+        """
+        Compute commitment voucher total.
+        """
+        # trick to refresh view and update total amount
+        return self.write(cr, uid, ids, [], context=context)
+
     def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
         """
         Update period regarding given date
