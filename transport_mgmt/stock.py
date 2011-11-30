@@ -19,8 +19,17 @@
 #
 ##############################################################################
 
-import purchase
-import product
-import stock
+from osv import osv
+from osv import fields
+
+class stock_incoterms(osv.osv):
+    _name = 'stock.incoterms'
+    _inherit = 'stock.incoterms'
+
+    _columns = {
+        'name': fields.char('Name', size=128, required=True, help="Incoterms are series of sales terms.They are used to divide transaction costs and responsibilities between buyer and seller and reflect state-of-the-art transportation practices."),
+    }
+
+stock_incoterms()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
