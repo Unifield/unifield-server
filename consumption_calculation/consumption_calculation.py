@@ -749,7 +749,6 @@ class monthly_review_consumption_line(osv.osv):
             for line in self.browse(cr, uid, [line_ids[0]], context=context):
                 last_fmc_reviewed = line.mrc_id.creation_date
                 
-                    
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
         return {'value': {'amc': amc,
                           'fmc': amc,
@@ -951,7 +950,7 @@ class product_product(osv.osv):
             from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
         date_diff = Age(to_date_str, from_date_str)
-        nb_months = date_diff.years*12 + date_diff.months + (date_diff.days/30)
+        nb_months = date_diff.years*12 + date_diff.months + (date_diff.days/30.0)
         
         if not nb_months: nb_months = 1
         
