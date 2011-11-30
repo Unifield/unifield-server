@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="transport_mgmt_product_form_view" model="ir.ui.view">
+            <field name="name">transport.mgmt.product.form.view</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page//field[@name='type']" position="after">
+                        <field name="transport_ok" attrs="{'invisible': [('type', 'not in', ['service', 'service_recep'])]}" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

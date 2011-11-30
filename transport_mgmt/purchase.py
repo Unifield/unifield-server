@@ -27,6 +27,17 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
+    def _get_include_transport(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns for all entries, the total cost included transport cost
+        '''
+        res = {}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = order.transport_cost + order.amount_total
+
+        return res
+
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
         'intl_supplier_ok': fields.boolean(string='International Supplier'),
@@ -35,6 +46,7 @@ class purchase_order(osv.osv):
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
+        'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total cost including transport", type='float', readonly=True),
     }
 
     _defaults = {

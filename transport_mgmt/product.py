@@ -19,7 +19,18 @@
 #
 ##############################################################################
 
-import purchase
-import product
+from osv import osv
+from osv import fields
+
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+    _columns = {
+        'transport_ok': fields.boolean(string='Transport product', help="Check this box if the current product is a transport product."),
+    }
+
+product_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

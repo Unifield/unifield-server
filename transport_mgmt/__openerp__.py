@@ -28,6 +28,7 @@
                 "service_purchasing",
                 "purchase_override",
                 "res_currency_functional",
+                "product_nomenclature",
                 "msf_partner",],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -39,6 +40,8 @@
     ],
     'update_xml': [
         'purchase_view.xml',
+        'product_view.xml',
+        'transport_data.xml',
     ],
     'demo_xml': [
     ],

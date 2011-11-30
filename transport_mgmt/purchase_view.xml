@@ -9,15 +9,21 @@
             <field name="inherit_id" ref="res_currency_functional.purchase_order_form_inherit" />
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page/group[1]/field[@name='currency_id']" position="before">
-                    <label colspan="2" string="" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                     <field name="display_intl_transport_ok" invisible="1" />
                     <field name="intl_supplier_ok" invisible="1" />
                     <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                                                        'required': [('intl_supplier_ok', '=', True)],
+                                                        'readonly': [('shipped_rate', '!=', 0.00)],
+                                                        }"/>
                     <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                                                        'required': [('intl_supplier_ok', '=', True)],
+                                                        'readonly': [('shipped_rate', '!=', 0.00)],
+                                                        }"/>
                     <field name="transport_currency_id" widget="selection" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                                                         'required': [('intl_supplier_ok', '=', True)],
+                                                        'readonly': [('shipped_rate', '!=', 0.00)],
+                                                        }"/>
+                    <field name="total_price_include_transport" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
                     <newline />
                 </xpath>
             </field>
