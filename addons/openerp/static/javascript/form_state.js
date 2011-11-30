@@ -305,7 +305,6 @@ function form_setReadonly(container, fieldName, readonly) {
             $field.css("cursor", "default");
         } else {
             $field.removeAttr('href');
-            $field.css("color", "gray");
         }
         
         $field.toggleClass('readonlyfield', type != 'button');
