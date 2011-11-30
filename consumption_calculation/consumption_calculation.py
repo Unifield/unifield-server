@@ -113,6 +113,23 @@ class real_average_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'valid_ok': lambda *a: True,
     }
+
+    _sql_constraints = [
+        ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
+    ]
+
+    def button_update_stock(self, cr, uid, ids, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        to_update = []
+        for line in self.read(cr, uid, ids, ['created_ok','line_ids']):
+            if line['created_ok']:
+                continue
+            to_update += line['line_ids']
+
+        if to_update:
+            self.pool.get('real.average.consumption.line')._check_qty(cr, uid, to_update, {'noraise': True})
+        return True
     
     def save_and_process(self, cr, uid, ids, context={}):
         '''
@@ -148,6 +165,9 @@ class real_average_consumption(osv.osv):
         for rac in self.browse(cr, uid, ids, context=context):
             if not rac.valid_ok:
                 raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
+            if DateFrom(rac.period_to) > now():
+                raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
+
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
             line_obj._check_qty(cr, uid, [x.id for x in rac.line_ids])
@@ -329,8 +349,11 @@ class real_average_consumption_line(osv.osv):
             
         return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_real'], context=context)['stock_real']
 
-    def _check_qty(self, cr, uid, ids):
-        
+    def _check_qty(self, cr, uid, ids, context={}):
+       
+        if context is None:
+            context = {}
+
         for obj in self.browse(cr, uid, ids):
             if obj.rac_id.created_ok:
                 continue
@@ -362,7 +385,7 @@ class real_average_consumption_line(osv.osv):
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
-            if prodlot_id and obj.consumed_qty > product_qty:
+            if prodlot_id and obj.consumed_qty > product_qty and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"%(obj.product_id.name, obj.consumed_qty, product_qty)))
             
@@ -394,6 +417,7 @@ class real_average_consumption_line(osv.osv):
     _sql_constraints = [
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
+
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, context={}):
         '''
