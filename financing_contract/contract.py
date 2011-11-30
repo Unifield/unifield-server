@@ -45,6 +45,16 @@ class financing_contract_contract(osv.osv):
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     
+    def _create_domain(self, header, element_list):
+        domain = "('" + header + "', 'in', ["
+        if len(element_list) > 0:
+            for element in element_list:
+                domain += str(element.id)
+                domain += ', '
+            domain = domain[:-2]
+        domain += "])"
+        return domain
+    
     def _create_parent_line(self, cr, uid, contract_id, context=None):
         # create parent reporting line (representing the contract in the tree view)
         report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
@@ -60,7 +70,8 @@ class financing_contract_contract(osv.osv):
                 'name': contract.name,
                 'code': contract.code,
                 'date_domain': general_information['date_domain'],
-                'funding_pool_domain': general_information['funding_pool_domain'],
+                'funding_pool_funded_domain': general_information['funding_pool_funded_domain'],
+                'funding_pool_project_domain': general_information['funding_pool_project_domain'],
                 'cost_center_domain': general_information['cost_center_domain'],
                 'computation_type': 'children_sum',
             }
@@ -75,43 +86,34 @@ class financing_contract_contract(osv.osv):
         date_domain += "'), ('date', '<=', '"
         date_domain += browse_contract.eligibility_to_date
         date_domain += "')]"
-        funding_pool_domain = "('account_id', 'in', ["
         # list of expense accounts in the funding pools.
-        # Unicity is not important, it's just for a future comparison
-        funding_pool_account_ids = []
-        # list of cost centers in the funding pools.
-        # Unicity is important
-        cost_center_ids = []
-        if len(browse_contract.funding_pool_ids) > 0:
-            for funding_pool_line in browse_contract.funding_pool_ids:
-                funding_pool = funding_pool_line.funding_pool_id
-                funding_pool_domain += str(funding_pool.id)
-                funding_pool_domain += ", "
-                for account in funding_pool.account_ids:
-                    funding_pool_account_ids.append(account.id)
-                if len(funding_pool.cost_center_ids) > 0:
-                    for cost_center in funding_pool.cost_center_ids:
-                        cost_center_ids.append(cost_center.id)
-            funding_pool_domain = funding_pool_domain[:-2]
-        funding_pool_domain += "])"
-        cost_center_domain = "('cost_center_id', 'in', ["
-        if len(cost_center_ids) > 0:
-            cost_center_set = set(cost_center_ids)
-            for cost_center_id in cost_center_set:
-                cost_center_domain += str(cost_center_id)
-                cost_center_domain += ', '
-            cost_center_domain = cost_center_domain[:-2]
-        cost_center_domain += "])"
+        # we take them all (funded and project), as for funded,
+        # we are sure that no allocation will be done with
+        # (funded funding pool, account in other funding pool)
+        account_ids = []
+        for funding_pool_line in browse_contract.funding_pool_ids:
+            funding_pool = funding_pool_line.funding_pool_id
+            for account in funding_pool.account_ids:
+                account_ids.append(account.id)
+        # Funding pools
+        funding_pool_funded_account_ids = [funding_pool_line.funding_pool_id for funding_pool_line in browse_contract.funding_pool_ids if funding_pool_line.funded]
+        funding_pool_project_account_ids = [funding_pool_line.funding_pool_id for funding_pool_line in browse_contract.funding_pool_ids]
+        funding_pool_funded_domain = self._create_domain('account_id', funding_pool_funded_account_ids)
+        funding_pool_project_domain = self._create_domain('account_id', funding_pool_project_account_ids)
+        # Cost centers
+        cost_center_domain = self._create_domain('cost_center_id', browse_contract.cost_center_ids)
         return {'date_domain': date_domain,
-                'funding_pool_domain': funding_pool_domain,
+                'funding_pool_funded_domain': funding_pool_funded_domain,
+                'funding_pool_project_domain': funding_pool_project_domain,
                 'cost_center_domain': cost_center_domain,
-                'account_ids': funding_pool_account_ids}
+                'account_ids': account_ids}
     
     def _create_actual_reporting_line(self, cr, uid, browse_actual_line, general_information, parent_line_id=False, context=None):
         report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
         if general_information \
            and 'date_domain' in general_information \
-           and 'funding_pool_domain' in general_information \
+           and 'funding_pool_funded_domain' in general_information \
+           and 'funding_pool_project_domain' in general_information \
            and 'cost_center_domain' in general_information \
            and 'account_ids' in general_information:
             line_vals = {
@@ -119,7 +121,8 @@ class financing_contract_contract(osv.osv):
                 'code': browse_actual_line.code,
                 'parent_id': parent_line_id,
                 'date_domain': general_information['date_domain'],
-                'funding_pool_domain': general_information['funding_pool_domain'],
+                'funding_pool_funded_domain': general_information['funding_pool_funded_domain'],
+                'funding_pool_project_domain': general_information['funding_pool_project_domain'],
                 'cost_center_domain': general_information['cost_center_domain'],
             }
             if browse_actual_line.line_type == 'view':
@@ -130,15 +133,9 @@ class financing_contract_contract(osv.osv):
                 line_vals['computation_type'] = 'analytic_sum'
                 line_vals['allocated_budget_value'] = browse_actual_line.allocated_amount
                 line_vals['project_budget_value'] = browse_actual_line.project_amount
-                # compute domain from accounts
-                account_ids = [account.id for account in browse_actual_line.account_ids if account.id in general_information['account_ids']]
-                account_domain = "('general_account_id', 'in', ["
-                if len(account_ids) > 0:
-                    for account_id in account_ids:
-                        account_domain += str(account_id)
-                        account_domain += ", "
-                    account_domain = account_domain[:-2]
-                account_domain += "])"
+                # compute domains from accounts
+                account_ids = [account for account in browse_actual_line.account_ids if account.id in general_information['account_ids']]
+                account_domain = self._create_domain('general_account_id', account_ids)
                 line_vals['account_domain'] = account_domain
             new_line_id = report_line_obj.create(cr, uid, line_vals, context=context)
             # create children, and retrieve their list of accounts
@@ -261,6 +258,7 @@ class financing_contract_contract(osv.osv):
         'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
         'notes': fields.text('Notes'),
         'funding_pool_ids': fields.one2many('financing.contract.funding.pool.line', 'contract_id', 'Funding Pools'),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'financing_contract_cost_center', 'contract_id', 'cost_center_id', string='Cost Centers'),
         'open_date': fields.date('Open date'),
         'soft_closed_date': fields.date('Soft-closed date'),
         'hard_closed_date': fields.date('Hard-closed date'),

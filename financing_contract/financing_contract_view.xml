@@ -39,6 +39,16 @@
                                     </tree>
                                 </field>
                             </page>
+                            <page string="Cost centers">
+                                <field colspan="4" name="cost_center_ids" nolabel="1"
+                                       domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                                       attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Cost centers">
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                    </tree>
+                                </field>
+                            </page>
                             <page string="Reporting lines">
                                 <field name="format_id" invisible="1"/>
                                 <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">

@@ -101,7 +101,7 @@ class financing_contract_donor_reporting_line(osv.osv):
                     if 'reporting_currency' in context:
                         analytic_line_obj = self.pool.get('account.analytic.line')
                         date_domain = eval(line.date_domain)
-                        analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_domain)]
+                        analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_funded_domain)]
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         allocated_real_sum = 0.0
                         currency_table = None
@@ -169,7 +169,7 @@ class financing_contract_donor_reporting_line(osv.osv):
                     if private_funds_id and 'reporting_currency' in context:
                         analytic_line_obj = self.pool.get('account.analytic.line')
                         date_domain = eval(line.date_domain)
-                        analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.cost_center_domain), ('account_id', '!=', private_funds_id)]
+                        analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_project_domain), eval(line.cost_center_domain)]
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         project_real_sum = 0.0
                         currency_table = None
@@ -214,7 +214,8 @@ class financing_contract_donor_reporting_line(osv.osv):
                                               ('grant_percentage','Total grant percentage')], 'Computation type'),
         'date_domain': fields.char('Date domain', size=256),
         'account_domain': fields.char('Account domain', size=256),
-        'funding_pool_domain': fields.char('Funding pool domain', size=256),
+        'funding_pool_funded_domain': fields.char('Funding pool funded domain', size=256),
+        'funding_pool_project_domain': fields.char('Funding pool project domain', size=256),
         'cost_center_domain': fields.char('Cost center domain', size=256),
         'parent_id': fields.many2one('financing.contract.donor.reporting.line', 'Parent line', ondelete='cascade'),
         'child_ids': fields.one2many('financing.contract.donor.reporting.line', 'parent_id', 'Child lines'),

@@ -142,7 +142,10 @@
     eligibility_to_date: !eval "'%s-12-31' %(datetime.now().year+1)"
     reporting_currency: base.CHF
     funding_pool_ids:
-      - analytic_account_FP1
+      - funding_pool_id: analytic_account_FP1
+        funded: True
+    cost_center_ids:
+      - analytic_account_OC1
     actual_line_ids:
       - name: "A"
         code: "A"
