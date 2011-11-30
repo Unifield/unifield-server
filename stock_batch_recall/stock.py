@@ -165,41 +165,4 @@ CREATE OR REPLACE view report_batch_recall AS (
 
 report_batch_recall()
 
-class stock_production_lot(osv.osv):
-    _name = 'stock.production.lot'
-    _inherit = 'stock.production.lot'
-
-    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=80):
-        '''
-        Add the possibility to search a lot with its prefix
-        '''
-        res = super(stock_production_lot, self).name_search(cr, uid, name, args, operator, context, limit)
-        
-        ids = []
-        res_ids = []
-        prefix = False
-        obj_name = False
-        domain = []
-        
-        if len(name) > 1:
-            tab_name = name.split('/')
-            prefix = tab_name[0]
-            if tab_name and len(tab_name) > 1:
-                obj_name = name.split('/')[1][1:-1]
-                
-        if obj_name:
-            domain.append(('name', '=ilike', '%%%s' %obj_name))
-        if prefix:
-            domain.append(('prefix', '=ilike', '%%%s' %prefix))
-            
-        ids = self.search(cr, uid, domain)
-        
-        for r in res:
-            if r[0] not in ids:
-                ids.append(r[0])
-
-        return self.name_get(cr, uid, ids)
-
-stock_production_lot()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
