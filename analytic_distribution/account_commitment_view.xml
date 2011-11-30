@@ -76,12 +76,38 @@
             </field>
         </record>
 
+    <!-- Commitment Search view -->
+        <record id="account_commitment_search" model="ir.ui.view">
+            <field name="name">Commitment Voucher</field>
+            <field name="model">account.commitment</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Commitment Voucher">
+                    <group col='6' colspan='4'>
+                        <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
+                        <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
+                        <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state"/>
+                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state"/>
+                        <newline/>
+                        <field name="currency_id" select="1"/>
+                        <field name="date" select='1'/>
+                        <field name="partner_id" select='1'/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
     <!-- Actions -->
         <record model="ir.actions.act_window" id="action_account_commitment_tree">
             <field name="res_model">account.commitment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
+            <field name="search_view_id" ref="account_commitment_search"/>
         </record>
 
     <!-- Menu -->
