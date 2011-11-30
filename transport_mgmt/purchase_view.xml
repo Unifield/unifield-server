@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="purchase_form_view_transport_mgmt_line" model="ir.ui.view">
+            <field name="name">purchase.form.view.transport.mgmt.line</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="res_currency_functional.purchase_order_form_inherit" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/notebook/page/group[1]/field[@name='currency_id']" position="before">
+                    <label colspan="2" string="" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
+                    <field name="display_intl_transport_ok" invisible="1" />
+                    <field name="intl_supplier_ok" invisible="1" />
+                    <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                    <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                    <field name="transport_currency_id" widget="selection" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                         'required': [('intl_supplier_ok', '=', True)]}"/>
+                    <newline />
+                </xpath>
+            </field>
+        </record>
+
+        <record id="purchase_form_view_transport_mgmt" model="ir.ui.view">
+            <field name="name">purchase.form.view.transport.mgmt</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='priority']" position="after">
+                        <button name="display_transport_line" type="object" string="Display Transport line" icon="gtk-execute" colspan="2" attrs="{'invisible': [('intl_supplier_ok', '=', True)]}"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
