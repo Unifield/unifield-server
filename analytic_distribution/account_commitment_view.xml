@@ -56,7 +56,6 @@
                     <field name="type"/>
                     <field name="state"/>
                     <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft"/>
-                    <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" attrs="{'readonly': [('type', '=', 'external')]}"/>
                 </tree>
             </field>
         </record>

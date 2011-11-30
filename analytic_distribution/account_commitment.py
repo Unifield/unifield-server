@@ -72,7 +72,7 @@ class account_commitment(osv.osv):
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Validate'), ('done', 'Done')], readonly=True, string="State", required=True),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
@@ -164,6 +164,24 @@ class account_commitment(osv.osv):
                     c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
         # Validate commitment voucher
         return self.write(cr, uid, ids, {'state': 'open'}, context=context)
+
+    def action_commitment_done(self, cr, uid, ids, context={}):
+        """
+        To do when a commitment is done.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse commitments
+        for c in self.browse(cr, uid, ids, context=context):
+            # Search analytic lines that have commitment line ids
+            search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', 'in', [x.id for x in c.line_ids])], context=context)
+            res = self.pool.get('account.analytic.line').unlink(cr,  uid, search_ids, context=context)
+            if res:
+                self.write(cr, uid, [c.id], {'state':'done'}, context=context)
+        return True
 
 account_commitment()
 

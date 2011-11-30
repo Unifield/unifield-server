@@ -26,7 +26,7 @@
         <record id="act_done" model="workflow.activity">
             <field name="wkf_id" ref="commit_wkf"/>
             <field name="name">done</field>
-            <field name="action">write({'state':'done'})</field>
+            <field name="action">action_commitment_done()</field>
             <field name="kind">function</field>
         </record>
 
