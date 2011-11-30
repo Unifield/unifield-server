@@ -271,7 +271,7 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals=None, context={}, load='_classic_read'):
         '''
         Set value for each month
         '''
