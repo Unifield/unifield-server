@@ -149,11 +149,11 @@ class expiry_quantity_report_line(osv.osv_memory):
         'product_code': fields.related('product_id', 'default_code', string='Reference', type='char'),
         'product_name': fields.related('product_id', 'name', string='Name', type='char'),
         'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
-        'real_stock': fields.float(digits=(16, 2), string='Real stock'),
-        'expired_qty': fields.float(digits=(16, 2), string='Expired quantity'),
+        'real_stock': fields.float(digits=(16, 2), string='Total product real stock in location'),
+        'expired_qty': fields.float(digits=(16, 2), string='Batch expired quantity in location'),
         'batch_number': fields.many2one('production.lot', string='Batch number'),
         'expiry_date': fields.date(string='Expiry date'),
-        'location_id': fields.many2one('stock.location', string='SLoc'),
+        'location_id': fields.many2one('stock.location', string='Location'),
     }
     
 expiry_quantity_report_line()

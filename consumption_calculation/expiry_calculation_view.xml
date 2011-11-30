@@ -39,11 +39,11 @@
     					<tree string="Expired products">
     						<field name="product_code" />
     						<field name="product_name" />
+    						<field name="location_id" />
     						<field name="real_stock" />
-    						<field name="expired_qty" />
     						<field name="batch_number" />
     						<field name="expiry_date" widget="date" />
-    						<field name="location_id" />
+    						<field name="expired_qty" />
     					</tree>
     				</field>
     			</form>
