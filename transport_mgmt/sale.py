@@ -19,37 +19,35 @@
 #
 ##############################################################################
 
-{
-    "name": "Transport management",
-    "version": "1.0",
-    "depends": [
-                "sale", 
-                "purchase", 
-                "service_purchasing",
-                "purchase_override",
-                "res_currency_functional",
-                "product_nomenclature",
-                "msf_partner",],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Sales & Purchase",
-    "description": """
-    This module aims at implementing the transport cost in Purchase and Sale orders.
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'purchase_view.xml',
-        'sale_view.xml',
-        'product_view.xml',
-        'transport_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-    ],
-    'installable': True,
-    'active': False,
-}
+from osv import osv
+from osv import fields
+
+class sale_order(osv.osv):
+    _name = 'sale.order'
+    _inherit = 'sale.order'
+
+    _columns = {
+        'intl_customer_ok': fields.boolean(string='International customer'),
+    }
+
+    def onchange_partner_id(self, cr, uid, ids, partner_id):
+        '''
+        Set the intl_customer_ok field if the partner is an ESC or an international partner
+        '''
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, partner_id)
+
+        if partner_id:
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if partner.partner_type == 'esc' or partner.zone == 'international':
+                res['value'].update({'intl_customer_ok': True})
+            else:
+                res['value'].update({'intl_customer_ok': False})
+        else:
+            res['value'].update({'intl_customer_ok': True})
+
+        return res
+
+
+sale_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

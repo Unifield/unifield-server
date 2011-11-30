@@ -47,6 +47,7 @@ class purchase_order(osv.osv):
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total cost including transport", type='float', readonly=True),
+        'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
     }
 
     _defaults = {

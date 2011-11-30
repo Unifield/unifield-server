@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="sale_order_form_view_incoterm" model="ir.ui.view">
+            <field name="name">sale.order.form.view.incoterm</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='incoterm']" position="replace">
+                    <field name="intl_customer_ok" invisible="1" />
+                    <field name="incoterm" attrs="{'invisible': [('intl_customer_ok', '=', False)]}" widget="selection" />
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

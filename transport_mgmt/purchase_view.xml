@@ -36,9 +36,15 @@
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
             <field name="arch" type="xml">
                 <data>
+
                     <xpath expr="/form//field[@name='priority']" position="after">
                         <button name="display_transport_line" type="object" string="Display Transport line" icon="gtk-execute" colspan="2" attrs="{'invisible': [('intl_supplier_ok', '=', True)]}"/>
                     </xpath>
+
+                    <xpath expr="/form//field[@name='location_id']" position="after">
+                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)]}" widget="selection" />
+                    </xpath>
+
                 </data>
             </field>
         </record>
