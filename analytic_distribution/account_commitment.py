@@ -71,7 +71,7 @@ class account_commitment(osv.osv):
         'name': fields.char(string="Number", size=64, readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
-        'period_id': fields.many2one('account.period', string="Period", readonly=True),
+        'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validate'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
@@ -80,13 +80,16 @@ class account_commitment(osv.osv):
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
         'type': fields.selection([('manual', 'Manual'), ('external', 'From external supplier'), ('esc', 'From Esc supplier')], string="Type", readonly=True),
+        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
     }
 
     _defaults = {
-        'name': '/',
+        'name': lambda *a: '/',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
+        'from_yml_test': lambda *a: False,
+        'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
@@ -133,6 +136,34 @@ class account_commitment(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
+
+    def action_commitment_open(self, cr, uid, ids, context={}):
+        """
+        To do when we validate a commitment.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse commitments
+        for c in self.browse(cr, uid, ids, context=context):
+            for cl in c.line_ids:
+                # Continue if we come from yaml tests
+                if c.from_yml_test or cl.from_yml_test:
+                    continue
+                # Verify that analytic distribution is present
+                if cl.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".' % 
+                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name)))
+                # Take analytic distribution either from line or from commitment voucher
+                distrib_id = (cl.analytic_distribution_id and cl.analytic_distribution_id.id) or (c.analytic_distribution_id and c.analytic_distribution_id.id)
+                # Create engagement journal lines
+                self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
+                    cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
+                    c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+        # Validate commitment voucher
+        return self.write(cr, uid, ids, {'state': 'open'}, context=context)
 
 account_commitment()
 
@@ -238,8 +269,8 @@ class account_commitment_line(osv.osv):
         return res
 
     _columns = {
-        'account_id': fields.many2one('account.account', string="Account"),
-        'amount': fields.float(string="Amount", digits_compute=dp.get_precision('Account')),
+        'account_id': fields.many2one('account.account', string="Account", required=True),
+        'amount': fields.float(string="Amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,

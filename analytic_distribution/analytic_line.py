@@ -28,8 +28,9 @@ class analytic_line(osv.osv):
     _inherit = "account.analytic.line"
 
     _columns = {
-        "distribution_id": fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center'),
+        'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
+        'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line')
     }
 
     def _check_date(self, cr, uid, vals, context={}):

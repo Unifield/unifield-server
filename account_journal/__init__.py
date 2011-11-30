@@ -21,6 +21,6 @@
 
 import account_journal
 import project # this is for account_analytic_journal
-import invoice
+#import invoice # disabled for new commitment voucher in analytic_distribution module
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

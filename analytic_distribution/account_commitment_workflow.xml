@@ -20,7 +20,7 @@
             <field name="wkf_id" ref="commit_wkf"/>
             <field name="name">open</field>
             <field name="kind">function</field>
-            <field name="action">write({'state':'open'})</field>
+            <field name="action">action_commitment_open()</field>
         </record>
 
         <record id="act_done" model="workflow.activity">
