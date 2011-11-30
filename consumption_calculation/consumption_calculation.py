@@ -82,11 +82,12 @@ class real_average_consumption(osv.osv):
             lines = []
             for line in report.line_ids:
                 lines.append(line.id)
-
-            self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
+            if lines:
+                self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
 
         # update created_ok at this end to disable _check qty on line
         self.write(cr, uid, res, {'created_ok': False})
+        self.button_update_stock(cr, uid, res)
         return res
 
     
