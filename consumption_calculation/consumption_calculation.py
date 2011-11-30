@@ -175,7 +175,7 @@ class real_average_consumption(osv.osv):
 
 
         for rac in self.browse(cr, uid, ids, context=context):
-
+            date = '%s %s'%(rac.period_to, time.strftime('%H:%M:%S'))
             picking_id = self.pool.get('stock.picking').create(cr, uid, {'name': 'OUT-%s' % rac.name,
                                                                          'origin': rac.name,
                                                                          'type': 'out',
@@ -183,7 +183,7 @@ class real_average_consumption(osv.osv):
                                                                          'state': 'auto',
                                                                          'move_type': 'one',
                                                                          'invoice_state': 'none',
-                                                                         'date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                                         'date': date,
                                                                          'reason_type_id': reason_type_id}, context=context)
             
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
@@ -192,8 +192,8 @@ class real_average_consumption(osv.osv):
                                                     'picking_id': picking_id,
                                                     'product_uom': line.uom_id.id,
                                                     'product_id': line.product_id.id,
-                                                    'date_expected': '%s %s'%(rac.period_to, time.strftime('%H:%M:%S')),
-                                                    'date': rac.creation_date,
+                                                    'date_expected': date,
+                                                    'date': date,
                                                     'product_qty': line.consumed_qty,
                                                     'prodlot_id': line.prodlot_id.id,
                                                     'expiry_date': line.expiry_date,
