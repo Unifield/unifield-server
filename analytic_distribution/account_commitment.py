@@ -93,6 +93,18 @@ class account_commitment(osv.osv):
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], limit=1, context=c)[0]
     }
 
+    def create(self, cr, uid, vals, context={}):
+        """
+        Update period_id regarding date.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not 'period_id' in vals:
+            period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
+            vals.update({'period_id': period_ids and period_ids[0]})
+        return super(account_commitment, self).create(cr, uid, vals, context=context)
+
     def unlink(self, cr, uid, ids, context={}):
         """
         Delete a commitment is forbidden.
