@@ -256,8 +256,9 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-	                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
-	                    					domain="[('product_id','=?',product_id), ('stock_available', '>', 0.0), ('check_type','=', True),]"
+	                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
+	                    					domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    					on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 	                    					attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
 	                    				<field name="hidden_batch_management_mandatory" invisible="True" />
@@ -534,8 +535,9 @@
 										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
-					                    	domain="[('product_id','=?',product_id), ('stock_available', '>', 0.0), ('check_type','=', True),]"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
@@ -777,8 +779,9 @@
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
 										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
-					                    	domain="[('product_id','=?',product_id), ('stock_available', '>', 0.0), ('check_type','=', True),]"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
+					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
 					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
