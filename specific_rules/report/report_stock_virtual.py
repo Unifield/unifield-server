@@ -68,7 +68,7 @@ class stock_report_prodlots_virtual(osv.osv):
                         on (sl.id = sm.location_dest_id)
                     left join product_uom uo
                         on (uo.id=sm.product_uom)
-                    where sm.state in ('confirmed','waiting','assigned','done')
+                    where sm.state in ('done')
                     group by sm.location_dest_id, sm.product_id, sm.product_uom, sm.prodlot_id
                 ) as report
                 group by location_id, product_id, prodlot_id
