@@ -577,12 +577,17 @@
             <field name="arch" type="xml">
                 <data>
                 
+                	<xpath expr="//tree[@string='Products']//field[@name='location_id']" position="replace">
+                		<field colspan="4" domain="[('usage','=','internal')]" name="location_id"
+                			context="{'product_id': product_id, 'prodlot_id': prod_lot_id, 'specific_rules_tree_view': True, 'compute_child': False,}" />
+                	</xpath>
+                
                     <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace">
                         <field name="prod_lot_id"
                         	on_change="change_lot(prod_lot_id)"
                         	groups="base.group_extended"
-                        	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
-                        	domain="[('check_type','=', True), ('product_id', '=', product_id),]"
+                        	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True,}"
+                        	domain="[('check_type','=', True), ('product_id', '=?', product_id),]"
                         	attrs="{'required': [('hidden_batch_management_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)],}" />
                         <field name="expiry_date"
                         	on_change="change_expiry(expiry_date, product_id, type_check)"
