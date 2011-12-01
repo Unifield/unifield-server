@@ -21,9 +21,22 @@
 #
 ##############################################################################
 
-import invoice
-import purchase
-import analytic_distribution
-import account_commitment
+{
+    "name" : "Analytic Distribution on Purchase Order",
+    "version" : "1.0",
+    "description" : "This permits to have analytic distribution wizard on a Purchase Order",
+    "author" : "TeMPO Consulting, MSF",
+    "category" : "Tools",
+    "depends" : ["base", "analytic_distribution", "purchase", "stock"],
+    "init_xml" : [],
+    "update_xml" : [
+            "purchase_view.xml",
+            "account_commitment_view.xml",
+    ],
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
+}
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

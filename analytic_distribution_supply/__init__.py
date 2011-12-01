@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,17 +21,10 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
+import invoice
+import purchase
+import analytic_distribution
+import account_commitment
+import stock
 
-class account_invoice_line(osv.osv):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
-
-    _columns = {
-        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
-    }
-
-account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
