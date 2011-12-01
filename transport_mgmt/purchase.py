@@ -72,17 +72,47 @@ class purchase_order(osv.osv):
         Display or not the line of international transport costs
         '''
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, partner_id)
+        func_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        currency_id = False
+
+        if not 'domain' in res:
+            res.update({'domain': {}})
 
         if partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            # Update the currency of the PO
+            currency_id = partner.property_product_pricelist_purchase.currency_id.id
             if partner.partner_type == 'esc' or partner.zone == 'international':
                 res['value'].update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
             else:
-                res['value'].update({'display_intl_transport_ok': False, 'intl_supplier_ok': False})
+                res['value'].update({'display_intl_transport_ok': False, 'intl_supplier_ok': False, })
+
         else:
             res['value'].update({'display_intl_transport_ok': False, 'intl_supplier_ok': False})
 
+        if func_currency_id and currency_id and func_currency_id != currency_id:
+            res['domain'].update({'transport_currency_id': [('id', 'in', [func_currency_id, currency_id])]})
+        elif (func_currency_id and not currency_id) or (func_currency_id == currency_id):
+            res['domain'].update({'transport_currency_id': [('id', '=', func_currency_id)]})
+        elif not func_currency_id and currency_id:
+            res['domain'].update({'transport_currency_id': [('id', '=', currency_id)]})
+        else:
+            res['domain'].update({'transport_currency_id': [('id', 'in', [])]})
+
         return res
+
+    def onchange_pricelist_id(self, cr, uid, ids, partner_id, pricelist_id):
+        '''
+        Change the domain of the transport currency according to the currency and the functional currency
+        '''
+        # Set at least, the functional currency
+        currency_ids = [self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id]
+
+        # Set the currency of the pricelist of the supplier
+        if partner_id and pricelist_id:
+            currency_ids.append(self.pool.get('product.pricelist').browse(cr, uid, pricelist_id).currency_id.id)
+
+        return {'domain': {'transport_currency_id': [('id', 'in', currency_ids)]}}
 
 
 purchase_order()

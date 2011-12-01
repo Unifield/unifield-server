@@ -43,6 +43,7 @@
         'sale_view.xml',
         'product_view.xml',
         'transport_data.xml',
+        'report/intl_transport_view.xml',
     ],
     'demo_xml': [
     ],

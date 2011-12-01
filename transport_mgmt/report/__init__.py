@@ -19,10 +19,6 @@
 #
 ##############################################################################
 
-import purchase
-import product
-import stock
-import sale
-import report
+import intl_transport
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
