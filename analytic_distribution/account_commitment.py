@@ -213,7 +213,9 @@ class account_commitment(osv.osv):
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".' % 
                         (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name)))
                 # Take analytic distribution either from line or from commitment voucher
-                distrib_id = (cl.analytic_distribution_id and cl.analytic_distribution_id.id) or (c.analytic_distribution_id and c.analytic_distribution_id.id)
+                distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
+                if not distrib_id:
+                    raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 # Create engagement journal lines
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
                     cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
