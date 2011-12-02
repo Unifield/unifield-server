@@ -353,7 +353,7 @@ class real_average_consumption_line(osv.osv):
         if not lot:
             return self.pool.get('product.product').read(cr, uid, product, ['qty_available'], context=context)['qty_available']
             
-        return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_real'], context=context)['stock_real']
+        return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_available'], context=context)['stock_available']
 
     def _check_qty(self, cr, uid, ids, context={}):
        
@@ -493,7 +493,7 @@ class real_average_consumption_line(osv.osv):
             product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
         else:
             context.update({'location_id': location_id})
-            product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_real
+            product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_available
         res['value'].update({'product_qty': product_qty})
 
         return res
