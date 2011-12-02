@@ -140,7 +140,7 @@
       assert sourcing.sale_order_id.id == ref("sale_order_tender_so0"), 'sourcing line, sale order id is wrong (%i, %i)'%(sourcing.sale_order_id, ref("sale_order_tender_so0"))
       assert int(sourcing.sale_order_line_id) == ref("sale_order_line_tender_p0"), 'sourcing line, sale order line id is wrong (%i, %i)'%(sourcing.sale_order_line_id, ref("sale_order_line_tender_p0"))
       assert sourcing.type == 'make_to_stock', 'sourcing type wrong'
-      assert sourcing.state == 'draft', 'sourcing state wrong'
+      assert sourcing.state == 'draft', 'sourcing state wrong (draft, %s)'%sourcing.state
       assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
       assert not sourcing.supplier.id, 'make_to_stock: sourcing has a supplier !'
       

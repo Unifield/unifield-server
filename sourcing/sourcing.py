@@ -101,13 +101,74 @@ class sourcing_line(osv.osv):
     
     _name = 'sourcing.line'
     _description = 'Sourcing Line'
+    
+    def _get_sourcing_vals(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        returns the value from the sale.order
+        '''
+        if isinstance(fields, str):
+            fields = [fields]
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f: False,})
+            # gather procurement_request boolean
+            result[obj.id]['procurement_request'] = obj.sale_order_id and obj.sale_order_id.procurement_request or False
+            # gather sale order line state
+            result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
+        
+        return result
+    
+    def _get_sale_order_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sale.order
+        ids represents the ids of sale.order objects for which procurement_request has changed
+        
+        return the list of ids of sourcing.line object which need to get their procurement_request field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # list of sourcing lines having sale_order_id within ids
+        result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_id', 'in', ids)], context=context)
+        return result
+    
+    def _get_sale_order_line_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sale.order.line
+        ids represents the ids of sale.order.line objects for which state has changed
+        
+        return the list of ids of sourcing.line object which need to get their state field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # list of sourcing lines having sale_order_line_id within ids
+        result = self.pool.get('sourcing.line').search(cr, uid, [('sale_order_line_id', 'in', ids)], context=context)
+        return result
+    
+    def _get_souring_lines_ids(self, cr, uid, ids, context=None):
+        '''
+        self represents sourcing.line
+        ids represents the ids of sourcing.line objects for which a field has changed
+        
+        return the list of ids of sourcing.line object which need to get their field updated
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        result = ids
+        return result
+    
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
-        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False), 
+#        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False),
+        'state': fields.function(_get_sourcing_vals, method=True, type='selection', selection=_SELECTION_SALE_ORDER_LINE_STATE, string='State', multi='get_vals_sourcing',
+                                  store={'sale.order.line': (_get_sale_order_line_ids, ['state'], 10),
+                                         'sourcing.line': (_get_souring_lines_ids, ['sale_order_line_id'], 10)}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
         'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
@@ -124,6 +185,9 @@ class sourcing_line(osv.osv):
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
+                                               store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
+                                                      'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
@@ -511,7 +575,9 @@ class sale_order_line(osv.osv):
                   'sale_order_state': orderState,
                   }
         
-        self.pool.get('sourcing.line').create(cr, uid, values, context=context)
+        sourcing_line_id = self.pool.get('sourcing.line').create(cr, uid, values, context=context)
+        # update sourcing line - trigger update of fields.function values -- OPENERP BUG ? with empty values
+        self.pool.get('sourcing.line').write(cr, uid, [sourcing_line_id], {}, context=context)
             
         return result
     
