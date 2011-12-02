@@ -249,7 +249,7 @@ class real_average_consumption(osv.osv):
         writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
-            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.id, line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
+            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id and line.uom_id.encode('utf-8'), line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
         outfile.seek(0)    
         file = base64.encodestring(outfile.read())
         outfile.close()
