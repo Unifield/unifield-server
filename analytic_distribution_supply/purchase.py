@@ -143,6 +143,8 @@ class purchase_order(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        # Update default
+        default.update({'commitment_ids': False})
         # Default method
         res = super(purchase_order, self).copy(cr, uid, id, default, context)
         # Update analytic distribution
