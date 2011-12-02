@@ -117,6 +117,8 @@ class sourcing_line(osv.osv):
             result[obj.id]['procurement_request'] = obj.sale_order_id and obj.sale_order_id.procurement_request or False
             # gather sale order line state
             result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
+            # display confirm button - display if state == draft and not proc or state == progress and proc
+            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and not obj.procurement_request) or (obj.sale_order_state == 'progress' and obj.procurement_request)
         
         return result
     
@@ -188,6 +190,7 @@ class sourcing_line(osv.osv):
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
                                                       'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
+        'display_confirm_button': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Display Button', multi='get_vals_sourcing',),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
