@@ -103,7 +103,6 @@ class account_invoice(osv.osv):
         # Browse given invoices
         for inv in self.browse(cr, uid, ids, context=context):
             # Prepare some values
-            new_commit_id = False
             co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids])], context=context)
             if not co_ids:
                 continue
@@ -140,15 +139,12 @@ class account_invoice(osv.osv):
                     processed_commitment_line.append(cl.id)
                     if eng_ids:
                         self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
+                        self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
                 else:
                     # Remember difference in diff_lines list
                     diff_lines.append({'cl': cl, 'diff': cl.amount - total_amount, 'new_mnt': total_amount})
             # Difference lines process
             if diff_lines:
-                # Create a new commitment voucher
-                if not new_commit_id:
-                    new_commit_id = self.pool.get('account.commitment').copy(cr, uid, co.id, {'type': co.type, 'date': co.date, 'period_id': co.period_id.id, 
-                        'line_ids': False})
                 for diff_line in diff_lines:
                     # Prepare some values
                     cl = diff_line.get('cl', False)
@@ -185,7 +181,7 @@ class account_invoice(osv.osv):
                                         cmp_vals.update({'cost_center_id': eng_line.cost_center_id.id})
                                     if cmp_vals == vals:
                                         # Update analytic line with new amount
-                                        anal_amount = (distrib_line.percentage * new_mnt) / 100
+                                        anal_amount = (distrib_line.percentage * diff) / 100
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency, 
                                             anal_amount, round=False, context=context)
                                         # write new amount to corresponding engagement line
@@ -193,26 +189,14 @@ class account_invoice(osv.osv):
                                             {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
                                         # delete processed engagement lines
                                         engagement_lines[i] = None
-                    # create new commitment line to new commitment voucher with an amount equal to remaining amount (initial_amount - new_amount)
-                    new_cl_mnt = cl.amount - new_mnt
-                    # copy analytic distribution if exists
-                    new_distrib_id = False
-                    if cl.analytic_distribution_id:
-                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, cl.analytic_distribution_id.id, {}, context=context)
-                    self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': new_commit_id, 'account_id': cl.account_id.id, 
-                        'amount': new_cl_mnt, 'analytic_distribution_id': new_distrib_id}, context=context)
                     # update existent commitment line with new amount (new_mnt)
-                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': new_mnt}, context=context)
+                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': cl.amount - new_mnt}, context=context)
                     # add cl to processed_commitment_line
                     processed_commitment_line.append(cl.id)
-            # Change not processed commitment lines to a new commitment voucher
-            if not new_commit_id:
-                new_commit_id = self.pool.get('account.commitment').copy(cr, uid, co.id, {'type': co.type, 'date': co.date, 'period_id': co.period_id.id, 
-                    'line_ids': False})
-            for cl_id in [x.id for x in co.line_ids]:
-                if cl_id not in processed_commitment_line:
-                    # Change commitment line from old commitment voucher to new commitment voucher
-                    self.pool.get('account.commitment.line').write(cr, uid, [cl_id], {'commit_id': new_commit_id}, context=context)
+            # Update commitment voucher state (if total_amount is 0.0, then state is done)
+            c_total = self.pool.get('account.commitment')._get_total(cr, uid, [co.id], {}, {}, context=context)
+            if c_total and c_total.get(co.id, False) and c_total.get(co.id) == 0.0:
+                self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
         return True
 
     def action_open_invoice(self, cr, uid, ids, context={}):

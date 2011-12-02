@@ -24,9 +24,9 @@ import account
 import account_bank_statement
 import account_move_line
 import analytic_account
+import account_commitment
 import analytic_line
 import invoice
 import wizard
-import account_commitment
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

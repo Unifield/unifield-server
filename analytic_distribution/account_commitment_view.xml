@@ -47,7 +47,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Commitment Voucher" colors="red:state == 'cancel';blue:state=='draft';black:state == 'black'">
+                <tree string="Commitment Voucher" colors="red:state == 'cancel';blue:state=='draft';black:state == 'black'" hide_delete_button="1">
                     <field name="date"/>
                     <field name="name"/>
                     <field name="partner_id"/>
