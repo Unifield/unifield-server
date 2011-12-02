@@ -118,12 +118,28 @@ class account_commitment(osv.osv):
         raise osv.except_osv(_('Error'), _('You cannot delete a Commitment Voucher!'))
         return True
 
-    def copy(self, cr, uid, ids, context={}):
+    def copy(self, cr, uid, id, default={}, context={}):
         """
-        Copy a commitment is not available.
+        Copy analytic_distribution
         """
-        raise osv.except_osv(_('Error'), _('Duplicate a commitment voucher is not available yet.'))
-        return True
+        # Some verifications
+        if not context:
+            context = {}
+        # Update default values
+        default.update({
+            'name': self.pool.get('ir.sequence').get(cr, uid, 'account.commitment'),
+            'state': 'draft',
+        })
+        # Default method
+        res = super(account_commitment, self).copy(cr, uid, id, default, context)
+        # Update analytic distribution
+        if res:
+            c = self.browse(cr, uid, res, context=context)
+        if res and c.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, c.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
+        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """

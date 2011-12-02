@@ -58,6 +58,7 @@ class purchase_order(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
+        'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
     }
 
     def inv_line_create(self, cr, uid, account_id, order_line):
