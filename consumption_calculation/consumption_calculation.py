@@ -246,10 +246,10 @@ class real_average_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=';')
-        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Consumed Qty', 'Remark'])
+        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
-            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
+            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
         outfile.seek(0)    
         file = base64.encodestring(outfile.read())
         outfile.close()
@@ -359,7 +359,6 @@ class real_average_consumption_line(osv.osv):
        
         if context is None:
             context = {}
-
         for obj in self.browse(cr, uid, ids):
             if obj.rac_id.created_ok:
                 continue
