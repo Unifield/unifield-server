@@ -100,14 +100,6 @@ class account_invoice(osv.osv):
         Update engagement lines for given invoice.
         NB: We use COMMITMENT VOUCHER ANALYTIC DISTRIBUTION for updating!
         """
-        # - Vérifier statut commitment + existence
-        # - Vérifier que la distro est sur la commitment_line, sinon commitment
-        # - prendre montant invoice line et trouver résultat en analytique (penser aux montant négatifs suivant le type d'INVOICE)
-        # - décrémenter ce montant sur celui de la ligne analytique attachée à ce commitment line
-        # - si la décrémentation donne 0 => supprimer ligne, sinon mettre à jour
-        # - enregistrer la ligne de commitment dont on vient, lui attacher le montant, mettre à jour le montant du commitment line et enregistrer ladite ligne
-        # - créer un nouveau commitment avec la différence
-        
         # Some verifications
         if not context:
             context = {}
