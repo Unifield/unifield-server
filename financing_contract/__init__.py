@@ -21,6 +21,7 @@
 
 import donor_reporting_line
 import format
+import format_line
 import donor
 import contract
 import analytic

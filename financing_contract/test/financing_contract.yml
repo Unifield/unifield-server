@@ -147,7 +147,8 @@
     cost_center_ids:
       - analytic_account_OC1
     actual_line_ids:
-      - name: "A"
+      - id: report_line_A
+        name: "A"
         code: "A"
         account_ids:
           - test_expense
@@ -158,8 +159,8 @@
     context = {"reporting_currency": ref("base.CHF"),
                "reporting_type": "all",
                "currency_table_id": None}
-    contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 2121.0, ("Allocation is not what is expected!")
+    report_line = self.pool.get('financing.contract.donor.reporting.line').browse(cr, uid, ref("report_line_A"), context=context)
+    assert report_line_A.allocated_real == 2121, ("Allocation is not what is expected!")
 -
   Assert that total retrieved for funded is 212100 EUR
 -
@@ -167,8 +168,8 @@
     context = {"reporting_currency": ref("base.EUR"),
                "reporting_type": "all",
                "currency_table_id": None}
-    contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 212100.0, ("Allocation is not what is expected!")
+    report_line = self.pool.get('financing.contract.donor.reporting.line').browse(cr, uid, ref("report_line_A"), context=context)
+    assert report_line_A.allocated_real == 212100, ("Allocation is not what is expected!")
 -
   Create a currency table
 -
@@ -194,6 +195,6 @@
     context = {"reporting_currency": ref("base.EUR"),
                "reporting_type": "all",
                "currency_table_id": ref("test_table")}
-    contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 21210.0, ("Allocation is not what is expected!")
+    report_line = self.pool.get('financing.contract.donor.reporting.line').browse(cr, uid, ref("report_line_A"), context=context)
+    assert report_line_A.allocated_real == 21210, ("Allocation is not what is expected!")
     
