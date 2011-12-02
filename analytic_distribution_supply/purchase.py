@@ -232,13 +232,21 @@ class purchase_order(osv.osv):
 
     def wkf_approve_order(self, cr, uid, ids, context={}):
         """
-        Checks if a commitment voucher should be created after PO approbation
+        Checks:
+        1/ if all purchase line could take an analytic distribution
+        2/ if a commitment voucher should be created after PO approbation
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.analytic_distribution_id or po.analytic_distribution_id:
+                    continue
+                raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO
