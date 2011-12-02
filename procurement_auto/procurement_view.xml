@@ -76,7 +76,8 @@
         
         <menuitem action="action_automatic_supply_tree"
                   id="menu_automatic_supply"
-                  parent="procurement.menu_stock_procurement" />
+                  sequence="2"
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
     
     </data>
 </openerp>

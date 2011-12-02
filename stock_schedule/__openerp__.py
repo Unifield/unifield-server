@@ -26,6 +26,7 @@
     "depends": [
                 "base",
                 "stock",
+                "procurement",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
