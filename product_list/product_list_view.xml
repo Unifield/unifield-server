@@ -91,6 +91,7 @@
         </record>
         
         <menuitem id="menu_sale_product_list"
+                  sequence="2"
                   action="action_product_list"
                   parent="base.menu_product" />
                   
@@ -100,6 +101,7 @@
                   parent="purchase.menu_procurement_management_product" />
                   
         <menuitem id="menu_stock_product_list"
+                  sequence="2"
                   action="action_product_list"
                   parent="stock.menu_stock_product" />
     
