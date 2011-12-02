@@ -28,7 +28,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Commitment voucher lines">
-                            <field name="line_ids" nolabel="1" colspan="4"/>
+                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': ['|', '&amp;', ('state', '!=', 'draft'), ('type', 'in', ['manual', 'esc']), ('type', '=', 'external')]}"/>
                         </page>
                     </notebook>
                     <group col="6" colspan="4">
