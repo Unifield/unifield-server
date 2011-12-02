@@ -246,7 +246,8 @@ class purchase_order(osv.osv):
             for line in po.order_line:
                 if line.analytic_distribution_id or po.analytic_distribution_id:
                     continue
-                raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
+                if not po.from_yml_test:
+                    raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO

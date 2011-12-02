@@ -73,6 +73,8 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'analytic_line_ids': fields.one2many('account.analytic.line', 'invoice_line_id', string="Analytic line", 
+            help="An analytic line linked with this invoice from an engagement journal (theorically)"),
     }
 
     _defaults = {

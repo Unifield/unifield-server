@@ -907,9 +907,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 aal_obj.unlink(cr, uid, aal_ids, context=context)
                 # create new analytic lines
                 ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
-
-            if not move_lines and wizard.invoice_line_id:
-                self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
         return True
 
 analytic_distribution_wizard()
