@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,22 +19,4 @@
 #
 ##############################################################################
 
-
-{
-    "name" : "Specific Locations",
-    "version" : "0.1",
-    "author" : "MSF pam",
-    "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", "purchase_override",],
-    "init_xml" : [],
-    "demo_xml" : [],
-    "description": """
-    Add locations capabilities
-    """,
-    'test': ['test/specific_locations.yml'],
-    'update_xml': [
-        'specific_locations_view.xml',
-    ],
-    'installable': True,
-}
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+import report_stock_virtual
