@@ -2,6 +2,8 @@
 <openerp>
     <data>
 
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="4"
+                groups="account.group_account_user,account.group_account_manager"/>
     <!-- Bank Register Form => Inheritance -->
         <record id="inherit_view_bank_statement_form" model="ir.ui.view">
             <field name='name'>inherit.view.bank.statement.form</field>
