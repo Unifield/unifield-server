@@ -95,6 +95,7 @@
                   parent="base.menu_product" />
                   
         <menuitem id="menu_purchase_product_list"
+                  sequence="2"
                   action="action_product_list"
                   parent="purchase.menu_procurement_management_product" />
                   

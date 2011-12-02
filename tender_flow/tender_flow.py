@@ -55,6 +55,7 @@ class tender(osv.osv):
             result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
             
         return result
+
     
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
@@ -73,7 +74,8 @@ class tender(osv.osv):
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
-                'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',)
+                'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
+                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
                 }
     
     _defaults = {'state': 'draft',

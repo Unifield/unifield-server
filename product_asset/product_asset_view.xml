@@ -225,7 +225,7 @@
 
 		<!-- Assets in PURCHASES>Products -->
 		<menuitem id="menu_asset_purchases" name="Assets"
-			parent="purchase.menu_procurement_management_product" sequence="10" />
+			parent="purchase.menu_procurement_management_product" sequence="3" />
 		<menuitem action="asset_normal_action" id="menu_assets_purchases"
 			parent="menu_asset_purchases" sequence="1" />
 
@@ -338,7 +338,7 @@
 
 		<!-- Asset Events in PURCHASES>Products>Assets -->
 		<menuitem action="asset_event_normal_action" id="menu_asset_event_purchases"
-			parent="menu_asset_purchases" sequence="1" />
+			parent="menu_asset_purchases" sequence="2" />
 
 		<!-- Asset Events in WAREHOUSE>Products>Assets -->
 		<menuitem action="asset_event_normal_action" id="menu_asset_event_warehouse"
@@ -385,7 +385,7 @@
 
 		<!-- Asset Types in PURCHASES>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_purchases"
-			parent="menu_asset_purchases" sequence="1" />
+			parent="menu_asset_purchases" sequence="3" />
 
 		<!-- Asset Types in WAREHOUSE>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_warehouse"
