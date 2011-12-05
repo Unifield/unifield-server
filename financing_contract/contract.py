@@ -192,12 +192,15 @@ class financing_contract_contract(osv.osv):
         # create the final domain
         contract_analytic_domain = []
         contract_account_domain = format_line_obj._create_domain('general_account_id', contract_account_ids)
+        contract_date_domain = eval(contract_general_domain['date_domain'])
         if contract.reporting_type == 'allocated':
-            contract_analytic_domain = [eval(contract_general_domain['date_domain']),
+            contract_analytic_domain = [contract_date_domain[0],
+                                        contract_date_domain[1],
                                         eval(contract_account_domain),
                                         eval(contract_general_domain['funding_pool_domain'])]
         else: 
-            contract_analytic_domain = [eval(contract_general_domain['date_domain']),
+            contract_analytic_domain = [contract_date_domain[0],
+                                        contract_date_domain[1],
                                         eval(contract_account_domain),
                                         eval(contract_general_domain['funding_pool_domain']),
                                         eval(contract_general_domain['cost_center_domain'])]

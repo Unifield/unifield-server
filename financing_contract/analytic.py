@@ -35,7 +35,7 @@ class account_analytic_line(osv.osv):
             if 'active_id' in context:
                 donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
                 if donor_line.analytic_domain:
-                    args += eval(donor_line.analytic_domain)
+                    args += donor_line.analytic_domain
                     
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 

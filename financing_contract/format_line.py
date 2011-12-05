@@ -54,18 +54,19 @@ class financing_contract_format_line(osv.osv):
                 res.append(line.parent_id.id)
         return res
     
-    def _get_total_costs(self, cr, uid, browse_overhead_line, field_name, context=None):
-        total_costs = 0.0
+    def _get_total_costs(self, cr, uid, browse_overhead_line, field_name=None, context=None):
         # since this is only called from the overhead line, the domain is
         # "all children of the parent line, except the current one"
-        if field_name:
-            for line in browse_overhead_line.parent_id.child_ids:
-                if line.id != browse_overhead_line.id:
-                    total_costs += getattr(line, field_name)
-            return {
-                    field_name: total_costs
-                   }
-        return {}
+        result = 0.0
+        total_line_ids = [line.id for line in browse_overhead_line.format_id.actual_line_ids if not line.parent_id and line.line_type != 'overhead']
+        total_costs = {}
+        if field_name and field_name in ('allocated_budget', 'project_budget'):
+            total_costs = self._get_budget_amount(cr, uid, total_line_ids, field_name, context=context)
+        else:
+            total_costs = self._get_actual_amount(cr, uid, total_line_ids, field_name, context=context)
+        for total_cost in total_costs.values():
+            result += total_cost
+        return result
     
     def _get_account_ids(self, browse_line, funding_pool_account_ids):
         result = []
@@ -113,12 +114,15 @@ class financing_contract_format_line(osv.osv):
         account_ids = self._get_account_ids(browse_line, general_domain['funding_pool_account_ids'])
         account_domain = self._create_domain('general_account_id', account_ids)
         # create the final domain
+        date_domain = eval(general_domain['date_domain'])
         if  domain_type == 'allocated':
-            return [eval(general_domain['date_domain']),
+            return [date_domain[0],
+                    date_domain[1],
                     eval(account_domain),
                     eval(general_domain['funding_pool_domain'])]
         else: 
-            return [eval(general_domain['date_domain']),
+            return [date_domain[0],
+                    date_domain[1],
                     eval(account_domain),
                     eval(general_domain['funding_pool_domain']),
                     eval(general_domain['cost_center_domain'])]
@@ -129,6 +133,8 @@ class financing_contract_format_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
+            # default value
+            res[line.id] = 0.0
             if line.line_type:
                 if line.line_type in ('actual', 'consumption'):
                     # Value is set by the user, just return it
@@ -141,15 +147,15 @@ class financing_contract_format_line(osv.osv):
                     sum_budget = 0.0
                     for child_line in line.child_ids:
                         child_values = self._get_budget_amount(cr, uid, [child_line.id], field_name, context=context)
-                        sum_budget += child_values[child_line.id][field_name]
+                        sum_budget += child_values[child_line.id]
                     res[line.id] = sum_budget
                 elif line.line_type == 'overhead':
                     # 2 cases
-                    if line.computation_type == 'cost_percentage':
+                    if line.overhead_type == 'cost_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
                         res[line.id] = total_costs * line.overhead_percentage / 100.0
-                    elif line.computation_type == 'grant_percentage':
+                    elif line.overhead_type == 'grant_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
                         res[line.id] = total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage)
@@ -161,6 +167,8 @@ class financing_contract_format_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
+            # default value
+            res[line.id] = 0.0
             if line.line_type:
                 if line.line_type == 'consumption':
                     # Value is set by the user, just return it
@@ -173,15 +181,15 @@ class financing_contract_format_line(osv.osv):
                     sum_real = 0.0
                     for child_line in line.child_ids:
                         child_values = self._get_actual_amount(cr, uid, [child_line.id], field_name, context=context)
-                        sum_real += child_values[child_line.id][field_name]
+                        sum_real += child_values[child_line.id]
                     res[line.id] = sum_real
                 elif line.line_type == 'overhead':
                     # 2 cases
-                    if line.computation_type == 'cost_percentage':
+                    if line.overhead_type == 'cost_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
                         res[line.id] = total_costs * line.overhead_percentage / 100.0
-                    elif line.computation_type == 'grant_percentage':
+                    elif line.overhead_type == 'grant_percentage':
                         # percentage of all costs (sum of all 2nd-level lines, except overhead)
                         total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
                         res[line.id] = total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage)
@@ -189,9 +197,9 @@ class financing_contract_format_line(osv.osv):
                     # sum of analytic lines, determined by the domain
                     analytic_domain = []
                     if field_name == 'project_real':
-                        self._get_analytic_domain(cr, uid, line, 'project', context=context)
+                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'project', context=context)
                     elif field_name == 'allocated_real':
-                        self._get_analytic_domain(cr, uid, line, 'allocated', context=context)
+                        analytic_domain = self._get_analytic_domain(cr, uid, line, 'allocated', context=context)
                     # selection of analytic lines
                     if 'reporting_currency' in context:
                         analytic_line_obj = self.pool.get('account.analytic.line')
@@ -231,7 +239,7 @@ class financing_contract_format_line(osv.osv):
         'project_budget_value': fields.float('Budget project amount (value)'),
         'allocated_real_value': fields.float('Real allocated amount (value)'),
         'project_real_value': fields.float('Real project amount (value)'),
-        'overhead_percentage': fields.float('Overhead percentage (value)'),
+        'overhead_percentage': fields.float('Overhead percentage'),
         'allocated_budget': fields.function(_get_budget_amount, method=True, store=False, string="Funded amount - Budget", type="float", readonly="True"),
         'project_budget': fields.function(_get_budget_amount, method=True, store=False, string="Total project amount - Budget", type="float", readonly="True"),
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded amount - Actuals", type="float", readonly="True"),
@@ -240,6 +248,8 @@ class financing_contract_format_line(osv.osv):
     
     _defaults = {
         'line_type': 'actual',
+        'overhead_type': 'cost_percentage',
+        'parent_id': lambda *a: False
     }
     
     def create(self, cr, uid, vals, context=None):

@@ -35,6 +35,10 @@ class financing_contract_donor_reporting_line(osv.osv_memory):
         'parent_id': fields.many2one('financing.contract.donor.reporting.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.donor.reporting.line', 'parent_id', 'Child lines'),
     }
+    
+    _defaults = {
+        'parent_id': lambda *a: False
+    }
         
 financing_contract_donor_reporting_line()
 
