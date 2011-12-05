@@ -105,19 +105,6 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
-    def unlink(self, cr, uid, ids, context={}):
-        """
-        Delete a commitment is forbidden.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Raise an error to display unpossibility to delete a commitment
-        raise osv.except_osv(_('Error'), _('You cannot delete a Commitment Voucher!'))
-        return True
-
     def copy(self, cr, uid, id, default={}, context={}):
         """
         Copy analytic_distribution

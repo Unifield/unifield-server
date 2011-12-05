@@ -35,7 +35,7 @@
         </record>
 
     <!-- Redefine Cancel and Done activites for Accounting Commitments -->
-        <record id="act_cancel" model="workflow.activity">
+        <record id="purchase.act_cancel" model="workflow.activity">
             <field name="wkf_id" ref="purchase.purchase_order"/>
             <field name="name">cancel</field>
             <field name="kind">function</field>
@@ -43,7 +43,7 @@
             <field name="action">action_cancel()</field>
         </record>
 
-        <record id="act_done" model="workflow.activity">
+        <record id="purchase.act_done" model="workflow.activity">
             <field name="wkf_id" ref="purchase.purchase_order"/>
             <field name="name">done</field>
             <field name="action">action_done()</field>

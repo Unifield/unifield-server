@@ -255,6 +255,48 @@ class purchase_order(osv.osv):
             self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 
+    def _delete_commitment(self, cr, uid, ids, context={}):
+        """
+        Delete attached commitment(s) from given Purchase Order.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse PO
+        for po in self.browse(cr, uid, ids, context=context):
+            # Delete commitment if exists
+            if po.commitment_ids:
+                self.pool.get('account.commitment').unlink(cr, uid, [x.id for x in po.commitment_ids], context=context)
+        return True
+
+    def action_cancel(self, cr, uid, ids, context={}):
+        """
+        Delete commitment from purchase before 'cancel' state.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Delete commitments if exists
+        self._delete_commitment(cr, uid, ids, context=context)
+        return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
+
+    def action_done(self, cr, uid, ids, context={}):
+        """
+        Delete commitment from purchase before 'done' state.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Delete commitments if exists
+        self._delete_commitment(cr, uid, ids, context=context)
+        return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
 purchase_order()
 
 class purchase_order_line(osv.osv):
