@@ -108,24 +108,28 @@ class financing_contract_format_line(osv.osv):
                 'funding_pool_account_ids': funding_pool_account_ids}
     
     def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
-        format = browse_line.format_id
-        general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
-        # General accounts
-        account_ids = self._get_account_ids(browse_line, general_domain['funding_pool_account_ids'])
-        account_domain = self._create_domain('general_account_id', account_ids)
-        # create the final domain
-        date_domain = eval(general_domain['date_domain'])
-        if  domain_type == 'allocated':
-            return [date_domain[0],
-                    date_domain[1],
-                    eval(account_domain),
-                    eval(general_domain['funding_pool_domain'])]
-        else: 
-            return [date_domain[0],
-                    date_domain[1],
-                    eval(account_domain),
-                    eval(general_domain['funding_pool_domain']),
-                    eval(general_domain['cost_center_domain'])]
+        if browse_line.line_type in ('consumption', 'overhead'):
+            # No domain for those
+            return False
+        else:
+            format = browse_line.format_id
+            general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
+            # General accounts
+            account_ids = self._get_account_ids(browse_line, general_domain['funding_pool_account_ids'])
+            account_domain = self._create_domain('general_account_id', account_ids)
+            # create the final domain
+            date_domain = eval(general_domain['date_domain'])
+            if  domain_type == 'allocated':
+                return [date_domain[0],
+                        date_domain[1],
+                        eval(account_domain),
+                        eval(general_domain['funding_pool_domain'])]
+            else: 
+                return [date_domain[0],
+                        date_domain[1],
+                        eval(account_domain),
+                        eval(general_domain['funding_pool_domain']),
+                        eval(general_domain['cost_center_domain'])]
 
     def _get_budget_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

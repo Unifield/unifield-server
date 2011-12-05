@@ -184,13 +184,19 @@
                                         <field name="line_type" invisible="1"/>
                                     </tree>
                                     <form string="Reporting lines">
-                                        <group colspan="4" col="6">
+                                        <group colspan="4" col="4">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4">
                                             <field name="parent_id" colspan="2"
                                                    domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
+                                            <field name="line_type" colspan="2"/>
                                         </group>
-                                        <field name="line_type"/>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
+                                            <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                        </group>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
                                                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
                                                attrs="{'invisible': [('line_type', '=', 'view')]}"/>

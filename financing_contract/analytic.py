@@ -22,6 +22,8 @@
 ##############################################################################
 
 from osv import osv
+import tools
+from tools.translate import _
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -36,6 +38,9 @@ class account_analytic_line(osv.osv):
                 donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
                 if donor_line.analytic_domain:
                     args += donor_line.analytic_domain
+                else:
+                    # Line without domain (consumption, overhead)
+                    raise osv.except_osv(_('No Analytic Domain !'),_("This line does not have an analytic domain!"))
                     
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
