@@ -54,6 +54,8 @@ class analytic_distribution(osv.osv):
             'invoice_line_ids': False,
             'register_line_ids': False,
             'move_line_ids': False,
+            'commitment_ids': False,
+            'commitment_line_ids': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
