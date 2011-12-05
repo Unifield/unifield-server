@@ -714,15 +714,18 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     STATE_SELECTION = [
-        ('draft', 'Request for Quotation'),
-        ('wait', 'Waiting'),
-        ('confirmed', 'Waiting Approval'),
-        ('approved', 'Approved'),
-        ('except_picking', 'Shipping Exception'),
-        ('except_invoice', 'Invoice Exception'),
-        ('done', 'Done'),
-        ('cancel', 'Cancelled')
-    ]
+                       ('draft', 'Draft'),
+                       ('wait', 'Waiting'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
+                       ('except_invoice', 'Invoice Exception'),
+                       ('done', 'Closed'),
+                       ('cancel', 'Cancelled'),
+                       ('rfq_sent', 'RfQ Sent'),
+                       ('rfq_updated', 'RfQ Updated'),
+                       #('rfq_done', 'RfQ Done'),
+                       ]
     _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
                 }
     
