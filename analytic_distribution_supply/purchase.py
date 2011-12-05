@@ -136,7 +136,7 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy_data(self, cr, uid, id, default={}, context={}):
         """
         Copy global distribution and give it to new purchase
         """
@@ -144,9 +144,9 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
         # Update default
-        default.update({'commitment_ids': False})
+        default.update({'commitment_ids': [],})
         # Default method
-        res = super(purchase_order, self).copy(cr, uid, id, default, context)
+        res = super(purchase_order, self).copy_data(cr, uid, id, default, context)
         # Update analytic distribution
         if res:
             po = self.browse(cr, uid, res, context=context)
@@ -255,7 +255,7 @@ class purchase_order(osv.osv):
             self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 
-    def _delete_commitment(self, cr, uid, ids, context={}):
+    def _finish_commitment(self, cr, uid, ids, context={}):
         """
         Delete attached commitment(s) from given Purchase Order.
         """
@@ -266,9 +266,9 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Browse PO
         for po in self.browse(cr, uid, ids, context=context):
-            # Delete commitment if exists
+            # Change commitment state if exists
             if po.commitment_ids:
-                self.pool.get('account.commitment').unlink(cr, uid, [x.id for x in po.commitment_ids], context=context)
+                self.pool.get('account.commitment').write(cr, uid, [x.id for x in po.commitment_ids], {'state': 'done'}, context=context)
         return True
 
     def action_cancel(self, cr, uid, ids, context={}):
@@ -281,7 +281,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Delete commitments if exists
-        self._delete_commitment(cr, uid, ids, context=context)
+        self._finish_commitment(cr, uid, ids, context=context)
         return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
 
     def action_done(self, cr, uid, ids, context={}):
@@ -293,8 +293,18 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Delete commitments if exists
-        self._delete_commitment(cr, uid, ids, context=context)
+        # Change commitments state if all shipments have been invoiced (not in "to be invoiced" state)
+        to_process = []
+        for po in self.browse(cr, uid, ids, context=context):
+            is_totally_done = True
+            # If one shipment (stock.picking) is '2binvoiced', we shouldn't change commitments ' state
+            for pick in po.picking_ids:
+                if pick.invoice_state == '2binvoiced':
+                    is_totally_done = False
+            # Else shipment is fully done. We could change commitments ' state to Done.
+            if is_totally_done:
+                to_process.append(po.id)
+        self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
 purchase_order()
