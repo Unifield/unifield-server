@@ -783,6 +783,17 @@ class account_invoice(osv.osv):
                 line.append((0,0,val))
         return line
 
+    def _hook_period_id(self, cr, uid, inv, context={}):
+        """
+        Redefine period from invoice date
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not inv:
+            return False
+        return self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or time.strftime('%Y-%m-%d')),('date_stop','>=',inv.date_invoice or time.strftime('%Y-%m-%d')), ('company_id', '=', inv.company_id.id)])
+
     def action_move_create(self, cr, uid, ids, *args):
         """Creates invoice related analytics and financial move lines"""
         ait_obj = self.pool.get('account.invoice.tax')
@@ -916,7 +927,7 @@ class account_invoice(osv.osv):
             }
             period_id = inv.period_id and inv.period_id.id or False
             if not period_id:
-                period_ids = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or time.strftime('%Y-%m-%d')),('date_stop','>=',inv.date_invoice or time.strftime('%Y-%m-%d')), ('company_id', '=', inv.company_id.id)])
+                period_ids = self._hook_period_id(cr, uid, inv, context=context)
                 if period_ids:
                     period_id = period_ids[0]
             if period_id:
