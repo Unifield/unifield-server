@@ -484,8 +484,8 @@ class stock_move(osv.osv):
                                      'message': _('The selected product is Perishable.')}
         
         # quantities are set to False
-        result.setdefault('value', {}).update({'product_qty': False,
-                                               'product_uos_qty': False,
+        result.setdefault('value', {}).update({'product_qty': 0.00,
+                                               'product_uos_qty': self.pool.get('stock.move').onchange_quantity(cr, uid, ids, prod_id, 0.00, product.uom_id.id, uos_id)['value']['product_uos_qty'],
                                                })
         return result
     
