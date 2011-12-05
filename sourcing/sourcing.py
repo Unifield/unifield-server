@@ -161,6 +161,23 @@ class sourcing_line(osv.osv):
         result = ids
         return result
     
+    def _get_fake(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
+
+    def _search_need_sourcing(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+        return ['|', '&', ('state', '=', 'draft'), ('procurement_request', '=', False), '&', ('sale_order_state', '=', 'progress'), ('procurement_request', '=', True)]
+
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
@@ -191,6 +208,7 @@ class sourcing_line(osv.osv):
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
                                                       'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
         'display_confirm_button': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Display Button', multi='get_vals_sourcing',),
+        'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
