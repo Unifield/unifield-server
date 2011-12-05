@@ -71,8 +71,8 @@
                             <group colspan="4" col="6">
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="procurement,progress" />
-                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm Request" states="procurement" />
-                                <button name="order_confirm" icon="gtk-execute" string="Close Request" states="progress" />
+                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="procurement" />
+                                <button name="order_confirm" icon="gtk-execute" string="Done" states="progress" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">

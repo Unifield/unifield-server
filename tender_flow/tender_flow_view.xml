@@ -65,7 +65,7 @@
                     <group col="13" colspan="4">
                         <field name="state"/>
                         <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('sale_order_id','!=', False),],}" />
-                        <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
+                        <button name="button_generate" states="draft" string="Create RfQ" icon="gtk-convert" />
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" />
                         <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','=', False),],}" />
@@ -159,10 +159,10 @@
 	                                <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
         	                        <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                         	        <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                                	<button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
+                                	<button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
 	                                <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
-            				<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft'),],}" />
-            				<button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft'),],}" />
+            				<button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft'),],}" />
+            				<button name="rfq_sent" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft'),],}" />
             				<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent'),],}" />
             			    <button name="rfq_done" states="rfq_updated" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'),],}" />
 				</group>
