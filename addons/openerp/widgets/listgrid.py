@@ -41,12 +41,13 @@ class List(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
     params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
-              'hiddens', 'edit_inline', 'field_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button']
+              'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button']
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
     pager = None
     field_total = {}
+    field_real_total = {}
     editors = {}
     hiddens = []
     buttons = []
@@ -207,11 +208,15 @@ class List(TinyWidget):
             data = kw['default_data']
 
         self.values = copy.deepcopy(data)
-        self.headers, self.hiddens, self.data, self.field_total, self.buttons = self.parse(root, fields, data)
+        self.headers, self.hiddens, self.data, self.field_total, self.field_real_total, self.buttons = self.parse(root, fields, data)
         
         for k, v in self.field_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_total[k][1] = self.do_sum(self.data, k)
+                
+        for k, v in self.field_real_total.items():
+            if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
+                self.field_real_total[k][1] = self.do_real_sum(self.data, k)
 
         self.columns = len(self.headers)
 
@@ -276,6 +281,27 @@ class List(TinyWidget):
 
         integer, digit = digits
         return format.format_decimal(sum or 0.0, digit)
+
+    def do_real_sum(self, data, field):
+        sum = 0.0
+
+        for d in data:
+            if d['line_type'].value != 'view':
+                value = d[field].value
+                sum += value
+
+        attrs = {}
+        if data:
+            d = data[0]
+            attrs = d[field].attrs
+
+        digits = attrs.get('digits', (16,2))
+        if isinstance(digits, basestring):
+            digits = eval(digits)
+
+        integer, digit = digits
+        return format.format_decimal(sum or 0.0, digit)
+
 
     def display(self, value=None, **params):
 
@@ -354,6 +380,7 @@ class List(TinyWidget):
         buttons = []
 
         field_total = {}
+        field_real_total = {}
         values  = [row.copy() for row in data]
 
         myfields = [] # check for duplicate fields
@@ -416,6 +443,9 @@ class List(TinyWidget):
 
                     if 'sum' in attrs:
                         field_total[name] = [attrs['sum'], 0.0]
+                        
+                    if 'real_sum' in attrs:
+                        field_real_total[name] = [attrs['real_sum'], 0.0]
 
                     for i, row in enumerate(data):
                         row_value = values[i]
@@ -440,7 +470,7 @@ class List(TinyWidget):
 
                     headers += [(name, fields[name])]
 
-        return headers, hiddens, data, field_total, buttons
+        return headers, hiddens, data, field_total, field_real_total, buttons
 
 class Char(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/char.mako"
