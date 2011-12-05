@@ -42,6 +42,17 @@ class purchase_order_line(osv.osv):
 
 purchase_order_line()
 
+class audittrail_log_sequence(osv.osv):
+    _name = 'audittrail.log.sequence'
+    _rec_name = 'model'
+    _columns = {
+        'model': fields.char(size=64, string='Model'),
+        'res_id': fields.integer(string='Res Id'),
+        'sequence': fields.many2one('ir.sequence', 'Logs Sequence', required=True, ondelete='cascade'),
+    }
+
+audittrail_log_sequence()
+
 class audittrail_rule(osv.osv):
     """
     For Auddittrail Rule
@@ -199,7 +210,8 @@ class audittrail_log_line(osv.osv):
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
           'user_id': fields.many2one('res.users', string='User'),
-          'method': fields.char(size=64, string='Method'),
+#          'method': fields.char(size=64, string='Method'),
+          'method': fields.selection([('create', 'Creation'), ('write', 'Modification'), ('unlink', 'Deletion')], string='Method'),
           'timestamp': fields.datetime(string='Date'),
           'res_id': fields.integer(string='Resource Id'),
           'field_id': fields.many2one('ir.model.fields', 'Fields'),
@@ -319,15 +331,47 @@ def create_log_line(self, cr, uid, model, lines=[]):
         fct_res_id = 'fct_res_id' in line and line['fct_res_id'] or False
         fct_object_id = 'fct_object_id' in line and line['fct_object_id'] or False
 
+        if res_id:
+            # Get the log number
+            seq_object_id = object_id
+            seq_res_id = res_id
+            fct_object = self.pool.get('ir.model').browse(cr, uid, seq_object_id)
+            log_sequence = self.pool.get('audittrail.log.sequence').search(cr, uid, [('model', '=', fct_object.model), ('res_id', '=', seq_res_id)])
+            if log_sequence:
+                log_seq = self.pool.get('audittrail.log.sequence').browse(cr, uid, log_sequence[0]).sequence
+                log = log_seq.get_id(test='id')
+            else:
+                # Create a new sequence
+                seq_pool = self.pool.get('ir.sequence')
+                seq_typ_pool = self.pool.get('ir.sequence.type')
+                types = {
+                    'name': fct_object.name,
+                    'code': fct_object.model,
+                }
+                seq_typ_pool.create(cr, uid, types)
+                seq = {
+                    'name': fct_object.name,
+                    'code': fct_object.model,
+                    'prefix': '',
+                    'padding': 1,
+                }
+                seq_id = seq_pool.create(cr, uid, seq)
+                self.pool.get('audittrail.log.sequence').create(cr, uid, {'model': fct_object.model, 'res_id': seq_res_id, 'sequence': seq_id})
+                log = self.pool.get('ir.sequence').browse(cr, uid, seq_id).get_id(test='id')
+
+
         if field_id:
             field_description = field['field_description']
-            if method == 'write':
-                field_description = 'Change %s'%field_description
-            elif method == 'create':
-                field_description = '%s creation'%field_description
-            elif method == 'unlink':
-                field_description = '%s deletion'%field_description
+            #if method == 'write':
+            #    field_description = 'Change %s'%field_description
+            #elif method == 'create':
+            #    field_description = '%s creation'%field_description
+            #elif method == 'unlink':
+            #    field_description = '%s deletion'%field_description
 
+            # TODO : Now, values of the field is saved when the method is called
+            # In the future, make the possibility to compute the field only when
+            # the user reads the log
             if field['ttype'] == 'many2one':
                 if type(old_value) == tuple:
                     old_value = old_value[0]
@@ -337,6 +381,20 @@ def create_log_line(self, cr, uid, model, lines=[]):
                     new_value = new_value[0]
                 # Get the readable name of the related field
                 new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
+            elif field['ttype'] == 'selection':
+                fct_object = self.pool.get('ir.model').browse(cr, uid, fct_object_id or object_id).model
+                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
+                old_value = dict(sel[field['name']]['selection']).get(old_value)
+                new_value = dict(sel[field['name']]['selection']).get(new_value)
+#                res = dict(sel[field['name']]['selection']).get(getattr(fct_object,field['name']),getattr(fct_object,field['name']))
+                name = '%s,%s' % (fct_object, field['name'])
+                old_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [old_value])])
+                new_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', 'in', [new_value])])
+                if old_tr_ids:
+                    old_value = self.pool.get('ir.translation').read(cr, uid, old_tr_ids, ['value'])[0]['value']
+                if new_tr_ids:
+                    new_value = self.pool.get('ir.translation').read(cr, uid, new_tr_ids, ['value'])[0]['value']
+
 
         vals = {
                 "field_id": field_id,
@@ -357,7 +415,6 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 "fct_object_id": fct_object_id,
                 "sub_obj_name": sub_obj_name,
                 }
-        print vals
         line_id = log_line_pool.create(cr, uid, vals)
     #End Loop
     return True
@@ -401,7 +458,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
             model_name = parent_field.model_id.name
             res_id2 = resource_pool.read(cr, uid, res_id, [parent_field.name])[parent_field.name][0]
         vals = {
-                "name": "%s creation" %model.name,
+#                "name": "%s creation" %model.name,
+                "name": '%s' %model.name,
                 "method": method,
                 "object_id": model_id,
                 "user_id": uid_orig,
