@@ -73,6 +73,8 @@
   !python {model: purchase.order}: |
     procurement_obj = self.pool.get('procurement.order')
     proc_ids = procurement_obj.browse(cr, uid, [ref('procurement_order_testcase0')])[0]
+    # Avoir analytic distribution error
+    self.write(cr, uid, [proc_ids.purchase_id.id], {'from_yml_test': True})
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'purchase.order',proc_ids.purchase_id.id,'purchase_confirm', cr)
