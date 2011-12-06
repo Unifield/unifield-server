@@ -38,6 +38,15 @@ class purchase_order(osv.osv):
 
         return res
 
+    def copy(self, cr, uid, ids, defaults={}, context=None):
+        '''
+        Remove the linked documents on copy
+        '''
+        defaults.update({'transport_order_id': False,
+                         'shipment_transport_ids': []})
+
+        return super(purchase_order, self).copy(cr, uid, ids, defaults, context=context)
+
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
         'intl_supplier_ok': fields.boolean(string='International Supplier'),
@@ -48,6 +57,8 @@ class purchase_order(osv.osv):
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total cost including transport", type='float', readonly=True),
         'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
+        'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain="[('categ', '!=', 'transport')]"),
+        'shipment_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked shipments'),
     }
 
     _defaults = {
@@ -116,5 +127,15 @@ class purchase_order(osv.osv):
 
 
 purchase_order()
+
+class stock_picking(osv.osv):
+    _name = 'stock.picking'
+    _inherit = 'stock.picking'
+
+    _columns = {
+        'transport_order_id': fields.many2one('purchase.order', string='Transport Order', domain="[('categ', '=', 'transport')]"),
+    }
+
+stock_picking()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -29,6 +29,7 @@
                 "purchase_override",
                 "res_currency_functional",
                 "product_nomenclature",
+                "msf_outgoing",
                 "msf_partner",],
     "author": "TeMPO Consulting, MSF",
     "website": "",

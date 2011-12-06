@@ -8,23 +8,34 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="res_currency_functional.purchase_order_form_inherit" />
             <field name="arch" type="xml">
-                <xpath expr="/form/notebook/page/group[1]/field[@name='currency_id']" position="before">
-                    <field name="display_intl_transport_ok" invisible="1" />
-                    <field name="intl_supplier_ok" invisible="1" />
-                    <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                        'readonly': [('shipped_rate', '!=', 0.00)],
-                                                        }"/>
-                    <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                        'required': [('intl_supplier_ok', '=', True)],
-                                                        'readonly': [('shipped_rate', '!=', 0.00)],
-                                                        }"/>
-                    <field name="transport_currency_id" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
-                                                         'required': [('intl_supplier_ok', '=', True)],
-                                                        'readonly': [('shipped_rate', '!=', 0.00)],
-                                                        }"/>
-                    <field name="total_price_include_transport" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
-                    <newline />
-                </xpath>
+                <data>
+                    <xpath expr="/form/notebook/page/group[1]/field[@name='currency_id']" position="before">
+                        <field name="display_intl_transport_ok" invisible="1" />
+                        <field name="intl_supplier_ok" invisible="1" />
+                        <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                            'readonly': [('shipped_rate', '!=', 0.00)],
+                                                            }"/>
+                        <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                            'required': [('intl_supplier_ok', '=', True)],
+                                                            'readonly': [('shipped_rate', '!=', 0.00)],
+                                                            }"/>
+                        <field name="transport_currency_id" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],
+                                                             'required': [('intl_supplier_ok', '=', True)],
+                                                            'readonly': [('shipped_rate', '!=', 0.00)],
+                                                            }"/>
+                        <field name="total_price_include_transport" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}" />
+                        <newline />
+                    </xpath>
+
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']" position="after">
+                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
+                            <separator colspan="4" string="Purchase Order" />
+                            <field name="transport_order_id" />
+                            <separator colspan="4" string="Shipment documents" />
+                            <field name="shipment_transport_ids" colspan="4" nolabel="1" widget="many2many" domain="[('type', '=', 'out'), '|', ('subtype', '=', 'packing'), ('converted_to_standard', '=', True)]" />
+                        </page>
+                    </xpath>
+                </data>
             </field>
         </record>
 
