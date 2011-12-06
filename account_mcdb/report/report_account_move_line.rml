@@ -269,7 +269,7 @@
           <para style="P3">[[ o.credit or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P2">[[ o.functional_currency_id and o.functiona_currency_id.name or '' ]]</para>
+          <para style="P2">[[ o.functional_currency_id and o.functional_currency_id.name or '' ]]</para>
         </td>
         <td>
           <para style="P2">[[ o.state or '' ]]</para>
