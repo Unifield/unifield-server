@@ -23,6 +23,7 @@ from osv import fields, osv, orm
 from osv.osv import osv_pool, object_proxy
 from osv.orm import orm_template
 from tools.translate import _
+from lxml import etree
 import ir
 import pooler
 import time
@@ -228,6 +229,19 @@ class audittrail_log_line(osv.osv):
           'fct_res_id': fields.integer(string='Res. Id'),
           'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
         }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Display the name of the resource on the tree view
+        '''
+        res = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('active_ids') and context.get('active_model'):
+            element_name = self.pool.get(context.get('active_model')).name_get(cr, uid, context.get('active_ids'), context=context)[0][1]
+            xml_view = etree.fromstring(res['arch'])
+            for element in xml_view.iter("tree"):
+                element.set('string', element_name)
+            res['arch'] = etree.tostring(xml_view)
+        return res
 
 audittrail_log_line()
 
