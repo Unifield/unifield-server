@@ -290,6 +290,7 @@
             		<field name="name" />
                     <field name="product_id"/>
                     <field name="stock_available"/>
+                    <field name="stock_virtual" />
                     <field name="date"/>
                 </tree>
             </field>
@@ -579,12 +580,17 @@
                 
                 	<xpath expr="//tree[@string='Products']//field[@name='location_id']" position="replace">
                 		<field colspan="4" domain="[('usage','=','internal')]" name="location_id"
+                			on_change="on_change_location_id(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                 			context="{'product_id': product_id, 'prodlot_id': prod_lot_id, 'specific_rules_tree_view': True, 'compute_child': False,}" />
                 	</xpath>
+                	
+	                <xpath expr="//tree[@string='Products']//field[@name='product_id']" position="replace">
+	                	<field context="location=location_id,uom=product_uom,to_date=parent.date" name="product_id" on_change="on_change_product_id_specific_rules(location_id,product_id,prod_lot_id,product_uom,parent.date)"  domain="[('type','not in',('service','service_recep'))]" />
+	                </xpath>
                 
                     <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace">
                         <field name="prod_lot_id"
-                        	on_change="change_lot(prod_lot_id)"
+                        	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                         	groups="base.group_extended"
                         	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True,}"
                         	domain="[('check_type','=', True), ('product_id', '=?', product_id),]"
@@ -604,7 +610,7 @@
                     
                     <xpath expr="//form[@string='Products ']//field[@name='prod_lot_id']" position="replace">
                     	<field name="prod_lot_id"
-                        	on_change="change_lot(prod_lot_id)"
+                        	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                         	groups="base.group_extended"
                         	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
                         	domain="[('check_type','=', True), ('product_id', '=', product_id),]"
