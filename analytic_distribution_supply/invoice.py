@@ -144,7 +144,7 @@ class account_invoice(osv.osv):
                     processed_commitment_line.append(cl.id)
                     if eng_ids:
                         self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
-                        self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
+                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
                 else:
                     # Remember difference in diff_lines list
                     diff_lines.append({'cl': cl, 'diff': cl.amount - total_amount, 'new_mnt': total_amount})
