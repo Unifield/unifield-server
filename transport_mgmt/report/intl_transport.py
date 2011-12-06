@@ -65,11 +65,11 @@ class international_transport_cost_report(osv.osv):
                         res_company c 
                             ON po.company_id = c.id
                     LEFT JOIN
-                        res_currency fr_cur
-                            ON c.currency_id = fr_cur.id
-                    LEFT JOIN
                         res_currency to_cur
-                            ON po.transport_currency_id = to_cur.id
+                            ON c.currency_id = to_cur.id
+                    LEFT JOIN
+                        res_currency fr_cur
+                            ON po.transport_currency_id = fr_cur.id
                     LEFT JOIN
                         (SELECT currency_id, rate FROM res_currency_rate WHERE name <= NOW() ORDER BY name desc) fr_rate
                             ON fr_cur.id = fr_rate.currency_id
