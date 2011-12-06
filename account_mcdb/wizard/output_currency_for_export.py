@@ -30,8 +30,21 @@ class output_currency_for_export(osv.osv_memory):
     _description = 'Output currency choice wizard'
 
     _columns = {
-        'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=True)
+        'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=True),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
     }
+
+    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
+        """
+        Update output currency domain in order to show right currencies attached to given fx table
+        """
+        res = {}
+        # Some verifications
+        if not context:
+            context = {}
+        if fx_table_id:
+            res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id)]}, 'value': {'currency_id' : False}})
+        return res
 
     def button_validate(self, cr, uid, ids, context={}):
         """
