@@ -182,17 +182,9 @@
         <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />
 
         <!-- Products -->
-        <menuitem id="purchase.menu_procurement_partner_contact_form"
-                  action="product.product_normal_action_puchased"
-                  sequence="1"
-                  name="Products"
-                  parent="purchase.menu_procurement_management_product" />
-
-        <menuitem id="purchase.menu_product_by_category_purchase_form"
-                  action="product.product_category_action"
-                  sequence="5"
-                  name="Products by Category"
-                  parent="purchase.menu_procurement_management_product" />
+        <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
+        <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
+        <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
     
     </data>
 </openerp>
