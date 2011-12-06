@@ -117,7 +117,7 @@ class account_invoice(osv.osv):
             # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
             # NB: This permits to avoid modification on commitment voucher when receiving some goods
             if co.state == 'draft':
-                self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'validated'}, context=context)
+                self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
             # Try to update engagement lines regarding invoice line amounts and account
             invoice_lines = defaultdict(list)
             # Group by account
