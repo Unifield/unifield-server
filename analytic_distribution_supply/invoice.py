@@ -114,11 +114,11 @@ class account_invoice(osv.osv):
             if len(co_ids) > 1:
                 raise osv.except_osv(_('Error'), _('Multiple Commitment Voucher for the same invoice is not supported yet!'))
             co = self.pool.get('account.commitment').browse(cr, uid, co_ids, context=context)[0]
+            # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
+            # NB: This permits to avoid modification on commitment voucher when receiving some goods
             if co.state == 'draft':
-                raise osv.except_osv(_('Error'), _('This Commitment Voucher has not been validated: "%s"!' % co.name))
-            elif co.state == 'done':
-                raise osv.except_osv(_('Warning'), _('You attempt to validate an invoice from which the commitment have already been done.'))
-            # else state is open so trying to update engagement lines regarding invoice line amounts and account
+                self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'validated'}, context=context)
+            # Try to update engagement lines regarding invoice line amounts and account
             invoice_lines = defaultdict(list)
             # Group by account
             for invl in inv.invoice_line:
