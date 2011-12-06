@@ -174,7 +174,10 @@ class audittrail_log_line(osv.osv):
                 field = line.rule_id.name_get_field_id.name
                 res_id = line.fct_res_id
                 object_id = self.pool.get(line.fct_object_id.model)
-                res[line.id] = object_id.read(cr, uid, res_id, [field], context=context)[field]
+                try:
+                    res[line.id] = object_id.read(cr, uid, res_id, [field], context=context)[field]
+                except TypeError:
+                    res[line.id] = False
 
         return res
 
@@ -222,8 +225,8 @@ class audittrail_log_line(osv.osv):
           'old_value_text': fields.text('Old value Text'),
           'new_value_text': fields.text('New value Text'),
           'field_description': fields.char('Field Description', size=64),
-#          'sub_obj_name': fields.char(size=64, string='Order line'),
-          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
+          'sub_obj_name': fields.char(size=64, string='Order line'),
+#          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
           'rule_id': fields.many2one('audittrail.rule', string='Rule'),
           'fct_res_id': fields.integer(string='Res. Id'),

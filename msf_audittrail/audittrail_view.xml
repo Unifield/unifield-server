@@ -97,7 +97,7 @@
                     <group col="8" colspan="4">
                         <filter string="Creation" icon="gtk-new" domain="[('method', 'in', ['create'])]" context="{}"/>
                         <filter string="Modification" icon="gtk-edit" domain="[('method', 'in', ['create'])]" context="{}"/>
-                        <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['delete'])]" context="{}"/>
+                        <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['unlink'])]" context="{}"/>
                         <field name="log" />
                         <field name="timestamp" />
                         <newline />
