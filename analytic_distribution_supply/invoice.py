@@ -198,9 +198,9 @@ class account_invoice(osv.osv):
                     self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': cl.amount - new_mnt}, context=context)
                     # add cl to processed_commitment_line
                     processed_commitment_line.append(cl.id)
-            # Update commitment voucher state (if total_amount is 0.0, then state is done)
+            # Update commitment voucher state (if total_amount is inferior to 0.0, then state is done)
             c_total = self.pool.get('account.commitment')._get_total(cr, uid, [co.id], {}, {}, context=context)
-            if c_total and c_total.get(co.id, 1.0) == 0.0:
+            if c_total and c_total.get(co.id, 1.0) <= 0.0:
                 self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
         return True
 
