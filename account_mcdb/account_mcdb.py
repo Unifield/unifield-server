@@ -103,7 +103,7 @@ class account_mcdb(osv.osv_memory):
         # Prepare some values
         vals = {}
         # Some verifications
-        if not choice or not currency:
+        if not choice:
             return {}
         # Fill in field
         if choice == 'functional':
