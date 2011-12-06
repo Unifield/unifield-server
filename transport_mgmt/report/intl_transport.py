@@ -34,6 +34,7 @@ class international_transport_cost_report(osv.osv):
         'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'),
                                             ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
+        'func_transport_cost': fields.float(digits=(16,2), string='Func. Transport cost'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'order_id': fields.many2one('purchase.order', string='PO Reference'),
@@ -47,21 +48,37 @@ class international_transport_cost_report(osv.osv):
         tools.sql.drop_view_if_exists(cr, 'international_transport_cost_report')
         cr.execute("""
                 create or replace view international_transport_cost_report as (
-                    select
+                    SELECT
                         min(po.id) as id,
                         po.id as order_id,
                         count(po.id) as nb_order,
                         po.transport_mode as transport_mode,
-                        sum(po.transport_cost) as transport_cost,
+                        sum(round((po.transport_cost*(to_rate.rate/fr_rate.rate)/to_cur.rounding))*to_cur.rounding) as func_transport_cost,
+                        po.transport_cost as transport_cost,
                         po.transport_currency_id as transport_currency_id,
                         po.date_order as date_order,
                         po.delivery_confirmed_date as delivery_confirmed_date,
                         po.partner_id as partner_id
-                    from
+                    FROM
                         purchase_order po
-                    where
+                    LEFT JOIN
+                        res_company c 
+                            ON po.company_id = c.id
+                    LEFT JOIN
+                        res_currency fr_cur
+                            ON c.currency_id = fr_cur.id
+                    LEFT JOIN
+                        res_currency to_cur
+                            ON po.transport_currency_id = to_cur.id
+                    LEFT JOIN
+                        (SELECT currency_id, rate FROM res_currency_rate WHERE name <= NOW() ORDER BY name desc) fr_rate
+                            ON fr_cur.id = fr_rate.currency_id
+                    LEFT JOIN
+                        (SELECT currency_id, rate FROM res_currency_rate WHERE name <= NOW() ORDER BY name desc) to_rate
+                            ON to_cur.id = to_rate.currency_id
+                    WHERE
                         po.intl_supplier_ok = True
-                    group by
+                    GROUP BY
                         po.id,
                         po.transport_mode,
                         po.transport_cost,
