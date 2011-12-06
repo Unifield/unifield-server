@@ -37,21 +37,6 @@
                         <attribute name="context">{'purchase_id': active_id}</attribute>
                     </xpath>
                     
-                    <!--  Add dates history tab -->
-                    <xpath expr="/form/notebook/page[@string='Notes']" position="before">
-                        <page string="Dates history" groups="base.group_extended">
-	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form" >
-	                            <tree string="Modifications">
-	                                <field name="name" />
-	                                <field name="time" />
-	                                <field name="old_value" />
-	                                <field name="new_value" />
-	                                <field name="user_id" />
-	                            </tree>
-	                        </field>
-                        </page>
-                    </xpath>
-                    
                     <!-- Delete the Requested date from 'Delivery' tab -->
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]/field[@name='minimum_planned_date']" position="replace" />
 	            </data>
@@ -70,20 +55,6 @@
                     <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                 </xpath>
                 
-                <!--  Add dates history tab -->
-                    <xpath expr="/form/notebook/page[@string='Notes']" position="before">
-                        <page string="Dates history" groups="base.group_extended">
-	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form" >
-	                            <tree string="Modifications">
-	                                <field name="name" />
-	                                <field name="time" />
-	                                <field name="old_value" />
-	                                <field name="new_value" />
-	                                <field name="user_id" />
-	                            </tree>
-	                        </field>
-	                    </page>
-                    </xpath>
                 </data>
             </field>
         </record>
@@ -129,20 +100,6 @@
                         <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                     </xpath>
                     
-                    <!--  Add dates history tab -->
-                    <xpath expr="/form/notebook/page[@string='History']" position="before">
-                        <page string="Dates history" groups="base.group_extended">
-	                        <field name="history_ids" colspan="4" nolabel="1" mode="tree,form">
-	                           <tree string="Modifications">
-		                            <field name="name" />
-		                            <field name="time" />
-		                            <field name="old_value" />
-		                            <field name="new_value" />
-		                            <field name="user_id" />
-		                          </tree>
-	                        </field>
-	                    </page>
-                    </xpath>
                 </data>
             </field>
         </record>

@@ -152,24 +152,6 @@ def check_dates(self, cr, uid, data, context={}):
     
     return True
 
-def create_history(self, cr, uid, ids, data, class_name, field_name, fields, context={}):
-    '''
-    Creates an entry in dates history of the object self._name
-    '''
-    history_obj = self.pool.get('history.order.date')
-    
-    for order in self.pool.get(class_name).read(cr, uid, ids, fields, context=context):
-        for field in fields:
-            if field in data and data.get(field, False) != order[field]:
-                history_obj.create(cr, uid, {'name': get_field_description(self, cr, uid, field),
-                                             field_name: order['id'],
-                                             'old_value': order[field] or False,
-                                             'new_value': data.get(field, False),
-                                             'user_id': uid,
-                                             'time': time.strftime('%y-%m-%d %H:%M:%S')})
-                
-    return
-
 def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
     '''
     Common function when type of order is changing
@@ -319,8 +301,6 @@ class purchase_order(osv.osv):
         
         check_dates(self, cr, uid, data, context=context)
         
-        create_history(self, cr, uid, ids, data, 'purchase.order', 'purchase_id', fields_date, context=context)
-            
         return super(purchase_order, self).write(cr, uid, ids, data, context=context)
     
     def create(self, cr, uid, data, context={}):
@@ -396,7 +376,6 @@ class purchase_order(osv.osv):
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
     }
     
     _defaults = {
@@ -481,31 +460,11 @@ class purchase_order_line(osv.osv):
     _name= 'purchase.order.line'
     _inherit = 'purchase.order.line'
     
-    def write(self, cr, uid, ids, data, context={}):
-        '''
-        Create history if date values changed
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-#        for line in self.browse(cr, uid, ids):
-#            if 'date_planned' in data:
-#                if line.order_id.delivery_requested_date > data['date_planned']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-#            if data.get('confirmed_delivery_date', False):
-#                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
-        
-        create_history(self, cr, uid, ids, data, 'purchase.order.line', 'purchase_line_id', fields_date_line, context=context)
-                    
-        return super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
-    
     _columns = {
         'date_planned': fields.date(string='Requested Date', required=True, select=True,
                                     help='Header level dates has to be populated by default with the possibility of manual updates'),
         'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
                                                help='Header level dates has to be populated by default with the possibility of manual updates.'),
-        'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
     }
     
     def _get_planned_date(self, cr, uid, context):
@@ -563,8 +522,6 @@ class sale_order(osv.osv):
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
             
         check_dates(self, cr, uid, data, context=context)
-        
-        create_history(self, cr, uid, ids, data, 'sale.order', 'sale_id', fields_date, context=context)
         
         return super(sale_order, self).write(cr, uid, ids, data, context=context)
     
@@ -642,7 +599,6 @@ class sale_order(osv.osv):
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),
-        'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
     }
     
     _defaults = {
@@ -692,31 +648,11 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def write(self, cr, uid, ids, data, context={}):
-        '''
-        Create history if date values changed
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-#        for line in self.browse(cr, uid, ids):
-#            if 'date_planned' in data:
-#                if line.order_id.delivery_requested_date > data['date_planned']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-#            if data.get('confirmed_delivery_date', False):
-#                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
-        
-        create_history(self, cr, uid, ids, data, 'sale.order.line', 'sale_line_id', fields_date_line, context=context)
-                    
-        return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
-    
     _columns = {
         'date_planned': fields.date(string='Requested Date', required=True, select=True,
                                     help='Header level dates has to be populated by default with the possibility of manual updates'),
         'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
                                                help='Header level dates has to be populated by default with the possibility of manual updates.'),
-        'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
     }
     
     def _get_planned_date(self, cr, uid, context, *a):
@@ -762,29 +698,6 @@ class sale_order_line(osv.osv):
             
     
 sale_order_line()
-
-
-class history_order_date(osv.osv):
-    _name = 'history.order.date'
-    _description = 'Date history'
-    
-    _columns = {
-        'name': fields.char(size=128, string='Modified field', required=True),
-        'purchase_id': fields.many2one('purchase.order', string='Order'),
-        'purchase_line_id': fields.many2one('purchase.order.line', string='Line'),
-        'sale_id': fields.many2one('sale.order', string='Order'),
-        'sale_line_id': fields.many2one('sale.order.line', string='Line'),
-        'old_value': fields.char(size=64, string='Old value'),
-        'new_value': fields.char(size=64, string='New value'),
-        'user_id': fields.many2one('res.users', string='User'),
-        'time': fields.datetime(string='Time', required=True),
-    }
-    
-    _defaults = {
-        'time': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
-    }
-    
-history_order_date()
 
 
 class procurement_order(osv.osv):
