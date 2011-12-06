@@ -1669,8 +1669,8 @@ class stock_picking(osv.osv):
         message = kwargs['message']
         # if the picking is converted to standard, and state is confirmed
         if pick.converted_to_standard and pick.state == 'confirmed':
-            message = 'The Preparation Picking has been converted to simple Out. ' + message
-        return message
+            return 'The Preparation Picking has been converted to simple Out. ' + message
+        return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
     
     def convert_to_standard(self, cr, uid, ids, context=None):
         '''
@@ -2342,7 +2342,7 @@ class product_product(osv.osv):
                       }
             result[product.id] = values
             # keep cool
-            is_keep_cool = product.heat_sensitive_item# in ('*', '**', '***',)
+            is_keep_cool = bool(product.heat_sensitive_item)# in ('*', '**', '***',)
             values['is_keep_cool'] = is_keep_cool
                     
         return result

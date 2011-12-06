@@ -180,6 +180,7 @@
                 <form string="Request for Quotation">
                     <group col="6" colspan="4">
                         <field name="name"/>
+                        <field name="rfq_ok" invisible="1" />
                         <field name="date_order"/>
                         <field name="invoiced"/>
                         <newline/>
