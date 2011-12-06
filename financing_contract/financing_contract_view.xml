@@ -14,8 +14,8 @@
                                attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
-                        <field name="eligibility_from_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                        <field name="eligibility_to_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_from_date" required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_to_date" required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <notebook colspan="4">
                             <page string="Contract information">
                                 <group colspan="4" col="6">
