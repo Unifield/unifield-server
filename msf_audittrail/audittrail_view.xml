@@ -95,10 +95,13 @@
             <field name="arch" type="xml">
                 <search string="Search Log">
                     <group col="8" colspan="4">
+                        <filter string="Creation" icon="gtk-new" domain="[('method', 'in', ['create'])]" context="{}"/>
+                        <filter string="Modification" icon="gtk-edit" domain="[('method', 'in', ['create'])]" context="{}"/>
+                        <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['delete'])]" context="{}"/>
                         <field name="log" />
                         <field name="timestamp" />
+                        <newline />
                         <field name="sub_obj_name" />
-                        <field name="method" />
                         <field name="field_description" />
                         <field name="old_value" />
                         <field name="new_value" />
