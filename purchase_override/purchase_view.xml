@@ -45,8 +45,6 @@
                       <field name="origin" />
                       <field name="shipped_rate" widget="progressbar" />
                       <field name="invoiced_rate" widget="progressbar" />
-                      <!-- TODO: To validate with Magali to know which field should be displayed between untaxed or taxed amount -->
-                      <field name="amount_untaxed" sum="Total Untaxed amount" />
                       <field name="amount_total" sum="Total amount" />
                       <field name="state" />
                 </tree>
@@ -160,7 +158,23 @@
                   parent="purchase.menu_procurement_management" />
 
         <!-- Address Book -->
-        <delete id="base.menu_procurement_management_supplier" model="ir.ui.menu" />
+        <menuitem id="base.menu_procurement_management_supplier"
+                  name="Address Book"
+                  parent="purchase.menu_purchase_config_purchase" />
+
+        <record id="action_supplier_address_form" model="ir.actions.act_window">
+            <field name="name">Addresses</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner.address</field>
+            <field name="view_type">form</field>
+            <field name="context">{"search_default_supplier":1}</field>
+            <field name="search_view_id" ref="base.view_res_partner_address_filter" />
+            <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
+        </record>
+
+        <menuitem action="action_supplier_address_form"
+                  id="menu_supplier_address_form"
+                  parent="base.menu_procurement_management_supplier" />
         
         <!-- Invoice control -->
         <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
