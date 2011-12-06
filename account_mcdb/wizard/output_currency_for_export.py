@@ -43,7 +43,8 @@ class output_currency_for_export(osv.osv_memory):
         if not context:
             context = {}
         if fx_table_id:
-            res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id)]}, 'value': {'currency_id' : False}})
+            res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id)]}, 'value': {'currency_id' : False}, 
+                'context': {'from': 'exception'}})
         return res
 
     def button_validate(self, cr, uid, ids, context={}):
