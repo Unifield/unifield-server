@@ -19,6 +19,9 @@
 #
 ##############################################################################
 
+TRANSPORT_TYPE = [('',''), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),] #[('flight', 'By Flight'), ('road', 'By Road'), ('boat', 'By Boat')]
+
+
 import order_dates
 import stock
 import wizard

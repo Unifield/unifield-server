@@ -29,6 +29,7 @@ from datetime import datetime
 
 # import partner_type from msf_partner
 from msf_partner import PARTNER_TYPE
+from msf_order_date import TRANSPORT_TYPE
 
 
 class res_partner(osv.osv):
@@ -255,7 +256,7 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_or
     '''
     Common function when Partner is changing
     
-    method VALIDATED for sprint3
+    VALIDATED for sprint3
     '''
     if res is None:
         res = {}
@@ -263,9 +264,13 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_or
     
     # reset the confirmed date
     res['value'].update({'delivery_confirmed_date': False,})
+    # reset transport type field
+    res['value'].update({'transport_type': '',})
     
     if part:
         partner = self.pool.get('res.partner').browse(cr, uid, part)
+        # update transport type field
+        res['value'].update({'transport_type': partner.transport_0,})
         # update the partner type field
         res['value'].update({'partner_type': partner.partner_type,})
         # with order_date, update requested_date
@@ -361,6 +366,10 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
             requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
             data['delivery_requested_date'] = requested_date
+        
+        # if comes from automatique data - fill confirmed date
+        if context.get('update_mode') in ['init', 'update']:
+            data['delivery_confirmed_date'] = data['delivery_requested_date']
             
         check_dates(self, cr, uid, data, context=context)
         
@@ -434,9 +443,8 @@ class purchase_order(osv.osv):
                 'delivery_confirmed_date': fields.date(readonly=True, string='Delivery Confirmed Date',
                                                        states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)],},
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
-                                                    ('boat', 'By Boat')], string='Transport Type',
-                                                   help='Number of days this field has to be associated with a transport mode selection'),
+                'transport_type': fields.selection(readonly=True, selection=TRANSPORT_TYPE, string='Transport Type',
+                                                   states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)],},),
                 'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
@@ -452,11 +460,10 @@ class purchase_order(osv.osv):
                 'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
                 }
     
-    _defaults = {
-        'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'national',
-        'confirmed_date_by_synchro': False,
-    }
+    _defaults = {'date_order': lambda *a: time.strftime('%Y-%m-%d'),
+                 'internal_type': lambda *a: 'national',
+                 'confirmed_date_by_synchro': False,
+                 }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
         '''
@@ -519,12 +526,14 @@ class purchase_order(osv.osv):
     def onchange_partner_id_order_date(self, cr, uid, ids, part, date_order):
         '''
         Fills the Requested and Confirmed delivery dates
+        
+        SPRINT3 VALIDATED
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part=part, res=res, date_order=date_order)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part, res=res, date_order=date_order)
         return res
     
     def requested_data(self, cr, uid, ids, context=None):
