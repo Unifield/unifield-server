@@ -151,8 +151,7 @@ class account_mcdb(osv.osv_memory):
         if not context:
             context = {}
         if fx_table_id:
-            res.update({'domain': {'display_in_output_currency': [('currency_table_id', '=', fx_table_id)]}})
-        print res
+            res.update({'domain': {'display_in_output_currency': [('currency_table_id', '=', fx_table_id)]}, 'value': {'display_in_output_currency' : False}})
         return res
 
     def button_validate(self, cr, uid, ids, context={}):
@@ -252,7 +251,9 @@ class account_mcdb(osv.osv_memory):
                 # Add elements to domain which would be use for filtering
                 for el in domain_elements:
                     domain.append(el)
-            # Output currency display
+            # Output currency display (with fx_table)
+            if wiz.fx_table_id:
+                context.update({'fx_table_id': wiz.fx_table_id.id, 'currency_table_id': wiz.fx_table_id.id})
             if wiz.display_in_output_currency:
                 context.update({'output_currency_id': wiz.display_in_output_currency.id})
             # Return result in a search view

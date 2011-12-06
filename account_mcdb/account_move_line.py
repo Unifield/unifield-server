@@ -32,7 +32,8 @@ class account_move_line(osv.osv):
 
     def _get_output(self, cr, uid, ids, field_name, arg, context={}):
         """
-        Get an amount regarding currency in context (from 'output' and 'output_currency_id' values)
+        Get an amount regarding currency in context (from 'output' and 'output_currency_id' values).
+        NB: Pay attention to 'currency_table_id' field in context. It compute amounts regarding another rates.
         """
         # Prepare some value
         res = {}
