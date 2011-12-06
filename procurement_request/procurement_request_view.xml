@@ -164,6 +164,7 @@
 	
         <menuitem action="action_procurement_request"
                   id="menu_procurement_request"
+                  sequence="2"
                   parent="base.menu_sales" />
     
     </data>

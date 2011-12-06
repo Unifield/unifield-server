@@ -52,6 +52,8 @@
                 <data>
                     <xpath expr="/tree/field[@name='date_order']" position="before">
                         <field name="order_type" />
+                        <field name="priority" />
+                        <field name="categ" />
                     </xpath>
                 </data>
             </field>
