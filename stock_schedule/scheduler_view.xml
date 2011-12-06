@@ -175,21 +175,14 @@
         <!-- REWORKING OF WAREHOUSE MENU ACCORDING TO UF-657 ERGONOMIC IMPROVEMENTS -->
         <menuitem id="stock.menu_traceability" name="Traceability" parent="stock.menu_stock_root" sequence="5"/>
         <menuitem id="stock.menu_stock_inventory_control" name="Inventory Control" parent="stock.menu_stock_root" sequence="6"/>
-        <menuitem id="procurement.menu_stock_sched" name="Schedulers" parent="stock.menu_stock_root" sequence="7"/>
+        <menuitem id="procurement.menu_stock_sched" name="Schedulers" parent="stock.menu_stock_root" sequence="10"/>
+        <menuitem id="stock.next_id_61" name="Reporting" parent="stock.menu_stock_root" sequence="8" />
 
         <!-- DELETE PRODUCTS -->
         <!-- TODO: To be validated with Magali
         <delete model="ir.ui.menu" id="stock.menu_stock_product" />
         <delete model="ir.ui.menu" id="stock.menu_product_by_category_stock_form" />
         <delete model="ir.ui.menu" id="stock.menu_stock_products_menu" />-->
-
-
-        <!-- DELETE SCHEDULERS -->
-        <!-- TODO: To be validated with Magali
-        <delete model="ir.ui.menu" id="procurement.menu_stock_sched" />
-        <delete model="ir.ui.menu" id="procurement.menu_stock_proc_schedulers" />
-        <delete model="ir.ui.menu" id="procurement.menu_stock_procurement_action" />
-        <delete model="ir.ui.menu" id="procurement.menu_stock_procurement" />-->
 
 
         <menuitem id="stock_automatic_procurements_menu"
