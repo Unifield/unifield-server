@@ -129,19 +129,6 @@
         <menuitem action="stock.action_out_picking_move" id="menu_sale_action_picking_tree_out_move"
                   parent="menu_sales_deliver_products" sequence="10"/>
 
-        <menuitem action="stock.action_picking_tree" id="menu_sale_delivery_orders"
-                  parent="menu_sales_deliver_products" sequence="1" />
-
-        <!-- TODO: To validate with Magali to know which kind of Outgoing should be displayed
-        <menuitem action="msf_outgoing.action_picking_ticket" id="menu_sale_picking_ticket"
-                  parent="menu_sales_deliver_products" sequence="1" />
-
-        <menuitem action="msf_outgoing.action_ppl" id="menu_sale_pre_packing_list"
-                  parent="menu_sales_deliver_products" sequence="1" />
-
-        <menuitem action="msf_outgoing.action_shipment" id="menu_sale_packing_list"
-                  parent="menu_sales_deliver_products" sequence="1" />-->
-
         <!-- Products -->
         <menuitem action="product.product_category_action"
                   id="product.menu_products_category"
