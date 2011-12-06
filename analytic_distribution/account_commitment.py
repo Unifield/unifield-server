@@ -367,6 +367,35 @@ class account_commitment_line(osv.osv):
         'from_yml_test': lambda *a: False,
     }
 
+    def create(self, cr, uid, vals, context={}):
+        """
+        Verify that given account_id (in vals) is not 'view'
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'account_id' in vals:
+            account_id = vals.get('account_id')
+            account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
+            if account.type in ['view']:
+                raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
+        raise osv.except_osv('error', 'programmed error')
+        return super(account_commitment_line, self).create(cr, uid, vals, context={})
+
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Verify that given account_id is not 'view'
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'account_id' in vals:
+            account_id = vals.get('account_id')
+            account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
+            if account.type in ['view']:
+                raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
+        return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
+
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
         Launch analytic distribution wizard on a commitment voucher line
