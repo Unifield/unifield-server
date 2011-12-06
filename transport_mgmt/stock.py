@@ -48,4 +48,14 @@ class stock_incoterms(osv.osv):
 
 stock_incoterms()
 
+class stock_picking(osv.osv):
+    _name = 'stock.picking'
+    _inherit = 'stock.picking'
+
+    _columns = {
+        'transport_order_id': fields.many2one('purchase.order', string='Transport Order', domain="[('categ', '=', 'transport')]"),
+    }
+
+stock_picking()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

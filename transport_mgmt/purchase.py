@@ -34,7 +34,15 @@ class purchase_order(osv.osv):
         res = {}
 
         for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = order.transport_cost + order.amount_total
+            cur_obj = self.pool.get('res.currency')
+            transport_cost = order.transport_cost + order.amount_total
+            try:
+                func_transport_cost = cur_obj.compute(cr, uid, order.transport_currency_id.id,
+                        order.functional_currency_id.id, transport_cost, round=True)
+            except:
+                func_transport_cost = transport_cost
+            res[order.id] = {'total_price_include_transport': transport_cost,
+                             'func_total_price_include_transport': func_transport_cost,}
 
         return res
 
@@ -55,7 +63,8 @@ class purchase_order(osv.osv):
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
-        'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total cost including transport", type='float', readonly=True),
+        'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total incl. transport", type='float', readonly=True, multi='cost'),
+        'func_total_price_include_transport': fields.function(_get_include_transport, method=True, string="Functionnal total incl. transport", type='float', readonly=True, multi='cost'),
         'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
         'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain="[('categ', '!=', 'transport')]"),
         'shipment_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked shipments'),
@@ -94,7 +103,7 @@ class purchase_order(osv.osv):
             # Update the currency of the PO
             currency_id = partner.property_product_pricelist_purchase.currency_id.id
             if partner.partner_type == 'esc' or partner.zone == 'international':
-                res['value'].update({'display_intl_transport_ok': True, 'intl_supplier_ok': True})
+                res['value'].update({'display_intl_transport_ok': True, 'intl_supplier_ok': True, 'transport_currency_id': currency_id})
             else:
                 res['value'].update({'display_intl_transport_ok': False, 'intl_supplier_ok': False, })
 
@@ -127,15 +136,5 @@ class purchase_order(osv.osv):
 
 
 purchase_order()
-
-class stock_picking(osv.osv):
-    _name = 'stock.picking'
-    _inherit = 'stock.picking'
-
-    _columns = {
-        'transport_order_id': fields.many2one('purchase.order', string='Transport Order', domain="[('categ', '=', 'transport')]"),
-    }
-
-stock_picking()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
