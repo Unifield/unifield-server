@@ -27,7 +27,7 @@
     "description" : "Ease data searching in Analytic Journal Items and Journal Items",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Accounting",
-    "depends" : ["base", "account", "register_accounting"],
+    "depends" : ["base", "account", "register_accounting", "res_currency_tables"],
     "init_xml" : [],
     "update_xml" : [
         'wizard/output_currency_for_export_view.xml',

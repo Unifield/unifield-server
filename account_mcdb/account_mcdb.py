@@ -63,6 +63,7 @@ class account_mcdb(osv.osv_memory):
         'rev_account_ids': fields.boolean('Reverse account(s) selection'),
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
     }
 
     _defaults = {
@@ -140,6 +141,19 @@ class account_mcdb(osv.osv_memory):
             elif amount_type == 'to':
                 vals['amount_out_to'] = amount
         return {'value': vals}
+
+    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
+        """
+        Update output currency domain in order to show right currencies attached to given fx table
+        """
+        res = {}
+        # Some verifications
+        if not context:
+            context = {}
+        if fx_table_id:
+            res.update({'domain': {'display_in_output_currency': [('currency_table_id', '=', fx_table_id)]}})
+        print res
+        return res
 
     def button_validate(self, cr, uid, ids, context={}):
         """
