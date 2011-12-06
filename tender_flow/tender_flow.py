@@ -645,7 +645,6 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', states={'rfq_sent':[('required',True), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 'name': fields.char('Order Reference', size=64, required=True, states={'done':[('readonly',True)],}, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
-                'date_order':fields.date('Creation Date', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)],}, select=True, help="Date on which this document has been created."),
                 }
 
     _defaults = {'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),

@@ -27,6 +27,9 @@ from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
+# import partner_type from msf_partner
+from msf_partner import PARTNER_TYPE
+
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -248,26 +251,29 @@ def common_onchange_transport_leadtime(self, cr, uid, ids, requested_date=False,
     
     return {'value': res}
 
-def common_onchange_partner_id(self, cr, uid, ids, part, res={}):
+def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_order=False):
     '''
     Common function when Partner is changing
-    '''
     
-    requested_date = time.strftime('%Y-%m-%d')
+    method VALIDATED for sprint3
+    '''
+    if res is None:
+        res = {}
+    requested_date = False
+    
+    # reset the confirmed date
+    res['value'].update({'delivery_confirmed_date': False,})
+    
     if part:
         partner = self.pool.get('res.partner').browse(cr, uid, part)
-        # TODO: Show the po_lead if it's those of company or those of partner
-        requested_date = datetime.strptime(requested_date, '%Y-%m-%d')
-        requested_date = requested_date + relativedelta(days=partner.leadtime)
-        requested_date = requested_date.strftime('%Y-%m-%d')
-    
-    if check_delivery_requested(self, requested_date):
-        res['value'].update({'delivery_requested_date': requested_date,})
-#                             'ready_to_ship_date': requested_date,})
-#                             'delivery_confirmed_date': requested_date})
-    else:
-        res.update({'warning': {'title': _('Warning'), 
-                                'message': _('The Delivery Requested Date should be between today and today + 24 months !')}})
+        # update the partner type field
+        res['value'].update({'partner_type': partner.partner_type,})
+        # with order_date, update requested_date
+        if date_order:
+            requested_date = datetime.strptime(date_order, '%Y-%m-%d')
+            requested_date = requested_date + relativedelta(days=partner.supplier_lt)
+            requested_date = requested_date.strftime('%Y-%m-%d')
+            res['value'].update({'delivery_requested_date': requested_date,})
     
     return res
 
@@ -307,15 +313,25 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit= 'purchase.order'
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Checks if dates are good before writing
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
             
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
+            
+        # fill partner_type
+        if data.get('partner_id', False):
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
+            data.update({'partner_type': partner.partner_type,})
+            # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
+            if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
+                data.update({'delivery_confirmed_date': False,})
         
         check_dates(self, cr, uid, data, context=context)
         
@@ -323,42 +339,53 @@ class purchase_order(osv.osv):
             
         return super(purchase_order, self).write(cr, uid, ids, data, context=context)
     
-    def create(self, cr, uid, data, context={}):
+    def create(self, cr, uid, data, context=None):
         '''
         Checks if dates are good before creation
-        '''
-        partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'))
-        requested_date = (datetime.today() + relativedelta(days=partner.leadtime)).strftime('%Y-%m-%d')
         
-        if 'delivery_requested_date' not in data:
+        Delivery Requested Date: creation date + supplier lead time from partner (supplier_lt)
+        '''
+        if context is None:
+            context = {}
+        
+        # fill partner_type
+        if data.get('partner_id', False):
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
+            data.update({'partner_type': partner.partner_type,})
+            # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
+            if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
+                data.update({'delivery_confirmed_date': False,})
+        
+        if 'delivery_requested_date' not in data and data.get('partner_id', False):
+            # by default delivery requested date is equal to today + supplier lead time - filled for compatibility because requested date is now mandatory
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
+            requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
             data['delivery_requested_date'] = requested_date
-#        if 'delivery_confirmed_date' not in data:
-#            data['delivery_confirmed_date'] = requested_date
             
         check_dates(self, cr, uid, data, context=context)
         
         return super(purchase_order, self).create(cr, uid, data, context=context)
     
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
-        '''
-        Displays the Creation date field as readonly if the user is not in the Purchase / Admin group
-        '''
-        res = super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type)
-        
-        group_id = False
-        
-        data_obj = self.pool.get('ir.model.data')
-        user_obj = self.pool.get('res.users')
-        data_ids = data_obj.search(cr, uid, [('module', '=', 'msf_order_date'), ('model', '=', 'res.groups'),
-                                             ('name', '=', 'purchase_admin_group')])
-        data_info = data_obj.read(cr, uid, data_ids, ['res_id'])
-        if data_info and view_type == 'form':
-            group_id = data_info[0]['res_id']
-            for g in user_obj.browse(cr, uid, uid).groups_id:
-                if g.id == group_id:
-                    res['fields']['date_order'].update({'readonly': False})
-                    
-        return res
+#    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+#        '''
+#        Displays the Creation date field as readonly if the user is not in the Purchase / Admin group
+#        '''
+#        res = super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type)
+#        
+#        group_id = False
+#        
+#        data_obj = self.pool.get('ir.model.data')
+#        user_obj = self.pool.get('res.users')
+#        data_ids = data_obj.search(cr, uid, [('module', '=', 'msf_order_date'), ('model', '=', 'res.groups'),
+#                                             ('name', '=', 'purchase_admin_group')])
+#        data_info = data_obj.read(cr, uid, data_ids, ['res_id'])
+#        if data_info and view_type == 'form':
+#            group_id = data_info[0]['res_id']
+#            for g in user_obj.browse(cr, uid, uid).groups_id:
+#                if g.id == group_id:
+#                    res['fields']['date_order'].update({'readonly': False})
+#                    
+#        return res
     
     def _get_receipt_date(self, cr, uid, ids, field_name, arg, context={}):
         '''
@@ -375,34 +402,60 @@ class purchase_order(osv.osv):
                 res[order.id] = pick_obj.browse(cr, uid, pick_ids[0]).date_done
             
         return res
-
     
-    _columns = {
-        'date_order': fields.date('Creation Date', select=True, readonly=True, 
-                                  required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True,
-                                            states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', 
-                                               help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
-                                            ('boat', 'By Boat')], string='Transport Type',
-                                            help='Number of days this field has to be associated with a transport mode selection'),
-        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
-        'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
-                                          help='Commitment date = date on which delivery of product is to/can be made.'),
-        'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
-        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
-                                         string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
-                                        ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
-    }
+    
+    def _get_vals_order_dates(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Return function values
+        '''
+        res = {}
+        pick_obj = self.pool.get('stock.picking')
+        
+        if isinstance(field_name, str):
+            field_name = [field_name] 
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # default dic
+            res[obj.id] = {}
+            # default value
+            for f in field_name:
+                res[obj.id].update({f:False})
+            # get corresponding partner type
+            if obj.partner_id:
+                partner_type = obj.partner_id.partner_type
+                res[obj.id]['partner_type'] = partner_type
+            
+        return res
+    
+    _columns = {'date_order':fields.date('Creation Date', readonly=True, required=True,
+                                         states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
+                'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True,
+                                                       states={'draft': [('readonly', False)],}),
+                'delivery_confirmed_date': fields.date(readonly=True, string='Delivery Confirmed Date',
+                                                       states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)],},
+                                                       help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
+                'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
+                                                    ('boat', 'By Boat')], string='Transport Type',
+                                                   help='Number of days this field has to be associated with a transport mode selection'),
+                'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
+                'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
+                                                  help='Commitment date = date on which delivery of product is to/can be made.'),
+                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
+                'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
+                                                string='Receipt Date', help='for a PO, date of the first godd receipt.'),
+                'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
+                                                   ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+                'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
+                'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
+                # to know if the delivery_confirmed_date can be erased
+                'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
+                }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'delivery_requested_date': lambda *a: time.strftime('%Y-%m-%d'),
         'internal_type': lambda *a: 'national',
+        'confirmed_date_by_synchro': False,
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
@@ -463,8 +516,7 @@ class purchase_order(osv.osv):
         '''
         return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
 
-    
-    def onchange_partner_id(self, cr, uid, ids, part):
+    def onchange_partner_id_order_date(self, cr, uid, ids, part, date_order):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
@@ -472,7 +524,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        return common_onchange_partner_id(self, cr, uid, ids, part=part, res=res, date_order=date_order)
         return res
     
     def requested_data(self, cr, uid, ids, context=None):
@@ -504,6 +556,21 @@ class purchase_order(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
+    
+    def wkf_approve_order(self, cr, uid, ids, context=None):
+        '''
+        Checks if the Delivery Confirmed Date has been filled
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            if not order.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            
+        return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
 purchase_order()
 
@@ -546,8 +613,8 @@ class purchase_order_line(osv.osv):
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
-        if po:
+        if context.get('purchase_id', False):
+            po = order_obj.browse(cr, uid, context.get('purchase_id'))
             res = po.delivery_requested_date
         
         return res

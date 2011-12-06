@@ -9,6 +9,16 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
+                
+                	<field name="partner_id" position="replace" >
+                		<field name="partner_id" on_change="onchange_partner_id_order_date(partner_id, date_order)" context="{'search_default_supplier':1}" />
+                		<field name="partner_type" />
+                	</field>
+                	
+                	<field name="date_order" position="replace">
+                		<field name="date_order" on_change="onchange_partner_id_order_date(partner_id, date_order)" />
+                	</field>
+                	
                     <!--  Add dates on header -->
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="internal_type" on_change="internal_type_change(internal_type, ready_to_ship_date, shipment_date)"/> -->
@@ -24,7 +34,7 @@
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested'}" icon="gtk-indent" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}"
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('partner_type', 'in', ('internal', 'section', 'empty'))], 'required':[('state', '==', 'confirmed')]}"
 	                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed'}" icon="gtk-indent" />
                             </group>

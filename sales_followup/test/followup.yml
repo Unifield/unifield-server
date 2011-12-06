@@ -349,6 +349,8 @@
               assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (4/P1)"
               
               for quotation in line.purchase_ids:
+                # Delivery confirmed date is mandatory at confirmed state (unifield naming) (== 'approved' state openERP naming)
+                quotation.write({'delivery_confirmed_date': '2011-03-04'}, context=context)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
             
@@ -398,6 +400,8 @@
               assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (4/P4)"
               
               for quotation in line.purchase_ids:
+                # Delivery confirmed date is mandatory at confirmed state (unifield naming) (== 'approved' state openERP naming)
+                quotation.write({'delivery_confirmed_date': '2011-03-03'}, context=context)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
         

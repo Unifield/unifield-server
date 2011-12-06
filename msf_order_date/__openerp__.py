@@ -22,12 +22,12 @@
 {
     "name": "MSF Order dates",
     "version": "3.0",
-    "depends": [
-                "base",
+    "depends": ["base",
                 "sale",
                 "purchase",
                 "account",
                 "stock_override",
+                "partner_modification",
                 ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
