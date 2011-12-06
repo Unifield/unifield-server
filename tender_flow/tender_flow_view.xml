@@ -116,14 +116,13 @@
 					
 					<newline />
 
-                    <!-- TODO : Validate with Magali if we need Priority
                     <group string="Priority" expand="0">
                       <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                       <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
                       <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
                     </group>
                     
-                    <newline />-->
+                    <newline />
                 
                     <group string="Category" expand="0">
                       <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
@@ -345,14 +344,13 @@
 	                        <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
 	                        <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
 	                    </group>
-                        <!-- TODO: Validate with Magali if keep Priority
 	                    <newline />
 
 	                    <group string="Priority" expand="0">
                             <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                             <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
                             <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
-	                    </group>-->
+	                    </group>
 
 	                    <newline />
 
@@ -403,8 +401,6 @@
                     <field name="partner_id" />
                     <field name="delivery_requested_date" />
                     <field name="origin" />
-                    <!-- TODO: To validate with Magali to know which field should be displayed between untaxed or taxed amount -->
-                    <field name="amount_untaxed" sum="Total Untaxed amount" />
                     <field name="amount_total" sum="Total amount" />
                     <field name="state" />
                 </tree>
