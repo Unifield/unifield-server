@@ -30,7 +30,7 @@ from datetime import datetime
 # import partner_type from msf_partner
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
-
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -369,7 +369,7 @@ class purchase_order(osv.osv):
         
         # if comes from automatique data - fill confirmed date
         if context.get('update_mode') in ['init', 'update']:
-            data['delivery_confirmed_date'] = data['delivery_requested_date']
+            data['delivery_confirmed_date'] = '2011-12-06'
             
         check_dates(self, cr, uid, data, context=context)
         
@@ -440,15 +440,13 @@ class purchase_order(osv.osv):
                                          states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
                 'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, required=True,
                                                        states={'draft': [('readonly', False)],}),
-                'delivery_confirmed_date': fields.date(readonly=True, string='Delivery Confirmed Date',
-                                                       states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)],},
+                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'transport_type': fields.selection(readonly=True, selection=TRANSPORT_TYPE, string='Transport Type',
-                                                   states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)],},),
+                'transport_type': fields.selection(readonly=True, selection=TRANSPORT_TYPE, string='Transport Mode',),
                 'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'shipment_date': fields.date(readonly=True, string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -456,7 +454,7 @@ class purchase_order(osv.osv):
                                                    ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
                 'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
                 'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
-                # to know if the delivery_confirmed_date can be erased
+                # to know if the delivery_confirmed_date can be erased - to be confirmed
                 'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
                 }
     
@@ -607,13 +605,42 @@ class purchase_order_line(osv.osv):
                     
         return super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
     
-    _columns = {
-        'date_planned': fields.date(string='Requested Date', required=True, select=True,
-                                    help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
-                                               help='Header level dates has to be populated by default with the possibility of manual updates.'),
-        'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
-    }
+    def _vals_get_order_date(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get values for functions
+        '''
+        if context is None:
+            context = {}
+        if isinstance(fields, str):
+            fields = [fields]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f: False})
+            # po state - order_id cannot be False
+            result[obj.id]['po_state_stored'] = obj.order_id.state
+        
+        return result
+    
+    def _get_line_ids_from_po_ids(self, cr, uid, ids, context=None):
+        '''
+        self is purchase.order
+        '''
+        result = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
+        return result
+    
+    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
+                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
+                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
+                'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
+                # not replacing the po_state from sale_followup
+                'po_state_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION,
+                                                   string='Po State', multi='get_vals_order_date',
+                                                   store={'purchase.order': (_get_line_ids_from_po_ids, ['state'], 10),
+                                                          'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)})}
     
     def _get_planned_date(self, cr, uid, context):
         '''
