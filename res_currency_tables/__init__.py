@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,39 +16,10 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
-{
-    "name" : "Sales Follow-Up",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Others",
-    "description": """
-        Add wizard to allow users to have
-        an overview of all related 
-        documents to a sale order.
-    """,
-    "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
-    "depends" : [
-        "sale",
-        "stock",
-        "purchase",
-        "msf_order_date",
-        "purchase_double_validation",
-        "procurement",
-        "tender_flow",
-    ],
-    "update_xml": [
-        "sale_followup_view.xml",
-    ],
-    "demo_xml": [
-    ],
-    "test": [
-        "test/data.yml",
-        "test/followup.yml",
-    ],
-    "installable": True,
-    "active": False,
-}
+
+import res_currency_table
+import res_currency
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

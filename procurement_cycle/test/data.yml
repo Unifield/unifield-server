@@ -517,9 +517,6 @@
       - name: product2
         fmc: 45.0
         valid_ok: True
-      - name: product3
-        fmc: 5.0
-        valid_ok: True
 -
   I create a stock move for P1 in SLoc 2
 - 

@@ -104,8 +104,12 @@ class financing_contract_donor_reporting_line(osv.osv):
                         analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.funding_pool_domain)]
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         allocated_real_sum = 0.0
+                        currency_table = None
+                        if 'currency_table_id' in context:
+                            currency_table = context['currency_table_id']
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            date_context = {'date': analytic_line.source_date or analytic_line.date}
+                            date_context = {'date': analytic_line.source_date or analytic_line.date,
+                                            'currency_table_id': currency_table}
                             allocated_real_sum += self.pool.get('res.currency').compute(cr,
                                                                                       uid,
                                                                                       analytic_line.currency_id.id,
@@ -168,8 +172,12 @@ class financing_contract_donor_reporting_line(osv.osv):
                         analytic_domain = [date_domain[0], date_domain[1], eval(line.account_domain), eval(line.cost_center_domain), ('account_id', '!=', private_funds_id)]
                         analytic_lines = analytic_line_obj.search(cr, uid, analytic_domain ,context=context)
                         project_real_sum = 0.0
+                        currency_table = None
+                        if 'currency_table_id' in context:
+                            currency_table = context['currency_table_id']
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            date_context = {'date': analytic_line.source_date or analytic_line.date}
+                            date_context = {'date': analytic_line.source_date or analytic_line.date,
+                                            'currency_table_id': currency_table}
                             project_real_sum += self.pool.get('res.currency').compute(cr,
                                                                                       uid,
                                                                                       analytic_line.currency_id.id,

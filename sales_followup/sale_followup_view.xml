@@ -35,14 +35,16 @@
 	                    <tree string="Order follow up lines">
 		                    <field name="line_number" />
 		                    <field name="product_id" />
+	 	 	   	    <field name="procure_method" />
+				    <field name="po_cft" />
 		                    <field name="qty_ordered" />
 		                    <field name="uom_id" />
 		                    <field name="tender_ids" />
-		                    <field name="quotation_ids" />
+		                    <!--<field name="quotation_ids" />-->
 		                    <field name="purchase_ids" />
 		                    <field name="incoming_ids" />
 		                    <field name="available_qty" />
-		                    <field name="outgoing_ids" />
+		                    <field name="outgoing_nb" />
 	                    </tree>
                     </field>
                     <separator colspan="4" />
@@ -73,11 +75,13 @@
                         <tree string="Order follow up lines">
                             <field name="line_number" />
                             <field name="product_id" />
+	 	 	   	    <field name="procure_method" />
+				    <field name="po_cft" />
                             <field name="qty_ordered" />
                             <field name="uom_id" />
                             <field name="sourced_ok" />
                             <field name="tender_status" />
-                            <field name="quotation_status" />
+                            <!--<field name="quotation_status" />-->
                             <field name="purchase_status" />
                             <field name="incoming_status" />
                             <field name="product_available" />
@@ -102,12 +106,14 @@
                 <tree string="Order follow up lines">
                     <field name="line_number" />
                     <field name="product_id" />
+	 	    <field name="procure_method" />
+		    <field name="po_cft" />
                     <field name="qty_ordered" />
                     <field name="uom_id" />
                     <field name="sourced_ok" />
                     <field name="tender_ids" />
-                    <field name="quotation_ids" />
-                    <field name="quotation_status" />
+                    <!--<field name="quotation_ids" />-->
+                    <!--<field name="quotation_status" />-->
                     <field name="purchase_ids" />
                     <field name="purchase_status" />
                     <field name="incoming_ids" />
@@ -131,16 +137,21 @@
                     <field name="line_id" />
                     <field name="product_id" />
                     <field name="qty_ordered" />
+		    <field name="procure_method" />
+		    <field name="po_cft" />
                     <separator colspan="4" string="Associated documents" />
                     <field name="tender_ids" nolabel="1" string="Tenders" colspan="4">
                     	<tree string="Tender" colors="green:state in ('done');grey: state in ('cancel')">
-                    		<field name="name" />
-                    		<field name="sale_order_id" />
+                    		<field name="product_id" />
+                    		<field name="tender_id" />
+                    		<field name="qty" />
+                    		<field name="product_uom" />
+                    		<field name="date_planned" />
                     		<field name="state" />
                     		<button name="go_to_tender_info" type="object" string="Go to tender form" icon="terp-stock_zoom" />
                 		</tree>
                     </field>
-                    <field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
+                    <!--<field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
                     	<tree string="Request for Quotation"
                     		colors="red: state in ('rfq_sent');blue: state in ('rfq_updated');green: state in ('done')">
                     		<field name="name" />
@@ -152,17 +163,18 @@
                     		<field name="state" />
                     		<button name="go_to_rfq_info" type="object" string="Go to RfQ form" icon="terp-stock_zoom" />
                     	</tree>
-                    </field>
-                    <field name="purchase_ids" nolabel="1" colspan="4" string="Purchase Orders">
+                    </field>-->
+                    <field name="purchase_line_ids" nolabel="1" colspan="4" string="Purchase Orders">
                     	<tree string="Purchase Orders"
                     		colors="grey: state in ('cancel', 'done');green: state in ('approved');blue: state in ('confirmed')">
-                    		<field name="name" />
-                    		<field name="order_type" />
-                    		<field name="date_order" />
-                    		<field name="partner_id" />
-                    		<field name="delivery_requested_date" />
-                    		<field name="amount_total" />
-                    		<field name="state" />
+                    		<field name="product_id" />
+				<field name="order_id" />
+			        <field name="partner_id" />
+				<field name="order_type" string="Order type" />
+                    		<field name="product_qty" />
+			        <field name="product_uom" />
+                    		<field name="date_planned" />
+                    		<field name="po_state" string="State" />
                     		<button name="go_to_po_info" type="object" string="Go to purchase order form" icon="terp-stock_zoom" />
                     	</tree>
                     </field>
@@ -170,13 +182,15 @@
                     	<tree string="Incoming Products"
                     		colors="grey: state in ('cancel', 'done');green: state in ('available')">
                     		<field name="name" />
-                    		<field name="location_dest_id" />
-                    		<field name="partner_id" />
+				<field name="picking_id" string="Shipment" />
+                    		<field name="order_type" />
+				<field name="location_id" string="Source Loc." />
+                    		<field name="location_dest_id" string="Dest. Loc." />
+                    		<field name="partner_id" string="Supplier" />
                     		<field name="product_id" />
                     		<field name="product_qty" />
                     		<field name="product_uom" />
-                    		<field name="order_type" />
-                    		<field name="date" />
+                    		<field name="date_expected" string="Expected receipt" />
                     		<field name="state" />
                     		<button name="go_to_incoming_info" type="object" string="Go to incoming move form" icon="terp-stock_zoom" />
                     	</tree>
@@ -185,13 +199,15 @@
                     	<tree string="Outgoing Products"
                     		colors="grey: state in ('cancel', 'done');green: state in ('available')">
                     		<field name="name" />
-                    		<field name="location_id" />
-                    		<field name="partner_id" />
+				<field name="picking_id" string="Picking" />
+                    		<field name="order_type" />
+                    		<field name="location_id" string="Source Loc." />
+				<field name="location_dest_id" string="Dest. Loc." />
+                    		<field name="partner_id" string="Customer" />
                     		<field name="product_id" />
                     		<field name="product_qty" />
                     		<field name="product_uom" />
-                    		<field name="order_type" />
-                    		<field name="date" />
+                    		<field name="date_expected" string="Expected delivery" />
                     		<field name="state" />
                     		<button name="go_to_outgoing_info" type="object" string="Go to outgoing move form" icon="terp-stock_zoom" />
                     	</tree>
