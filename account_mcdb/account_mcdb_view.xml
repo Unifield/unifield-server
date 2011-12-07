@@ -69,7 +69,7 @@
                         <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
                         <newline/>
                         <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
-                        <field name="display_in_output_currency" colspan="2"/>
+                        <field name="display_in_output_currency" colspan="2" domain="[('active', 'in', ['True', 'False'])]"/>
                     </group>
                     <group col="4" colspan="6">
                         <field name="functional_currency_id" invisible="1"/>
