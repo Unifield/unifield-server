@@ -28,10 +28,17 @@ class wizard_consumption_nomenclature(osv.osv_memory):
 
     _columns = {
         'rac_id': fields.many2one('real.average.consumption', 'RAC'),
-        'nomen_manda_0': fields.many2one('wizard_consumption.nomenclature.line', 'N0'),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'N1'),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'N2'),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'N3'),
+        'nomen_manda_0': fields.many2one('wizard_consumption.nomenclature.line', 'Main Type'),
+        'nomen_manda_1': fields.many2one('wizard_consumption.nomenclature.line', 'Group'),
+        'nomen_manda_2': fields.many2one('wizard_consumption.nomenclature.line', 'Family'),
+        'nomen_manda_3': fields.many2one('wizard_consumption.nomenclature.line', 'Root'),
+        
+#        'nomen_sub_0': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 1'),
+#        'nomen_sub_1': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 2'),
+#        'nomen_sub_2': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 3'),
+#        'nomen_sub_3': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 4'),
+#        'nomen_sub_4': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 5'),
+#        'nomen_sub_5': fields.many2one('wizard_consumption.nomenclature.line', 'Sub Class 6'),
     }
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
@@ -39,24 +46,47 @@ class wizard_consumption_nomenclature(osv.osv_memory):
             context = {}
         prod = self.pool.get('product.product')
         return prod.onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context)
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        line = self.pool.get('wizard_consumption.nomenclature.line')
+        ret = super(wizard_consumption_nomenclature, self).fields_view_get( cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context.get('rac_id'):
+            obj = self.browse(cr, uid, context['rac_id'])
+            for x in [0, 1, 2]:
+                if obj['nomen_manda_%s'%(x,)]:
+                    dom = [('parent_id', '=', obj['nomen_manda_%s'%(x,)].id), ('level', '=', x+1)]
+                    ret['fields']['nomen_manda_%s'%(x+1,)]['selection'] = [(False, '')]+line._name_search(cr, uid, '', dom, context={}, limit=None, name_get_uid=1)
+        return ret
+
+    def set_nomenclature(self, cr, uid, ids, context={}):
+        nom = self.browse(cr, uid, ids[0])
+        rac = self.pool.get('real.average.consumption')
+        write = False
+        for f in ['nomen_manda_3', 'nomen_manda_2', 'nomen_manda_1', 'nomen_manda_0']:
+            if nom[f]:
+                rac.write(cr, uid, nom.rac_id.id, {'nomen_id': nom[f].id})
+                write = True
+                break
+        if not write:
+            rac.write(cr, uid, nom.rac_id.id, {'nomen_id': False})
+
+        return {'type': 'ir.actions.act_window_close'}
+
 wizard_consumption_nomenclature()
 
-class wizard_consumption_nomenclature_nome(osv.osv_memory):
+class wizard_consumption_nomenclature_nome(osv.osv):
     _name = 'wizard_consumption.nomenclature.line'
     _inherit = 'product.nomenclature'
+    _table = 'product_nomenclature'
 
     def name_get(self, cr, uid, ids, *a, **b):
         res = []
-        print uid, ids, a, b
         for nom in self.read(cr, uid, ids, ['name', 'number_of_products']):
             res.append((nom['id'],'%s (%s)'%(nom['name'], nom['number_of_products'])))
-        print res
         return res
 
-    def search(self, cr, *a, **b):
-        a = super(wizard_consumption_nomenclature_nome, self).search(cr, *a, **b)
-        print a
-        return a
     _columns = {
 
     }

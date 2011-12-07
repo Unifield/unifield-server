@@ -316,20 +316,26 @@ class real_average_consumption(osv.osv):
                 'target': 'dummy',
                 'context': context}
         
-    def nomen_change(self, cr, uid, ids, nomen_id, context={}):
-        context.update({'test_id': nomen_id})
-    
-        return {}
-
     def button_open_nomenclature(self, cr, uid, ids, context={}):
-        newid = self.pool.get('wizard_consumption.nomenclature').create(cr, uid, {'rac_id': ids[0]})
+        obj = self.browse(cr, uid, ids[0])
+
+        data = {'rac_id': ids[0]}
+        if obj.nomen_id:
+            level = obj.nomen_id.level
+            nomen = obj.nomen_id
+            for x in range(level, -1, -1):
+                data['nomen_manda_%s'%x] = nomen.id
+                nomen = nomen.parent_id
+        newid = self.pool.get('wizard_consumption.nomenclature').create(cr, uid, data)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard_consumption.nomenclature',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'dummy',
+                'target': 'new',
                 'res_id': newid,
-                }
+                'context': {'rac_id': newid, 'time': time.time()},
+        }
+
 real_average_consumption()
 
 

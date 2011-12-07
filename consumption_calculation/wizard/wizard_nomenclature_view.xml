@@ -28,8 +28,17 @@
                               on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3)"
                               widget="selection"
                     />
+
+                    <field name="nomen_sub_0" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    <field name="nomen_sub_1" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    <field name="nomen_sub_2" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    <field name="nomen_sub_3" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    <field name="nomen_sub_4" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    <field name="nomen_sub_5" domain="[('parent_id', '=', -1)]" widget="selection" />
+
+
 					<button special="cancel" string="Cancel" icon="gtk-cancel" type="object" colspan="2" />
-					<button name="import_file" string="Import file" icon="gtk-go-forward" type="object" colspan="2" />
+					<button name="set_nomenclature" string="Ok" icon="gtk-go-forward" type="object" colspan="2" />
 				</form>
 			</field>
         </record>

@@ -25,8 +25,8 @@
                     <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     
                     <group colspan="2" col="3">
-                        <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                        <button string="Open Nom." type="object" name="button_open_nomenclature"  attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <field name="nomen_id" readonly="1"/>
+                        <button string="Change" type="object" icon="gtk-indent" name="button_open_nomenclature"  attrs="{'invisible': [('created_ok', '=', True)]}" />
                     </group>
 
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
