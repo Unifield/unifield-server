@@ -35,9 +35,11 @@ class international_transport_cost_report(osv.osv):
                                             ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
         'func_transport_cost': fields.float(digits=(16,2), string='Func. Transport cost'),
+        'func_currency_id': fields.many2one('res.currency', string='Func. Currency'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'order_id': fields.many2one('purchase.order', string='PO Reference'),
+        'order_state': fields.selection([('approved', 'Confirmed'), ('done', 'Done')], string='State'),
         'date_order': fields.date(string='Creation date'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'partner_id': fields.many2one('res.partner', string='Supplier'),
@@ -57,8 +59,10 @@ class international_transport_cost_report(osv.osv):
                         po.transport_cost as transport_cost,
                         po.transport_currency_id as transport_currency_id,
                         po.date_order as date_order,
+                        to_cur.id as func_currency_id,
                         po.delivery_confirmed_date as delivery_confirmed_date,
-                        po.partner_id as partner_id
+                        po.partner_id as partner_id,
+                        po.state as order_state
                     FROM
                         purchase_order po
                     LEFT JOIN
@@ -78,6 +82,10 @@ class international_transport_cost_report(osv.osv):
                             ON to_cur.id = to_rate.currency_id
                     WHERE
                         po.intl_supplier_ok = True
+                      AND
+                        po.state in ('approved', 'done')
+                      AND
+                        po.rfq_ok = False   
                     GROUP BY
                         po.id,
                         po.transport_mode,
@@ -85,7 +93,9 @@ class international_transport_cost_report(osv.osv):
                         po.transport_currency_id,
                         po.date_order,
                         po.delivery_confirmed_date,
-                        po.partner_id
+                        po.partner_id,
+                        to_cur.id,
+                        po.state
                 )""")
 
 international_transport_cost_report()

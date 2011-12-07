@@ -34,9 +34,11 @@ class local_transport_cost_report(osv.osv):
         'transport_mode': fields.many2one('product.product', string='Transport mode', domain=[('transport_ok', '=', True)]),
 #        'transport_mode': fields.char(size=64, string='Transport mode'),
         'func_transport_cost': fields.float(digits=(16,2), string='Func. Transport cost'),
+        'func_currency_id': fields.many2one('res.currency', string='Currency'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'order_id': fields.many2one('purchase.order', string='PO Reference'),
+        'order_state': fields.selection([('approved', 'Confirmed'), ('done', 'Done')], string='Order state'),
         'date_order': fields.date(string='Creation date'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'partner_id': fields.many2one('res.partner', string='Supplier'),
@@ -53,11 +55,13 @@ class local_transport_cost_report(osv.osv):
                         count(pol.id) as nb_order,
                         pol.product_id as transport_mode,
                         sum(ROUND(((pol.product_qty*pol.price_unit)*(to_rate.rate/fr_rate.rate)/to_cur.rounding))*to_cur.rounding) as func_transport_cost,
+                        to_cur.id as currency_id,
                         pol.product_qty*pol.price_unit as transport_cost,
                         pric.currency_id as transport_currency_id,
                         po.date_order as date_order,
                         po.delivery_confirmed_date as delivery_confirmed_date,
-                        po.partner_id as partner_id
+                        po.partner_id as partner_id,
+                        po.state as order_state
                     FROM
                         purchase_order_line pol
                     LEFT JOIN
@@ -86,6 +90,10 @@ class local_transport_cost_report(osv.osv):
                             ON to_cur.id = to_rate.currency_id
                     WHERE
                         prod.transport_ok = True
+                      AND
+                        po.rfq_ok = False
+                      AND
+                        po.state in ('approved', 'done')
                     GROUP BY
                         po.id,
                         pol.product_id,
@@ -94,7 +102,9 @@ class local_transport_cost_report(osv.osv):
                         pric.currency_id,
                         po.date_order,
                         po.delivery_confirmed_date,
-                        po.partner_id
+                        po.partner_id,
+                        po.state,
+                        to_cur.id
                 )""")
 
 local_transport_cost_report()
