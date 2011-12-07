@@ -320,7 +320,16 @@ class real_average_consumption(osv.osv):
         context.update({'test_id': nomen_id})
     
         return {}
-    
+
+    def button_open_nomenclature(self, cr, uid, ids, context={}):
+        newid = self.pool.get('wizard_consumption.nomenclature').create(cr, uid, {'rac_id': ids[0]})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard_consumption.nomenclature',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'dummy',
+                'res_id': newid,
+                }
 real_average_consumption()
 
 

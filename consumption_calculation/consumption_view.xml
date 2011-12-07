@@ -23,7 +23,12 @@
                     <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    
+                    <group colspan="2" col="3">
+                        <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                        <button string="Open Nom." type="object" name="button_open_nomenclature"  attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    </group>
+
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
