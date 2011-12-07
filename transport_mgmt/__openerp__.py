@@ -43,6 +43,7 @@
         'purchase_view.xml',
         'sale_view.xml',
         'product_view.xml',
+        'stock_view.xml',
         'transport_data.xml',
         'report/intl_transport_view.xml',
         'report/local_transport_view.xml',

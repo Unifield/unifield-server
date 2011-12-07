@@ -174,7 +174,7 @@ class shipment(osv.osv):
             if packing.shipment_id and packing.shipment_id.id not in result:
                 result.append(packing.shipment_id.id)
         return result 
-    
+
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.date(string='Date'),
                 'transport_type': fields.selection([('by_road', 'By road')],
@@ -225,6 +225,7 @@ class shipment(osv.osv):
                                                                                               ('cancel', 'Canceled')], string='State', multi='get_vals',
                                          store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
+                'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 }
     _order = 'name desc'
     
@@ -274,7 +275,7 @@ class shipment(osv.osv):
             shipment_number = sequence.get_id(test='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
-            values = {'name': shipment_name, 'address_id': address_id}
+            values = {'name': shipment_name, 'address_id': address_id, 'parent_id': draft_shipment.id}
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
             for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):

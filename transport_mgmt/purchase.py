@@ -67,7 +67,8 @@ class purchase_order(osv.osv):
         'func_total_price_include_transport': fields.function(_get_include_transport, method=True, string="Functionnal total incl. transport", type='float', readonly=True, multi='cost'),
         'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
         'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain="[('categ', '!=', 'transport')]"),
-        'shipment_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked shipments'),
+        'picking_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked deliveries'),
+        'shipment_transport_ids': fields.one2many('shipment', 'transport_order_id', string='Linked shipments'),
     }
 
     _defaults = {

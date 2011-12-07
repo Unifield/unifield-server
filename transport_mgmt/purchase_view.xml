@@ -41,8 +41,28 @@
                         <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
                             <separator colspan="4" string="Purchase Order" />
                             <field name="transport_order_id" />
-                            <separator colspan="4" string="Shipment documents" />
-                            <field name="shipment_transport_ids" colspan="4" nolabel="1" widget="many2many" domain="[('type', '=', 'out'), '|', ('subtype', '=', 'packing'), ('converted_to_standard', '=', True)]" />
+                            <newline />
+                            <separator colspan="2" string="Delivery documents" />
+                            <separator colspan="2" string="Shipment documents" />
+                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]">
+                                <tree string="Delivery Orders">
+                                    <field name="name" />
+                                    <field name="reason_type_id" />
+                                    <field name="date" />
+                                    <field name="min_date" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
+                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]">
+                                <tree string="Shipments">
+                                    <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="num_of_packs" />
+                                    <field name="date" />
+                                    <field name="date_of_departure" />
+                                    <field name="state" />
+                                </tree>
+                            </field>
                         </page>
                     </xpath>
                 </data>
