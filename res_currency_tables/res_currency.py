@@ -51,12 +51,11 @@ class res_currency(osv.osv):
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
         # add argument to discard table currencies by default
         table_in_args = False
-        if context and context.get('from', False) != 'exception':
-            for a in args:
-                if a[0] == 'currency_table_id':
-                    table_in_args = True
-            if not table_in_args:
-                args.insert(0, ('currency_table_id', '=', False))
+        for a in args:
+            if a[0] == 'currency_table_id':
+                table_in_args = True
+        if not table_in_args:
+            args.insert(0, ('currency_table_id', '=', False))
         return super(res_currency, self).search(cr, uid, args, offset, limit, order, context, count=count)
     
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
