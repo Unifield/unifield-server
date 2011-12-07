@@ -45,6 +45,7 @@
         'product_view.xml',
         'transport_data.xml',
         'report/intl_transport_view.xml',
+        'report/local_transport_view.xml',
     ],
     'demo_xml': [
     ],

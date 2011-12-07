@@ -29,7 +29,7 @@
         <record id="product_xtra0002---" model="product.product">
             <field name="type">service_recep</field>
             <field name="transport_ok">True</field>
-            <field name="name">Transport by Rea</field>
+            <field name="name">Transport by Sea</field>
             <field name="default_code">XTRA0002---</field>
             <field name="procure_method">make_to_order</field>
             <field name="supply_method">buy</field>

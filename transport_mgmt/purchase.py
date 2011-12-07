@@ -137,4 +137,26 @@ class purchase_order(osv.osv):
 
 purchase_order()
 
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+
+    _columns = {
+        'product_domain': fields.boolean(string='Transport products ?'),
+    }
+
+    def _get_product_domain(self, cr, uid, context={}):
+        order_obj = self.pool.get('purchase.order')
+        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
+        res = False
+        if po and po.categ == 'transport':
+            res = True
+        return res
+
+    _defaults = {
+        'product_domain': _get_product_domain,
+    }
+
+purchase_order_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
