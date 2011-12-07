@@ -19,9 +19,9 @@
 #
 ##############################################################################
 
+import stock
 import purchase
 import product
-import stock
 import sale
 import report
 

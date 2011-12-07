@@ -66,7 +66,7 @@ class purchase_order(osv.osv):
         'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total incl. transport", type='float', readonly=True, multi='cost'),
         'func_total_price_include_transport': fields.function(_get_include_transport, method=True, string="Functionnal total incl. transport", type='float', readonly=True, multi='cost'),
         'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
-        'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain="[('categ', '!=', 'transport')]"),
+        'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain=[('categ', '!=', 'transport')]),
         'picking_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked deliveries'),
         'shipment_transport_ids': fields.one2many('shipment', 'transport_order_id', string='Linked shipments'),
     }
@@ -137,27 +137,5 @@ class purchase_order(osv.osv):
 
 
 purchase_order()
-
-class purchase_order_line(osv.osv):
-    _name = 'purchase.order.line'
-    _inherit = 'purchase.order.line'
-
-    _columns = {
-        'product_domain': fields.boolean(string='Transport products ?'),
-    }
-
-    def _get_product_domain(self, cr, uid, context={}):
-        order_obj = self.pool.get('purchase.order')
-        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
-        res = False
-        if po and po.categ == 'transport':
-            res = True
-        return res
-
-    _defaults = {
-        'product_domain': _get_product_domain,
-    }
-
-purchase_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

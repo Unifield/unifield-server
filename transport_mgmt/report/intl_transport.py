@@ -82,6 +82,8 @@ class international_transport_cost_report(osv.osv):
                             ON to_cur.id = to_rate.currency_id
                     WHERE
                         po.intl_supplier_ok = True
+                      OR
+                        po.display_intl_transport_ok = True
                       AND
                         po.state in ('approved', 'done')
                       AND
