@@ -21,14 +21,14 @@
                     <group col="4" colspan="6">
                         <field name="abs_id" colspan="2"/>
                         <group col="4" colspan="6">
-                            <field name="journal_id" colspan="2" nolabel="1">
+                            <field name="journal_ids" colspan="2" nolabel="1">
                                 <tree string="Journal">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
                                 </tree>
                             </field>
-                            <field name="period_id" colspan="2" nolabel="1">
+                            <field name="period_ids" colspan="2" nolabel="1">
                                 <tree string="Period">
                                     <field name="name" string="Name"/>
                                     <field name="date_start" string="Start"/>
@@ -54,6 +54,14 @@
                                 <tree string="Account type">
                                     <field name="code"/>
                                     <field name="name"/>
+                                </tree>
+                            </field>
+                            <newline/>
+                            <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                                <tree string="Analytic Accounts">
+                                    <field name="code" string="Ana. Code"/>
+                                    <field name="name" string="Ana. Name"/>
+                                    <field name="type" string="Ana. Type"/>
                                 </tree>
                             </field>
                         </group>

@@ -30,14 +30,14 @@ class account_mcdb(osv.osv_memory):
     _name = 'account.mcdb'
 
     _columns = {
-        'journal_id': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
+        'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
         'company_id': fields.many2one('res.company', string="Proprietary instance"),
         'posting_date_from': fields.date('First posting date'),
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
-        'period_id': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
+        'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
         'employee_id': fields.many2one('hr.employee', string="Employee"),
@@ -56,7 +56,8 @@ class account_mcdb(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'amount_from': fields.float('Begin amount in given currency type'),
         'amount_to': fields.float('Ending amount in given currency type'),
-        'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id', string="Account type"),
+        'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id', 
+            string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
@@ -64,6 +65,8 @@ class account_mcdb(osv.osv_memory):
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
+        'analytic_account_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+            string="Analytic Account"),
     }
 
     _defaults = {
@@ -171,8 +174,8 @@ class account_mcdb(osv.osv_memory):
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
-            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_id', 'period_id'), 
-                ('journal_id', 'journal_id')]:
+            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_ids', 'period_id'), 
+                ('journal_ids', 'journal_id'), ('analytic_account_ids', 'account_id')]:
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
                     # Special field : account_ids with reversal
@@ -260,15 +263,17 @@ class account_mcdb(osv.osv_memory):
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
             search_view = 'mcdb_view_account_move_line_filter'
+            name = _('Journal Items MCDB result')
             if res_model == 'account.analytic.line':
                 view = 'account_analytic_line_mcdb_search_result'
                 search_view = 'mcdb_view_account_analytic_line_filter'
+                name = _('Analytic Journal Items MCDB result')
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
             search_view_id = search_view_id and search_view_id[1] or False
             return {
-                'name': _('Journal Items MCDB result'),
+                'name': name,
                 'type': 'ir.actions.act_window',
                 'res_model': res_model,
                 'view_type': 'form',
