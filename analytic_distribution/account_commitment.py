@@ -379,7 +379,6 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
-        raise osv.except_osv('error', 'programmed error')
         return super(account_commitment_line, self).create(cr, uid, vals, context={})
 
     def write(self, cr, uid, ids, vals, context={}):

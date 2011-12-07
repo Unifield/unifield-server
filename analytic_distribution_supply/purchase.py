@@ -138,15 +138,16 @@ class purchase_order(osv.osv):
 
     def copy_data(self, cr, uid, id, default={}, context={}):
         """
-        Copy global distribution and give it to new purchase
+        Copy global distribution and give it to new purchase.
+        Delete commitment_ids link.
         """
         # Some verifications
         if not context:
             context = {}
         # Update default
-        default.update({'commitment_ids': [],})
+        default.update({'commitment_ids': False,})
         # Default method
-        res = super(purchase_order, self).copy_data(cr, uid, id, default, context)
+        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
         # Update analytic distribution
         if res:
             po = self.browse(cr, uid, res, context=context)
@@ -402,11 +403,13 @@ class purchase_order_line(osv.osv):
 
     def copy_data(self, cr, uid, id, default={}, context={}):
         """
-        Copy global distribution and give it to new purchase line
+        Copy global distribution and give it to new purchase line.
         """
         # Some verifications
         if not context:
             context = {}
+        # Update default
+        default.update({'commitment_line_ids': [(6, 0, [])],})
         # Copy analytic distribution
         pol = self.browse(cr, uid, [id], context=context)[0]
         if pol.analytic_distribution_id:
