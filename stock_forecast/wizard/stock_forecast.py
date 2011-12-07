@@ -489,12 +489,13 @@ class stock_forecast(osv.osv_memory):
                 
                 for obj in tenderl_obj.browse(cr, uid, ids_list, context=context):
                     # create lines corresponding to po
-                    
-                    origin = obj.tender_id.sale_order_id
-                    if not obj.tender_id.sale_order_id:
-                        origin = False
+
+                    # Get the sale order as origin of the Tender if exists
+                    if not obj.tender_id.sale_order_id:                    
+                        origin = obj.tender_id.sale_order_id.name
                     else: 
-                        origin = origin.name
+                        origin = False
+                        
                     line_to_create.append({'date': len(obj.date_planned.split(' ')) > 1 and obj.date_planned.split(' ')[0] or obj.date_planned,
                                            'doc': 'TENDER',
                                            'order_type': False,
