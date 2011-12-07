@@ -30,13 +30,14 @@
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
-	                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
-	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested'}" icon="gtk-indent" />
+	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested'}" icon="gtk-indent"
+	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}"
-	                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
-	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed'}" icon="gtk-indent" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}" />
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed'}" icon="gtk-indent" 
+	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))],}" />
                             <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)"
@@ -84,9 +85,13 @@
             <field name="arch" type="xml">
                 <data>
                 <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace">
-                    <field name="date_planned" string="modified..." on_change="dates_change(date_planned, confirmed_delivery_date, context)"
-                    	attrs="{'readonly': [('po_state_stored', '!=', 'z')]}" />
-                    <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
+                	<!-- None in attrs because when the line is created, state is not filled (until save) -->
+                    <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)"
+                    	attrs="{'readonly': [('function_updated', '=', True), ('po_state_stored', '!=', 'draft')]}" />
+                    <field name="po_state_stored" invisible="False" />
+                    <field name="po_partner_type_stored" invisible="False" />
+                    <field name="function_updated" invisible="False" />
+                    <field name="confirmed_delivery_date" attrs="{'readonly': ['&amp;', ('function_updated', '=', True), '|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
                 </xpath>
                 
                 <!--  Add dates history tab -->
