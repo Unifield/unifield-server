@@ -11,14 +11,14 @@
                 <form string="Commitment Voucher" hide_duplicate_button="1" hide_delete_button="1">
                     <group col="6" colspan="4">
                         <field name="journal_id"/>
-                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
+                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
                         <newline/>
                         <field name="name"/>
                         <newline/>
                         <field name="date" on_change="onchange_date(date, period_id)"/>
                         <field name="period_id"/>
                         <newline/>
-                        <field name="currency_id" attrs="{'readonly': [('type', '!=', 'manual')]}"/>
+                        <field name="currency_id" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
                         <field name="type"/>
                     </group>
                     <group colspan="6">
