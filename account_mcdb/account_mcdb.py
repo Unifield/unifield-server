@@ -49,9 +49,9 @@ class account_mcdb(osv.osv_memory):
         'booking_currency_id': fields.many2one('res.currency', string="Booking currency"),
         'amount_book_from': fields.float('Begin amount in booking currency'),
         'amount_book_to': fields.float('Ending amount in booking currency'),
-        'output_currency_id': fields.many2one('res.currency', string="Output currency", readonly=True),
-        'amount_out_from': fields.float('Begin amount in output currency', readonly=True),
-        'amount_out_to': fields.float('Ending amount in output currency', readonly=True),
+        'output_currency_id': fields.many2one('res.currency', string="Output currency"),
+        'amount_out_from': fields.float('Begin amount in output currency'),
+        'amount_out_to': fields.float('Ending amount in output currency'),
         'currency_choice': fields.selection([('booking', 'Booking'), ('functional', 'Functional'), ('output', 'Output')], string="Currency type"),
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'amount_from': fields.float('Begin amount in given currency type'),
@@ -75,7 +75,7 @@ class account_mcdb(osv.osv_memory):
         'currency_choice': lambda *a: 'booking',
     }
 
-    def onchange_currency_choice(self, cr, uid, ids, choice, currency=False, func_curr=False, book_curr=False, mnt_func_from=0.0, mnt_func_to=0.0, mnt_book_from=0.0, mnt_book_to=0.0, context={}):
+    def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context={}):
         """
         Permit to give default company currency if 'functional' has been choosen.
         Delete all currency and amount fields (to not disturb normal mechanism)
@@ -88,15 +88,23 @@ class account_mcdb(osv.osv_memory):
         # Prepare some values
         vals = {}
         # Reset fields
-        for field in ['amount_book_from', 'amount_book_to', 'amount_func_from', 'amount_func_to', 'booking_currency_id', 'output_currency_id']:
-            vals[field] = False
+        for field in ['amount_book_from', 'amount_book_to', 'amount_func_from', 'amount_func_to', 'amount_out_from', 'amount_out_to', 
+            'booking_currency_id', 'output_currency_id']:
+            vals[field] = 0.0
         # Fill in values
         if choice == 'functional':
-            vals['currency_id'] = func_curr or False
+            vals.update({'currency_id': func_curr or False})
         elif choice == 'booking':
-            vals['currency_id'] = False
+            vals.update({'currency_id': False})
         elif choice == 'output':
-            vals['output_currency_id'] = False
+            vals.update({'currency_id': False})
+        # Update amounts 'from' and 'to'.
+        update_from = self.onchange_amount(cr, uid, ids, choice, mnt_from, 'from', context=context)
+        update_to = self.onchange_amount(cr, uid, ids, choice, mnt_to, 'to', context=context)
+        if update_from:
+            vals.update(update_from.get('value'))
+        if update_to:
+            vals.update(update_to.get('value'))
         return {'value': vals}
 
     def onchange_currency(self, cr, uid, ids, choice, currency, context={}):
