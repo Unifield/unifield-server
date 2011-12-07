@@ -22,6 +22,8 @@
 
 from tools import flatten, reverse_enumerate
 import fields
+import osv
+from tools.translate import _
 
 
 class expression(object):
@@ -165,6 +167,7 @@ class expression(object):
                     # the function field doesn't provide a search function and doesn't store
                     # values in the database, so we must ignore it : we generate a dummy leaf
                     self.__exp[i] = self.__DUMMY_LEAF
+                    raise osv.except_osv(_('Error !'), _('Please kindly ask a developper to add a search function for %s (%s) function field from table %s in module %s.'%(field.string, fargs[0], main_table._table, main_table._module)))
                 else:
                     subexp = field.search(cr, uid, table, left, [self.__exp[i]], context=context)
                     if not subexp:
