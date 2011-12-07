@@ -46,6 +46,7 @@
         'transport_data.xml',
         'report/intl_transport_view.xml',
         'report/local_transport_view.xml',
+        'security/ir.model.access.csv',
     ],
     'demo_xml': [
     ],
