@@ -91,7 +91,7 @@ class account_line_csv_export(osv.osv_memory):
             #functional_currency_id
             string += ';' + ustr(ml.functional_currency_id and ml.functional_currency_id.name or '')
             #output amount regarding booking currency
-            amount = currency_obj.compute(cr, uid, currency_id, ml.currency_id.id, ml.amount_currency, round=True, context=context)
+            amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
             string += ';' + ustr(amount or 0.0)
             #output currency
             string += ';' + ustr(currency_name or '')
@@ -156,7 +156,7 @@ class account_line_csv_export(osv.osv_memory):
             #currency_id
             string += ';' + ustr(al.currency_id and al.currency_id.name or '')
             #output amount
-            amount = currency_obj.compute(cr, uid, currency_id, al.currency_id.id, al.amount_currency, round=True, context=context)
+            amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
             string += ';' + ustr(amount or 0.0)
             #output currency
             string += ';' + ustr(currency_name or '')

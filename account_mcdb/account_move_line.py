@@ -54,7 +54,7 @@ class account_move_line(osv.osv):
             if field_name == 'output_amount':
                 # Update with date
                 context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-                mnt = self.pool.get('res.currency').compute(cr, uid, currency_id, ml.currency_id.id, ml.amount_currency, round=True, context=context)
+                mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
                 res[ml.id] = mnt or 0.0
             # or output_currency field
             elif field_name == 'output_currency':
