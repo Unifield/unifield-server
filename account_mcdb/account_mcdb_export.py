@@ -135,15 +135,20 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not currency_id:
-            raise osv.except_osv(_('Error'), _('No currency found.'))
         # Prepare some value
         string = ""
-        currency_obj = self.pool.get('res.currency')
-        currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+        currency_name = ""
+        if currency_id:
+            currency_obj = self.pool.get('res.currency')
+            currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # String creation
         # Prepare csv head
-        string += "Journal Code;Date;Instance;Description;Reference;Amount;Amount currency;Currency;Output amount;Output currency;Analytic Account\n"
+        string += "Journal Code;Date;Instance;Description;Reference;Amount;Company currency;Amount currency;Currency;"
+        if currency_id:
+            string += "Output amount;Output currency;"
+        string += "Analytic Account\n"
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             # journal_id
             string += ustr(al.journal_id and al.journal_id.code or '')
@@ -157,15 +162,18 @@ class account_line_csv_export(osv.osv_memory):
             string += ';' + ustr(al.ref or '')
             #amount
             string += ';' + ustr(al.amount or 0.0)
+            #company currency
+            string += ';' + company_currency
             #amount_currency
             string += ';' + ustr(al.amount_currency or 0.0)
             #currency_id
             string += ';' + ustr(al.currency_id and al.currency_id.name or '')
-            #output amount
-            amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
-            string += ';' + ustr(amount or 0.0)
-            #output currency
-            string += ';' + ustr(currency_name or '')
+            if currency_id:
+                #output amount
+                amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
+                string += ';' + ustr(amount or 0.0)
+                #output currency
+                string += ';' + ustr(currency_name or '')
             #account_id name
             string += ';' + ustr(al.account_id and al.account_id.name or '')
             # EOL
