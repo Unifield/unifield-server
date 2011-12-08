@@ -10,7 +10,7 @@
             rml="account_mcdb/report/report_account_move_line.rml"
             header="False"
             auto="False"
-            menu="True"
+            menu="False"
          />
 
     </data>
