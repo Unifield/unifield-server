@@ -184,6 +184,7 @@ class real_average_consumption(osv.osv):
 
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
+            move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
             
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
         
@@ -966,12 +967,20 @@ class product_product(osv.osv):
         res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             
         return res
+
+    def _compute_product_amc(self, cr, uid, ids, field_name, args, context={}):
+        res = {}
+        for product in ids:
+            res[product] = self.compute_amc(cr, uid, product, context=context)
+
+        return res
     
     
     _columns = {
         'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
                                         help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
-        'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Monthly consumption', readonly=True),
+        'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Real Consumption', readonly=True),
+        'product_amc': fields.function(_compute_product_amc, method=True, type='float', string='Monthly consupmiton', readonly=True),
         'reviewed_consumption': fields.function(_compute_fmc, method=True, type='float', string='Forecasted Monthly Consumption', readonly=True),
     }
     

@@ -255,7 +255,7 @@
             <field name="inherit_id" ref="stock.view_normal_stock_property_form" />
             <field name="arch" type="xml">
                 <field name="virtual_available" position="after">
-                    <field name="monthly_consumption" readonly="1" />
+                    <field name="product_amc" readonly="1" />
                     <field name="reviewed_consumption" />
                 </field>
             </field>
