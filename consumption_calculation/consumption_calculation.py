@@ -471,10 +471,23 @@ class monthly_review_consumption(osv.osv):
     }
     
     _defaults = {
+        'period_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-        'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'cons_location_id': lambda *a: 'MSF Instance',
     }
+
+    def period_change(self, cr, uid, ids, period_from, period_to, context={}):
+        '''
+        Get the first day of month and the last day
+        '''
+        res = {}
+
+        if period_from:
+            res.update({'period_from': (DateFrom(period_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+        if period_to:
+            res.update({'period_to': (DateFrom(period_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+
+        return {'value': res}
     
     def import_fmc(self, cr, uid, ids, context={}):
         '''
