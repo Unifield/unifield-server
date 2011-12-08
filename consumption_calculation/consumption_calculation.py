@@ -349,7 +349,7 @@ class real_average_consumption_line(osv.osv):
     def _get_qty(self, cr, uid, product, lot, location, uom):
         if not product and not lot:
             return False
-        context = {'location_id': location, 'location': location, 'uom': uom}
+        context = {'location_id': location, 'location': location, 'uom': uom, 'compute_child': False}
         if not lot:
             return self.pool.get('product.product').read(cr, uid, product, ['qty_available'], context=context)['qty_available']
             
@@ -453,6 +453,7 @@ class real_average_consumption_line(osv.osv):
             result['value'].update(prodlot_id=False)
    
         context.update(uom=uom)
+        context.update({'compute_child': False})
         product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
         result['value'].update({'product_qty': product.qty_available})
         
@@ -489,6 +490,7 @@ class real_average_consumption_line(osv.osv):
             res['value'].update({'expiry_date': False})
 
         if not prodlot_id:
+            context.update({'compute_child': False})
             product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
         else:
             context.update({'location_id': location_id})
@@ -519,6 +521,7 @@ class real_average_consumption_line(osv.osv):
             if location_id:
                 context.update({'location': location_id, 'uom': uom})
 
+            context.update({'compute_child': False})
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             qty_available = product.qty_available
                 
