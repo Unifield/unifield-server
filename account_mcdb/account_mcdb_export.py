@@ -120,7 +120,6 @@ class account_line_csv_export(osv.osv_memory):
             #            for i, field in enumerate(fields):
             #                if i != 0:
             #                    res += ';'
-            #                print field
             #                res+= ustr(getattr(ml, field, ''))
             #            res+= '\n'
             #############################

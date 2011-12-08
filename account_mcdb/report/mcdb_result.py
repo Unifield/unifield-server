@@ -24,7 +24,6 @@
 from report import report_sxw
 from osv import osv
 import time
-from tools.translate import _
 
 class account_move_line_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -37,5 +36,17 @@ class account_move_line_report(report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.account.move.line','account.move.line','addons/account_mcdb/report/report_account_move_line.rml', parser=account_move_line_report)
+
+class account_analytic_line_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        """
+        Parser initialisation
+        """
+        super(account_analytic_line_report, self).__init__(cr, uid, name, context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+report_sxw.report_sxw('report.account.analytic.line','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line.rml', parser=account_analytic_line_report)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

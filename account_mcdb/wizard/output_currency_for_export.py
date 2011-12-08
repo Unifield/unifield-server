@@ -75,12 +75,15 @@ class output_currency_for_export(osv.osv_memory):
             # Return good view
             return self.pool.get('account.line.csv.export').export_to_csv(cr, uid, line_ids, currency_id, model, context=context) or False
         # Else return PDF export
-        # FIXME ########### FIXME ######## redirect on another report if come from analytic mcdb result
         datas = {'ids': context.get('active_ids', [])}
         context.update({'output_currency_id': currency_id})
+        # Update report name if come from analytic
+        report_name = 'account.move.line'
+        if model == 'account.analytic.line':
+            report_name = 'account.analytic.line'
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'account.move.line',
+            'report_name': report_name,
             'datas': datas,
             'context': context,
                 }
