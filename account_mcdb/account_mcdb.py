@@ -49,10 +49,7 @@ class account_mcdb(osv.osv_memory):
         'booking_currency_id': fields.many2one('res.currency', string="Booking currency"),
         'amount_book_from': fields.float('Begin amount in booking currency'),
         'amount_book_to': fields.float('Ending amount in booking currency'),
-        'output_currency_id': fields.many2one('res.currency', string="Output currency"),
-        'amount_out_from': fields.float('Begin amount in output currency'),
-        'amount_out_to': fields.float('Ending amount in output currency'),
-        'currency_choice': fields.selection([('booking', 'Booking'), ('functional', 'Functional'), ('output', 'Output')], string="Currency type"),
+        'currency_choice': fields.selection([('booking', 'Booking'), ('functional', 'Functional')], string="Currency type"),
         'currency_id': fields.many2one('res.currency', string="Currency"),
         'amount_from': fields.float('Begin amount in given currency type'),
         'amount_to': fields.float('Ending amount in given currency type'),
@@ -88,15 +85,12 @@ class account_mcdb(osv.osv_memory):
         # Prepare some values
         vals = {}
         # Reset fields
-        for field in ['amount_book_from', 'amount_book_to', 'amount_func_from', 'amount_func_to', 'amount_out_from', 'amount_out_to', 
-            'booking_currency_id', 'output_currency_id']:
+        for field in ['amount_book_from', 'amount_book_to', 'amount_func_from', 'amount_func_to', 'booking_currency_id']:
             vals[field] = 0.0
         # Fill in values
         if choice == 'functional':
             vals.update({'currency_id': func_curr or False})
         elif choice == 'booking':
-            vals.update({'currency_id': False})
-        elif choice == 'output':
             vals.update({'currency_id': False})
         # Update amounts 'from' and 'to'.
         update_from = self.onchange_amount(cr, uid, ids, choice, mnt_from, 'from', context=context)
@@ -121,8 +115,6 @@ class account_mcdb(osv.osv_memory):
             vals['functional_currency_id'] = currency
         elif choice == 'booking':
             vals['booking_currency_id'] = currency
-        elif choice == 'output':
-            vals['output_currency_id'] = currency
         return {'value': vals}
 
     def onchange_amount(self, cr, uid, ids, choice, amount, amount_type=None, context={}):
@@ -146,11 +138,6 @@ class account_mcdb(osv.osv_memory):
                 vals['amount_book_from'] = amount
             elif amount_type == 'to':
                 vals['amount_book_to'] = amount
-        elif choice == 'output':
-            if amount_type == 'from':
-                vals['amount_out_from'] = amount
-            elif amount_type == 'to':
-                vals['amount_out_to'] = amount
         return {'value': vals}
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):

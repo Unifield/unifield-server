@@ -86,9 +86,6 @@
                         <field name="booking_currency_id" widget="selection" colspan="2" invisible="1"/>
                         <field name="amount_book_from" string="Amount" colspan="2" invisible="1"/>
                         <field name="amount_book_to" string="to" colspan="2" invisible="1"/>
-                        <field name="output_currency_id" widget="selection" colspan="2" invisible="1"/>
-                        <field name="amount_out_from" string="Amount" colspan="2" invisible="1"/>
-                        <field name="amount_out_to" string="to" colspan="2" invisible="1"/>
                     </group>
                     <separator string="Third Party"/>
                     <group col="6" colspan="6">
