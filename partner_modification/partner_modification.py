@@ -30,6 +30,7 @@ import pooler
 import time
 
 from msf_order_date import TRANSPORT_TYPE
+from msf_order_date import ZONE_SELECTION
 
 NUMBER_OF_CHOICE = 3
 
@@ -117,7 +118,7 @@ class res_partner(osv.osv):
         return {'value': {'supplier_lt': transport_0_lt + procurement_lt,
                           'customer_lt': transport_0_lt + procurement_lt}}
     
-    _columns = {'zone': fields.selection([('national','National'),('international','International'),], string='Zone',),
+    _columns = {'zone': fields.selection(selection=ZONE_SELECTION, string='Zone',),
                 'customer_lt': fields.integer('Customer Lead Time'),
                 'supplier_lt': fields.integer('Supplier Lead Time'),
                 'procurement_lt': fields.integer('Internal Lead Time'),

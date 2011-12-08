@@ -20,7 +20,7 @@
 ##############################################################################
 
 TRANSPORT_TYPE = [('',''), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),] #[('flight', 'By Flight'), ('road', 'By Road'), ('boat', 'By Boat')]
-
+ZONE_SELECTION = [('national','National'),('international','International')]
 
 import order_dates
 import stock

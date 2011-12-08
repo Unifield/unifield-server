@@ -30,6 +30,7 @@ from datetime import datetime
 # import partner_type from msf_partner
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
+from msf_order_date import ZONE_SELECTION
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class res_partner(osv.osv):
@@ -330,10 +331,13 @@ class purchase_order(osv.osv):
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
             
-        # fill partner_type
+        # fill partner_type and zone
         if data.get('partner_id', False):
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
+            # partner type - always set
             data.update({'partner_type': partner.partner_type,})
+            # internal type (zone) - always set
+            data.update({'internal_type': partner.zone,})
             # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
             if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
                 data.update({'delivery_confirmed_date': False,})
@@ -353,10 +357,16 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         
-        # fill partner_type
+        # fill partner_type and zone
         if data.get('partner_id', False):
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
+            # partner type - always set
             data.update({'partner_type': partner.partner_type,})
+            # internal type (zone) - always set
+            data.update({'internal_type': partner.zone,})
+            # transport type - only if not present (can be modified by user)
+            if 'transport_type' not in data:
+                data.update({'transport_type': partner.transport_0,})
             # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
             if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
                 data.update({'delivery_confirmed_date': False,})
@@ -412,7 +422,6 @@ class purchase_order(osv.osv):
             
         return res
     
-    
     def _get_vals_order_dates(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return function values
@@ -441,21 +450,26 @@ class purchase_order(osv.osv):
                 'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True,),
                 'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'transport_type': fields.selection(readonly=True, selection=TRANSPORT_TYPE, string='Transport Mode',),
-                'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.date(readonly=True, string='Shipment Date', help='Date on which picking is created at supplier'),
+                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-                'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
-                                                   ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
                 'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
-                # not a function because a function value is only filled when saved, not with on change of partner id
-                'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
-                # to know if the delivery_confirmed_date can be erased - to be confirmed
+                # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
                 'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
+                # FIELDS PART OF CREATE/WRITE methods
+                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+                'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',),
+                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+                'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
+                # not a function because a function value is only filled when saved, not with on change of partner id
+                # from partner_id object
+                'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
+                # not a function because a function value is only filled when saved, not with on change of partner id
+                # from partner_id object
+                'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
                 }
     
     _defaults = {'date_order': lambda *a: time.strftime('%Y-%m-%d'),
@@ -555,6 +569,7 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
+        assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
         name = data['name']
@@ -635,25 +650,6 @@ class purchase_order_line(osv.osv):
         result = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
         return result
     
-    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
-                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
-                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
-                'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
-                # not replacing the po_state from sale_followup
-                'po_state_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION,
-                                                   string='Po State', multi='get_vals_order_date',
-                                                   store={'purchase.order': (_get_line_ids_from_po_ids, ['state'], 10),
-                                                          'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
-                'po_partner_type_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PARTNER_TYPE,
-                                                          string='Po Partner Type', multi='get_vals_order_date',
-                                                          store={'purchase.order': (_get_line_ids_from_po_ids, ['partner_type'], 10),
-                                                                 'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
-                'function_updated': fields.boolean(readonly=True, string='Functions updated'),
-                }
-    _defaults = {'function_updated': False,}
-    
-    
     def _get_planned_date(self, cr, uid, context):
         '''
         Returns planned_date
@@ -683,10 +679,30 @@ class purchase_order_line(osv.osv):
             res = po.delivery_confirmed_date
         
         return res
-
+    
+    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
+                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
+                'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
+                # not replacing the po_state from sale_followup
+                'po_state_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION,
+                                                   string='Po State', multi='get_vals_order_date',
+                                                   store={'purchase.order': (_get_line_ids_from_po_ids, ['state'], 10),
+                                                          'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
+                'po_partner_type_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PARTNER_TYPE,
+                                                          string='Po Partner Type', multi='get_vals_order_date',
+                                                          store={'purchase.order': (_get_line_ids_from_po_ids, ['partner_type'], 10),
+                                                                 'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
+                'function_updated': fields.boolean(readonly=True, string='Functions updated'),
+                'test_true': fields.boolean(readonly=True, string='test true'),
+                }
+    
     _defaults = {
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': _get_confirmed_date,
+        'function_updated': False,
+        'test_true': True,
     }
     
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
@@ -790,8 +806,7 @@ class sale_order(osv.osv):
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
-                                        ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),
+        'internal_type': fields.selection(selection=ZONE_SELECTION, string='Type', readonly=True, states={'draft': [('readonly', False)]}),
         'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
     }
     
