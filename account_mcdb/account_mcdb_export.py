@@ -47,16 +47,20 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not currency_id:
-            raise osv.except_osv(_('Error'), _('No currency. Please choose one.'))
         # Prepare some value
         string = ""
-        currency_obj = self.pool.get('res.currency')
-        currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+        currency_name = ""
+        if currency_id:
+            currency_obj = self.pool.get('res.currency')
+            currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # String creation
         # Prepare csv head
-        string += "Journal Code;Sequence;Instance;Reference;Posting date;Period;Name;Account Code;Account Description;Third party;Book. Debit;Book. Credit;Book. currency;Func. Debit;"
-        string += "Func. Credit;Func. currency;Output amount;Output currency;State;Reconcile\n"
+        string += "Journal Code;Sequence;Instance;Reference;Posting date;Period;Name;Account Code;Account Description;Third party;Book. Debit;Book. Credit;Book. currency;"
+        if not currency_id:
+            string += "Func. Debit;Func. Credit;Func. currency;"
+        else:
+            string += "Output amount;Output currency;"
+        string += "State;Reconcile\n"
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             # journal_id
             string += ustr(ml.journal_id and ml.journal_id.code or '')
@@ -84,17 +88,19 @@ class account_line_csv_export(osv.osv_memory):
             string += ';' + ustr(ml.credit_currency or 0.0)
             #currency_id
             string += ';' + ustr(ml.currency_id and ml.currency_id.name or '')
-            #debit
-            string += ';' + ustr(ml.debit or 0.0)
-            #credit
-            string += ';' + ustr(ml.credit or 0.0)
-            #functional_currency_id
-            string += ';' + ustr(ml.functional_currency_id and ml.functional_currency_id.name or '')
-            #output amount regarding booking currency
-            amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-            string += ';' + ustr(amount or 0.0)
-            #output currency
-            string += ';' + ustr(currency_name or '')
+            if not currency_id:
+                #debit
+                string += ';' + ustr(ml.debit or 0.0)
+                #credit
+                string += ';' + ustr(ml.credit or 0.0)
+                #functional_currency_id
+                string += ';' + ustr(ml.functional_currency_id and ml.functional_currency_id.name or '')
+            else:
+                #output amount regarding booking currency
+                amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+                string += ';' + ustr(amount or 0.0)
+                #output currency
+                string += ';' + ustr(currency_name or '')
             #state
             string += ';' + ustr(ml.state or '')
             #reconcile_total_partial_id
@@ -175,8 +181,6 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not currency_id:
-            raise osv.except_osv(_('Error'), _('No currency. Please choose a currency.'))
         if not model:
             raise osv.except_osv(_('Error'), _('No model found.'))
         # Prepare some values
