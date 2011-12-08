@@ -253,6 +253,27 @@ def common_onchange_transport_leadtime(self, cr, uid, ids, requested_date=False,
     
     return {'value': res}
 
+def common_onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, result=None, context=None):
+    '''
+    fills the estimated transport lead time corresponding to the selected transport,
+    0.0 if no transport selected
+    '''
+    if context is None:
+        context = {}
+    if result is None:
+        result = {}
+    # reset by default
+    result.setdefault('value', {}).update({'est_transport_lead_time': 0.0})
+    # get the value if partner
+    if partner_id:
+        partner_obj = self.pool.get('res.partner')
+        # returns a dictionary
+        lead_time = partner_obj.get_transport_lead_time(cr, uid, [partner_id], transport_type, context=context)
+        lead_time = lead_time.get(partner_id)
+        result.setdefault('value', {}).update({'est_transport_lead_time': lead_time,})
+    
+    return result
+
 def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_order=False):
     '''
     Common function when Partner is changing
@@ -267,11 +288,15 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_or
     res['value'].update({'delivery_confirmed_date': False,})
     # reset transport type field
     res['value'].update({'transport_type': '',})
+    # reset estimated transport leadtime (est_transport_lead_time)
+    res['value'].update({'est_transport_lead_time': 0.0,})
     
     if part:
         partner = self.pool.get('res.partner').browse(cr, uid, part)
         # update transport type field
         res['value'].update({'transport_type': partner.transport_0,})
+        # update estimated transport lead-time (est_transport_lead_time)
+        res['value'].update({'est_transport_lead_time': partner.transport_0_lt})
         # update the partner type field
         res['value'].update({'partner_type': partner.partner_type,})
         # with order_date, update requested_date
@@ -364,9 +389,12 @@ class purchase_order(osv.osv):
             data.update({'partner_type': partner.partner_type,})
             # internal type (zone) - always set
             data.update({'internal_type': partner.zone,})
-            # transport type - only if not present (can be modified by user)
+            # transport type - only if not present (can be modified by user to False)
             if 'transport_type' not in data:
                 data.update({'transport_type': partner.transport_0,})
+            # est_transport_lead_time - only if not present (can be modified by user to False)
+            if 'est_transport_lead_time' not in data:
+                data.update({'est_transport_lead_time': partner.transport_0_lt,})
             # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
             if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
                 data.update({'delivery_confirmed_date': False,})
@@ -534,6 +562,14 @@ class purchase_order(osv.osv):
         Fills the Ready to ship date
         '''
         return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
+    
+    def onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, context=None):
+        '''
+        transport type changed
+        '''
+        result = {'value': {}}
+        result = common_onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, result=result, context=context)
+        return result
 
     def onchange_partner_id_order_date(self, cr, uid, ids, part, date_order):
         '''
@@ -638,8 +674,6 @@ class purchase_order_line(osv.osv):
             result[obj.id]['po_state_stored'] = obj.order_id.state
             # po partner type
             result[obj.id]['po_partner_type_stored'] = obj.order_id.partner_type
-            # update the function_updated flag - dirty hack to used attrs on dates when the fields function have not yet been updated...
-            obj.write({'function_updated': True}, context=context)
         
         return result
     
@@ -680,30 +714,37 @@ class purchase_order_line(osv.osv):
         
         return res
     
+    def _get_default_state(self, cr, uid, context=None):
+        '''
+        default value for state fields.related
+        
+        why, beacause if we try to pass state in the context,
+        the context is simply reset without any values specified...
+        '''
+        if context is None:
+            context= {}
+        if context.get('purchase_id', False):
+            order_obj= self.pool.get('purchase.order')
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            return po.state
+        
+        return False
+    
     _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
                 'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
-                # not replacing the po_state from sale_followup
-                'po_state_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION,
-                                                   string='Po State', multi='get_vals_order_date',
-                                                   store={'purchase.order': (_get_line_ids_from_po_ids, ['state'], 10),
-                                                          'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
-                'po_partner_type_stored': fields.function(_vals_get_order_date, method=True, type='selection', selection=PARTNER_TYPE,
-                                                          string='Po Partner Type', multi='get_vals_order_date',
-                                                          store={'purchase.order': (_get_line_ids_from_po_ids, ['partner_type'], 10),
-                                                                 'purchase.order.line': (lambda self, cr, uid, ids, c={}: ids, ['order_id'], 10)}),
-                'function_updated': fields.boolean(readonly=True, string='Functions updated'),
-                'test_true': fields.boolean(readonly=True, string='test true'),
+                # not replacing the po_state from sale_followup - should ?
+                'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
+                'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
                 }
     
-    _defaults = {
-        'date_planned': _get_planned_date,
-        'confirmed_delivery_date': _get_confirmed_date,
-        'function_updated': False,
-        'test_true': True,
-    }
+    _defaults = {'po_state_stored': _get_default_state,
+                 'po_partner_type_stored': lambda obj, cr, uid, c: c and c.get('partner_type', False),
+                 'date_planned': _get_planned_date,
+                 'confirmed_delivery_date': _get_confirmed_date,
+                 }
     
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
         '''
@@ -711,8 +752,8 @@ class purchase_order_line(osv.osv):
         '''
         return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'purchase.order', context=context)
 
-    
 purchase_order_line()
+
 
 class sale_order(osv.osv):
     _name = 'sale.order'

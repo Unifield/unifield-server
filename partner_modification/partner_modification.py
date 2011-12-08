@@ -98,10 +98,11 @@ class res_partner(osv.osv):
         '''
         for a given transport name (road, air, sea), 
         '''
-        list_of_vals = [x[0] for x in TRANSPORT_TYPE]
-        assert transport_name in list_of_vals, 'The transport name is not supported.'
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         # result values
         result = {}
+        # get corresponding lt
         for partner in self.browse(cr, uid, ids, context=context):
             result[partner.id] = 0
             for i in range(NUMBER_OF_CHOICE):
