@@ -852,12 +852,19 @@ class product_product(osv.osv):
                     to_date = line.rac_id.period_to
 
             # We want the average for the entire period
-            if context.get('average', False):
+            if to_date and from_date and context.get('average', True):
                 if to_date < from_date:
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
-                to_date_str = strptime(to_date, '%Y-%m-%d')
-                from_date_str = strptime(from_date, '%Y-%m-%d')
+                try:
+                    to_date_str = strptime(to_date, '%Y-%m-%d')
+                except ValueError:
+                    to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+                                
+                try:
+                    from_date_str = strptime(from_date, '%Y-%m-%d')
+                except ValueError:
+                    from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
                 
                 date_diff = Age(to_date_str, from_date_str)
                 nb_months = round(date_diff.years*12.0 + date_diff.months + (date_diff.days/30.0), 2)
@@ -909,9 +916,9 @@ class product_product(osv.osv):
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
         if to_date:
-            domain.append(('date_expected', '<=', to_date))
+            domain.append(('date', '<=', to_date))
         if from_date:
-            domain.append(('date_expected', '>=', from_date))
+            domain.append(('date', '>=', from_date))
         
         locations = self.pool.get('stock.location').search(cr, uid, [('usage', 'in', ('internal', 'customer'))], context=context)
         # Add locations filters in domain if locations are passed in context
@@ -927,10 +934,10 @@ class product_product(osv.osv):
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             
             # Update the limit in time
-            if not context.get('from_date') and (not from_date or move.date_expected < from_date):
-                from_date = move.date_expected
-            if not context.get('to_date') and (not to_date or move.date_expected > to_date):
-                to_date = move.date_expected
+            if not context.get('from_date') and (not from_date or move.date < from_date):
+                from_date = move.date
+            if not context.get('to_date') and (not to_date or move.date > to_date):
+                to_date = move.date
                 
         if not to_date or not from_date:
             return 0.00
