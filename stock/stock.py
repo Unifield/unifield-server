@@ -224,6 +224,9 @@ class stock_location(osv.osv):
         'scrap_location': False,
     }
 
+    def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
+        return kwargs.get('result', None)
+
     def chained_location_get(self, cr, uid, location, partner=None, product=None, context=None):
         """ Finds chained location
         @param location: Location id
@@ -237,6 +240,7 @@ class stock_location(osv.osv):
                 result = partner.property_stock_customer
         elif location.chained_location_type == 'fixed':
             result = location.chained_location_id
+        result = self._hook_chained_location_get(cr, uid, context=context, location=location, partner=partner, product=product, result=result)
         if result:
             return result, location.chained_auto_packing, location.chained_delay, location.chained_journal_id and location.chained_journal_id.id or False, location.chained_company_id and location.chained_company_id.id or False, location.chained_picking_type
         return result
@@ -1604,7 +1608,7 @@ class stock_move(osv.osv):
         'move_history_ids2': fields.many2many('stock.move', 'stock_move_history_ids', 'child_id', 'parent_id', 'Move History (parent moves)'),
         'picking_id': fields.many2one('stock.picking', 'Reference', select=True,states={'done': [('readonly', True)]}),
         'note': fields.text('Notes'),
-        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
+        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=False, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Done\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'price_unit': fields.float('Unit Price', digits_compute= dp.get_precision('Account'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
