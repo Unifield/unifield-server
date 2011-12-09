@@ -13,7 +13,6 @@
                 <data>
                     <xpath expr="/form/group[1]/field[@name='date']" position="after">
                         <field name="reversal_origin"/>
-                        <field name="invoice_line_id"/>
                     </xpath>
                 </data>
             </field>
@@ -34,9 +33,6 @@
                     <xpath expr="/tree/field[@name='amount']" position='after'>
                         <field name="amount_currency"/>
                         <field name="currency_id"/>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='general_account_id']" position='after'>
-                        <field name="invoice_line_id"/>
                     </xpath>
                 </data>
             </field>
