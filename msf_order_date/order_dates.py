@@ -325,17 +325,7 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
     for line in self.browse(cr, uid, ids, context=context):
         min_confirmed = line.order_id.delivery_confirmed_date
         min_requested = line.order_id.delivery_requested_date
-        
-#    if min_confirmed and confirmed_date:
-#        if min_confirmed > confirmed_date:
-#            return {'warning': {'title': _('Warning'),
-#                                'message': _('You cannot define a delivery confirmed date older than the PO delivery confirmed date !')}}
-    
-#    if min_requested and requested_date:
-#        if min_requested > requested_date:
-#            return {'warning': {'title': _('Warning'),
-#                                'message': _('You cannot define a delivery requested date older than the PO delivery requested date !')}}
-#    
+         
     return {'value': {'date_planned': requested_date,}}
 #                      'confirmed_delivery_date': confirmed_date}}
         
@@ -472,6 +462,17 @@ class purchase_order(osv.osv):
                 res[obj.id]['partner_type'] = partner_type
             
         return res
+    
+    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        modify data for stock move creation
+        - date is set to False
+        - date_expected is set to delivery_confirmed_date
+        '''
+        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
+        order_line = kwargs['order_line']
+        move_values.update({'date': order_line.confirmed_delivery_date,'date_expected': order_line.confirmed_delivery_date,})
+        return move_values
     
     _columns = {'date_order':fields.date('Creation Date', readonly=True, required=True,
                                          states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
@@ -627,6 +628,10 @@ class purchase_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the purchase order value
+            for line in order.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': order.delivery_confirmed_date,}, context=context)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
@@ -730,7 +735,7 @@ class purchase_order_line(osv.osv):
         
         return False
     
-    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
+    _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
@@ -828,33 +833,30 @@ class sale_order(osv.osv):
                 res[order.id] = pick_obj.browse(cr, uid, pick_ids[0]).date_done
             
         return res
-
     
-    _columns = {
-        'date_order': fields.date('Creation Date', select=True, readonly=True, 
-                                  required=True, help="Date on which order is created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, #required=True, 
-                                            states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', #required=True, 
-                                               help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
-                                            ('boat', 'By Boat')], string='Transport Type',
-                                            help='Number of days this field has to be associated with a transport mode selection'),
-        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
-        'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
-                                          help='Commitment date = date on which delivery of product is to/can be made.'),
-        'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
-        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
-                                         string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        'internal_type': fields.selection(selection=ZONE_SELECTION, string='Type', readonly=True, states={'draft': [('readonly', False)]}),
-        'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
-    }
+    _columns = {'date_order': fields.date('Creation Date', select=True, readonly=True, 
+                                          required=True, help="Date on which order is created."),
+                'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True, #required=True, 
+                                                       states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
+                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', #required=True, 
+                                                       help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
+                'transport_type': fields.selection([('flight', 'By Flight'), ('road', 'By Road'),
+                                                    ('boat', 'By Boat')], string='Transport Type',
+                                                   help='Number of days this field has to be associated with a transport mode selection'),
+                'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
+                'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
+                                                  help='Commitment date = date on which delivery of product is to/can be made.'),
+                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
+                'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
+                                                string='Receipt Date', help='for a PO, date of the first godd receipt.'),
+                'internal_type': fields.selection(selection=ZONE_SELECTION, string='Type', readonly=True, states={'draft': [('readonly', False)]}),
+                'history_ids': fields.one2many('history.order.date', 'sale_id', string='Dates History'),
+                }
     
-    _defaults = {
-        'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'internal_type': lambda *a: 'national',
-    }
+    _defaults = {'date_order': lambda *a: time.strftime('%Y-%m-%d'),
+                 'internal_type': lambda *a: 'national',
+                 }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
         '''
@@ -917,13 +919,12 @@ class sale_order_line(osv.osv):
                     
         return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
     
-    _columns = {
-        'date_planned': fields.date(string='Requested Date', required=True, select=True,
-                                    help='Header level dates has to be populated by default with the possibility of manual updates'),
-        'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
-                                               help='Header level dates has to be populated by default with the possibility of manual updates.'),
-        'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
-    }
+    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
+                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
+                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
+                'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
+                }
     
     def _get_planned_date(self, cr, uid, context, *a):
         '''
@@ -965,7 +966,6 @@ class sale_order_line(osv.osv):
         Checks if dates are later than header dates 
         '''
         return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'sale.order', context=context)
-            
     
 sale_order_line()
 
@@ -1016,3 +1016,52 @@ class procurement_order(osv.osv):
 
 procurement_order()
 
+
+class stock_picking(osv.osv):
+    _name = 'stock.picking'
+    _inherit = 'stock.picking'
+    
+    def get_min_max_date(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        call super - modify logic for min_date (Expected receipt date)
+        '''
+        result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
+        # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.purchase_id:
+                result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date,})
+        return result
+    
+    def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
+        '''
+        call super
+        '''
+        result = super(stock_picking, self)._set_minimum_date(cr, uid, ids, name, value, arg, context=context)
+        return result
+
+    _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
+                'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
+                                            method=True, store=True, type='datetime', string='Expected Receipt Date', select=1,
+                                            help="Expected date for the picking to be processed"),
+                }
+
+    # @@@override stock>stock.py>stock_picking>do_partial
+    def do_partial(self, cr, uid, ids, partial_datas, context=None):
+        '''
+        Write the shipment date on accoding order
+        '''
+        res = super(stock_picking, self).do_partial(cr, uid, ids, partial_datas, context=context)
+
+        po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
+
+        for picking in self.browse(cr, uid, ids, context=context):
+            # no default value for po
+#            if picking.purchase_id:
+#                po_obj.write(cr, uid, [picking.purchase_id.id], {'shipment_date': picking.date_done})
+            if picking.sale_id:
+                so_obj.write(cr, uid, [picking.sale_id.id], {'shipment_date': picking.date_done})
+
+        return res
+
+stock_picking()

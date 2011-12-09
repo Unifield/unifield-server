@@ -236,6 +236,13 @@ class purchase_order(osv.osv):
         
         return invoice_id
     
+    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        modify data for stock move creation
+        '''
+        move_values = kwargs['move_values']
+        return move_values
+    
     # @@@override@purchase.purchase.order.action_picking_create
     def action_picking_create(self,cr, uid, ids, context={}, *args):
         picking_id = False
@@ -297,6 +304,8 @@ class purchase_order(osv.osv):
                         'company_id': order.company_id.id,
                         'price_unit': order_line.price_unit
                     }
+                    # hook for stock move values modification
+                    move_values = self._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, move_values=move_values, order_line=order_line,)
                     
                     if reason_type_id:
                         move_values.update({'reason_type_id': reason_type_id})

@@ -27,6 +27,7 @@
                 "purchase",
                 "account",
                 "stock_override",
+                "purchase_override",
                 "partner_modification",
                 ],
     "author": "TeMPO Consulting, MSF",
