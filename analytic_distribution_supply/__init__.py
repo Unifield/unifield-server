@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,25 +20,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "Financing Contracts for MSF",
-    "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic_distribution"],
-    "description": """Module for defining financing contract and donor objects.
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
-    ],
-    'test': [],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import purchase
+import invoice
+import analytic_distribution
+import account_commitment
+import stock
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

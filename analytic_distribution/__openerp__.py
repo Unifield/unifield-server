@@ -19,20 +19,28 @@
 #
 ##############################################################################
 {
-    "name" : "Financing Contracts for MSF",
+    "name" : "Analytic Account for MSF",
     "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
+    "author" : "MSF - TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic_distribution"],
-    "description": """Module for defining financing contract and donor objects.
+    "depends" : ["analytic", "account", "account_override"],
+    "description": """Module for defining analytic accounting object and commitment voucher.
     """,
-    "init_xml" : [],
+    "init_xml" : [
+        'data/analytic_account_data.xml',
+    ],
     "update_xml": [
         'security/ir.model.access.csv',
-        'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
+        'analytic_account_view.xml',
+        'wizard/account_analytic_chart_view.xml',
+        'analytic_distribution_wizard_view.xml',
+        'account_commitment_workflow.xml',
+        'account_commitment_sequence.xml',
+        'account_commitment_view.xml',
     ],
-    'test': [],
+    'test': [
+        'test/analytic_account_activable.yml',
+    ],
     'demo_xml': [
     ],
     'installable': True,

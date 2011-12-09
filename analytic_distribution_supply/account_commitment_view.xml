@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Commitment -->
+        <record model="ir.ui.view" id="inherit_account_commitment_form">
+            <field name="name">inherit.account.commitment.form</field>
+            <field name="model">account.commitment</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="analytic_distribution.account_commitment_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[1]/field[@name='name']" position="after">
+                    <field name="purchase_id"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Commitment Lines -->
+        <record model="ir.ui.view" id="inherit_account_commitment_tree">
+            <field name="name">inherit.account.commitment.tree</field>
+            <field name="model">account.commitment</field>
+            <field name="inherit_id" ref="analytic_distribution.account_commitment_tree"/>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='partner_id']" position="after">
+                    <field name="purchase_id"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

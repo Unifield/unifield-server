@@ -21,25 +21,35 @@
 #
 ##############################################################################
 
-{
-    "name" : "Accounting Corrections",
-    "version" : "1.0",
-    "description" : """
-        Permits some corrections from Journal Items.
-    """,
-    "author" : "TeMPO Consulting",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override'],
-    "init_xml" : [],
-    "update_xml" : [
-        'account_view.xml',
-        'account_wizard_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
 
+class analytic_distribution(osv.osv):
+    _name = 'analytic.distribution'
+    _inherit = 'analytic.distribution'
+
+    _columns = {
+        'purchase_ids': fields.one2many('purchase.order', 'analytic_distribution_id', string="Purchases"),
+        'purchase_line_ids': fields.one2many('purchase.order.line', 'analytic_distribution_id', string="Purchase Lines"),
+    }
+
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Delete one2many fields
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Delete purchase_ids and purchase_line_ids links
+        defaults.update({
+            'purchase_ids': False,
+            'purchase_line_ids': False,
+        })
+        return super(analytic_distribution, self).copy(cr, uid, id, defaults, context)
+
+analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+
+
+
