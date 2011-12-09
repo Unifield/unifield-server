@@ -1088,17 +1088,28 @@ class lang(osv.osv):
         format = lang_id and self.read(cr, uid, lang_id[0], [type], context=context)[type] or getattr(self, '_get_default_%s'%type)(cr, uid, context=context)
         return format
     
+lang()
+
+
+class msf_tools(osv.osv):
+    '''
+    tools for msf project
+    '''
+    _name = 'msf.tools'
+    
     def get_date_format(self, cr, uid, context=None):
         '''
         get the date format for the uid specified user
         '''
-        return self._get_format(cr, uid, 'date', context=context)
+        lang_obj = self.pool.get('res.lang')
+        return lang_obj._get_format(cr, uid, 'date', context=context)
     
     def get_time_format(self, cr, uid, context=None):
         '''
         get the time format for the uid specified user
         '''
-        return self._get_format(cr, uid, 'time', context=context)
+        lang_obj = self.pool.get('res.lang')
+        return lang_obj._get_format(cr, uid, 'time', context=context)
     
     def get_datetime_format(self, cr, uid, context=None):
         '''
@@ -1106,4 +1117,4 @@ class lang(osv.osv):
         '''
         return self.get_date_format(cr, uid, context=context) + ' ' + self.get_time_format(cr, uid, context=context)
     
-lang()
+msf_tools()
