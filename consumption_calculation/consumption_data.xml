@@ -2,7 +2,7 @@
 <openerp>
     <data noupdate="1">
     
-        <record id="stock.stock_location_internal_cust" model="stock.location">
+        <record id="stock.stock_location_internal_customers" model="stock.location">
             <field name="name">MSF Customer</field>
             <field name="usage">customer</field>
         </record>
