@@ -31,12 +31,12 @@
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
 	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested'}" icon="gtk-indent"
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order',}" icon="gtk-indent"
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
 	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}" />
-	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed'}" icon="gtk-indent" 
+	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order',}" icon="gtk-indent" 
 	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type"
@@ -109,7 +109,7 @@
             </field>
         </record>
         
-        <record id="sale_order_dates_form_view" model="ir.ui.view">
+        <record id="view_order_form" model="ir.ui.view">
             <field name="name">sale.order.dates.form.view</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
@@ -122,14 +122,25 @@
                         <field name="picked_rate" invisible="1" />
                     </xpath>
                     
+                    <xpath expr="/form/group/field[@name='date_order']" position="replace">
+                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    </xpath>
+                                       
                     <!--  Add dates on 'Other Information' tab -->
                     <xpath expr="/form/notebook/page[@string='Other Information']" position="before">
                         <page string="Order dates">
 	                        <group colspan="4" col="4" name="date">
 	                            <separator colspan="4" string="Dates" />
-	                            <field name="delivery_requested_date" on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order)" />
-	                            <field name="delivery_confirmed_date" attrs="{'readonly':[('shipped_rate', '!=', 0.00)]}" 
-	                                   on_change="requested_date_change(delivery_requested_date, delivery_confirmed_date, date_order, est_transport_lead_time)" />
+	                            <group colspan="2" col="3">
+		                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order',}" icon="gtk-indent"
+		                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
+	                            </group>
+	                            <group colspan="2" col="3">
+		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}" />
+		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order',}" icon="gtk-indent" 
+		                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            </group>
 	                            <field name="transport_type" />
 	                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
 	                            <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
@@ -141,7 +152,7 @@
 	                    </page>
                     </xpath>
                     
-                    <!-- Give the context when create a new PO line -->
+                    <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
                         <attribute name="context">{'sale_id': active_id}</attribute>
                     </xpath>

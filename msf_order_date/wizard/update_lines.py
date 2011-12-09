@@ -44,16 +44,18 @@ class update_lines(osv.osv_memory):
         if context is None:
             context = {}
         
-        po_obj = self.pool.get('purchase.order')
+        # switch according to type
+        type = context['type']
+        obj_obj = self.pool.get(type)
         res = super(update_lines, self).default_get(cr, uid, fields, context=context)
-        po_ids = context.get('active_ids', [])
-        if not po_ids:
+        obj_ids = context.get('active_ids', [])
+        if not obj_ids:
             return res
         
         result = []
-        for po in po_obj.browse(cr, uid, po_ids, context=context):
-            delivery_requested_date = po.delivery_requested_date
-            delivery_confirmed_date = po.delivery_confirmed_date
+        for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
+            delivery_requested_date = obj.delivery_requested_date
+            delivery_confirmed_date = obj.delivery_confirmed_date
             
         if 'delivery_requested_date' in fields:
             res.update({'delivery_requested_date': delivery_requested_date})
@@ -71,22 +73,25 @@ class update_lines(osv.osv_memory):
         assert context, 'No context defined'
         # call super
         result = super(update_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        # working objects
-        po_obj = self.pool.get('purchase.order')
-        po_ids = context.get('active_ids', [])
+        # switch according to type
+        type = context['type']
+        obj_obj = self.pool.get(type)
+        obj_ids = context.get('active_ids', [])
         field_name = context.get('field_name', False)
         
-        if not po_ids:
+        if not obj_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
         
+        obj_name = obj_obj.browse(cr, uid, obj_ids[0], context=context).name
+        
         _moves_arch_lst = """
                         <form>
-                        <separator colspan="4" string="Value to be used-"/>
+                        <separator colspan="4" string="%s: Value to be used-"/>
                         <field name="delivery_%s_date" />
                         <button name="update_delivery_%s_date" string="Yes" type="object" icon="gtk-apply" />
                         <button special="cancel" string="No" icon="gtk-cancel"/>
-                        """ % (field_name, field_name)
+                        """ % (obj_name, field_name, field_name)
         
         _moves_fields = result['fields']
         # add field related to picking type only
@@ -101,12 +106,14 @@ class update_lines(osv.osv_memory):
     
     def update_delivery_requested_date(self, cr, uid, ids, context=None):
         '''
-        update all correpsonding lines
+        update all corresponding lines
         '''
+        # switch according to type
+        type = context['type']
+        obj_obj = self.pool.get(type)
         # working objects
-        po_obj = self.pool.get('purchase.order')
-        po_ids = context.get('active_ids', [])
-        for obj in po_obj.browse(cr, uid, po_ids, context=context):
+        obj_ids = context.get('active_ids', [])
+        for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             requested_date = obj.delivery_requested_date
             for line in obj.order_line:
                 line.write({'date_planned': requested_date,})
@@ -115,12 +122,14 @@ class update_lines(osv.osv_memory):
     
     def update_delivery_confirmed_date(self, cr, uid, ids, context=None):
         '''
-        update all correpsonding lines
+        update all corresponding lines
         '''
+        # switch according to type
+        type = context['type']
+        obj_obj = self.pool.get(type)
         # working objects
-        po_obj = self.pool.get('purchase.order')
-        po_ids = context.get('active_ids', [])
-        for obj in po_obj.browse(cr, uid, po_ids, context=context):
+        obj_ids = context.get('active_ids', [])
+        for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             confirmed_date = obj.delivery_confirmed_date
             for line in obj.order_line:
                 line.write({'confirmed_delivery_date': confirmed_date,})

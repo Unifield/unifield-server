@@ -36,6 +36,8 @@ class date_tools(osv.osv):
     def get_date_format(self, cr, uid, context=None):
         '''
         get the date format for the uid specified user
+        
+        from msf_order_date module
         '''
         lang_obj = self.pool.get('res.lang')
         return lang_obj._get_format(cr, uid, 'date', context=context)
@@ -43,6 +45,8 @@ class date_tools(osv.osv):
     def get_time_format(self, cr, uid, context=None):
         '''
         get the time format for the uid specified user
+        
+        from msf_order_date module
         '''
         lang_obj = self.pool.get('res.lang')
         return lang_obj._get_format(cr, uid, 'time', context=context)
