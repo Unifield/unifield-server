@@ -674,8 +674,8 @@ class shipment(osv.osv):
                 # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
                 if new_packing.sale_id and not new_packing.sale_id.shipment_date:
                     # get the date format
-                    tools_obj = self.pool.get('msf.tools')
-                    date_format = tools_obj.get_date_format(cr, uid, context=context)
+                    date_tools = self.pool.get('date.tools')
+                    date_format = date_tools.get_date_format(cr, uid, context=context)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': time.strftime('%Y-%m-%d'),}, context=context)
                     so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, time.strftime(date_format))))
                 

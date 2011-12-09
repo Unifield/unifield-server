@@ -1050,16 +1050,15 @@ class stock_picking(osv.osv):
         '''
         Write the shipment date on accoding order
         '''
+        date_tools = self.pool.get('date.tools')
         res = super(stock_picking, self).do_partial(cr, uid, ids, partial_datas, context=context)
 
         po_obj = self.pool.get('purchase.order')
         so_obj = self.pool.get('sale.order')
 
         for picking in self.browse(cr, uid, ids, context=context):
-            # no default value for po
-#            if picking.purchase_id:
-#                po_obj.write(cr, uid, [picking.purchase_id.id], {'shipment_date': picking.date_done})
-            if picking.sale_id:
+            if picking.sale_id and not picking.sale_id.shipment_date:
+                date_format = date_tools.get_date_format(cr, uid, context=context)
                 so_obj.write(cr, uid, [picking.sale_id.id], {'shipment_date': picking.date_done})
 
         return res
@@ -1089,32 +1088,3 @@ class lang(osv.osv):
         return format
     
 lang()
-
-
-class msf_tools(osv.osv):
-    '''
-    tools for msf project
-    '''
-    _name = 'msf.tools'
-    
-    def get_date_format(self, cr, uid, context=None):
-        '''
-        get the date format for the uid specified user
-        '''
-        lang_obj = self.pool.get('res.lang')
-        return lang_obj._get_format(cr, uid, 'date', context=context)
-    
-    def get_time_format(self, cr, uid, context=None):
-        '''
-        get the time format for the uid specified user
-        '''
-        lang_obj = self.pool.get('res.lang')
-        return lang_obj._get_format(cr, uid, 'time', context=context)
-    
-    def get_datetime_format(self, cr, uid, context=None):
-        '''
-        get the datetime format for the uid specified user
-        '''
-        return self.get_date_format(cr, uid, context=context) + ' ' + self.get_time_format(cr, uid, context=context)
-    
-msf_tools()
