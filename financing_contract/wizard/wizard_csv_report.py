@@ -39,7 +39,6 @@ class wizard_csv_report(osv.osv_memory):
         if 'reporting_type' in context:
             # Dictionary for selection
             reporting_type_selection = dict(self.pool.get('financing.contract.format')._columns['reporting_type'].selection)
-            
             return [['Financing contract name:', contract.name],
                     ['Financing contract code:', contract.code],
                     ['Donor:', contract.donor_id.name],
