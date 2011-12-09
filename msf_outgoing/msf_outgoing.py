@@ -29,6 +29,7 @@ import decimal_precision as dp
 import netsvc
 import logging
 import tools
+import time
 from os import path
 
 class stock_warehouse(osv.osv):
@@ -646,9 +647,11 @@ class shipment(osv.osv):
         - trigger the workflow button_confirm for the new packing
         - trigger the workflow to terminate the initial packing
         - update the draft_picking_id fields of pack_families
+        - update the shipment_date of the corresponding sale_order if not set yet
         '''
         pick_obj = self.pool.get('stock.picking')
         pf_obj = self.pool.get('pack.family')
+        so_obj = self.pool.get('sale.order')
         
         for shipment in self.browse(cr, uid, ids, context=context):
             # the state does not need to be updated - function
@@ -668,6 +671,14 @@ class shipment(osv.osv):
                                                                      'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True, allow_copy=True,))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
+                # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
+                if new_packing.sale_id and not new_packing.sale_id.shipment_date:
+                    # get the date format
+                    lang_obj = self.pool.get('res.lang')
+                    date_format = lang_obj.get_date_format(cr, uid, context=context)
+                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': time.strftime('%Y-%m-%d'),}, context=context)
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, time.strftime(date_format))))
+                
                 # update locations of stock moves
                 for move in new_packing.move_lines:
                     move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,

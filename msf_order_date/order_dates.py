@@ -1065,3 +1065,45 @@ class stock_picking(osv.osv):
         return res
 
 stock_picking()
+
+
+class lang(osv.osv):
+    '''
+    define getter for date / time / datetime formats
+    '''
+    _inherit = 'res.lang'
+    
+    def _get_format(self, cr, uid, type, context=None):
+        '''
+        generic function
+        '''
+        type = type + '_format'
+        assert type in self._columns, 'Specified format field does not exist'
+        user_obj = self.pool.get('res.users')
+        # get user context lang
+        user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+        # get coresponding id
+        lang_id = self.search(cr, uid, [('code','=',user_lang)])
+        # return format value or from default function if not exists
+        format = lang_id and self.read(cr, uid, lang_id[0], [type], context=context)[type] or getattr(self, '_get_default_%s'%type)(cr, uid, context=context)
+        return format
+    
+    def get_date_format(self, cr, uid, context=None):
+        '''
+        get the date format for the uid specified user
+        '''
+        return self._get_format(cr, uid, 'date', context=context)
+    
+    def get_time_format(self, cr, uid, context=None):
+        '''
+        get the time format for the uid specified user
+        '''
+        return self._get_format(cr, uid, 'time', context=context)
+    
+    def get_datetime_format(self, cr, uid, context=None):
+        '''
+        get the datetime format for the uid specified user
+        '''
+        return self.get_date_format(cr, uid, context=context) + ' ' + self.get_time_format(cr, uid, context=context)
+    
+lang()

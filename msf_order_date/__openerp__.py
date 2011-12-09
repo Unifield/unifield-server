@@ -51,6 +51,7 @@
         'test/purchase_dates.yml',
         'test/sale_dates.yml',
         'test/history_dates.yml',
+        'test/lang_format.yml',
     ],
     'installable': True,
     'active': False,
