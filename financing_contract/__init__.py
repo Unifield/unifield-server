@@ -25,5 +25,6 @@ import format_line
 import donor
 import contract
 import analytic
+import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

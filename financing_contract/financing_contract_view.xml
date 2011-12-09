@@ -328,6 +328,36 @@
 	            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_button" name="value"/>
 	            <field eval="True" name="object"/>
 	        </record>
+            
+            <record id="act_financing_contract_allocated_expense_report" model="ir.actions.server">
+                <field name="name">Allocated Expenses Report</field>
+                <field name="model_id" ref="model_financing_contract_contract"/>
+                <field name="state">code</field>
+                <field name="code">action = obj.menu_allocated_expense_report(context=context)</field>
+            </record>
+
+            <record id="ir_financing_contract_allocated_expense_report" model="ir.values">
+                <field eval="'client_action_multi'" name="key2"/>
+                <field eval="'financing.contract.contract'" name="model"/>
+                <field name="name">Allocated Expenses Report</field>
+                <field eval="'ir.actions.server,%d'%act_financing_contract_allocated_expense_report" name="value"/>
+                <field eval="True" name="object"/>
+            </record>
+            
+            <record id="act_financing_contract_project_expense_report" model="ir.actions.server">
+                <field name="name">Project Expenses Report</field>
+                <field name="model_id" ref="model_financing_contract_contract"/>
+                <field name="state">code</field>
+                <field name="code">action = obj.menu_project_expense_report(context=context)</field>
+            </record>
+
+            <record id="ir_financing_contract_project_expense_report" model="ir.values">
+                <field eval="'client_action_multi'" name="key2"/>
+                <field eval="'financing.contract.contract'" name="model"/>
+                <field name="name">Project Expenses Report</field>
+                <field eval="'ir.actions.server,%d'%act_financing_contract_project_expense_report" name="value"/>
+                <field eval="True" name="object"/>
+            </record>
 	            
        </data>
 </openerp> 

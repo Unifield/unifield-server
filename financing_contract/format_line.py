@@ -286,8 +286,6 @@ class financing_contract_format_line(osv.osv):
                 'format_id': destination_format_id,
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
-                'allocated_amount': browse_source_line.allocated_amount,
-                'project_amount': browse_source_line.project_amount,
             }
             account_ids = []
             for account in browse_source_line.account_ids:
