@@ -115,7 +115,6 @@
             view_type="form"
             target="new"/>
 
-
     <!-- Mass reallocation wizard -->
         <record id="mass_reallocation_wizard_view" model="ir.ui.view">
             <field name="name">Mass Reallocation Wizard</field>
@@ -133,5 +132,29 @@
                 </form>
             </field>
         </record>
+
+    <!-- Mass reallocation verification wizard -->
+        <record id="mass_reallocation_verification_wizard_view" model="ir.ui.view">
+            <field name="name">Mass Reallocation Verification Wizard</field>
+            <field name="model">mass.reallocation.verification.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="error_ids" colspan="4"/>
+                    <newline />
+                    <field name="non_supported_ids" colspan="4"/>
+                    <newline />
+                    <field name="process_ids" colspan="4"/>
+                    <newline />
+                    <group col="6" colspan="4"/>
+                        <label string="" colspan="2"/>
+                        <button type="special" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Verify" icon="gtk-ok" colspan="1"/>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

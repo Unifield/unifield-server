@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from tools.misc import flatten
+from collections import defaultdict
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -71,6 +73,66 @@ class analytic_line(osv.osv):
                 vals.update({'account_id': account_id})
             self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
+
+    def distribution_is_valid_with_account(self, cr, uid, ids, account_id, context={}):
+        """
+        Analytic distribution validity verification with given account for given ids.
+        Return all valid ids.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some value
+        account_type = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category'], context=context).get('category', False)
+        res = []
+        if not account_type:
+            return res
+        try:
+            msf_private_fund = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_private_fund = 0
+        # Fetch all necessary elements sorted by analytic distribution
+        elements = defaultdict(list)
+        for aline in self.browse(cr, uid, ids, context=context):
+            elements[aline.distribution_id.id].append(aline)
+        # Retrieve distribution_ids
+        distrib_ids = [x for x in elements]
+        # Process regarding account_type
+        if account_type == 'OC':
+            # Search all FP lines for given distribution
+            fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', 'in', distrib_ids)])
+            # Browse FP and select those that are compatible with selected account_id
+            fp_compatible_ids = defaultdict(list)
+            non_compatible_distribution_ids = []
+            for distrib_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, fp_line_ids, context=context):
+                # If account_id is msf_private_fund OR account_id is in cost_center_ids, then add distrib line in fp_compatible_ids
+                if distrib_line.analytic_id.id == msf_private_fund or account_id in [x.id for x in distrib_line.analytic_id.cost_center_ids]:
+                    fp_compatible_ids[distrib_line.distribution_id.id].append(distrib_line.id)
+            # Browse each distribution
+            for distrib_id in fp_compatible_ids:
+                # Test FP and account for each analytic line
+                for aline in elements[distrib_id]:
+                    if aline.distribution_id.funding_pool_lines and fp_compatible_ids[distrib_id]:
+                        # First test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
+                        #+ the current distrib
+                        # FIXME: Do a better research of funding pool line that have cost_center_id == aline.account_id.id
+                        aline_fp_lines = [x.id for x in aline.distribution_id.funding_pool_lines if aline.account_id.id == x.cost_center_id.id] or []
+                        if len(aline_fp_lines) == len(fp_compatible_ids[distrib_id]):
+                            # All matches, test that general_account_id is in all funding_pool_lines
+                            res.append(aline.id)
+                            continue
+            # FIXME: Doesn't work because we should verify FP lines that have given cost_center !
+        elif account_type == 'FUNDING':
+            # FIXME: 
+            # 1/ Do a dict with all account compatible with funding pool and all cost center compatible with choosen FP
+            # 2/ Compare each analytic line with cost center and account to see if compatible
+            pass
+        else:
+            pass
+        return res
 
 analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
