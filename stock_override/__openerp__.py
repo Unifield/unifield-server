@@ -31,8 +31,12 @@
     "category" : "Generic Modules/Inventory Control",
     "init_xml" : [],
     "demo_xml" : [],
-    "update_xml" : ["report/report_stock_move_view.xml"],
-    'test': [],
+    "update_xml" : [
+        "stock_view.xml",
+        "report/report_stock_move_view.xml",
+        "security/ir.model.access.csv",
+        ],
+    'test': ['test/chained_nomen_loc.yml'],
     'installable': True,
     'active': False,
 }
