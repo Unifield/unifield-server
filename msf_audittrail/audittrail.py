@@ -238,12 +238,13 @@ class audittrail_log_line(osv.osv):
         Display the name of the resource on the tree view
         '''
         res = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree' and context.get('active_ids') and context.get('active_model'):
-            element_name = self.pool.get(context.get('active_model')).name_get(cr, uid, context.get('active_ids'), context=context)[0][1]
-            xml_view = etree.fromstring(res['arch'])
-            for element in xml_view.iter("tree"):
-                element.set('string', element_name)
-            res['arch'] = etree.tostring(xml_view)
+        # TODO: Waiting OEB-86 
+#        if view_type == 'tree' and context.get('active_ids') and context.get('active_model'):
+#            element_name = self.pool.get(context.get('active_model')).name_get(cr, uid, context.get('active_ids'), context=context)[0][1]
+#            xml_view = etree.fromstring(res['arch'])
+#            for element in xml_view.iter("tree"):
+#                element.set('string', element_name)
+#            res['arch'] = etree.tostring(xml_view)
         return res
 
 audittrail_log_line()
