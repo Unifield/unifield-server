@@ -55,7 +55,7 @@ class local_transport_cost_report(osv.osv):
                         count(pol.id) as nb_order,
                         pol.product_id as transport_mode,
                         sum(ROUND(((pol.product_qty*pol.price_unit)*(to_rate.rate/fr_rate.rate)/to_cur.rounding))*to_cur.rounding) as func_transport_cost,
-                        to_cur.id as currency_id,
+                        to_cur.id as func_currency_id,
                         pol.product_qty*pol.price_unit as transport_cost,
                         pric.currency_id as transport_currency_id,
                         po.date_order as date_order,
