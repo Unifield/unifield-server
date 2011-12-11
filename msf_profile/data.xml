@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
     <record id="base.lang_en" model="res.lang">
         <field name="date_format">%d/%m/%Y</field>
         <field name="time_format">%H:%M</field>
@@ -64,7 +64,7 @@
         <field name="chained_picking_type">internal</field>
     </record>
 
-    <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
+<!--     <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
         <field name="location_id" ref="stock.stock_location_stock" />
         <field name="nomen_id" ref="product_nomenclature.nomen_med" />
         <field name="dest_location_id" ref="stock_location_medical" />
@@ -74,7 +74,7 @@
         <field name="location_id" ref="stock.stock_location_stock" />
         <field name="nomen_id" ref="product_nomenclature.nomen_log" />
         <field name="dest_location_id" ref="stock_location_logistic" />
-    </record>
+    </record> -->
 
     <record id="stock.stock_location_output" model="stock.location">
         <field name="name">OUTPUT</field>
@@ -147,8 +147,8 @@
         <field name="quarantine_location">True</field>
     </record>
 
-    <record id="stock.stock_location_inventory" model="stock.location">
-        <field name="name">Inventory</field>
+    <record id="stock.location_inventory" model="stock.location">
+        <field name="name">Inventory (loss &amp; profit)</field>
         <field name="location_category">other</field>
         <field name="usage">inventory</field>
         <field name="chained_location_type">none</field>
@@ -167,7 +167,7 @@
         <field name="destruction_location">True</field>
     </record>
 
-    <record id="stock.stock_location_production" model="stock.location">
+    <record id="stock.location_production" model="stock.location">
         <field name="name">Production</field>
         <field name="location_category">other</field>
         <field name="usage">production</field>
@@ -176,7 +176,7 @@
         <field name="chained_picking_type">internal</field>
     </record>
 
-    <record id="stock.stock_location_procurement" model="stock.location">
+    <record id="stock.location_procurement" model="stock.location">
         <field name="name">Procurement</field>
         <field name="location_category">other</field>
         <field name="usage">procurement</field>
@@ -256,6 +256,7 @@
 
     <record id="stock.stock_location_suppliers" model="stock.location">
         <field name="name">Others Suppliers</field>
+        <field name="location_id" eval="False" />
         <field name="location_category">other</field>
         <field name="usage">supplier</field>
         <field name="chained_location_type">none</field>
@@ -275,6 +276,7 @@
     <record id="stock.stock_location_customers" model="stock.location">
         <field name="name">Other Customers</field>
         <field name="location_category">other</field>
+        <field name="location_id" eval="False" />
         <field name="usage">customer</field>
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
@@ -329,5 +331,9 @@
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
     </record>
+    
+    <delete model="stock.location" id="stock.stock_location_locations_partner" />
+    <delete model="stock.location" id="stock.stock_location_locations_virtual" />
+    
     </data>
 </openerp>
