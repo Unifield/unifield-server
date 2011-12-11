@@ -518,9 +518,12 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
             model_name = parent_field.model_id.name
 
         for tmp_res_id in res_ids:
-            res_id = resource_pool.read(cr, uid, tmp_res_id, [parent_field.name])[parent_field.name][0]
+            if not parent_field_id:
+                res_id = tmp_res_id
+            else:
+                res_id = resource_pool.read(cr, uid, tmp_res_id, [parent_field.name])[parent_field.name][0]
             vals = {
-                "name": "%s deletion" %model_name,
+                "name": "%s" %model_name,
                 "method": method,
                 "object_id": model_id,
                 "user_id": uid_orig,
@@ -530,7 +533,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
             # Add the name of the created sub-object
             if parent_field_id:
-                vals.update({'sub_obj_name': old_values[tmp_res_id][name_get_field],
+                vals.update({'sub_obj_name': old_values[tmp_res_id][name_get_field or 'name'],
                              'rule_id': rule_id,
                              'fct_object_id': model.id,
                              'fct_res_id': tmp_res_id})
