@@ -24,6 +24,14 @@
         report_type="txt"
         auto="True"
         menu="True"/>
+        
+        <report id="contract"
+        string="Financing Contract"
+        model="financing.contract.contract"
+        name="financing.contract"
+        rml="financing_contract/report/financing_contract.rml"
+        auto="False"
+        menu="True"/>
 
     </data>
 </openerp>
