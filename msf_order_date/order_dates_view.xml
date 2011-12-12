@@ -152,8 +152,6 @@
 	                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
 	                            <field name="ready_to_ship_date" />
 	                            <field name="shipment_date" />
-	                            <field name="receipt_date" readonly="1" />
-	                            <field name="arrival_date" />
 	                        </group>
 	                    </page>
                     </xpath>
@@ -162,7 +160,7 @@
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
                         <attribute name="context">{'sale_id': active_id}</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="after">
+                    <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
                         <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                         <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
                     </xpath>

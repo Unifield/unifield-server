@@ -32,6 +32,7 @@ from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -766,7 +767,7 @@ class purchase_order_line(osv.osv):
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context):
+    def _get_confirmed_date(self, cr, uid, context=None):
         '''
         Returns confirmed date
         
@@ -884,7 +885,7 @@ class sale_order(osv.osv):
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'shipment_date': fields.date(string='Shipment Date', readonly=True,),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -1048,24 +1049,9 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-#        for line in self.browse(cr, uid, ids):
-#            if 'date_planned' in data:
-#                if line.order_id.delivery_requested_date > data['date_planned']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Requested date for a line older than the Order Delivery Requested Date'))
-#            if data.get('confirmed_delivery_date', False):
-#                 if line.order_id.delivery_confirmed_date > data['confirmed_delivery_date']:
-#                    raise osv.except_osv(_('Error'), _('You cannot have a Delivery Confirmed date for a line older than the Order Delivery Confirmed Date'))
-        
         create_history(self, cr, uid, ids, data, 'sale.order.line', 'sale_line_id', fields_date_line, context=context)
                     
         return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
-    
-    _columns = {'date_planned': fields.date(string='Requested Date', required=True, select=True,
-                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'confirmed_delivery_date': fields.date(string='Confirmed Delivery Date',
-                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
-                'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
-                }
     
     def _get_planned_date(self, cr, uid, context, *a):
         '''
@@ -1096,11 +1082,35 @@ class sale_order_line(osv.osv):
             res = po.delivery_confirmed_date
         
         return res
+    
+    def _get_default_state(self, cr, uid, context=None):
+        '''
+        default value for state fields.related
+        
+        why, beacause if we try to pass state in the context,
+        the context is simply reset without any values specified...
+        '''
+        if context is None:
+            context= {}
+        if context.get('purchase_id', False):
+            order_obj= self.pool.get('purchase.order')
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            return po.state
+        
+        return False
+    
+    _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
+                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
+                'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
+                'so_state_stored': fields.related('order_id', 'state', type='selection', selection=SALE_ORDER_STATE_SELECTION, string='So State', readonly=True,),
+                }
 
-    _defaults = {
-        'date_planned': _get_planned_date,
-        'confirmed_delivery_date': _get_confirmed_date,
-    }
+    _defaults = {'date_planned': _get_planned_date,
+                 'confirmed_delivery_date': _get_confirmed_date,
+                 'so_state_stored': _get_default_state,
+                 }
     
     def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
         '''
