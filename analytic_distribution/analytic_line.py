@@ -124,7 +124,7 @@ class analytic_line(osv.osv):
                     # add analytic line to final result
                     for aline in elements[distrib_id]:
                         res.append(aline.id)
-##### CASE WHERE WE ACCEPT TO PROCESS SOME LINES OF DISTRIBUTION #############p
+##### CASE WHERE WE ACCEPT TO PROCESS SOME LINES OF DISTRIBUTION #############
 #                # Test FP for each analytic line
 #                for aline in elements[distrib_id]:
 #                    if aline.distribution_id and fp_compatible_ids[distrib_id]:

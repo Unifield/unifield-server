@@ -32,12 +32,12 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, readonly=True),
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
-        'non_supported_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
+        'supported_ids': fields.many2many('account.analytic.line', 'mass_reallocation_supported_rel', 'wizard_id', 'analytic_line_id', string="Supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="To process", readonly=True),
     }
 
     def button_validate(self, cr, uid, ids, context={}):
-        pass
+        return {'type': 'ir.actions.act_window_close'}
 
 mass_reallocation_verification_wizard()
 
@@ -101,16 +101,19 @@ class mass_reallocation_wizard(osv.osv_memory):
                 error_ids.extend([x for x in tmp_to_process if x not in valid_ids])
         print "RESULT: ERR, %s NS, %s PROC, %s" % (error_ids, non_supported_ids, process_ids)
         vals = {'account_id': account_id,}
-        if error_ids:
+        # Display of elements. Non supported should be inserted into some one. If process_ids not null, then include them into.
+        if error_ids and not process_ids:
+            vals.update({'error_ids': [(6, 0, error_ids + non_supported_ids)]})
+        elif error_ids:
             vals.update({'error_ids': [(6, 0, error_ids)]})
-        if non_supported_ids:
-            vals.update({'non_supported_ids': [(6, 0, non_supported_ids)]})
-        if process_ids:
-            vals.update({'process_ids': [(6, 0, process_ids)]})
+        if non_supported_ids and process_ids:
+            vals.update({'process_ids': [(6, 0, non_supported_ids + process_ids)], 'supported_ids': [(6, 0, process_ids)]})
+        elif process_ids:
+            vals.update({'process_ids': [(6, 0, process_ids)], 'supported_ids': [(6, 0, process_ids)]})
         verif_id = self.pool.get('mass.reallocation.verification.wizard').create(cr, uid, vals, context=context)
         # Create Mass Reallocation Verification Wizard
         return {
-                'name': "Mass Reallocation Wizard Verification Result",
+                'name': "Verification Result",
                 'type': 'ir.actions.act_window',
                 'res_model': 'mass.reallocation.verification.wizard',
                 'view_type': 'form',
