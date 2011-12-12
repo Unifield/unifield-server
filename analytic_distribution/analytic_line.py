@@ -94,6 +94,9 @@ class analytic_line(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_private_fund = 0
+        # If account is MSF Private Fund, do nothing and return all lines. Because of MSF Private Fund compatibility with all elements.
+        if account_id == msf_private_fund or account_type not in ['OC', 'FUNDING']:
+            return ids
         # Fetch all necessary elements sorted by analytic distribution
         elements = defaultdict(list)
         for aline in self.browse(cr, uid, ids, context=context):
@@ -113,25 +116,42 @@ class analytic_line(osv.osv):
                     fp_compatible_ids[distrib_line.distribution_id.id].append(distrib_line.id)
             # Browse each distribution
             for distrib_id in fp_compatible_ids:
-                # Test FP and account for each analytic line
-                for aline in elements[distrib_id]:
-                    if aline.distribution_id.funding_pool_lines and fp_compatible_ids[distrib_id]:
-                        # First test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
-                        #+ the current distrib
-                        # FIXME: Do a better research of funding pool line that have cost_center_id == aline.account_id.id
-                        aline_fp_lines = [x.id for x in aline.distribution_id.funding_pool_lines if aline.account_id.id == x.cost_center_id.id] or []
-                        if len(aline_fp_lines) == len(fp_compatible_ids[distrib_id]):
-                            # All matches, test that general_account_id is in all funding_pool_lines
-                            res.append(aline.id)
-                            continue
-            # FIXME: Doesn't work because we should verify FP lines that have given cost_center !
+                fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                # Compare two list
+                diff = set(fp_lines) & set(fp_compatible_ids[distrib_id])
+                # Verify that it correspond to fp_lines length
+                if len(diff) == len(fp_lines):
+                    # add analytic line to final result
+                    for aline in elements[distrib_id]:
+                        res.append(aline.id)
+##### CASE WHERE WE ACCEPT TO PROCESS SOME LINES OF DISTRIBUTION #############p
+#                # Test FP for each analytic line
+#                for aline in elements[distrib_id]:
+#                    if aline.distribution_id and fp_compatible_ids[distrib_id]:
+#                        # Test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
+#                        #+ the current distrib
+#                        valid = 0
+#                        aline_fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', aline.distribution_id.id), 
+#                            ('cost_center_id', '=', aline.account_id.id)], context=context) or []
+#                        for el in aline_fp_lines:
+#                            if el in fp_compatible_ids[distrib_id]:
+#                                valid += 1
+#                        if len(aline_fp_lines) == valid:
+#                            # All matches
+#                            res.append(aline.id)
+##############################################################################
         elif account_type == 'FUNDING':
-            # FIXME: 
-            # 1/ Do a dict with all account compatible with funding pool and all cost center compatible with choosen FP
-            # 2/ Compare each analytic line with cost center and account to see if compatible
-            pass
-        else:
-            pass
+            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'account_ids'], context=context)
+            cc_ids = fp and fp.get('cost_center_ids', []) or []
+            account_ids = fp and fp.get('account_ids', []) or []
+            # Browse all analytic line to compare verify them
+            for aline in self.browse(cr, uid, ids, context=context):
+                # Verify that:
+                # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
+                # - the cost_center is in compatible cost center from the new funding pool
+                # - the general account is in compatible accounts
+                if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.general_account_id.id in account_ids:
+                    res.append(aline.id)
         return res
 
 analytic_line()
