@@ -20,7 +20,6 @@
 ##############################################################################
 from osv import fields, osv
 import csv
-import base64
 import StringIO
 from tools.translate import _
 
@@ -39,7 +38,6 @@ class wizard_csv_report(osv.osv_memory):
         if 'reporting_type' in context:
             # Dictionary for selection
             reporting_type_selection = dict(self.pool.get('financing.contract.format')._columns['reporting_type'].selection)
-            
             return [['Financing contract name:', contract.name],
                     ['Financing contract code:', contract.code],
                     ['Donor:', contract.donor_id.name],
@@ -62,11 +60,9 @@ class wizard_csv_report(osv.osv_memory):
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
             writer.writerow(line)
-        
-        out=base64.encodestring(buffer.getvalue())
+        out = buffer.getvalue()    
         buffer.close()
-        
-        return out
+        return (out, 'csv')
 
 wizard_csv_report()
 

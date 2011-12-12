@@ -31,20 +31,19 @@ class wizard_interactive_report(osv.osv_memory):
         data.append([parent_hierarchy,
                      line.code,
                      line.name,
-                     locale.format("%.2f", line.allocated_budget, grouping=True),
-                     locale.format("%.2f", line.allocated_real, grouping=True),
-                     locale.format("%.2f", line.project_budget, grouping=True),
-                     locale.format("%.2f", line.project_real, grouping=True)])
+                     locale.format("%d", round(line.allocated_budget), grouping=True),
+                     locale.format("%d", round(line.allocated_real), grouping=True),
+                     locale.format("%d", round(line.project_budget), grouping=True),
+                     locale.format("%d", round(line.project_real), grouping=True)])
         for child_line in line.child_ids:
             max_parent_hierarchy = self._create_reporting_line(child_line, parent_hierarchy + 1, data)
         return max_parent_hierarchy
         
     
-    def _get_report(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    def _get_interactive_data(self, cr, uid, contract_id, context=None):
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
         # Context updated with wizard's value
-        contract_id = self.read(cr, uid, ids, ['contract_id'])[0]['contract_id']
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
         # Update the context
         context.update({'reporting_currency': contract.reporting_currency.id,
@@ -65,10 +64,10 @@ class wizard_interactive_report(osv.osv_memory):
         # create "real" lines
         for line in contract.actual_line_ids:
             if not line.parent_id:
-                allocated_budget += line.allocated_budget
-                project_budget += line.project_budget
-                allocated_real += line.allocated_real
-                project_real += line.project_real
+                allocated_budget += round(line.allocated_budget)
+                project_budget += round(line.project_budget)
+                allocated_real += round(line.allocated_real)
+                project_real += round(line.project_real)
                 current_max_parent_hierarchy = self._create_reporting_line(line, 1, temp_analytic_data)
                 if current_max_parent_hierarchy > max_parent_hierarchy:
                     max_parent_hierarchy = current_max_parent_hierarchy
@@ -83,10 +82,10 @@ class wizard_interactive_report(osv.osv_memory):
                               [0,
                                contract.code,
                                contract.name,
-                               locale.format("%.2f", allocated_budget, grouping=True),
-                               locale.format("%.2f", allocated_real, grouping=True),
-                               locale.format("%.2f", project_budget, grouping=True),
-                               locale.format("%.2f", project_real, grouping=True)]] + temp_analytic_data
+                               locale.format("%d", allocated_budget, grouping=True),
+                               locale.format("%d", allocated_real, grouping=True),
+                               locale.format("%d", project_budget, grouping=True),
+                               locale.format("%d", project_real, grouping=True)]] + temp_analytic_data
 
         # Now, do the hierarchy
         analytic_data = []
@@ -108,19 +107,9 @@ class wizard_interactive_report(osv.osv_memory):
             if contract.reporting_type != 'allocated':
                 final_line += temp_line[5:7]
             analytic_data.append(final_line)
-        
-        # TODO
+            
         data = header_data + [[]] + analytic_data + [[]] + footer_data
-        
-        res[ids[0]] = self._create_csv(data)
-        return res
-    
-    _columns = {
-        # Report
-        'data': fields.function(_get_report, method=True, store=False, string="CSV Report", type="binary", readonly="True"),
-        'filename': fields.char(size=128, string='Filename', required=True),
-        'contract_id': fields.many2one('financing.contract.contract', 'Contract', required=True),
-    }
+        return data
     
 wizard_interactive_report()
 

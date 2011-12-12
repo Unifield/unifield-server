@@ -26,12 +26,10 @@ class wizard_expense_report(osv.osv_memory):
     _name = "wizard.expense.report"
     _inherit = "wizard.csv.report"
         
-    def _get_report(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    def _get_expenses_data(self, cr, uid, contract_id, reporting_type, context=None):
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
         # Context updated with wizard's value
-        reporting_type = self.read(cr, uid, ids, ['reporting_type'])[0]['reporting_type']
-        contract_id = self.read(cr, uid, ids, ['contract_id'])[0]['contract_id']
         context.update({'reporting_type': reporting_type})
         
         contract = contract_obj.browse(cr, uid, contract_id, context=context)
@@ -102,17 +100,7 @@ class wizard_expense_report(osv.osv_memory):
         
         data = header_data + [[]] + analytic_data + [[]] + footer_data
         
-        res[ids[0]] = self._create_csv(data)
-        return res
-    
-    _columns = {
-        'reporting_type': fields.selection([('project','Total project costs'),
-                                            ('allocated','Funded costs')], 'Reporting type', required=True),
-        # Report
-        'data': fields.function(_get_report, method=True, store=False, string="CSV Report", type="binary", readonly="True"),
-        'filename': fields.char(size=128, string='Filename', required=True),
-        'contract_id': fields.many2one('financing.contract.contract', 'Contract', required=True),
-    }
+        return data
     
 wizard_expense_report()
 
