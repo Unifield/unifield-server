@@ -103,7 +103,7 @@
     two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
     res = self.onchange_requested_date(cr, uid, [ref('po1')], two_days, 2, context=context)
     assert not res.get('warning', False), "Error on selecting Delivery Requested Date in future ( < today + 24 months)"
-    assert 'value' in res and 'delivery_confirmed_date' in res['value'] and res['value']['delivery_confirmed_date'] == two_days, "Wrong value for Delivery Confirmed Date when Delivrey Requested Date is changing"
+    # confirmed date is not changed
     try:
       self.write(cr, uid, ref('po1'), {'delivery_requested_date': two_days})
     except osv.except_osv, e:
@@ -152,7 +152,7 @@
     three_years = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(years=3)).strftime('%Y-%m-%d')
     res = self.onchange_requested_date(cr, uid, [ref('po1')], two_days, 3, context=context)
     assert not res.get('warning', False), "Error on selecting Delivery Confirmed Date in future"
-    assert 'value' in res and 'delivery_confirmed_date' in res['value'] and res['value']['delivery_confirmed_date'] == three_years, "Wrong value for Delivery Confirmed Date when Delivrey Requested Date is changing"
+    # confirmed date is not changed
     try:
       self.write(cr, uid, ref('po1'), {'delivery_confirmed_date': three_years})
     except osv.except_osv, e:
@@ -176,7 +176,7 @@
       self.write(cr, uid, ref('po1'), {'ready_to_ship_date': '2007-01-01'})
       #assert False, "Error on writing Ready To Ship Date in past"
     except osv.except_osv, e:
-      res = self.onchange_transport_lt(cr, uid, [ref('po1')], two_days, '30')
+      res = self.onchange_transport_lt(cr, uid, [ref('po1')], two_days, 2, context=context)
       assert res.get('value', False) and res['value'].get('ready_to_ship_date', False) == ship_date, "Wrong value for Ready To Ship Date when select Est. Transport Lead Time"
       try:
         self.write(cr, uid, ref('po1'), {'ready_to_ship_date': two_days})

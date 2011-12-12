@@ -172,7 +172,7 @@
       self.write(cr, uid, ref('so1'), {'ready_to_ship_date': '2007-01-01'})
       #assert False, "Error on writing Ready To Ship Date in past"
     except osv.except_osv, e:
-      res = self.onchange_transport_lt(cr, uid, [ref('so1')], two_days, '30')
+      res = self.onchange_transport_lt(cr, uid, [ref('so1')], two_days, 3, context=context)
       assert res.get('value', False) and res['value'].get('ready_to_ship_date', False) == ship_date, "Wrong value for Ready To Ship Date when select Est. transport Lead Time"
       try:
         self.write(cr, uid, ref('so1'), {'ready_to_ship_date': two_days})
