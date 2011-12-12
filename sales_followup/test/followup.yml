@@ -94,8 +94,6 @@
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P2)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P2)"
               assert line.tender_status == 'N/A', "Tender status is different than 'N/A' (1/P2)"
-              assert len(line.quotation_ids) == 0, "Number of quotation is different than 0 (1/P2)"
-              assert line.quotation_status == 'N/A', "Quotation status is different than N/A (1/P2)"
               assert len(line.purchase_ids) == 0, "Number of PO is different than 0 (1/P2)"
               assert line.purchase_status == 'N/A', "The purchase status is not 'N/A' (1/P2)"
               assert len(line.incoming_ids) == 0, "Number of Incoming shipment is different than 0 (1/P2)"
@@ -245,9 +243,9 @@
               assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (3/P1)"
               
               # write on PO in order to avoid analytic distribution error
-              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.quotation_ids], {'from_yml_test': True})
+              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
-              for quotation in line.quotation_ids:
+              for quotation in line.purchase_ids:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_confirm', cr)
             
@@ -290,9 +288,9 @@
               assert line.outgoing_status == 'Waiting', "Outgoing status is different than 'Waiting' (3/P4)"
               
               # write on PO in order to avoid analytic distribution error
-              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.quotation_ids], {'from_yml_test': True})
+              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
-              for quotation in line.quotation_ids:
+              for quotation in line.purchase_ids:
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_confirm', cr)
         
