@@ -74,7 +74,7 @@ class analytic_line(osv.osv):
             self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def distribution_is_valid_with_account(self, cr, uid, ids, account_id, context={}):
+    def check_analytic_account(self, cr, uid, ids, account_id, context={}):
         """
         Analytic distribution validity verification with given account for given ids.
         Return all valid ids.
