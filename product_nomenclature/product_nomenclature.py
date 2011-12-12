@@ -57,7 +57,7 @@ class product_nomenclature(osv.osv):
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
-    def name_get(self, cr, uid, ids, context=None):
+    def name_get1(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
         reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
@@ -69,6 +69,21 @@ class product_nomenclature(osv.osv):
             res.append((record['id'], name))
         return res
 
+    def name_get(self, cr, uid, ids, context=None):
+        if not len(ids):
+            return []
+        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            res.append((record['id'], name))
+#            if record['parent_id']:
+#                name = record['parent_id'][1]+' / '+name
+#            res.append((record['id'], name))
+        return res
+
+
+    
     def _name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
