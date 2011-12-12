@@ -98,6 +98,8 @@ class res_partner(osv.osv):
         '''
         for a given transport name (road, air, sea), 
         '''
+        if not ids:
+            return 0.0
         if ids and isinstance(ids, (int, long)):
             ids = [ids]
         # result values
@@ -105,10 +107,11 @@ class res_partner(osv.osv):
         # get corresponding lt
         for partner in self.browse(cr, uid, ids, context=context):
             result[partner.id] = 0
-            for i in range(NUMBER_OF_CHOICE):
-                if getattr(partner, 'transport_%s'%i) == transport_name:
-                    val = getattr(partner, 'transport_%s_lt'%i)
-                    result[partner.id] = val
+            if transport_name:
+                for i in range(NUMBER_OF_CHOICE):
+                    if getattr(partner, 'transport_%s'%i) == transport_name:
+                        val = getattr(partner, 'transport_%s_lt'%i)
+                        result[partner.id] = val
                     
         return result
     

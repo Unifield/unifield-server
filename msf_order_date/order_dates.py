@@ -53,6 +53,17 @@ fields_date = ['date_order', 'delivery_requested_date', 'delivery_confirmed_date
 
 fields_date_line = ['date_planned', 'confirmed_delivery_date']
 
+def get_type(self):
+    '''
+    return type corresponding to object
+    '''
+    if self._name == 'sale.order':
+        return 'so'
+    if self._name == 'purchase.order':
+        return 'po'
+    
+    return False
+
 def get_field_description(self, cr, uid, field, context={}):
     '''
     Returns the description of the field
@@ -184,41 +195,6 @@ def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment
 #        v.update({'shipment_date': rts})
         
     return v
-
-def common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
-    '''
-    Common function when requested date is changing
-    '''
-    message = {}
-    v = {}
-    if isinstance(leadtime, str):
-        leadtime = int(leadtime)
-    
-    if not confirmed_date:
-        confirmed_date = requested_date
-    if not date_order:
-#        return {'value': {'delivery_confirmed_date': confirmed_date},
-        return {'value': {},
-                'warning': message}
-    
-    # Set the message if the user enter a wrong requested date
-#    if not check_delivery_requested(self, requested_date, context=context):
-#        message = {'title': _('Warning'),
-#                   'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
-    
-    # Set the message if the user enter a wrong confirmed date    
-#    if not check_delivery_confirmed(self, confirmed_date, date_order, context):
-#        message = {'title': _('Warning'),
-#                   'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
-    if requested_date and leadtime:
-        requested = datetime.strptime(requested_date, '%Y-%m-%d')
-        ready_to_ship = requested - relativedelta(days=leadtime)
-        v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
-        
-#    v.update({'delivery_confirmed_date': confirmed_date})
-    
-    return {'value': v,
-            'warning': message}
     
 def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
     '''
@@ -241,73 +217,152 @@ def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, s
         
     return {'warning': message, 'value': v}
 
-def common_onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
+def compute_rts(self, cr, uid, requested_date=False, transport_lt=0, type=False, context=None):
     '''
-    Common fonction when transport lead time is changing
+    requested - transport lt - shipment lt
     '''
-    res = {}
-    if requested_date and leadtime!=0.00:
+    if context is None:
+        context = {}
+    company_obj = self.pool.get('res.company')
+    # need request_date for computation
+    if requested_date:
+        company_id = company_obj._company_default_get(cr, uid, False, context=context)
+        if type == 'so':
+            company_id = company_obj._company_default_get(cr, uid, 'sale.order', context=context)
+        if type == 'po':
+            company_id = company_obj._company_default_get(cr, uid, 'purchase.order', context=context)
+        shipment_lt = company_obj.read(cr, uid, [company_id], ['shipment_lead_time'], context=context)[0]['shipment_lead_time']
         requested = datetime.strptime(requested_date, '%Y-%m-%d')
-        ready_to_ship = requested - relativedelta(days=round(leadtime*7,0))
-        res = {'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')}
+        rts = requested - relativedelta(days=transport_lt or 0)
+        rts = rts - relativedelta(days=shipment_lt or 0)
+        rts = rts.strftime('%Y-%m-%d')
+        return rts
     
-    return {'value': res}
+    return False
 
-def common_onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, result=None, context=None):
+def compute_requested_date(self, cr, uid, part=False, date_order=False, type=False, context=None):
+    '''
+    compute requested date according to type
+    
+    SPRINT3 validated - yaml test ok
+    '''
+    if context is None:
+        context = {}
+    # part and date_order are need for computation
+    if part and date_order:
+        partner = self.pool.get('res.partner').browse(cr, uid, part)
+        requested_date = datetime.strptime(date_order, '%Y-%m-%d')
+        if type == 'so':
+            requested_date = requested_date + relativedelta(days=partner.customer_lt)
+        if type == 'po':
+            requested_date = requested_date + relativedelta(days=partner.supplier_lt)
+        requested_date = requested_date.strftime('%Y-%m-%d')
+        return requested_date
+    
+    return False
+
+def compute_transport_type(self, cr, uid, part=False, type=False, context=None):
+    '''
+    return the preferred transport type of partner
+    '''
+    if part:
+        partner_obj = self.pool.get('res.partner')
+        res = partner_obj.read(cr, uid, [part], ['transport_0'], context=context)[0]['transport_0']
+        return res
+        
+    return False
+
+def common_requested_date_change(self, cr, uid, ids, requested_date=False, transport_lt=0, type=False, res=None, context=None):
+    '''
+    Common function when requested date is changing
+    '''
+    if context is None:
+        context = {}
+    if res is None:
+        res = {}
+    # compute rts - only for so
+    if type == 'so':
+        rts = compute_rts(self, cr, uid, requested_date=requested_date, transport_lt=transport_lt, type=type, context=context)
+        res.setdefault('value', {}).update({'ready_to_ship_date': rts})
+    return res
+
+def common_onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, type=False, res=None, context=None):
+    '''
+    Common fonction when transport lead time is changed
+    '''
+    if context is None:
+        context = {}
+    if res is None:
+        res = {}
+    # compute rts - only for so
+    if type == 'so':
+        rts = compute_rts(self, cr, uid, requested_date=requested_date, transport_lt=transport_lt, type=type, context=context)
+        res.setdefault('value', {}).update({'ready_to_ship_date': rts})
+    return res
+
+def common_onchange_transport_type(self, cr, uid, ids, part=False, transport_type=False, type=False, res=None, context=None):
     '''
     fills the estimated transport lead time corresponding to the selected transport,
     0.0 if no transport selected
     '''
     if context is None:
         context = {}
-    if result is None:
-        result = {}
-    # reset by default
-    result.setdefault('value', {}).update({'est_transport_lead_time': 0.0})
-    # get the value if partner
-    if partner_id:
-        partner_obj = self.pool.get('res.partner')
-        # returns a dictionary
-        lead_time = partner_obj.get_transport_lead_time(cr, uid, [partner_id], transport_type, context=context)
-        lead_time = lead_time.get(partner_id)
-        result.setdefault('value', {}).update({'est_transport_lead_time': lead_time,})
-    
-    return result
-
-def common_onchange_partner_id(self, cr, uid, ids, part=False, res=None, date_order=False):
-    '''
-    Common function when Partner is changing
-    
-    VALIDATED for sprint3
-    '''
     if res is None:
         res = {}
-    requested_date = False
+    # get the value if partner
+    partner_obj = self.pool.get('res.partner')
+    # returns a dictionary
+    lead_time = partner_obj.get_transport_lead_time(cr, uid, part, transport_type, context=context)
+    lead_time = lead_time and lead_time.get(part) or lead_time
+    res.setdefault('value', {}).update({'est_transport_lead_time': lead_time,})
+    # call onchange_transport_lt and update **VALUE** of res
+    res_transport_lt = self.onchange_transport_lt(cr, uid, ids, requested_date=requested_date, transport_lt=res['value']['est_transport_lead_time'], context=None)
+    res.setdefault('value', {}).update(res_transport_lt.setdefault('value', {}))
+    return res
+
+def common_onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, type=False, res=None, context=None,):
+    '''
+    Common function when the Creation date (order_date) is changed
     
-    # reset the confirmed date
-    res['value'].update({'delivery_confirmed_date': False,})
-    # reset transport type field
-    res['value'].update({'transport_type': '',})
-    # reset estimated transport leadtime (est_transport_lead_time)
-    res['value'].update({'est_transport_lead_time': 0.0,})
-    
-    if part:
-        partner = self.pool.get('res.partner').browse(cr, uid, part)
-        # update transport type field
-        res['value'].update({'transport_type': partner.transport_0,})
-        # update estimated transport lead-time (est_transport_lead_time)
-        res['value'].update({'est_transport_lead_time': partner.transport_0_lt})
-        # update the partner type field
-        res['value'].update({'partner_type': partner.partner_type,})
-        # with order_date, update requested_date
-        if date_order:
-            requested_date = datetime.strptime(date_order, '%Y-%m-%d')
-            requested_date = requested_date + relativedelta(days=partner.supplier_lt)
-            requested_date = requested_date.strftime('%Y-%m-%d')
-            res['value'].update({'delivery_requested_date': requested_date,})
+    - modify requested date
+    - call on_change_requested_date
+    '''
+    if context is None:
+        context = {}
+    if res is None:
+        res = {}
+    # compute requested date
+    requested_date = compute_requested_date(self, cr, uid, part=part, date_order=date_order, type=type, context=context)
+    res.setdefault('value', {}).update({'delivery_requested_date': requested_date})
+    # call onchange_requested_date and update **VALUE** of res
+    res_requested_date = self.onchange_requested_date(cr, uid, ids, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
+    res.setdefault('value', {}).update(res_requested_date.setdefault('value', {}))
     
     return res
 
+def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
+    '''
+    Common function when Partner is changing
+    '''
+    if context is None:
+        context = {}
+    if res is None:
+        res = {}
+    # compute requested date
+    requested_date = compute_requested_date(self, cr, uid, part=part, date_order=date_order, type=type, context=context)
+    res.setdefault('value', {}).update({'delivery_requested_date': requested_date})
+    # call onchange_requested_date and update **VALUE** of res
+    res_requested_date = self.onchange_requested_date(cr, uid, ids, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
+    res.setdefault('value', {}).update(res_requested_date.setdefault('value', {}))
+    # compute transport type
+    transport_type = compute_transport_type(self, cr, uid, part=part, type=type, context=context)
+    res.setdefault('value', {}).update({'transport_type': transport_type,})
+    # call onchange_transport_type and update **VALUE** of res
+    res_transport_type = self.onchange_transport_type(cr, uid, ids, part=part, transport_type=res['value']['transport_type'], requested_date=res['value']['delivery_requested_date'], context=context)
+    res.setdefault('value', {}).update(res_transport_type.setdefault('value', {}))
+    
+    return res
+    
 def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, parent_class, context={}):
     '''
     Checks if dates are later than header dates 
@@ -407,7 +462,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         # common function for so and po
-        data = common_create(self, cr, uid, data, 'po', context=context)
+        data = common_create(self, cr, uid, data, type=get_type(self), context=context)
         # fill partner_type data
         if data.get('partner_id', False):
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
@@ -506,45 +561,46 @@ class purchase_order(osv.osv):
         '''        
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
     
-    def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
+    def onchange_requested_date(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
         '''
         Set the confirmed date with the requested date if the first is not fill
         '''
-        message = {}
-        v = {}
-        line_obj = self.pool.get('purchase.order.line')
-        if isinstance(leadtime, str):
-            leadtime = int(leadtime)
-        
-#        if not confirmed_date:
-#            confirmed_date = requested_date
-        if not date_order:
-            #return {'value': {'delivery_confirmed_date': confirmed_date},
-            return {'value': {},
-                    'warning': message}
-        
-        # Set the message if the user enter a wrong requested date
-        if not check_delivery_requested(self, requested_date, context=context):
-            message = {'title': _('Warning'),
-                       'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
-        
-        # Set the message if the user enter a wrong confirmed date    
-        if not check_delivery_confirmed(self, confirmed_date, date_order, context):
-            message = {'title': _('Warning'),
-                       'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
-        if requested_date:
-            requested = datetime.strptime(requested_date, '%Y-%m-%d')
-#            ready_to_ship = requested - relativedelta(days=leadtime)
-#            v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
-            # Change the date on all lines
-            line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)])
-            #line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, 'confirmed_delivery_date': confirmed_date})
-            line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, })
-            
-        v.update({'delivery_confirmed_date': confirmed_date})
-        
-        return {'value': v,
-                'warning': message}
+#        message = {}
+#        v = {}
+#        line_obj = self.pool.get('purchase.order.line')
+#        if isinstance(leadtime, str):
+#            leadtime = int(leadtime)
+#        
+##        if not confirmed_date:
+##            confirmed_date = requested_date
+#        if not date_order:
+#            #return {'value': {'delivery_confirmed_date': confirmed_date},
+#            return {'value': {},
+#                    'warning': message}
+#        
+#        # Set the message if the user enter a wrong requested date
+#        if not check_delivery_requested(self, requested_date, context=context):
+#            message = {'title': _('Warning'),
+#                       'message': _('The Delivery Requested Date should be between today and today + 24 months !')}
+#        
+#        # Set the message if the user enter a wrong confirmed date    
+#        if not check_delivery_confirmed(self, confirmed_date, date_order, context):
+#            message = {'title': _('Warning'),
+#                       'message': _('The Delivery Confirmed Date should be older than the Creation date !')}
+#        if requested_date:
+#            requested = datetime.strptime(requested_date, '%Y-%m-%d')
+##            ready_to_ship = requested - relativedelta(days=leadtime)
+##            v.update({'ready_to_ship_date': ready_to_ship.strftime('%Y-%m-%d')})
+#            # Change the date on all lines
+#            line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)])
+#            #line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, 'confirmed_delivery_date': confirmed_date})
+#            line_obj.write(cr, uid, line_ids, {'date_planned': requested_date, })
+#            
+#        v.update({'delivery_confirmed_date': confirmed_date})
+#        
+#        return {'value': v,
+#                'warning': message}
+        return {}
         
     def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
         '''
@@ -552,31 +608,33 @@ class purchase_order(osv.osv):
         '''
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
-    def onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
+    def onchange_transport_lt(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
         '''
         Fills the Ready to ship date
         '''
-        return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
+        return common_onchange_transport_lt(self, cr, uid, ids, requested_date, leadtime, context=context)
     
-    def onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, context=None):
+    def onchange_transport_type(self, cr, uid, ids, part, transport_type, context=None):
         '''
         transport type changed
         '''
-        result = {'value': {}}
-        result = common_onchange_transport_type(self, cr, uid, ids, partner_id, transport_type, result=result, context=context)
-        return result
+        if context is None:
+            context = {}
+        res = {}
+        res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, type=get_type(self), res=res, context=context)
+        return res
 
-    def onchange_partner_id_order_date(self, cr, uid, ids, part, date_order):
+    def onchange_partner_id(self, cr, uid, ids, part, date_order, context=None):
         '''
         Fills the Requested and Confirmed delivery dates
         
-        SPRINT3 VALIDATED
+        
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, res=res, date_order=date_order)
+        #res = common_onchange_partner_id(self, cr, uid, ids, part=part, res=res, date_order=date_order, type=get_type(self),)
         return res
     
     def requested_data(self, cr, uid, ids, context=None):
@@ -622,7 +680,7 @@ class purchase_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
-            # for all lines, if the confirmed date is not filled, we copy the purchase order value
+            # for all lines, if the confirmed date is not filled, we copy the header value
             for line in order.order_line:
                 if not line.confirmed_delivery_date:
                     line.write({'confirmed_delivery_date': order.delivery_confirmed_date,}, context=context)
@@ -766,14 +824,19 @@ class sale_order(osv.osv):
         
         return super(sale_order, self).write(cr, uid, ids, data, context=context)
     
-    def create(self, cr, uid, data, context={}):
+    def create(self, cr, uid, data, context=None):
         '''
         Checks if dates are good before creation
         '''
         if context is None:
             context = {}
+        company_obj = self.pool.get('res.company')
         # common function for so and po
-        data = common_create(self, cr, uid, data, 'so', context=context)
+        data = common_create(self, cr, uid, data, type=get_type(self), context=context)
+        # ready_to_ship_date only mandatory for so
+        if 'ready_to_ship_date' not in data:
+            rts = compute_rts(self, cr, uid, data.get('delivery_requested_date'), data.get('est_transport_lead_time'), type=get_type(self), context=context)
+            data.update({'ready_to_ship_date': rts,})
         # deprecated ?
         check_dates(self, cr, uid, data, context=context)
         
@@ -797,9 +860,9 @@ class sale_order(osv.osv):
     
     _columns = {'date_order':fields.date(string='Creation Date', required=True, select=True, help="Date on which this document has been created."),
                 'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True,),
-                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date', #required=True, 
+                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
+                'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
                 'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
@@ -830,45 +893,86 @@ class sale_order(osv.osv):
         Set the shipment date if the internal_type == international
         '''
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
-    
-    def requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime=0, context={}):
-        '''
-        Set the confirmed date with the requested date if the first is not fill
-        '''
-        return common_requested_date_change(self, cr, uid, ids, requested_date, confirmed_date, date_order, leadtime, context=context)
         
     def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
         '''
         Checks the entered value
         '''
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
-
     
-    def onchange_transport_leadtime(self, cr, uid, ids, requested_date=False, leadtime=0, context={}):
+    def onchange_requested_date(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
+        '''
+        Set the confirmed date with the requested date if the first is not fill
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        # compute ready to ship date
+        res = common_requested_date_change(self, cr, uid, ids, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
+
+    def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
         '''
         Fills the Ready to ship date
+        
+        SPRINT3 validated - YAML ok
         '''
-        return common_onchange_transport_leadtime(self, cr, uid, ids, requested_date, leadtime, context=context)
+        if context is None:
+            context = {}
+        res = {}
+        # compute ready to ship date
+        res = common_onchange_transport_lt(self, cr, uid, ids, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
     
-    def onchange_partner_id(self, cr, uid, ids, part):
+    def onchange_transport_type(self, cr, uid, ids, part=False, transport_type=False, requested_date=False, context=None):
+        '''
+        transport type changed
+        
+        requested date is in the signature because it is needed for children on_change call
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, type=get_type(self), res=res, context=context)
+        return res
+    
+    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
         '''
         Fills the Requested and Confirmed delivery dates
+        
+        
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
+        # compute requested date and transport type
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
+    
+    def onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
+        '''
+        date_order is changed (creation date)
         
-        return common_onchange_partner_id(self, cr, uid, ids, part, res)
+        SPRINT3 validated - YAML ok
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        # compute requested date
+        res = common_onchange_date_order(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
     
     def requested_data(self, cr, uid, ids, context=None):
         '''
-        data for requested
+        data for requested for change line wizard
         '''
         return {'name': _('Do you want to update the Requested Date of all order lines ?'),}
     
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
-        data for confirmed
+        data for confirmed for change line wizard
         '''
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'),}
     
@@ -890,6 +994,20 @@ class sale_order(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
+    
+    def action_wait(self, cr, uid, ids, *args):
+        '''
+        check delivery_confirmed_date field
+        '''
+        for obj in self.browse(cr, uid, ids):
+            if not obj.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+            # for all lines, if the confirmed date is not filled, we copy the header value
+            for line in obj.order_line:
+                if not line.confirmed_delivery_date:
+                    line.write({'confirmed_delivery_date': obj.delivery_confirmed_date,})
+            
+        return super(sale_order, self).action_wait(cr, uid, ids, args)
     
 sale_order()
 
@@ -1086,3 +1204,18 @@ class lang(osv.osv):
         return format
     
 lang()
+
+
+class res_company(osv.osv):
+    '''
+    add time related fields
+    '''
+    _inherit = 'res.company'
+    
+    _columns = {'shipment_lead_time': fields.float(digits=(16,2), string='Shipment Lead Time'),
+                }
+    
+    _defaults = {'shipment_lead_time': 0.0,
+                 }
+
+res_company()

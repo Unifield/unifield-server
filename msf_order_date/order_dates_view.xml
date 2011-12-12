@@ -11,12 +11,12 @@
                 <data>
                 
                 	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id_order_date(partner_id, date_order)" context="{'search_default_supplier':1}" />
+                		<field name="partner_id" on_change="onchange_partner_id(partner_id, date_order)" context="{'search_default_supplier':1}" />
                 		<field name="partner_type" />
                 	</field>
                 	
                 	<field name="date_order" position="replace">
-                		<field name="date_order" on_change="onchange_partner_id_order_date(partner_id, date_order)" />
+                		<field name="date_order" on_change="onchange_date_order(part, date_order, context)" />
                 	</field>
                 	
                     <!--  Add dates on header -->
@@ -35,14 +35,15 @@
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order',}" icon="gtk-indent" 
 	                            	attrs="{'invisible': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <field name="transport_type"
                             	on_change="onchange_transport_type(partner_id, transport_type)"
                             	attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))],}" />
-                            <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))],}" />
+                            <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('state', 'not in', ('draft', 'confirmed'))],}"
+                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
                             <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')],}" />
                             <field name="shipment_date" attrs="{'readonly': ['|', ('partner_type', 'in', ('internal', 'section', 'empty')), ('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')],}" />
                             <field name="arrival_date" attrs="{'readonly': [('shipped_rate', '!=', 0.0)], 'invisible': [('internal_type', '!=', 'international')]}" />
@@ -116,14 +117,20 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <!--  Add dates on header -->
+                
+                	<field name="partner_id" position="replace" >
+                		<field name="partner_id" on_change="onchange_partner_id(partner_id, date_order)" context="{'search_default_customer':1}" />
+                		<field name="partner_type" />
+                	</field>
+                    
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
-                        <!-- <field name="internal_type" on_change="internal_type_change(internal_type, ready_to_ship_date, shipment_date)"/> -->
-                        <field name="picked_rate" invisible="1" />
+                        <field name="internal_type" invisible="True" />
+                        <field name="picked_rate" invisible="True" />
                     </xpath>
                     
                     <xpath expr="/form/group/field[@name='date_order']" position="replace">
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        	on_change="onchange_date_order(partner_id, date_order, context)" />
                     </xpath>
                                        
                     <!--  Add dates on 'Other Information' tab -->
@@ -137,16 +144,17 @@
 		                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
 	                            </group>
 	                            <group colspan="2" col="3">
-		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))], 'required':[('state', '==', 'confirmed')]}" />
+		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', '!=', 'draft')], 'required':[('state', '==', 'confirmed')]}" />
 		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order',}" icon="gtk-indent" 
 		                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            </group>
-	                            <field name="transport_type" />
-	                            <field name="est_transport_lead_time" on_change="onchange_transport_leadtime(delivery_requested_date, est_transport_lead_time)" />
-	                            <field name="ready_to_ship_date" on_change="ready_to_ship_change(ready_to_ship_date, date_order, shipment_date)" />
+	                            <field name="transport_type" attrs="{'readonly': [('state', '!=', 'draft')]}"
+	                            	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" />
+	                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', '!=', 'draft')]}"
+	                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
+	                            <field name="ready_to_ship_date" />
 	                            <field name="shipment_date" />
 	                            <field name="receipt_date" readonly="1" />
-	                            <!-- <field name="arrival_date" attrs="{'invisible': [('internal_type', '!=', 'international')]}" /> -->
 	                            <field name="arrival_date" />
 	                        </group>
 	                    </page>
@@ -209,6 +217,19 @@
 				</data>
 			</field>
 		</record>
+		
+		
+		<record id="view_company_form" model="ir.ui.view">
+            <field name="name">res.company</field>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.mrp_company" />
+            <field name="arch" type="xml">
+                <field name="po_lead" position="after">
+                    <field name="shipment_lead_time" />
+                </field>
+            </field>
+        </record>
     
     </data>
 </openerp>
