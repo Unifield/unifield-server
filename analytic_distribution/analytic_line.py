@@ -74,6 +74,33 @@ class analytic_line(osv.osv):
             self._check_date(cr, uid, vals, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
+    def update_account(self, cr, uid, ids, account_id, context={}):
+        """
+        Update account on given analytic lines with account_id
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not account_id:
+            return False
+        # Prepare some value
+        account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
+        # Process lines
+        for aline in self.browse(cr, uid, ids, context=context):
+            if account.category == 'OC':
+                old_account_id = aline.account_id and aline.account_id.id or False
+                fp_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('cost_center_id', '=', old_account_id), 
+                    ('distribution_id', '=', aline.distribution_id.id)], context=context)
+                if isinstance(fp_line_ids, (int, long)):
+                    fp_line_ids = [fp_line_ids]
+                # Update attache funding pool lines
+                self.pool.get('account.analytic.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
+            # Update account
+            self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+        return True
+
     def check_analytic_account(self, cr, uid, ids, account_id, context={}):
         """
         Analytic distribution validity verification with given account for given ids.

@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from collections import defaultdict
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -37,6 +38,32 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
     }
 
     def button_validate(self, cr, uid, ids, context={}):
+        """
+        Launch mass reallocation on "supported_ids".
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse all given wizard
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # If no supporteds_ids, raise an error
+            if not wiz.supported_ids:
+                raise osv.except_osv(_('Error'), _('No lines to be processed.'))
+            # Prepare some values
+            account_id = wiz.account_id and wiz.account_id.id
+            # Sort by distribution
+            lines = defaultdict(list)
+            for line in wiz.supported_ids:
+                lines[line.distribution_id.id].append(line)
+            # Process each distribution
+            for distrib_id in lines:
+                for line in lines[distrib_id]:
+                    # Update distribution
+                    self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, [distrib_id], [line.account_id.id], account_id, context=context)
+                    # Then update analytic line
+                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 mass_reallocation_verification_wizard()

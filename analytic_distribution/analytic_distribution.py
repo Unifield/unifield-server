@@ -171,6 +171,37 @@ class analytic_distribution(osv.osv):
                     dl_obj.write(cr, uid, [dl.id], dl_vals, context=context)
         return True
 
+    def update_distribution_line_account(self, cr, uid, ids, old_account_id, account_id, context={}):
+        """
+        Update account on distribution line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not old_account_id or not account_id:
+            return False
+        # Prepare some values
+        account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context=context)[0]
+        # Browse distribution
+        for distrib_id in ids:
+            for dl_name in ['cost.center.distribution.line', 'funding.pool.distribution.line', 'free.1.distribution.line', 'free.2.distribution.line']:
+                dl_obj = self.pool.get(dl_name)
+                dl_ids = dl_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('analytic_id', '=', old_account_id)], context=context)
+                for dl in dl_obj.browse(cr, uid, dl_ids, context=context):
+                    if account.category == 'OC':
+                        # Search funding pool line to update them
+                        fp_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', "=", distrib_id), 
+                            ('cost_center_id', '=', old_account_id)])
+                        if isinstance(fp_line_ids, (int, long)):
+                            fp_line_ids = [fp_line_ids]
+                        # Update funding pool line(s)
+                        self.pool.get('funding.pool.distribution.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
+                    # Update distribution line
+                    dl_obj.write(cr, uid, [dl.id], {'analytic_id': account_id,}, context=context)
+        return True
+
     def create_funding_pool_lines(self, cr, uid, ids, context={}):
         """
         Create funding pool lines regarding cost_center_lines from analytic distribution.
