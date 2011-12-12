@@ -590,6 +590,9 @@ class ProgressBar(Char):
         if not self.value:
             return 0.0
         
+        if self.value == "False":
+            return "False"
+        
         if isinstance(self.value, float):
             self.value = '%.2f' % (self.value)
             self.value = float(self.value)
