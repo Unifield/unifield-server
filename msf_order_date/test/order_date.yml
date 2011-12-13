@@ -57,10 +57,10 @@
     assert res['value']['delivery_requested_date'] == False, 'creation date False: requested date is wrong - %s - %s'%(False,res['value']['delivery_requested_date'])
     assert res['value']['ready_to_ship_date'] == False, 'creation date False: ready to ship date is wrong - %s - %s'%(False,res['value']['ready_to_ship_date'])
     # requested date
-    res = self.onchange_requested_date(cr, uid, [], requested_date=requested, transport_lt=transport_lt, context=context)
+    res = self.onchange_requested_date(cr, uid, [], part=ref("customer100"), date_order=today, requested_date=requested, transport_lt=transport_lt, context=context)
     assert res['value']['ready_to_ship_date'] == rts, 'requested date: ready to ship date is wrong - %s - %s'%(rts,res['value']['ready_to_ship_date'])
     # requested date False
-    res = self.onchange_requested_date(cr, uid, [], requested_date=False, transport_lt=transport_lt, context=context)
+    res = self.onchange_requested_date(cr, uid, [], part=ref("customer100"), date_order=today, requested_date=False, transport_lt=transport_lt, context=context)
     assert res['value']['ready_to_ship_date'] == False, 'requested date False: ready to ship date is wrong - %s - %s'%(False,res['value']['ready_to_ship_date'])
     # transport type
     res = self.onchange_transport_type(cr, uid, [], part=ref("customer100"), transport_type=transport_type, requested_date=requested, context=context)
@@ -118,11 +118,14 @@
     assert res['value']['delivery_requested_date'] == False, 'po-creation date False: requested date is wrong - %s - %s'%(False,res['value']['delivery_requested_date'])
     assert 'ready_to_ship_date' not in res['value'], 'po-creation date (date_order) False:ready to ship date should not be in res dictionary'
     # requested date
-    res = self.onchange_requested_date(cr, uid, [], requested_date=requested, transport_lt=transport_lt, context=context)
+    res = self.onchange_requested_date(cr, uid, [], part=ref("supplier100"), date_order=today, requested_date=requested, transport_lt=transport_lt, context=context)
     assert 'value' not in res, 'po-requested date:value should not be in res dictionary'
     # requested date False
-    res = self.onchange_requested_date(cr, uid, [], requested_date=False, transport_lt=transport_lt, context=context)
+    res = self.onchange_requested_date(cr, uid, [], part=ref("supplier100"), date_order=today, requested_date=False, transport_lt=transport_lt, context=context)
     assert 'value' not in res, 'po-requested date False:value should not be in res dictionary'
+    # requested date WARNING
+    res = self.onchange_requested_date(cr, uid, [], part=ref("supplier100"), date_order=today, requested_date=today, transport_lt=transport_lt, context=context)
+    assert 'warning' in res, 'po-requested date Warning:a warning should have been generated'
     # transport type
     res = self.onchange_transport_type(cr, uid, [], part=ref("supplier100"), transport_type=transport_type, requested_date=requested, context=context)
     assert res['value']['est_transport_lead_time'] == transport_lt, 'transport lead time is wrong - %s - %s'%(transport_lt,res['value']['est_transport_lead_time'])

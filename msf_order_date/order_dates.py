@@ -218,6 +218,21 @@ def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, s
         
     return {'warning': message, 'value': v}
 
+def get_field_from_company(self, cr, uid, object=False, field=False, context=None):
+    '''
+    return the value for field from company for object 
+    '''
+    # field is required for value
+    if not field:
+        return False
+    # object
+    company_obj = self.pool.get('res.company')
+    # corresponding company
+    company_id = company_obj._company_default_get(cr, uid, object, context=context)
+    # get the value
+    res = company_obj.read(cr, uid, [company_id], [field], context=context)[0][field]
+    return res
+
 def compute_rts(self, cr, uid, requested_date=False, transport_lt=0, type=False, context=None):
     '''
     requested - transport lt - shipment lt
@@ -286,7 +301,7 @@ def compute_partner_type(self, cr, uid, part=False, type=False, context=None):
         
     return False
 
-def common_requested_date_change(self, cr, uid, ids, requested_date=False, transport_lt=0, type=False, res=None, context=None):
+def common_requested_date_change(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, type=False, res=None, context=None):
     '''
     Common function when requested date is changing
     '''
@@ -298,6 +313,21 @@ def common_requested_date_change(self, cr, uid, ids, requested_date=False, trans
     if type == 'so':
         rts = compute_rts(self, cr, uid, requested_date=requested_date, transport_lt=transport_lt, type=type, context=context)
         res.setdefault('value', {}).update({'ready_to_ship_date': rts})
+    # display warning if requested date - creation date < default supplier lead time
+    if type == 'po' and part and requested_date and date_order:
+        # objects
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        partner = self.pool.get('res.partner').browse(cr, uid, part, context=context)
+        # compute delta
+        requested = datetime.strptime(requested_date, db_date_format)
+        creation = datetime.strptime(date_order, db_date_format)
+        delta = requested - creation
+        # if < supplier_lt, display warning
+        if delta.days < partner.supplier_lt:
+            res.setdefault('warning', {}).update({'title': _('Warning'),
+                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).'%(delta.days,partner.supplier_lt))})
+            
     return res
 
 def common_onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, type=False, res=None, context=None):
@@ -351,7 +381,7 @@ def common_onchange_date_order(self, cr, uid, ids, part=False, date_order=False,
     requested_date = compute_requested_date(self, cr, uid, part=part, date_order=date_order, type=type, context=context)
     res.setdefault('value', {}).update({'delivery_requested_date': requested_date})
     # call onchange_requested_date and update **VALUE** of res
-    res_requested_date = self.onchange_requested_date(cr, uid, ids, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
+    res_requested_date = self.onchange_requested_date(cr, uid, ids, part=part, date_order=date_order, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
     res.setdefault('value', {}).update(res_requested_date.setdefault('value', {}))
     
     return res
@@ -368,7 +398,7 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False,
     requested_date = compute_requested_date(self, cr, uid, part=part, date_order=date_order, type=type, context=context)
     res.setdefault('value', {}).update({'delivery_requested_date': requested_date})
     # call onchange_requested_date and update **VALUE** of res
-    res_requested_date = self.onchange_requested_date(cr, uid, ids, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
+    res_requested_date = self.onchange_requested_date(cr, uid, ids, part=part, date_order=date_order, requested_date=res['value']['delivery_requested_date'], transport_lt=transport_lt, context=context)
     res.setdefault('value', {}).update(res_requested_date.setdefault('value', {}))
     # compute transport type
     transport_type = compute_transport_type(self, cr, uid, part=part, type=type, context=context)
@@ -594,7 +624,7 @@ class purchase_order(osv.osv):
         '''
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
-    def onchange_requested_date(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
+    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
         '''
         Set the confirmed date with the requested date if the first is not fill
         '''
@@ -602,7 +632,7 @@ class purchase_order(osv.osv):
             context = {}
         res = {}
         # compute ready to ship date
-        res = common_requested_date_change(self, cr, uid, ids, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
     
     def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
@@ -937,7 +967,7 @@ class sale_order(osv.osv):
         '''
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
-    def onchange_requested_date(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
+    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
         '''
         Set the confirmed date with the requested date if the first is not fill
         '''
@@ -945,7 +975,7 @@ class sale_order(osv.osv):
             context = {}
         res = {}
         # compute ready to ship date
-        res = common_requested_date_change(self, cr, uid, ids, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
 
     def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
@@ -1046,6 +1076,56 @@ class sale_order(osv.osv):
                     line.write({'confirmed_delivery_date': obj.delivery_confirmed_date,})
             
         return super(sale_order, self).action_wait(cr, uid, ids, args)
+    
+    def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for stock move creation
+        '''
+        if context is None:
+            context = {}
+        # objects
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        # call super
+        move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
+        order = kwargs['order']
+        # get shipment lead time
+        shipment_lt = get_field_from_company(self, cr, uid, object=self._name, field='shipment_lead_time', context=context)
+        # date = rts of so + shipment lt
+        rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
+        rts = rts + relativedelta(days=shipment_lt or 0)
+        rts = rts.strftime(db_date_format)
+        # date, date_expected
+        move_data.update({'date': rts,'date_expected': rts})
+        
+        return move_data
+    
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
+        # objects
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        # call to super
+        result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
+        # date_planned = rts - company.prep_lt
+        order = kwargs['order']
+        # get value from company
+        prep_lt = get_field_from_company(self, cr, uid, object=self._name, field='preparation_lead_time', context=context)
+        # rts - prep_lt
+        rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
+        rts = rts - relativedelta(days=prep_lt or 0)
+        rts = rts.strftime(db_date_format)
+        result['date_planned'] = rts
+        
+        return result
     
 sale_order()
 
@@ -1162,25 +1242,39 @@ history_order_date()
 
 
 class procurement_order(osv.osv):
-    _name = 'procurement.order'
+    '''
+    date modifications
+    '''
     _inherit = 'procurement.order'
     
-    # @@@overwrite purchase.procurement_order.make_po
-    def make_po(self, cr, uid, ids, context=None):
+    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        Overwritten the default method to change the requested date of purchase lines
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order line creation
         '''
-        po_obj = self.pool.get('purchase.order')
-        pol_obj = self.pool.get('purchase.order.line')
-        res = super(procurement_order, self).make_po(cr, uid, ids, context=context)
+        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        procurement = kwargs['procurement']
+        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
+        # confirmed_delivery_date (confirmed date) = False
+        line.update({'date_planned': procurement.date_planned, 'confirmed_delivery_date': False,})
+        return line
+    
+    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
         
-        for key in res:
-            purchase = po_obj.browse(cr, uid, res.get(key))
-            for line in purchase.order_line:
-                pol_obj.write(cr, uid, [line.id], {'date_planned': (datetime.now()+relativedelta(days=+2)).strftime('%Y-%m-%d')})
-        
-        return res
-    # @@@end
+        - allow to modify the data for purchase order creation
+        '''
+        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        line = kwargs['line']
+        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
+        # confirmed_delivery_date (confirmed date) = False
+        # both values are taken from line 
+        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'],})
+        return values  
 
 procurement_order()
 
@@ -1193,11 +1287,20 @@ class stock_picking(osv.osv):
         '''
         call super - modify logic for min_date (Expected receipt date)
         '''
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.purchase_id:
                 result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date,})
+            if obj.sale_id:
+                # rts is a mandatory field
+                shipment_lt = get_field_from_company(self, cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
+                rts = rts + relativedelta(days=shipment_lt or 0)
+                rts = rts.strftime(db_date_format)
+                result.setdefault(obj.id, {}).update({'min_date': rts,})
         return result
     
     def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
@@ -1209,7 +1312,7 @@ class stock_picking(osv.osv):
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
-                                            method=True, store=True, type='datetime', string='Expected Receipt Date', select=1,
+                                            method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),
                 }
 
@@ -1309,9 +1412,11 @@ class res_company(osv.osv):
     _inherit = 'res.company'
     
     _columns = {'shipment_lead_time': fields.float(digits=(16,2), string='Shipment Lead Time'),
+                'preparation_lead_time': fields.float(digits=(16,2), string='Preparation Lead Time'),
                 }
     
     _defaults = {'shipment_lead_time': 0.0,
+                 'preparation_lead_time': 0.0,
                  }
 
 res_company()

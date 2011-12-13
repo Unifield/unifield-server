@@ -394,6 +394,12 @@ class sale_order(osv.osv):
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
         # new field representing selected partner from sourcing tool
         line = kwargs['line']
