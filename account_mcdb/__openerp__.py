@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,27 +20,26 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
 {
-    "name" : "Financing Contracts for MSF",
-    "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["res_currency_tables", "analytic_distribution"],
-    "description": """Module for defining financing contract and donor objects.
-    """,
+    "name" : "Multi-Criteria Data Browser",
+    "version" : "0.1",
+    "description" : "Ease data searching in Analytic Journal Items and Journal Items",
+    "author" : "MSF - TeMPO Consulting",
+    "category" : "Accounting",
+    "depends" : ["base", "account", "register_accounting", "res_currency_tables"],
     "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
+    "update_xml" : [
+        'wizard/output_currency_for_export_view.xml',
+        'account_mcdb_view.xml',
+        'account_view.xml',
+        'account_mcdb_export_view.xml',
+        'account_mcdb_report.xml',
     ],
-    'test': [
-        'test/financing_contract.yml'
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
 }
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
