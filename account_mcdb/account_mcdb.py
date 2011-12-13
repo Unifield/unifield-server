@@ -169,8 +169,13 @@ class account_mcdb(osv.osv_memory):
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
-            for m2m in [('account_ids', 'account_id'), ('account_type_ids', 'account_id.user_type'), ('period_ids', 'period_id'), 
-                ('journal_ids', 'journal_id'), ('analytic_account_ids', 'account_id')]:
+            m2m_fields = [('account_type_ids', 'account_id.user_type'), ('period_ids', 'period_id'), ('journal_ids', 'journal_id'), 
+                ('analytic_account_ids', 'account_id')]
+            if res_model == 'account.analytic.line':
+                m2m_fields.append(('account_ids', 'general_account_id'))
+            else:
+                m2m_fields.append(('account_ids', 'account_id'))
+            for m2m in m2m_fields:
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
                     # Special field : account_ids with reversal

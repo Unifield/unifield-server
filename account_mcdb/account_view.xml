@@ -133,5 +133,21 @@
             </field>
         </record>
 
+    <!-- Account Analytic Account Action -->
+        <record id="action_analytic_account_mass_reallocation_search" model="ir.actions.server">
+            <field name="name">Search for Mass Reallocation</field>
+            <field name="model_id" ref="model_mass_reallocation_search"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_filled_mcdb(context=context)</field>
+        </record>
+
+        <record id="ir_open_mcdb_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.analytic.account</field>
+            <field name="name">Search for Mass Reallocation</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_account_mass_reallocation_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
     </data>
 </openerp>
