@@ -1017,8 +1017,6 @@ class product_product(osv.osv):
         except ValueError:
             from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
-        date_diff = Age(to_date_str, from_date_str)
-        nb_months = round(date_diff.years*12 + date_diff.months + (date_diff.days/30.0), 1)
         nb_months = self._get_date_diff(from_date_str, to_date_str)
         
         if not nb_months: nb_months = 1
