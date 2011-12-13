@@ -139,6 +139,11 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('account_id', '=', account_id)], context=context)
             if same_account_ids:
                 non_supported_ids.extend(same_account_ids)
+            # Search commitment_lines
+            commitment_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
+                ('commitment_line_id', '!=', False)], context=context)
+            if commitment_line_ids:
+                non_supported_ids.extend(commitment_line_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids
             tmp_to_process = [x for x in to_process if x not in non_supported_ids]
             if tmp_to_process:
