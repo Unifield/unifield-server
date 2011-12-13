@@ -33,11 +33,14 @@
     'website': 'unifield.org',
     'depends': ['purchase'],
     'init_xml' : [ ],
+     "update_xml": [
+        "purchase_followup_view.xml",
+    ],
     'demo_xml' : [ ],
     'test': [
+        'test/normal_flow.yml',
+        'test/split_flow.yml',
              ],
-    'update_xml' : [
-    ],
     'installable': True,
 }
 

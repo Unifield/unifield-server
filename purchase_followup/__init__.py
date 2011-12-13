@@ -19,5 +19,7 @@
 #
 ##############################################################################
 
+import purchase_followup
+import sale_purchase
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
