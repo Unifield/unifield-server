@@ -24,6 +24,7 @@ from osv import fields
 from tools.translate import _
 from tools.misc import flatten
 from collections import defaultdict
+from time import strftime
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -104,8 +105,8 @@ class analytic_line(osv.osv):
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
                     # Then Create new lines
                     for fp_id in fp_line_ids:
-                        self.pool.get('account.analytic.line').copy(cr, uid, fp_id, {'cost_center_id': account_id}, context=context)
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id}, context=context)
+                        self.pool.get('account.analytic.line').copy(cr, uid, fp_id, {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d')}, context=context)
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id, 'date': strftime('%Y-%m-%d')}, context=context)
                 else:
                     # Update attached funding pool lines
                     self.pool.get('account.analytic.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
@@ -127,7 +128,8 @@ class analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some value
-        account_type = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category'], context=context).get('category', False)
+        account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
+        account_type = account and account.get('category', False) or False
         res = []
         if not account_type:
             return res
@@ -136,12 +138,23 @@ class analytic_line(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_private_fund = 0
-        # If account is MSF Private Fund, do nothing and return all lines. Because of MSF Private Fund compatibility with all elements.
-        if account_id == msf_private_fund or account_type not in ['OC', 'FUNDING']:
-            return ids
-        # Fetch all necessary elements sorted by analytic distribution
+        expired_date_ids = []
+        date_start = account and account.get('date_start', False) or False
+        date_stop = account and account.get('date', False) or False
         elements = defaultdict(list)
+        # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         for aline in self.browse(cr, uid, ids, context=context):
+            # For Cost Center lines (OC), another treatment is needed
+            # Period verification
+            period = aline.move_id and aline.move_id.period_id or False
+            date = aline.date
+            # if period not 'Draft' (created) or 'Open' (draft)
+            if period and period.state not in ['created', 'draft']:
+                date = strftime('%Y-%m-%d')
+            # Add line to expired_date if date is not in date_start - date_stop
+            if (date_start and date < date_start) or (date_stop and date > date_stop):
+                expired_date_ids.append(aline.id)
+            # add line to elements, sorted by distribution
             elements[aline.distribution_id.id].append(aline)
         # Retrieve distribution_ids
         distrib_ids = [x for x in elements]
@@ -158,18 +171,6 @@ class analytic_line(osv.osv):
                     fp_compatible_ids[distrib_line.distribution_id.id].append(distrib_line.id)
             # Browse each distribution
             for distrib_id in fp_compatible_ids:
-##### CASE WHERE WE DO NOT ACCEPT TO PROCESS LINES IF ONE FAILED #############
-#                fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id), 
-#                    ('cost_center_id', "=", account_id)], context=context)
-#                # Compare two list
-#                diff = set(fp_lines) & set(fp_compatible_ids[distrib_id])
-#                # Verify that it correspond to fp_lines length
-#                if len(diff) == len(fp_lines):
-#                    # add analytic line to final result
-#                    for aline in elements[distrib_id]:
-#                        res.append(aline.id)
-##############################################################################
-##### CASE WHERE WE ACCEPT TO PROCESS SOME LINES OF DISTRIBUTION #############
                 # Test FP for each analytic line
                 for aline in elements[distrib_id]:
                     if aline.distribution_id and fp_compatible_ids[distrib_id]:
@@ -184,7 +185,6 @@ class analytic_line(osv.osv):
                         if len(aline_fp_lines) == valid:
                             # All matches
                             res.append(aline.id)
-##############################################################################
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
@@ -195,8 +195,19 @@ class analytic_line(osv.osv):
                 # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
                 # - the cost_center is in compatible cost center from the new funding pool
                 # - the general account is in compatible accounts
+                # No verification if account is MSF Private Fund because of its compatibility with all elements.
+                if account_id == msf_private_fund:
+                    res.append(aline.id)
+                    continue
                 if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.general_account_id.id in account_ids:
                     res.append(aline.id)
+        else:
+            # Case of FREE1 and FREE2 lines
+            for id in ids:
+                res.append(id)
+        # Delete elements that are in expired_date_ids
+        for id in expired_date_ids:
+            res.remove(id)
         return res
 
 analytic_line()
