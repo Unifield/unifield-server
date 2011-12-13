@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 import decimal_precision as dp
+from time import strftime
 
 class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
@@ -63,7 +64,8 @@ class account_analytic_line(osv.osv):
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
-                'date': al.source_date or al.date,
+                'date': strftime('%Y-%m-%d'),
+                'source_date': al.source_date or al.date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,

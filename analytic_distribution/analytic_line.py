@@ -38,7 +38,7 @@ class analytic_line(osv.osv):
 
     def _check_date(self, cr, uid, vals, context={}):
         """
-        Check if given account_id is active for given date
+        Check if given account_id is active for given date. Except for mass reallocation ('from' = 'mass_reallocation' in context)
         """
         if not context:
             context={}
@@ -50,7 +50,8 @@ class analytic_line(osv.osv):
             if vals['date'] < account.date_start \
             or (account.date != False and \
                 vals['date'] >= account.date):
-                raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
+                if 'from' not in context or context.get('from') != 'mass_reallocation':
+                    raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
 
     def create(self, cr, uid, vals, context={}):
         """
@@ -88,6 +89,7 @@ class analytic_line(osv.osv):
             return False
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
+        context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
             if account.category == 'OC':
@@ -104,14 +106,19 @@ class analytic_line(osv.osv):
                     self.pool.get('account.analytic.line').reverse(cr, uid, fp_line_ids, context=context) # for Funding Pool Lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
                     # Then Create new lines
-                    for fp_id in fp_line_ids:
-                        self.pool.get('account.analytic.line').copy(cr, uid, fp_id, {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d')}, context=context)
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id, 'date': strftime('%Y-%m-%d')}, context=context)
+                    for fp in self.pool.get('account.analytic.line').browse(cr, uid, fp_line_ids, context=context):
+                        self.pool.get('account.analytic.line').copy(cr, uid, fp.id, {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d'),
+                            'source_date': fp.source_date or fp.date}, context=context)
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id, 'date': strftime('%Y-%m-%d'),
+                        'source_date': aline.source_date or aline.date}, context=context)
                 else:
                     # Update attached funding pool lines
-                    self.pool.get('account.analytic.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
+                    for fp in self.pool.get('account.analytic.line').browse(cr, uid, fp_line_ids, context=context):
+                        self.pool.get('account.analytic.line').write(cr, uid, [fp.id], {'cost_center_id': account_id, 'date': strftime('%Y-%m-%d'),
+                            'source_date': fp.source_date or fp.date}, context=context)
                     # Update account
-                    self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+                    self.write(cr, uid, [aline.id], {'account_id': account_id, 'date': strftime('%Y-%m-%d'), 
+                        'source_date': aline.source_date or aline.date}, context=context)
             else:
                 # Update account
                 self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
@@ -144,15 +151,8 @@ class analytic_line(osv.osv):
         elements = defaultdict(list)
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         for aline in self.browse(cr, uid, ids, context=context):
-            # For Cost Center lines (OC), another treatment is needed
-            # Period verification
-            period = aline.move_id and aline.move_id.period_id or False
-            date = aline.date
-            # if period not 'Draft' (created) or 'Open' (draft)
-            if period and period.state not in ['created', 'draft']:
-                date = strftime('%Y-%m-%d')
             # Add line to expired_date if date is not in date_start - date_stop
-            if (date_start and date < date_start) or (date_stop and date > date_stop):
+            if (date_start and aline.date < date_start) or (date_stop and aline.date > date_stop):
                 expired_date_ids.append(aline.id)
             # add line to elements, sorted by distribution
             elements[aline.distribution_id.id].append(aline)
