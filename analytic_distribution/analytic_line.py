@@ -207,7 +207,8 @@ class analytic_line(osv.osv):
                 res.append(id)
         # Delete elements that are in expired_date_ids
         for id in expired_date_ids:
-            res.remove(id)
+            if id in res:
+                res.remove(id)
         return res
 
 analytic_line()
