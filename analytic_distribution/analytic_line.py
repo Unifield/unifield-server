@@ -95,10 +95,25 @@ class analytic_line(osv.osv):
                     ('distribution_id', '=', aline.distribution_id.id)], context=context)
                 if isinstance(fp_line_ids, (int, long)):
                     fp_line_ids = [fp_line_ids]
-                # Update attache funding pool lines
-                self.pool.get('account.analytic.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
-            # Update account
-            self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+                # Period verification
+                period = aline.move_id and aline.move_id.period_id or False
+                # if period not 'Draft' (created) or 'Open' (draft), so reverse line before recreating them with right values
+                if period and period.state not in ['created', 'draft']:
+                    # First reverse lines
+                    self.pool.get('account.analytic.line').reverse(cr, uid, fp_line_ids, context=context) # for Funding Pool Lines
+                    self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
+                    # Then Create new lines
+                    for fp_id in fp_line_ids:
+                        self.pool.get('account.analytic.line').copy(cr, uid, fp_id, {'cost_center_id': account_id}, context=context)
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {'account_id': account_id}, context=context)
+                else:
+                    # Update attached funding pool lines
+                    self.pool.get('account.analytic.line').write(cr, uid, fp_line_ids, {'cost_center_id': account_id}, context=context)
+                    # Update account
+                    self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
+            else:
+                # Update account
+                self.write(cr, uid, [aline.id], {'account_id': account_id}, context=context)
         return True
 
     def check_analytic_account(self, cr, uid, ids, account_id, context={}):
