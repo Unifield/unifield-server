@@ -140,10 +140,15 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
+                    <group col="6" colspan="4">
+                        <field name="nb_process" colspan="2"/>
+                        <field name="nb_error" colspan="2"/>
+                        <field name="nb_other" colspan="2"/>
+                    </group>
                     <field name="account_id" colspan="2"/>
                     <newline/>
                     <field name="error_ids" colspan="4" nolabel="1">
-                        <tree string="Failed lines" noteditable="1">
+                        <tree string="Non reallocatable lines" noteditable="1">
                             <field name="date"/>
                             <field name="ref"/>
                             <field name="name"/>
@@ -157,7 +162,7 @@
                     </field>
                     <newline />
                     <field name="process_ids" colspan="4" nolabel="1">
-                        <tree string="To be processed lines" noteditable="1">
+                        <tree string="Reallocatable lines" noteditable="1">
                             <field name="date"/>
                             <field name="ref"/>
                             <field name="name"/>

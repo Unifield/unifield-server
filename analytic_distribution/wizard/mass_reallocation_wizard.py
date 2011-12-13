@@ -30,16 +30,35 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
     _description = 'Mass Reallocation Verification Wizard'
 
+    def _get_total(self, cr, uid, ids, field_name, arg, context={}):
+        """
+        Get total of lines for given field_name
+        """
+        # Prepare some value
+        res = {}
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context:
+            context = {}
+        # browse elements
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res[wiz.id] = {'nb_error': len(wiz.error_ids), 'nb_process': len(wiz.process_ids), 'nb_other': len(wiz.other_ids)}
+        return res
+
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, readonly=True),
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
-        'supported_ids': fields.many2many('account.analytic.line', 'mass_reallocation_supported_rel', 'wizard_id', 'analytic_line_id', string="Supported", readonly=True),
-        'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="To process", readonly=True),
+        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
+        'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
+        'nb_error': fields.function(_get_total, string="Line in error", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_process': fields.function(_get_total, string="Allocatable lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
+        'nb_other': fields.function(_get_total, string="Other lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
     }
 
     def button_validate(self, cr, uid, ids, context={}):
         """
-        Launch mass reallocation on "supported_ids".
+        Launch mass reallocation on "process_ids".
         """
         # Some verifications
         if not context:
@@ -49,13 +68,13 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             # If no supporteds_ids, raise an error
-            if not wiz.supported_ids:
+            if not wiz.process_ids:
                 raise osv.except_osv(_('Error'), _('No lines to be processed.'))
             # Prepare some values
             account_id = wiz.account_id and wiz.account_id.id
             # Sort by distribution
             lines = defaultdict(list)
-            for line in wiz.supported_ids:
+            for line in wiz.process_ids:
                 lines[line.distribution_id.id].append(line)
             # Process each distribution
             for distrib_id in lines:
@@ -128,15 +147,13 @@ class mass_reallocation_wizard(osv.osv_memory):
                 error_ids.extend([x for x in tmp_to_process if x not in valid_ids])
         print "RESULT: ERR, %s NS, %s PROC, %s" % (error_ids, non_supported_ids, process_ids)
         vals = {'account_id': account_id,}
-        # Display of elements. Non supported should be inserted into some one. If process_ids not null, then include them into.
-        if error_ids and not process_ids:
-            vals.update({'error_ids': [(6, 0, error_ids + non_supported_ids)]})
-        elif error_ids:
+        # Display of elements
+        if error_ids:
             vals.update({'error_ids': [(6, 0, error_ids)]})
-        if non_supported_ids and process_ids:
-            vals.update({'process_ids': [(6, 0, non_supported_ids + process_ids)], 'supported_ids': [(6, 0, process_ids)]})
-        elif process_ids:
-            vals.update({'process_ids': [(6, 0, process_ids)], 'supported_ids': [(6, 0, process_ids)]})
+        if non_supported_ids:
+            vals.update({'other_ids': [(6, 0, non_supported_ids)]})
+        if process_ids:
+            vals.update({'process_ids': [(6, 0, process_ids)]})
         verif_id = self.pool.get('mass.reallocation.verification.wizard').create(cr, uid, vals, context=context)
         # Create Mass Reallocation Verification Wizard
         return {
