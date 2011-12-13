@@ -143,29 +143,32 @@ class analytic_line(osv.osv):
                     fp_compatible_ids[distrib_line.distribution_id.id].append(distrib_line.id)
             # Browse each distribution
             for distrib_id in fp_compatible_ids:
-                fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
-                # Compare two list
-                diff = set(fp_lines) & set(fp_compatible_ids[distrib_id])
-                # Verify that it correspond to fp_lines length
-                if len(diff) == len(fp_lines):
-                    # add analytic line to final result
-                    for aline in elements[distrib_id]:
-                        res.append(aline.id)
+##### CASE WHERE WE DO NOT ACCEPT TO PROCESS LINES IF ONE FAILED #############
+#                fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id), 
+#                    ('cost_center_id', "=", account_id)], context=context)
+#                # Compare two list
+#                diff = set(fp_lines) & set(fp_compatible_ids[distrib_id])
+#                # Verify that it correspond to fp_lines length
+#                if len(diff) == len(fp_lines):
+#                    # add analytic line to final result
+#                    for aline in elements[distrib_id]:
+#                        res.append(aline.id)
+##############################################################################
 ##### CASE WHERE WE ACCEPT TO PROCESS SOME LINES OF DISTRIBUTION #############
-#                # Test FP for each analytic line
-#                for aline in elements[distrib_id]:
-#                    if aline.distribution_id and fp_compatible_ids[distrib_id]:
-#                        # Test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
-#                        #+ the current distrib
-#                        valid = 0
-#                        aline_fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', aline.distribution_id.id), 
-#                            ('cost_center_id', '=', aline.account_id.id)], context=context) or []
-#                        for el in aline_fp_lines:
-#                            if el in fp_compatible_ids[distrib_id]:
-#                                valid += 1
-#                        if len(aline_fp_lines) == valid:
-#                            # All matches
-#                            res.append(aline.id)
+                # Test FP for each analytic line
+                for aline in elements[distrib_id]:
+                    if aline.distribution_id and fp_compatible_ids[distrib_id]:
+                        # Test that analytic line distribution have some funding pool lines that matches all compatible funding pool for 
+                        #+ the current distrib
+                        valid = 0
+                        aline_fp_lines = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', aline.distribution_id.id), 
+                            ('cost_center_id', '=', aline.account_id.id)], context=context) or []
+                        for el in aline_fp_lines:
+                            if el in fp_compatible_ids[distrib_id]:
+                                valid += 1
+                        if len(aline_fp_lines) == valid:
+                            # All matches
+                            res.append(aline.id)
 ##############################################################################
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'account_ids'], context=context)
