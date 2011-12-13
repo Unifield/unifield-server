@@ -675,9 +675,12 @@ class shipment(osv.osv):
                 if new_packing.sale_id and not new_packing.sale_id.shipment_date:
                     # get the date format
                     date_tools = self.pool.get('date.tools')
-                    date_format = date_tools.get_date_format(cr, uid, context=context)
-                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': time.strftime('%Y-%m-%d'),}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, time.strftime(date_format))))
+                    date_format = date_tools.get_datetime_format(cr, uid, context=context)
+                    db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                    today = time.strftime(date_format)
+                    today_db = time.strftime(db_date_format)
+                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, today)))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:

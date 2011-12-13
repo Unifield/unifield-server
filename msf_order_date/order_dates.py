@@ -554,7 +554,7 @@ class purchase_order(osv.osv):
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'shipment_date': fields.datetime(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -863,6 +863,18 @@ class sale_order(osv.osv):
         
         return super(sale_order, self).create(cr, uid, data, context=context)
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        erase shipment date
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        default.update({'shipment_date': False,})
+        res = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
+        return res
+    
     def _get_receipt_date(self, cr, uid, ids, field_name, arg, context={}):
         '''
         Returns the date of the first picking for the the PO
@@ -885,7 +897,7 @@ class sale_order(osv.osv):
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.date(string='Shipment Date', readonly=True,),
+                'shipment_date': fields.datetime(string='Shipment Date', readonly=True,),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -1077,9 +1089,12 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        po = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if po:
-            res = po.delivery_confirmed_date
+        if 'delivery_confirmed_date' in context:
+            res = context['delivery_confirmed_date']
+            return res
+        so = order_obj.browse(cr, uid, context.get('sale_id', []))
+        if so:
+            res = so.delivery_confirmed_date
         
         return res
     
@@ -1201,22 +1216,56 @@ class stock_picking(osv.osv):
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
         '''
-        Write the shipment date on accoding order
+        shipment date of sale order is updated and logged
         '''
         date_tools = self.pool.get('date.tools')
         res = super(stock_picking, self).do_partial(cr, uid, ids, partial_datas, context=context)
 
-        po_obj = self.pool.get('purchase.order')
         so_obj = self.pool.get('sale.order')
 
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.sale_id and not picking.sale_id.shipment_date:
-                date_format = date_tools.get_date_format(cr, uid, context=context)
-                so_obj.write(cr, uid, [picking.sale_id.id], {'shipment_date': picking.date_done})
+                sale_id = picking.sale_id.id
+                date_format = date_tools.get_datetime_format(cr, uid, context=context)
+                db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                today = time.strftime(date_format)
+                today_db = time.strftime(db_date_format)
+                so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(picking.sale_id.name, today)))
 
         return res
 
 stock_picking()
+
+
+class stock_move(osv.osv):
+    '''
+    shipment date of sale order is updated
+    '''
+    _inherit = 'stock.move'
+    
+    def do_partial(self, cr, uid, ids, partial_datas, context=None):
+        '''
+        update shipment date and logged
+        '''
+        date_tools = self.pool.get('date.tools')
+        res = super(stock_move, self).do_partial(cr, uid, ids, partial_datas, context=context)
+        
+        so_obj = self.pool.get('sale.order')
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.picking_id and obj.picking_id.sale_id and not obj.picking_id.sale_id.shipment_date:
+                sale_id = obj.picking_id.sale_id.id
+                date_format = date_tools.get_datetime_format(cr, uid, context=context)
+                db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                today = time.strftime(date_format)
+                today_db = time.strftime(db_date_format)
+                so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(obj.picking_id.sale_id.name, today)))
+
+        return res
+    
+stock_move()
 
 
 class lang(osv.osv):
@@ -1240,6 +1289,16 @@ class lang(osv.osv):
         format = lang_id and self.read(cr, uid, lang_id[0], [type], context=context)[type] or getattr(self, '_get_default_%s'%type)(cr, uid, context=context)
         return format
     
+    def _get_db_format(self, cr, uid, type, context=None):
+        '''
+        generic function - for now constant values
+        '''
+        if type == 'date':
+            return '%Y-%m-%d'
+        if type == 'time':
+            return '%H:%M:%S'
+        # default value
+        return '%Y-%m-%d'
 lang()
 
 

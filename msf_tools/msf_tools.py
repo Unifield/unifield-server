@@ -42,6 +42,13 @@ class date_tools(osv.osv):
         lang_obj = self.pool.get('res.lang')
         return lang_obj._get_format(cr, uid, 'date', context=context)
     
+    def get_db_date_format(self, cr, uid, context=None):
+        '''
+        return constant value
+        '''
+        lang_obj = self.pool.get('res.lang')
+        return lang_obj._get_db_format(cr, uid, 'date', context=context)
+    
     def get_time_format(self, cr, uid, context=None):
         '''
         get the time format for the uid specified user
@@ -51,10 +58,23 @@ class date_tools(osv.osv):
         lang_obj = self.pool.get('res.lang')
         return lang_obj._get_format(cr, uid, 'time', context=context)
     
+    def get_db_time_format(self, cr, uid, context=None):
+        '''
+        return constant value
+        '''
+        lang_obj = self.pool.get('res.lang')
+        return lang_obj._get_db_format(cr, uid, 'time', context=context)
+    
     def get_datetime_format(self, cr, uid, context=None):
         '''
         get the datetime format for the uid specified user
         '''
         return self.get_date_format(cr, uid, context=context) + ' ' + self.get_time_format(cr, uid, context=context)
+    
+    def get_db_datetime_format(self, cr, uid, context=None):
+        '''
+        return constant value
+        '''
+        return self.get_db_date_format(cr, uid, context=context) + ' ' + self.get_db_time_format(cr, uid, context=context)
     
 date_tools()

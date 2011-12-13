@@ -7,10 +7,16 @@
     tools_obj = self.pool.get('date.tools')
     # date
     tools_obj.get_date_format(cr, uid, context=context)
+    # db date
+    tools_obj.get_db_date_format(cr, uid, context=context)
     # time
     tools_obj.get_time_format(cr, uid, context=context)
+    # db time
+    tools_obj.get_db_time_format(cr, uid, context=context)
     # date time
     tools_obj.get_datetime_format(cr, uid, context=context)
+    # db date time
+    tools_obj.get_db_datetime_format(cr, uid, context=context)
     # special case format is not defined in the database
     # get user context lang
     user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']

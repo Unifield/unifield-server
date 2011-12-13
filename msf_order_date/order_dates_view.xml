@@ -150,7 +150,7 @@
 	                            	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" />
 	                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', '!=', 'draft')]}"
 	                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
-	                            <field name="ready_to_ship_date" />
+	                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)]}" />
 	                            <field name="shipment_date" />
 	                        </group>
 	                    </page>
@@ -158,11 +158,11 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id,}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
-                        <field name="date_planned" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
-                        <field name="confirmed_delivery_date" on_change="dates_change(date_planned, confirmed_delivery_date, context)" />
+                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
+                        <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
                     </xpath>
                     
                     <!--  Add dates history tab -->
