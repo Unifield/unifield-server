@@ -72,11 +72,13 @@ class financing_contract_contract(osv.osv):
         format_line_obj = self.pool.get('financing.contract.format.line')
         # Values to be set
         account_ids = []
+        if reporting_type is None:
+            reporting_type = browse_contract.reporting_type
         # general domain
         general_domain = format_line_obj._get_general_domain(cr,
                                                              uid,
                                                              browse_contract.format_id,
-                                                             browse_contract.reporting_type,
+                                                             reporting_type,
                                                              context=context)
         
         # parse parent lines (either value or sum of children's values)
@@ -85,8 +87,6 @@ class financing_contract_contract(osv.osv):
                 account_ids += format_line_obj._get_account_ids(line, general_domain['funding_pool_account_ids'])
                 
         # create the domain
-        if reporting_type is None:
-            reporting_type = browse_contract.reporting_type
         analytic_domain = []
         account_domain = format_line_obj._create_domain('general_account_id', account_ids)
         date_domain = eval(general_domain['date_domain'])
