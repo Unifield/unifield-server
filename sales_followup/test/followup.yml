@@ -207,9 +207,8 @@
 -
   I run the scheduler.
 -
-  !function {model: procurement.order, name: run_scheduler}:
-    - model: procurement.order
-      search: "[]"
+  !python {model: procurement.order}: |
+    self.run_scheduler(cr, uid)
 -
   I create again a wizard
 -

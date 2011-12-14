@@ -202,7 +202,7 @@ class sale_order_followup(osv.osv_memory):
                     for rfq in line.procurement_id.tender_id.rfq_ids:
                         if not rfq.rfq_ok:
                             purchase_ids.append(rfq.id)
-        
+
         return purchase_ids
 
     def get_purchase_line_ids(self, cr, uid, line_id, purchase_ids, context={}):
@@ -261,7 +261,7 @@ class sale_order_followup(osv.osv_memory):
             purchase_ids= [purchase_ids]
             
         incoming_ids = []
-        
+
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for po in purchase_obj.browse(cr, uid, purchase_ids, context=context):
                 for po_line in po.order_line:

@@ -33,6 +33,7 @@
     """,
     'test': [
              'test/sourcing.yml',
+             'test/2lines_supplier.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',

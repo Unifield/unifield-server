@@ -394,13 +394,34 @@ class sale_order(osv.osv):
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        
+        
+        return result
+    
+    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to modify the data for procurement order creation
+        '''
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # new field representing selected partner from sourcing tool
+        proc_data = kwargs['proc_data']
         line = kwargs['line']
+        
+        # new field representing selected partner from sourcing tool
         result['supplier'] = line.supplier and line.supplier.id or False
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
+        
+        date_planned = None
+        if line.sourcing_line_ids:
+            for sourcing_line in line.sourcing_line_ids:
+                if not date_planned or sourcing_line.estimated_delivery_date < date_planned:
+                    date_planned = sourcing_line.estimated_delivery_date
+            if date_planned:
+                result['date_planned'] = date_planned
         
         return result
 
@@ -643,6 +664,30 @@ class procurement_order(osv.osv):
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
+
+    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        if a purchase order for the same supplier and the same requested date,
+        don't create a new one
+        '''
+        po_obj = self.pool.get('purchase.order')
+        procurement = kwargs['procurement']
+        values = kwargs['values']
+
+        partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
+        requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
+
+        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
+                                               ('delivery_requested_date', '=', requested_date)], context=context)
+
+        if purchase_ids:
+            line_values = values['order_line'][0][2]
+            line_values.update({'order_id': purchase_ids[0]})
+            self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
+            return purchase_ids[0]
+        else:
+            purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
+            return purchase_id
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
