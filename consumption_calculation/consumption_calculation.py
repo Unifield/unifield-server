@@ -214,6 +214,7 @@ class real_average_consumption(osv.osv):
 
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
+            move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
             
         
         return {'type': 'ir.actions.act_window',
@@ -569,10 +570,23 @@ class monthly_review_consumption(osv.osv):
     }
     
     _defaults = {
+        'period_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-        'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'cons_location_id': lambda *a: 'MSF Instance',
     }
+
+    def period_change(self, cr, uid, ids, period_from, period_to, context={}):
+        '''
+        Get the first day of month and the last day
+        '''
+        res = {}
+
+        if period_from:
+            res.update({'period_from': (DateFrom(period_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+        if period_to:
+            res.update({'period_to': (DateFrom(period_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+
+        return {'value': res}
     
     def import_fmc(self, cr, uid, ids, context={}):
         '''
@@ -654,12 +668,21 @@ class monthly_review_consumption(osv.osv):
                     products.append(line.name.id)
                 else:
                     self.pool.get('monthly.review.consumption.line').unlink(cr, uid, line.id, context=context)
+
+            amc_context = context.copy()
+            if amc_context.get('from_date', False):
+                from_date = (DateFrom(amc_context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+                amc_context.update({'from_date': from_date})
+                                               
+            if amc_context.get('to_date', False):
+                to_date = (DateFrom(amc_context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                amc_context.update({'to_date': to_date})
                     
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
                     products.append(product.id)
-                    amc = self.pool.get('product.product').compute_amc(cr, uid, product.id, context=context)
+                    amc = self.pool.get('product.product').compute_amc(cr, uid, product.id, context=amc_context)
                     last_fmc_reviewed = False
                     line_ids = line_obj.search(cr, uid, [('name', '=', product.id), ('valid_ok', '=', True)], order='valid_until desc, id desc', context=context)
                     if line_ids:
@@ -714,6 +737,14 @@ class monthly_review_consumption_line(osv.osv):
         
         for line in self.browse(cr, uid, ids, context=context):
             context.update({'from_date': line.mrc_id.period_from, 'to_date': line.mrc_id.period_to})
+            if context.get('from_date', False):
+                from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+                context.update({'from_date': from_date})
+                                               
+            if context.get('to_date', False):
+                to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                context.update({'to_date': to_date})
+                    
             res[line.id] = self.pool.get('product.product').compute_amc(cr, uid, line.name.id, context=context)
             
         return res
@@ -848,6 +879,14 @@ class monthly_review_consumption_line(osv.osv):
         if line_ids:
             for line in self.browse(cr, uid, [line_ids[0]], context=context):
                 last_fmc_reviewed = line.mrc_id.creation_date
+
+        if context.get('from_date', False):
+            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            context.update({'from_date': from_date})
+                                               
+        if context.get('to_date', False):
+            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            context.update({'to_date': to_date})
                 
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)
         return {'value': {'amc': amc,
@@ -952,12 +991,19 @@ class product_product(osv.osv):
                     to_date = line.rac_id.period_to
 
             # We want the average for the entire period
-            if context.get('average', False):
+            if to_date and from_date and context.get('average', True):
                 if to_date < from_date:
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
-                to_date_str = strptime(to_date, '%Y-%m-%d')
-                from_date_str = strptime(from_date, '%Y-%m-%d')
+                try:
+                    to_date_str = strptime(to_date, '%Y-%m-%d')
+                except ValueError:
+                    to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+                                
+                try:
+                    from_date_str = strptime(from_date, '%Y-%m-%d')
+                except ValueError:
+                    from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
                 
                 date_diff = Age(to_date_str, from_date_str)
                 nb_months = round(date_diff.years*12.0 + date_diff.months + (date_diff.days/30.0), 2)
@@ -1009,9 +1055,9 @@ class product_product(osv.osv):
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
         if to_date:
-            domain.append(('date_expected', '<=', to_date))
+            domain.append(('date', '<=', to_date))
         if from_date:
-            domain.append(('date_expected', '>=', from_date))
+            domain.append(('date', '>=', from_date))
         
         locations = self.pool.get('stock.location').search(cr, uid, [('usage', 'in', ('internal', 'customer'))], context=context)
         # Add locations filters in domain if locations are passed in context
@@ -1027,10 +1073,10 @@ class product_product(osv.osv):
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             
             # Update the limit in time
-            if not context.get('from_date') and (not from_date or move.date_expected < from_date):
-                from_date = move.date_expected
-            if not context.get('to_date') and (not to_date or move.date_expected > to_date):
-                to_date = move.date_expected
+            if not context.get('from_date') and (not from_date or move.date < from_date):
+                from_date = move.date
+            if not context.get('to_date') and (not to_date or move.date > to_date):
+                to_date = move.date
                 
         if not to_date or not from_date:
             return 0.00
@@ -1059,12 +1105,29 @@ class product_product(osv.osv):
         res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
             
         return res
+
+    def _compute_product_amc(self, cr, uid, ids, field_name, args, context={}):
+        res = {}
+
+        if context.get('from_date', False):
+            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            context.update({'from_date': from_date})
+                                               
+        if context.get('to_date', False):
+            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            context.update({'to_date': to_date})
+
+        for product in ids:
+            res[product] = self.compute_amc(cr, uid, product, context=context)
+
+        return res
     
     
     _columns = {
         'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
                                         help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
-        'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Monthly consumption', readonly=True),
+        'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Real Consumption', readonly=True),
+        'product_amc': fields.function(_compute_product_amc, method=True, type='float', string='Monthly consupmiton', readonly=True),
         'reviewed_consumption': fields.function(_compute_fmc, method=True, type='float', string='Forecasted Monthly Consumption', readonly=True),
     }
     

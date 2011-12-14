@@ -151,9 +151,9 @@
             <field name="arch" type="xml">
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
-                    <field name="period_from" />
+                    <field name="period_from" on_change="period_change(period_from, period_to)" />
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
-                    <field name="period_to" />
+                    <field name="period_to" on_change="period_change(period_from, period_to)" />
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />
@@ -259,7 +259,7 @@
             <field name="inherit_id" ref="stock.view_normal_stock_property_form" />
             <field name="arch" type="xml">
                 <field name="virtual_available" position="after">
-                    <field name="monthly_consumption" readonly="1" />
+                    <field name="product_amc" readonly="1" />
                     <field name="reviewed_consumption" />
                 </field>
             </field>
