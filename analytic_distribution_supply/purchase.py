@@ -251,9 +251,10 @@ class purchase_order(osv.osv):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
-        # Create commitments for each PO
+        # Create commitments for each PO only if po is "from picking"
         for po in self.browse(cr, uid, ids, context=context):
-            self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+            if po.invoice_method == 'picking':
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
         return res
 
     def _finish_commitment(self, cr, uid, ids, context={}):
