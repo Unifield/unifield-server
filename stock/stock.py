@@ -1415,7 +1415,10 @@ class stock_production_lot(osv.osv):
         if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
+
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1444,7 +1447,10 @@ class stock_production_lot(osv.osv):
         if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
+        
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         ids = [('id', 'in', [])]
         if locations:
