@@ -13,6 +13,11 @@
 	                    <separator orientation="vertical"/>
 	                    <filter icon="terp-partner" name="location_type_supplier" string="Supplier" domain="[('location_type','=','supplier')]"/>
 	                    <filter icon="terp-partner" name="location_type_customer" string="Customer" domain="[('location_type','=','customer')]"/>
+	                    <separator orientation="vertical" />
+	                    <field name="location_id" />
+	                    <field name="product_id" />
+	                    <field name="prodlot_id" />
+	                    <field name="expired_date" />
 	                </group>
 	            </search>
 	        </field>

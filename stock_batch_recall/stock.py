@@ -116,7 +116,7 @@ class report_batch_recall(osv.osv):
                     (SELECT
                         m.product_id AS product_id,
                         m.prodlot_id AS prodlot_id,
-                        lot.life_date AS expired_date,
+                        m.expired_date AS expired_date,
                         m.location_dest_id AS location_id,
                         p.address_id AS partner_id,
                         CASE when pt.uom_id = m.product_uom
@@ -150,7 +150,7 @@ class report_batch_recall(osv.osv):
                     GROUP BY
                         m.product_id,
                         m.prodlot_id,
-                        lot.life_date,
+                        m.expired_date,
                         m.location_dest_id,
                         pt.uom_id,
                         m.product_uom,
@@ -159,7 +159,7 @@ class report_batch_recall(osv.osv):
                     (SELECT
                         m.product_id AS product_id,
                         m.prodlot_id AS prodlot_id,
-                        lot.life_date AS expired_date,
+                        m.expired_date AS expired_date,
                         m.location_id AS location_id,
                         NULL AS partner_id,
                         CASE when pt.uom_id = m.product_uom
@@ -193,7 +193,7 @@ class report_batch_recall(osv.osv):
                     GROUP BY
                         m.product_id,
                         m.prodlot_id,
-                        lot.life_date,
+                        m.expired_date,
                         m.location_id,
                         pt.uom_id,
                         m.product_uom,
@@ -223,8 +223,7 @@ class report_batch_recall(osv.osv):
               lot.name,
               rec.location_id,
               addr.partner_id
-        );
-        """)
+        );""")
         
     def unlink(self, cr, uid, ids, context={}):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
