@@ -24,6 +24,7 @@ from osv.osv import osv_pool, object_proxy
 from osv.orm import orm_template
 from tools.translate import _
 from lxml import etree
+from datetime import *
 import ir
 import pooler
 import time
@@ -35,6 +36,13 @@ class purchase_order(osv.osv):
     _trace = True
 
 purchase_order()
+
+class stock_picking(osv.osv):
+    _name = 'stock.picking'
+    _inherit = 'stock.picking'
+    _trace = True
+
+stock_picking()
 
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
@@ -298,7 +306,26 @@ def get_value_text(self, cr, uid, field_name, values, model, context=None):
             res = []
             for relation_model_object in relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name]):
                 res.append(relation_model_object[relation_model_pool._rec_name])
-            return res            
+            return res
+        elif field['ttype'] == 'date':
+            res = False
+            if values:
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', user.context_lang)], context=context)
+                lang = self.pool.get('res.lang').browse(cr, uid, lang_ids[0], context=context)
+                res = datetime.strptime(values, '%Y-%m-%d')
+                res = datetime.strftime(res, lang.date_format)
+            return res
+        elif field['ttype'] == 'datetime':
+            res = False
+            if values:
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                lang_ids = self.pool.get('res.lang').search(cr, uid, [('code', '=', user.context_lang)], context=context)
+                lang = self.pool.get('res.lang').browse(cr, uid, lang_ids[0], context=context)
+                date_format = '%s %s' %(lang.date_format, lang.time_format)
+                res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
+                res = datetime.strftime(res, date_format)
+            return res
 
     return values
 
@@ -402,7 +429,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                     new_value = new_value[0]
                 # Get the readable name of the related field
                 new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
-            elif field['ttype'] == 'many2many':
+            elif field['ttype'] in ('date', 'datetime', 'many2many'):
                 old_value = old_value_text
                 new_value = new_value_text
             elif field['ttype'] == 'selection':

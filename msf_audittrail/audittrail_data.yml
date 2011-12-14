@@ -9,7 +9,7 @@
       # Create the rule
       fields = ['arrival_date', 'date_approve', 'date_order', 'delivery_confirmed_date',
                 'delivery_requested_date', 'est_transport_lead_time', 'invoice_method', 'invoice_ids',
-                'loan_duration', 'loan_id', 'location_id', 'notes', 'order_line', 'order_type',
+                'loan_duration', 'loan_id', 'location_id', 'notes', 'order_type',
                 'picking_ids', 'priority', 'ready_to_ship_date', 'rfq_ok', 'shipment_date', 'shipped',
                 'state', 'tender_id', 'transport_type', 'valid_till']
 
