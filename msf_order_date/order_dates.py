@@ -82,6 +82,8 @@ def check_date_order(self, cr, uid, date=False, context={}):
     
     @param : date : Creation date
     @return True if the date is in an opened period, False if not
+    
+    deprecated
     '''
     if not date:
         return True
@@ -106,6 +108,8 @@ def check_delivery_requested(self, date=False, context={}):
     
     @param: Date to test (Delivery requested date)
     @return : False if the date is not in the scale
+    
+    deprecated
     '''
     if not date:
         return True
@@ -128,6 +132,8 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
     
     @param: Date to test (Delivery requested date)
     @return : False if the date is not in the scale
+    
+    deprecated
     '''
     if not confirmed_date or not date_order:
         return True
@@ -149,6 +155,8 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
 def check_dates(self, cr, uid, data, context={}):
     '''
     Runs all tests on dates
+    
+    deprecated
     '''
     # Comment this line if you would check date on PO/SO creation/write
     return True
@@ -190,6 +198,8 @@ def create_history(self, cr, uid, ids, data, class_name, field_name, fields, con
 def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
     '''
     Common function when type of order is changing
+    
+    deprecated
     '''
     v = {}
 #    if internal_type == 'international' and rts and not shipment_date:
@@ -200,6 +210,8 @@ def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment
 def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
     '''
     Common function when ready_to_ship date is changing
+    
+    deprecated
     '''
     message = {}
     v = {}
@@ -217,21 +229,6 @@ def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, s
         v.update({'shipment_date': ready_to_ship})
         
     return {'warning': message, 'value': v}
-
-def get_field_from_company(self, cr, uid, object=False, field=False, context=None):
-    '''
-    return the value for field from company for object 
-    '''
-    # field is required for value
-    if not field:
-        return False
-    # object
-    company_obj = self.pool.get('res.company')
-    # corresponding company
-    company_id = company_obj._company_default_get(cr, uid, object, context=context)
-    # get the value
-    res = company_obj.read(cr, uid, [company_id], [field], context=context)[0][field]
-    return res
 
 def compute_rts(self, cr, uid, requested_date=False, transport_lt=0, type=False, context=None):
     '''
@@ -282,6 +279,18 @@ def compute_transport_type(self, cr, uid, part=False, type=False, context=None):
     return the preferred transport type of partner
     '''
     field = 'transport_0'
+    if part:
+        partner_obj = self.pool.get('res.partner')
+        res = partner_obj.read(cr, uid, [part], [field], context=context)[0][field]
+        return res
+        
+    return False
+
+def compute_internal_type(self, cr, uid, part=False, type=False, context=None):
+    '''
+    return the zone of partner
+    '''
+    field = 'zone'
     if part:
         partner_obj = self.pool.get('res.partner')
         res = partner_obj.read(cr, uid, [part], [field], context=context)[0][field]
@@ -411,6 +420,9 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False,
     # compute partner type
     partner_type = compute_partner_type(self, cr, uid, part=part, type=type, context=context)
     res.setdefault('value', {}).update({'partner_type': partner_type,})
+    # internal type
+    internal_type = compute_internal_type(self, cr, uid, part=part, type=type, context=context)
+    res.setdefault('value', {}).update({'internal_type': internal_type,})
     
     return res
     
@@ -613,7 +625,8 @@ class purchase_order(osv.osv):
         Set the shipment date if the internal_type == international
         
         deprecated
-        '''        
+        '''
+        return {}
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
         
     def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
@@ -622,6 +635,7 @@ class purchase_order(osv.osv):
         
         deprecated
         '''
+        return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
     def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
@@ -957,6 +971,7 @@ class sale_order(osv.osv):
         
         deprecated
         '''
+        return {}
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
         
     def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
@@ -965,6 +980,7 @@ class sale_order(osv.osv):
         
         deprecated
         '''
+        return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
     def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
@@ -1088,16 +1104,15 @@ class sale_order(osv.osv):
             context = {}
         # objects
         date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         # call super
         move_data = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         order = kwargs['order']
         # get shipment lead time
-        shipment_lt = get_field_from_company(self, cr, uid, object=self._name, field='shipment_lead_time', context=context)
-        # date = rts of so + shipment lt
-        rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
-        rts = rts + relativedelta(days=shipment_lt or 0)
-        rts = rts.strftime(db_date_format)
+        shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+        # date = rts of so - by default, a picking is created
+        rts = order.ready_to_ship_date
         # date, date_expected
         move_data.update({'date': rts,'date_expected': rts})
         
@@ -1112,13 +1127,14 @@ class sale_order(osv.osv):
         '''
         # objects
         date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         # call to super
         result = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
         # date_planned = rts - company.prep_lt
         order = kwargs['order']
         # get value from company
-        prep_lt = get_field_from_company(self, cr, uid, object=self._name, field='preparation_lead_time', context=context)
+        prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
         # rts - prep_lt
         rts = datetime.strptime(order.ready_to_ship_date, db_date_format)
         rts = rts - relativedelta(days=prep_lt or 0)
@@ -1288,6 +1304,7 @@ class stock_picking(osv.osv):
         call super - modify logic for min_date (Expected receipt date)
         '''
         date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
@@ -1296,11 +1313,21 @@ class stock_picking(osv.osv):
                 result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date,})
             if obj.sale_id:
                 # rts is a mandatory field
-                shipment_lt = get_field_from_company(self, cr, uid, object=self._name, field='shipment_lead_time', context=context)
-                rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
-                rts = rts + relativedelta(days=shipment_lt or 0)
-                rts = rts.strftime(db_date_format)
-                result.setdefault(obj.id, {}).update({'min_date': rts,})
+                if obj.subtype == 'standard':
+                    # rts + shipment lt
+                    shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                    rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
+                    rts = rts + relativedelta(days=shipment_lt or 0)
+                    rts = rts.strftime(db_date_format)
+                    result.setdefault(obj.id, {}).update({'min_date': rts,})
+                if obj.subtype == 'picking':
+                    # rts
+                    result.setdefault(obj.id, {}).update({'min_date': obj.sale_id.ready_to_ship_date,})
+                if obj.subtype == 'ppl':
+                    # today
+                    today = time.strftime(db_date_format)
+                    result.setdefault(obj.id, {}).update({'min_date': today,})
+                    
         return result
     
     def _set_minimum_date(self, cr, uid, ids, name, value, arg, context=None):
@@ -1417,6 +1444,19 @@ class res_company(osv.osv):
     
     _defaults = {'shipment_lead_time': 0.0,
                  'preparation_lead_time': 0.0,
+                 'po_lead': lambda *a: 0.0, # removed from processes - set to 0.0 for security
                  }
 
 res_company()
+
+
+class product_template(osv.osv):
+    '''
+    set delay to 0 to be sure it does not take part to processes
+    '''
+    _inherit = "product.template"
+    _defaults = {'sale_delay': lambda *a: 0,
+                 'produce_delay': lambda *a: 0,
+                 }
+
+product_template()

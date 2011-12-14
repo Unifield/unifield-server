@@ -78,3 +78,28 @@ class date_tools(osv.osv):
         return self.get_db_date_format(cr, uid, context=context) + ' ' + self.get_db_time_format(cr, uid, context=context)
     
 date_tools()
+
+
+class fields_tools(osv.osv):
+    '''
+    date related tools for msf project
+    '''
+    _name = 'fields.tools'
+    
+    def get_field_from_company(self, cr, uid, object=False, field=False, context=None):
+        '''
+        return the value for field from company for object 
+        '''
+        # field is required for value
+        if not field:
+            return False
+        # object
+        company_obj = self.pool.get('res.company')
+        # corresponding company
+        company_id = company_obj._company_default_get(cr, uid, object, context=context)
+        # get the value
+        res = company_obj.read(cr, uid, [company_id], [field], context=context)[0][field]
+        return res
+    
+fields_tools()
+    

@@ -85,8 +85,8 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace">
                     <field name="date_planned" attrs="{'readonly': [('po_state_stored', '!=', 'draft')]}" />
-                    <field name="po_state_stored" invisible="False" />
-                    <field name="po_partner_type_stored" invisible="False" />
+                    <field name="po_state_stored" invisible="True" />
+                    <field name="po_partner_type_stored" invisible="True" />
                     <field name="confirmed_delivery_date" attrs="{'readonly': ['|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
                 </xpath>
                 
@@ -328,10 +328,23 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.mrp_company" />
             <field name="arch" type="xml">
-                <field name="po_lead" position="after">
+                <field name="po_lead" position="replace">
                     <field name="shipment_lead_time" />
                     <field name="preparation_lead_time" />
                 </field>
+            </field>
+        </record>
+        
+        <record id="mrp_company" model="ir.ui.view">
+            <field name="name">res.company.mrp.config</field>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="priority">24</field>
+            <field name="inherit_id" ref="sale.mrp_company"/>
+            <field name="arch" type="xml">
+            	<data>
+            		<field name="security_lead" position="replace" />
+            	</data>
             </field>
         </record>
     

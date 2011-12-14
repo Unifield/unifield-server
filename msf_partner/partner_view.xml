@@ -55,6 +55,7 @@
                         <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
                         <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
                         <separator orientation="vertical" />
+                        <newline />
                     </xpath>
                 </data>
             </field>

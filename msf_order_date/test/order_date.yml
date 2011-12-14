@@ -17,6 +17,17 @@
     transport_0: sea
     transport_0_lt: 5
 -
+  I create a Purchase Order
+-
+  !record {model: purchase.order, id: po1}:
+    name: 'PO/21'
+    #company_id: base.main_company
+    #invoice_method: 'order'
+    location_id: stock.stock_location_stock
+    partner_address_id: address1
+    partner_id: supplier100
+    pricelist_id: purchase.list0
+-
   Check on_change functions so
 -
   !python {model: sale.order}: |
@@ -81,6 +92,10 @@
   Check on_change functions po
 -
   !python {model: purchase.order}: |
+    # test default values
+    po_test = self.browse(cr, uid, ref("po1"), context=context)
+    assert po_test.internal_type, 'internal_type missing'
+    assert po_test.partner_type, 'partner_type missing'
     # objects
     import time
     from datetime import datetime
