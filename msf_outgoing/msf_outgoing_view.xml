@@ -205,7 +205,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}" on_change="onchange_move()" >
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="asset_id" />
