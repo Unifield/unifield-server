@@ -165,7 +165,6 @@ class account_invoice(osv.osv):
                     # Browse distribution
                     distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
                     engagement_lines = distrib.analytic_lines
-                    matching_elements = []
                     for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                         for distrib_line in distrib_lines:
                             vals = {

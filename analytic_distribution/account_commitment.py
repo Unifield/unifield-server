@@ -369,9 +369,33 @@ class account_commitment_line(osv.osv):
         'from_yml_test': lambda *a: False,
     }
 
+    def update_analytic_lines(self, cr, uid, ids, amount, context={}):
+        """
+        Update analytic lines from given commitment lines with an ugly method: delete all analytic lines and recreate them…
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        for cl in self.browse(cr, uid, ids, context=context):
+            # Browse distribution
+            distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or False
+            if not distrib_id:
+                distrib_id = cl.commit_id and cl.commit_id.analytic_distribution_id and cl.commit_id.analytic_distribution_id.id or False
+            if distrib_id:
+                analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
+                self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', cl.commit_id.date, amount, 
+                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, False, cl.commit_id.date, cl.account_id.id, False, False, cl.id, context=context)
+        return True
+
     def create(self, cr, uid, vals, context={}):
         """
-        Verify that given account_id (in vals) is not 'view'
+        Verify that given account_id (in vals) is not 'view'.
+        Update initial amount with those given by 'amount' field.
         """
         # Some verifications
         if not context:
@@ -388,7 +412,9 @@ class account_commitment_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context={}):
         """
-        Verify that given account_id is not 'view'
+        Verify that given account_id is not 'view'.
+        Update initial_amount if amount in vals and type is 'manual' and state is 'draft'.
+        Update analytic distribution if amount in vals.
         """
         # Some verifications
         if not context:
@@ -398,6 +424,28 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
+        # Update analytic distribution if needed and initial_amount
+        for line in self.browse(cr, uid, ids, context=context):
+            # verify analytic distribution only on 'open' commitments
+            if line.commit_id and line.commit_id.state and line.commit_id.state == 'open':
+                # Search distribution
+                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+                if not distrib_id:
+                    distrib_id = line.commit_id.analytic_distribution_id and line.commit_id.analytic_distribution_id.id or False
+                # Verify amount
+                if 'amount' in vals and vals.get('amount', 0.0) == '0.0':
+                    # delete analytic lines that are null
+                    if distrib_id:
+                        distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
+                        if distrib and distrib.analytic_lines:
+                            self.pool.get('account.analytic.line').unlink(cr, uid, [x.id for x in distrib.analytic_lines], context=context)
+                elif 'amount' in vals:
+                    # Update analytic lines
+                    if distrib_id:
+                        self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), context=context)
+            elif line.commit_id and line.commit_id.state and line.commit_id.state == 'draft' and vals.get('amount', 0.0):
+                vals.update({'initial_amount': vals.get('amount')})
+        # FIXME FIXME FIXME: change commitment voucher state if all lines are 0 ?
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
