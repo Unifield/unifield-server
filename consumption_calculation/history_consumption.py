@@ -52,7 +52,7 @@ class product_history_consumption(osv.osv_memory):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.history.consumption',
                 'res_id': new_id,
-                'context': context,
+                'context': {'active_id': new_id, 'active_ids': [new_id]},
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'dummy'}
@@ -271,17 +271,16 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals=None, context={}, load='_classic_read'):
         '''
         Set value for each month
         '''
 
         if context.get('history_cons', False):
-            vals = ['default_code', 'name']
-            for month in context.get('months'):
-                vals.append(DateFrom(month.get('date_from')).strftime('%m/%Y'))
-
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
+
+            if 'average' not in vals:
+                return res
 
             if not context.get('amc'):
                 raise osv.except_osv(_('Error'), _('No Consumption type has been choosen !'))
