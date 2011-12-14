@@ -124,10 +124,12 @@ class sourcing_line(osv.osv):
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'company_id': fields.many2one('res.company','Company',select=1),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
+             'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def check_supplierinfo(self, cr, uid, ids, partner_id, context=None):
@@ -723,6 +725,9 @@ class procurement_order(osv.osv):
         procurement = kwargs['procurement']
         # the specified supplier in sourcing tool has priority over suppinfo
         partner = procurement.supplier or super(procurement_order, self)._partner_get_hook(cr, uid, ids, context=context, *args, **kwargs)
+        if partner.id == self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id:
+            cr.execute('update procurement_order set message=%s where id=%s',
+                           (_('Impossible to make a Purchase Order to your own company !'), procurement.id))
         return partner
     
     def get_delay_qty(self, cr, uid, ids, partner, product, context=None):

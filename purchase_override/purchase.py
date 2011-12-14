@@ -67,6 +67,7 @@ class purchase_order(osv.osv):
     # @@@end
     
     _columns = {
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
@@ -94,6 +95,34 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
     }
+
+    def _check_user_company(self, cr, uid, company_id, context={}):
+        '''
+        Remove the possibility to make a PO to user's company
+        '''
+        user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        if company_id == user_company_id:
+            raise osv.except_osv(_('Error'), _('You cannot made a purchase order to your own company !'))
+
+        return True
+
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Check if the partner is correct
+        '''
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+    
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Check if the partner is correct
+        '''
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+
+        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
         '''
