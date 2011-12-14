@@ -349,7 +349,8 @@ class account_commitment_line(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True),
-        'amount': fields.float(string="Amount", digits_compute=dp.get_precision('Account'), required=True),
+        'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=True),
+        'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=False, readonly=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
@@ -363,6 +364,7 @@ class account_commitment_line(osv.osv):
     }
 
     _defaults = {
+        'initial_amount': lambda *a: 0.0,
         'amount': lambda *a: 0.0,
         'from_yml_test': lambda *a: False,
     }
@@ -379,6 +381,9 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
+        # Update initial amount
+        if not vals.get('initial_amount', 0.0) and vals.get('amount', 0.0):
+            vals.update({'initial_amount': vals.get('amount')})
         return super(account_commitment_line, self).create(cr, uid, vals, context={})
 
     def write(self, cr, uid, ids, vals, context={}):
