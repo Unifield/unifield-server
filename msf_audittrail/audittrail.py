@@ -98,6 +98,9 @@ class audittrail_rule(osv.osv):
         @param ids: List of Auddittrail Rule’s IDs.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
         obj_action = self.pool.get('ir.actions.act_window')
         obj_model = self.pool.get('ir.model.data')
         #start Loop

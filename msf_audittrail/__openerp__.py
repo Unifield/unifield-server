@@ -40,7 +40,8 @@
         'wizard/audittrail_view_log_view.xml',
         'audittrail_view.xml',
         'security/ir.model.access.csv',
-        'security/audittrail_security.xml'
+        'security/audittrail_security.xml',
+        'audittrail_data.yml',
     ],
     'demo_xml': [],
     'installable': True,
