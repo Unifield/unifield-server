@@ -29,6 +29,9 @@ import time
 import base64
 import netsvc
 
+import csv
+from tempfile import TemporaryFile
+
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
@@ -241,14 +244,15 @@ class real_average_consumption(osv.osv):
         '''
         rac = self.browse(cr, uid, ids[0], context=context)
         
-        export = 'Product reference;Product name;Product UoM;Consumed Qty;Remark'
-        export += '\n'
+        outfile = TemporaryFile('w+')
+        writer = csv.writer(outfile, quotechar='"', delimiter=',')
+        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
-            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.uom_id.id, line.consumed_qty, line.remark)
-            export += '\n'
-            
-        file = base64.encodestring(export.encode("utf-8"))
+            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
+        outfile.seek(0)    
+        file = base64.encodestring(outfile.read())
+        outfile.close()
         
         export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 'file': file, 
                                                                         'filename': 'rac_%s.csv' % (rac.cons_location_id.name.replace(' ', '_')), 
@@ -590,14 +594,15 @@ class monthly_review_consumption(osv.osv):
         '''
         fmc = self.browse(cr, uid, ids[0], context=context)
         
-        export = 'Product reference;Product name;AMC;FMC;Valid until'
-        export += '\n'
+        outfile = TemporaryFile('w+')
+        writer = csv.writer(outfile, quotechar='"', delimiter=',')
+        writer.writerow(['Product reference', 'Product name', 'AMC', 'FMC', 'Valid until'])
         
         for line in fmc.line_ids:
-            export += '%s;%s;%s;%s;%s' % (line.name.default_code, line.name.name, line.amc, line.fmc, line.valid_until or '')
-            export += '\n'
-            
-        file = base64.encodestring(export.encode("utf-8"))
+            writer.writerow([line.name.default_code and line.name.default_code.encode('utf-8'), line.name.name and line.name.name.encode('utf-8'), line.amc, line.fmc, line.valid_until or ''])
+        outfile.seek(0)    
+        file = base64.encodestring(outfile.read())
+        outfile.close()
         
         export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
                                                                         'filename': 'fmc_%s.csv' % (time.strftime('%Y_%m_%d')), 
