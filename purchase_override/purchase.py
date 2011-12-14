@@ -236,6 +236,18 @@ class purchase_order(osv.osv):
         
         return invoice_id
     
+    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
+        
+        - allow to choose whether or not the source location of the corresponding outgoing stock move should
+        match the destination location of incoming stock move
+        '''
+        order_line = kwargs['order_line']
+        # by default, we change the destination stock move if the destination stock move exists
+        return order_line.move_dest_id
+    
     # @@@override@purchase.purchase.order.action_picking_create
     def action_picking_create(self,cr, uid, ids, context={}, *args):
         picking_id = False
@@ -302,7 +314,7 @@ class purchase_order(osv.osv):
                         move_values.update({'reason_type_id': reason_type_id})
                     
                     move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
-                    if order_line.move_dest_id:
+                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line,):
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)
             self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)

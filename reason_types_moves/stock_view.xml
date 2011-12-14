@@ -214,9 +214,12 @@
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
                                 <field name="location_dest_id" domain="[('usage','in',('internal', 'inventory', 'procurement', 'production'))]" on_change="location_dest_change(location_dest_id)" />
                         </xpath>
+                        
+                        <!-- MOVED TO SPECIFIC_RULES
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
                                 <field name="location_id" domain="[('usage','in',('internal', 'procurement', 'production'))]" />
                         </xpath>
+                        -->
 
                </data>
             </field>
