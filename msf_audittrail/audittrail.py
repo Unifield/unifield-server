@@ -298,7 +298,7 @@ def get_value_text(self, cr, uid, field_name, values, model, context=None):
             res = []
             for relation_model_object in relation_model_pool.read(cr, uid, values, [relation_model_pool._rec_name]):
                 res.append(relation_model_object[relation_model_pool._rec_name])
-            return res
+            return res            
 
     return values
 
@@ -402,6 +402,9 @@ def create_log_line(self, cr, uid, model, lines=[]):
                     new_value = new_value[0]
                 # Get the readable name of the related field
                 new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
+            elif field['ttype'] == 'many2many':
+                old_value = old_value_text
+                new_value = new_value_text
             elif field['ttype'] == 'selection':
                 fct_object = self.pool.get('ir.model').browse(cr, uid, fct_object_id or object_id).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
