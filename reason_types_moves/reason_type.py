@@ -294,13 +294,13 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
                 
         # Change the reason type of the picking if it is not the same
-        if 'picking_id' in vals:
+        if vals.get('picking_id'):
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
             if pick_id.reason_type_id.id != vals['reason_type_id']:
                 other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                 self.pool.get('stock.picking').write(cr, uid, vals['picking_id'], {'reason_type_id': other_type_id}, context=context)
 
-        return super(stock_move, self).create(cr, uid, vals, context)
+        return super(stock_move, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context={}):
         '''
@@ -316,11 +316,11 @@ class stock_move(osv.osv):
         # Change the reason type of the picking if it is not the same
         if 'reason_type_id' in vals:
             for pick_id in self.browse(cr, uid, ids, context=context):
-                if pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
+                if pick_id.picking_id and pick_id.picking_id.reason_type_id.id != vals['reason_type_id']:
                     other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                     self.pool.get('stock.picking').write(cr, uid, pick_id.picking_id.id, {'reason_type_id': other_type_id}, context=context)
 
-        return super(stock_move, self).write(cr, uid, ids, vals, context)
+        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False):
         '''
