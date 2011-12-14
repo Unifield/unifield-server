@@ -88,7 +88,7 @@ class purchase_order(osv.osv):
                     if not line.analytic_distribution_id:
                         raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
             # Copy analytic_distribution
-            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, po.invoice_ids)
+            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [x.id for x in po.invoice_ids])
         return res
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
