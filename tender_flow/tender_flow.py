@@ -176,7 +176,7 @@ class tender(osv.osv):
                 
             # if some rfq have wrong state, we display a message
             if rfq_list:
-                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Canceled."))
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
             
             # integrity check, all lines must have purchase_order_line_id
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids]):
@@ -202,7 +202,7 @@ class tender(osv.osv):
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('draft', 'rfq_sent',)),], context=context)
         if rfq_ids:
-            raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Canceled."))
+            raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
         # at least one rfq must be updated and not canceled
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('rfq_updated',)),], context=context)

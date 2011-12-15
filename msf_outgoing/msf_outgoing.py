@@ -222,7 +222,7 @@ class shipment(osv.osv):
                                                                                               ('packed', 'Packed'),
                                                                                               ('shipped', 'Shipped'),
                                                                                               ('done', 'Closed'),
-                                                                                              ('cancel', 'Canceled')], string='State', multi='get_vals',
+                                                                                              ('cancel', 'Cancelled')], string='State', multi='get_vals',
                                          store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
                 }
@@ -861,7 +861,7 @@ class pack_family_memory(osv.osv_memory):
                                                                                               ('assigned', 'Available'),
                                                                                               ('stock_return', 'Returned to Stock'),
                                                                                               ('ship_return', 'Returned from Shipment'),
-                                                                                              ('cancel', 'Canceled'),
+                                                                                              ('cancel', 'Cancelled'),
                                                                                               ('done', 'Done'),], string='State', multi='get_vals',),
                 'location_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Src Loc.', multi='get_vals',),
                 'location_dest_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Dest. Loc.', multi='get_vals',),
