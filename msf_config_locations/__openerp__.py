@@ -38,6 +38,7 @@
     "init_xml" : [
     ],
     "update_xml" : [
+        'stock_configuration_view.xml',
         'msf_location_data.xml',
     ],
     "demo_xml" : [

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="stock_location_configuration_wizard" model="ir.ui.view">
+			<field name="name">stock.location.configuration.wizard</field>
+			<field name="model">stock.location.configuration.wizard</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="New location creation">
+					<separator colspan="4" string="Location configuration" />
+					<field name="location_name" colspan="4" />
+					<field name="location_type" colspan="4" attrs="{'readonly': [('location_name', '=', False)], 
+																    'required': [('location_name', '!=', False)],}" />
+					<field name="location_in_out" colspan="4" attrs="{'invisible': [('location_type', '!=', 'cu')],
+																      'required': [('location_type', '=', 'cu')]}" />
+					<separator colspan="4" string="Actions" />
+					<button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2" />
+					<button name="confirm_creation" icon="terp-camera_test" string="Confirm" colspan="2" type="object" />
+				</form>
+			</field>
+		</record>
+		
+		<record id="action_stock_location_configuration_wizard" model="ir.actions.act_window">
+			<field name="name">Create new stock location</field>
+			<field name="res_model">stock.location.configuration.wizard</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">form</field>
+			<field name="target">new</field>
+		</record>
+		
+		<menuitem id="menu_stock_location_configuration_wizard"
+				  action="action_stock_location_configuration_wizard"
+				  parent="stock.menu_warehouse_config" />
+		
+	</data>
+</openerp>

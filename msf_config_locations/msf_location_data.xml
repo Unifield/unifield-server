@@ -245,6 +245,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
         <field name="posz">3</field>
     </record>
 
@@ -256,6 +257,7 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
         <field name="posz">1</field>
     </record>
     
@@ -267,16 +269,7 @@
         <field name="chained_location_type">fixed</field>
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">internal</field>
-    </record>
-
-    <record id="stock_location_intermediate_is0" model="stock.location">
-        <field name="name">Intermediate Stock IS0</field>
-        <field name="location_category">stock</field>
-        <field name="usage">internal</field>
-        <field name="location_id" ref="stock_location_intermediate_client_view" />
-        <field name="chained_location_type">none</field>
-        <field name="chained_auto_packing">manual</field>
+        <field name="active" eval="False" />
         <field name="chained_picking_type">internal</field>
     </record>
 
@@ -288,17 +281,8 @@
         <field name="chained_location_type">none</field>
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
         <field name="posz">2</field>
-    </record>
-
-    <record id="stock_location_consumption_unit_cu0" model="stock.location">
-        <field name="name">Consumption Unit CU0</field>
-        <field name="location_category">consumption_unit</field>
-        <field name="usage">internal</field>
-        <field name="location_id" ref="stock_location_consumption_units_view" />
-        <field name="chained_location_type">none</field>
-        <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">internal</field>
     </record>
     
     <record id="stock_location_internal_suppliers_view" model="stock.location">
@@ -365,26 +349,6 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">out</field>
         <field name="posz">1</field>
-    </record>
-
-    <record id="stock_location_cust_consumption_unit_cu0" model="stock.location">
-        <field name="name">Consumption Unit CU0</field>
-        <field name="location_category">consumption_unit</field>
-        <field name="usage">customer</field>
-        <field name="location_id" ref="stock.stock_location_internal_customers" />
-        <field name="chained_location_type">none</field>
-        <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">out</field>
-    </record>
-
-    <record id="stock_location_activity_alpha" model="stock.location">
-        <field name="name">Activity a</field>
-        <field name="location_category">other</field>
-        <field name="usage">customer</field>
-        <field name="location_id" ref="stock.stock_location_internal_customers" />
-        <field name="chained_location_type">none</field>
-        <field name="chained_auto_packing">manual</field>
-        <field name="chained_picking_type">out</field>
     </record>
 
     <record id="stock.warehouse0" model="stock.warehouse">
