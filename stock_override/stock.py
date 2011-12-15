@@ -420,6 +420,7 @@ class stock_location(osv.osv):
                                      "\n* Nomenclature: The chained location is taken from the options field: Chained Location is according to the nomenclature level of product."\
                                     ),
         'chained_options_ids': fields.one2many('stock.location.chained.options', 'location_id', string='Chained options'),
+        'optional_loc': fields.boolean(string='Is an optional location ?'),
     }
 
     #####

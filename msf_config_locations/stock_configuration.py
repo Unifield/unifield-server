@@ -39,9 +39,9 @@ class stock_location_configuration_wizard(osv.osv_memory):
     
     _columns = {
         'location_name': fields.char(size=64, string='Location name', required=True),
-        'location_type': fields.selection([('stock', 'Stock'), ('cu', 'Consumption Unit'), ('eprep', 'EPREP')],
+        'location_usage': fields.selection([('stock', 'Stock'), ('cu', 'Consumption Unit'), ('eprep', 'EPREP')],
                                           string='Location usage'),
-        'location_in_out': fields.selection([('in', 'Internal'), ('out', 'Partner')], string='Location type'),
+        'location_type': fields.selection([('in', 'Internal'), ('out', 'External')], string='Location type'),
     }
 
     def confirm_creation(self, cr, uid, ids, context={}):
@@ -60,7 +60,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             location_name = wizard.location_name
             # Check if all parent locations are activated in the system
-            if wizard.location_type in ('stock', 'eprep') or (wizard.location_in_out == 'in' and wizard.location_type == 'cu'):
+            if wizard.location_usage in ('stock', 'eprep') or (wizard.location_type == 'in' and wizard.location_usage == 'cu'):
                 # Check if 'Configurable locations' location is active − If not, activate it !
                 location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')
                 if not location_id:
@@ -69,8 +69,8 @@ class stock_location_configuration_wizard(osv.osv_memory):
                 if not location_obj.browse(cr, uid, location_id, context=context).active:
                     location_obj.write(cr, uid, [location_id[1]], {'active': True}, context=context)
                 
-                if wizard.location_type in ('stock', 'eprep'):
-                    if wizard.location_type == 'stock':
+                if wizard.location_usage in ('stock', 'eprep'):
+                    if wizard.location_usage == 'stock':
                         location_category = 'stock'
                         location_usage = 'internal'
                     else:
@@ -93,7 +93,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     
                     if not location_obj.browse(cr, uid, parent_location_id, context=context).active:
                         location_obj.write(cr, uid, [parent_location_id], {'active': True}, context=context)
-                elif wizard.location_type == 'cu':
+                elif wizard.location_usage == 'cu':
                     location_category = 'consumption_unit'
                     location_usage = 'internal'
                     # Check if 'Internal Consumption Units' is active − If note activate it !
@@ -108,7 +108,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                         location_obj.write(cr, uid, [parent_location_id], {'active': True}, context=context)
                 else:
                     raise osv.except_osv(_('Error'), _('The type of the new location is not correct ! Please check the parameters and retry.'))
-            elif wizard.location_in_out == 'out' and wizard.location_type == 'cu':
+            elif wizard.location_type == 'out' and wizard.location_usage == 'cu':
                 location_category = 'consumption_unit'
                 location_usage = 'customer'
                 chained_picking_type = 'out'
@@ -136,6 +136,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                                       'chained_auto_packing': chained_auto_packing,
                                       'chained_picking_type': chained_picking_type,
                                       'chained_location_id': chained_location_id,
+                                      'optional_loc': True,
                                       }, context=context)
         
         return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
@@ -145,11 +146,162 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     'res_model': 'stock.location',
                     'domain': [('location_id','=',False)],
                     'view_type': 'tree',
+                    'target': 'crush',
                     'view_id': [return_view_id[1]],
                     }
         else:
             return {'type': 'ir.actions.act_window'}
     
 stock_location_configuration_wizard()
+
+
+class stock_remove_location_wizard(osv.osv_memory):
+    _name = 'stock.remove.location.wizard'
+    
+    _columns = {
+        'location_id': fields.many2one('stock.location', string='Location to remove'),
+        'location_usage': fields.selection([('internal', 'Internal'), ('customer', 'External')], string='Location type'),
+        'location_category': fields.selection([('eprep', 'EPREP'), ('stock', 'Stock'), ('consumption_unit', 'Consumption Unit')],
+                                              string='Location type'),
+        'error_message': fields.text(string='Information Message', readonly=True),
+        'error': fields.boolean(string='Error'),
+        'move_from_to': fields.boolean(string='Has a move from/to the location'),
+        'not_empty': fields.boolean(string='Location not empty'),
+        'has_child': fields.boolean(string='Location has children locations'),
+    }
+    
+    def location_id_on_change(self, cr, uid, ids, location_id, context={}):
+        '''
+        Check if no moves to this location aren't done
+        Check if there is no stock in this location
+        '''
+        res = {'error_message': '', 
+               'move_from_to': False, 
+               'not_empty': False,
+               'has_child': False}
+        warning = {}
+        error = False
+        
+        if location_id:
+            location = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
+            # Check if no moves to this location aren't done
+            move_from_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
+            if move_from_to:
+                error = True
+                res['move_from_to'] = True
+                res['error_message'] += '''* You have at least one move from or to the location '%s' which is not 'Done'.
+Please click on the 'See moves' button to see which moves are still in progress from/to this location.''' %location.name
+                res['error_message'] += '\n' + '\n'
+            # Check if no stock in the location
+            if location.stock_real and location.usage == 'internal':
+                error = True
+                res['not_empty'] = True
+                res['error_message'] += '''* The location '%s' is not empty of products. 
+Please click on the 'Products in location' button to see which products are still in the location.''' %location.name
+                res['error_message'] += '\n' + '\n'
+
+            # Check if the location has children locations
+            if location.child_ids:
+                error = True
+                res['has_child'] = True
+                res['error_message'] += '''* The location '%s' has children locations.
+Please remove all children locations before remove it. 
+Please click on the 'Children locations' button to see all children locations.''' %location.name
+                res['error_message'] += '\n' + '\n'
+                
+        if error:
+            warning.update({'title': 'Be careful !',
+                            'message': 'You have a problem with this location − Please see the message in the form for more information.'})
+            
+        res['error'] = error
+        
+        return {'value': res,
+                'warning': warning}
+        
+    def location_usage_change(self, cr, uid, ids, usage, context={}):
+        if usage and usage == 'customer':
+            return {'value': {'location_category': 'consumption_unit'}} 
+        
+        return {}
+        
+    def deactivate_location(self, cr, uid, ids, context={}):
+        '''
+        Deactivate the selected location
+        '''
+        raise osv.except_osv('Error', 'Not implemented')
+        return True
+    
+    def see_moves(self, cr, uid, ids, context={}):
+        '''
+        Returns all stock.picking containing a stock move not done from/to the location
+        '''
+        location = False
+        picking_ids = []
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            location = wizard.location_id
+            
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
+        for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
+            if move.picking_id and move.picking_id.id not in picking_ids:
+                picking_ids.append(move.picking_id.id)
+                
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'vpicktree')[1]
+        if location.usage == 'customer':
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1]
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.picking',
+                'domain': [('id', 'in', picking_ids)],
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'target': 'current',
+                }
+        
+    def products_in_location(self, cr, uid, ids, context={}):
+        '''
+        Returns a list of products in the location
+        '''
+        location = False
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            location = wizard.location_id
+            
+        context.update({'contact_display': 'partner', 'search_default_real':1, 
+                        'search_default_location_type_internal':1,
+                        'search_default_group_product':1,
+                        'group_by':[], 'group_by_no_leaf':1})
+        context.update({'search_default_location_id': location.id})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'report.stock.inventory',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'domain': [('location_id', '=', location.id)],
+                'context': context,
+                'target': 'current'}
+        
+    def children_location(self, cr, uid, ids, context={}):
+        '''
+        Returns the list of all children locations
+        '''
+        location_ids = []
+        location = False
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            location = wizard.location_id
+            
+        for loc in location.child_ids:
+            location_ids.append(loc.id)
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.location',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'domain': [('id', 'in', location_ids)],
+                'target': 'current',}
+    
+stock_remove_location_wizard()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
