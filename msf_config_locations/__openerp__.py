@@ -33,6 +33,7 @@
         'stock',
         'product_nomenclature',
         'msf_outgoing',
+        'stock_override',
     ],
     "init_xml" : [
     ],

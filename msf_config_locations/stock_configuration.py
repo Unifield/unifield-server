@@ -22,4 +22,12 @@
 from osv import osv
 from osv import fields
 
+class stock_location(osv.osv):
+    _name = "stock.location"
+    _inherit = 'stock.location'
+    _parent_order = 'posz'
+    _order = 'posz'
+    
+stock_location()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
