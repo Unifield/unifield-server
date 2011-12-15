@@ -45,15 +45,14 @@
 					<field name="not_empty" invisible="1" />
 					<field name="has_child" invisible="1" />
 					<separator string="Parameters" colspan="4" />
-					<field name="location_usage" string="Which is the usage of the location to remove ?" colspan="4" required="1" 
-						   on_change="location_usage_change(location_usage)"/>
+					<!--<field name="location_usage" string="Which is the usage of the location to remove ?" colspan="4" 
+						   on_change="location_usage_change(location_usage)" />
 					<newline />
-					<field name="location_category" string="Which is the type of the location to remove ?" colspan="4" required="1"
+					<field name="location_category" string="Which is the type of the location to remove ?" colspan="4"
 						   attrs="{'invisible': [('location_usage', '=', False)], 'readonly': [('location_usage', '=', 'customer')]}" />
-					<newline />
+					<newline />-->
 					<field name="location_id" string="Choose a location" colspan="4" required="1" 
-							attrs="{'invisible': [('location_usage', '=', False), ('location_category', '=', False)]}" 
-							on_change="location_id_on_change(location_id)" domain="[('optional_loc', '=', True), ('usage', '=', location_usage), ('location_category', '=', location_category)]"/>
+							on_change="location_id_on_change(location_id)" domain="[('optional_loc', '=', True), ('usage', 'not in', ['view',])]"/>
 					<group colspan="4" col="3" attrs="{'invisible': [('error', '=', False)]}">
 						<separator string="Message" colspan="4" />
 						<field name="error_message" nolabel="1" colspan="4" />

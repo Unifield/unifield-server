@@ -246,6 +246,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
         <field name="posz">3</field>
     </record>
 
@@ -258,10 +259,11 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
         <field name="posz">1</field>
     </record>
     
-    <record id="stock_location_eprep" model="stock.location">
+<!--     <record id="stock_location_eprep" model="stock.location">
         <field name="name">EPREP</field>
         <field name="location_category">eprep</field>
         <field name="usage">internal</field>
@@ -270,8 +272,9 @@
         <field name="chained_location_id" ref="stock.stock_location_stock" />
         <field name="chained_auto_packing">manual</field>
         <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
         <field name="chained_picking_type">internal</field>
-    </record>
+    </record> -->
 
     <record id="stock_location_consumption_units_view" model="stock.location">
         <field name="name">Internal Consumption Units</field>
@@ -282,6 +285,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
         <field name="posz">2</field>
     </record>
     

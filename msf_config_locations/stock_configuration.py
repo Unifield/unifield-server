@@ -218,6 +218,21 @@ Please click on the 'Children locations' button to see all children locations.''
         return {'value': res,
                 'warning': warning}
         
+    def check_error(self, cr, uid, ids, context={}):
+        '''
+        Check if errors are always here
+        '''
+        for wizard in self.browse(cr, uid, ids, context=context):
+            errors = self.location_id_on_change(cr, uid, ids, wizard.location_id.id, context=context)
+            self.write(cr, uid, ids, errors.get('value', {}), context=context)
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.remove.location.wizard',
+                'res_id': wizard.id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',}
+        
     def location_usage_change(self, cr, uid, ids, usage, context={}):
         if usage and usage == 'customer':
             return {'value': {'location_category': 'consumption_unit'}} 
@@ -228,8 +243,51 @@ Please click on the 'Children locations' button to see all children locations.''
         '''
         Deactivate the selected location
         '''
-        raise osv.except_osv('Error', 'Not implemented')
-        return True
+        location = False
+        data_obj = self.pool.get('ir.model.data')
+        location_obj = self.pool.get('stock.location')
+        configurable_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
+        intermediate_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
+        internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+        
+        for wizard in self.browse(cr, uid, ids, context=context):
+            if wizard.error or wizard.has_child or wizard.not_empty or wizard.move_from_to:
+                raise osv.except_osv(_('Error'), _('You cannot remove this location because some errors are still here !'))
+            
+            location = wizard.location_id
+        
+        # De-activate the location
+        location_obj.write(cr, uid, [location.id], {'active': False}, context=context)
+            
+        # Check if parent location should be also de-activated
+        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id):
+            empty = True
+            for child in location.location_id.child_ids:
+                if child.active:
+                    empty = False
+            if empty:
+                location_obj.write(cr, uid, [location.location_id.id], {'active': False}, context=context)
+                
+                if location.location_id.location_id.id == configurable_loc_id:
+                    empty2 = True
+                    for child in location.location_id.location_id.child_ids:
+                        if child.active:
+                            empty2 = False
+                    if empty2:
+                        location_obj.write(cr, uid, [location.location_id.location_id.id], {'active': False}, context=context)
+            
+        return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
+        
+        if return_view_id:
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'stock.location',
+                    'domain': [('location_id','=',False)],
+                    'view_type': 'tree',
+                    'target': 'crush',
+                    'view_id': [return_view_id[1]],
+                    }
+        else:
+            return {'type': 'ir.actions.act_window'}
     
     def see_moves(self, cr, uid, ids, context={}):
         '''
