@@ -196,9 +196,9 @@ class account_commitment(osv.osv):
             vals['period_id'] = periods[0]
         return {'value': vals}
 
-    def action_commitment_open(self, cr, uid, ids, context={}):
+    def create_analytic_lines(self, cr, uid, ids, context={}):
         """
-        To do when we validate a commitment.
+        Create analytic line for given commitment voucher.
         """
         # Some verifications
         if not context:
@@ -219,10 +219,26 @@ class account_commitment(osv.osv):
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
-                # Create engagement journal lines
-                self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
-                    cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
-                    c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+                # Search if analytic lines exists for this commitment voucher line
+                al_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
+                if not al_ids:
+                    # Create engagement journal lines
+                    self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', c.date, 
+                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.purchase_id and c.purchase_id.name or False, 
+                        c.date, cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+        return True
+
+    def action_commitment_open(self, cr, uid, ids, context={}):
+        """
+        To do when we validate a commitment.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse commitments and create analytic lines
+        self.create_analytic_lines(cr, uid, ids, context=context)
         # Validate commitment voucher
         return self.write(cr, uid, ids, {'state': 'open'}, context=context)
 

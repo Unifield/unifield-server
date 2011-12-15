@@ -902,21 +902,42 @@ class analytic_distribution_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             distrib = wizard.distribution_id or False
-            move_lines = [x.id for x in distrib.move_line_ids]
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
             if not distrib:
                 return False
-            # Search account analytic lines attached to this move lines
-            operator = 'in'
-            if len(move_lines) == 1:
-                operator = '='
-            aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
-            if aal_ids:
-                # delete old analytic lines
-                aal_obj.unlink(cr, uid, aal_ids, context=context)
-                # create new analytic lines
-                ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+            if wizard.move_line_id:
+                move_lines = [x.id for x in distrib.move_line_ids]
+                # Search account analytic lines attached to this move lines
+                operator = 'in'
+                if len(move_lines) == 1:
+                    operator = '='
+                aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
+                if aal_ids:
+                    # delete old analytic lines
+                    aal_obj.unlink(cr, uid, aal_ids, context=context)
+                    # create new analytic lines
+                    ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+            elif wizard.commitment_line_id:
+                # Do process only if commitment is on 'open' state
+                if wizard.commitment_line_id.commit_id and wizard.commitment_line_id.commit_id.state == 'open':
+                    self.pool.get('account.commitment.line').update_analytic_lines(cr, uid, [wizard.commitment_line_id.id], wizard.total_amount, context=context)
+            elif wizard.commitment_id:
+                if wizard.commitment_id.state == 'open':
+                    # Search commitment lines that doesn't have any distribution and that are linked to this commitment
+                    cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', wizard.commitment_id.id), 
+                        ('analytic_distribution_id', '=', False)], context=context)
+                    if cl_ids:
+                        operator = 'in'
+                        if len(cl_ids) == 1:
+                            operator = '='
+                        # Search all analytic lines linked to this commitment lines
+                        aal_ids = aal_obj.search(cr, uid, [('commitment_line_id', operator, cl_ids)], context=context)
+                        if aal_ids:
+                            # delete old analytic lines
+                            aal_obj.unlink(cr, uid, aal_ids, context=context)
+                            # create new analytic lines
+                            self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
         return True
 
 analytic_distribution_wizard()
