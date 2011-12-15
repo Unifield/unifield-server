@@ -39,7 +39,6 @@
         "account_activable",
         "msf_order_date",
         "purchase_compare_rfq",
-        "account_budget_definition",
         "purchase_msf",
         "product_asset",
         "order_nomenclature",
@@ -74,6 +73,7 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
+        "msf_budget",
 #        "analytic_distribution_purchase",
     ],
     "update_xml": [

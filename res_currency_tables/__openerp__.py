@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,24 +19,23 @@
 #
 ##############################################################################
 {
-    "name" : "Financing Contracts for MSF",
-    "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["res_currency_tables", "funding_pool"],
-    "description": """Module for defining financing contract and donor objects.
+    "name": "Fx Tables Management",
+    "version": "1.0",
+    "depends": ["res_currency_functional"],
+    "category": "General/Standard",
+    "description": """
+    This module aims to have other subsets of currencies, and have them available
+    for financing contracts and budgets.
+    
     """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
+    "init_xml": [
+    ],
+    'update_xml': [
+        'res_currency_view.xml',
     ],
     'test': [
-        'test/financing_contract.yml'
     ],
-    'demo_xml': [
-    ],
+    'demo_xml': [],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',

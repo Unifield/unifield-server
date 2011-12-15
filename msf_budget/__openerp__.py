@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,23 +19,20 @@
 #
 ##############################################################################
 {
-    "name" : "Financing Contracts for MSF",
-    "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["res_currency_tables", "funding_pool"],
-    "description": """Module for defining financing contract and donor objects.
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
+    'name': 'MSF Budget Management',
+    'version': '1.0',
+    'category': 'Generic Modules/Accounting',
+    'author': 'MSF: Matthieu Dietrich',
+    'depends': ['res_currency_tables'],
+    'description': '''
+        Budget view
+    ''',
+    'init_xml': [],
+    'update_xml': [
+        'msf_budget_view.xml',
+        'msf_budget_workflow.xml',
     ],
     'test': [
-        'test/financing_contract.yml'
-    ],
-    'demo_xml': [
     ],
     'installable': True,
     'active': False,
