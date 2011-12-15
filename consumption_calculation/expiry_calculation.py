@@ -185,16 +185,17 @@ class product_likely_expire_report(osv.osv_memory):
         'msf_instance': lambda *a: 'MSF Instance',
     }
 
-    def period_change(self, cr, uid, ids, consumption_from, consumption_to, context={}):
+    def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context={}):
         '''
         Get the first or last day of month
         '''
         res = {}
 
-        if consumption_from:
-            res.update({'consumption_from': (DateFrom(period_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
-        if period_to:
-            res.update({'consumption_to': (DateFrom(period_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+        if consumption_type == 'amc':
+            if consumption_from:
+                res.update({'consumption_from': (DateFrom(consumption_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+            if consumption_to:
+                res.update({'consumption_to': (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
 
         return {'value': res}
             
