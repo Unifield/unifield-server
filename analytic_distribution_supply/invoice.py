@@ -194,7 +194,10 @@ class account_invoice(osv.osv):
                                         # delete processed engagement lines
                                         engagement_lines[i] = None
                     # update existent commitment line with new amount (new_mnt)
-                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': cl.amount - new_mnt}, context=context)
+                    commitment_line_new_amount = cl.amount - new_mnt
+                    if commitment_line_new_amount < 0.0:
+                        commitment_line_new_amount = 0.0
+                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': commitment_line_new_amount}, context=context)
                     # add cl to processed_commitment_line
                     processed_commitment_line.append(cl.id)
             # Update commitment voucher state (if total_amount is inferior to 0.0, then state is done)

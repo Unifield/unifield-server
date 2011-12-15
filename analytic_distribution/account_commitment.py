@@ -402,16 +402,18 @@ class account_commitment_line(osv.osv):
             if not distrib_id:
                 distrib_id = cl.commit_id and cl.commit_id.analytic_distribution_id and cl.commit_id.analytic_distribution_id.id or False
             if distrib_id:
-                analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distribution_id', '=', distrib_id)], context=context)
+                analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
+                ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', cl.commit_id.date, amount, 
-                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, False, cl.commit_id.date, cl.account_id.id, False, False, cl.id, context=context)
+                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, cl.account_id.id, False, False, cl.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context={}):
         """
         Verify that given account_id (in vals) is not 'view'.
         Update initial amount with those given by 'amount' field.
+        Verify amount sign.
         """
         # Some verifications
         if not context:
@@ -424,6 +426,9 @@ class account_commitment_line(osv.osv):
         # Update initial amount
         if not vals.get('initial_amount', 0.0) and vals.get('amount', 0.0):
             vals.update({'initial_amount': vals.get('amount')})
+        # Verify amount validity
+        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+            raise osv.except_osv(_('Warning'), _('Amount should be superior to 0!'))
         return super(account_commitment_line, self).create(cr, uid, vals, context={})
 
     def write(self, cr, uid, ids, vals, context={}):
@@ -431,6 +436,7 @@ class account_commitment_line(osv.osv):
         Verify that given account_id is not 'view'.
         Update initial_amount if amount in vals and type is 'manual' and state is 'draft'.
         Update analytic distribution if amount in vals.
+        Verify amount sign.
         """
         # Some verifications
         if not context:
@@ -440,6 +446,9 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
+        # Verify amount validity
+        if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
+            raise osv.except_osv(_('Warning'), _('Amount should be superior to 0!'))
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
             # verify analytic distribution only on 'open' commitments
@@ -461,7 +470,6 @@ class account_commitment_line(osv.osv):
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), context=context)
             elif line.commit_id and line.commit_id.state and line.commit_id.state == 'draft' and vals.get('amount', 0.0):
                 vals.update({'initial_amount': vals.get('amount')})
-        # FIXME FIXME FIXME: change commitment voucher state if all lines are 0 ?
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
