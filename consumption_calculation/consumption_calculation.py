@@ -247,10 +247,10 @@ class real_average_consumption(osv.osv):
         
         outfile = TemporaryFile('w+')
         writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Consumed Qty', 'Remark'])
+        writer.writerow(['Product reference', 'Product name', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
         
         for line in rac.line_ids:
-            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
+            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
         outfile.seek(0)    
         file = base64.encodestring(outfile.read())
         outfile.close()
@@ -350,17 +350,16 @@ class real_average_consumption_line(osv.osv):
     def _get_qty(self, cr, uid, product, lot, location, uom):
         if not product and not lot:
             return False
-        context = {'location_id': location, 'location': location, 'uom': uom}
+        context = {'location_id': location, 'location': location, 'uom': uom, 'compute_child': False}
         if not lot:
             return self.pool.get('product.product').read(cr, uid, product, ['qty_available'], context=context)['qty_available']
             
-        return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_real'], context=context)['stock_real']
+        return self.pool.get('stock.production.lot').read(cr, uid, lot, ['stock_available'], context=context)['stock_available']
 
     def _check_qty(self, cr, uid, ids, context={}):
        
         if context is None:
             context = {}
-
         for obj in self.browse(cr, uid, ids):
             if obj.rac_id.created_ok:
                 continue
@@ -455,6 +454,7 @@ class real_average_consumption_line(osv.osv):
             result['value'].update(prodlot_id=False)
    
         context.update(uom=uom)
+        context.update({'compute_child': False})
         product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
         result['value'].update({'product_qty': product.qty_available})
         
@@ -491,10 +491,11 @@ class real_average_consumption_line(osv.osv):
             res['value'].update({'expiry_date': False})
 
         if not prodlot_id:
+            context.update({'compute_child': False})
             product_qty = self.pool.get('product.product').browse(cr, uid, product_id, context=context).qty_available
         else:
             context.update({'location_id': location_id})
-            product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_real
+            product_qty = self.pool.get('stock.production.lot').browse(cr, uid, prodlot_id, context=context).stock_available
         res['value'].update({'product_qty': product_qty})
 
         return res
@@ -521,6 +522,7 @@ class real_average_consumption_line(osv.osv):
             if location_id:
                 context.update({'location': location_id, 'uom': uom})
 
+            context.update({'compute_child': False})
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             qty_available = product.qty_available
                 
