@@ -153,7 +153,7 @@ class object_query(osv.osv):
             export_obj = self.pool.get('ir.exports')
             
             if query.export_id:
-                export_obj.unlink(cr, uid, query.export_id)
+                export_obj.unlink(cr, uid, query.export_id.id)
 
             export_id = export_obj.create(cr, uid, {'name': query.name,
                                         'resource': query.object_id.model_id.model,})
