@@ -429,7 +429,12 @@ class account_commitment_line(osv.osv):
         # Verify amount validity
         if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
             raise osv.except_osv(_('Warning'), _('Amount should be superior to 0!'))
-        return super(account_commitment_line, self).create(cr, uid, vals, context={})
+        res = super(account_commitment_line, self).create(cr, uid, vals, context={})
+        if res:
+            for cl in self.browse(cr, uid, [res], context=context):
+                if 'amount' in vals and cl.commit_id and cl.commit_id.state and cl.commit_id.state == 'open':
+                    self.update_analytic_lines(cr, uid, [cl.id], vals.get('amount'), context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context={}):
         """
