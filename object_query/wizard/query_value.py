@@ -95,7 +95,7 @@ class search_values(osv.osv_memory):
        
         for sel in obj_q.selection_ids:
             field_name = '%s'%(sel.id)
-            quest_fields['forced_%s'%field_name] = {'type': 'boolean', 'string': 'forced value', 'default': values.get('forced_%s'%(field_name, ))}
+            quest_fields['forced_%s'%field_name] = {'type': 'boolean', 'string': 'forced value', 'default': values.get('forced_%s'%(field_name, )), 'invisible': 1}
 
             if sel.ttype in ('date', 'datetime', 'integer', 'float'):
                 quest_fields['forced_%s'%field_name]['default'] = True

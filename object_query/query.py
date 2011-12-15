@@ -563,6 +563,17 @@ class ir_fields(osv.osv):
                                                       toolbar=toolbar,
                                                       submenu=submenu)
         
+   
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context is None:
+            context = {}
+        if 'special_search_id' in context:
+            # remove duplicate fields name and reference in product
+            ids_to_remove = self.search(cr, uid, [('name', 'in', ['code', 'name_template']), ('model_id', '=', 'product.product')])
+            if ids_to_remove:
+                args.append(('id', 'not in', ids_to_remove))
+        
+        return super(ir_fields, self).search(cr, uid, args, offset, limit, order, context, count)
     
 ir_fields()
 
