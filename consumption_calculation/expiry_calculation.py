@@ -68,8 +68,8 @@ class expiry_quantity_report(osv.osv_memory):
         
         report = self.browse(cr, uid, ids[0], context=context)
         lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])
-        domain = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
-        domain_out = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+        domain = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+        domain_out = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
             
         not_loc_ids = []
         # Remove input and output location
