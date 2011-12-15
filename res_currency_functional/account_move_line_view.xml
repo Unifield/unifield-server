@@ -19,11 +19,11 @@
                     <field name="account_id"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
-                    <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
+                    <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="currency_id" string="Booking Currency"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
                     <field name="debit" sum="Total Functional Debit" string="Functional Out"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional In"/>
                     <field name="functional_currency_id"/>
                     <field name="state"/>
                     <field name="reconcile_total_partial_id" />
@@ -101,11 +101,11 @@
                         attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
-                    <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>
+                    <field name="credit_currency" sum="Total Booking Credit"/>
                     <field name="currency_id" string="Booking Currency"/>
-                    <field name="credit" sum="Total Functional Credit" string="Functional In" readonly="1"/>
-                    <field name="debit" sum="Total Functional Debit" string="Functional Out" readonly="1"/>
+                    <field name="debit" sum="Total Functional Debit" string="Functional Debit" readonly="1"/>
+                    <field name="credit" sum="Total Functional Credit" string="Functional Credit" readonly="1"/>
                     <field name="functional_currency_id" readonly="1"/>
                     <field name="reconcile_total_partial_id" readonly="1"/>
                     <field name="state"/>
