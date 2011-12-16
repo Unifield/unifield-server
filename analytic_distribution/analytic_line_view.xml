@@ -13,7 +13,7 @@
                 <data>
                     <xpath expr="/tree/field[@name='date']" position='before'>
                         <field name="is_reallocated" invisible="1"/>
-                        <button name="button_reallocated" type="object" string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
+                        <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     </xpath>
                 </data>
             </field>
