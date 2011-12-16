@@ -83,6 +83,18 @@
 		<menuitem id="menu_stock_remove_location_wizard"
 				  action="action_stock_remove_location_wizard"
 				  parent="stock.menu_warehouse_config" />
+				  
+		<record id="view_location_tree" model="ir.ui.view">
+		    <field name="name">view.location.tree</field>
+		    <field name="model">stock.location</field>
+		    <field name="type">tree</field>
+		    <field name="inherit_id" ref="stock.view_location_tree" />
+		    <field name="arch" type="xml">
+		        <xpath expr="/tree" position="attributes">
+		            <attribute name="expand_button">1</attribute>
+		        </xpath>
+		    </field>
+		</record>
 		
 	</data>
 </openerp>
