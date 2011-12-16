@@ -146,7 +146,6 @@ class mass_reallocation_wizard(osv.osv_memory):
                 valid_ids = self.pool.get('account.analytic.line').check_analytic_account(cr, uid, tmp_to_process, account_id, context=context)
                 process_ids.extend(valid_ids)
                 error_ids.extend([x for x in tmp_to_process if x not in valid_ids])
-        print "RESULT: ERR, %s NS, %s PROC, %s" % (error_ids, non_supported_ids, process_ids)
         vals = {'account_id': account_id,}
         # Display of elements
         if error_ids:

@@ -65,9 +65,14 @@
                                 </tree>
                             </field>
                         </group>
-                        <separator string="Reconciliation"/>
-                        <field name="reconciled"/><field name="reconcile_id"/>
-                        
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <separator string="Reconciliation"/>
+                            <field name="reconciled"/><field name="reconcile_id"/>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <separator string="Reallocation"/>
+                            <field name="reallocated"/><field name="reversed"/>
+                        </group>
                     </group>
                     <separator string="Amount &amp; Currency"/>
                     <group col="8" colspan="6">
