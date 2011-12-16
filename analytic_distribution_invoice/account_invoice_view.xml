@@ -20,8 +20,8 @@
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='account_analytic_id']" position="replace">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
-                        <field name="analytic_distribution_state"/>
                         <field name="have_analytic_distribution_from_header"/>
+                        <field name="analytic_distribution_state" />
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']" position="attributes">
                         <attribute name="colors">blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')</attribute>
@@ -39,12 +39,13 @@
             <field name="arch" type="xml">
                 <field name="account_analytic_id" position="replace">
                     <group colspan="6">
-                        <field name="analytic_distribution_line_count" string="Analytic distribution" colspan="2"/>
-                        <field name="newline" invisible="1" />
-                        <group colspan="2" col="3">
+                        <group colspan="2" col="4">
+                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': ['|',('newline', '=', True),('analytic_distribution_state', '!=', 'valid')]}" />
+                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': ['|',('newline', '=', True), ('analytic_distribution_state', '=', 'valid')]}" />
                             <field name="have_analytic_distribution_from_header"/>
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="1" attrs="{'invisible': [('newline', '=', True)]}" />
                         </group>
+                        <field name="analytic_distribution_state" invisible="1"/>
+                        <field name="newline" invisible="1" />
                     </group>
                 </field>
             </field>
