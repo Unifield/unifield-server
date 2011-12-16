@@ -73,6 +73,8 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     if wizard.location_usage == 'stock':
                         location_category = 'stock'
                         location_usage = 'internal'
+                        # Check if 'Intermediate Stocks' is active − If note activate it !
+                        parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
                     else:
                         location_stock_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')
                         if not location_stock_id:
@@ -83,8 +85,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                         chained_auto_packing = 'manual'
                         chained_picking_type = 'internal'
                         chained_location_id = location_stock_id[1]
-                    # Check if 'Intermediate Stocks' is active − If note activate it !
-                    parent_location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')
+                        parent_location_id = location_id
                 
                     if not parent_location_id:
                         raise osv.except_osv(_('Error'), _('Location \'Intermediate Stocks\' not found in the instance or is not activated !'))
@@ -260,7 +261,7 @@ Please click on the 'Children locations' button to see all children locations.''
         location_obj.write(cr, uid, [location.id], {'active': False}, context=context)
             
         # Check if parent location should be also de-activated
-        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id):
+        if location.location_id.id in (intermediate_loc_id, internal_cu_loc_id, configurable_loc_id):
             empty = True
             for child in location.location_id.child_ids:
                 if child.active:
