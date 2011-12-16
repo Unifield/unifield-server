@@ -64,6 +64,7 @@ class account_mcdb(osv.osv_memory):
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Analytic Account"),
+        'reversed': fields.boolean(string='Reversed?'),
     }
 
     _defaults = {
@@ -202,6 +203,10 @@ class account_mcdb(osv.osv_memory):
                 ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
+            # And BOOLEAN fields
+            for b in [('reversed', 'is_reversal')]:
+                if getattr(wiz, b[0]):
+                    domain.append((b[1], '=', True))
             # Finally others fields
             # LOOKS LIKE fields
             for ll in [('ref', 'ref'), ('name', 'name')]:
@@ -214,6 +219,12 @@ class account_mcdb(osv.osv_memory):
             for inf in [('posting_date_to', 'date')]:
                 if getattr(wiz, inf[0]):
                     domain.append((inf[1], '<=', getattr(wiz, inf[0])))
+            # RECONCILE field
+            if wiz.reconciled:
+                if wiz.reconciled == 'reconciled':
+                    domain.append(('reconcile_id', '!=', False))
+                elif wiz.reconciled == 'unreconciled':
+                    domain.append(('reconcile_id', '=', False))
             ## SPECIAL fields
             #
             # AMOUNTS fields
