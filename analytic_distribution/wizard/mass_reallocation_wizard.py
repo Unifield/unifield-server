@@ -128,32 +128,18 @@ class mass_reallocation_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
-            # Don't process lines that are not from choosen category. For an example it's useless to treat line that have a funding pool if we choose a cost center account.
+            # Don't process lines:
+            # - that are not from choosen category. For an example it's useless to treat line that have a funding pool if we choose a cost center account.
             # Nevertheless line that have a funding pool line could be indirectally be modified by a change of cost center.
+            # - that have same account
+            # - that are commitment lines
+            # - that have been reallocated
+            # - that have been reversed
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                ('account_id.category', '!=', wiz.account_id.category)], context=context)
+                '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True)], context=context)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)
-            # Search line that have same account as given account_id (useless to treat a line that already have the given account)
-            same_account_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                ('account_id', '=', account_id)], context=context)
-            if same_account_ids:
-                non_supported_ids.extend(same_account_ids)
-            # Search commitment_lines
-            commitment_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                ('commitment_line_id', '!=', False)], context=context)
-            if commitment_line_ids:
-                non_supported_ids.extend(commitment_line_ids)
-            # Search reallocated_lines
-            reallocated_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                ('is_reallocated', '=', True)])
-            if reallocated_line_ids:
-                non_supported_ids.extend(reallocated_line_ids)
-            # Search reverse lines
-            reverse_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                ('is_reversal', '=', True)])
-            if reverse_line_ids:
-                non_supported_ids.extend(reverse_line_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids
             tmp_to_process = [x for x in to_process if x not in non_supported_ids]
             if tmp_to_process:
