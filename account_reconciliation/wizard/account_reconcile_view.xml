@@ -29,5 +29,32 @@
             </field>
         </record>
 
+    <!-- Delete image tag from unreconcile wizard -->
+        <record id="inherit_account_unreconcile_reconcile_view" model="ir.ui.view">
+            <field name="name">Unreconcile Entries</field>
+            <field name="model">account.unreconcile.reconcile</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.account_unreconcile_reconcile_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/image" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="inherit_account_unreconcile_view" model="ir.ui.view">
+            <field name="name">Unreconcile Entries</field>
+            <field name="model">account.unreconcile</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.account_unreconcile_view"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/image" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
     </data>
 </openerp>
