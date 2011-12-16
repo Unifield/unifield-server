@@ -81,9 +81,9 @@ class account_move_line_compute_currency(osv.osv):
                 if total != 0.0:
                     partner_db = partner_cr = addendum_db = addendum_cr = None
                     if total < 0.0:
-                        partner_db = addendum_cr = abs(total)
-                    else:
                         partner_cr = addendum_db = abs(total)
+                    else:
+                        partner_db = addendum_cr = abs(total)
                     for al in self.browse(cr, uid, addendum_line_ids, context=context):
                         # search other line from same move in order to update its amount
                         other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
@@ -112,7 +112,7 @@ class account_move_line_compute_currency(osv.osv):
         for move_line in self.browse(cr, uid, ids):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
-            # WARNING: since sprint2, source_date have priority to date if exists. That's why it should be used for computing amounts
+            # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
             if move_line.date:
                 ctx['date'] = move_line.date
             # source_date is more important than date
@@ -181,7 +181,7 @@ class account_move_line_compute_currency(osv.osv):
         ctxcurr = {}
         cur_obj = self.pool.get('res.currency')
         
-        # WARNING: source_date field have priority to date field. This is because of Sprint 2 Specifications
+        # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
         if vals.get('date', date):
             ctxcurr['date'] = vals.get('date', date)
         if vals.get('source_date', source_date):
