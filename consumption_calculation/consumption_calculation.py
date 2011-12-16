@@ -214,7 +214,7 @@ class real_average_consumption(osv.osv):
 
             # Confirm all moves
             move_obj.action_done(cr, uid, move_ids, context=context)
-            move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
+            #move_obj.write(cr, uid, move_ids, {'date': rac.period_to}, context=context)
             
         
         return {'type': 'ir.actions.act_window',
