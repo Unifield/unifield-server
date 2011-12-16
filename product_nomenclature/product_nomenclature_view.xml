@@ -85,9 +85,7 @@
 								</group>
 
 							</group>
-							<group colspan="2" col="4"></group>
-							<newline />
-
+							
 							<group colspan="2" col="5">
 								<separator string="Optional Levels" colspan="4" />
 
@@ -116,21 +114,6 @@
 										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 								</group>
 
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-								</group>
-
 							</group>
 						</page>
 						<!-- END COPY TO order_nomenclature_view.xml -->
@@ -149,7 +132,6 @@
 			<field name="arch" type="xml">
 				<form string="Product Nomenclature">
 					<field name="name" select="1" />
-					<field name="code" />
 					<field name="type" />
 					<field name="sub_level"
 						attrs="{'invisible': [('type', '!=', 'optional')], 'required': [('type', '=', 'optional')]}" />
@@ -169,7 +151,6 @@
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
 					<field name="complete_name" />
-					<field name="code" />
 					<field name="type" />
 					<field name="sub_level" />
 				</tree>
@@ -185,7 +166,6 @@
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
 					<field name="name" colspan="4" />
-					<field name="code" />
 					<field name="number_of_products" />
 				</tree>
 			</field>

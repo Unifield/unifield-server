@@ -89,17 +89,6 @@
 										attrs="{'readonly':[('product_id', '!=', False)]}" />
 								</group>
 
-								<group colspan="1" col="2">
-									<field name="nomen_c_manda_0" invisible="True"
-										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_1" invisible="True"
-										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_2" invisible="True"
-										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_3" invisible="True"
-										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-								</group>
-
 							</group>
 
 							<group colspan="2" col="5">
@@ -135,21 +124,6 @@
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
 										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0" invisible="True"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1" invisible="True"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2" invisible="True"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3" invisible="True"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4" invisible="True"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5" invisible="True"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 								</group>
 
 							</group>
@@ -255,17 +229,6 @@
 										attrs="{'readonly':[('product_id', '!=', False)]}" />
 								</group>
 
-								<group colspan="1" col="2">
-									<field name="nomen_c_manda_0" invisible="True"
-										on_change="codeChange(0, nomen_c_manda_0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_1" invisible="True"
-										on_change="codeChange(1, nomen_c_manda_1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_2" invisible="True"
-										on_change="codeChange(2, nomen_c_manda_2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_manda_3" invisible="True"
-										on_change="codeChange(3, nomen_c_manda_3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-								</group>
-
 							</group>
 
 							<group colspan="2" col="5">
@@ -301,21 +264,6 @@
 										domain="[('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False]), ('sub_level', '=', '5'), ('id', 'not in', [nomen_sub_0,nomen_sub_1,nomen_sub_2,nomen_sub_3,nomen_sub_4])]"
 										on_change="nomenChange(5, nomen_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" />
-								</group>
-
-								<group colspan="1" col="2">
-									<field name="nomen_c_sub_0" invisible="True"
-										on_change="codeChange(0, nomen_c_sub_0, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_1" invisible="True"
-										on_change="codeChange(1, nomen_c_sub_1, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_2" invisible="True"
-										on_change="codeChange(2, nomen_c_sub_2, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_3" invisible="True"
-										on_change="codeChange(3, nomen_c_sub_3, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_4" invisible="True"
-										on_change="codeChange(4, nomen_c_sub_4, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
-									<field name="nomen_c_sub_5" invisible="True"
-										on_change="codeChange(5, nomen_c_sub_5, 'optional', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" />
 								</group>
 
 							</group>

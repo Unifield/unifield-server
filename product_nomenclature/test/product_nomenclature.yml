@@ -20,7 +20,6 @@
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest0}:
-    code: TEST-1
     name: nomenclature test 1
 
 
@@ -28,7 +27,6 @@
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest1}:
-    code: TEST-2
     level: 1
     name: nomenclature test 2
     parent_id: product_nomenclature_nomenclaturetest0
@@ -38,7 +36,6 @@
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest2}:
-    code: TEST-3
     level: 2
     name: nomenclature test 3
     parent_id: product_nomenclature_nomenclaturetest1
@@ -48,7 +45,6 @@
   Creating a product.nomenclature record
 - 
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest3}:
-    code: TEST-4
     level: 3
     name: nomenclature test 4
     parent_id: product_nomenclature_nomenclaturetest2
@@ -71,10 +67,6 @@
     mes_type: fixed
     name: product test
     name_template: product test
-    nomen_c_manda_0: TEST-1
-    nomen_c_manda_1: TEST-2
-    nomen_c_manda_2: TEST-3
-    nomen_c_manda_3: TEST-4
     nomen_manda_0: product_nomenclature_nomenclaturetest0
     nomen_manda_1: product_nomenclature_nomenclaturetest1
     nomen_manda_2: product_nomenclature_nomenclaturetest2
@@ -106,16 +98,3 @@
     
     assert nom.level == result['value']['level'], 'level wrong'
 
-
--
-
-  I check the onchange function, product_product.codeChange
-
--
-  !python {model: product.product}: |
-    product = self.browse(cr, uid, ref("product_product_producttest0"))
-
-    result = product.codeChange(0, 'TEST-1', 'mandatory',
-            ref("product_nomenclature_nomenclaturetest0"), False, False, False, {'test':'test'},False,False,False,False,False,False)
-    
-    assert result['value']['nomen_manda_0'] == ref("product_nomenclature_nomenclaturetest0"), 'codeChange wrong'

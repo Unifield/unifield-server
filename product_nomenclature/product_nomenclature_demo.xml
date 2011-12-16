@@ -12,11 +12,6 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_drugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_drugs_infusions)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_drugs_infusions_dex)]" use="code" model="product.nomenclature" />
-			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -35,11 +30,6 @@
 			<field name="nomen_manda_1" ref="nomen_med_drugs" />
 			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
-			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_drugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_drugs_infusions)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_drugs_infusions_dex)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -60,11 +50,6 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_halo" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_drugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_drugs_oraldrugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_drugs_oraldrugs_halo)]" use="code" model="product.nomenclature" />
-			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -84,14 +69,8 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_albe" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_drugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_drugs_oraldrugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_drugs_oraldrugs_albe)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_med_200" />
 			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_200)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -112,14 +91,8 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_albe" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_drugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_drugs_oraldrugs)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_drugs_oraldrugs_albe)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_med_400" />
 			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_400)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -140,15 +113,7 @@
 			<field name="nomen_manda_2" ref="nomen_med_kits_medicalkits" />
 			<field name="nomen_manda_3" ref="nomen_med_kits_medicalkits_cholera" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_kits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_kits_medicalkits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_kits_medicalkits_cholera)]" use="code" model="product.nomenclature" />
-			
-			<field name="nomen_sub_0" ref="nomeno0_med_module" />
-			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_module)]" use="code" model="product.nomenclature" />
-
+		
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -168,17 +133,9 @@
 			<field name="nomen_manda_2" ref="nomen_med_kits_medicalkits" />
 			<field name="nomen_manda_3" ref="nomen_med_kits_medicalkits_cholera" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_kits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_kits_medicalkits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_kits_medicalkits_cholera)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_med_module" />
 			<field name="nomen_sub_1" ref="nomeno1_med_noinf" />
 			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_module)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_1" search="[('id', '=', nomeno1_med_noinf)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -197,11 +154,6 @@
 			<field name="nomen_manda_1" ref="nomen_med_kits" />
 			<field name="nomen_manda_2" ref="nomen_med_kits_dentalinstbox" />
 			<field name="nomen_manda_3" ref="nomen_med_kits_dentalinstbox_dental" />
-			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_kits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_kits_dentalinstbox)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_kits_dentalinstbox_dental)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -222,17 +174,9 @@
 			<field name="nomen_manda_2" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
 			<field name="nomen_manda_3" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_medicalrenewablesup)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_medicalrenewablesup_smallmedicalsupplies)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_med_su" />
 			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
 			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_su)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_1" search="[('id', '=', nomeno1_med_nonster)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -252,17 +196,9 @@
 			<field name="nomen_manda_2" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
 			<field name="nomen_manda_3" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_med)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_med_medicalrenewablesup)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_med_medicalrenewablesup_smallmedicalsupplies)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_med_su" />
 			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
 			
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_med_su)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_1" search="[('id', '=', nomeno1_med_nonster)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -282,14 +218,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_administration_teamlife" />
 			<field name="nomen_manda_3" ref="nomen_log_administration_teamlife_glo" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_administration)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_administration_teamlife)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_administration_teamlife_glo)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_leatpro" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_leatpro)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -310,11 +239,6 @@
 			<field name="nomen_manda_2" ref="nomen_log_administration_teamlife" />
 			<field name="nomen_manda_3" ref="nomen_log_administration_teamlife_glo" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_administration)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_administration_teamlife)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_administration_teamlife_glo)]" use="code" model="product.nomenclature" />
-			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -334,14 +258,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_camps_watersanitation)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_camps_watersanitation_stainer)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_2" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_2)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -362,15 +279,8 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_camps_watersanitation)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_camps_watersanitation_stainer)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_4" />
 
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_4)]" use="code" model="product.nomenclature" />
-			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -390,14 +300,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_stainer" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_camps_watersanitation)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_camps_watersanitation_stainer)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_4" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_4)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -418,14 +321,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_tank" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_camps_watersanitation)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_camps_watersanitation_tank)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_flexi" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_flexi)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -446,11 +342,6 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_tank" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_camps_watersanitation)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_camps_watersanitation_tank)]" use="code" model="product.nomenclature" />
-			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -470,14 +361,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_kits_progsuppkits" />
 			<field name="nomen_manda_3" ref="nomen_log_kits_progsuppkits_ident" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_kits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_kits_progsuppkits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_kits_progsuppkits_ident)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_module" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_module)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -498,14 +382,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_kits_progsuppkits" />
 			<field name="nomen_manda_3" ref="nomen_log_kits_progsuppkits_hard" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_kits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_kits_progsuppkits)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_kits_progsuppkits_hard)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_module" />
-
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_module)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -526,14 +403,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
 			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_programsupport)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_programsupport_coldchain)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_programsupport_coldchain_box)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
-	
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_programsupport_coldchain_electro)]" use="code" model="product.nomenclature" />
 
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -554,15 +424,8 @@
 			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
 			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_programsupport)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_programsupport_coldchain)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_programsupport_coldchain_box)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
 	
-			<field name="nomen_c_sub_0" search="[('id', '=', nomeno0_log_programsupport_coldchain_electro)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -581,11 +444,6 @@
 			<field name="nomen_manda_1" ref="nomen_log_programsupport" />
 			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
 			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
-			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_programsupport)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_programsupport_coldchain)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_programsupport_coldchain_box)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -606,11 +464,6 @@
 			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
 			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_carbu" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_transport)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_transport_sparepartsyamaha)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_transport_sparepartsyamaha_carbu)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -629,11 +482,6 @@
 			<field name="nomen_manda_1" ref="nomen_log_transport" />
 			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
 			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_spring" />
-			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_log)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_log_transport)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_log_transport_sparepartsyamaha)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_log_transport_sparepartsyamaha_spring)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
@@ -654,11 +502,6 @@
 			<field name="nomen_manda_2" ref="nomen_service_camps_reparing" />
 			<field name="nomen_manda_3" ref="nomen_service_camps_reparing_XXX" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', nomen_service)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', nomen_service_camps)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', nomen_service_camps_reparing)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', nomen_service_camps_reparing_XXX)]" use="code" model="product.nomenclature" />
-
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
@@ -679,24 +522,12 @@
 			<field name="nomen_manda_2" ref="XXX" />
 			<field name="nomen_manda_3" ref="XXX" />
 			
-			<field name="nomen_c_manda_0" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_1" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_2" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_manda_3" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			
 			<field name="nomen_sub_0" ref="XXX" />
 			<field name="nomen_sub_1" ref="XXX" />
 			<field name="nomen_sub_2" ref="XXX" />
 			<field name="nomen_sub_3" ref="XXX" />
 			<field name="nomen_sub_4" ref="XXX" />
 			<field name="nomen_sub_5" ref="XXX" />
-			
-			<field name="nomen_c_sub_0" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_1" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_2" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_3" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_4" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
-			<field name="nomen_c_sub_5" search="[('id', '=', XXX)]" use="code" model="product.nomenclature" />
 			
 			<field name="procure_method">make_to_stock</field>
 			<field name="supply_method">buy</field>

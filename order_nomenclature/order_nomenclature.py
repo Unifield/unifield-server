@@ -187,11 +187,7 @@ class purchase_order_line(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
-        # codes
-        'nomen_c_manda_0': fields.char('C1', size=32),
-        'nomen_c_manda_1': fields.char('C2', size=32),
-        'nomen_c_manda_2': fields.char('C3', size=32),
-        'nomen_c_manda_3': fields.char('C4', size=32),
+
         # optional nomenclature levels
         'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
         'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
@@ -199,13 +195,7 @@ class purchase_order_line(osv.osv):
         'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
         'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
         'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
-        # codes
-        'nomen_c_sub_0': fields.char('C5', size=128),
-        'nomen_c_sub_1': fields.char('C6', size=128),
-        'nomen_c_sub_2': fields.char('C7', size=128),
-        'nomen_c_sub_3': fields.char('C8', size=128),
-        'nomen_c_sub_4': fields.char('C9', size=128),
-        'nomen_c_sub_5': fields.char('C10', size=128),
+
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
@@ -458,11 +448,7 @@ class sale_order_line(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
-        # codes
-        'nomen_c_manda_0': fields.char('C1', size=32),
-        'nomen_c_manda_1': fields.char('C2', size=32),
-        'nomen_c_manda_2': fields.char('C3', size=32),
-        'nomen_c_manda_3': fields.char('C4', size=32),
+
         # optional nomenclature levels
         'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1'),
         'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2'),
@@ -470,13 +456,7 @@ class sale_order_line(osv.osv):
         'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4'),
         'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5'),
         'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6'),
-        # codes
-        'nomen_c_sub_0': fields.char('C5', size=128),
-        'nomen_c_sub_1': fields.char('C6', size=128),
-        'nomen_c_sub_2': fields.char('C7', size=128),
-        'nomen_c_sub_3': fields.char('C8', size=128),
-        'nomen_c_sub_4': fields.char('C9', size=128),
-        'nomen_c_sub_5': fields.char('C10', size=128),
+
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
