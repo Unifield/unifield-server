@@ -45,6 +45,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Analytic Line" min_rows="100">
+                    <field name="is_reallocated" invisible="1"/>
+                    <button name="button_reallocated" type="object" string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     <field name="journal_id" string="Journal Code"/>
                     <field name="date"/>
                     <field name="company_id" string="Proprietary Instance"/>

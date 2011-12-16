@@ -32,6 +32,7 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'analytic_account_view.xml',
+        'analytic_line_view.xml',
         'wizard/account_analytic_chart_view.xml',
         'analytic_distribution_wizard_view.xml',
         'account_commitment_workflow.xml',
