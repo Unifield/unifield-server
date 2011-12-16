@@ -919,7 +919,7 @@ class product_product(osv.osv):
         fmc_line_obj = self.pool.get('monthly.review.consumption.line')
             
         # Search all Review report for locations
-        fmc_ids = fmc_obj.search(cr, uid, [], context=context)
+        fmc_ids = fmc_obj.search(cr, uid, [], order='period_to desc', limit=1, context=context)
         
         for product in ids:
             res[product] = 0.00
@@ -931,10 +931,7 @@ class product_product(osv.osv):
             # Get the last created line
             for line in fmc_line_obj.browse(cr, uid, line_ids, context=context):
                 if not last_date:
-                    last_date = line.valid_until or line.mrc_id.period_to
-                    res[product] = line.fmc
-                elif line.valid_until and line.valid_until > last_date:
-                    last_date = line.valid_until
+                    last_date = line.mrc_id.period_to
                     res[product] = line.fmc
                 elif line.mrc_id.period_to > last_date:
                     last_date = line.mrc_id.period_to

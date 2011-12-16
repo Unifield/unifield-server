@@ -68,8 +68,8 @@ class expiry_quantity_report(osv.osv_memory):
         
         report = self.browse(cr, uid, ids[0], context=context)
         lot_ids = lot_obj.search(cr, uid, [('life_date', '<=', (date.today() + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d'))])
-        domain = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
-        domain_out = [('date_expected', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+        domain = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
+        domain_out = [('date', '<=', (date.today()  + timedelta(weeks=report.week_nb)).strftime('%Y-%m-%d')), ('state', '=', 'done'), ('prodlot_id', 'in', lot_ids)]
             
         not_loc_ids = []
         # Remove input and output location
@@ -184,6 +184,21 @@ class product_likely_expire_report(osv.osv_memory):
         'consumption_type': lambda *a: 'fmc',
         'msf_instance': lambda *a: 'MSF Instance',
     }
+
+    def period_change(self, cr, uid, ids, consumption_from, consumption_to, consumption_type, context={}):
+        '''
+        Get the first or last day of month
+        '''
+        res = {}
+
+        if consumption_type == 'amc':
+            if consumption_from:
+                res.update({'consumption_from': (DateFrom(consumption_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')})
+            if consumption_to:
+                res.update({'consumption_to': (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
+
+        return {'value': res}
+            
     
     def _get_average_consumption(self, cr, uid, product_id, consumption_type, date_from, date_to, context={}):
         '''
