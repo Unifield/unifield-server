@@ -193,7 +193,7 @@ class analytic_line(osv.osv):
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
             account_ids = fp and fp.get('account_ids', []) or []
-            # Browse all analytic line to compare verify them
+            # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids, context=context):
                 # No verification if account is MSF Private Fund because of its compatibility with all elements.
                 if account_id == msf_private_fund:

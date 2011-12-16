@@ -37,22 +37,41 @@ class mass_reallocation_search(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Prepare some values
+        valid_ids = []
         # Only process first id
         account = self.pool.get('account.analytic.account').browse(cr, uid, ids, context=context)[0]
         if account.category != 'FUNDING':
             raise osv.except_osv(_('Error'), _('This action only works for Funding Pool accounts!'))
         # Take all elements to create a domain
-        domain = []
+        search = []
         if account.date_start:
-            domain.append(('date', '>=', account.date_start))
+            search.append(('date', '>=', account.date_start))
         if account.date:
-            domain.append(('date', '<=', account.date))
+            search.append(('date', '<=', account.date))
         if account.account_ids:
-            domain.append(('general_account_id', 'in', [x.id for x in account.account_ids]))
+            search.append(('general_account_id', 'in', [x.id for x in account.account_ids]))
         if account.cost_center_ids:
-            domain.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
-        domain.append(('account_id', '!=', account.id))
-        print domain
+            search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
+        search.append(('account_id', '!=', account.id))
+        search_ids = self.pool.get('account.analytic.line').search(cr, uid, search, context=context)
+        print search, search_ids
+        non_valid_ids = []
+        # Browse all analytic line to verify contract state
+        for aline in self.pool.get('account.analytic.line').browse(cr, uid, search_ids, context=context):
+            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
+            valid = True
+            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
+                if contract.state in ['soft_closed', 'hard_closed']:
+                    valid = False
+            if not valid:
+                non_valid_ids.append(aline.id)
+        # Delete ids that doesn't correspond to a valid line
+        valid_ids = [x for x in search_ids if x not in non_valid_ids]
+        operator = 'in'
+        if len(valid_ids) == 1:
+            operator = '='
+        domain = [('id', 'in', valid_ids)]
         return {
             'name': 'Mass reallocation search for' + ' ' + account.name,
             'type': 'ir.actions.act_window',
