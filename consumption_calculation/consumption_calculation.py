@@ -1131,7 +1131,7 @@ class product_product(osv.osv):
         Returns the number of months between to dates according to the number
         of days in the month.
         '''
-        diff_date = Age(from_date, to_date)
+        diff_date = Age(to_date, from_date)
         res = 0.0
         
         def days_in_month(month, year):
