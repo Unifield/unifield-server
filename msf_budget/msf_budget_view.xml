@@ -54,13 +54,15 @@
                     <field name="decision_moment"/>
                     <field name="version"/>
                     <field name="currency_id"/>
+                    <field name="currency_table_id"/>
                     <field name="budget_line_ids" colspan="4" nolabel="1">
-                        <tree string="Budget Lines">
+                        <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="account_id"/>
-                            <field name="budget_amount" sum="Budget Amount"/>
-                            <field name="actual_amount" sum="Actual Amount"/>
-                            <field name="balance" sum="Balance"/>
+                            <field name="budget_amount" real_sum="Budget Amount"/>
+                            <field name="actual_amount" real_sum="Actual Amount"/>
+                            <field name="balance" real_sum="Balance"/>
                             <field name="percentage"/>
+                            <field name="line_type"/>
                         </tree>
                     </field>
                     <field name="state" select="1"/>
