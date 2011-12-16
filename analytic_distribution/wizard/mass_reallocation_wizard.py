@@ -144,6 +144,11 @@ class mass_reallocation_wizard(osv.osv_memory):
                 ('commitment_line_id', '!=', False)], context=context)
             if commitment_line_ids:
                 non_supported_ids.extend(commitment_line_ids)
+            # Search reallocated_lines
+            reallocated_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
+                ('is_reallocated', '=', True)])
+            if reallocated_line_ids:
+                non_supported_ids.extend(reallocated_line_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids
             tmp_to_process = [x for x in to_process if x not in non_supported_ids]
             if tmp_to_process:
