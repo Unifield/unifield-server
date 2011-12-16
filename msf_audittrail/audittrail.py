@@ -159,6 +159,17 @@ class audittrail_rule(osv.osv):
                 res = ir.ir_del(cr, uid, val_id[0])
             self.write(cr, uid, [thisrule.id], {"state": "draft"})
         #End Loop
+        
+        # Check if an export model already exist for audittrail.rule
+        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
+        if not export_ids:
+            export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
+                                                                     'resource': 'audittrail.log.line'})
+            fields = ['log', 'timestamp', 'sub_obj_name', 'method', 'field_description', 'old_value', 'new_value', 'user_id']
+            for f in fields:
+                self.pool.get('ir.exports.line').create(cr, uid, {'name': f, 'export_id': export_id}) 
+
+        
         return True
 
 audittrail_rule()
