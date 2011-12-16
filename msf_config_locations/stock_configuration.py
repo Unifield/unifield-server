@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 
+from tools.translate import _
+
 class stock_location(osv.osv):
     '''
     Change the order and parent_order field.
@@ -39,13 +41,58 @@ class stock_location_configuration_wizard(osv.osv_memory):
     
     _columns = {
         'location_name': fields.char(size=64, string='Location name', required=True),
-        'location_usage': fields.selection([('stock', 'Stock'), ('cu', 'Consumption Unit'), ('eprep', 'EPREP')],
+        'location_usage': fields.selection([('stock', 'Stock'), ('consumption_unit', 'Consumption Unit'), ('eprep', 'EPREP')],
                                           string='Location usage'),
-        'location_type': fields.selection([('in', 'Internal'), ('out', 'External')], string='Location type'),
+        'location_type': fields.selection([('internal', 'Internal'), ('customer', 'External')], string='Location type'),
+        'location_id': fields.many2one('stock.location', string='Inactive location to re-activate'),
+        'reactivate': fields.boolean(string='Reactivate location ?'),
     }
+    
+    _defaults = {
+        'reactivate': lambda *a: False,
+    }
+    
+    def name_on_change(self, cr, uid, ids, location_name, usage, type, context={}):
+        '''
+        Check if a location with the same parameter exists on
+        the instance warehouse
+        '''
+        res = {}
+        warning = {}
+        location_obj = self.pool.get('stock.location')
+        
+        if location_name:
+            inactive_location_ids = location_obj.search(cr, uid, [('name', '=', location_name),
+                                                                  ('active', '=', False), 
+                                                                  ('usage', '=', usage or 'internal'),
+                                                                  ('location_category', '=', type)], context=context)
+            active_location_ids = location_obj.search(cr, uid, [('name', '=', location_name), 
+                                                                ('usage', '=', usage or 'internal'),
+                                                                ('location_category', '=', type)], context=context)
+            
+            if inactive_location_ids:
+                warning.update({'title': _('Warning !'),
+                                'message': _('An existing but inactive location already exists with the same parameters ! '\
+                                           'Please, change the name of the new location, or re-activate the existing location '\
+                                           'by clicking on \'Re-activate\' button.')})
+                res.update({'reactivate': True, 'location_id': inactive_location_ids[0]})
+            elif active_location_ids:
+                warning.update({'title': _('Error !'),
+                                'message': _('A location with the same name and the parameters already exists and is active. '\
+                                           'You cannot have two locations with the same name and parameters. ' \
+                                           'Please change the name of the new location before create it.')})
+                res.update({'reactivate': False, 'loc_exists': True})
+            else:
+                res.update({'reactivate': False, 'location_id': False})
+        
+        return {'value': res,
+                'warning': warning}
+        
+    def confirm_creation2(self, cr, uid, ids, context={}):
+        context.update({'reactivate_loc': True})
+        return self.confirm_creation(cr, uid, ids, context=context)
 
     def confirm_creation(self, cr, uid, ids, context={}):
-        res = False
         data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         parent_location_id = False
@@ -56,11 +103,26 @@ class stock_location_configuration_wizard(osv.osv_memory):
         chained_auto_packing = 'manual'
         chained_picking_type = 'internal'
         chained_location_id = False
+        location = False
         
         for wizard in self.browse(cr, uid, ids, context=context):
+            # Check if errors on location name
+            errors = self.name_on_change(cr, uid, ids, wizard.location_name, wizard.location_type, wizard.location_usage, context=context)
+            warning = errors.get('warning', {})
+            values = errors.get('value', {})
+            if warning and (values.get('loc_exists', False) or (values.get('reactivate', True) and not context.get('reactivate_loc', False))):
+                raise osv.except_osv(errors.get('warning', {}).get('title', ''), errors.get('warning', {}).get('message', ''))
+            # Returns an error if no given location name
+            if not wizard.location_name:
+#                # Raise error if location with the same name and the same parameters already exists
+#                if location_obj.search(cr, uid, [('name', '=', wizard.location_name), 
+#                                                 ('usage', '=', wizard.location_type or 'internal'),
+#                                                 ('location_category', '=', wizard.location_usage)], context=context):
+                raise osv.except_osv(_('Error'), _('You should give a name for the new location !'))
+            location = wizard.location_id
             location_name = wizard.location_name
             # Check if all parent locations are activated in the system
-            if wizard.location_usage in ('stock', 'eprep') or (wizard.location_type == 'in' and wizard.location_usage == 'cu'):
+            if wizard.location_usage in ('stock', 'eprep') or (wizard.location_type == 'internal' and wizard.location_usage == 'consumption_unit'):
                 # Check if 'Configurable locations' location is active − If not, activate it !
                 location_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')
                 if not location_id:
@@ -94,7 +156,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                     
                     if not location_obj.browse(cr, uid, parent_location_id, context=context).active:
                         location_obj.write(cr, uid, [parent_location_id], {'active': True}, context=context)
-                elif wizard.location_usage == 'cu':
+                elif wizard.location_usage == 'consumption_unit':
                     location_category = 'consumption_unit'
                     location_usage = 'internal'
                     # Check if 'Internal Consumption Units' is active − If note activate it !
@@ -109,7 +171,7 @@ class stock_location_configuration_wizard(osv.osv_memory):
                         location_obj.write(cr, uid, [parent_location_id], {'active': True}, context=context)
                 else:
                     raise osv.except_osv(_('Error'), _('The type of the new location is not correct ! Please check the parameters and retry.'))
-            elif wizard.location_type == 'out' and wizard.location_usage == 'cu':
+            elif wizard.location_type == 'customer' and wizard.location_usage == 'consumption_unit':
                 location_category = 'consumption_unit'
                 location_usage = 'customer'
                 chained_picking_type = 'out'
@@ -128,17 +190,21 @@ class stock_location_configuration_wizard(osv.osv_memory):
         if not parent_location_id or not location_category or not location_usage:
             raise osv.except_osv(_('Error'), _('Parent stock location not found for the new location !'))
         
-        # Create the new location
-        location_obj.create(cr, uid, {'name': location_name,
-                                      'location_id': parent_location_id,
-                                      'location_category': location_category,
-                                      'usage': location_usage,
-                                      'chained_location_type': chained_location_type,
-                                      'chained_auto_packing': chained_auto_packing,
-                                      'chained_picking_type': chained_picking_type,
-                                      'chained_location_id': chained_location_id,
-                                      'optional_loc': True,
-                                      }, context=context)
+        if not location:
+            # Create the new location
+            location_obj.create(cr, uid, {'name': location_name,
+                                          'location_id': parent_location_id,
+                                          'location_category': location_category,
+                                          'usage': location_usage,
+                                          'chained_location_type': chained_location_type,
+                                          'chained_auto_packing': chained_auto_packing,
+                                          'chained_picking_type': chained_picking_type,
+                                          'chained_location_id': chained_location_id,
+                                          'optional_loc': True,
+                                          }, context=context)
+        else:
+            # Reactivate the location
+            location_obj.write(cr, uid, [location.id], {'active': True}, context=context)
         
         return_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_location_tree')
         
