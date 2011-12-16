@@ -1152,6 +1152,7 @@ class product_product(osv.osv):
             if diff_date.years:
                 res += diff_date.years*12
                 from_date += RelativeDate(years=diff_date.years)
+                diff_date = Age(to_date, from_date)
             else:
                 # If two dates are in the same month
                 if from_date.month == to_date.month:
