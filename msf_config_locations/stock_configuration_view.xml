@@ -8,7 +8,7 @@
 			<field name="type">form</field>
 			<field name="arch" type="xml">
 				<form string="New location creation">
-				    <field name="reactivate" invisible="0" />
+				    <field name="reactivate" invisible="1" />
 					<separator colspan="4" string="Location configuration" />
 					<field name="location_usage" colspan="4" required="1" />
 					<newline />
