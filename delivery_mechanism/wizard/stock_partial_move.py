@@ -27,23 +27,9 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
-    def _get_checks_asset(self, cr, uid, ids, name, arg, context=None):
-        '''
-        complete force_complete boolean
-        '''
-        result = {}
-        for id in ids:
-            result[id] = False
-            
-        for out in self.browse(cr, uid, ids, context=context):
-            result[out.id] = out.product_id.subtype == 'asset'
-            
-        return result
-    
-    _columns = {
-        'force_complete' : fields.boolean(string='Force Complete'),
-        'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True),
-    }
+    _columns = {'force_complete' : fields.boolean(string='Force Complete'),
+                }
+    _defaults = {'force_complete': False,}
     
 stock_partial_move_memory_out()
     
@@ -56,17 +42,6 @@ stock_partial_move_memory_in()
     
 class stock_partial_move(osv.osv_memory):
     _inherit = "stock.partial.move"
-    
-    def __create_partial_move_memory(self, move):
-        '''
-        add the asset_id
-        '''
-        move_memory = super(stock_partial_move, self).__create_partial_move_memory(move)
-        assert move_memory is not None
-        
-        move_memory.update({'asset_id' : move.asset_id.id})
-        
-        return move_memory
     
     def do_partial_hook(self, cr, uid, context, *args, **kwargs):
         '''
@@ -82,7 +57,7 @@ class stock_partial_move(osv.osv_memory):
         assert p_moves, 'p_moves is missing'
         
         # update asset_id
-        partial_datas['move%s' % (move.id)].update({'asset_id': p_moves[move.id].asset_id.id,})
+        partial_datas['move%s' % (move.id)].update({'force_complete': p_moves[move.id].force_complete,})
         
         return partial_datas
 
