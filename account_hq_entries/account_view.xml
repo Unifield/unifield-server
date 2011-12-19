@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- HQ entries tree -->
+
+    <!-- Actions -->
+        <record model="ir.actions.act_window" id="action_hq_entries_tree">
+            <field name="name">HQ Entries</field>
+            <field name="res_model">account.move.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('account_id.user_type.code', '=', 'expense'), ('journal_id.type', '=', 'hq')]</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_hq_analytic_entries_tree">
+            <field name="name">HQ Analytic Entries</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('journal_id.type', '=', 'hq')]</field>
+        </record>
+
+    <!-- Menu -->
+        <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>
+        <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="1"/>
+        <menuitem name="HQ Analytic Entries" action="action_hq_analytic_entries_tree" id="menu_hq_analytic_entries" parent="menu_hq" sequence="2"/>
+
+    </data>
+</openerp>

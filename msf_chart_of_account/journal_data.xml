@@ -41,18 +41,31 @@
             <field name="code">HQ</field>
             <field name="type">hq</field>
         </record>
+        <record id="account_hq_entries.hq_analytic_journal" model="account.analytic.journal">
+            <field name="name">HQ - Field expenses</field>
+            <field name="code">HQ-Exp</field>
+            <field name="type">hq</field>
+        </record>
+        <record id="account_hq_entries.hq_journal" model="account.journal">
+            <field name="name">HQ - Field expenses</field>
+            <field name="code">HQ-Exp</field>
+            <field name="type">hq</field>
+            <field name="analytic_journal_id" ref="account_hq_entries.hq_analytic_journal"/>
+        </record>
+
         <record id="hr_journal" model="account.journal">
             <field name="name">HR</field>
             <field name="code">HR</field>
             <field name="type">hr</field>
         </record>
+
         <record id="stock.stock_journal" model="account.journal">
             <field name="name">Stock</field>
             <field name="code">STO</field>
             <field name="type">stock</field>
             <field name="instance_id" search="[]" use="name" model="res.company" />
         </record>
-        
+
         <record id="bank_analytic_journal" model="account.analytic.journal">
             <field name="name">Bank</field>
             <field name="code">BNK</field>
@@ -76,7 +89,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.5350" />
             <field name="analytic_journal_id" ref="bank_analytic_journal"/>
         </record>
-        
+
         <record id="cash_analytic_journal" model="account.analytic.journal">
             <field name="name">Cash</field>
             <field name="code">CAS</field>
@@ -100,7 +113,7 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.5310" />
             <field name="analytic_journal_id" ref="cash_analytic_journal"/>
         </record>
-        
+
         <record id="cheque_analytic_journal" model="account.analytic.journal">
             <field name="name">Cheque</field>
             <field name="code">CHK</field>
@@ -124,11 +137,12 @@
             <field name="default_credit_account_id" ref="msf_chart_of_account.5361" />
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
-        
+
         <record id="account_journal.engagement_journal" model="account.analytic.journal">
             <field name="name">Engagement Journal</field>
             <field name="code">ENG</field>
             <field name="type">engagement</field>
         </record>
+
     </data>
 </openerp>
