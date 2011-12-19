@@ -96,7 +96,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="Partner" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
@@ -150,7 +150,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="Partner" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
@@ -205,7 +205,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="State" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
@@ -226,7 +226,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="Partner" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
@@ -280,7 +280,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="Partner" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
@@ -334,7 +334,7 @@
             			<field name="order_category" />
             		</field>
             		
-            		<filter string="Journal" position="after">
+            		<filter string="Partner" position="after">
             			<separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
             		</filter>
