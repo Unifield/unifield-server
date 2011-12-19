@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,8 +21,20 @@
 #
 ##############################################################################
 
-import account
-import account_move_line
-import wizard
+from osv import osv
+from osv import fields
 
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+
+    _columns = {
+        'correction_is_forbidden': fields.boolean(string="Forbid correction on this account?", help="Informs system to block account correction for this account."),
+    }
+
+    _defaults = {
+        'correction_is_forbidden': lambda *a: False,
+    }
+
+account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

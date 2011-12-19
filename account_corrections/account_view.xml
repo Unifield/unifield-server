@@ -22,5 +22,18 @@
             </field>
         </record>
 
+    <!-- Add 'correction_is_forbidden' field to account_account view -->
+        <record model="ir.ui.view" id="account_account_forbidden_view">
+            <field name="name">Accounts</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="correction_is_forbidden"/>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>

@@ -67,6 +67,9 @@ class account_move_line(osv.osv):
             for aml in ml.move_id.line_id:
                 if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
                     res[aml.id] = False
+            # False if account is correction is forbidden on account
+            if ml.account_id.correction_is_forbidden is True:
+                res[aml.id] = False
         return res
 
     _columns = {
