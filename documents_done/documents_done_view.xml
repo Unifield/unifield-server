@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="documents_done_list_view" model="ir.ui.view">
+            <field name="name">documents.done.list.view</field>
+            <field name="model">documents.done.wizard</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Documents not done">
+                    <field name="name" />
+                    <field name="creation_date" />
+                    <field name="partner_id" />
+                    <field name="doc_type" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="documents_done_search_view" model="ir.ui.view">
+            <field name="name">documents.done.search.view</field>
+            <field name="model">documents.done.wizard</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Documents not done">
+                    <group colspan="4">
+                        <field name="creation_date" />
+                        <field name="expected_date" />
+                        <field name="doc_type" />
+                        <field name="partner_id" />
+                        <field name="name" />
+                        <field name="state" />
+                    </group>
+                    <newline />
+                    <group string="Group by..." expand="1" colspan="1">
+                        <filter name="group_name" string="Name" domain="[]" context="{'group_by': 'name'}" icon="" />
+                        <filter name="group_creation_date" string="Creation date" domain="[]" context="{'group_by': 'creation_date'}" icon="" />
+                        <filter name="group_partner" string="Partner" domain="[]" context="{'group_by': 'partner_id'}" icon="" />
+                        <filter name="group_doc_type" string="Type" domain="[]" context="{'group_by': 'doc_type'}" icon="" />
+                        <filter name="group_state" string="State" domain="[]" context="{'group_by': 'state'}" icon="" />
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_documents_done_view" model="ir.actions.act_window">
+            <field name="name">Documents not 'Done'</field>
+            <field name="res_model">documents.done.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="context">{}</field>
+        </record>
+        
+        <menuitem id="menu_documents_done"
+                  action="action_documents_done_view"
+                  parent="stock.menu_stock_warehouse_mgmt" />
+        
+    </data>
+</openerp>
