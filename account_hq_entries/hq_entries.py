@@ -24,13 +24,27 @@
 from osv import osv
 from osv import fields
 
-class account_move_line(osv.osv):
-    _name = 'account.move.line'
-    _inherit = 'account.move.line'
+class hq_entries_validation_wizard(osv.osv_memory):
+    _name = 'hq.entries.validation.wizard'
 
-    _columns = {
-        'user_validated': fields.boolean(string="User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
-    }
+    def validate(self, cr, uid, ids, context={}):
+        """
+        Validate all given lines (in context)
+        """
+        # Some verifications
+        if not context or not context.get('active_ids', False):
+            return False
+        active_ids = context.get('active_ids')
+        if isinstance(active_ids, (int, long)):
+            active_ids = [active_ids]
+        # Tag active_ids as user validated
+        for line in self.pool.get('account.move.line').browse(cr, uid, active_ids, context=context):
+            if not line.user_validated:
+                self.pool.get('account.move.line').write(cr, uid, [line.id], {'user_validated': True}, context=context)
+        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
+        res = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], [], context=context)
+        res['target'] = 'crush'
+        return res
 
-account_move_line()
+hq_entries_validation_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

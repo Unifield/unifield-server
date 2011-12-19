@@ -83,6 +83,22 @@
             <field name="context">{'from': 'hq_analytic_entries'}</field>
         </record>
 
+    <!-- Action: lines validation -->
+        <record id="action_hq_entries_validation" model="ir.actions.server">
+            <field name="name">Validation</field>
+            <field name="model_id" ref="model_hq_entries_validation_wizard"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.validate(context)</field>
+        </record>
+        
+        <record id="ir_validate_hq_entries" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Validation</field>
+            <field eval="'ir.actions.server,%d'%action_hq_entries_validation" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="5"/>
         <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="1"/>
