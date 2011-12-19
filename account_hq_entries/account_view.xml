@@ -3,6 +3,64 @@
     <data>
 
     <!-- HQ entries tree -->
+    <record model="ir.ui.view" id="hq_entries_tree">
+        <field name="name">hq.entries.tree</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="account_corrections.inherit_view_move_line_tree"/>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="/tree/field[@name='ref']" position="after">
+                    <field name="user_validated"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- HQ Entries search view -->
+    <record id="hq_entries_filter" model="ir.ui.view">
+        <field name="name">HQ Entries</field>
+        <field name="model">account.move.line</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Search HQ Entries">
+                <group col='10' colspan='4'>
+                    <filter icon="gtk-new" string="To validate" domain="[('user_validated', '=', False)]" help="Non validated entries" name="non_validated"/>
+                    <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
+                    <separator orientation="vertical"/>
+                    <field name="move_id" select="1" string="Number (Move)"/>
+                    <field name="date" select='1'/>
+                    <field name="account_id" select='1'/>
+                    <field name="partner_id" select='1'>
+                        <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
+                    </field>
+                </group>
+                <newline/>
+                <group col="10" colspan="4">
+                    <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                    <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                </group>
+                <newline/>
+                <group expand="0" string="Extended Filters...">
+                    <field name="ref" select="1" string="Reference"/>
+                    <field name="name" select="1"/>
+                    <field name="narration" select="1"/>
+                    <field name="balance" string="Debit/Credit" select='1'/>
+                </group>
+                <newline/>
+                <group expand="0" string="Group By..." colspan="12" col="10">
+                    <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                    <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                </group>
+                <newline/>
+            </search>
+        </field>
+    </record>
 
     <!-- Actions -->
         <record model="ir.actions.act_window" id="action_hq_entries_tree">
@@ -10,7 +68,10 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="hq_entries_tree"/>
+            <field name="search_view_id" ref="hq_entries_filter"/>
             <field name="domain">[('account_id.user_type.code', '=', 'expense'), ('journal_id.type', '=', 'hq')]</field>
+            <field name="context">{'from': 'hq_entries'}</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_hq_analytic_entries_tree">
@@ -19,6 +80,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('journal_id.type', '=', 'hq')]</field>
+            <field name="context">{'from': 'hq_analytic_entries'}</field>
         </record>
 
     <!-- Menu -->
