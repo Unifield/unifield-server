@@ -81,7 +81,11 @@ class purchase_order(osv.osv):
             if not po.analytic_distribution_id:
                 for line in po.order_line:
                     if not line.analytic_distribution_id:
-                        raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
+                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        po.analytic_distribution_id = ana_obj.browse(cr, uid, ana_id)
+                        #raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
+                        break
             inv_ids = po.invoice_ids
             for inv in inv_ids:
                 # First set invoice global distribution

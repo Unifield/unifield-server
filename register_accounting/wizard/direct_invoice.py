@@ -73,7 +73,7 @@ class wizard_account_invoice(osv.osv):
         Reset the invoice by reseting some fields
         """
         self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'), 
-            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft'})
+            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False})
         return True
 
     def invoice_cancel_wizard(self, cr, uid, ids, context={}):
