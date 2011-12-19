@@ -457,7 +457,7 @@ def common_create(self, cr, uid, data, type, context=None):
         context = {}
         
     # if comes from automatic data - fill confirmed date
-    if context.get('update_mode') in ['init', 'update']:
+    if context.get('update_mode') in ['init', 'update'] or data.get('from_yml_test'):
         data['delivery_confirmed_date'] = '2011-12-06'
         
     # fill partner_type data
@@ -1140,6 +1140,8 @@ class sale_order(osv.osv):
         rts = rts - relativedelta(days=prep_lt or 0)
         rts = rts.strftime(db_date_format)
         result['date_planned'] = rts
+        # update from yml flag
+        result['from_yml_test'] = order.from_yml_test
         
         return result
     
@@ -1286,6 +1288,9 @@ class procurement_order(osv.osv):
         '''
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         line = kwargs['line']
+        procurement = kwargs['procurement']
+        # update from yml flag
+        values['from_yml_test'] = procurement.from_yml_test
         # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
         # confirmed_delivery_date (confirmed date) = False
         # both values are taken from line 

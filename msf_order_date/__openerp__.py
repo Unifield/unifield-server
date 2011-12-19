@@ -27,6 +27,7 @@
                 "purchase",
                 "account",
                 "stock_override",
+                "sale_override",
                 "purchase_override",
                 "partner_modification",
                 ],
