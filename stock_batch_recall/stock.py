@@ -43,7 +43,7 @@ class stock_batch_recall(osv.osv_memory):
         '''
         move_obj = self.pool.get('stock.move')
         
-        domain = [('product_qty', '>=', 0.00)]
+        domain = [('product_qty', '>', 0.00)]
         for track in self.browse(cr, uid, ids):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
