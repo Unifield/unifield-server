@@ -9,9 +9,9 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <!-- <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
-                        <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_supplier':1}" />
-                    </xpath> -->
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='partner_id']" position="replace">
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                    </xpath>
                     
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id)" />
@@ -53,7 +53,7 @@
                         <field name="origin" />
                     </field>
                     <filter name="draft" position="replace">
-                        <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state', 'in', ('draft', 'rfq_done', 'rfq_sent', 'rfq_updated',))]" separator="1" help="Purchase order which are in draft state"/>
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ('draft',))]" separator="1" help="Purchase order which are in draft state"/>
                     </filter>
                     <xpath expr="/search/group/field[@name='create_uid']" position="after">
                     <newline />
@@ -76,10 +76,7 @@
 	                    <group string="Category" expand="0">
                             <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                             <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
                             <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
-                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
                             <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                    </group>
                         <newline />
@@ -94,6 +91,17 @@
                     </xpath>
                 </data>
             </field>
+        </record>
+        
+        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
+            <field name="name">Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_mode">tree,form,graph,calendar</field>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
+            <field name="domain">[('tender_id', '=', False),]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
     
     </data>

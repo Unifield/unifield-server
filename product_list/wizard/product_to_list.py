@@ -29,7 +29,7 @@ class product_to_list(osv.osv_memory):
     _description = 'Import product to list'
     
     _columns = {
-        'type': fields.selection([('exist', 'Existing list'), ('new', 'New list')], string='Existed/New list', required=True),
+        'type': fields.selection([('exist', 'Existing list'), ('new', 'New list'), ('replace', 'Replace list')], string='Existed/New list', required=True),
         'list_id': fields.many2one('product.list', string='Existing list'),
         'new_list_name': fields.char(size=128, string='Name of the new list'),
         'new_list_type': fields.selection([('list', 'List'), ('sublist', 'Sublist')], string='Type of the new list'),
@@ -70,6 +70,12 @@ class product_to_list(osv.osv_memory):
                                                     context=context)
             else:
                 list_id = imp.list_id.id
+
+                # Remove all old lines
+                if imp.type == 'replace':
+                    for list_line in list_obj.browse(cr, uid, list_id, context=context).product_ids:
+                        line_obj.unlink(cr, uid, list_line.id, context=context)
+
                 for l in imp.list_id.product_ids:
                     if l.name.id not in product_ids:
                         product_ids.append(l.name.id)

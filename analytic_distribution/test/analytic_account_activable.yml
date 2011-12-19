@@ -10,6 +10,7 @@
 -
  !record {model: res.currency, id: cur_1}:
     name: CUR
+    currency_name: Test currency
 -
   I check that the activation date is 3 months ago
 -

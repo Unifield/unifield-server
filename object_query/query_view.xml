@@ -82,7 +82,7 @@
                         </page>
                     </notebook>
                     <label colspan="2" />
-                    <button name="create_view" string="Open the search view" type="object" icon="gtk-execute" colspan="2" />
+                    <button name="create_view" string="Run the query" type="object" icon="gtk-execute" colspan="2" />
                 </form>
             </field>
         </record>

@@ -132,10 +132,16 @@
     nb_months = round(date_diff.years*12 + date_diff.months + (date_diff.days/30.0), 2)
     res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, 506.0/nb_months, uom_id)
     assert p1_rac.monthly_consumption == res, "The average of product 1 is not correct"
+#-
+#  I check the average consumption for 2011, June
+#-
+#  !python {model: product.product}: |
+#    context = {'from_date': '2011-06-01', 'to_date': '2011-06-30'}
+#    p4_rac = self.browse(cr, uid, ref('product4'), context=context).monthly_consumption
+#    assert p4_rac == 103.00, "The average of product 4 for 2011, June is not correct"
 -
-  I check the average consumption for 2011, June
+  I test the default activity (because of module msf_outgoing installed or not)
 -
-  !python {model: product.product}: |
-    context = {'from_date': '2011-06-01', 'to_date': '2011-06-30'}
-    p4_rac = self.browse(cr, uid, ref('product4'), context=context).monthly_consumption
-    assert p4_rac == 103.00, "The average of product 4 for 2011, June is not correct"
+  !record {model: real.average.consumption, id: rac_test}:
+    cons_location_id: stock.stock_location_stock
+    period_from: !eval time.strftime('%Y-%m-%d', time.strptime('2011-08-01', '%Y-%m-%d'))

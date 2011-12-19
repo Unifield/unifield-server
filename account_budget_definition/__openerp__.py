@@ -23,7 +23,7 @@
     'version': '1.0',
     'category': 'Generic Modules/Accounting',
     'author': 'MSF: Matthieu Dietrich',
-    'depends': ['account', 'account_budget'],
+    'depends': ['account', 'account_budget', 'analytic_distribution'],
     'description': '''
         Budget view
     ''',

@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from datetime import datetime
-from ..register_tools import create_starting_cashbox_lines
+from ..register_tools import create_cashbox_lines
 
 class wizard_closing_cashbox(osv.osv_memory):
     
@@ -95,7 +95,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                             if not st_line.amount:
                                  continue
                         # Create next register starting cashbox_lines if necessary
-                        create_starting_cashbox_lines(self, cr, uid, st.id, context=context)
+                        create_cashbox_lines(self, cr, uid, st.id, context=context)
                         # Change cashbox state
                         res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}, context=context)
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }

@@ -14,9 +14,9 @@
                     <field name="file_to_import" colspan="4" />
                     <separator colspan="4" string="List definition" />
                     <field name="type" />
-                    <field name="list_id" attrs="{'invisible': [('type', '=', 'new')], 'required': [('type', '=', 'exist')]}" />
-                    <field name="new_list_name" attrs="{'invisible': [('type', '=', 'exist')], 'required': [('type', '=', 'new')]}" />
-                    <field name="new_list_type" attrs="{'invisible': [('type', '=', 'exist')], 'required': [('type', '=', 'new')]}" />
+                    <field name="list_id" attrs="{'invisible': [('type', '=', 'new')], 'required': [('type', 'in', ['exist', 'replace'])]}" />
+                    <field name="new_list_name" attrs="{'invisible': [('type', 'in', ['exist', 'replace'])], 'required': [('type', '=', 'new')]}" />
+                    <field name="new_list_type" attrs="{'invisible': [('type', 'in', ['exist', 'replace'])], 'required': [('type', '=', 'new')]}" />
                     <separator colspan="4" string="" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
                     <button name="import_csv" string="Import file" icon="gtk-execute" type="object" />

@@ -21,6 +21,17 @@
 from osv import osv, fields
 from tools.translate import _
 
+class stock_warehouse(osv.osv):
+    '''
+    add a new field quarantine which is not mandatory
+    '''
+    _inherit = 'stock.warehouse'
+    _columns = {'lot_quarantine_id': fields.many2one('stock.location', 'Location Quarantine', domain=[('usage','<>','view'), ('quarantine_location', '=', True),]),
+                }
+    
+stock_warehouse()
+
+
 class stock_location(osv.osv):
     '''
     override stock location to add:
@@ -81,6 +92,26 @@ class stock_location(osv.osv):
           result[id] = False
         return result
     
+    def _check_parent(self, cr, uid, ids, context=None):
+        """ 
+        Quarantine Location can only have Quarantine Location or Views as parent location.
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.quarantine_location and obj.location_id:
+                if obj.location_id.usage not in ('view',) and not obj.location_id.quarantine_location:
+                    return False
+        return True
+    
+    def _check_chained(self, cr, uid, ids, context=None):
+        """ Checks if location is quarantine and chained loc
+        @return: True or False
+        """
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.quarantine_location:
+                if obj.chained_location_type != 'none':
+                    return False
+        return True
+    
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),
                 'location_category': fields.selection([('stock', 'Stock'),
@@ -93,6 +124,14 @@ class stock_location(osv.osv):
     _defaults = { 
        'location_category': 'stock',
     }
+    
+    _constraints = [(_check_parent,
+                     'Quarantine Location can only have Quarantine Location or Views as parent location.',
+                     ['location_id'],),
+                    (_check_chained,
+                     'You cannot define a quarantine location as chained location.',
+                     ['quarantine_location', 'chained_location_type'],),
+                    ]
 
 stock_location()
 
@@ -115,3 +154,41 @@ class procurement_order(osv.osv):
         return values
 
 procurement_order()
+
+
+class purchase_order(osv.osv):
+    '''
+    override purchase order
+    - add hook _hook_action_picking_create_modify_out_source_loc_check
+    '''
+    _inherit = 'purchase.order'
+    
+    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
+        
+        - allow to choose whether or not the source location of the corresponding outgoing stock move should
+        match the destination location of incoming stock move
+        '''
+        # we do not want the corresponding out stock move to be updated
+        return False
+    
+purchase_order()
+
+
+class stock_move(osv.osv):
+    '''
+    add _hook_action_done_update_out_move_check
+    '''
+    _inherit = 'stock.move'
+    
+    def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        choose if the corresponding out stock move must be updated
+        '''
+        result = super(stock_move, self)._hook_action_done_update_out_move_check(cr, uid, ids, context=context, *args, **kwargs)
+        # we never update the corresponding out stock move
+        return False
+
+stock_move()

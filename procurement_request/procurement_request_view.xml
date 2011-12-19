@@ -38,11 +38,12 @@
                         <field name="date_order" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                         <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                         <field name="requestor" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
+						<field name="requested_date" attrs="{'readonly': [('state', '!=', 'procurement')]}" required="1" />
                         <field name="origin" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}">
                                 <tree editable="top" string="Products">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
                                     <field name="name" invisible="1" />
@@ -51,7 +52,8 @@
                                     <field name="notes" />
                                     <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />
-                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True)]"/>
+				    <field name="my_company_id" invisible="1" />
+                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"/>
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
@@ -100,6 +102,7 @@
                 <tree string="Procurement Requests">
                     <field name="name" />
                     <field name="date_order" />
+                    <field name="requested_date" />
                     <field name="origin" />
                     <field name="requestor" />
                     <field name="state" />

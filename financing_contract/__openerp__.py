@@ -30,6 +30,7 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
+        'financing_contract_workflow.xml',
     ],
     'test': [],
     'demo_xml': [

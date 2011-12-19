@@ -70,6 +70,7 @@ class procurement_request(osv.osv):
     _columns = {
         'requestor': fields.char(size=128, string='Requestor'),
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'requested_date': fields.date(string='Requested date'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
         'notes': fields.text(string='Notes'),
@@ -133,6 +134,7 @@ class procurement_request(osv.osv):
             vals['partner_order_id'] = address_id
             vals['partner_invoice_id'] = address_id
             vals['partner_shipping_id'] = address_id
+            vals['delivery_requested_date'] = vals.get('requested_date')
             pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
             vals['pricelist_id'] = pl
 
@@ -234,14 +236,42 @@ class procurement_request_line(osv.osv):
         
         return res
     
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Adds the date_planned value
+        '''
+        if context is None:
+            context = {}
+
+        if not 'date_planned' in vals and context.get('procurement_request'):
+            if 'date_planned' in context:
+                vals.update({'date_planned': context.get('date_planned')})
+            else:
+                date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
+                vals.update({'date_planned': date_planned})
+                
+        return super(procurement_request_line, self).create(cr, uid, vals, context=context)
+    
     _columns = {
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
+        'my_company_id': fields.many2one('res.company','Company',select=1),
+        'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
     }
     
+    def _get_planned_date(self, cr, uid, c={}):
+        if c is None:
+            c = {}
+        if 'procurement_request' in c:
+            return c.get('date_planned', False)
+
+        return super(procurement_request_line, self)._get_planned_date(cr, uid, c)
+
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
+        'date_planned': _get_planned_date,
+        'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):

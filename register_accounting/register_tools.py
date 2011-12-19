@@ -81,6 +81,38 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             cr.execute(sql)
     return True
 
+def _get_third_parties_name(self, cr, uid, vals, context={}):
+    """
+    Get third parties name from vals that could contain:
+     - partner_type: displayed as "object,id"
+     - partner_id: the id of res.partner
+     - register_id: the id of account.bank.statement
+     - employee_id: the id of hr.employee
+    """
+    # Prepare some values
+    res = ''
+    # Some verifications
+    if not context:
+        context = {}
+    if not vals:
+        return res
+    if 'partner_type' in vals and vals.get('partner_type', False):
+        a = vals.get('partner_type').split(',')
+        if len(a) and len(a) > 1:
+            b = self.pool.get(a[0]).browse(cr, uid, [int(a[1])], context=context)
+            res = b and b[0] and b[0].name or ''
+            return res
+    if 'partner_id' in vals and vals.get('partner_id', False):
+        partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')], context=context)
+        res = partner and partner[0] and partner[0].name or ''
+    if 'employee_id' in vals and vals.get('employee_id', False):
+        employee = self.pool.get('hr.employee').browse(cr, uid, [vals.get('employee_id')], context=context)
+        res = employee and employee[0] and employee[0].name or ''
+    if 'register_id' in vals and vals.get('register_id', False):
+        register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
+        res = register and register[0] and register[0].name or ''
+    return res
+
 def open_register_view(self, cr, uid, register_id, context={}): 
     """
     Return the necessary object in order to return on the register we come from
@@ -128,23 +160,17 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
-def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+def previous_period_id(self, cr, uid, period_id, context={}):
     """
-    Give the previous register id regarding some criteria:
-     - period_id: the period of current register
-     - currency_id: currency of the current register
-     - register_type: type of register
-     - fiscalyear_id: current fiscalyear
+    Give previous period of those given
     """
-    # TIP - Use this postgresql query to verify current registers:
-    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
-    # from account_bank_statement as s, account_journal as j, res_currency as c 
-    # where s.journal_id = j.id and j.currency = c.id;
-
+    # Some verifications
+    if not context:
+        context = {}
+    if not period_id:
+        raise osv.except_osv(_('Error'), _('No period given.'))
     # Prepare some values
     p_obj = self.pool.get('account.period')
-    j_obj = self.pool.get('account.journal')
-    st_obj = self.pool.get('account.bank.statement')
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
@@ -160,9 +186,28 @@ def previous_register_id(self, cr, uid, period_id, currency_id, register_type, c
         previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
             limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
             # and "Period 15"
+    if previous_period_ids:
+        return previous_period_ids[0]
+    return False
+
+def previous_register_id(self, cr, uid, period_id, journal_id, context={}):
+    """
+    Give the previous register id regarding some criteria:
+     - period_id: the period of current register
+     - journal_id: this include same currency and same type
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    st_obj = self.pool.get('account.bank.statement')
+    prev_period_id = False
     # Search journal_ids that have the type we search
-    journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
-    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
     if len(previous_reg_ids) != 1:
         return False
     return previous_reg_ids[0]
@@ -209,7 +254,7 @@ def totally_or_partial_reconciled(self, cr, uid, ids, context={}):
                     return False
     return True
 
-def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
+def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context={}):
     """
     Create account_cashbox_lines from the current registers (register_ids) to the next register (to be defined)
     """
@@ -232,15 +277,22 @@ def create_starting_cashbox_lines(self, cr, uid, register_ids, context={}):
             # Search lines from current register ending balance
             cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
             # Unlink all previously cashbox lines for the next register
-            old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', next_reg_id)], context=context)
-            cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
-            for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
-                new_vals = {
-                    'starting_id': next_reg_id,
-                    'pieces': line.pieces,
-                    'number': line.number,
-                }
-                cashbox_line_obj.create(cr, uid, new_vals, context=context)
+            elements = ['starting_id']
+            # Add ending_id if demand
+            if ending:
+                elements.append('ending_id')
+            for el in elements:
+                old_cashbox_lines_ids = cashbox_line_obj.search(cr, uid, [(el, '=', next_reg_id)], context=context)
+                cashbox_line_obj.unlink(cr, uid, old_cashbox_lines_ids, context=context)
+                for line in cashbox_line_obj.browse(cr, uid, cashbox_lines_ids, context=context):
+                    starting_vals = {
+                        el: next_reg_id,
+                        'pieces': line.pieces,
+                        'number': line.number,
+                    }
+                    if el == 'ending_id':
+                        starting_vals.update({'number': 0.0,})
+                    cashbox_line_obj.create(cr, uid, starting_vals, context=context)
             # update new register balance_end
             balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
             if balance:

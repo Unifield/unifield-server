@@ -29,6 +29,78 @@
             </field>
 		</record>
 		
+		<record id="view_location_tree2" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="2"/>
+            <field name="inherit_id" ref="stock.view_location_tree2" />
+            <field name="arch" type="xml">
+            	<data>
+
+                    <field name="usage" position="after">
+                    	<field name="location_category" />
+                    </field>
+                    
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_location_search" model="ir.ui.view">
+            <field name="name">stock.location.search</field>
+            <field name="model">stock.location</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_location_search" />
+            <field name="arch" type="xml">
+            	<data>
+
+                    <field name="name" position="after">
+                    	<field name="location_category" />
+                    </field>
+
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_warehouse" model="ir.ui.view">
+            <field name="name">stock.warehouse</field>
+            <field name="model">stock.warehouse</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_warehouse" />
+            <field name="arch" type="xml">
+                <data>
+                
+                	<field name="lot_stock_id" position="replace">
+				<field name="lot_stock_id" domain="[('quarantine_location', '=', False)]" />
+	                	<field name="lot_quarantine_id" />
+                	</field>
+                	<field name="lot_output_id" position="replace">
+				<field name="lot_output_id" domain="[('quarantine_location', '=', False)]" />
+                	</field>
+                
+                </data>
+            </field>
+        </record>
+        
+        <!--MOVED TO SPECIFIC_RULES
+        <record id="view_picking_in_form" model="ir.ui.view">
+            <field name="name">stock.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="location_id" position="replace">
+            			<field name="location_id" domain="[('usage','&lt;&gt;','view'), ('quarantine_location', '=', False),]" />
+            		</field>
+            	
+            	</data>
+            </field>
+        </record>
+        -->
+		
+		<!-- MOVED TO SPECIFIC_RULES
 		<record id="view_picking_out_form" model="ir.ui.view">
             <field name="name">stock.picking.out.form</field>
             <field name="model">stock.picking</field>
@@ -44,6 +116,57 @@
             	</data>
             </field>
 		</record>
+		-->
+		
+		<record id="view_move_form_reception_picking" model="ir.ui.view">
+            <field name="name">view.move.form.reception.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
+            <field name="arch" type="xml">
+                <data>
+                
+                	<field name="location_id" position="replace">
+                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False),]" />
+                	</field>
+                
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_move_form" model="ir.ui.view">
+            <field name="name">stock.move.form</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form" />
+            <field eval="4" name="priority"/>
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="location_id" position="replace">
+                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False),]" />
+                	</field>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_move_tree" model="ir.ui.view">
+            <field name="name">stock.move.tree</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field eval="6" name="priority"/>
+            <field name="inherit_id" ref="stock.view_move_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="location_id" position="replace">
+                		<field name="location_id" domain="[('quarantine_location', '=', False),]" />
+                	</field>
+            	
+            	</data>
+            </field>
+        </record>
 
 	</data>
 </openerp>

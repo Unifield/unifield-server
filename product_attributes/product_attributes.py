@@ -73,50 +73,6 @@ product_attributes_template()
 class product_attributes(osv.osv):
     _inherit = "product.product"
     
-    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
-        '''
-        Returns all lists/sublists where the product is in
-        '''
-        if not context:
-            context = {}
-            
-        if isinstance(ids, (long,int)):
-            ids = [ids]
-            
-        res = {}
-            
-        for product in self.browse(cr, uid, ids, context=context):
-            res[product.id] = []
-            line_ids = self.pool.get('product.list.line').search(cr, uid, [('name', '=', product.id)], context=context)
-            for line in self.pool.get('product.list.line').browse(cr, uid, line_ids, context=context):
-                if line.list_id and line.list_id.id not in res[product.id]:
-                    res[product.id].append(line.list_id.id)
-                    
-        return res
-    
-    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
-        '''
-        Filter the search according to the args parameter
-        '''
-        if not context:
-            context = {}
-            
-        ids = []
-            
-        for arg in args:
-            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
-                list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
-                for line in list.product_ids:
-                    ids.append(line.name.id)
-            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
-                for list in self.pool.get('product.list').browse(cr, uid, arg[2], context=context):
-                    for line in list.product_ids:
-                        ids.append(line.name.id)
-            else:
-                return []
-            
-        return [('id', 'in', ids)]
-    
     def _get_nomen(self, cr, uid, ids, field_name, args, context={}):
         res = {}
         
@@ -212,7 +168,7 @@ class product_attributes(osv.osv):
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
         'heat_sensitive_item': fields.selection([('',''),
-            ('_','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
+            ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
             ('*','Keep Cool'),
             ('**','Keep Cool, airfreight'),
             ('***','Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
@@ -252,8 +208,6 @@ class product_attributes(osv.osv):
         'removal_time': fields.integer('Product Removal Time',
             help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
-        'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
-                                    type='many2many', relation='product.list', method=True, string='Lists'),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
     }

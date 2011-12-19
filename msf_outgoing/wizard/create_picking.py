@@ -573,6 +573,28 @@ class create_picking(osv.osv_memory):
         
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
+    
+    def integrity_check_weight(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on ppl2 data for weight
+        
+        dict: {189L: {1: {1: {439: [{'asset_id': False, 'weight': False, 'product_id': 246, 'product_uom': 1, 
+            'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 
+            'qty_per_pack': 1.0, 'product_qty': 1.0, 'width': False, 'move_id': 439}]}}}}
+        '''
+        move_obj = self.pool.get('stock.move')
+        for picking_data in data.values():
+            for from_data in picking_data.values():
+                for to_data in from_data.values():
+                    for move_data in to_data.values():
+                        for data in move_data:
+                            if not data.get('weight', False):
+                                move = move_obj.browse(cr, uid, data.get('move_id'), context=context)
+                                flow_type = move.picking_id.flow_type
+                                if flow_type != 'quick':
+                                    return False
+        
+        return True
         
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
@@ -588,6 +610,10 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # update data structure
         self.update_data_from_partial(cr, uid, ids, context=context)
+        # integrity check on wizard data
+        partial_datas_ppl1 = context['partial_datas_ppl1']
+        if not self.integrity_check_weight(cr, uid, ids, partial_datas_ppl1, context=context):
+            raise osv.except_osv(_('Warning !'), _('You must specify a weight for each pack family!'))
         # call stock_picking method which returns action call
         return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 

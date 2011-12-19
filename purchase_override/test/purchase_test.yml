@@ -59,7 +59,7 @@
     assert move_ids, ('No generated stock moves from Regular PO with internal supplier')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
-      assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
+      assert move.order_category == 'other', ('Generated move hasn\'t the good category')
       assert move.order_type == 'regular', ('Generated move hasn\'t the good type')
       assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
 -
@@ -128,7 +128,7 @@
 -
   !record {model: purchase.order, id: donation3}:
     order_type: donation_exp
-    categ: food
+    categ: other
     priority: priority
     name: Donation3
     partner_id: supplier1
@@ -189,7 +189,7 @@
     assert move_ids, ('No generated stock moves from Donation before expiry with internal supplier')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'priority', ('Generated move hasn\'t the good priority')
-      assert move.order_category == 'food', ('Generated move hasn\'t the good category')
+      assert move.order_category == 'other', ('Generated move hasn\'t the good category')
       assert move.order_type == 'donation_exp', ('Generated move hasn\'t the good type')
       reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
       assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
@@ -262,8 +262,8 @@
   !record {model: purchase.order, id: loan5}:
     order_type: loan
     priority: priority
-    categ: asset
-    name: Loan5
+    categ: other
+    name: other
     loan_duration: 6
     partner_id: supplier1
     company_id: base.main_company
@@ -316,7 +316,7 @@
     assert move_ids, ('No generated stock moves from loan')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'priority', ('Generated move hasn\'t the good priority')
-      assert move.order_category == 'asset', ('Generated move hasn\'t the good category')
+      assert move.order_category == 'other', ('Generated move hasn\'t the good category')
       assert move.order_type == 'loan', ('Generated move hasn\'t the good type')
       reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
       assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
@@ -428,7 +428,7 @@
     assert move_ids, ('No generated stock moves from In-kind donation')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
-      assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
+      assert move.order_category == 'other', ('Generated move hasn\'t the good category')
       assert move.order_type == 'in_kind', ('Generated move hasn\'t the good type')
       reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1]
       assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
@@ -496,7 +496,7 @@
     assert move_ids, ('No generated stock moves from Purchase List')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
-      assert move.order_category == 'mixed', ('Generated move hasn\'t the good category')
+      assert move.order_category == 'other', ('Generated move hasn\'t the good category')
       assert move.order_type == 'purchase_list', ('Generated move hasn\'t the good type')
       reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
       assert move.picking_id.reason_type_id.id == reason_id, ('Generated picking hasn\'t the good reason type')
@@ -685,3 +685,22 @@
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular11')])
     assert invoice_ids, ('No invoice created from Regular PO with internal supplier')
+-
+  Try to create a PO to the main company
+-
+  !python {model: purchase.order}: |
+    import time
+    data = {'name': 'Main company',
+            'partner_id': ref('base.main_company'),
+            'company_id': ref('base.main_company'),
+            'date_order': time.strftime('%Y-%m-%d'),
+            'invoice_method': 'order',
+            'location_id': ref('stock.stock_location_stock'),
+            'partner_address_id': ref('base.main_address'),
+            'pricelist_id': ref('purchase.list0'),
+           }
+    try:
+      self.create(cr, uid, data, context=context)
+      assert False, "The PO creation shouldn't allow a partner = main company"
+    except:
+      assert True

@@ -34,7 +34,7 @@ class product_list_import(osv.osv_memory):
     
     _columns = {
         'file_to_import': fields.binary(string='File to import', required=True),
-        'type': fields.selection([('exist', 'Existing list'), ('new', 'New list')], string='Existed/New list', required=True),
+        'type': fields.selection([('exist', 'Existing list'), ('new', 'New list'), ('replace', 'Replace list')], string='Existed/New list', required=True),
         'list_id': fields.many2one('product.list', string='Existing list'),
         'new_list_name': fields.char(size=128, string='Name of the new list'),
         'new_list_type': fields.selection([('list', 'List'), ('sublist', 'Sublist')], string='Type of the new list'),
@@ -85,6 +85,11 @@ class product_list_import(osv.osv_memory):
                                                     context=context)
             else:
                 list_id = file.list_id.id
+
+                # Remove all old lines
+                if file.type == 'replace':
+                    for list_line in list_obj.browse(cr, uid, list_id, context=context).product_ids:
+                        line_obj.unlink(cr, uid, list_line.id, context=context)
             
             fileobj = TemporaryFile('w+')
             fileobj.write(base64.decodestring(file.file_to_import))
@@ -100,7 +105,7 @@ class product_list_import(osv.osv_memory):
             
             for line in reader:
                 line_num += 1
-                if len(line) < 3:
+                if len(line) < 2:
                     error += 'Line %s is not valid !' % (line_num)
                     error += '\n'
                     continue
@@ -117,13 +122,20 @@ class product_list_import(osv.osv_memory):
                     continue
 
                 product_id = product_ids[0]
-                
-                line_ids.append(line_obj.create(cr, uid, {'name': product_id,
-                                                          'comment': line[2],
-                                                          'list_id': list_id}))
+
+                # Check if the product is already in list
+                prd_lines = line_obj.search(cr, uid, [('name', '=', product_id), ('list_id', '=', list_id)], context=context)
+
+                if not prd_lines:
+                    line_ids.append(line_obj.create(cr, uid, {'name': product_id,
+                                                              'comment': len(line) > 2 and line[2] or '',
+                                                              'list_id': list_id}, context=context))
+                elif len(line) > 2:
+                    line_obj.write(cr, uid, prd_lines, {'comment': line[2]})
                 
             if error and error != '':
                 self.write(cr, uid, ids, {'message': error})
+                context.update({'import_error': True})
                 
                 line_obj.unlink(cr, uid, line_ids, context=context)
                 if file.type == 'new_list':
