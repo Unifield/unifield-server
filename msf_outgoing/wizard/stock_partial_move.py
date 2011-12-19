@@ -24,11 +24,11 @@ from tools.translate import _
 import time
 import decimal_precision as dp
 
-class stock_partial_move_memory_picking(osv.osv_memory):
+
+class stock_partial_move_memory_out(osv.osv_memory):
     '''
-    add the split method
+    add split method to base out object
     '''
-    _name = "stock.move.memory.picking"
     _inherit = "stock.move.memory.out"
     
     def split(self, cr, uid, ids, context=None):
@@ -47,6 +47,23 @@ class stock_partial_move_memory_picking(osv.osv_memory):
         # and class name, to know which type of moves
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
 
+stock_partial_move_memory_out()
+
+
+class stock_partial_move_memory_in(osv.osv_memory):
+    _name = "stock.move.memory.in"
+    _inherit = "stock.move.memory.out"
+    
+stock_partial_move_memory_in()
+
+
+class stock_partial_move_memory_picking(osv.osv_memory):
+    '''
+    add the split method
+    '''
+    _name = "stock.move.memory.picking"
+    _inherit = "stock.move.memory.out"
+    
 stock_partial_move_memory_picking()
 
 
