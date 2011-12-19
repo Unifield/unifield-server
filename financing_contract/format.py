@@ -105,7 +105,7 @@ class financing_contract_actual_line(osv.osv):
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
         'account_ids': fields.many2many('account.account', 'financing_contract_actual_accounts', 'actual_line_id', 'account_id', string='Accounts'),
-        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line', ondelete='cascade'),
+        'parent_id': fields.many2one('financing.contract.actual.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.actual.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal')], 'Line type', required=True),
@@ -116,6 +116,19 @@ class financing_contract_actual_line(osv.osv):
     _defaults = {
         'line_type': 'normal',
     }
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for reporting_line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('format_id', '=', reporting_line.format_id.id),('|'),('name', '=ilike', reporting_line.name),('code', '=ilike', reporting_line.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between reporting lines!', ['code', 'name']),
+    ]
     
     def create(self, cr, uid, vals, context=None):
         if not context:

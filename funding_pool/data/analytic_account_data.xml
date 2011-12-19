@@ -8,7 +8,6 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">OC</field>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
     
         <record id="analytic_account_funding_pool" model="account.analytic.account">
@@ -17,7 +16,6 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">FUNDING</field>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
     
         <record id="analytic_account_free_1" model="account.analytic.account">
@@ -26,7 +24,6 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">FREE1</field>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
     
         <record id="analytic_account_free_2" model="account.analytic.account">
@@ -35,7 +32,6 @@
             <field name="type">view</field>
             <field name="active">True</field>
             <field name="category">FREE2</field>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
     
         <record id="analytic_account_msf_private_funds" model="account.analytic.account">
@@ -44,8 +40,6 @@
             <field name="type">normal</field>
             <field name="active">True</field>
             <field name="category">FUNDING</field>
-            <field name="parent_id" ref="funding_pool.analytic_account_funding_pool"/>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
         
     </data>

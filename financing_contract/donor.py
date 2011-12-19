@@ -36,6 +36,28 @@ class financing_contract_donor(osv.osv):
         'active': True,
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for donor in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', donor.name),('code', '=ilike', donor.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between donors!', ['code', 'name']),
+    ]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        donor = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (donor['code'] or '') + '(copy)'
+        default['name'] = (donor['name'] or '') + '(copy)'
+        return super(financing_contract_donor, self).copy(cr, uid, id, default, context=context)
     
     
 financing_contract_donor()
