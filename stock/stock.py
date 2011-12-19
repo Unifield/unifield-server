@@ -1410,10 +1410,15 @@ class stock_production_lot(osv.osv):
         """
         if context is None:
             context = {}
-        if 'location_id' not in context:
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
             locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = context['location_id'] and [context['location_id']] or []
+            locations = context['location_id'] or []
+
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1435,21 +1440,30 @@ class stock_production_lot(osv.osv):
         """ Searches Ids of products
         @return: Ids of locations
         """
-        if context.get('location_id', False):
-            locations = context['location_id'] and [context['location_id']] or []
+        if context is None:
+            context = {}
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
         else:
-            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')])
+            locations = context['location_id'] or []
+        
+        if isinstance(locations, (int, long)):
+            locations = [locations]
 
-        cr.execute('''select
-                prodlot_id,
-                sum(qty)
-            from
-                stock_report_prodlots
-            where
-                location_id IN %s group by prodlot_id
-            having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
-        res = cr.fetchall()
-        ids = [('id', 'in', map(lambda x: x[0], res))]
+        ids = [('id', 'in', [])]
+        if locations:
+            cr.execute('''select
+                    prodlot_id,
+                    sum(qty)
+                from
+                    stock_report_prodlots
+                where
+                    location_id IN %s group by prodlot_id
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+            res = cr.fetchall()
+            ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
 
     _columns = {
@@ -2160,6 +2174,13 @@ class stock_move(osv.osv):
                          'line_id': move_lines,
                          'ref': move.picking_id and move.picking_id.name})
 
+    def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        choose if the corresponding out stock move must be updated
+        '''
+        move = kwargs['move']
+        result = move.move_dest_id.id and (move.state != 'done')
+        return result
 
     def action_done(self, cr, uid, ids, context=None):
         """ Makes the move done and if all moves are done, it will finish the picking.
@@ -2193,7 +2214,7 @@ class stock_move(osv.osv):
 
             if move.picking_id:
                 picking_ids.append(move.picking_id.id)
-            if move.move_dest_id.id and (move.state != 'done'):
+            if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 self.write(cr, uid, [move.id], {'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))
                 if move.move_dest_id.state in ('waiting', 'confirmed'):
