@@ -39,7 +39,6 @@ class msf_budget_line(osv.osv):
             if budget_line.line_type == 'normal': 
                 month_stop = 0
                 actual_domain = []
-                budget_value_list = eval(budget_line.budget_values)
                 # "Global" domain: cost center, account, date must be after fiscal year's start
                 actual_domain.append(('general_account_id', '=', budget_line.account_id.id))
                 actual_domain.append(('account_id', '=', budget_line.budget_id.cost_center_id.id))
@@ -54,8 +53,11 @@ class msf_budget_line(osv.osv):
                     actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
                 # if set in context, budget values are added until the period's month
                 # otherwise, all are added (month_stop = 12)
-                for i in range(month_stop):
-                    budget_amount += budget_value_list[i]
+                if budget_line.budget_values:
+                    budget_value_list = eval(budget_line.budget_values)
+                    if len(budget_value_list) == 12: 
+                        for i in range(month_stop):
+                            budget_amount += budget_value_list[i]
                 # 2. commitments
                 # if commitments are set to False in context, the ENG analytic journal is removed
                 # from the domain
@@ -125,15 +127,16 @@ class msf_budget_line(osv.osv):
         if 'account_id' in vals and 'budget_id' in vals:
             # search for budget line
             account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
-            parent_account_id = account.parent_id.id
-            parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
-                                                    ('budget_id', '=', vals['budget_id'])], context=context)
-            if len(parent_line_ids) > 0:
-                # Parent line exists, add it to vals
-                vals.update({'parent_id': parent_line_ids[0]})
-            else:
-                # Create parent line and add it to vals
-                if account.parent_id:
+            chart_of_account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', 'MSF')], context=context)
+            if account.parent_id and account.parent_id.id not in chart_of_account_ids:
+                parent_account_id = account.parent_id.id
+                parent_line_ids = self.search(cr, uid, [('account_id', '=', parent_account_id),
+                                                        ('budget_id', '=', vals['budget_id'])], context=context)
+                if len(parent_line_ids) > 0:
+                    # Parent line exists, add it to vals
+                    vals.update({'parent_id': parent_line_ids[0]})
+                else:
+                    # Create parent line and add it to vals, except if it's the main parent
                     parent_vals = {'budget_id': vals['budget_id'],
                                    'account_id': parent_account_id,
                                    'line_type': 'view'}
