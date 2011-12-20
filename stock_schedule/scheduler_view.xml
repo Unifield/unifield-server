@@ -178,11 +178,17 @@
         <menuitem id="procurement.menu_stock_sched" name="Schedulers" parent="stock.menu_stock_root" sequence="10"/>
         <menuitem id="stock.next_id_61" name="Reporting" parent="stock.menu_stock_root" sequence="8" />
 
+        <!-- REWORKING OF TRACEABILITY MENU -->
+        <record id="stock.action_production_lot_form" model="ir.actions.act_window">
+            <field name="name">Batch numbers</field>
+        </record>
+
+        <menuitem id="stock.menu_action_production_lot_form" action="stock.action_production_lot_form" sequence="-10" parent="stock.menu_traceability" />
+
         <!-- DELETE PRODUCTS -->
-        <!-- TODO: To be validated with Magali
         <delete model="ir.ui.menu" id="stock.menu_stock_product" />
         <delete model="ir.ui.menu" id="stock.menu_product_by_category_stock_form" />
-        <delete model="ir.ui.menu" id="stock.menu_stock_products_menu" />-->
+        <delete model="ir.ui.menu" id="stock.menu_stock_products_menu" />
 
 
         <menuitem id="stock_automatic_procurements_menu"

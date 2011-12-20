@@ -157,6 +157,8 @@
                   sequence="4"
                   parent="purchase.menu_procurement_management" />
 
+        <menuitem id="base.menu_purchase_root" sequence="2" />
+
         <!-- Address Book -->
         <menuitem id="base.menu_procurement_management_supplier"
                   name="Address Book"

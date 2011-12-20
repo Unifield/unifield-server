@@ -2,6 +2,11 @@
 <openerp>
     <data>
     	
+    	<menuitem id="menu_warehouse_expiry"
+                  name="Expiry"
+                  sequence="-10"
+    			  parent="stock.next_id_61" />
+    	
     	<record id="expiry_quantity_report_init_view" model="ir.ui.view">
     		<field name="name">expiry.quantity.report.init.view</field>
     		<field name="model">expiry.quantity.report</field>
@@ -61,7 +66,7 @@
     	<menuitem id="menu_expired_products"
     			  action="action_expired_products"
                   sequence="-10"
-    			  parent="stock.next_id_61" />
+    			  parent="menu_warehouse_expiry" />
     			  
     			  
     	<record id="product_likely_expire_report_form_init" model="ir.ui.view">
@@ -131,7 +136,7 @@
     	<menuitem id="menu_products_to_expire"
     			  action="action_products_to_expire"
                   sequence="-1"
-    			  parent="stock.next_id_61" />
+    			  parent="menu_warehouse_expiry" />
     			  
     	 <record id="product_likely_expire_report_item_form" model="ir.ui.view">
     	 	<field name="name">product.likely.expire.report.item.form</field>
