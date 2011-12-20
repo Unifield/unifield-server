@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report auto="False" 
+                header="True"
+                id="msf_audittrail.report_log_line" 
+                model="audittrail.log.line" 
+                name="msf.log.line"
+                rml="msf_audittrail/report/log_line.rml"
+                string="Log lines" />
+
+    </data>
+</openerp>
