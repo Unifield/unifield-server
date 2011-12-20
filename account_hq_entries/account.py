@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from lxml import etree
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -31,6 +32,24 @@ class account_move_line(osv.osv):
     _columns = {
         'user_validated': fields.boolean(string="User validated?", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Update tree view to display 'user_validated' field for HQ Entries View
+        """
+        if not context:
+            context = {}
+        view = super(account_move_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='tree' and context.get('from', False) == 'hq_entries':
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('/tree/field[@name="ref"]')
+            if fields:
+                field = fields[0]
+                parent = field.getparent()
+                parent.insert(parent.index(field)+1, etree.XML('<field name="user_validated"/>\n'))
+                view['fields'].update(self.fields_get(cr, uid, fields=['user_validated'], context=context))
+                view['arch'] = etree.tostring(tree)
+        return view
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

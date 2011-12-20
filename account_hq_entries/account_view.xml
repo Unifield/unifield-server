@@ -2,22 +2,6 @@
 <openerp>
     <data>
 
-    <!-- HQ entries tree -->
-    <record model="ir.ui.view" id="hq_entries_tree">
-        <field name="name">hq.entries.tree</field>
-        <field name="model">account.move.line</field>
-        <field name="type">tree</field>
-        <field name="inherit_id" ref="account_corrections.inherit_view_move_line_tree"/>
-        <field name="priority" eval="1"/>
-        <field name="arch" type="xml">
-            <data>
-                <xpath expr="/tree/field[@name='ref']" position="after">
-                    <field name="user_validated"/>
-                </xpath>
-            </data>
-        </field>
-    </record>
-
     <!-- HQ Entries search view -->
     <record id="hq_entries_filter" model="ir.ui.view">
         <field name="name">HQ Entries</field>
@@ -68,7 +52,6 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="hq_entries_tree"/>
             <field name="search_view_id" ref="hq_entries_filter"/>
             <field name="domain">[('account_id.user_type.code', '=', 'expense'), ('journal_id.type', '=', 'hq')]</field>
             <field name="context">{'from': 'hq_entries'}</field>
