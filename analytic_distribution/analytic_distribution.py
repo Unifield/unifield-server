@@ -59,6 +59,29 @@ class analytic_distribution(osv.osv):
         })
         return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
+    def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
+        if not id:
+            if parent_id:
+                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
+            return 'none'
+        distri = self.browse(cr, uid, id)
+        # Search MSF Private Fund element, because it's valid with all accounts
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        for fp_line in distri.funding_pool_lines:
+            # If fp_line is MSF Private Fund, all is ok
+            if fp_line.analytic_id.id == fp_id:
+                continue
+            if account_id not in [x.id for x in fp_line.analytic_id.account_ids]:
+                return 'invalid'
+            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+                return 'invalid'
+        return 'valid'
+
+
 analytic_distribution()
 
 class distribution_line(osv.osv):
