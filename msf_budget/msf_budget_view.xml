@@ -54,7 +54,6 @@
                     <field name="decision_moment"/>
                     <field name="version"/>
                     <field name="currency_id"/>
-                    <field name="currency_table_id"/>
                     <field name="budget_line_ids" colspan="4" nolabel="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="account_id" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
@@ -64,6 +63,15 @@
                             <field name="percentage"/>
                             <field name="line_type"/>
                         </tree>
+                        <form string="Budget Line">
+                            <group colspan="4">
+                                <field name="account_id" colspan="2"/>
+	                            <field name="budget_amount" colspan="1"/>
+	                            <field name="actual_amount" colspan="1"/>
+	                            <field name="balance" colspan="1"/>
+	                            <field name="percentage" colspan="1"/>
+                            </group>
+                        </form>
                     </field>
                     <field name="state" select="1"/>
                     <group col="4" colspan="2">
@@ -89,6 +97,37 @@
         <menuitem parent="next_id_31"
             id="menu_act_crossovered_budget_view"
             action="act_crossovered_budget_view" sequence="1" />
+
+        <record id="wizard_budget_import_view" model="ir.ui.view">
+            <field name="name">Budget Import</field>
+            <field name="model">wizard.budget.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Import">
+                    <label string="Select a .CSV file to import." align="0.0" colspan="3"/>
+                    <field name="import_file"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="import_csv_budget" string="Import Budget" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_wizard_budget_import" model="ir.actions.act_window">
+            <field name="name">Import Budget</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.budget.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="wizard_budget_import_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="next_id_31"
+            action="action_wizard_budget_import"
+            id="menu_action_wizard_budget_import"  sequence="2"/>
 
     </data>
 </openerp>
