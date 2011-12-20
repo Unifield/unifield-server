@@ -132,6 +132,16 @@ class audittrail_rule(osv.osv):
             value = 'ir.actions.act_window,' + str(action_id)
             res = obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
             #End Loop
+        
+        # Check if an export model already exist for audittrail.rule
+        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
+        if not export_ids:
+            export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
+                                                                     'resource': 'audittrail.log.line'})
+            fields = ['log', 'timestamp', 'sub_obj_name', 'method', 'field_description', 'old_value', 'new_value', 'user_id']
+            for f in fields:
+                self.pool.get('ir.exports.line').create(cr, uid, {'name': f, 'export_id': export_id}) 
+
         return True
 
     def unsubscribe(self, cr, uid, ids, *args):
@@ -159,16 +169,6 @@ class audittrail_rule(osv.osv):
                 res = ir.ir_del(cr, uid, val_id[0])
             self.write(cr, uid, [thisrule.id], {"state": "draft"})
         #End Loop
-        
-        # Check if an export model already exist for audittrail.rule
-        export_ids = self.pool.get('ir.exports').search(cr, uid, [('name', '=', 'Log Lines'), ('resource', '=', 'audittrail.log.line')])
-        if not export_ids:
-            export_id = self.pool.get('ir.exports').create(cr, uid, {'name': 'Log Lines',
-                                                                     'resource': 'audittrail.log.line'})
-            fields = ['log', 'timestamp', 'sub_obj_name', 'method', 'field_description', 'old_value', 'new_value', 'user_id']
-            for f in fields:
-                self.pool.get('ir.exports.line').create(cr, uid, {'name': f, 'export_id': export_id}) 
-
         
         return True
 
