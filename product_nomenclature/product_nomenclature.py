@@ -57,31 +57,19 @@ class product_nomenclature(osv.osv):
             file = tools.file_open(pathname)
             tools.convert_xml_import(cr, 'product_nomenclature', file, {}, mode='init', noupdate=False)
 
-    def name_get1(self, cr, uid, ids, context=None):
-        if not len(ids):
-            return []
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
-        res = []
-        for record in reads:
-            name = record['name']
-            if record['parent_id']:
-                name = record['parent_id'][1]+' / '+name
-            res.append((record['id'], name))
-        return res
-
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
+        if context is None:
+            context = {}
         reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
         res = []
         for record in reads:
             name = record['name']
+            if not context.get('nolevel') and record['parent_id']:
+                name = record['parent_id'][1]+' / '+name
             res.append((record['id'], name))
-#            if record['parent_id']:
-#                name = record['parent_id'][1]+' / '+name
-#            res.append((record['id'], name))
         return res
-
 
     
     def _name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
@@ -276,6 +264,29 @@ class product_nomenclature(osv.osv):
     ]
     def child_get(self, cr, uid, ids):
         return [ids]
+    
+    def get_nomen(self, cr, uid, obj, id, field):
+        parent = {'nomen_manda_1': 'nomen_manda_0', 'nomen_manda_2': 'nomen_manda_1', 'nomen_manda_3': 'nomen_manda_2'}
+        level = {'nomen_manda_1': 1, 'nomen_manda_2': 2, 'nomen_manda_3': 3}
+        p_id = obj.read(cr, uid, id, [parent[field]])[parent[field]]
+        dom = [('level', '=',  level.get(field)), ('type', '=', 'mandatory'), ('parent_id', '=', p_id and p_id[0] or 0)]
+        return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context={'nolevel':1})
+    
+    def get_sub_nomen(self, cr, uid, obj, id, field):
+        parent = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
+        level = {'nomen_sub_0': '0', 'nomen_sub_1': '1', 'nomen_sub_2': '2', 'nomen_sub_3': '3', 'nomen_sub_4': '4', 'nomen_sub_5': '5'}
+        read = parent + level.keys()
+        nom = obj.read(cr, uid, id, read)
+        parent_id = [False]
+        for p in parent:
+            if nom[p]:
+                parent_id.append(nom[p][0])
+        sub = []
+        for p in level.keys():
+            if p != field and nom[p]:
+                sub.append(nom[p][0])
+        dom = [('type', '=', 'optional'), ('parent_id', 'in', parent_id), ('sub_level', '=', level.get(field)),  ('id', 'not in', sub)]
+        return [('','')]+self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context={'nolevel':1})
 
 product_nomenclature()
 
@@ -346,6 +357,12 @@ class product_product(osv.osv):
     
     _inherit = "product.product"
     _description = "Product"
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+    
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -365,7 +382,7 @@ class product_product(osv.osv):
         
         return super(product_product, self).write(cr, uid, ids, vals, context)
     
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
         the nomenclature selection search changes
         '''
@@ -405,34 +422,40 @@ class product_product(osv.osv):
         if position < 3:
             nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
-                for n in nomenObj.read(cr, uid, nomenids, ['name', 'number_of_products'], context=context):
+                for n in nomenObj.read(cr, uid, nomenids, ['name'] + (num and ['number_of_products'] or []), context=context):
                     # get the name and product number
                     id = n['id']
                     name = n['name']
-                    number = n['number_of_products']
-                    values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+                    if num:
+                        number = n['number_of_products']
+                        values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+                    else:
+                        values[mandaName%(position+1)].append((id, name))
         
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
         if not selected:
             optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='name', context=context))
         else:
-            pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
-            if pids:
-                for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
-                    optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
+            optionalList = nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False])])
+#            pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
+#            if pids:
+#                for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
+#                    optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
             
         # sort the optional nomenclature according to their id
         optionalList.sort()
         if optionalList:
-            for n in nomenObj.read(cr, uid, optionalList, ['name', 'number_of_products','sub_level'], context=context):
+            for n in nomenObj.read(cr, uid, optionalList, ['name', 'sub_level'] + (num and ['number_of_products'] or []), context=context):
                 # get the name and product number
                 id = n['id']
                 name = n['name']
-                number = n['number_of_products']
                 sublevel = n['sub_level']
-                values[optName%(sublevel)].append((id, name + ' (%s)'%number))
-        
+                if num:
+                    number = n['number_of_products']
+                    values[optName%(sublevel)].append((id, name + ' (%s)'%number))
+                else:
+                    values[optName%(sublevel)].append((id, name))
         return result
     
     def _resetNomenclatureFields(self, values):

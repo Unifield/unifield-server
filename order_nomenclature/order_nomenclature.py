@@ -207,6 +207,14 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
 
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
 
 purchase_order_line()
 
@@ -467,5 +475,15 @@ class sale_order_line(osv.osv):
     
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+
     
 sale_order_line()
