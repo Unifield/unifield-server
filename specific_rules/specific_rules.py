@@ -1219,15 +1219,17 @@ class stock_inventory_line(osv.osv):
                     return False
         return True
     
-    _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
-                'expiry_date': fields.date(string='Expiry Date'),
-                'type_check': fields.char(string='Type Check', size=1024,),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                }
+    _columns = {
+        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
+        'expiry_date': fields.date(string='Expiry Date'),
+        'type_check': fields.char(string='Type Check', size=1024,),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+    }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
