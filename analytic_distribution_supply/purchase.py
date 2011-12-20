@@ -80,18 +80,7 @@ class purchase_order(osv.osv):
         # Retrieve some data
         res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
         # Set analytic distribution from purchase order to invoice
-        ana_obj = self.pool.get('analytic.distribution')
         for po in self.browse(cr, uid, ids):
-            if po.from_yml_test:
-                continue
-            if not po.analytic_distribution_id:
-                for line in po.order_line:
-                    if not line.analytic_distribution_id:
-                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')
-                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-                        po.analytic_distribution_id = ana_obj.browse(cr, uid, ana_id)
-                        #raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
-                        break
             # Copy analytic_distribution
             self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [x.id for x in po.invoice_ids])
         return res
@@ -248,12 +237,14 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Analytic distribution verification
+        ana_obj = self.pool.get('analytic.distribution')
         for po in self.browse(cr, uid, ids, context=context):
-            for line in po.order_line:
-                if line.analytic_distribution_id or po.analytic_distribution_id:
-                    continue
-                if not po.from_yml_test:
-                    raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
+            if not po.analytic_distribution_id:
+                for line in po.order_line:
+                    if not line.analytic_distribution_id:
+                        dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')
+                        ana_id = ana_obj.create(cr, uid, {'purchase_ids': [(4,po.id)], 'cost_center_lines': [(0, 0, {'analytic_id': dummy_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                        break
         # Default behaviour
         res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
         # Create commitments for each PO only if po is "from picking"
