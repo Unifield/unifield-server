@@ -392,6 +392,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = True
             elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
+                res[wiz.id] = True
 
         return res
 
@@ -832,9 +834,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 il = wiz.invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
             # Same thing for purchase order line
-            if wiz.purchase_line_id:
+            elif wiz.purchase_line_id:
                 pl = wiz.purchase_line_id
                 distrib = pl.order_id and pl.order_id.analytic_distribution_id and pl.order_id.analytic_distribution_id or False
+            elif wiz.commitment_line_id:
+                pl = wiz.commitment_line_id
+                distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
+
             if distrib:
                 # First delete all current lines
                 self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
