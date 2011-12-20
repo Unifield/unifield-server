@@ -314,7 +314,6 @@ class purchase_order(osv.osv):
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
->>>>>>> MERGE-SOURCE
 purchase_order()
 
 class purchase_order_line(osv.osv):
