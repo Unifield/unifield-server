@@ -37,7 +37,7 @@
       fields = ['comment', 'confirmed_delivery_date', 'date_planned', 'default_code',
                 'default_name', 'name', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2',
                 'nomen_manda_3', 'notes', 'price_unit', 'product_qty', 'product_uom',
-                'state', 'taxes_id']
+                'taxes_id']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
       field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
