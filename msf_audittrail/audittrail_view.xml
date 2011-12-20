@@ -117,7 +117,7 @@
             <field name="model">audittrail.log.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Logs">
+                <tree string="Logs" hide_new_button="1" hide_delete_button="1" noteditable="1" editable="top">
                     <field name="log" />
                     <field name="timestamp" />
                     <field name="sub_obj_name" />
