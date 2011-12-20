@@ -19,9 +19,6 @@
                     ${editors[field].display()}
                 % endfor
                 <!-- end of hidden fields -->
-                <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
-                    class="listImage editors" border="0" title="${_('Update')}"
-                    onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
             % for i, (field, field_attrs) in enumerate(headers):
                 % if field == 'button':
@@ -37,9 +34,9 @@
                 % endif
             % endfor
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
-                <img alt="delete record" src="/openerp/static/images/iconset-b-remove.gif"
-                    class="listImage editors" border="0" title="${_('Cancel')}"
-                    onclick="new ListView('${name}').reload()"/>
+                <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
+                    class="listImage editors" border="0" title="${_('Update')}"
+                    onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
         </tr>
     % endif
