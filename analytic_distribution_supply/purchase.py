@@ -25,6 +25,12 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+from time import strftime
+from account_tools import get_period_from_date
+from account_tools import get_date_in_period
+
+from collections import defaultdict
+
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
@@ -52,6 +58,7 @@ class purchase_order(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
+        'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
     }
 
     def inv_line_create(self, cr, uid, account_id, order_line):
@@ -73,7 +80,6 @@ class purchase_order(osv.osv):
         # Retrieve some data
         res = super(purchase_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
         # Set analytic distribution from purchase order to invoice
-        invl_obj = self.pool.get('account.invoice.line') # invoice line object
         ana_obj = self.pool.get('analytic.distribution')
         for po in self.browse(cr, uid, ids):
             if po.from_yml_test:
@@ -86,27 +92,8 @@ class purchase_order(osv.osv):
                         po.analytic_distribution_id = ana_obj.browse(cr, uid, ana_id)
                         #raise osv.except_osv(_('Error'), _("No analytic distribution found on purchase order '%s'.") % po.name)
                         break
-            inv_ids = po.invoice_ids
-            for inv in inv_ids:
-                # First set invoice global distribution
-                if po.analytic_distribution_id:
-                    new_distrib_id = ana_obj.copy(cr, uid, po.analytic_distribution_id.id, {})
-                    if not new_distrib_id:
-                        raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                    # create default funding pool lines
-                    ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                    self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
-                # Search all invoice lines
-                invl_ids = invl_obj.search(cr, uid, [('invoice_id', '=', inv.id)])
-                # Then set distribution on invoice line regarding purchase order line distribution
-                for invl in invl_obj.browse(cr, uid, invl_ids):
-                    if invl.order_line_id and invl.order_line_id.analytic_distribution_id:
-                        new_invl_distrib_id = ana_obj.copy(cr, uid, invl.order_line_id.analytic_distribution_id.id, {})
-                        if not new_invl_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id])
-                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
+            # Copy analytic_distribution
+            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [x.id for x in po.invoice_ids])
         return res
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
@@ -154,15 +141,18 @@ class purchase_order(osv.osv):
                 'context': context,
         }
 
-    def copy(self, cr, uid, id, default={}, context={}):
+    def copy_data(self, cr, uid, id, default={}, context={}):
         """
-        Copy global distribution and give it to new purchase
+        Copy global distribution and give it to new purchase.
+        Delete commitment_ids link.
         """
         # Some verifications
         if not context:
             context = {}
+        # Update default
+        default.update({'commitment_ids': False,})
         # Default method
-        res = super(purchase_order, self).copy(cr, uid, id, default, context)
+        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
         # Update analytic distribution
         if res:
             po = self.browse(cr, uid, res, context=context)
@@ -172,6 +162,159 @@ class purchase_order(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
+    def action_create_commitment(self, cr, uid, ids, type=False, context={}):
+        """
+        Create commitment from given PO, but only for external and esc partner_types
+        """
+        # Some verifications
+        if not type or type not in ['external', 'esc']:
+            return False
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        commit_obj = self.pool.get('account.commitment')
+        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
+        for po in self.browse(cr, uid, ids, context=context):
+            # fetch analytic distribution, period from delivery date, currency, etc.
+            vals = {
+                'journal_id': eng_ids and eng_ids[0] or False,
+                'currency_id': po.currency_id and po.currency_id.id or False,
+                'partner_id': po.partner_id and po.partner_id.id or False,
+                'purchase_id': po.id or False,
+                'type': po.partner_id and po.partner_id.partner_type or 'manual',
+            }
+            # prepare some values
+            today = strftime('%Y-%m-%d')
+            period_ids = get_period_from_date(self, cr, uid, po.delivery_requested_date or today, context=context)
+            period_id = period_ids and period_ids[0] or False
+            date = get_date_in_period(self, cr, uid, po.delivery_requested_date or today, period_id, context=context)
+            po_lines = defaultdict(list)
+            # update period and date
+            vals.update({
+                'date': date,
+                'period_id': period_id,
+            })
+            # Create commitment
+            commit_id = commit_obj.create(cr, uid, vals, context=context)
+            # Add analytic distribution from purchase
+            if po.analytic_distribution_id:
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
+                # Update this distribution not to have a link with purchase but with new commitment
+                if new_distrib_id:
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id], {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    # Create funding pool lines if needed
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
+                    # Update commitment with new analytic distribution
+                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
+            # Browse purchase order lines and group by them by account_id
+            for pol in po.order_line:
+                # Search product account_id
+                if pol.product_id:
+                    a = pol.product_id.product_tmpl_id.property_account_expense.id
+                    if not a:
+                        a = pol.product_id.categ_id.property_account_expense_categ.id
+                    if not a:
+                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+                else:
+                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+                fpos = po.fiscal_position or False
+                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                # Write
+                po_lines[a].append(pol)
+            # Commitment lines process
+            created_commitment_lines = []
+            for account_id in po_lines:
+                total_amount = 0.0
+                for line in po_lines[account_id]:
+                    total_amount += line.price_subtotal
+                # Create commitment lines
+                line_id = self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
+                created_commitment_lines.append(line_id)
+            # Create analytic distribution on this commitment line
+            self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
+        return True
+
+    def wkf_approve_order(self, cr, uid, ids, context={}):
+        """
+        Checks:
+        1/ if all purchase line could take an analytic distribution
+        2/ if a commitment voucher should be created after PO approbation
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Analytic distribution verification
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.analytic_distribution_id or po.analytic_distribution_id:
+                    continue
+                if not po.from_yml_test:
+                    raise osv.except_osv(_('Error'), _('No analytic distribution found for: %s, qty: %s, price: %s' % (line.name, line.product_qty, line.price_subtotal)))
+        # Default behaviour
+        res = super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+        # Create commitments for each PO only if po is "from picking"
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.invoice_method == 'picking':
+                self.action_create_commitment(cr, uid, [po.id], po.partner_id and po.partner_id.partner_type, context=context)
+        return res
+
+    def _finish_commitment(self, cr, uid, ids, context={}):
+        """
+        Delete attached commitment(s) from given Purchase Order.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse PO
+        for po in self.browse(cr, uid, ids, context=context):
+            # Change commitment state if exists
+            if po.commitment_ids:
+                self.pool.get('account.commitment').write(cr, uid, [x.id for x in po.commitment_ids], {'state': 'done'}, context=context)
+        return True
+
+    def action_cancel(self, cr, uid, ids, context={}):
+        """
+        Delete commitment from purchase before 'cancel' state.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Delete commitments if exists
+        self._finish_commitment(cr, uid, ids, context=context)
+        return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
+
+    def action_done(self, cr, uid, ids, context={}):
+        """
+        Delete commitment from purchase before 'done' state.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Change commitments state if all shipments have been invoiced (not in "to be invoiced" state)
+        to_process = []
+        for po in self.browse(cr, uid, ids, context=context):
+            is_totally_done = True
+            # If one shipment (stock.picking) is '2binvoiced', we shouldn't change commitments ' state
+            for pick in po.picking_ids:
+                if pick.invoice_state == '2binvoiced':
+                    is_totally_done = False
+            # Else shipment is fully done. We could change commitments ' state to Done.
+            if is_totally_done:
+                to_process.append(po.id)
+        self._finish_commitment(cr, uid, to_process, context=context)
+        return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
+>>>>>>> MERGE-SOURCE
 purchase_order()
 
 class purchase_order_line(osv.osv):
@@ -213,6 +356,8 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
+        'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id', 
+            string="Commitment Voucher Lines", readonly=True),
     }
 
     _defaults = {
@@ -266,10 +411,13 @@ class purchase_order_line(osv.osv):
     def copy_data(self, cr, uid, id, default={}, context={}):
         """
         Copy global distribution and give it to new purchase line
+        Copy global distribution and give it to new purchase line.
         """
         # Some verifications
         if not context:
             context = {}
+        # Update default
+        default.update({'commitment_line_ids': [(6, 0, [])],})
         # Copy analytic distribution
         pol = self.browse(cr, uid, [id], context=context)[0]
         if pol.analytic_distribution_id:

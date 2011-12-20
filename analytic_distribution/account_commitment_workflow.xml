@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Workflow -->
+        <record id="commit_wkf" model="workflow">
+            <field name="name">account.commitment</field>
+            <field name="osv">account.commitment</field>
+            <field name="on_create">True</field>
+        </record>
+
+    <!-- States / Activities -->
+        <record id="act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="commit_wkf"/>
+            <field name="flow_start">True</field>
+            <field name="name">draft</field>
+        </record>
+
+        <record id="act_open" model="workflow.activity">
+            <field name="wkf_id" ref="commit_wkf"/>
+            <field name="name">open</field>
+            <field name="kind">function</field>
+            <field name="action">action_commitment_open()</field>
+        </record>
+
+        <record id="act_done" model="workflow.activity">
+            <field name="wkf_id" ref="commit_wkf"/>
+            <field name="name">done</field>
+            <field name="action">action_commitment_done()</field>
+            <field name="kind">function</field>
+        </record>
+
+    <!-- Transitions -->
+        <record id="commit_t1" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_open"/>
+            <field name="signal">commitment_open</field>
+        </record>
+
+        <record id="commit_t2" model="workflow.transition">
+            <field name="act_from" ref="act_open"/>
+            <field name="act_to" ref="act_done"/>
+            <field name="signal">commitment_validate</field>
+        </record>
+
+    </data>
+</openerp>

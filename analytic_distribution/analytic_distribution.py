@@ -35,6 +35,8 @@ class analytic_distribution(osv.osv):
         'invoice_line_ids': fields.one2many('account.invoice.line', 'analytic_distribution_id', string="Invoice Lines"),
         'register_line_ids': fields.one2many('account.bank.statement.line', 'analytic_distribution_id', string="Register Lines"),
         'move_line_ids': fields.one2many('account.move.line', 'analytic_distribution_id', string="Move Lines"),
+        'commitment_ids': fields.one2many('account.commitment', 'analytic_distribution_id', string="Commitments voucher"),
+        'commitment_line_ids': fields.one2many('account.commitment.line', 'analytic_distribution_id', string="Commitment voucher lines"),
     }
 
     _defaults ={
@@ -52,6 +54,8 @@ class analytic_distribution(osv.osv):
             'invoice_line_ids': False,
             'register_line_ids': False,
             'move_line_ids': False,
+            'commitment_ids': False,
+            'commitment_line_ids': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
@@ -200,6 +204,68 @@ class analytic_distribution(osv.osv):
                     }
                     new_pf_line_id = self.pool.get('funding.pool.distribution.line').create(cr, uid, vals, context=context)
             res[distrib.id] = True
+        return res
+
+    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, ref=False, source_date=False, general_account_id=False, \
+        move_id=False, invoice_line_id=False, commitment_line_id=False, context={}):
+        """
+        Create analytic lines from given elements:
+         - date
+         - name
+         - amount
+         - journal_id (analytic_journal_id)
+         - currency_id
+         - ref (optional)
+         - source_date (optional)
+         - general_account_id (optional)
+         - move_id (optional)
+         - invoice_line_id (optional)
+         - commitment_line_id (optional)
+        Return all created ids, otherwise return false (or [])
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not name or not date or not amount or not journal_id or not currency_id:
+            return False
+        # Prepare some values
+        res = []
+        vals = {
+            'name': name,
+            'date': source_date or date,
+            'ref': ref or '',
+            'journal_id': journal_id,
+            'general_account_id': general_account_id or False,
+            'move_id': move_id or False,
+            'invoice_line_id': invoice_line_id or False,
+            'user_id': uid,
+            'currency_id': currency_id,
+            'source_date': source_date or False,
+            'commitment_line_id': commitment_line_id or False,
+        }
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        # Browse distribution(s)
+        for distrib in self.browse(cr, uid, ids, context=context):
+            vals.update({'distribution_id': distrib.id,})
+            # create lines
+            for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+                for distrib_line in distrib_lines:
+                    context.update({'date': source_date or date}) # for amount computing
+                    anal_amount = (distrib_line.percentage * amount) / 100
+                    vals.update({
+                        'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency, 
+                            anal_amount, round=False, context=context),
+                        'amount_currency': -1 * anal_amount,
+                        'account_id': distrib_line.analytic_id.id,
+                    })
+                    # Update values if we come from a funding pool
+                    if distrib_line._name == 'funding.pool.distribution.line':
+                        vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                    # create analytic line
+                    al_id = self.pool.get('account.analytic.line').create(cr, uid, vals, context=context)
+                    res.append(al_id)
         return res
 
 analytic_distribution()

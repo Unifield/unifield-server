@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,8 +21,19 @@
 #
 ##############################################################################
 
-import invoice
-import purchase
-import analytic_distribution
+{
+    "name" : "Account Tools",
+    "version" : "0.1",
+    "description" : "Some tools in order to develop accounting modules for OpenERP",
+    "author" : "MSF - TeMPO Consulting",
+    "category" : "Tools",
+    "depends" : ["base", "account"],
+    "init_xml" : [],
+    "update_xml" : [],
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
+}
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
