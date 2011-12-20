@@ -88,7 +88,7 @@ class report_stock_move(osv.osv):
                                                  ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                                  ('direct', 'Direct Purchase Order')], multi='move_order'),
         'comment': fields.char(size=128, string='Comment'),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Production Lot', states={'done': [('readonly', True)]}, help="Production lot is used to put a serial number on the production", select=True),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
         'tracking_id': fields.many2one('stock.tracking', 'Pack', select=True, states={'done': [('readonly', True)]}, help="Logistical shipping unit: pallet, box, pack ..."),
         'origin': fields.related('picking_id','origin',type='char', size=64, relation="stock.picking", string="Origin", store=True),
         'move': fields.many2one('stock.move', string='Move'),
@@ -193,5 +193,13 @@ class report_stock_move(osv.osv):
                         al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal, al.tracking_id, al.comment, al.prodlot_id, al.reason_type_id
                )
         """)
+
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        if context is None:
+            context = {}
+        if fields is None:
+            fields = []
+        context['with_expiry'] = 1
+        return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
 
 report_stock_move()
