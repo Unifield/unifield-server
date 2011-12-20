@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,31 +19,23 @@
 #
 ##############################################################################
 {
-    "name" : "Analytic Account for MSF",
-    "version": "1.1",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override"],
-    "description": """Module for defining analytic accounting object and commitment voucher.
+    "name": "Fx Tables Management",
+    "version": "1.0",
+    "depends": ["res_currency_functional"],
+    "category": "General/Standard",
+    "description": """
+    This module aims to have other subsets of currencies, and have them available
+    for financing contracts and budgets.
+    
     """,
-    "init_xml" : [
-        'data/analytic_account_data.xml',
+    "init_xml": [
     ],
-    "update_xml": [
-        'security/ir.model.access.csv',
-        'analytic_account_view.xml',
-        'analytic_line_view.xml',
-        'wizard/account_analytic_chart_view.xml',
-        'analytic_distribution_wizard_view.xml',
-        'account_commitment_workflow.xml',
-        'account_commitment_sequence.xml',
-        'account_commitment_view.xml',
+    'update_xml': [
+        'res_currency_view.xml',
     ],
     'test': [
-        'test/analytic_account_activable.yml',
     ],
-    'demo_xml': [
-    ],
+    'demo_xml': [],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',

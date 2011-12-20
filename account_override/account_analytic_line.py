@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 import decimal_precision as dp
+from time import strftime
 
 class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
@@ -45,10 +46,16 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
-        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line", readonly=True, help="Invoice line from which this line is linked.", ondelete='cascade'),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'amount_currency': fields.float(string="Amount currency", digits_compute=dp.get_precision('Account'), readonly="True", required=True, help="The amount expressed in an optional other currency."),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
+        'is_reversal': fields.boolean('Is a reversal line?'),
+        'is_reallocated': fields.boolean('Have been reallocated?'),
+    }
+
+    _defaults = {
+        'is_reversal': lambda *a: False,
+        'is_reallocated': lambda *a: False,
     }
 
     def reverse(self, cr, uid, ids, context={}):
@@ -64,10 +71,12 @@ class account_analytic_line(osv.osv):
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
-                'date': al.source_date or al.date,
+                'date': strftime('%Y-%m-%d'),
+                'source_date': al.source_date or al.date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,
+                'is_reversal': True,
             }
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="view_currency_table_tree" model="ir.ui.view">
+            <field name="name">res.currency.table.tree</field>
+            <field name="model">res.currency.table</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Currency Tables">
+                    <field name="name"/>
+                    <field name="code"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_currency_table_form" model="ir.ui.view">
+            <field name="name">res.currency.table.form</field>
+            <field name="model">res.currency.table</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Currency Table">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field colspan="4" name="currency_ids" nolabel="1" widget="one2many_list" context="{'search_default_active': False}"/>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_currency_table_form" model="ir.actions.act_window">
+            <field name="name">Currency Tables</field>
+            <field name="res_model">res.currency.table</field>
+            <field name="view_id" ref="view_currency_table_tree"/>
+        </record>
+        
+        <menuitem action="action_currency_table_form" id="menu_action_currency_table_form" parent="account.menu_configuration_misc"/>
+        
+    </data>
+</openerp>
