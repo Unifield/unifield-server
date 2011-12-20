@@ -52,6 +52,7 @@
             <field name="res_model">account.move.line</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_corrections.inherit_view_move_line_tree"/>
             <field name="search_view_id" ref="hq_entries_filter"/>
             <field name="domain">[('account_id.user_type.code', '=', 'expense'), ('journal_id.type', '=', 'hq')]</field>
             <field name="context">{'from': 'hq_entries'}</field>
