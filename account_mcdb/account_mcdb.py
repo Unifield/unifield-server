@@ -151,8 +151,7 @@ class account_mcdb(osv.osv_memory):
         if not context:
             context = {}
         if fx_table_id:
-            res.update({'domain': {'display_in_output_currency': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 
-                'value': {'display_in_output_currency' : False}})
+            res.update({'value': {'display_in_output_currency' : False}})
         return res
 
     def button_validate(self, cr, uid, ids, context={}):
