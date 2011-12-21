@@ -81,13 +81,15 @@ class international_transport_cost_report(osv.osv):
                         (SELECT currency_id, rate FROM res_currency_rate WHERE name <= NOW() ORDER BY name desc) to_rate
                             ON to_cur.id = to_rate.currency_id
                     WHERE
-                        po.intl_supplier_ok = True
+                        (po.intl_supplier_ok = True
                       OR
-                        po.display_intl_transport_ok = True
+                        po.display_intl_transport_ok = True)
                       AND
                         po.state in ('approved', 'done')
                       AND
                         po.rfq_ok = False   
+                      AND
+                        po.transport_cost > 0.00
                     GROUP BY
                         po.id,
                         po.transport_mode,

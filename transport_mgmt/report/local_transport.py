@@ -89,6 +89,8 @@ class local_transport_cost_report(osv.osv):
                         (SELECT currency_id, rate FROM res_currency_rate WHERE name <= NOW() ORDER BY name desc) to_rate
                             ON to_cur.id = to_rate.currency_id
                     WHERE
+                        pol.price_unit*pol.product_qty > 0.00
+                      AND
                         prod.transport_ok = True
                       AND
                         po.rfq_ok = False
