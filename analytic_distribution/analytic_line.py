@@ -33,7 +33,7 @@ class analytic_line(osv.osv):
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
-        'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line'),
+        'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
     }
 
     def _check_date(self, cr, uid, vals, context={}):
