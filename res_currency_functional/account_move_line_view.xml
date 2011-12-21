@@ -56,7 +56,10 @@
                         <newline/>
                         <field name="account_id" select="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" on_change="onchange_account_id(account_id)" colspan="2"/>
                         <field name="partner_type" select="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                            attrs="{'required': [('partner_type_mandatory', '=', True)]}" colspan="2"/>
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}" colspan="2"
+                            domain="[('filter_for_third_party', '=', account_id)]"
+                            context="{'curr': currency_id}"
+                            />
                         <field name="partner_type_mandatory" invisible="1" colspan="2"/>
                         <newline />
                         <field name="credit" string="Functional In" readonly="0" colspan="2"/>
@@ -98,7 +101,10 @@
                     <field name="move_state" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                        attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                        domain="[('filter_for_third_party', '=', account_id)]"
+                        context="{'curr': currency_id}"                        
+                        />
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="name"/>
                     <field name="debit_currency" sum="Total Booking Debit"/>

@@ -37,6 +37,10 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
             res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
                 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
+        elif st_line.transfer_journal_id:
+            res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
+            res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
+                'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
@@ -48,9 +52,9 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 third_type = [('res.partner', 'Partner')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
-                if acc_type == 'transfer':
-                    third_type = [('account.bank.statement', 'Register')]
-                    third_selection = 'account.bank.statement,'
+                if acc_type in ['transfer', 'transfer_same']:
+                    third_type = [('account.journal', 'Journal')]
+                    third_selection = 'account.journal,'
                 elif acc_type == 'advance':
                     third_type = [('hr.employee', 'Employee')]
                     third_selection = 'hr.employee,'
@@ -72,6 +76,8 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             obj = 'register_id'
         elif element == 'res.partner':
             obj = 'partner_id'
+        elif element == 'account.journal':
+            obj = 'transfer_journal_id'
         if obj:
             sql += "%s = %s " % (obj, fields[1])
             sql += "WHERE id = %s" % id
