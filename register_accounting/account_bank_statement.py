@@ -90,13 +90,14 @@ class account_journal(osv.osv):
     def _search_filter_third(self, cr, uid, obj, name, args, context):
         if not context:
             context = {}
+        dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
         if not args or not context.get('curr'):
-            return []
+            return dom
         if args[0][2]:
            t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
            if t['type_for_register'] == 'transfer_same':
-               return [('currency', 'in', [context['curr']])]
-        return []
+               return dom+[('currency', 'in', [context['curr']])]
+        return dom
 
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
