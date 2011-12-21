@@ -46,23 +46,28 @@ class account_analytic_line(osv.osv):
             return res
         # Retrieve currency
         currency_id = context.get('output_currency_id')
+        currency_obj = self.pool.get('res.currency')
+        rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
+        if not rate:
+            for id in ids:
+                res[id] = {'output_currency': currency_id, 'output_amount': 0.0}
+            return res
         for ml in self.browse(cr, uid, ids, context=context):
-            res[ml.id] = 0.0
+            res[ml.id] = {'output_currency': False, 'output_amount': 0.0}
             # output_amount field
-            if field_name == 'output_amount':
-                # Update with date
-                context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-                mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-                res[ml.id] = mnt or 0.0
+            # Update with date
+            context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
+            mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
+            res[ml.id]['output_amount'] = mnt or 0.0
             # or output_currency field
-            elif field_name == 'output_currency':
-                res[ml.id] = currency_id
+            res[ml.id]['output_currency'] = currency_id
         return res
 
     _columns = {
-        'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False),
-        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False),
+        'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
+        'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False, 
+            multi="analytic_output_currency"),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
