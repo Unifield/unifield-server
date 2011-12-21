@@ -58,7 +58,7 @@ class tender(osv.osv):
     
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
-                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Close'), ('cancel', 'Cancelled'),], string="State", readonly=True),
+                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'),], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
                                                  context={'search_default_supplier': 1,}),
@@ -627,8 +627,8 @@ class purchase_order(osv.osv):
                        ('except_invoice', 'Invoice Exception'),
                        ('done', 'Closed'),
                        ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'RfQ Sent'),
-                       ('rfq_updated', 'RfQ Updated'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
                        #('rfq_done', 'RfQ Done'),
                        ]
     
@@ -669,6 +669,17 @@ class purchase_order(osv.osv):
             if obj.rfq_ok:
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
+
+    def rfq_sent(self, cr, uid, ids, context={}):
+        for rfq in self.browse(cr, uid, ids, context=context):
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': 'purchase.quotation',
+                'datas': datas}
     
 purchase_order()
 

@@ -43,7 +43,7 @@ class purchase_report(osv.osv):
 
     STATE_SELECTION = [
                        ('draft', 'Draft'),
-                       ('wait', 'Waiting'),
+                       ('wait', 'Wait'),
                        ('confirmed', 'Validated'),
                        ('approved', 'Confirmed'),
                        ('except_picking', 'Receipt Exception'),

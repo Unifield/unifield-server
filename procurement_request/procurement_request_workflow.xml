@@ -10,8 +10,7 @@
         <record id="act_procurement" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale"/>
             <field name="flow_start" eval="False" />
-            <field name="kind">function</field>
-            <field name="action">write({'state': 'procurement'})</field>
+            <field name="kind">dummy</field>
             <field name="name">procurement</field>
         </record>
 

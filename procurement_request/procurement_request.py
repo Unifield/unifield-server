@@ -78,7 +78,7 @@ class procurement_request(osv.osv):
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'procurement': [('readonly', False)], 'draft': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
@@ -98,7 +98,6 @@ class procurement_request(osv.osv):
             },
             multi='sums', help="The total amount."),
         'state': fields.selection([
-            ('procurement', 'Draft'),
             ('draft', 'Draft'),
             ('waiting_date', 'Waiting Schedule'),
             ('manual', 'Confirmed'),
@@ -113,7 +112,7 @@ class procurement_request(osv.osv):
     _defaults = {
         'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or '',
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
-        'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
+        'state': 'draft',
     }
 
     def create(self, cr, uid, vals, context={}):
@@ -150,7 +149,7 @@ class procurement_request(osv.osv):
         normal_ids = []
         
         for request in self.browse(cr, uid, ids, context=context):
-            if request.procurement_request and request.state in ['procurement', 'cancel']:
+            if request.procurement_request and request.state in ['draft', 'cancel']:
                 del_ids.append(request.id)
             elif not request.procurement_request:
                 normal_ids.append(request.id)
