@@ -453,8 +453,7 @@ class stock_forecast(osv.osv_memory):
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
-                              'origin': sol.order_id.origin,
-                              #'origin': 'sale.order,%s'%sol.order_id.origin,
+                              'origin': sol.order_id.client_order_ref,
                               'reference': 'sale.order,%s'%sol.order_id.id,
                               'state': PREFIXES['sale.order'] + sol.order_id.state,
                               'qty': uom_obj._compute_qty_obj(cr, uid, sol.product_uom, -sol.product_uom_qty, uom_to_use, context=context),
@@ -476,7 +475,6 @@ class stock_forecast(osv.osv_memory):
                                            'doc': 'PO',
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
                                            'origin': pol.order_id.origin,
-                                           #'origin': 'purchase.order,%s'%pol.order_id.origin,
                                            'reference': 'purchase.order,%s'%pol.order_id.id,
                                            'state': PREFIXES['purchase.order'] + pol.order_id.state,
                                            'qty':  uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, uom_to_use, context=context),
@@ -488,13 +486,10 @@ class stock_forecast(osv.osv_memory):
                                                         ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for obj in tenderl_obj.browse(cr, uid, ids_list, context=context):
-                    # create lines corresponding to po
-
                     # Get the sale order as origin of the Tender if exists
-                    if not obj.tender_id.sale_order_id:                    
+                    origin = False
+                    if obj.tender_id.sale_order_id:
                         origin = obj.tender_id.sale_order_id.name
-                    else: 
-                        origin = False
                         
                     line_to_create.append({'date': len(obj.date_planned.split(' ')) > 1 and obj.date_planned.split(' ')[0] or obj.date_planned,
                                            'doc': 'TENDER',
