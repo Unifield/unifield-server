@@ -115,6 +115,35 @@
             </field>
         </record>
 
+        <record id="wizard_budget_import_confirm_view" model="ir.ui.view">
+            <field name="name">Budget Already Existing</field>
+            <field name="model">wizard.budget.import.confirm</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Already Existing">
+                    <label string="A budget with those parameters already exists. Do you want to overwrite it?" align="0.0" colspan="3"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_confirm" string="Yes" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_budget_import_finish_view" model="ir.ui.view">
+            <field name="name">Budget Imported</field>
+            <field name="model">wizard.budget.import.finish</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Imported">
+                    <label string="The budget has been correctly uploaded." align="0.0" colspan="3"/>
+                    <separator colspan="4"/>
+                    <button name="button_close" string="OK" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
+
         <record id="action_wizard_budget_import" model="ir.actions.act_window">
             <field name="name">Import Budget</field>
             <field name="type">ir.actions.act_window</field>

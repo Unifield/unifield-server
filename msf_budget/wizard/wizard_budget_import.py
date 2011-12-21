@@ -154,12 +154,22 @@ class wizard_budget_import(osv.osv_memory):
                 if latest_budget['version'] and latest_budget['state']:
                     if latest_budget['state'] == 'draft':
                         # latest budget is draft
-                        # TODO pop-up to overwrite it
-                        # Remove old budget
-                        budget_obj.unlink(cr, uid, [latest_budget_id], context=context)
                         # Prepare creation of the "new" one
                         budget_vals.update({'version': latest_budget['version'],
                                             'latest_version': True})
+                        # add to context
+                        context.update({'latest_budget_id': latest_budget_id,
+                                        'budget_vals': budget_vals,
+                                        'budget_line_vals': budget_line_vals})
+                        # we open a wizard
+                        return {
+                                'type': 'ir.actions.act_window',
+                                'res_model': 'wizard.budget.import.confirm',
+                                'view_type': 'form',
+                                'view_mode': 'form',
+                                'target': 'new',
+                                'context': context
+                        }
                     else:
                         # latest budget is validated
                         # a new version will be created...
@@ -177,8 +187,16 @@ class wizard_budget_import(osv.osv_memory):
             for line_vals in budget_line_vals:
                 line_vals.update({'budget_id': created_budget_id})
                 self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
-            
-        return {'type' : 'ir.actions.act_window_close'}
+                
+        # we open a wizard
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.budget.import.finish',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context
+        }
 
 wizard_budget_import()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

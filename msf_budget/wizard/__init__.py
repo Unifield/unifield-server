@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import wizard_budget_import_finish
+import wizard_budget_import_confirm
 import wizard_budget_import
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
