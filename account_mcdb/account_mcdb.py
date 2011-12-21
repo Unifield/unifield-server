@@ -64,6 +64,7 @@ class account_mcdb(osv.osv_memory):
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Analytic Account"),
+        'rev_analytic_account_ids': fields.boolean('Reverse analytic account(s) selection'),
         'reallocated': fields.selection([('reallocated', 'Reallocated'), ('unreallocated', 'NOT reallocated')], string='Reallocated?'),
         'reversed': fields.boolean(string='Reversed?'),
     }
@@ -180,14 +181,17 @@ class account_mcdb(osv.osv_memory):
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
                     # Special field : account_ids with reversal
-                    if m2m[0] == 'account_ids' and wiz.rev_account_ids:
+                    if (m2m[0] == 'account_ids' and wiz.rev_account_ids) or (m2m[0] == 'analytic_account_ids' and wiz.rev_analytic_account_ids):
                         operator = 'not in'
                     # Search if a view account is given
-                    if m2m[0] == 'account_ids':
+                    if m2m[0] in ['account_ids', 'analytic_account_ids']:
                         account_ids = []
+                        account_obj = 'account.account'
+                        if m2m[0] == 'analytic_account_ids':
+                            account_obj = 'account.analytic.account'
                         for account in getattr(wiz, m2m[0]):
                             if account.type == 'view':
-                                search_ids = self.pool.get('account.account').search(cr, uid, [('id', 'child_of', [account.id])])
+                                search_ids = self.pool.get(account_obj).search(cr, uid, [('id', 'child_of', [account.id])])
                                 account_ids.append(search_ids)
                         if account_ids:
                             # Add default account_ids from wizard

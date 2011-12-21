@@ -57,6 +57,8 @@
                                 </tree>
                             </field>
                             <newline/>
+                            <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <newline/>
                             <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
                                 <tree string="Analytic Accounts">
                                     <field name="code" string="Ana. Code"/>
