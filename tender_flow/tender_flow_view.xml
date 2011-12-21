@@ -145,7 +145,7 @@
             	<data>
             		<field name="details" position="after">
             			<field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
-            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['draft', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
             			<field name="rfq_ok" invisible="True" />
             		</field>
 
@@ -191,7 +191,22 @@
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[1]" position="attributes">
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='delivery_requested_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='transport_type']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='ready_to_ship_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='est_transport_lead_time']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='shipment_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='arrival_date']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]" position="attributes">
