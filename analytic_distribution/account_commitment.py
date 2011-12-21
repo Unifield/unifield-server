@@ -105,6 +105,37 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Update analytic lines date if date in vals for validated commitment voucher.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse elements if 'date' in vals
+        if vals.get('date', False):
+            date = vals.get('date')
+            for c in self.browse(cr, uid, ids, context=context):
+                if c.state == 'open':
+                    for cl in c.line_ids:
+                        # Verify that date is compatible with all analytic account from distribution
+                        if cl.analytic_distribution_id:
+                            distrib = cl.analytic_distribution_id
+                        elif cl.commit_id and cl.commit_id.analytic_distribution_id:
+                            distrib = cl.commit_id.analytic_distribution_id
+                        else:
+                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s' % (cl.account_id.code, cl.initial_amount)))
+                        for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+                            for distrib_line in distrib_lines:
+                                if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
+                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.' % distrib_line.analytic_id.name))
+                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date}, context=context)
+        # Default behaviour
+        res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
+        return res
+
     def copy(self, cr, uid, id, default={}, context={}):
         """
         Copy analytic_distribution
