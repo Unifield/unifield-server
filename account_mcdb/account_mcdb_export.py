@@ -26,7 +26,8 @@ from osv import fields
 from tools.translate import _
 from base64 import encodestring
 from time import strftime
-from tools import ustr
+import csv
+from tempfile import TemporaryFile
 
 class account_line_csv_export(osv.osv_memory):
     _name = 'account.line.csv.export'
@@ -38,7 +39,7 @@ class account_line_csv_export(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
 
-    def _account_move_line_to_csv(self, cr, uid, ids, currency_id, context={}):
+    def _account_move_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
         """
         Take account_move_line and return a csv string
         """
@@ -47,66 +48,71 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not writer:
+            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
         # Prepare some value
-        string = ""
         currency_name = ""
         if currency_id:
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
-        # String creation
         # Prepare csv head
-        string += "Journal Code;Sequence;Instance;Reference;Posting date;Period;Name;Account Code;Account Description;Third party;Book. Debit;Book. Credit;Book. currency;"
+        head = ['Journal Code', 'Sequence', 'Instance', 'Reference', 'Posting date', 'Period', 'Name', 'Account Code', 'Account Description', 'Third party', 
+            'Book. Debit', 'Book. Credit', 'Book. currency']
         if not currency_id:
-            string += "Func. Debit;Func. Credit;Func. currency;"
+            head += ['Func. Debit', 'Func. Credit', 'Func. currency']
         else:
-            string += "Output amount;Output currency;"
-        string += "State;Reconcile\n"
+            head += ['Output amount','Output currency']
+        head += ['State', 'Reconcile']
+        writer.writerow(head)
+        # Then write lines
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
+            csv_line = []
             # journal_id
-            string += ustr(ml.journal_id and ml.journal_id.code or '')
+            csv_line.append(ml.journal_id and ml.journal_id.code.encode('utf-8') or '')
             #move_id
-            string += ';' + ustr(ml.move_id and ml.move_id.name or '')
+            csv_line.append(ml.move_id and ml.move_id.name.encode('utf-8') or '')
             #instance
-            string += ';' + ustr(ml.instance or '')
+            csv_line.append(ml.instance.encode('utf-8') or '')
             #ref
-            string += ';' + ustr(ml.ref or '')
+            csv_line.append(ml.ref.encode('utf-8') or '')
             #date
-            string += ';' + ustr(ml.date or '')
+            csv_line.append(ml.date or '')
             #period_id
-            string += ';' + ustr(ml.period_id and ml.period_id.name or '')
+            csv_line.append(ml.period_id and ml.period_id.name.encode('utf-8') or '')
             #name
-            string += ';' + ustr(ml.name or '')
+            csv_line.append(ml.name.encode('utf-8') or '')
             #account_id code
-            string += ';' + ustr(ml.account_id and ml.account_id.code or '')
+            csv_line.append(ml.account_id and ml.account_id.code.encode('utf-8') or '')
             #account_id name
-            string += ';' + ustr(ml.account_id and ml.account_id.name or '')
+            csv_line.append(ml.account_id and ml.account_id.name.encode('utf-8') or '')
             #partner_txt
-            string += ';' + ustr(ml.partner_txt or '')
+            csv_line.append(ml.partner_txt.encode('utf-8') or '')
             #debit_currency
-            string += ';' + ustr(ml.debit_currency or 0.0)
+            csv_line.append(ml.debit_currency or 0.0)
             #credit_currency
-            string += ';' + ustr(ml.credit_currency or 0.0)
+            csv_line.append(ml.credit_currency or 0.0)
             #currency_id
-            string += ';' + ustr(ml.currency_id and ml.currency_id.name or '')
+            csv_line.append(ml.currency_id and ml.currency_id.name.encode('utf-8') or '')
             if not currency_id:
                 #debit
-                string += ';' + ustr(ml.debit or 0.0)
+                csv_line.append(ml.debit or 0.0)
                 #credit
-                string += ';' + ustr(ml.credit or 0.0)
+                csv_line.append(ml.credit or 0.0)
                 #functional_currency_id
-                string += ';' + ustr(ml.functional_currency_id and ml.functional_currency_id.name or '')
+                csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount regarding booking currency
                 amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-                string += ';' + ustr(amount or 0.0)
+                csv_line.append(amount or 0.0)
                 #output currency
-                string += ';' + ustr(currency_name or '')
+                csv_line.append(currency_name.encode('utf-8') or '')
             #state
-            string += ';' + ustr(ml.state or '')
+            csv_line.append(ml.state.encode('utf-8') or '')
             #reconcile_total_partial_id
-            string += ';' + ustr(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name or '')
-            # EOL
-            string += '\n'
+            csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+            # Write line
+            writer.writerow(csv_line)
+            
             #############################
             ###
             # This function could be used with a fields parameter in this method in order to create a CSV with field that could change
@@ -123,9 +129,9 @@ class account_line_csv_export(osv.osv_memory):
             #                res+= ustr(getattr(ml, field, ''))
             #            res+= '\n'
             #############################
-        return ustr(string)
+        return True
 
-    def _account_analytic_line_to_csv(self, cr, uid, ids, currency_id, context={}):
+    def _account_analytic_line_to_csv(self, cr, uid, ids, writer, currency_id, context={}):
         """
         Take account_analytic_line and return a csv string
         """
@@ -134,50 +140,53 @@ class account_line_csv_export(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not writer:
+            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
         # Prepare some value
-        string = ""
         currency_name = ""
         if currency_id:
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
-        # String creation
         # Prepare csv head
-        string += "Journal Code;Date;Instance;Description;Reference;Amount;Company currency;Amount currency;Currency;"
+        head = ['Journal Code', 'Date', 'Instance', 'Description', 'Reference', 'Amount', 'Company currency', 'Amount currency', 'Currency']
         if currency_id:
-            string += "Output amount;Output currency;"
-        string += "Analytic Account\n"
+            head += ['Output amount','Output currency']
+        head += ['Analytic Account']
+        writer.writerow(head)
+        # Then write lines
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
+            csv_line = []
             # journal_id
-            string += ustr(al.journal_id and al.journal_id.code or '')
+            csv_line.append(al.journal_id and al.journal_id.code.encode('utf-8') or '')
             #date
-            string += ';' + ustr(al.date or '')
+            csv_line.append(al.date or '')
             #instance
-            string += ';' + ustr(al.company_id and al.company_id.name or '')
+            csv_line.append(al.company_id and al.company_id.name.encode('utf-8') or '')
             #name
-            string += ';' + ustr(al.name or '')
+            csv_line.append(al.name.encode('utf-8') or '')
             #ref
-            string += ';' + ustr(al.ref or '')
+            csv_line.append(al.ref.encode('utf-8') or '')
             #amount
-            string += ';' + ustr(al.amount or 0.0)
+            csv_line.append(al.amount or 0.0)
             #company currency
-            string += ';' + company_currency
+            csv_line.append(company_currency.encode('utf-8') or '')
             #amount_currency
-            string += ';' + ustr(al.amount_currency or 0.0)
+            csv_line.append(al.amount_currency or 0.0)
             #currency_id
-            string += ';' + ustr(al.currency_id and al.currency_id.name or '')
+            csv_line.append(al.currency_id and al.currency_id.name.encode('utf-8') or '')
             if currency_id:
                 #output amount
                 amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
-                string += ';' + ustr(amount or 0.0)
+                csv_line.append(amount or 0.0)
                 #output currency
-                string += ';' + ustr(currency_name or '')
+                csv_line.append(currency_name.encode('utf-8') or '')
             #account_id name
-            string += ';' + ustr(al.account_id and al.account_id.name or '')
-            # EOL
-            string += '\n'
-        return ustr(string)
+            csv_line.append(al.account_id and al.account_id.name.encode('utf-8') or '')
+            # Write Line
+            writer.writerow(csv_line)
+        return True
 
     def export_to_csv(self, cr, uid, ids, currency_id, model, context={}):
         """
@@ -196,16 +205,19 @@ class account_line_csv_export(osv.osv_memory):
         name = '_'.join(['mcdb', mtype, 'result', today])
         ext = '.csv'
         filename = str(name + ext)
-        string = ''
+        
+        outfile = TemporaryFile('w+')
+        writer = csv.writer(outfile, quotechar='"', delimiter=',')
         
         # Take string regarding model
         if model == 'account.move.line':
-            string = self._account_move_line_to_csv(cr, uid, ids, currency_id, context=context) or ''
+            self._account_move_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         elif model == 'account.analytic.line':
-            string = self._account_analytic_line_to_csv(cr, uid, ids, currency_id, context=context) or ''
+            self._account_analytic_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         
-        # String unicode tranformation then to file
-        file = encodestring(string.encode("utf-8"))
+        outfile.seek(0)
+        file = encodestring(outfile.read())
+        outfile.close()
         
         export_id = self.create(cr, uid, 
             {
