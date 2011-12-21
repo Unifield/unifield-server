@@ -339,6 +339,7 @@ class account_commitment_line(osv.osv):
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
     }
 
     _defaults = {
@@ -347,7 +348,7 @@ class account_commitment_line(osv.osv):
         'from_yml_test': lambda *a: False,
     }
 
-    def update_analytic_lines(self, cr, uid, ids, amount, context={}):
+    def update_analytic_lines(self, cr, uid, ids, amount, account_id=False, context={}):
         """
         Update analytic lines from given commitment lines with an ugly method: delete all analytic lines and recreate them…
         """
@@ -368,7 +369,7 @@ class account_commitment_line(osv.osv):
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
                 ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or ''
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], 'Commitment voucher line', cl.commit_id.date, amount, 
-                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, cl.account_id.id, move_id=False, invoice_line_id=False, 
+                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, 
                     commitment_line_id=cl.id, context=context)
         return True
 
@@ -433,15 +434,13 @@ class account_commitment_line(osv.osv):
                         if distrib and distrib.analytic_lines:
                             self.pool.get('account.analytic.line').unlink(cr, uid, [x.id for x in distrib.analytic_lines], context=context)
                 elif 'amount' in vals:
+                    # Verify expense account
+                    account_id = False
+                    if 'account_id' in vals and vals.get('account_id', False) and line.account_id.id != vals.get('account_id'):
+                        account_id = vals.get('account_id')
                     # Update analytic lines
                     if distrib_id:
-                        self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), context=context)
-                # Verify expense account
-                if 'account_id' in vals and vals.get('account_id', False):
-                    # update account_id on all attached analytic line
-                    search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', line.id)], context=context)
-                    if search_ids:
-                        self.pool.get('account.analytic.line').write(cr, uid, search_ids, {'general_account_id': vals.get('account_id')}, context=context)
+                        self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
             elif line.commit_id and line.commit_id.state and line.commit_id.state == 'draft' and vals.get('amount', 0.0):
                 vals.update({'initial_amount': vals.get('amount')})
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
