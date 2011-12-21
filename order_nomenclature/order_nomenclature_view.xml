@@ -115,36 +115,42 @@
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_1"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_2"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_3"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_4"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_5"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 								</group>
@@ -278,29 +284,34 @@
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_1"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_2"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_3"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 									<field name="nomen_sub_4"
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
                                         get_selection="get_sub_nomen"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
@@ -308,6 +319,7 @@
                                         domain="[('type', '=', 'optional'), ('id', 'in', [0])]"
                                         widget="selection"
                                         get_selection="get_sub_nomen"
+                                        on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)"
 										attrs="{'readonly':[('product_id', '!=', False)]}" 
                                     />
 								</group>
