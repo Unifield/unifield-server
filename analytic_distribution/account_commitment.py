@@ -436,6 +436,12 @@ class account_commitment_line(osv.osv):
                     # Update analytic lines
                     if distrib_id:
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), context=context)
+                # Verify expense account
+                if 'account_id' in vals and vals.get('account_id', False):
+                    # update account_id on all attached analytic line
+                    search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', line.id)], context=context)
+                    if search_ids:
+                        self.pool.get('account.analytic.line').write(cr, uid, search_ids, {'general_account_id': vals.get('account_id')}, context=context)
             elif line.commit_id and line.commit_id.state and line.commit_id.state == 'draft' and vals.get('amount', 0.0):
                 vals.update({'initial_amount': vals.get('amount')})
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
