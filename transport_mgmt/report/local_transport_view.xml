@@ -57,7 +57,7 @@
             <field name="context">{'search_default_group_transport_mode':1, 'search_default_group_partner_id':1, 'search_default_group_transport_currency_id':1, 'group_by':[], 'group_by_no_leaf':0}</field>
         </record>
 
-        <menuitem action="action_local_transport_cost_action" id="menu_local_transport_cost_report" parent="base.next_id_73"/>
+        <menuitem action="action_local_transport_cost_action" id="menu_local_transport_cost_report" parent="menu_transport_cost_reports"/>
 
     </data>
 </openerp>
