@@ -18,7 +18,7 @@
             <field name="wkf_id" ref="purchase.purchase_order" />
             <field name="name">mannually_done</field>
             <field name="kind">function</field>
-            <field name="action">set_manually_done</field>
+            <field name="action">set_manually_done()</field>
         </record>
         
         <record id="trans_router_loan" model="workflow.transition">
