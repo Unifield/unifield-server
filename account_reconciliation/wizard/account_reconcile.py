@@ -82,14 +82,14 @@ class account_move_line_reconcile(osv.osv_memory):
         operator = 'in'
         if len(context['active_ids']) == 1:
             operator = '='
-        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', '=', 'transfer'), ('id', operator, context['active_ids'])], context=context)
+        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', '=', 'transfer_same'), ('id', operator, context['active_ids'])], context=context)
         if len(context['active_ids']) == len(search_ids):
             if len(context['active_ids']) == 2:
                 elements = account_move_line_obj.browse(cr, uid, context['active_ids'], context)
                 first_line = elements[0]
                 second_line = elements[1]
-                if first_line.statement_id and first_line.register_id and second_line.statement_id and second_line.register_id:
-                    if first_line.statement_id.id == second_line.register_id.id and second_line.statement_id.id == first_line.register_id.id:
+                if first_line.journal_id and first_line.transfer_journal_id and second_line.journal_id and second_line.transfer_journal_id:
+                    if first_line.journal_id.id == second_line.transfer_journal_id.id and second_line.journal_id.id == first_line.transfer_journal_id.id:
                         transfer = True
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
