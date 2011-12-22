@@ -11,8 +11,11 @@
                     <field name="name" />
                     <field name="creation_date" />
                     <field name="partner_id" />
-                    <field name="doc_type" />
-                    <field name="state" />
+                    <field name="model" />
+                    <field name="display_state" />
+                    <field name="problem" invisible="1" />
+                    <button type="object" name="go_to_problems" string="Errors" icon="terp-gtk-stop" attrs="{'invisible': [('problem', '=', False)]}" />
+                    <button type="object" name="cancel_line" string="Cancel" icon="terp-gtk-go-back-rtl" attrs="{'invisible': [('problem', '=', True)]}" />
                 </tree>
             </field>
         </record>
@@ -26,17 +29,17 @@
                     <group colspan="4">
                         <field name="creation_date" />
                         <field name="expected_date" />
-                        <field name="doc_type" />
+                        <field name="model" />
                         <field name="partner_id" />
                         <field name="name" />
-                        <field name="state" />
+                        <field name="display_state" />
                     </group>
                     <newline />
                     <group string="Group by..." expand="1" colspan="1">
                         <filter name="group_name" string="Name" domain="[]" context="{'group_by': 'name'}" icon="" />
                         <filter name="group_creation_date" string="Creation date" domain="[]" context="{'group_by': 'creation_date'}" icon="" />
                         <filter name="group_partner" string="Partner" domain="[]" context="{'group_by': 'partner_id'}" icon="" />
-                        <filter name="group_doc_type" string="Type" domain="[]" context="{'group_by': 'doc_type'}" icon="" />
+                        <filter name="group_model" string="Type" domain="[]" context="{'group_by': 'model'}" icon="" />
                         <filter name="group_state" string="State" domain="[]" context="{'group_by': 'state'}" icon="" />
                     </group>
                 </search>
@@ -54,6 +57,27 @@
         <menuitem id="menu_documents_done"
                   action="action_documents_done_view"
                   parent="stock.menu_stock_warehouse_mgmt" />
+
+        <record id="documents_done_problem_form_view" model="ir.ui.view">
+            <field name="name">documents.done.problem.form.view</field>
+            <field name="model">documents.done.problem</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Problem on documents">
+                    <field name="doc_name" colspan="4" readonly="1" />
+                    <field name="pb_lines" mode="tree" colspan="4" nolabel="1" readonly="1">
+                        <tree string="Documents">
+                            <field name="doc_name" />
+                            <field name="doc_type" />
+                            <button name="go_to_doc" type="object" icon="terp-stock_zoom" string="Go to document" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Close" icon="gtk-cancel" />
+                    <button name="done_all_documents" string="Done/Cancel all documents" type="object" colspan="3" icon="gtk-execute" />
+                </form>
+            </field>
+        </record>
         
     </data>
 </openerp>

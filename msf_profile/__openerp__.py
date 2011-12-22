@@ -74,6 +74,7 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
+        "documents_done",
 #        "analytic_distribution_purchase",
     ],
     "update_xml": [

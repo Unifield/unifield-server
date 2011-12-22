@@ -29,26 +29,278 @@ class documents_done_wizard(osv.osv):
     _name = 'documents.done.wizard'
     _description = 'Documents not \'Done\''
     _auto = False
-    
+
+    def _get_selection(self, cr, uid, context={}):
+        states = []
+        if not context:
+            context = {}
+
+        for model in context.get('models', ['sale.order', 'purchase.order', 'tender']):
+            sel = self.pool.get(model).fields_get(cr, uid, ['state'])
+            res = sel['state']['selection']
+            for st in res:
+                if not 'db_value' in context:
+                    if (st[1], st[1]) not in states and st[0] not in ('done', 'cancel'):
+                        states.append((st[1], st[1]))
+                else:
+                    if (st[0], st[1]) not in states and st[0] not in ('done', 'cancel'):
+                        states.append((st[0], st[1]))
+
+
+        return states
+
+    def _get_model_from_state(self, cr, uid, state, context={}):
+        '''
+        Returns the model which have the value of state in the selection field 'state'.
+        '''
+        if not context:
+            context = {}
+
+        models = []
+        states = []
+
+        for model in context.get('models', ['sale.order', 'purchase.order', 'tender']):
+            sel = self.pool.get(model).fields_get(cr, uid, ['state'])
+            for st in sel['state']['selection']:
+                if st[1] == state:
+                    models.append(model)
+                    states.append(st[0])
+
+        return models, states
+
     def _get_state(self, cr, uid, ids, field_name, args, context={}):
-        return {}
+        '''
+        Returns the good value according to the doc type
+        '''
+        res = {}
+
+        for doc in self.browse(cr, uid, ids, context=context):
+            context.update({'models': [doc.real_model], 'db_value': True})
+            for state in self._get_selection(cr, uid, context=context):
+                if state[0] == doc.state:
+                    res[doc.id] = state[1]
+
+        return res
     
-    def _search_state(self, cr, uid, ):
+    def _search_state(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns all documents according to state
+        '''
+        ids = []
+
+        for arg in args:
+            if arg[0] == 'display_state':
+                docs, db_values = self._get_model_from_state(cr, uid, arg[2])
+                ids = self.pool.get('documents.done.wizard').search(cr, uid, [('real_model', 'in', docs), ('state', 'in', db_values)], context=context)
+
+        return [('id', 'in', ids)]
+
+    def _get_related_stock_moves(self, cr, uid, order, field, context={}):
+        '''
+        Returns all stock moves related to an order (sale.order/purchase.order)
+        '''
+        line_ids = []
+        for line in order.order_line:
+            line_ids.append(line.id)
+        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
+
+    def _get_problem_sale_order(self, cr, uid, order, context={}):
+        '''
+        Check if all stock moves, all procurement orders, all purchase orders
+        and all stock picking generated from the sale order is closed or canceled
+        '''
+        move_ids = self._get_related_stock_moves(cr, uid, order, 'sale_line_id', context=context)
+        proc_ids = []
+        po_ids = []
+        tender_ids = []
+        so_ids = []
+        for line in order.order_line:
+            # Check procurement orders
+            if line.procurement_id:
+                if line.procurement_id.state not in ('cancel', 'done'):
+                    proc_ids.append(line.procurement_id.id)
+                # Check tenders
+                if line.procurement_id.tender_id and line.procurement_id.tender_id.state not in ('cancel', 'done'):
+                    tender_ids.append(line.procurement_id.tender_id.id)
+                    # Check Rfheck RfQ
+                    for rfq in line.procurement_id.tender_id.rfq_ids:
+                        if rfq.state not in ('cancel', 'done'):
+                            po_ids.append(rfq.id)
+
+        # Check loan counterpart
+        if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
+            po_ids.append(order.loan_id.id)
+
+        if context.get('count', False):
+            return move_ids or proc_ids or po_ids or tender_ids or False
+        else:
+            return move_ids, proc_ids, po_ids, tender_ids
+
+    def _get_problem_purchase_order(self, cr, uid, order, context={}):
+        '''
+        Check if all stock moves, all invoices
+        and all stock picking generated from the purchase order is closed or canceled
+        '''
+        move_ids = self._get_related_stock_moves(cr, uid, order, 'purchase_line_id', context=context)
+        so_ids = []
+        if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
+            so_ids.append(order.loan_id.id)
+
+        if context.get('count', False):
+            return move_ids or so_ids or False
+        else:
+            return move_ids, so_ids
+
+    def _get_problem_tender(self, cr, uid, order, context={}):
+        '''
+        Check if all request for quotations and all purchase orders
+        generated from the tender is closed or canceled
+        '''
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('state', 'not in', ['cancel', 'done']), '|', ('tender_id', '=', order.id), ('origin_tender_id', '=', order.id)], context=context)
+        if context.get('count', False):
+            return po_ids or False
+        else:
+            return po_ids
+
+    def _get_problem(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns True if at least one doc stop the manually done processe
+        '''
+        res = {}
+        c = context.copy()
+        c.update({'count': True})
+        for doc in self.browse(cr, uid, ids, context=context):
+            order = self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context)
+            if doc.real_model == 'sale.order':
+                res[doc.id] = self._get_problem_sale_order(cr, uid, order, context=c)
+            elif doc.real_model == 'purchase.order':
+                res[doc.id] = self._get_problem_purchase_order(cr, uid, order, context=c)
+            elif doc.real_model == 'tender':
+                res[doc.id] = self._get_problem_tender(cr, uid, order, context=c)
+            else:
+                res[doc.id] = False
+
+        return res
     
     _columns = {
         'name': fields.char(size=256, string='Name', readonly=True),
-        'doc_type': fields.selection([('sale.order', 'Sale Order'),
-                                      ('purchase.order', 'Purchase Order'),
-                                      ('internal.request', 'Internal Request'),
-                                      ('rfq', 'Request for Quotation'),
-                                      ('tender', 'Tender')], string='Doc. Type', readonly=True),
+        'res_id': fields.integer(string='Res. Id'),
+        'real_model': fields.char(size=64, string='Real model'),
+        'model': fields.selection([('sale.order', 'Sale Order'),
+                                   ('purchase.order', 'Purchase Order'),
+                                   ('internal.request', 'Internal Request'),
+                                   ('rfq', 'Request for Quotation'),
+                                   ('tender', 'Tender')], string='Doc. Type', readonly=True),
         'creation_date': fields.date(string='Creation date', readonly=True),
         'expected_date': fields.date(string='Expected date', readonly=True),
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
+        'problem': fields.function(_get_problem, string='Problem', required=True, method=True, store=False, 
+                                    type='boolean', readonly=True),
         'state': fields.char(size=64, string='State', readonly=True),
         'display_state': fields.function(_get_state, fnct_search=_search_state, type='selection', selection=_get_selection,
-                                         method=True, store=False, readonly=True),
+                                         method=True, store=False, readonly=True, string='State'),
     }
+
+    def _add_stock_move_pb(self, cr, uid, problem_id, moves, context={}):
+        '''
+        Add a line for each moves
+        '''
+        line_obj = self.pool.get('documents.done.problem.line')
+        picking_ids = []
+        for move in self.pool.get('stock.move').browse(cr, uid, moves, context=context):
+            if move.picking_id and (move.type != 'out' or move.picking_id.converted_to_standard) and move.picking_id.id not in picking_ids:
+                picking_ids.append(move.picking_id.id)
+                doc_type = 'Internal move'
+                if move.type == 'out':
+                    doc_type = 'Delivery Order'
+                elif move.type == 'in':
+                    doc_type = 'Incoming Shipment'
+                line_obj.create(cr, uid, {'problem_id': problem_id,
+                                          'doc_name': move.picking_id.name,
+                                          'doc_model': 'stock.picking',
+                                          'doc_id': move.picking_id.id,
+                                          'doc_type': doc_type})
+            elif not move.picking_id:
+                line_obj.create(cr, uid, {'problem_id': problem_id,
+                                          'doc_name': move.name,
+                                          'doc_model': 'stock.move',
+                                          'doc_id': move.id,
+                                          'doc_type': 'Stock move'})
+        return
+
+    def _add_purchase_order(self, cr, uid, problem_id, po_ids, context={}):
+        '''
+        Add line for each PO/RfQ
+        '''
+        line_obj = self.pool.get('documents.done.problem.line')
+        for order in self.pool.get('purchase.order').browse(cr, uid, po_ids, context=context):
+            line_obj.create(cr, uid, {'problem_id': problem_id,
+                                      'doc_name': order.name,
+                                      'doc_model': 'purchase.order',
+                                      'doc_id': order.id,
+                                      'doc_type': order.rfq_ok and 'Request for Quotation' or 'Purchase Order'})
+        return
+
+    def go_to_problems(self, cr, uid, ids, context={}):
+        '''
+        Returns a wizard with all documents posing a problem
+        '''
+        pb_obj = self.pool.get('documents.done.problem')
+        pb_line_obj = self.pool.get('documents.done.problem.line')
+        move_obj = self.pool.get('stock.move')
+        proc_obj = self.pool.get('procurement.order')
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            pick_ids = []
+            order = False
+            move_ids = []
+            proc_ids = []
+            po_ids = []
+            so_ids = []
+            tender_ids = []
+            doc = self.pool.get(wiz.real_model).browse(cr, uid, wiz.res_id, context=context)
+            pb_id = pb_obj.create(cr, uid, {'wizard_id': wiz.id,
+                                            'doc_name': doc.name})
+
+            # For sales orders and procurement request
+            if wiz.real_model == 'sale.order':
+                order = self.pool.get('sale.order').browse(cr, uid, wiz.res_id, context=context)
+                move_ids, proc_ids, po_ids, tender_ids = self._get_problem_sale_order(cr, uid, order, context=context)
+            elif wiz.real_model == 'purchase.order':
+                order = self.pool.get('purchase.order').browse(cr, uid, wiz.res_id, context=context)
+                move_ids, so_ids = self._get_problem_purchase_order(cr, uid, order, context=context)
+            elif wiz.real_model == 'tender':
+                order = self.pool.get('tender').browse(cr, uid, wiz.res_id, context=context)
+                po_ids = self._get_problem_tender(cr, uid, order, context=context)
+            # Process all stock moves
+            self._add_stock_move_pb(cr, uid, pb_id, move_ids, context=context)
+            # Process all PO/RfQ
+            self._add_purchase_order(cr, uid, pb_id, po_ids, context=context)
+            # Process all tenders
+            for tender in self.pool.get('tender').browse(cr, uid, tender_ids, context=context):
+                pb_line_obj.create(cr, uid, {'problem_id': pb_id,
+                                             'doc_name': tender.name,
+                                             'doc_model': 'tender',
+                                             'doc_id': tender.id,
+                                             'doc_type': 'Tender'})
+            # Search all procurement orders attached to the sale order
+            for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
+                pb_line_obj.create(cr, uid, {'problem_id': pb_id,
+                                             'doc_name': proc.name,
+                                             'doc_model': 'procurement.order',
+                                             'doc_id': proc.id,
+                                             'doc_type': 'Procurement Order'})
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'documents.done.problem',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': pb_id,
+                'target': 'new'}
+                        
+
+    def cancel_line(self, cr, uid, ids, context={}):
+        raise osv.except_osv('Error', 'Not implemented')
     
     def init(self, cr):
         '''
@@ -59,7 +311,9 @@ class documents_done_wizard(osv.osv):
                 SELECT
                     row_number() OVER(ORDER BY name) AS id,
                     dnd.name,
-                    dnd.doc_type,
+                    dnd.res_id,
+                    dnd.real_model,
+                    dnd.model,
                     dnd.state,
                     dnd.creation_date,
                     dnd.expected_date,
@@ -67,11 +321,13 @@ class documents_done_wizard(osv.osv):
                 FROM
                     ((SELECT
                         so.name AS name,
-                        'sale.order' AS doc_type,
+                        so.id AS res_id,
+                        'sale.order' AS real_model,
+                        'sale.order' AS model,
                         so.state AS state,
                         so.date_order AS creation_date,
                         so.delivery_requested_date AS expected_date,
-                        so.partner_id AS partner_id
+                        so.partner_id 
                     FROM
                         sale_order so
                     WHERE
@@ -81,7 +337,9 @@ class documents_done_wizard(osv.osv):
                 UNION
                     (SELECT
                         ir.name AS name,
-                        'internal.request' AS doc_type,
+                        ir.id AS res_id,
+                        'sale.order' AS real_model,
+                        'internal.request' AS model,
                         ir.state AS state,
                         ir.date_order AS creation_date,
                         ir.delivery_requested_date AS expected_date,
@@ -95,7 +353,9 @@ class documents_done_wizard(osv.osv):
                 UNION
                     (SELECT
                         po.name AS name,
-                        'purchase.order' AS doc_type,
+                        po.id AS res_id,
+                        'purchase.order' AS real_model,
+                        'purchase.order' AS model,
                         po.state AS state,
                         po.date_order AS creation_date,
                         po.delivery_requested_date AS expected_date,
@@ -109,7 +369,9 @@ class documents_done_wizard(osv.osv):
                 UNION
                     (SELECT
                         rfq.name AS name,
-                        'rfq' AS doc_type,
+                        rfq.id AS res_id,
+                        'purchase.order' AS real_model,
+                        'rfq' AS model,
                         rfq.state AS state,
                         rfq.date_order AS creation_date,
                         rfq.delivery_requested_date AS expected_date,
@@ -123,7 +385,9 @@ class documents_done_wizard(osv.osv):
                 UNION
                     (SELECT
                         t.name AS name,
-                        'tender' AS doc_type,
+                        t.id AS res_id,
+                        'tender' AS real_model,
+                        'tender' AS model,
                         t.state AS state,
                         t.creation_date AS creation_date,
                         t.requested_date AS expected_date,
@@ -135,5 +399,44 @@ class documents_done_wizard(osv.osv):
         );""")
     
 documents_done_wizard()
+
+class documents_done_problem(osv.osv_memory):
+    _name = 'documents.done.problem'
+
+    _columns = {
+        'wizard_id': fields.many2one('documents.done.wizard', string='Wizard'),
+        'doc_name': fields.char(size=64, string='Document'),
+        'pb_lines': fields.one2many('documents.done.problem.line', 'problem_id', string='Lines'),
+    }
+
+    def done_all_documents(self, cr, uid, ids, context={}):
+        raise osv.except_osv('Error', 'Not implemented')
+
+documents_done_problem()
+
+class documents_done_problem_line(osv.osv_memory):
+    _name = 'documents.done.problem.line'
+
+    _columns = {
+        'problem_id': fields.many2one('documents.done.problem', string='Problem'),
+        'doc_name': fields.char(size='64', string='Reference'),
+        'doc_type': fields.char(size=64, string='Doc. Type'),
+        'doc_model': fields.char(size=64, string='Doc. Model'),
+        'doc_id': fields.integer(string='Doc. Id'),
+    }
+
+    def go_to_doc(self, cr, uid, ids, context={}):
+        '''
+        Open the form of the related doc
+        '''
+        for item in self.browse(cr, uid, ids, context=context):
+            return {'type': 'ir.actions.act_window',
+                    'res_model': item.doc_model,
+                    'name': item.doc_type,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': item.doc_id,}
+
+documents_done_problem_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

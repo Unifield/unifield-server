@@ -82,7 +82,21 @@ procurement_order()
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _description = "Picking List"
-    
+
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the picking to done
+        '''
+        move_ids = []
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if move.state not in ('cancel', 'done'):
+                    move_ids.append(move.id)
+
+        #Set all stock moves to done
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+
+        return True
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -268,6 +282,23 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
+    _STOCK_MOVE_STATE = [('draft', 'Draft'),
+                         ('waiting', 'Waiting'),
+                         ('confirmed', 'Not Available'),
+                         ('assigned', 'Available'),
+                         ('done', 'Done'),
+                         ('cancel', 'Cancel'),
+                         ('manual_done', 'Manually Done')]
+
+    _columns = {
+        'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
+    }
+
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the stock move to manually done
+        '''
+        return self.write(cr, uid, ids, {'state': 'manual_done'}, context=context)
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

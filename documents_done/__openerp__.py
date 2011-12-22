@@ -28,6 +28,7 @@
         "stock_override",
         "tender_flow",
         "stock",
+        "msf_outgoing",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "http://www.unifield.org",
