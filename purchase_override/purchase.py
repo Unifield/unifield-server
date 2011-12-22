@@ -381,8 +381,8 @@ class purchase_order(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
                 # Stock moves
                 for line in order.order_lines:
-                   move_ids.extend(move_obj.search(cr, uid, [('purchase_line_id', '=', line.id), ('state', 'not in', ('done', 'cancel'))], context=context)
-        
+                   move_ids.extend(move_obj.search(cr, uid, [('purchase_line_id', '=', line.id), ('state', 'not in', ('done', 'cancel'))], context=context))
+
             move_obj.set_manually_done(cr, uid, move_ids, context=context)
 
             return True
