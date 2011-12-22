@@ -8,7 +8,7 @@
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Journal Items MCDB">
+                <form string="Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <separator string="General"/>
                     <group col="4" colspan="6">
                         <field name="company_id" widget="selection" colspan="2"/><label string="" colspan="4"/>
