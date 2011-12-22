@@ -19,8 +19,8 @@
                     </group>
                     <separator string="Accounting"/>
                     <group col="4" colspan="6">
-                        <field name="abs_id" colspan="2"/>
-                        <group col="4" colspan="6">
+                        <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
                             <field name="journal_ids" colspan="2" nolabel="1">
                                 <tree string="Journal">
                                     <field name="code"/>
@@ -36,6 +36,16 @@
                                     <field name="state"/>
                                 </tree>
                             </field>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                                <tree string="Analytic Journal">
+                                    <field name="code"/>
+                                    <field name="name" string="Name"/>
+                                    <field name="type"/>
+                                </tree>
+                            </field>
+                            <label string="" colspan="2"/>
                         </group>
                     </group>
                     <separator string="Account"/>

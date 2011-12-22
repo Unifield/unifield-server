@@ -31,6 +31,7 @@ class account_mcdb(osv.osv_memory):
 
     _columns = {
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
+        'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic Journal Code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
         'company_id': fields.many2one('res.company', string="Proprietary instance"),
         'posting_date_from': fields.date('First posting date'),
@@ -172,7 +173,7 @@ class account_mcdb(osv.osv_memory):
             # Prepare domain values
             # First MANY2MANY fields
             m2m_fields = [('account_type_ids', 'account_id.user_type'), ('period_ids', 'period_id'), ('journal_ids', 'journal_id'), 
-                ('analytic_account_ids', 'account_id')]
+                ('analytic_journal_ids', 'journal_id'), ('analytic_account_ids', 'account_id')]
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
             else:
