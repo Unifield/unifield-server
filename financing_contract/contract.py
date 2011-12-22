@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+import datetime
 
 class financing_contract_contract(osv.osv):
     
@@ -205,27 +206,35 @@ class financing_contract_contract(osv.osv):
                 }
                 report_line_obj.create(cr, uid, consumption_line_vals, context=context)
         return
-    
-#    def dummy(self, cr, uid, ids, *args, **kwargs):
-#        mode = self.read(cr, uid, ids, ['reporting_type'])[0]['reporting_type']
-#        next_mode = False
-#        if mode == 'allocated':
-#            next_mode = 'project'
-#        elif mode == 'project':
-#            next_mode = 'all'
-#        else:
-#            next_mode = 'allocated'
-#        self.write(cr, uid, [ids[0]], {'reporting_type': next_mode})
-#        return True
+
+    def contract_open(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'open',
+            'open_date': datetime.date.today().strftime('%Y-%m-%d'),
+            'soft_closed_date': None
+        })
+        return True
+
+    def contract_soft_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'soft_closed',
+            'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
+
+    def contract_hard_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'hard_closed',
+            'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
     
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
-        'grant_name': fields.char('Grant name', size=64, required=True),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
-        'contract_type': fields.selection([('', ''), ('ear_marked','Ear-marked'), ('global_contribution','Global Contribution')], 'Financing contract type', required=True),
         'eligibility_from_date': fields.date('Eligibility date from', required=True),
         'eligibility_to_date': fields.date('Eligibility date to', required=True),
         'grant_amount': fields.float('Grant amount', size=64, required=True),
@@ -247,6 +256,28 @@ class financing_contract_contract(osv.osv):
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for contract in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', contract.name),('code', '=ilike', contract.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
+    ]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        contract = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (contract['code'] or '') + '(copy)'
+        default['name'] = (contract['name'] or '') + '(copy)'
+        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
     
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
@@ -301,7 +332,8 @@ class financing_contract_contract(osv.osv):
         contract_obj = self.browse(cr, uid, ids[0], context=context)
         model_data_obj = self.pool.get('ir.model.data')
         # update the context with reporting type (used for "get analytic_lines" action)
-        context.update({'reporting_type': contract_obj.reporting_type,
+        context.update({'reporting_currency': contract_obj.reporting_currency.id,
+                        'reporting_type': contract_obj.reporting_type,
                         'active_id': ids[0],
                         'active_ids': ids})
         # retrieve the corresponding_view

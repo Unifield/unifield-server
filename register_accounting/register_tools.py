@@ -37,6 +37,10 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
             res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
                 'selection': 'account.bank.statement,%s' % st_line.register_id.id}
+        elif st_line.transfer_journal_id:
+            res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
+            res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
+                'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
@@ -48,9 +52,9 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}
                 third_type = [('res.partner', 'Partner')]
                 third_selection = 'res.partner,'
                 acc_type = st_line.account_id.type_for_register
-                if acc_type == 'transfer':
-                    third_type = [('account.bank.statement', 'Register')]
-                    third_selection = 'account.bank.statement,'
+                if acc_type in ['transfer', 'transfer_same']:
+                    third_type = [('account.journal', 'Journal')]
+                    third_selection = 'account.journal,'
                 elif acc_type == 'advance':
                     third_type = [('hr.employee', 'Employee')]
                     third_selection = 'hr.employee,'
@@ -72,6 +76,8 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             obj = 'register_id'
         elif element == 'res.partner':
             obj = 'partner_id'
+        elif element == 'account.journal':
+            obj = 'transfer_journal_id'
         if obj:
             sql += "%s = %s " % (obj, fields[1])
             sql += "WHERE id = %s" % id
@@ -111,6 +117,9 @@ def _get_third_parties_name(self, cr, uid, vals, context={}):
     if 'register_id' in vals and vals.get('register_id', False):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
         res = register and register[0] and register[0].name or ''
+    if 'journal_id' in vals and vals.get('journal_id', False):
+        journal = self.pool.get('account.journal').browse(cr, uid, [vals['journal_id']], context=context)
+        res = journal and journal[0] and journal[0].code or ''
     return res
 
 def open_register_view(self, cr, uid, register_id, context={}): 
@@ -160,23 +169,17 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context={}):
         return period.date_stop
     return date
 
-def previous_register_id(self, cr, uid, period_id, currency_id, register_type, context={}):
+def previous_period_id(self, cr, uid, period_id, context={}):
     """
-    Give the previous register id regarding some criteria:
-     - period_id: the period of current register
-     - currency_id: currency of the current register
-     - register_type: type of register
-     - fiscalyear_id: current fiscalyear
+    Give previous period of those given
     """
-    # TIP - Use this postgresql query to verify current registers:
-    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
-    # from account_bank_statement as s, account_journal as j, res_currency as c 
-    # where s.journal_id = j.id and j.currency = c.id;
-
+    # Some verifications
+    if not context:
+        context = {}
+    if not period_id:
+        raise osv.except_osv(_('Error'), _('No period given.'))
     # Prepare some values
     p_obj = self.pool.get('account.period')
-    j_obj = self.pool.get('account.journal')
-    st_obj = self.pool.get('account.bank.statement')
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
@@ -192,9 +195,28 @@ def previous_register_id(self, cr, uid, period_id, currency_id, register_type, c
         previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
             limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
             # and "Period 15"
+    if previous_period_ids:
+        return previous_period_ids[0]
+    return False
+
+def previous_register_id(self, cr, uid, period_id, journal_id, context={}):
+    """
+    Give the previous register id regarding some criteria:
+     - period_id: the period of current register
+     - journal_id: this include same currency and same type
+     - fiscalyear_id: current fiscalyear
+    """
+    # TIP - Use this postgresql query to verify current registers:
+    # select s.id, s.state, s.journal_id, j.type, s.period_id, s.name, c.name 
+    # from account_bank_statement as s, account_journal as j, res_currency as c 
+    # where s.journal_id = j.id and j.currency = c.id;
+
+    # Prepare some values
+    st_obj = self.pool.get('account.bank.statement')
+    prev_period_id = False
     # Search journal_ids that have the type we search
-    journal_ids = j_obj.search(cr, uid, [('currency', '=', currency_id), ('type', '=', register_type)], context=context)
-    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', 'in', journal_ids), ('period_id', '=', previous_period_ids[0])], context=context)
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
     if len(previous_reg_ids) != 1:
         return False
     return previous_reg_ids[0]

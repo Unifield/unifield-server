@@ -60,9 +60,33 @@
             <field name="view_mode">tree,form</field>
         </record>
         <menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
+    	
+    	<record id="stock.action_picking_tree" model="ir.actions.act_window">
+            <field name="name">Delivery Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+            <field name="search_view_id" ref="stock.view_picking_out_search"/>
+            <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
+        </record>
     
+    
+    	<record id="stock.action_picking_tree" model="ir.actions.act_window">
+            <field name="name">Delivery Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+            <field name="search_view_id" ref="stock.view_picking_out_search"/>
+            <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
+        </record>
     	<!-- delete outgoing delivery menuitem -->
-    	<delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/>
+    	<!-- <delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/> -->
     	
     	<record id="view_warehouse" model="ir.ui.view">
             <field name="name">stock.warehouse</field>
@@ -166,7 +190,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4"/>
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                         </group>
@@ -174,12 +198,14 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
                         <page string="Products">
-                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}">
+                            <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id}" on_change="onchange_move()" >
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="asset_id" />
@@ -194,12 +220,16 @@
                                     <field name="virtual_available" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
                                         <field name="asset_id" />
                                         <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
                                         <field name="product_uom" string="Unit Of Measure" colspan="4" />
@@ -210,7 +240,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]"
+                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -223,15 +254,20 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
-					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
-					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
-					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    					context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
+	                    					domain="[('product_id','=?',product_id), ('check_type','=', True),]"
+	                    					on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
+	                    					attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    				<field name="hidden_batch_management_mandatory" invisible="True" />
+					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -248,6 +284,7 @@
                                 <field name="flow_type" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
                                 <button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" groups="base.group_extended" icon="gtk-find"/>
+                                <button name="convert_to_standard" states="draft" string="Convert to Simple Out" type="object" icon="gtk-convert" />
                                 <button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" />
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"/>
@@ -350,7 +387,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-            <field name="context">{'picking_screen':True}</field>
+            <field name="context">{'picking_screen':True, 'test':True}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
@@ -380,11 +417,11 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
+                <tree hide_new_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
-		    <field name="reason_type_id" />
+		    		<field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -422,12 +459,12 @@
             <!-- but then other form view also use it... -->
             <!-- <field eval="11" name="priority"/> -->
             <field name="arch" type="xml">
-                <form string="Pre-Packing List">
+                <form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4"/>
+                            <field name="address_id" on_change="onchange_partner_in(address_id)" context="{'contact_display':'partner'}" colspan="4" attrs="{'required': [('subtype', 'in', ('picking', 'ppl',))],}" />
                             <field name="invoice_state"/>
                             <field name="backorder_id" readonly="1" groups="base.group_extended"/>
                             <field name="num_of_packs" />
@@ -437,7 +474,9 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                             <field name='ppl_customize_label' required="True" />
                         </group>
                     </group>
@@ -460,12 +499,16 @@
                                     <field name="to_pack" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
                                         <field name="asset_id" />
                                         <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
                                         <field name="product_uom" string="Unit Of Measure" colspan="4" />
@@ -476,7 +519,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" 
+                                       			context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -488,16 +532,21 @@
                                     </group>
 
                                     <group colspan="2" col="4" groups="base.group_extended">
-					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    <field name="hidden_batch_management_mandatory" invisible="True" />
+					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -582,7 +631,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
-            <field name="context">{'contact_display': 'partner_address'}</field>
+            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True}</field>
             <field name="search_view_id" ref="view_ppl_search"/>
             <field name="help">This is the list of all ppl that have been picked.</field>
         </record>
@@ -667,7 +716,9 @@
                             <field name="date"/>
                             <field name="min_date" readonly="1"/>
                             <field name="reason_type_id" widget="selection"/>
-                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', 'not in', ('draft',)), ('subtype', 'not in', ('picking',)),]}" />
+                            <field name="sale_id" invisible="True" />
+                            <field name="subtype" invisible="True" />
+                            <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking'),]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -692,12 +743,16 @@
                                     <field name="currency_id" />
                                     <field name="date"/>
                                     <field name="state"/>
+                                    <field name="kc_check" />
+			            			<field name="ssl_check" />
+			            			<field name="dg_check" />
+			            			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
                                         <field name="asset_id" />
                                         <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
                                         <field name="product_uom" string="Unit Of Measure" colspan="4" />
@@ -708,7 +763,8 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2" />
-                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
+                                        <field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" 
+                                        		context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
                                         <field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id)" />
                                     </group>
 
@@ -721,15 +777,20 @@
 
                                     <group colspan="2" col="4" groups="base.group_extended">
                                         <separator string="Traceability" colspan="4" groups="base.group_extended"/>
-					<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                                         <field name="prodlot_id" groups="base.group_extended"
-					                    	context="{'location_id':location_id, 'product_id':product_id}"
+					                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  			'search_default_real': True}"
 					                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 					                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-					                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-					                    <field name="hidden_prod_mandatory" invisible="True" />
+					                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+					                    <field name="hidden_batch_management_mandatory" invisible="True" />
+					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_dg" />
+										<field name="kc_check" />
+				            			<field name="ssl_check" />
+				            			<field name="dg_check" />
+				            			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -990,6 +1051,7 @@
             <field name="arch" type="xml">
                 <search string="Shipment">
                     <group col="8" colspan="4">
+                    	<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" help="Draft Delivery Orders"/>
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
                         <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>

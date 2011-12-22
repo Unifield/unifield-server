@@ -118,7 +118,7 @@
     amount_tax: 0.0
     amount_total: 1.0
     amount_untaxed: 1.0
-    categ: mixed
+    categ: other
     company_id: base.main_company
     date_order: '2011-08-29'
     delivery_requested_date: '2011-08-31'
@@ -244,5 +244,20 @@
     prodlot_obj = self.pool.get('stock.production.lot')
     ids = prodlot_obj.search(cr, uid, [('product_id', '=', ref("product_product_testproduct0")), ('life_date', '=', '2011-10-04'),])
     assert len(ids) == 1, 'the number of production lot is wrong - 1 - %s'%len(ids)
-    
+     
+-
+  test new onchange functions
+  
+  product - product_product_testproduct0
+  location_id - stock.stock_location_stock
+  
+-
+
+  !python {model: stock.inventory.line}: |
+    # change_lot
+    self.change_lot(cr, uid, [ref("stock_inventory_line0")], ref("stock.stock_location_stock"), ref("product_product_testproduct0"), prod_lot_id=False, uom=False, to_date=False,)
+    # on_change_location_id
+    self.on_change_location_id(cr, uid, [ref("stock_inventory_line0")], ref("stock.stock_location_stock"), ref("product_product_testproduct0"), prod_lot_id=False, uom=False, to_date=False,)
+    # on_change_product_id_specific_rules
+    self.on_change_product_id_specific_rules(cr, uid, [ref("stock_inventory_line0")], ref("stock.stock_location_stock"), ref("product_product_testproduct0"), prod_lot_id=False, uom=False, to_date=False,)
     

@@ -34,6 +34,77 @@ import time
 from datetime import datetime
 import decimal_precision as dp
 
+def _get_fake(cr, table, ids, *a, **kw):
+    ret = {}
+    for id in ids:
+        ret[id] = False
+    return ret
+
+def _search_fake(*a, **kw):
+    return []
+
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = 'hr.employee'
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+    }
+hr_employee()
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    def _get_fake(self, cr, table, ids, field_name, arg, context):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_filter_third(self, cr, uid, obj, name, args, context):
+        if not context:
+            context = {}
+        if not args:
+            return []
+        if args[0][2]:
+           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type'])
+           if t['type'] == 'payable':
+               return [('property_account_payable', '=', args[0][2])]
+           if t['type'] == 'receivable':
+                return [('property_account_receivable', '=', args[0][2])]
+        return []
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+    }
+res_partner()
+
+class account_journal(osv.osv):
+    _name = 'account.journal'
+    _inherit = 'account.journal'
+
+    def _get_fake(self, cr, table, ids, field_name, arg, context):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_filter_third(self, cr, uid, obj, name, args, context):
+        if not context:
+            context = {}
+        dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
+        if not args or not context.get('curr'):
+            return dom
+        if args[0][2]:
+           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
+           if t['type_for_register'] == 'transfer_same':
+               return dom+[('currency', 'in', [context['curr']])]
+        return dom
+
+    _columns = {
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+    }
+account_journal()
+
+
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
@@ -102,6 +173,7 @@ class account_bank_statement(osv.osv):
         'code': fields.char('Register Code', size=10, ),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
     }
 
     _defaults = {
@@ -539,13 +611,14 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Draft'), 
             ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean', store=False),
@@ -557,7 +630,7 @@ class account_bank_statement_line(osv.osv):
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
             required=False, readonly=True),
@@ -626,6 +699,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id, register_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
@@ -670,6 +744,7 @@ class account_bank_statement_line(osv.osv):
             # Add employee_id and register_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
             'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
+            'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
             # end of add
@@ -1081,6 +1156,33 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
+    def copy(self, cr, uid, id, default={}, context={}):
+        """
+        Create a copy of given line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        # Update vals
+        default.update({
+            'analytic_account_id': False,
+            'analytic_distribution_id': False,
+            'direct_invoice': False,
+            'first_move_line_id': False,
+            'from_cash_return': False,
+            'from_import_cheque_id': False,
+            'imported_invoice_line_ids': False,
+            'invoice_id': False,
+            'move_ids': False,
+            'reconciled': False,
+            'sequence': False,
+            'sequence_for_reference': False,
+            'state': 'draft',
+        })
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+
     def posting(self, cr, uid, ids, postype, context={}):
         """
         Write some statement line into some account move lines with a state that depends on postype.
@@ -1247,6 +1349,26 @@ class account_bank_statement_line(osv.osv):
             }
         }
 
+    def button_duplicate(self, cr, uid, ids, context={}):
+        """
+        Copy given lines and delete all links
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.statement_id and line.statement_id.state != 'open':
+                raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
+
+            default_vals = ({
+                'name': '(copy) ' + line.name,
+            })
+            self.copy(cr, uid, line.id, default_vals, context=context)
+        return True
+
     def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
         """
         Update Third Party type regarding account type_for_register field.
@@ -1256,30 +1378,20 @@ class account_bank_statement_line(osv.osv):
         third_type = [('res.partner', 'Partner')]
         third_required = False
         third_selection = 'res.partner,0'
-        domain = {'partner_type': []}
         # if an account is given, then attempting to change third_type and information about the third required
         if account_id:
             account = acc_obj.browse(cr, uid, [account_id], context=context)[0]
             acc_type = account.type_for_register
-            # if the account is a payable account, then we change the domain
-            if acc_type == 'partner':
-                if account.type == "payable":
-                    domain = {'partner_type': [('property_account_payable', '=', account_id)]}
-                elif account.type == "receivable":
-                    domain = {'partner_type': [('property_account_receivable', '=', account_id)]}
-
-            if acc_type == 'transfer':
-                third_type = [('account.bank.statement', 'Register')]
+            if acc_type in ['transfer', 'transfer_same']:
+                # UF-428: transfer type shows only Journals instead of Registers as before
+                third_type = [('account.journal', 'Journal')]
                 third_required = True
-                third_selection = 'account.bank.statement,0'
-                domain = {'partner_type': [('state', '=', 'open')]}
-                if statement_id:
-                    domain = {'partner_type': [('state', '=', 'open'), ('id', '!=', statement_id)]}
+                third_selection = 'account.journal,0'
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}, 'domain': domain}
+        return {'value': {'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}}}
 
     def onchange_partner_type(self, cr, uid, ids, partner_type=None, amount_in=None, amount_out=None, context={}):
         """

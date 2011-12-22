@@ -24,6 +24,7 @@ from osv import osv, fields
 class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
+    _order = 'date_expected asc'
     
     def _get_picking_ids(self, cr, uid, ids, context={}):
         res = []

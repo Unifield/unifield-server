@@ -140,7 +140,7 @@
       assert sourcing.sale_order_id.id == ref("sale_order_tender_so0"), 'sourcing line, sale order id is wrong (%i, %i)'%(sourcing.sale_order_id, ref("sale_order_tender_so0"))
       assert int(sourcing.sale_order_line_id) == ref("sale_order_line_tender_p0"), 'sourcing line, sale order line id is wrong (%i, %i)'%(sourcing.sale_order_line_id, ref("sale_order_line_tender_p0"))
       assert sourcing.type == 'make_to_stock', 'sourcing type wrong'
-      assert sourcing.state == 'draft', 'sourcing state wrong'
+      assert sourcing.state == 'draft', 'sourcing state wrong (draft, %s)'%sourcing.state
       assert sourcing.state == sourcing.sale_order_line_state, 'states wrong'
       assert not sourcing.supplier.id, 'make_to_stock: sourcing has a supplier !'
       
@@ -213,6 +213,8 @@
     # update the price_unit of purchase order line
     tender_id = False
     for po in self.browse(cr, uid, ids):
+      # update valid till date
+      po.write({'valid_till': '2011-10-31',})
       for pol in po.order_line:
         pol.write({'price_unit':1024})
       tender_id = po.tender_id
@@ -250,6 +252,7 @@
     ids = self.search(cr, uid, [('sale_order_id', '=', ref("sale_order_tender_so0")),], context=context)
     tender = self.browse(cr, uid, ids[0])
     assert tender.tender_line_ids[0].price_unit == 1024, 'price_unit has not been updated. %s-1024'%tender.tender_line_ids[0].price_unit
+    po_id = self.create_po(cr, uid, tender.id, context=context)
     
     import netsvc
     wf_service = netsvc.LocalService("workflow")
@@ -257,13 +260,15 @@
     
     # all rfqs must be rfq_done
     for rfq in tender.rfq_ids:
-      assert rfq.state == 'rfq_done', 'the state of the rfq is not rfq_done : done - %s'%rfq.state
+      assert rfq.state == 'done', 'the state of the rfq is not done : done - %s'%rfq.state
        
     # the final po must have state = 'confirmed'
     po_obj = self.pool.get('purchase.order')
     so_obj = self.pool.get('sale.order')
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
-    ids = po_obj.search(cr, uid, [('origin', '=', so.name),])
+    so_ids = po_obj.search(cr, uid, [])
+    ids = po_obj.search(cr, uid, [('origin', '=', so.name + '/' + tender.name),('id', '=', po_id)])
+    assert ids, 'The origin of the generated purchase order is not correct'
     po = po_obj.browse(cr, uid, ids[0])
     assert po.state in ('approved', 'confirmed',), 'the state of purchase order is wrong. %s-approved'%po.state # state depends on the installation or not of double validation module for purchase order
     

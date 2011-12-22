@@ -121,6 +121,7 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -134,15 +135,27 @@ class sale_order(osv.osv):
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'company_id2': fields.many2one('res.company','Company',select=1),
     }
     
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'mixed',
+        'categ': lambda *a: 'other',
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
+        'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+
+    def _check_own_company(self, cr, uid, company_id, context={}):
+        '''
+        Remove the possibility to make a SO to user's company
+        '''
+        user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        if company_id == user_company_id:
+            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+
+        return True
     
     def create(self, cr, uid, vals, context={}):
         if not context:
@@ -150,7 +163,22 @@ class sale_order(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
+
+        # Don't allow the possibility to make a SO to my owm company
+        if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
+            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
         return super(sale_order, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Remove the possibility to make a SO to user's company
+        '''
+        # Don't allow the possibility to make a SO to my owm company
+        if 'partner_id' in vals and not context.get('procurement_request'):
+            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -315,10 +343,10 @@ class sale_order(osv.osv):
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
         wf_service = netsvc.LocalService("workflow")
-        order = kwargs['order']
-        proc_id = kwargs['proc_id']
-        if order.procurement_request and order.state == 'progress':
-            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+        #order = kwargs['order']
+        #proc_id = kwargs['proc_id']
+        #if order.procurement_request and order.state == 'progress':
+        #    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         
         return True
     

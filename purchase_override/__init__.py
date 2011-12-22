@@ -4,10 +4,7 @@ ORDER_PRIORITY = [('emergency', 'Emergency'),
 
 ORDER_CATEGORY = [('medical', 'Medical'), 
                   ('log', 'Logistic'), 
-                  ('food', 'Food'),
                   ('service', 'Service'), 
-                  ('asset', 'Asset'), 
-                  ('mixed', 'Mixed'),
                   ('other', 'Other')]
 
 import purchase

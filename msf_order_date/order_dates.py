@@ -328,7 +328,7 @@ class purchase_order(osv.osv):
         Checks if dates are good before creation
         '''
         partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'))
-        requested_date = (datetime.today() + relativedelta(days=partner.leadtime)).strftime('%Y-%m-%d')
+        requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
         
         if 'delivery_requested_date' not in data:
             data['delivery_requested_date'] = requested_date
@@ -527,10 +527,10 @@ class purchase_order_line(osv.osv):
         '''
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-        
-        po = order_obj.browse(cr, uid, context.get('purchase_id', []))
-        if po:
-            res = po.delivery_confirmed_date
+       
+        if context.get('purchase_id', []): 
+            po_id = context.get('purchase_id', [])
+            res = order_obj.browse(cr, uid, po_id, context=context).delivery_confirmed_date
         
         return res
 

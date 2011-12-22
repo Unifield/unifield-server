@@ -57,6 +57,7 @@ class account_move_line(osv.osv):
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', 
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
+        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True),
     }
 
     def _accounting_balance(self, cr, uid, ids, context={}):

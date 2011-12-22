@@ -44,11 +44,36 @@ class analytic_account(osv.osv):
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
 
-    def set_category(self, cr, uid, vals):
-        if 'parent_id' in vals and vals['parent_id']:
-            parent = self.read(cr, uid, [vals['parent_id']], ['category'])[0]
-            if parent['category']:
-                vals['category'] = parent['category']
+    #def _check_unicity(self, cr, uid, ids, context={}):
+    #    if not context:
+    #        context={}
+    #    for account in self.browse(cr, uid, ids, context=context):
+    #        bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
+    #        if len(bad_ids) and len(bad_ids) > 1:
+    #            return False
+    #    return True
+
+    #_constraints = [
+    #    (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
+    #]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        account = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (account['code'] or '') + '(copy)'
+        default['name'] = (account['name'] or '') + '(copy)'
+        return super(analytic_account, self).copy(cr, uid, id, default, context=context)
+
+    def set_funding_pool_parent(self, cr, uid, vals):
+        if 'category' in vals and \
+           'code' in vals and \
+            vals['category'] == 'FUNDING' and \
+            vals['code'] != 'FUNDING':
+            # for all accounts except the parent one
+            funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
+            vals['parent_id'] = funding_pool_parent
     
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
@@ -61,12 +86,12 @@ class analytic_account(osv.osv):
     
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
-        self.set_category(cr, uid, vals)
+        self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         self._check_date(vals)
-        self.set_category(cr, uid, vals)
+        self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
@@ -104,6 +129,15 @@ class analytic_account(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
+    
+    def on_change_category(self, cr, uid, id, category):
+        if not category:
+            return {}
+        res = {'value': {}, 'domain': {}}
+        parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
+        res['value']['parent_id'] = parent
+        res['domain']['parent_id'] = [('category', '=', category)]
+        return res
 analytic_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
