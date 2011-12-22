@@ -31,6 +31,7 @@
     "init_xml": [
     ],
     'update_xml': [
+        'security/ir.model.access.csv',
         'res_currency_view.xml',
     ],
     'test': [
