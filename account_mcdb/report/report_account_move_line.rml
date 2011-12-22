@@ -30,8 +30,8 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
-    <paraStyle name="P2" fontName="Helvetica" alignment="CENTER"/>
-    <paraStyle name="P3" fontName="Helvetica" alignment="RIGHT"/>
+    <paraStyle name="P2" fontName="Helvetica" alignment="CENTER" fontSize="8.0" leading="13"/>
+    <paraStyle name="P3" fontName="Helvetica" alignment="RIGHT" fontSize="8.0" leading="13"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -89,16 +89,16 @@
           <para style="P3">Book. Credit</para>
         </td>
         <td>
-          <para style="Table Contents">Book. Currency</para>
+          <para style="Table Contents">Book. Curr.</para>
         </td>
         <td>
           <para style="P3">Out. Amount</para>
         </td>
         <td>
-          <para style="Table Contents">Out. Currency</para>
+          <para style="Table Contents">Out. Curr.</para>
         </td>
         <td>
-          <para style="Table Contents">Reconcile</para>
+          <para style="Table Contents">Rec.</para>
         </td>
       </tr>
       <tr>
@@ -116,7 +116,7 @@
           <para style="P2">[[ o.ref or '' ]]</para>
         </td>
         <td>
-          <para style="P2">[[ o.date or '' ]]</para>
+          <para style="P2">[[ formatLang(o.date, date=True) or '' ]]</para>
         </td>
         <td>
           <para style="P2">[[ o.period_id and o.period_id.name or '' ]]</para>
