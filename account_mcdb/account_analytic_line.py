@@ -87,5 +87,15 @@ class account_analytic_line(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        """
+        defaults.update({
+            'output_currency': False,
+            'output_amount': 0.0,
+        })
+        res = super(account_analytic_line, self).copy(cr, uid, id, defaults, context=context)
+        return res
+
 account_analytic_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
