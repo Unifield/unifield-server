@@ -53,9 +53,9 @@ class analytic_account(osv.osv):
                 return False
         return True
 
-    _constraints = [
-        (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
-    ]
+#    _constraints = [
+#        (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
+#    ]
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, id, context=context)
