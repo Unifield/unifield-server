@@ -77,6 +77,20 @@ class account_move_line_reconcile(osv.osv_memory):
         # Browse all lines
         prev_acc_id = None
         prev_third_party = None
+        transfer = False
+        # Transfer verification
+        operator = 'in'
+        if len(context['active_ids']) == 1:
+            operator = '='
+        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', '=', 'transfer'), ('id', operator, context['active_ids'])], context=context)
+        if len(context['active_ids']) == len(search_ids):
+            if len(context['active_ids']) == 2:
+                elements = account_move_line_obj.browse(cr, uid, context['active_ids'], context)
+                first_line = elements[0]
+                second_line = elements[1]
+                if first_line.statement_id and first_line.register_id and second_line.statement_id and second_line.register_id:
+                    if first_line.statement_id.id == second_line.register_id.id and second_line.statement_id.id == first_line.register_id.id:
+                        transfer = True
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
             account_id = line.account_id.id
@@ -89,11 +103,16 @@ class account_move_line_reconcile(osv.osv_memory):
             if prev_acc_id != account_id:
                 raise osv.except_osv(_('Error'), _('An account is different from others: %s' % line.account_id.code))
             # verification that there's only one 3rd party
-            # FIXME: This 3rd party verification should be desactivated in case of transfer with change
-            if not prev_third_party:
-                prev_third_party = line.partner_txt
-            if prev_third_party != line.partner_txt:
-                raise osv.except_osv(_('Error'), _('A third party is different from others: %s' % line.partner_txt))
+            # The 3rd party verification is desactivated in case of transfer with change
+            if not transfer:
+                third_party = {
+                        'partner_id': line.partner_id and line.partner_id.id or False, 
+                        'employee_id': line.employee_id and line.employee_id.id or False, 
+                        'register_id': line.register_id and line.register_id.id or False}
+                if not prev_third_party:
+                    prev_third_party = third_party
+                if prev_third_party != third_party:
+                    raise osv.except_osv(_('Error'), _('A third party is different from others: %s' % line.partner_txt))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
