@@ -362,6 +362,45 @@ class sale_order(osv.osv):
         result = result and not line.order_id.procurement_request
         return result
 
+    '''
+    Set manually done methods
+    '''
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the SO and all related documents to done
+        '''
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+        move_ids = []
+        proc_ids = []
+        for order in self.browse(cr, uid, ids, context=context):
+            # Picking
+            for picking in order.picking_ids:
+                wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
+
+            # PO (loan)
+            if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
+                wf_service.trg_validate(uid, 'purchase.order', order.loan_id.id, 'manually_done', cr)
+
+            # Procurements
+            for line in order.order_lines:
+                if line.procurement_id and line.procurement_id.state not in ('cancel', 'done'):
+                    # Tenders
+                    if line.procurement_id.tender_id:
+                        wf_service.trg_validate(uid, 'tender', line.procurement_id.tender_id.id, 'manually_done', cr)
+                    # PO and RfQ
+                    elif line.procurement_id.purchase_id:
+                        wf_service.trg_validate(uid, 'purchase.order', line.procurement_id.purchase_id.id, 'manually_done', cr)
+                    # Cancel the procurement order
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_cancel')
+
+                # Moves
+                move_ids.extend(move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ('cancel', 'done'))]))
+
+        move_obj.set_manually_done(cr, uid, move_ids, context=context)
+
+        return True
+
 sale_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
