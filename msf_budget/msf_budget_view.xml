@@ -47,14 +47,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Budget">
-                    <field name="name"/>
-                    <field name="code"/>
-                    <field name="fiscalyear_id"/>
-                    <field name="cost_center_id"/>
-                    <field name="decision_moment"/>
-                    <field name="version"/>
-                    <field name="currency_id"/>
-                    <field name="budget_line_ids" colspan="4" nolabel="1">
+                    <field name="name" readonly="1"/>
+                    <field name="code" readonly="1"/>
+                    <field name="fiscalyear_id" readonly="1"/>
+                    <field name="cost_center_id" readonly="1"/>
+                    <field name="decision_moment" readonly="1"/>
+                    <field name="version" readonly="1"/>
+                    <field name="currency_id" readonly="1"/>
+                    <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="account_id" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
                             <field name="budget_amount" real_sum="Budget Amount"/>
@@ -65,15 +65,15 @@
                         </tree>
                         <form string="Budget Line">
                             <group colspan="4">
-                                <field name="account_id" colspan="2"/>
-	                            <field name="budget_amount" colspan="1"/>
-	                            <field name="actual_amount" colspan="1"/>
-	                            <field name="balance" colspan="1"/>
-	                            <field name="percentage" colspan="1"/>
+                                <field name="account_id" colspan="2" readonly="1"/>
+	                            <field name="budget_amount" colspan="1" readonly="1"/>
+	                            <field name="actual_amount" colspan="1" readonly="1"/>
+	                            <field name="balance" colspan="1" readonly="1"/>
+	                            <field name="percentage" colspan="1" readonly="1"/>
                             </group>
                         </form>
                     </field>
-                    <field name="state" select="1"/>
+                    <field name="state" select="1" readonly="1"/>
                     <group col="4" colspan="2">
                         <button string="Approve" name="validate" states="draft" type="workflow" icon="gtk-ok"/>
                         <button string="Done" name="done" states="validate" type="workflow" icon="gtk-jump-to" />

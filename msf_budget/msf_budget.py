@@ -41,6 +41,21 @@ class msf_budget(osv.osv):
         'version': 1,
         'state': 'draft',
     }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        # if a "latest version" budget is deleted, set the flag on the previous budget (if existing)
+        for budget in self.browse(cr, uid, ids, context=context):
+            previous_budget_ids =  self.search(cr,
+                                               uid,
+                                               [('code','=',budget.code),
+                                                ('name','=',budget.name),
+                                                ('fiscalyear_id','=',budget.fiscalyear_id.id),
+                                                ('cost_center_id','=',budget.cost_center_id.id),
+                                                ('version','=',budget.version - 1)],
+                                               context=context)
+            if len(previous_budget_ids) > 0:
+                self.write(cr, uid, [previous_budget_ids[0]], {'latest_version': True}, context=context)
+        return super(msf_budget, self).unlink(cr, uid, ids, context=context)
 
 msf_budget()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

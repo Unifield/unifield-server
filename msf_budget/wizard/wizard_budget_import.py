@@ -69,19 +69,12 @@ class wizard_budget_import(osv.osv_memory):
             raise osv.except_osv(_('Warning !'), _("The budget has no decision moment!"))
         else:
             result.update({'decision_moment': import_data[4][1]})
-        # currency table code (not mandatory)
-        if import_data[5][1] != "":
-            curr_table_ids = self.pool.get('res.currency.table').search(cr, uid, [('code', '=', import_data[6][1])], context=context)
-            if len(curr_table_ids) == 0:
-                raise osv.except_osv(_('Warning !'), _("The currency table %s is not defined in the database!" % import_data[6][1]))
-            else:
-                result.update({'currency_table_id': curr_table_ids[0]})
         return result
     
     def fill_budget_line_data(self, cr, uid, import_data, context={}):
         result = []
         # Check that the account exists
-        for import_line in import_data[8:]:
+        for import_line in import_data[7:]:
             budget_line_vals = {}
             if import_line[0] == "":
                 raise osv.except_osv(_('Warning !'), _("A budget line has no account!"))
@@ -96,7 +89,8 @@ class wizard_budget_import(osv.osv_memory):
                     account = self.pool.get('account.account').browse(cr,uid,account_ids[0], context=context)
                     if account.user_type_code != 'expense':
                         raise osv.except_osv(_('Warning !'), _("Account %s is not an expense account!" % import_line[0]))
-                    else:
+                    elif account.type != 'view':
+                        # Only create "normal" budget lines (view accounts are just discarded)
                         budget_line_vals.update({'account_id': account_ids[0]})
             budget_values = "["
             for budget_value in import_line[1:13]:
