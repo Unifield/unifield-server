@@ -117,8 +117,8 @@ def _get_third_parties_name(self, cr, uid, vals, context={}):
     if 'register_id' in vals and vals.get('register_id', False):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
         res = register and register[0] and register[0].name or ''
-    if 'journal_id' in vals and vals.get('journal_id', False):
-        journal = self.pool.get('account.journal').browse(cr, uid, [vals['journal_id']], context=context)
+    if 'transfer_journal_id' in vals and vals.get('transfer_journal_id', False):
+        journal = self.pool.get('account.journal').browse(cr, uid, [vals['transfer_journal_id']], context=context)
         res = journal and journal[0] and journal[0].code or ''
     return res
 
