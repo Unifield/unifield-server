@@ -850,7 +850,7 @@ class stock_production_lot(osv.osv):
     _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
                         ]
     
-    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
         '''
