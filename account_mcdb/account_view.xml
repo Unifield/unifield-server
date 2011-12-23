@@ -29,7 +29,8 @@
                     <field name="debit" sum="Total Functional Debit" string="Func. Debit"/>
                     <field name="credit" sum="Total Functional Credit" string="Func. Credit"/>
                     <field name="functional_currency_id" string="Func. Currency"/>
-                    <field name="output_amount"/>
+                    <field name="output_amount_debit"/>
+                    <field name="output_amount_credit"/>
                     <field name="output_currency"/>
                     <field name="state"/>
                     <field name="reconcile_total_partial_id" />

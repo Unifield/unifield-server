@@ -42,7 +42,7 @@ class account_analytic_line(osv.osv):
         # Return nothing if no 'output_currency_id' in context
         if not context or not context.get('output_currency_id', False):
             for id in ids:
-                res[id] = 0.0
+                res[id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         # Retrieve currency
         currency_id = context.get('output_currency_id')
@@ -51,21 +51,29 @@ class account_analytic_line(osv.osv):
         # Do calculation
         if not rate:
             for id in ids:
-                res[id] = {'output_currency': currency_id, 'output_amount': 0.0}
+                res[id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
         for ml in self.browse(cr, uid, ids, context=context):
-            res[ml.id] = {'output_currency': False, 'output_amount': 0.0}
+            res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
             context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
             mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
             res[ml.id]['output_amount'] = mnt or 0.0
+            if mnt < 0.0:
+                res[ml.id]['output_amount_debit'] = 0.0
+                res[ml.id]['output_amount_credit'] = abs(mnt) or 0.0
+            else:
+                res[ml.id]['output_amount_debit'] = abs(mnt) or 0.0
+                res[ml.id]['output_amount_credit'] = 0.0
             # or output_currency field
             res[ml.id]['output_currency'] = currency_id
         return res
 
     _columns = {
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
+        'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
+        'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False, 
             multi="analytic_output_currency"),
     }
@@ -78,12 +86,10 @@ class account_analytic_line(osv.osv):
         view = super(account_analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type == 'tree' and (not context or not context.get('output_currency_id', False)):
             tree = etree.fromstring(view['arch'])
-            amount_fields = tree.xpath('/tree/field[@name="output_amount"]')
-            for field in amount_fields:
-                tree.remove(field)
-            curr_fields = tree.xpath('/tree/field[@name="output_currency"]')
-            for field in curr_fields:
-                tree.remove(field)
+            for element in ['output_currency', 'output_amount']:
+                element_fields = tree.xpath('/tree/field[@name="' + element + '"]')
+                for field in element_fields:
+                    tree.remove(field)
             view['arch'] = etree.tostring(tree)
         return view
 
