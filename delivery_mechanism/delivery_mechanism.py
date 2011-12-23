@@ -141,6 +141,8 @@ class stock_picking(osv.osv):
         
         - allow to modify the data for wizard display
         '''
+        if context is None:
+            context = {}
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
         res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
