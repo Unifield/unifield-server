@@ -383,7 +383,7 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'purchase.order', order.loan_id.id, 'manually_done', cr)
 
             # Procurements
-            for line in order.order_lines:
+            for line in order.order_line:
                 if line.procurement_id and line.procurement_id.state not in ('cancel', 'done'):
                     # Tenders
                     if line.procurement_id.tender_id:
@@ -396,6 +396,16 @@ class sale_order(osv.osv):
 
                 # Moves
                 move_ids.extend(move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ('cancel', 'done'))]))
+
+            # Invoices
+            error_inv_ids = []
+            for invoice in order.invoice_ids:
+                if invoice.state == 'draft':
+                    wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
+                elif invoice.state not in ('paid', 'cancel'):
+                    error_inv_ids.append(invoice)
+            if error_inv_ids:
+                raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
 
         move_obj.set_manually_done(cr, uid, move_ids, context=context)
 

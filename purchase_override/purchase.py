@@ -361,31 +361,39 @@ class purchase_order(osv.osv):
         return picking_id
         # @@@end
 
-
+    '''
+    Documents done workflow modifications
+    '''
+    def set_manually_done(self, cr, uid, ids, context={}):
         '''
-        Documents done workflow modifications
+        Set the PO and the related document to done
         '''
-        def set_manually_done(self, cr, uid, ids, context={}):
-            '''
-            Set the PO and the related document to done
-            '''
-            wf_service = netsvc.LocalService('workflow')
-            move_obj = self.pool.get('stock.move')
-            move_ids = []
-            for order in self.browse(cr, uid, ids, context=context):
-                # Counterpart of a loan
-                if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
-                    wf_service.trg_validate(uid, 'sale.order', order.loan_id.id, 'manually_done', cr)
-                # Stock picking
-                for picking in order.picking_ids:
-                    wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
-                # Stock moves
-                for line in order.order_lines:
-                   move_ids.extend(move_obj.search(cr, uid, [('purchase_line_id', '=', line.id), ('state', 'not in', ('done', 'cancel'))], context=context))
+        wf_service = netsvc.LocalService('workflow')
+        move_obj = self.pool.get('stock.move')
+        move_ids = []
+        for order in self.browse(cr, uid, ids, context=context):
+            # Counterpart of a loan
+            if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
+                wf_service.trg_validate(uid, 'sale.order', order.loan_id.id, 'manually_done', cr)
+            # Stock picking
+            for picking in order.picking_ids:
+                wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
+            # Stock moves
+            for line in order.order_line:
+               move_ids.extend(move_obj.search(cr, uid, [('purchase_line_id', '=', line.id), ('state', 'not in', ('done', 'cancel'))], context=context))
+            # Invoices
+            error_inv_ids = []
+            for invoice in order.invoice_ids:
+                if invoice.state == 'draft':
+                    wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
+                elif invoice.state not in ('paid', 'cancel'):
+                    error_inv_ids.append(invoice)
+            if error_inv_ids:
+                raise osv.except_osv(_('Error'), _('You cannot set the PO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
 
-            move_obj.set_manually_done(cr, uid, move_ids, context=context)
+        move_obj.set_manually_done(cr, uid, move_ids, context=context)
 
-            return True
+        return True
     
 purchase_order()
 

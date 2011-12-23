@@ -20,6 +20,7 @@
 ##############################################################################
 
 import tools
+import netsvc
 
 from osv import osv
 from osv import fields
@@ -102,7 +103,7 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
-        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done', 'manual_done']), (field, 'in', line_ids)], context=context)
 
     def _get_problem_sale_order(self, cr, uid, order, context={}):
         '''
@@ -114,6 +115,7 @@ class documents_done_wizard(osv.osv):
         po_ids = []
         tender_ids = []
         so_ids = []
+        invoice_ids = []
         for line in order.order_line:
             # Check procurement orders
             if line.procurement_id:
@@ -131,10 +133,15 @@ class documents_done_wizard(osv.osv):
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             po_ids.append(order.loan_id.id)
 
+        # Invoices
+        for invoice in order.invoice_ids:
+            if invoice.state not in ('cancel', 'paid'):
+                invoice_ids.append(invoice.id)
+
         if context.get('count', False):
-            return move_ids or proc_ids or po_ids or tender_ids or False
+            return move_ids or proc_ids or po_ids or tender_ids or invoice_ids or False
         else:
-            return move_ids, proc_ids, po_ids, tender_ids
+            return move_ids, proc_ids, po_ids, tender_ids, invoice_ids
 
     def _get_problem_purchase_order(self, cr, uid, order, context={}):
         '''
@@ -143,13 +150,19 @@ class documents_done_wizard(osv.osv):
         '''
         move_ids = self._get_related_stock_moves(cr, uid, order, 'purchase_line_id', context=context)
         so_ids = []
+        invoice_ids = []
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             so_ids.append(order.loan_id.id)
 
+        # Invoices
+        for invoice in order.invoice_ids:
+            if invoice.state not in ('cancel', 'paid'):
+                invoice_ids.append(invoice.id)
+
         if context.get('count', False):
-            return move_ids or so_ids or False
+            return move_ids or so_ids or invoice_ids or False
         else:
-            return move_ids, so_ids
+            return move_ids, so_ids, invoice_ids
 
     def _get_problem_tender(self, cr, uid, order, context={}):
         '''
@@ -258,6 +271,7 @@ class documents_done_wizard(osv.osv):
             po_ids = []
             so_ids = []
             tender_ids = []
+            invoice_ids = []
             doc = self.pool.get(wiz.real_model).browse(cr, uid, wiz.res_id, context=context)
             pb_id = pb_obj.create(cr, uid, {'wizard_id': wiz.id,
                                             'doc_name': doc.name})
@@ -265,10 +279,10 @@ class documents_done_wizard(osv.osv):
             # For sales orders and procurement request
             if wiz.real_model == 'sale.order':
                 order = self.pool.get('sale.order').browse(cr, uid, wiz.res_id, context=context)
-                move_ids, proc_ids, po_ids, tender_ids = self._get_problem_sale_order(cr, uid, order, context=context)
+                move_ids, proc_ids, po_ids, tender_ids, invoice_ids = self._get_problem_sale_order(cr, uid, order, context=context)
             elif wiz.real_model == 'purchase.order':
                 order = self.pool.get('purchase.order').browse(cr, uid, wiz.res_id, context=context)
-                move_ids, so_ids = self._get_problem_purchase_order(cr, uid, order, context=context)
+                move_ids, so_ids, invoice_ids = self._get_problem_purchase_order(cr, uid, order, context=context)
             elif wiz.real_model == 'tender':
                 order = self.pool.get('tender').browse(cr, uid, wiz.res_id, context=context)
                 po_ids = self._get_problem_tender(cr, uid, order, context=context)
@@ -291,6 +305,14 @@ class documents_done_wizard(osv.osv):
                                              'doc_id': proc.id,
                                              'doc_type': 'Procurement Order'})
 
+            # Process all invoices
+            for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
+                pb_line_obj.create(cr, uid, {'problem_id': pb_id,
+                                             'doc_name': inv.name,
+                                             'doc_model': 'account.invoice',
+                                             'doc_id': inv.id,
+                                             'doc_type': 'Invoice'})
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'documents.done.problem',
                 'view_mode': 'form',
@@ -300,7 +322,20 @@ class documents_done_wizard(osv.osv):
                         
 
     def cancel_line(self, cr, uid, ids, context={}):
-        raise osv.except_osv('Error', 'Not implemented')
+        '''
+        Set the document to done state
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        for doc in self.browse(cr, uid, ids, context=context):
+            if doc.problem:
+                raise osv.except_osv(_('Error'), _('This document has some other documents not done or cancelled which blocked the process !'))
+            wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'manually_done', cr)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'documents.done.wizard',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'target': 'crush'}
     
     def init(self, cr):
         '''
@@ -410,7 +445,27 @@ class documents_done_problem(osv.osv_memory):
     }
 
     def done_all_documents(self, cr, uid, ids, context={}):
-        raise osv.except_osv('Error', 'Not implemented')
+        '''
+        For all documents, check the state of the doc and send the signal
+        of 'manually_done' if needed
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for line in wiz.pb_lines:
+                if line.doc_model == 'account.invoice':
+                    invoice_state = self.pool.get('account.invoice').browse(cr, uid, line.doc_id, context=context).state
+                    if invoice_state == 'draft':
+                        wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
+                    elif invoice_state not in ('cancel', 'paid'):
+                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
+                elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'paid'):
+                    wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'documents.done.wizard',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'target': 'crush'}
 
 documents_done_problem()
 

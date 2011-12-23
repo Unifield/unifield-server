@@ -63,6 +63,17 @@
             <field name="act_to" ref="act_proc_done"/>
             <field name="signal">order_confirm</field>
         </record>
+        <record id="trans_procurement_manual_done" model="workflow.transition">
+            <field name="act_from" ref="procurement_request.act_procurement" />
+            <field name="act_to" ref="sale_override.act_manual_done" />
+            <field name="signal">manually_done</field>
+        </record>
+        <record id="trans_proc_confirm_manual_done" model="workflow.transition">
+            <field name="act_from" ref="procurement_request.act_proc_confirm" />
+            <field name="act_to" ref="sale_override.act_manual_done" />
+            <field name="signal">manually_done</field>
+        </record>
+
         
     
     </data>
