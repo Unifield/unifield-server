@@ -58,6 +58,7 @@
                     <field name="output_amount"/>
                     <field name="output_currency"/>
                     <field name="account_id"/>
+                    <field name="general_account_id"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
