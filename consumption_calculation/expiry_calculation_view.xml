@@ -76,8 +76,8 @@
     				<field name="only_non_zero" />
     				<separator colspan="4" string="Consumption parameters" />
     				<field name="consumption_type" colspan="4" />
-    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
-    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
+    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
     				<separator colspan="4" string="Location" />
     				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
 				<newline />

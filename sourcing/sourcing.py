@@ -266,7 +266,8 @@ class sourcing_line(osv.osv):
                 else:
                     # if make to stock, reset anyway to False
                     pocft = False
-                    vals.update({'po_cft': pocft})
+                    values.update({'po_cft': pocft, 'supplier': False})
+                    vals.update({'po_cft': pocft, 'supplier': False})
                 
                 # partner_id
                 if 'supplier' in values:
@@ -674,7 +675,9 @@ class sale_order_line(osv.osv):
                 values.update({'type': vals['type']})
                 if vals['type'] == 'make_to_stock':
                     values.update({'po_cft': False})
+                    vals.update({'po_cft': False})
                     values.update({'supplier': False})
+                    vals.update({'supplier': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
                 
