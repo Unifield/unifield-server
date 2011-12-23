@@ -149,7 +149,7 @@ class stock_picking(osv.osv):
                                                                                wizard_ids=[res['res_id']],
                                                                                wizard_name=res['name'],
                                                                                model=res['res_model'],
-                                                                               step=res['default']))
+                                                                               step='default'))
         return res
     
     def create_sequence(self, cr, uid, vals, context=None):
