@@ -10,6 +10,10 @@
 			<field name="arch" type="xml">
 				<data>
 				
+					<field name="product_id" position="before">
+						<field name="line_number" />
+					</field>
+				
 					<field name="quantity" position="after">
 						<field name="force_complete"/>
 					</field>
@@ -25,6 +29,10 @@
             <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
 			<field name="arch" type="xml">
 				<data>
+				
+					<field name="product_id" position="before">
+						<field name="line_number" />
+					</field>
 				
 					<field name="quantity" position="after">
 						<field name="force_complete"/>

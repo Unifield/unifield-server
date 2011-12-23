@@ -28,6 +28,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
     _columns = {'force_complete' : fields.boolean(string='Force'),
+                'line_number': fields.integer(string='Line'),
                 }
     _defaults = {'force_complete': False,}
     

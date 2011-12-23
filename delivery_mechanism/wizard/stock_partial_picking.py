@@ -121,6 +121,18 @@ class stock_partial_picking(osv.osv_memory):
                 # replace call to do_partial by do_incoming_shipment
                 res['arch'] = res['arch'].replace('do_partial', 'do_incoming_shipment')
         return res
+    
+    def __create_partial_picking_memory(self, picking, pick_type):
+        '''
+        add the asset_id
+        NOTE: the name used here : picking is WRONG. it is in fact a stock.move object
+        '''
+        move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(picking, pick_type)
+        assert move_memory is not None
+        
+        move_memory.update({'line_number' : picking.line_number})
+        
+        return move_memory
         
 stock_partial_picking()
 
