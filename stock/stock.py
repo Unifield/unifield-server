@@ -660,13 +660,15 @@ class stock_picking(osv.osv):
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
     }
     
-    def _stock_picking_action_process_hook(self, cr, uid, ids, context=context, *args, **kwargs):
+    def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_process method from stock>stock.py>stock_picking
         
         - allow to modify the data for wizard display
         '''
+        if context is None:
+            context = {}
         res = kwargs['res']
         return res
     
