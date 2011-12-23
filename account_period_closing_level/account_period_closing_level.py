@@ -136,7 +136,9 @@ class account_period_closing_level(osv.osv):
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
     }
-   
+
+    _order = 'date_start, number'
+
     def create(self, cr, uid, vals, context={}):
         if not context:
             context = {}
