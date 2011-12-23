@@ -108,7 +108,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 third_party = {
                         'partner_id': line.partner_id and line.partner_id.id or False, 
                         'employee_id': line.employee_id and line.employee_id.id or False, 
-                        'register_id': line.register_id and line.register_id.id or False}
+                        'register_id': line.register_id and line.register_id.id or False, 
+                        'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or False}
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
