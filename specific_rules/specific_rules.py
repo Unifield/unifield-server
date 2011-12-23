@@ -754,6 +754,12 @@ class stock_production_lot(osv.osv):
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
+    
+    def _stock_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        call super method, as fields.function does not work with inheritance
+        '''
+        return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
 
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
@@ -843,6 +849,14 @@ class stock_production_lot(osv.osv):
     
     _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
                         ]
+    
+    def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context={}, count=False):
+        '''
+        search function of production lot
+        '''
+        result = super(stock_production_lot, self).search(cr, uid, args=args, offset=offset, limit=limit, order=order, context=context, count=count)
+        
+        return result
     
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
