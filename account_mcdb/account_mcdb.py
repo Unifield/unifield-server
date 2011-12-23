@@ -67,7 +67,7 @@ class account_mcdb(osv.osv_memory):
             string="Analytic Account"),
         'rev_analytic_account_ids': fields.boolean('Reverse analytic account(s) selection'),
         'reallocated': fields.selection([('reallocated', 'Reallocated'), ('unreallocated', 'NOT reallocated')], string='Reallocated?'),
-        'reversed': fields.boolean(string='Reversed?'),
+        'reversed': fields.selection([('reversed', 'Reversed'), ('notreversed', 'NOT reversed')], string='Reversed?'),
     }
 
     _defaults = {
@@ -208,10 +208,6 @@ class account_mcdb(osv.osv_memory):
                 ('register_id', 'register_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
-            # And BOOLEAN fields
-            for b in [('reversed', 'is_reversal')]:
-                if getattr(wiz, b[0]):
-                    domain.append((b[1], '=', True))
             # Finally others fields
             # LOOKS LIKE fields
             for ll in [('ref', 'ref'), ('name', 'name')]:
@@ -236,6 +232,12 @@ class account_mcdb(osv.osv_memory):
                     domain.append(('is_reallocated', '=', True))
                 elif wiz.reallocated == 'unreallocated':
                     domain.append(('is_reallocated', '=', False))
+            # REVERSED field
+            if wiz.reversed:
+                if wiz.reversed == 'reversed':
+                    domain.append(('is_reversal', '=', True))
+                elif wiz.reversed == 'notreversed':
+                    domain.append(('is_reversal', '=', False))
             ## SPECIAL fields
             #
             # AMOUNTS fields
