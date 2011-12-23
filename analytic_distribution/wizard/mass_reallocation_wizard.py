@@ -135,9 +135,11 @@ class mass_reallocation_wizard(osv.osv_memory):
             # - that are commitment lines
             # - that have been reallocated
             # - that have been reversed
+            # - that come from an engagement journal
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, [('id', 'in', to_process), 
-                '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
-                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True)], context=context)
+                '|', '|', '|', '|', '|', ('account_id.category', '!=', wiz.account_id.category), ('account_id', '=', account_id),
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement')], 
+                context=context)
             if search_ns_ids:
                 non_supported_ids.extend(search_ns_ids)
             # Delete non_supported element from to_process and write them to tmp_process_ids

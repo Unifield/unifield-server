@@ -195,14 +195,7 @@ class analytic_line(osv.osv):
             account_ids = fp and fp.get('account_ids', []) or []
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids, context=context):
-                # No verification if account is MSF Private Fund because of its compatibility with all elements.
-                if account_id == msf_private_fund:
-                    res.append(aline.id)
-                    continue
                 # Verify that:
-                # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
-                # - the cost_center is in compatible cost center from the new funding pool
-                # - the general account is in compatible accounts
                 # - the line doesn't have any draft/open contract
                 contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
                 valid = True
@@ -211,6 +204,14 @@ class analytic_line(osv.osv):
                         valid = False
                 if not valid:
                     continue
+                # No verification if account is MSF Private Fund because of its compatibility with all elements.
+                if account_id == msf_private_fund:
+                    res.append(aline.id)
+                    continue
+                # Verify that:
+                # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
+                # - the cost_center is in compatible cost center from the new funding pool
+                # - the general account is in compatible accounts
                 if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.general_account_id.id in account_ids:
                     res.append(aline.id)
         else:
