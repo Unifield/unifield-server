@@ -30,7 +30,7 @@ class cashbox_write_off(osv.osv_memory):
     _name = 'cashbox.write.off'
 
     _columns = {
-        'choice' : fields.selection( [('writeoff', 'Accept write-off and close cashbox'), ('reopen', 'Re-open CashBox')], \
+        'choice' : fields.selection( [('writeoff', 'Accept write-off and close register'), ('reopen', 'Re-open Register')], \
             string="Decision about CashBox", required=True),
         'account_id': fields.many2one('account.account', string="Write-off Account"),
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
@@ -85,6 +85,8 @@ class cashbox_write_off(osv.osv_memory):
             # look at user choice
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
+                if cstate not in ['partial_close']:
+                    raise osv.except_osv(_('Warning'), _('You cannot re-open a Closed Register.'))
                 # re-open case
                 cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': id}
