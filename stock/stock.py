@@ -659,11 +659,22 @@ class stock_picking(osv.osv):
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.picking', context=c)
     }
+    
+    def _stock_picking_action_process_hook(self, cr, uid, ids, context=context, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        
+        - allow to modify the data for wizard display
+        '''
+        res = kwargs['res']
+        return res
+    
     def action_process(self, cr, uid, ids, context=None):
         if context is None: context = {}
         partial_id = self.pool.get("stock.partial.picking").create(
             cr, uid, {}, context=dict(context, active_ids=ids))
-        return {
+        res = {
             'name':_("Products to Process"),
             'view_mode': 'form',
             'view_id': False,
@@ -676,6 +687,9 @@ class stock_picking(osv.osv):
             'domain': '[]',
             'context': dict(context, active_ids=ids)
         }
+        # hook on view dic
+        res = self._stock_picking_action_process_hook(cr, uid, ids, context=context, res=res,)
+        return res
 
     def _erase_prodlot_hook(self, cr, uid, id, context=None, *args, **kwargs):
         '''
