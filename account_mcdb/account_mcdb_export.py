@@ -68,23 +68,23 @@ class account_line_csv_export(osv.osv_memory):
         for ml in self.pool.get('account.move.line').browse(cr, uid, ids, context=context):
             csv_line = []
             # journal_id
-            csv_line.append(ml.journal_id and ml.journal_id.code.encode('utf-8') or '')
+            csv_line.append(ml.journal_id and ml.journal_id.code and ml.journal_id.code.encode('utf-8') or '')
             #move_id
-            csv_line.append(ml.move_id and ml.move_id.name.encode('utf-8') or '')
+            csv_line.append(ml.move_id and ml.move_id.name and ml.move_id.name.encode('utf-8') or '')
             #instance
-            csv_line.append(ml.instance.encode('utf-8') or '')
+            csv_line.append(ml.instance and ml.instance.encode('utf-8') or '')
             #ref
-            csv_line.append(ml.ref.encode('utf-8') or '')
+            csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
             #date
             csv_line.append(ml.date or '')
             #period_id
-            csv_line.append(ml.period_id and ml.period_id.name.encode('utf-8') or '')
+            csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
             #name
-            csv_line.append(ml.name.encode('utf-8') or '')
+            csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #account_id code
-            csv_line.append(ml.account_id and ml.account_id.code.encode('utf-8') or '')
+            csv_line.append(ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or '')
             #account_id name
-            csv_line.append(ml.account_id and ml.account_id.name.encode('utf-8') or '')
+            csv_line.append(ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or '')
             #partner_txt
             csv_line.append(ml.partner_txt.encode('utf-8') or '')
             #debit_currency
@@ -92,14 +92,14 @@ class account_line_csv_export(osv.osv_memory):
             #credit_currency
             csv_line.append(ml.credit_currency or 0.0)
             #currency_id
-            csv_line.append(ml.currency_id and ml.currency_id.name.encode('utf-8') or '')
+            csv_line.append(ml.currency_id and ml.currency_id.name and ml.currency_id.name.encode('utf-8') or '')
             if not currency_id:
                 #debit
                 csv_line.append(ml.debit or 0.0)
                 #credit
                 csv_line.append(ml.credit or 0.0)
                 #functional_currency_id
-                csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name.encode('utf-8') or '')
+                csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount regarding booking currency
                 amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
@@ -109,7 +109,7 @@ class account_line_csv_export(osv.osv_memory):
             #state
             csv_line.append(ml.state.encode('utf-8') or '')
             #reconcile_total_partial_id
-            csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+            csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
             # Write line
             writer.writerow(csv_line)
             
@@ -159,15 +159,15 @@ class account_line_csv_export(osv.osv_memory):
         for al in self.pool.get('account.analytic.line').browse(cr, uid, ids, context=context):
             csv_line = []
             # journal_id
-            csv_line.append(al.journal_id and al.journal_id.code.encode('utf-8') or '')
+            csv_line.append(al.journal_id and al.journal_id.code and al.journal_id.code.encode('utf-8') or '')
             #date
             csv_line.append(al.date or '')
             #instance
-            csv_line.append(al.company_id and al.company_id.name.encode('utf-8') or '')
+            csv_line.append(al.company_id and al.company_id.name and al.company_id.name.encode('utf-8') or '')
             #name
-            csv_line.append(al.name.encode('utf-8') or '')
+            csv_line.append(al.name and al.name.encode('utf-8') or '')
             #ref
-            csv_line.append(al.ref.encode('utf-8') or '')
+            csv_line.append(al.ref and al.ref.encode('utf-8') or '')
             #amount
             csv_line.append(al.amount or 0.0)
             #company currency
@@ -175,7 +175,7 @@ class account_line_csv_export(osv.osv_memory):
             #amount_currency
             csv_line.append(al.amount_currency or 0.0)
             #currency_id
-            csv_line.append(al.currency_id and al.currency_id.name.encode('utf-8') or '')
+            csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
             if currency_id:
                 #output amount
                 amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
@@ -183,7 +183,7 @@ class account_line_csv_export(osv.osv_memory):
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
             #account_id name
-            csv_line.append(al.account_id and al.account_id.name.encode('utf-8') or '')
+            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
             # Write Line
             writer.writerow(csv_line)
         return True
