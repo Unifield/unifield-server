@@ -92,16 +92,6 @@ class stock_picking(osv.osv):
         assert defaults is not None, 'missing defaults'
         
         return defaults
-    
-    def _do_partial_complete_condition_hook(self, cr, uid, ids, context, *args, **kwargs):
-        '''
-        hook to determining complete condition
-        '''
-        move = kwargs['move']
-        partial_data = kwargs['partial_data']
-        product_qty = partial_data.get('product_qty') or 0.0
-        
-        return move.product_qty == product_qty
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
@@ -141,7 +131,7 @@ class stock_picking(osv.osv):
                 product_currency = partial_data.get('product_currency') or False
                 prodlot_id = partial_data.get('prodlot_id') or False
                 prodlot_ids[move.id] = prodlot_id
-                if self._do_partial_complete_condition_hook(cr, uid, ids, context=context, move=move, partial_data=partial_data):
+                if move.product_qty == product_qty:
                     complete.append(move)
                 elif move.product_qty > product_qty:
                     too_few.append(move)

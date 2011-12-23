@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
-
-        
-            
+  
         <record id="stock_move_memory_tree_in" model="ir.ui.view">
             <field name="name">stock.move.memory.tree</field>
             <field name="model">stock.move.memory.in</field>
@@ -13,10 +10,8 @@
 			<field name="arch" type="xml">
 				<data>
 				
-					<field name="product_id" position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]"
-							attrs="{'readonly': [('asset_check', '=', False),],}" />
-						<field name="asset_check" invisible="True" />
+					<field name="quantity" position="after">
+						<field name="force_complete"/>
 					</field>
 				
 				</data>
@@ -31,10 +26,8 @@
 			<field name="arch" type="xml">
 				<data>
 				
-					<field name="product_id" position="after">
-						<field name="asset_id" domain="[('product_id', '=', product_id)]"
-							attrs="{'readonly': [('asset_check', '=', False),],}" />
-						<field name="asset_check" invisible="True" />
+					<field name="quantity" position="after">
+						<field name="force_complete"/>
 					</field>
 				
 				</data>

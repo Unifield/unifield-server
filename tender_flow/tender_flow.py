@@ -617,7 +617,7 @@ class procurement_order(osv.osv):
         '''
         data for the purchase order creation
         '''
-        values = kwargs['values']
+        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
         
         values['date_planned'] = procurement.date_planned 

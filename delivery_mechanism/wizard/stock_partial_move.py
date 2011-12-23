@@ -27,38 +27,35 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
-    _columns = {'force_complete' : fields.boolean(string='Force Complete'),
+    _columns = {'force_complete' : fields.boolean(string='Force'),
                 }
     _defaults = {'force_complete': False,}
     
-stock_partial_move_memory_out()
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        remove force_complete if not incoming
+        
+        temporary hack
+        because problem: attrs does not work : <field name="force_complete" attrs="{'readonly': [('type_check', '!=', 'in')]}" />
+        '''
+        res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        picking_obj = self.pool.get('stock.picking')
+        picking_id = context.get('active_ids')
+        if picking_id:
+            picking_id = picking_id[0]
+            picking_type = picking_obj.browse(cr, uid, picking_id, context=context).type
+            if picking_type != 'in':
+                arch = res['arch']
+                arch = arch.replace('<field name="force_complete"/>', '')
+                res['arch'] = arch
+        return res
     
+stock_partial_move_memory_out()
+
+
 class stock_partial_move_memory_in(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     _name = "stock.move.memory.in"
     
 stock_partial_move_memory_in()
-    
-    
-class stock_partial_move(osv.osv_memory):
-    _inherit = "stock.partial.move"
-    
-    def do_partial_hook(self, cr, uid, context, *args, **kwargs):
-        '''
-        add hook to do_partial
-        '''
-        # call to super
-        partial_datas = super(stock_partial_move, self).do_partial_hook(cr, uid, context, *args, **kwargs)
-        assert partial_datas, 'partial_datas missing'
-        
-        move = kwargs.get('move')
-        assert move, 'move is missing'
-        p_moves = kwargs.get('p_moves')
-        assert p_moves, 'p_moves is missing'
-        
-        # update asset_id
-        partial_datas['move%s' % (move.id)].update({'force_complete': p_moves[move.id].force_complete,})
-        
-        return partial_datas
 
-stock_partial_move()

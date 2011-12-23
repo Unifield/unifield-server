@@ -30,6 +30,7 @@
                 "purchase_override",
                 "sale_override",
                 "msf_outgoing",
+                "product_asset", # because of asset_id
                 ],
     "author": "MSF",
     "website": "",
@@ -41,10 +42,11 @@
     ],
     'update_xml': ['security/ir.model.access.csv',
                    'delivery_mechanism_view.xml',
+                   'wizard/stock_partial_move_view.xml',
                    ],
     'demo_xml': [
     ],
-    'test': ['test/delivery_mechanism.yml',
+    'test': [#'test/delivery_mechanism.yml',
              ],
     'installable': True,
     'active': False,
