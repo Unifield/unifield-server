@@ -17,6 +17,7 @@
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="name"/>
                     <field name="account_id"/>
+                    <field name="account_type" invisible="1"/>
                     <field name="move_state" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
@@ -110,6 +111,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <filter string="Account Type"  icon="terp-folder-green" context="{'group_by':'account_type'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
                         <separator orientation="vertical"/>
