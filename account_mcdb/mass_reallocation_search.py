@@ -53,9 +53,9 @@ class mass_reallocation_search(osv.osv_memory):
             search.append(('general_account_id', 'in', [x.id for x in account.account_ids]))
         if account.cost_center_ids:
             search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
-        search.append(('account_id', '!=', account.id))
+        for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
+            search.append(criterium)
         search_ids = self.pool.get('account.analytic.line').search(cr, uid, search, context=context)
-        print search, search_ids
         non_valid_ids = []
         # Browse all analytic line to verify contract state
         for aline in self.pool.get('account.analytic.line').browse(cr, uid, search_ids, context=context):
