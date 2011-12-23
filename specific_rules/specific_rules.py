@@ -754,12 +754,6 @@ class stock_production_lot(osv.osv):
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
-    
-    def _stock_search(self, cr, uid, obj, name, args, context=None):
-        '''
-        call super method, as fields.function does not work with inheritance
-        '''
-        return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
 
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations

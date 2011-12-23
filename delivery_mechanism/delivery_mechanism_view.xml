@@ -34,6 +34,22 @@
 						<attribute name="invisible">True</attribute>
 					</xpath>
 					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.move_scrap)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.track_line)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//field[@name='tracking_id']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.split_into)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
 				</data>
 			</field>
 		</record>
