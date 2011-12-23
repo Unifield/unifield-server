@@ -406,22 +406,13 @@ class tender(osv.osv):
         nb_up_lines = 0
         for tender in self.browse(cr, uid, ids, context=context):
             for rfq in tender.rfq_ids:
-                if nb_up_lines < len(tender.tender_line_ids):
-                    # Update tender lines
-                    for line in tender.tender_line_ids:
-                        if not line.purchase_order_line_id:
-                            for rfq_line in rfq.order_line:
-                                if line.product_id.id == rfq_line.product_id.id:
-                                    nb_up_line += 1
-                                    self.pool.get('tender.line').write(cr, uid, {'purchase_order_line_id': rfq_line.id})
-                
-                if rfq.state not in ('rfq_updated', 'cancel'):
+                if rfq.state not in ('done', 'cancel'):
                     wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
                     wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-        # All POs generated from the Rfq
-        po_ids.extend(po_obj.search(cr, uid, [('origin_tender_id', 'in', ids)], context=context))
-        self.pool.get('purchase.order').set_manually_done(cr, uid, po_ids, context=context)
+            # Call the done method of the tender
+            wf_service.trg_delete(uid, 'tender', tender.id, cr)
+        self.pool.get('tender').write(cr, uid, )
 
         return True
 
