@@ -21,7 +21,6 @@
 
 import account
 import account_period_closing_level
-import account_fiscalyear_closing_level
 import account_journal_period
 import wizard
 

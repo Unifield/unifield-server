@@ -134,6 +134,7 @@ class account_period_closing_level(osv.osv):
             help="These periods can overlap.", readonly=True),
         'state': fields.selection(_get_state, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
+        'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
     }
    
     def create(self, cr, uid, vals, context={}):
@@ -147,7 +148,8 @@ class account_period_closing_level(osv.osv):
         return super(account_period_closing_level, self).create(cr, uid, vals, context=context)
 
     _defaults = {
-        'state': 'created'
+        'state': lambda *a: 'created',
+        'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
     }
 
     def button_overdue_invoice(self, cr, uid, ids, context={}):
