@@ -121,7 +121,7 @@
             <field name="act_to" ref="purchase.act_buy"/>
             <field name="condition">((is_tender and is_tender_done) or (not is_tender)) and check_buy()</field>
         </record>
-        
+
         <!-- PURCHASE ORDER WORKFLOW -->
         <record id="purchase.act_rfq_sent" model="workflow.activity">
             <field name="wkf_id" ref="purchase.purchase_order"/>
@@ -173,17 +173,6 @@
             <field name="act_from" ref="purchase.act_rfq_updated" />
             <field name="act_to" ref="purchase.act_cancel" />
             <field name="signal">purchase_cancel</field>
-        </record>
-
-        <record id="trans_rfq_sent_manual_done" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_sent" />
-            <field name="act_to" ref="purchase_override.act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_rfq_updated_manual_done" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_updated" />
-            <field name="act_to" ref="purchase_override.act_manual_done" />
-            <field name="signal">manually_done</field>
         </record>
 
     </data>

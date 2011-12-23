@@ -65,6 +65,7 @@
             <field name="arch" type="xml">
                 <form string="Problem on documents">
                     <field name="doc_name" colspan="4" readonly="1" />
+                    <field name="errors" invisible="1" />
                     <field name="pb_lines" mode="tree" colspan="4" nolabel="1" readonly="1">
                         <tree string="Documents">
                             <field name="doc_name" />
@@ -74,7 +75,10 @@
                     </field>
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Close" icon="gtk-cancel" />
-                    <button name="done_all_documents" string="Done/Cancel all documents" type="object" colspan="3" icon="gtk-execute" />
+                    <group colspan="3" col="3">
+                        <button name="done_all_documents" string="Done/Cancel all documents" type="object" colspan="3" icon="gtk-execute" attrs="{'invisible': [('errors', '=', False)]}" />
+                        <button name="cancel_document" string="Done the document" type="object" colspan="3" icon="terp-check" attrs="{'invisible': [('errors', '=', True)]}" />
+                    </group>
                 </form>
             </field>
         </record>

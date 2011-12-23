@@ -24,6 +24,7 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
 
+from workflow.wkf_expr import _eval_expr
 from mx.DateTime import *
 
 class purchase_order(osv.osv):
@@ -371,10 +372,21 @@ class purchase_order(osv.osv):
         wf_service = netsvc.LocalService('workflow')
         move_obj = self.pool.get('stock.move')
         move_ids = []
+        res = True
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for order in self.browse(cr, uid, ids, context=context):
             # Counterpart of a loan
-            if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
-                wf_service.trg_validate(uid, 'sale.order', order.loan_id.id, 'manually_done', cr)
+            if order.loan_id and order.loan_id.state not in ('cancel', 'done') and (not 'loan_id' in context or context.get('loan_id') != order.id):
+                context.update({'loan_id': order.loan_id.id})
+                self.pool.get('sale.order').set_manually(cr, uid, order.loan_id.id, context=context)
+                #wf_service.trg_delete(uid, 'sale.order', order.loan_id.id, cr)
+                # Search the action_done of the sale.order workflow
+                #wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
+                #action = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context).action
+                #_eval_expr(cr, [uid, 'sale.order', order.loan_id.id], False, action)
             # Stock picking
             for picking in order.picking_ids:
                 wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
@@ -391,9 +403,15 @@ class purchase_order(osv.osv):
             if error_inv_ids:
                 raise osv.except_osv(_('Error'), _('You cannot set the PO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
 
+            wf_service.trg_delete(uid, 'purchase.order', order.id, cr)
+            # Search the action_done of the purchase.order workflow
+            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
+            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+            res = _eval_expr(cr, [uid, 'purchase.order', order.id], False, activity.action)
+
         move_obj.set_manually_done(cr, uid, move_ids, context=context)
 
-        return True
+        return res
     
 purchase_order()
 

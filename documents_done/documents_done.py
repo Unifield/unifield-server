@@ -169,7 +169,7 @@ class documents_done_wizard(osv.osv):
         Check if all request for quotations and all purchase orders
         generated from the tender is closed or canceled
         '''
-        po_ids = self.pool.get('purchase.order').search(cr, uid, [('state', 'not in', ['cancel', 'done']), '|', ('tender_id', '=', order.id), ('origin_tender_id', '=', order.id)], context=context)
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('state', 'not in', ['cancel', 'done']), ('tender_id', '=', order.id)], context=context)
         if context.get('count', False):
             return po_ids or False
         else:
@@ -329,7 +329,13 @@ class documents_done_wizard(osv.osv):
         for doc in self.browse(cr, uid, ids, context=context):
             if doc.problem:
                 raise osv.except_osv(_('Error'), _('This document has some other documents not done or cancelled which blocked the process !'))
-            wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'manually_done', cr)
+            elif doc.real_model == 'tender':
+                if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state == 'draft':
+                    wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'purchase_cancel', cr)
+                else:
+                    wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'manually_done', cr)
+            elif self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
+                self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'documents.done.wizard',
@@ -438,9 +444,23 @@ documents_done_wizard()
 class documents_done_problem(osv.osv_memory):
     _name = 'documents.done.problem'
 
+    def _get_errors(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        Returns True if at least one problem is found
+        '''
+        res = {}
+
+        for doc in self.browse(cr, uid, ids, context=context):
+            res[doc.id] = False
+            if doc.pb_lines:
+                res[doc.id] = True
+
+        return res
+
     _columns = {
         'wizard_id': fields.many2one('documents.done.wizard', string='Wizard'),
         'doc_name': fields.char(size=64, string='Document'),
+        'errors': fields.function(_get_errors, method=True, store=False, string='Errors', type='boolean', readonly=True),
         'pb_lines': fields.one2many('documents.done.problem.line', 'problem_id', string='Lines'),
     }
 
@@ -458,14 +478,27 @@ class documents_done_problem(osv.osv_memory):
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
                     elif invoice_state not in ('cancel', 'paid'):
                         raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
-                elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'paid'):
+                elif line.doc_model == 'tender':
                     wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
+                elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
+                    self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, context=context)
+
+            return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'documents.done.wizard',
                 'view_type': 'form',
                 'view_mode': 'tree',
                 'target': 'crush'}
+
+    def cancel_document(self, cr, uid, ids, context={}):
+        '''
+        Cancel the document
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], context=context)
+
+        return True
 
 documents_done_problem()
 

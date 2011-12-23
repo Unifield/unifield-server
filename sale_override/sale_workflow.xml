@@ -13,13 +13,6 @@
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">loan_done</field>
         </record>
-        <!-- Manually done activity -->
-        <record id="act_manual_done" model="workflow.activity">
-            <field name="wkf_id" ref="sale.wkf_sale" />
-            <field name="name">manually_done</field>
-            <field name="kind">function</field>
-            <field name="action">set_manually_done()</field>
-        </record>
         
         <record id="trans_sale_router_loan" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />
@@ -44,61 +37,6 @@
             <field name="act_from" ref="sale.act_wait_invoice"/>
             <field name="act_to" ref="sale.act_invoice_end"/>
             <field name="condition">(order_policy=='picking') or order_type!='regular' or (order_type=='regular' and partner_id.partner_type=='internal')</field>
-        </record>
-
-        <!-- Manually done trasitions -->
-        <record id="trans_draft_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_draft" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_loan_manual_done" model="workflow.transition">
-            <field name="act_from" ref="act_sale_loan" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_wait_ship_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_wait_ship" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_ship_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_ship" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_ship_except_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_ship_except" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_wait_invoice_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_wait_invoice" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_invoice_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_invoice" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        <record id="trans_invoice_except_manual_done" model="workflow.transition">
-            <field name="act_from" ref="sale.act_invoice_except" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-
-        <record id="trans_manual_done_ship_end" model="workflow.transition">
-            <field name="act_from" ref="act_manual_done" />
-            <field name="act_to" ref="sale.act_ship_end" />
-        </record>
-        <record id="trans_manual_done_invoice_end" model="workflow.transition">
-            <field name="act_from" ref="act_manual_done" />
-            <field name="act_to" ref="sale.act_invoice_end" />
-        </record>
-        <record id="trans_manual_done_loan_done" model="workflow.transition">
-            <field name="act_from" ref="act_manual_done" />
-            <field name="act_to" ref="act_sale_loan_done" />
         </record>
 
     </data>

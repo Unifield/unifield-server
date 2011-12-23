@@ -28,6 +28,8 @@ from mx.DateTime import *
 from tools.translate import _ 
 import logging
 
+from workflow.wkf_expr import _eval_expr
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -373,26 +375,32 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         move_ids = []
         proc_ids = []
+        res = True
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for order in self.browse(cr, uid, ids, context=context):
+            print order.name
             # Picking
             for picking in order.picking_ids:
                 wf_service.trg_validate(uid, 'stock.picking', picking.id, 'manually_done', cr)
 
             # PO (loan)
-            if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
-                wf_service.trg_validate(uid, 'purchase.order', order.loan_id.id, 'manually_done', cr)
+            if order.loan_id and order.loan_id.state not in ('cancel', 'done') and (not 'loan_id' in context or context.get('loan_id') != order.id):
+                context.update({'loan_id': order.loan_id.id})
+                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=context)
+                #wf_service.trg_delete(uid, 'purchase.order', order.loan_id.id, cr)
+                # Search the action_done of the purchase.order workflow
+                #wkf_id = self.pool.get('ir.model.date').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
+                #action = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context).action
+                #_eval_expr(cr, [uid, 'purchase.order', order.loan_id.id], False, action)
 
             # Procurements
             for line in order.order_line:
+                print line.procurement_id
                 if line.procurement_id and line.procurement_id.state not in ('cancel', 'done'):
-                    # Tenders
-                    if line.procurement_id.tender_id:
-                        wf_service.trg_validate(uid, 'tender', line.procurement_id.tender_id.id, 'manually_done', cr)
-                    # PO and RfQ
-                    elif line.procurement_id.purchase_id:
-                        wf_service.trg_validate(uid, 'purchase.order', line.procurement_id.purchase_id.id, 'manually_done', cr)
-                    # Cancel the procurement order
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_cancel')
+                    self.pool.get('procurement.order').set_manually_done(cr, uid, line.procurement_id.id, context=context)
 
                 # Moves
                 move_ids.extend(move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ('cancel', 'done'))]))
@@ -407,9 +415,14 @@ class sale_order(osv.osv):
             if error_inv_ids:
                 raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
 
+            wf_service.trg_delete(uid, 'sale.order', order.id, cr)
+            wkf_id = self.pool.get('ir.model.date').get_object_reference(cr, uid, 'sale', 'act_done')[1]
+            action = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context).action
+            res = _eval_expr(cr, [uid, 'purchase.order', order.loan_id.id], False, action)
+
         move_obj.set_manually_done(cr, uid, move_ids, context=context)
 
-        return True
+        return res
 
 sale_order()
 

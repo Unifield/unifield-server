@@ -25,6 +25,8 @@ from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
 
+from workflow.wkf_expr import _eval_expr
+
 import decimal_precision as dp
 import netsvc
 import pooler
@@ -395,18 +397,31 @@ class tender(osv.osv):
         '''
         Set the tender and all related documents to done
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
         po_obj = self.pool.get('purchase.order')
         po_ids = []
-        wf_service = netsvc.LocalService("workflow")
+        nb_up_lines = 0
         for tender in self.browse(cr, uid, ids, context=context):
             for rfq in tender.rfq_ids:
-                if rfq.state not in ('done', 'cancel'):
-                    po_ids.append(rfq)
+                if nb_up_lines < len(tender.tender_line_ids):
+                    # Update tender lines
+                    for line in tender.tender_line_ids:
+                        if not line.purchase_order_line_id:
+                            for rfq_line in rfq.order_line:
+                                if line.product_id.id == rfq_line.product_id.id:
+                                    nb_up_line += 1
+                                    self.pool.get('tender.line').write(cr, uid, {'purchase_order_line_id': rfq_line.id})
+                
+                if rfq.state not in ('rfq_updated', 'cancel'):
+                    wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                    wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
         # All POs generated from the Rfq
         po_ids.extend(po_obj.search(cr, uid, [('origin_tender_id', 'in', ids)], context=context))
-        for po_id in po_ids:
-            wf_service.trg_validate(uid, 'purchase.order', po_id, 'manually_done', cr)
+        self.pool.get('purchase.order').set_manually_done(cr, uid, po_ids, context=context)
 
         return True
 
@@ -646,6 +661,32 @@ class procurement_order(osv.osv):
         values['date_planned'] = procurement.date_planned 
         
         return values
+
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the state of the procurement order to done
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        res = True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for proc in self.browse(cr, uid, ids, context=context):
+            if proc.state not in ('cancel', 'done'):
+                # Tenders
+                if proc.tender_id:
+                    wf_service.trg_validate(uid, 'tender', proc.tender_id.id, 'manually_done', cr)
+                # PO and RfQ
+                elif proc.purchase_id:
+                    self.pool.get('purchase.order').set_manually_done(cr, uid, proc.purchase.id.id, context=context)
+                # Cancel the procurement order
+                wf_service.trg_delete(uid, 'procurement.order', proc.id, cr)
+                # Search the action_done of the purchase.order workflow
+                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement', 'act_done')[1]
+                action = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context).action
+                res = _eval_expr(cr, [uid, 'procurement.order', proc.id], False, action)
+
+        return res
     
 procurement_order()
 
