@@ -19,9 +19,6 @@
 #
 ##############################################################################
 
-import msf_budget
-import msf_budget_line
-import wizard
-import report
+import report_budget_criteria
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

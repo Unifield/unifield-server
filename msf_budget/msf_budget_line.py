@@ -20,6 +20,8 @@
 ##############################################################################
 
 from osv import fields, osv
+import datetime
+from dateutil.relativedelta import relativedelta
 
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
@@ -36,28 +38,42 @@ class msf_budget_line(osv.osv):
             budget_amount = 0.0
             actual_amount = 0.0
             if budget_line.line_type == 'normal': 
-                month_stop = 0
                 actual_domain = []
                 # "Global" domain: cost center, account, date must be after fiscal year's start
                 actual_domain.append(('general_account_id', '=', budget_line.account_id.id))
                 actual_domain.append(('account_id', '=', budget_line.budget_id.cost_center_id.id))
-                actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
-                # 1. period_id
-                if 'period_id' in context:
-                    period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
-                    month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
-                    actual_domain.append(('date', '<=', period.date_stop))
+                # 1. for_month (calculate amounts for one month only)
+                if 'for_month' in context and context['for_month'] > 0:
+                    # retrieve year from fiscal year
+                    fiscal_year = datetime.datetime.strptime(budget_line.budget_id.fiscalyear_id.date_start, '%Y-%m-%d').year
+                    # Get month dates
+                    start_date = datetime.date(fiscal_year, context['for_month'], 1)
+                    end_date = start_date + relativedelta(months=1, days=-1)
+                    actual_domain.append(('date', '>=', start_date.strftime('%Y-%m-%d')))
+                    actual_domain.append(('date', '<=', end_date.strftime('%Y-%m-%d')))
+                    # Retrieve budget amount
+                    if budget_line.budget_values:
+                        budget_value_list = eval(budget_line.budget_values)
+                        budget_amount = budget_value_list[context['for_month'] - 1]
+                # 2. period_id
                 else:
-                    month_stop = 12
-                    actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
-                # if set in context, budget values are added until the period's month
-                # otherwise, all are added (month_stop = 12)
-                if budget_line.budget_values:
-                    budget_value_list = eval(budget_line.budget_values)
-                    if len(budget_value_list) == 12: 
+                    month_stop = 0
+                    if 'period_id' in context:
+                        period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
+                        month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
+                        actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
+                        actual_domain.append(('date', '<=', period.date_stop))
+                    else:
+                        month_stop = 12
+                        actual_domain.append(('date', '>=', budget_line.budget_id.fiscalyear_id.date_start))
+                        actual_domain.append(('date', '<=', budget_line.budget_id.fiscalyear_id.date_stop))
+                    # if set in context, budget values are added until the period's month
+                    # otherwise, all are added (month_stop = 12)
+                    if budget_line.budget_values:
+                        budget_value_list = eval(budget_line.budget_values)
                         for i in range(month_stop):
                             budget_amount += budget_value_list[i]
-                # 2. commitments
+                # 3. commitments
                 # if commitments are set to False in context, the ENG analytic journal is removed
                 # from the domain
                 if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
@@ -66,7 +82,7 @@ class msf_budget_line(osv.osv):
                 # Analytic domain is now done; lines are retrieved and added
                 analytic_line_obj = self.pool.get('account.analytic.line')
                 analytic_lines = analytic_line_obj.search(cr, uid, actual_domain ,context=context)
-                # 3. currency_table_id
+                # 4. currency_table_id
                 currency_table = None
                 if 'currency_table_id' in context:
                     currency_table = context['currency_table_id']

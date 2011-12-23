@@ -30,8 +30,10 @@
     'init_xml': [],
     'update_xml': [
         'security/ir.model.access.csv',
+        'msf_budget_report.xml',
         'msf_budget_view.xml',
         'msf_budget_workflow.xml',
+        'wizard/wizard_budget_criteria_export_view.xml'
     ],
     'test': [
     ],

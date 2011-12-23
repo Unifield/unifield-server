@@ -98,6 +98,26 @@
             id="menu_act_crossovered_budget_view"
             action="act_crossovered_budget_view" sequence="1" />
 
+        <record id="wizard_budget_criteria_export_view" model="ir.ui.view">
+            <field name="name">Budget vs. Actuals Export</field>
+            <field name="model">wizard.budget.criteria.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget vs. Actuals Export">
+                    <field name="currency_table_id"/>
+                    <field name="period_id"/>
+                    <field name="commitment"/>
+                    <field name="breakdown"/>
+                    <field name="granularity"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
         <record id="wizard_budget_import_view" model="ir.ui.view">
             <field name="name">Budget Import</field>
             <field name="model">wizard.budget.import</field>
