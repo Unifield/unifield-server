@@ -31,13 +31,14 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 'line_number': fields.integer(string='Line'),
                 }
     _defaults = {'force_complete': False,}
+    _order = 'line_number asc'
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         remove force_complete if not incoming
         
         temporary hack
-        because problem: attrs does not work : <field name="force_complete" attrs="{'readonly': [('type_check', '!=', 'in')]}" />
+        because problem: attrs does not work : <field name="force_complete" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
         '''
         res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         picking_obj = self.pool.get('stock.picking')

@@ -92,8 +92,10 @@ class split_memory_move(osv.osv_memory):
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
             # create new memory move - copy for memory is not implemented
-            default_val = {'product_id': memory_move.product_id.id,
+            default_val = {'line_number': memory_move.line_number,
+                           'product_id': memory_move.product_id.id,
                            'quantity': new_qty,
+                           'force_complete': memory_move.force_complete,
                            'product_uom': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
                            'move_id': memory_move.move_id.id,
@@ -101,7 +103,7 @@ class split_memory_move(osv.osv_memory):
                            'cost': memory_move.cost,
                            'currency': memory_move.currency.id,
                            'asset_id': memory_move.asset_id.id,
-            }
+                           }
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
         
         # no data for type 'back'
