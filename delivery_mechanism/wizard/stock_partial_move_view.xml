@@ -16,6 +16,7 @@
 				
 					<field name="quantity" position="after">
 						<field name="force_complete"/>
+						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
 					</field>
 				
 				</data>
@@ -36,6 +37,7 @@
 				
 					<field name="quantity" position="after">
 						<field name="force_complete"/>
+						<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
 					</field>
 				
 				</data>

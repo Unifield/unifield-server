@@ -37,6 +37,7 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _columns = {'line_number': fields.integer(string='Line', required=True),
                 }
+    _defaults = {'line_number': 0,}
     _order = 'line_number'
     
     def create(self, cr, uid, vals, context=None):
@@ -132,6 +133,22 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _columns = {'sequence_id': fields.many2one('ir.sequence', 'Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
                 }
+    
+    def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_process method from stock>stock.py>stock_picking
+        
+        - allow to modify the data for wizard display
+        '''
+        res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
+        wizard_obj = self.pool.get('wizard')
+        res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
+                                                                               wizard_ids=[res['res_id']],
+                                                                               wizard_name=res['name'],
+                                                                               model=res['res_model'],
+                                                                               step=res['default']))
+        return res
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
