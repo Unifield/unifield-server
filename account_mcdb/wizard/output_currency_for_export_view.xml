@@ -12,7 +12,7 @@
                     <separator colspan="4" string="Information" />
                     <label string="Please choose an output currency before export." colspan="4" align="0.0"/>
                     <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
-                    <field name="currency_id" colspan="2" domain="[('currency_table_id', '=', False), ('active', 'in', ['True', 'False'])]" attrs="{'required': [('export_format', '=', 'pdf')]}"/>
+                    <field name="currency_id" colspan="2" domain="[('currency_table_id', '=', False), ('active', 'in', ['True', 'False'])]"/>
                     <newline/>
                     <field name="export_format" colspan="2"/>
                     <group col="4" colspan="6">

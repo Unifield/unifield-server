@@ -66,7 +66,9 @@ class output_currency_for_export(osv.osv_memory):
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
         wiz = self.browse(cr, uid, ids, context=context)[0]
-        currency_id = wiz and wiz.currency_id and wiz.currency_id.id or False
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
+        currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
         choice = wiz and wiz.export_format or False
         if not choice:
             raise osv.except_osv(_('Error'), _('Please choose an export format!'))
