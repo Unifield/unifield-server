@@ -388,6 +388,25 @@ class tender(osv.osv):
                 
         return True
 
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the tender and all related documents to done state
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for tender in self.browse(cr, uid, ids, context=context):
+            rfq_ids = []
+            for rfq in tender.rfq_ids:
+                rfq_ids.append(rfq.id)
+
+            if rfq_ids:
+                self.pool.get('purchase.order').set_manually_done(cr, uid, rfq_ids, context=context)
+
+            netsvc.LocalService("workflow").trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+
+        return True
+
 tender()
 
 
