@@ -384,7 +384,8 @@ class purchase_order(osv.osv):
 
             # Done loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
-                pass
+                loan_context = context.copy()
+                self.pool.get('sale.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
 
             # Done invoices
             invoice_error_ids = []
