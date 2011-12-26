@@ -127,10 +127,10 @@
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
     # assert a backorder has been created
     back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
-    assert back_ids, 'backorder does not exist'
+    assert not back_ids, 'backorder does not exist'
     # check the moves in backorder
     a_qty = [3.0]
-    b_qty = [3.0]
+    b_qty = [1.0]
     for obj in self.browse(cr, uid, back_ids, context=context):
       for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):
@@ -138,23 +138,23 @@
         if move.product_id.id == ref("product_B"):
           b_qty.remove(move.product_qty)
     # all qty must be empty
-    assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
-    assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
-    # check the moves in IN
-    a_qty = [2.0, 5.0]
-    b_qty = [1.0, 1.0]
+    assert a_qty, 'Quantity for product A is not empty - %s'%a_qty
+    assert b_qty, 'Quantity for product B is not empty - %s'%b_qty
+    # check the moves in IN - products have changed !
+    c_qty = [2.0, 1.0]
+    d_qty = [5.0, 3.0]
     for obj in self.browse(cr, uid, in_ids, context=context):
       for move in obj.move_lines:
-        if move.product_id.id == ref("product_A"):
-          a_qty.remove(move.product_qty)
-        if move.product_id.id == ref("product_B"):
-          b_qty.remove(move.product_qty)
+        if move.product_id.id == ref("product_C"):
+          c_qty.remove(move.product_qty)
+        if move.product_id.id == ref("product_D"):
+          d_qty.remove(move.product_qty)
     # all qty must be empty
-    assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
-    assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
+    assert c_qty, 'Quantity for product C is not empty - %s'%c_qty
+    assert d_qty, 'Quantity for product D is not empty - %s'%d_qty
     # check the moves in OUT
-    a_qty = [5.0, 5.0] # the missing qty is put in the first move (2 + (10-7)) = 5 instead of 2 for the first one)
-    b_qty = [4.0, 1.0] # same behavior, the missing 3 is placed in the first move
+    a_qty = [3.0] # the missing qty is put in the first move (2 + (10-7)) = 5 instead of 2 for the first one)
+    b_qty = [1.0] # same behavior, the missing 3 is placed in the first move
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_C"))], context=context)
     # only one OUT for the sale order
     assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
