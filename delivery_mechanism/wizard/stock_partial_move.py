@@ -61,9 +61,10 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'
-        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
         wiz_obj = self.pool.get('wizard')
-        
         # data - no step needed for present split wizard
         name = _("Change Product of Selected Stock Move")
         model = 'change.product.memory.move'
@@ -72,11 +73,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
         data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
         product_id = data['product_id']
         uom_id = data['product_uom']
-        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context,
-                                                                                                                       memory_move_ids=ids,
-                                                                                                                       class_name=self._name,
-                                                                                                                       product_id=product_id,
-                                                                                                                       uom_id=uom_id))
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
+                                   type='create', context=dict(context,
+                                                               memory_move_ids=ids,
+                                                               class_name=self._name,
+                                                               product_id=product_id,
+                                                               uom_id=uom_id))
     
 stock_partial_move_memory_out()
 

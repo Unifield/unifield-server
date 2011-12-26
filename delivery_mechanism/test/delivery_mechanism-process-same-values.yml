@@ -1,34 +1,3 @@
-- 
-  Partner A
-- 
-  !record {model: res.partner, id: partner_A}:
-    name: A
-    supplier: true
-    customer: true
-- 
-  Address for Partner A
-- 
-  !record {model: res.partner.address, id: address_A}:
-    partner_id: partner_A
-    street: AddressA
--
-  Product A
-- 
-  !record {model: product.product, id: product_A}:
-    name: ProdA
-    seller_ids:
-      - sequence: 10
-        min_qty: 0.00
-        name: partner_A
--
-  Product B
--
-  !record {model: product.product, id: product_B}:
-    name: ProdB
-    seller_ids:
-      - sequence: 10
-        min_qty: 0.00
-        name: partner_A
 -
   Create a Sale Order
 -
@@ -49,7 +18,7 @@
 -
   Create a Sale Order Line
 -
-  !record {model: sale.order.line, id: sol_A}:
+  !record {model: sale.order.line, id: sol_A1}:
     product_uom: product.product_uom_unit
     product_id: product_A
     order_id: so_A
@@ -58,13 +27,14 @@
     date_planned: '2011-04-13'
     type: make_to_order
 -
-  !record {model: sale.order.line, id: sol_B}:
+  !record {model: sale.order.line, id: sol_A2}:
     product_uom: product.product_uom_unit
     product_id: product_B
     order_id: so_A
     price_unit: 1
     product_uom_qty: 5
     date_planned: '2011-04-13'
+    type: make_to_order
 -
   I validate the sale order
 -
@@ -84,7 +54,7 @@
     proc_obj = self.pool.get('procurement.order')
     sol_obj = self.pool.get('sale.order.line')
     # get the corresponding procurement order
-    data = sol_obj.read(cr, uid, [ref("sol_A")], ['procurement_id'], context=context)[0]
+    data = sol_obj.read(cr, uid, [ref("sol_A1")], ['procurement_id'], context=context)[0]
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
@@ -99,7 +69,7 @@
     proc_obj = self.pool.get('procurement.order')
     sol_obj = self.pool.get('sale.order.line')
     # get the corresponding procurement order
-    data = sol_obj.read(cr, uid, [ref("sol_A")], ['procurement_id'], context=context)[0]
+    data = sol_obj.read(cr, uid, [ref("sol_A1")], ['procurement_id'], context=context)[0]
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]

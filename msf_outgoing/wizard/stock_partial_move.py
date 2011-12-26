@@ -37,7 +37,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'
-        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wiz_obj = self.pool.get('wizard')
         
         # data - no step needed for present split wizard
@@ -271,11 +272,12 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
     def split(self, cr, uid, ids, context=None):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
-        
+        # objects
         wiz_obj = self.pool.get('wizard')
-
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for memory_move in self.browse(cr, uid, ids, context=context):
-                        
             # create new memory move - copy for memory is not implemented
             fields = self.fields_get(cr, uid, context=context)
             values = {}

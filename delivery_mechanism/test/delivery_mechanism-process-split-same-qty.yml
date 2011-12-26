@@ -79,70 +79,33 @@
     wiz_model = dic['res_model']
     wiz_id = dic['res_id']
     wiz_c = dic['context']
-    # reduce qty and then split moves
+    # split moves
     wiz_obj = self.pool.get(wiz_model)
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c):
       for out in obj.product_moves_out:
-        # change the product of original move
-        dic_change = out.change_product(context=wiz_c)
-        change_model = dic_change['res_model']
-        change_ids = [dic_change['res_id']]
-        change_c = dic_change['context']
-        change_obj = self.pool.get(change_model)
-        # product A/B -> C
-        change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_C"), 'change_reason': 'yml test'}, context=change_c)
-        change_obj.change_product(cr, uid, change_ids, context=change_c)
         # call the split wizard
         dic_split = out.split(context=wiz_c)
         split_model = dic_split['res_model']
         split_ids = [dic_split['res_id']]
         split_c = dic_split['context']
         split_obj = self.pool.get(split_model)
-        # depending on the qty, we put different quantity in the new move
-        if out.product_qty == 10:
-          # reduce qty
-          out.write({'quantity': 7}, context=wiz_c)
-          split_obj.write(cr, uid, split_ids, {'quantity': 5}, context=split_c)
-        if out.product_qty == 5:
-          # reduce qty
-          out.write({'quantity': 4}, context=wiz_c)
-          split_obj.write(cr, uid, split_ids, {'quantity': 3}, context=split_c)
+        # depending on the product, we put different quantity in the new move
+        if out.product_id.id == ref("product_A"):
+          split_obj.write(cr, uid, split_ids, {'quantity': 7}, context=split_c)
+        if out.product_id.id == ref("product_B"):
+          split_obj.write(cr, uid, split_ids, {'quantity': 1}, context=split_c)
         # we perform the split
         split_obj.split(cr, uid, split_ids, context=split_c)
-        
-      for out in obj.product_moves_out:
-        # change the product of splitted move
-        dic_change = out.change_product(context=wiz_c)
-        change_model = dic_change['res_model']
-        change_ids = [dic_change['res_id']]
-        change_c = dic_change['context']
-        change_obj = self.pool.get(change_model)
-        if out.product_qty == 5 or out.product_qty == 3:
-          # product C -> D for original A of qty 5 and original B of qty 3
-          change_obj.write(cr, uid, change_ids, {'new_product_id': ref("product_D"), 'change_reason': 'yml test'}, context=change_c)
-          change_obj.change_product(cr, uid, change_ids, context=change_c)
-
+      
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
-    # assert a backorder has been created
+    # assert no backorder has been created
     back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
-    assert back_ids, 'backorder does not exist'
-    # check the moves in backorder
-    a_qty = [3.0]
-    b_qty = [3.0]
-    for obj in self.browse(cr, uid, back_ids, context=context):
-      for move in obj.move_lines:
-        if move.product_id.id == ref("product_A"):
-          a_qty.remove(move.product_qty)
-        if move.product_id.id == ref("product_B"):
-          b_qty.remove(move.product_qty)
-    # all qty must be empty
-    assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
-    assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
+    assert not back_ids, 'backorder exists, and should not because split was performed with an equal overall quantity'
     # check the moves in IN
-    a_qty = [2.0, 5.0]
-    b_qty = [1.0, 1.0]
+    a_qty = [3.0, 7.0]
+    b_qty = [4.0, 1.0]
     for obj in self.browse(cr, uid, in_ids, context=context):
       for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):
@@ -153,8 +116,8 @@
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
     # check the moves in OUT
-    a_qty = [5.0, 5.0] # the missing qty is put in the first move (2 + (10-7)) = 5 instead of 2 for the first one)
-    b_qty = [4.0, 1.0] # same behavior, the missing 3 is placed in the first move
+    a_qty = [3.0, 7.0]
+    b_qty = [4.0, 1.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_C"))], context=context)
     # only one OUT for the sale order
     assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)

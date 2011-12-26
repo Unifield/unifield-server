@@ -45,6 +45,8 @@ class change_product_memory_move(osv.osv_memory):
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         wiz_obj = self.pool.get('wizard')
         # no data for type 'back'
@@ -54,10 +56,12 @@ class change_product_memory_move(osv.osv_memory):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
         assert context['class_name'], 'No class name defined'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # class corresponding to calling object
         class_name = context['class_name']
-        
+        # objects
         wiz_obj = self.pool.get('wizard')
-        
         # integrity check
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.change_reason or not obj.new_product_id:

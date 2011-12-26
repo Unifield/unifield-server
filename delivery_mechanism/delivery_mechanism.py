@@ -80,6 +80,8 @@ class stock_move(osv.osv):
         only one mirror object should exist for each object (to check)
         return objects which are not done
         
+        same sale_line_id/purchase_line_id - same product - same quantity
+        
         IN: move -> po line -> procurement -> so line -> move
         OUT: move -> so line -> procurement -> po line -> move
         
@@ -107,22 +109,19 @@ class stock_move(osv.osv):
                         so_line_ids = so_line_obj.search(cr, uid, [('procurement_id', '=', procurement_id)], context=context)
                         assert len(so_line_ids) == 1, 'number of so line is wrong - 1 - %s'%len(so_line_ids)
                         # find the corresponding OUT move
-                        move_ids = self.search(cr, uid, [('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                        move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                        # list of matching out moves
+                        integrity_check = []
                         for move in self.browse(cr, uid, move_ids, context=context):
                             # move from draft picking or standard picking
-                            # only one move should fit
-                            integrity_check = []
-                            if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id) or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                            if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
                                 integrity_check.append(move.id)
-                        
-                        # only one move should fit search criteria
-                        assert len(integrity_check) <= 1, 'number of OUT moves is wrong - <= 1 - %s'%len(integrity_check)
+                        # return the first one matching
                         if integrity_check:
                             res[obj.id] = integrity_check[0]
-                
-            if obj.type == 'out':
+            else:
                 # we are looking for corresponding IN from on_order purchase order
-                assert False, 'This method is not implemented for OUT moves'
+                assert False, 'This method is not implemented for OUT or Internal moves'
                 
         return res
     
@@ -216,8 +215,8 @@ class stock_picking(osv.osv):
         '''
         update the mirror move with difference quantity diff_qty
         
-        if diff_qty < 0, the qty is increased
-        if diff_qty > 0, the qty is decreased
+        if diff_qty < 0, the qty is decreased
+        if diff_qty > 0, the qty is increased
         '''
         # stock move object
         move_obj = self.pool.get('stock.move')
@@ -226,7 +225,7 @@ class stock_picking(osv.osv):
         if out_move_id:
             # decrease/increase depending on diff_qty sign the qty by diff_qty
             present_qty = move_obj.read(cr, uid, [out_move_id], ['product_qty'], context=context)[0]['product_qty']
-            new_qty = max(present_qty - diff_qty, 0)
+            new_qty = max(present_qty + diff_qty, 0)
             move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
                                                     'product_uos_qty': new_qty,}, context=context)
         # return updated move or False
@@ -273,68 +272,78 @@ class stock_picking(osv.osv):
                 # initial qty
                 initial_qty = move.product_qty
                 # update out flag
-                update_out = partial_datas[pick.id][move.id] > 1
+                update_out = len(partial_datas[pick.id][move.id]) > 1
+                # corresponding out move
+                out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], context=context)[move.id]
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
-                    # force complete flag
-                    if first:
-                        force_complete = partial['force_complete']
-                    assert force_complete == partial['force_complete'], 'force complete is not equal for all splitted lines - %s - %s'%(force_complete,partial['force_complete'])
                     # the quantity
                     count = count + partial['product_qty']
                     if first:
                         first = False
                         # update existing move
-                        move_obj.write(cr, uid, move_ids, {'product_id': partial['product_id'],
-                                                            'product_qty': partial['product_qty'],
-                                                            'prodlot_id': partial['prodlot_id'],
-                                                            'product_uom': partial['product_uom'],
-                                                            'asset_id': partial['asset_id'],
-                                                            'change_reason': partial['change_reason']}, context=context)
+                        values = {'product_id': partial['product_id'],
+                                  'product_qty': partial['product_qty'],
+                                  'prodlot_id': partial['prodlot_id'],
+                                  'product_uom': partial['product_uom'],
+                                  'asset_id': partial['asset_id'],
+                                  'change_reason': partial['change_reason'],
+                                  }
+                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        # if split happened, we update the corresponding OUT move
+                        if update_out:
+                            move_obj.write(cr, uid, [out_move_id], values, context=context)
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
-                        new_move = move_obj.copy(cr, uid, move.id, {'product_id': partial['product_id'],
-                                                                    'product_qty': partial['product_qty'],
-                                                                    'prodlot_id': partial['prodlot_id'],
-                                                                    'product_uom': partial['product_uom'],
-                                                                    'asset_id': partial['asset_id'],
-                                                                    'change_reason': partial['change_reason'],
-                                                                    'state': 'assigned',}, context=context)
+                        values = {'product_id': partial['product_id'],
+                                  'product_qty': partial['product_qty'],
+                                  'prodlot_id': partial['prodlot_id'],
+                                  'product_uom': partial['product_uom'],
+                                  'asset_id': partial['asset_id'],
+                                  'change_reason': partial['change_reason'],
+                                  'state': 'assigned',
+                                  }
+                        new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                        if update_out:
+                            new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
-                # the difference is written back to incoming shipment
+                # the difference is written back to incoming shipment - and possibilty to OUT if split happened
                 # is positive if some qty was removed during the process -> current incoming qty is modified
-                #    if force_complete flag is checked for the move, will not be part of a possible backorder - decrease corresponding OUT move
-                #    if not, create a backorder if does not exist, copy original move with difference qty in it # DOUBLE CHECK ORIGINAL FUNCTION BEHAVIOR !!!!!
+                #    create a backorder if does not exist, copy original move with difference qty in it # DOUBLE CHECK ORIGINAL FUNCTION BEHAVIOR !!!!!
+                #    if split happened, update the corresponding out move with diff_qty
                 if diff_qty > 0:
-                    if not force_complete:
-                        if not backorder_id:
-                            # create the backorder - with no lines
-                            backorder_id = self.copy(cr, uid, pick.id, {'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
-                                                                        'move_lines' : [],
-                                                                        'state':'draft',
-                                                                        })
-                        # create the corresponding move in the backorder - reset productionlot
-                        defaults = {'product_qty': diff_qty,
-                                    'product_uos_qty': diff_qty,
-                                    'picking_id': backorder_id,
-                                    'prodlot_id': False,
-                                    'state': 'assigned',
-                                    'move_dest_id': False,
-                                    'price_unit': move.price_unit,
-                                    'change_reason': False,
-                                    }
-                        move_obj.copy(cr, uid, move.id, defaults, context=context)
-                    else:
-                        # we update the corresponding OUT object if exists - if no out_move_id -> all are done already
+                    if not backorder_id:
+                        # create the backorder - with no lines
+                        backorder_id = self.copy(cr, uid, pick.id, {'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
+                                                                    'move_lines' : [],
+                                                                    'state':'draft',
+                                                                    })
+                    # create the corresponding move in the backorder - reset productionlot
+                    defaults = {'product_qty': diff_qty,
+                                'product_uos_qty': diff_qty,
+                                'picking_id': backorder_id,
+                                'prodlot_id': False,
+                                'state': 'assigned',
+                                'move_dest_id': False,
+                                'price_unit': move.price_unit,
+                                'change_reason': False,
+                                }
+                    move_obj.copy(cr, uid, move.id, defaults, context=context)
+                    # if split happened
+                    if update_out:
+                        # update out move - quantity is increased, to match the original qty
                         self._update_mirror_move(cr, uid, ids, move, diff_qty, context=context)
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
-                    # we update the corresponding OUT object if exists - if no out_move_id -> all are done already
-                    self._update_mirror_move(cr, uid, ids, move, diff_qty, context=context)
-            # we set the missing move to 0 - or delete ? see with Magali
+                    # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
+                    # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
+                    if not update_out:
+                        update_qty = -diff_qty
+                        self._update_mirror_move(cr, uid, ids, move, update_qty, context=context)
+            # what to do with missing moves - we set to 0 - or delete ? see with Magali
             move_obj.write(cr, uid, missing_move_ids, {'product_qty': 0}, context=context)
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
