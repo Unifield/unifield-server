@@ -29,6 +29,7 @@
         "tender_flow",
         "stock",
         "msf_outgoing",
+        "object_query",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "http://www.unifield.org",
