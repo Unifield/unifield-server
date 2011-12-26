@@ -211,17 +211,30 @@ class stock_picking(osv.osv):
             
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
-    def _update_mirror_move(self, cr, uid, ids, move, diff_qty, context=None):
+    def _update_mirror_move(self, cr, uid, ids, move, diff_qty, out_move=False, context=None):
         '''
         update the mirror move with difference quantity diff_qty
+        
+        if out_move is provided, it is used for copy if another cannot be found (meaning the one provided does
+        not fit anyhow)
         
         if diff_qty < 0, the qty is decreased
         if diff_qty > 0, the qty is increased
         '''
         # stock move object
         move_obj = self.pool.get('stock.move')
-        
+        # first look for a move - we search even if we get out_move because out_move
+        # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
         out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], context=context)[move.id]
+        if not out_move_id and out_move:
+            # copy existing out_move with move properties:
+            values = {'product_id': move.product_id.id,
+                      'product_qty': 0,
+                      'product_uom': move.product_uom.id,
+                      'state': 'assigned',
+                      }
+            out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
+        # update quantity
         if out_move_id:
             # decrease/increase depending on diff_qty sign the qty by diff_qty
             present_qty = move_obj.read(cr, uid, [out_move_id], ['product_qty'], context=context)[0]['product_qty']
@@ -263,6 +276,8 @@ class stock_picking(osv.osv):
             # these moves will be set to 0 - not present in the wizard
             missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
+                # keep data for back order creation
+                product_id_back = move.product_id.id keep all data to pass to update function and for backorder creation... cannot finish now :(
                 # qty selected
                 count = 0
                 # flag to update the first move - if split was performed during the validation, new stock moves are created
@@ -293,6 +308,11 @@ class stock_picking(osv.osv):
                         # if split happened, we update the corresponding OUT move
                         if update_out:
                             move_obj.write(cr, uid, [out_move_id], values, context=context)
+                        elif move.product_id.id != partial['product_id']:
+                            # no split but product changed, we have to update the corresponding out move
+                            move_obj.write(cr, uid, [out_move_id], values, context=context)
+                            # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
+                            update_out = True
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
@@ -305,8 +325,7 @@ class stock_picking(osv.osv):
                                   'state': 'assigned',
                                   }
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
-                        if update_out:
-                            new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
+                        new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
