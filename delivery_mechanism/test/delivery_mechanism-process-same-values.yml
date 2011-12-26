@@ -65,7 +65,6 @@
     price_unit: 1
     product_uom_qty: 5
     date_planned: '2011-04-13'
-    type: make_to_order
 -
   I validate the sale order
 -
@@ -94,7 +93,7 @@
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
 -
-  Process the incoming shipment - reduce both qty - a back order is created
+  Process the incoming shipment
 -
   !python {model: stock.picking}: |
     proc_obj = self.pool.get('procurement.order')
@@ -107,25 +106,7 @@
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     dic = self.action_process(cr, uid, in_ids, context=context)
-    # reduce quantities - in out memory moves
-    wiz_obj = self.pool.get(dic['res_model'])
-    for obj in wiz_obj.browse(cr, uid, [dic['res_id']], context=context):
-      for out in obj.product_moves_out:
-        if out.product_id.id == ref("product_A"):
-          out.write({'quantity': 7})
-        if out.product_id.id == ref("product_B"):
-          out.write({'quantity': 1})
-      
-    wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
+    self.pool.get(dic['res_model']).do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
-    # assert the backorder
-    back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
-    data = self.read(cr, uid, back_ids, ['state'], context=context)[0]
-    # check quantities
-    for obj in self.browse(cr, uid, back_ids, context=context):
-      for move in obj.move_lines:
-        if move.product_id.id == ref("product_A"):
-          assert move.product_qty == 3, 'back order qty is wrong - 10-7=3 - %s'%move.product_qty
-        if move.product_id.id == ref("product_B"):
-          assert move.product_qty == 4, 'back order qty is wrong - 5-1=4 - %s'%move.product_qty
+    

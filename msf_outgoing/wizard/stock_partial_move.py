@@ -33,7 +33,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
     
     def split(self, cr, uid, ids, context=None):
         '''
-        open the split wizard, the user can select the qty to leave in the stock move
+        open the split wizard, the user can select the qty for the new move
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'

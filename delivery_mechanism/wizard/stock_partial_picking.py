@@ -32,8 +32,15 @@ class stock_partial_picking(osv.osv_memory):
         integrity for incoming shipment wizard
         
         - values cannot be negative
-        - 
+        - at least one partial data !
         '''
+        total_qty = 0
+        for move_dic in data.values():
+            for arrays in move_dic.values():
+                for partial_dic in arrays:
+                    total_qty += partial_dic['product_qty']
+        if not total_qty:
+            raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.'))
         return True
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
@@ -47,6 +54,8 @@ class stock_partial_picking(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # picking ids
         picking_ids = context['active_ids']
         # partial data from wizard
@@ -102,8 +111,12 @@ class stock_partial_picking(osv.osv_memory):
                                                                                'prodlot_id': prodlot_id,
                                                                                'asset_id': move.asset_id.id,
                                                                                'force_complete': move.force_complete,
+                                                                               'change_reason': move.change_reason,
                                                                                })
-                
+        # integrity check on wizard data
+        if not self.integrity_check_do_incoming_shipment(cr, uid, ids, partial_datas, context=context):
+            # inline integrity status not yet implemented - will trigger the wizard update
+            pass
         # call stock_picking method which returns action call
         return pick_obj.do_incoming_shipment(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     
@@ -117,7 +130,7 @@ class stock_partial_picking(osv.osv_memory):
         if picking_id:
             picking_id = picking_id[0]
             picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
-            if picking_type == 'in':
+            if picking_type == 'in' or True:
                 # replace call to do_partial by do_incoming_shipment
                 res['arch'] = res['arch'].replace('do_partial', 'do_incoming_shipment')
         return res

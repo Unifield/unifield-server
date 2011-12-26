@@ -36,6 +36,7 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     _columns = {'line_number': fields.integer(string='Line', required=True),
+                'change_reason': fields.char(string='Change Reason', size=1024),
                 }
     _defaults = {'line_number': 0,}
     _order = 'line_number'
@@ -86,6 +87,8 @@ class stock_move(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
             
         # objetcts
         so_line_obj = self.pool.get('sale.order.line')
@@ -131,7 +134,7 @@ class stock_picking(osv.osv):
     do_partial modification
     '''
     _inherit = 'stock.picking'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', 'Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
+    _columns = {'sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
                 }
     
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -143,6 +146,8 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
         res = wizard_obj.open_wizard(cr, uid, ids, type='update', context=dict(context,
@@ -237,6 +242,8 @@ class stock_picking(osv.osv):
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         # sequence object
         sequence_obj = self.pool.get('ir.sequence')
@@ -252,6 +259,10 @@ class stock_picking(osv.osv):
             backorder_id = None
             # treat moves
             move_ids = partial_datas[pick.id].keys()
+            # all moves
+            all_move_ids = [move.id for move in pick.move_lines]
+            # these moves will be set to 0 - not present in the wizard
+            missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # qty selected
                 count = 0
@@ -261,8 +272,8 @@ class stock_picking(osv.osv):
                 force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
-                # log message for this move
-                message = ''
+                # update out flag
+                update_out = partial_datas[pick.id][move.id] > 1
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
                     # force complete flag
@@ -274,11 +285,12 @@ class stock_picking(osv.osv):
                     if first:
                         first = False
                         # update existing move
-                        move_obj.write(cr, uid, [move.id], {'product_id': partial['product_id'],
+                        move_obj.write(cr, uid, move_ids, {'product_id': partial['product_id'],
                                                             'product_qty': partial['product_qty'],
                                                             'prodlot_id': partial['prodlot_id'],
                                                             'product_uom': partial['product_uom'],
-                                                            'asset_id': partial['asset_id']}, context=context)
+                                                            'asset_id': partial['asset_id'],
+                                                            'change_reason': partial['change_reason']}, context=context)
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
@@ -287,6 +299,7 @@ class stock_picking(osv.osv):
                                                                     'prodlot_id': partial['prodlot_id'],
                                                                     'product_uom': partial['product_uom'],
                                                                     'asset_id': partial['asset_id'],
+                                                                    'change_reason': partial['change_reason'],
                                                                     'state': 'assigned',}, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
@@ -311,6 +324,7 @@ class stock_picking(osv.osv):
                                     'state': 'assigned',
                                     'move_dest_id': False,
                                     'price_unit': move.price_unit,
+                                    'change_reason': False,
                                     }
                         move_obj.copy(cr, uid, move.id, defaults, context=context)
                     else:
@@ -320,7 +334,8 @@ class stock_picking(osv.osv):
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - if no out_move_id -> all are done already
                     self._update_mirror_move(cr, uid, ids, move, diff_qty, context=context)
-                        
+            # we set the missing move to 0 - or delete ? see with Magali
+            move_obj.write(cr, uid, missing_move_ids, {'product_qty': 0}, context=context)
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
@@ -388,6 +403,8 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order line creation
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         # give the purchase order line a link to corresponding procurement
         procurement = kwargs['procurement']
