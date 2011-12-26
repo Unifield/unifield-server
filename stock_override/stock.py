@@ -88,9 +88,13 @@ class stock_picking(osv.osv):
         Set the picking to done
         '''
         move_ids = []
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
-                if move.state not in ('cancel', 'done'):
+                if move.state not in ('cancel', 'done', 'manual_done'):
                     move_ids.append(move.id)
 
         #Set all stock moves to done

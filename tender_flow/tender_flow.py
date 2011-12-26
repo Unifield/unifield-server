@@ -396,6 +396,7 @@ class tender(osv.osv):
             ids = [ids]
 
         for tender in self.browse(cr, uid, ids, context=context):
+            print tender.state
             rfq_ids = []
             for rfq in tender.rfq_ids:
                 rfq_ids.append(rfq.id)

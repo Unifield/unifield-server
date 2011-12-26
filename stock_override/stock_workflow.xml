@@ -6,7 +6,7 @@
             <field name="wkf_id" ref="stock.wkf_picking"/>
             <field name="name">manually_done</field>
             <field name="kind">function</field>
-            <field name="action">set_manually_done</field>
+            <field name="action">set_manually_done()</field>
         </record>
 
         <record id="trans_draft_manual_done" model="workflow.transition">
