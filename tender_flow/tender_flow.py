@@ -345,7 +345,7 @@ class tender(osv.osv):
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['delivery'])['delivery']
-                po_values = {'origin': tender.sale_order_id.name + '/' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
