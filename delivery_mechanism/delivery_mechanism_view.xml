@@ -54,13 +54,14 @@
 						<field name="change_reason" colspan="4" />
 					</xpath>
 					
-					<xpath expr="/form/notebook/page/group/button[@name='button_cancel']" position="before">
-						<button name="cancel_and_update_out" states="assigned,confirmed,draft" string="Cancel" type="object" icon="gtk-cancel"/>
+					<xpath expr="/form/notebook/page/group/button[@name='button_cancel']" position="replace">
+						<button name="enter_reason" states="assigned,confirmed,draft" string="Cancel" type="object" icon="gtk-cancel" context="{'cancel_type': 'update_out'}" />
+						<button name="enter_reason" states="assigned,confirmed,draft" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" />
 					</xpath>
 					
-					<xpath expr="/form/notebook/page/group/button[@name='button_cancel']" position="attributes">
-						<attribute name="string">Cancel &amp; Resource</attribute>
-					</xpath>
+					<field name="backorder_id" position="after">
+						<field name="change_reason" />
+					</field>
 					
 				</data>
 			</field>

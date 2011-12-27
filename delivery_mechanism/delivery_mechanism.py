@@ -135,6 +135,7 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _columns = {'sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
+                'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     
     def _stock_picking_action_process_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -400,6 +401,21 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
 
         return {'type': 'ir.actions.act_window_close'}
+    
+    def enter_reason(self, cr, uid, ids, context=None):
+        '''
+        open reason wizard
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        # data
+        name = _("Enter a Reason for Incoming cancellation")
+        model = 'enter.reason'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
     
     def cancel_and_update_out(self, cr, uid, ids, context=None):
         '''

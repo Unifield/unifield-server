@@ -22,3 +22,4 @@
 import stock_partial_move
 import stock_partial_picking
 import change_product_memory_move
+import enter_reason

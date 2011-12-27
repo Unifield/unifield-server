@@ -44,6 +44,7 @@
                    'delivery_mechanism_view.xml',
                    'wizard/stock_partial_move_view.xml',
                    'wizard/change_product_memory_move_view.xml',
+                   'wizard/enter_reason_view.xml',
                    ],
     'demo_xml': [
     ],
