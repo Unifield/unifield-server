@@ -234,12 +234,6 @@
     d_qty = [1.0]
     for obj in self.browse(cr, uid, back_ids, context=context):
       for move in obj.move_lines:
-        print a_qty
-        print b_qty
-        print c_qty
-        print d_qty
-        print move.product_id.name
-        print move.product_qty
         if move.product_id.id == ref("product_A"):
           a_qty.remove(move.product_qty)
         if move.product_id.id == ref("product_B"):
@@ -249,15 +243,15 @@
         if move.product_id.id == ref("product_D"):
           d_qty.remove(move.product_qty)
     # all qty must be empty
-    assert a_qty, 'Quantity for product A is not empty - %s'%a_qty
-    assert b_qty, 'Quantity for product B is not empty - %s'%b_qty
-    assert c_qty, 'Quantity for product C is not empty - %s'%c_qty
-    assert d_qty, 'Quantity for product D is not empty - %s'%d_qty
+    assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
+    assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
+    assert not c_qty, 'Quantity for product C is not empty - %s'%c_qty
+    assert not d_qty, 'Quantity for product D is not empty - %s'%d_qty
     # check the moves in OUT
-    a_qty = [3.0]
-    b_qty = [1.0]
-    c_qty = [2.0, 1.0]
-    d_qty = [5.0, 3.0]
+    a_qty = [2.0]
+    b_qty = [8.0]
+    c_qty = [2.0, 1.0, 5.0]
+    d_qty = [5.0, 3.0, 1.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_E"))], context=context)
     # only one OUT for the sale order
     assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
@@ -277,10 +271,3 @@
     assert not c_qty, 'Quantity for product C is not empty - %s'%c_qty
     assert not d_qty, 'Quantity for product D is not empty - %s'%d_qty
     
-    
-#    print c_qty
-#    print d_qty
-#    print move.product_id.name
-#    print move.product_qty
-#    print 'OK'
-        
