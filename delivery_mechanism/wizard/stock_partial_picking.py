@@ -130,7 +130,7 @@ class stock_partial_picking(osv.osv_memory):
         if picking_id:
             picking_id = picking_id[0]
             picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
-            if picking_type == 'in' or True:
+            if picking_type == 'in':
                 # replace call to do_partial by do_incoming_shipment
                 res['arch'] = res['arch'].replace('do_partial', 'do_incoming_shipment')
         return res
