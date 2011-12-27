@@ -71,10 +71,6 @@
     mes_type: fixed
     name: product test
     name_template: product test
-    nomen_c_manda_0: TEST-1
-    nomen_c_manda_1: TEST-2
-    nomen_c_manda_2: TEST-3
-    nomen_c_manda_3: TEST-4
     nomen_manda_0: product_nomenclature_nomenclaturetest0
     nomen_manda_1: product_nomenclature_nomenclaturetest1
     nomen_manda_2: product_nomenclature_nomenclaturetest2

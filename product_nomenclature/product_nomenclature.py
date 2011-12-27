@@ -60,15 +60,18 @@ class product_nomenclature(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
+        if context is None:
+            context = {}
         reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
         res = []
         for record in reads:
             name = record['name']
-            if record['parent_id']:
+            if not context.get('nolevel') and record['parent_id']:
                 name = record['parent_id'][1]+' / '+name
             res.append((record['id'], name))
         return res
 
+    
     def _name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
@@ -226,7 +229,6 @@ class product_nomenclature(osv.osv):
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
-        'code': fields.char('Code', size=64, required=True),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature','Parent Nomenclature', select=True),
         # TODO try to display child_ids on screen. which result ?
@@ -262,6 +264,29 @@ class product_nomenclature(osv.osv):
     ]
     def child_get(self, cr, uid, ids):
         return [ids]
+    
+    def get_nomen(self, cr, uid, obj, id, field):
+        parent = {'nomen_manda_1': 'nomen_manda_0', 'nomen_manda_2': 'nomen_manda_1', 'nomen_manda_3': 'nomen_manda_2'}
+        level = {'nomen_manda_1': 1, 'nomen_manda_2': 2, 'nomen_manda_3': 3}
+        p_id = obj.read(cr, uid, id, [parent[field]])[parent[field]]
+        dom = [('level', '=',  level.get(field)), ('type', '=', 'mandatory'), ('parent_id', '=', p_id and p_id[0] or 0)]
+        return self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context={'nolevel':1})
+    
+    def get_sub_nomen(self, cr, uid, obj, id, field):
+        parent = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
+        level = {'nomen_sub_0': '0', 'nomen_sub_1': '1', 'nomen_sub_2': '2', 'nomen_sub_3': '3', 'nomen_sub_4': '4', 'nomen_sub_5': '5'}
+        read = parent + level.keys()
+        nom = obj.read(cr, uid, id, read)
+        parent_id = [False]
+        for p in parent:
+            if nom[p]:
+                parent_id.append(nom[p][0])
+        sub = []
+        for p in level.keys():
+            if p != field and nom[p]:
+                sub.append(nom[p][0])
+        dom = [('type', '=', 'optional'), ('parent_id', 'in', parent_id), ('sub_level', '=', level.get(field)),  ('id', 'not in', sub)]
+        return [('','')]+self._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context={'nolevel':1})
 
 product_nomenclature()
 
@@ -280,11 +305,7 @@ class product_template(osv.osv):
                 'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
                 'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
                 'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
-                # codes
-                'nomen_c_manda_0': fields.char('C1', size=32),
-                'nomen_c_manda_1': fields.char('C2', size=32),
-                'nomen_c_manda_2': fields.char('C3', size=32),
-                'nomen_c_manda_3': fields.char('C4', size=32),
+
                 # optional nomenclature levels
                 'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1', select=1),
                 'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2', select=1),
@@ -292,13 +313,7 @@ class product_template(osv.osv):
                 'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4', select=1),
                 'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5', select=1),
                 'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6', select=1),
-                # codes
-                'nomen_c_sub_0': fields.char('C5', size=128),
-                'nomen_c_sub_1': fields.char('C6', size=128),
-                'nomen_c_sub_2': fields.char('C7', size=128),
-                'nomen_c_sub_3': fields.char('C8', size=128),
-                'nomen_c_sub_4': fields.char('C9', size=128),
-                'nomen_c_sub_5': fields.char('C10', size=128),
+
                 # concatenation of nomenclature in a visible way
                 'nomenclature_description': fields.char('Nomenclature', size=1024),
     }
@@ -342,6 +357,12 @@ class product_product(osv.osv):
     
     _inherit = "product.product"
     _description = "Product"
+    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+    
+    def get_sub_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -361,7 +382,7 @@ class product_product(osv.osv):
         
         return super(product_product, self).write(cr, uid, ids, vals, context)
     
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None):
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
         the nomenclature selection search changes
         '''
@@ -401,36 +422,40 @@ class product_product(osv.osv):
         if position < 3:
             nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
-                for n in nomenObj.read(cr, uid, nomenids, ['code', 'name', 'number_of_products'], context=context):
+                for n in nomenObj.read(cr, uid, nomenids, ['name'] + (num and ['number_of_products'] or []), context=context):
                     # get the name and product number
                     id = n['id']
-                    code = n['code']
                     name = n['name']
-                    number = n['number_of_products']
-                    values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+                    if num:
+                        number = n['number_of_products']
+                        values[mandaName%(position+1)].append((id, name + ' (%s)'%number))
+                    else:
+                        values[mandaName%(position+1)].append((id, name))
         
         # find the list of optional nomenclature related to products filtered by mandatory nomenclatures
         optionalList = []
         if not selected:
-            optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='code', context=context))
+            optionalList.extend(nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', '=', False)], order='name', context=context))
         else:
-            pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
-            if pids:
-                for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
-                    optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
+            optionalList = nomenObj.search(cr, uid, [('type', '=', 'optional'), ('parent_id', 'in', [nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3,False])])
+#            pids = prodObj.search(cr, uid, [(mandaName%position, '=', selected)], context=context)
+#            if pids:
+#                for p in prodObj.read(cr, uid, pids, ['nomen_sub_%s'%x for x in range(_SUB_LEVELS)], context=context):
+#                    optionalList.extend([eval("p['nomen_sub_%s'][0]"%x, {'p':p}) for x in range(_SUB_LEVELS) if eval("p['nomen_sub_%s']"%x, {'p':p}) and eval("p['nomen_sub_%s'][0]"%x, {'p':p}) not in optionalList])
             
         # sort the optional nomenclature according to their id
         optionalList.sort()
         if optionalList:
-            for n in nomenObj.read(cr, uid, optionalList, ['code', 'name', 'number_of_products','sub_level'], context=context):
+            for n in nomenObj.read(cr, uid, optionalList, ['name', 'sub_level'] + (num and ['number_of_products'] or []), context=context):
                 # get the name and product number
                 id = n['id']
-                code = n['code']
                 name = n['name']
-                number = n['number_of_products']
                 sublevel = n['sub_level']
-                values[optName%(sublevel)].append((id, name + ' (%s)'%number))
-        
+                if num:
+                    number = n['number_of_products']
+                    values[optName%(sublevel)].append((id, name + ' (%s)'%number))
+                else:
+                    values[optName%(sublevel)].append((id, name))
         return result
     
     def _resetNomenclatureFields(self, values):
@@ -441,11 +466,9 @@ class product_product(osv.osv):
         '''
         for x in range(_LEVELS):
             values.update({'nomen_manda_%s'%x:False})
-            values.update({'nomen_c_manda_%s'%x:False})
             
         for x in range(_SUB_LEVELS):
             values.update({'nomen_sub_%s'%x:False})
-            values.update({'nomen_c_sub_%s'%x:False})
     
     def _generateValueDic(self, cr, uid, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, *optionalList):
         '''
@@ -487,7 +510,7 @@ class product_product(osv.osv):
         
         for x in levels[level+1:]:
             result['value'].update({'nomen_manda_%s'%x:False})
-            result['value'].update({'nomen_c_manda_%s'%x:False})
+
         # always update all sub levels
         for x in range(_SUB_LEVELS):
             # clear optional fields with level below 'level'
@@ -497,7 +520,6 @@ class product_product(osv.osv):
                 subNomenclatureLevel = subNomenclature.level
                 if subNomenclatureLevel > level:
                     result['value'].update({'nomen_sub_%s'%x:False})
-                    result['value'].update({'nomen_c_sub_%s'%x:False})
             
         return result
     
@@ -537,7 +559,6 @@ class product_product(osv.osv):
         if nomenclatureId:
             selectedNomenclature = self.pool.get('product.nomenclature').browse(cr, uid, nomenclatureId)
             newId = nomenclatureId
-            newCode = selectedNomenclature.code
             newType = selectedNomenclature.type
             newLevel = selectedNomenclature.level
             # converted to int, because string from selection
@@ -548,7 +569,6 @@ class product_product(osv.osv):
                                           'message': _("The selected nomenclature's type is '%s'. Must be '%s' (field's type)."%(newType,nomenclatureType)),
                                           })
                 newId = False
-                newCode = False
                 newType = nomenclatureType
                 
                 
@@ -559,7 +579,6 @@ class product_product(osv.osv):
                                           'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newLevel,fieldNumber)),
                                           })
                     newId = False
-                    newCode = False
                     
             elif newType == 'optional':
                 if fieldNumber != newSubLevel:
@@ -568,12 +587,10 @@ class product_product(osv.osv):
                                           'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newSubLevel+1,fieldNumber+1)),
                                           })
                     newId = False
-                    newCode = False
                     
         else:
             # the field has been cleared, we simply want to clear the code field as well
             newId = False
-            newCode = False
             newType = nomenclatureType
             
         
@@ -584,13 +601,11 @@ class product_product(osv.osv):
 
             # update selected level
             result['value'].update({'nomen_manda_%s'%fieldNumber:newId})
-            result['value'].update({'nomen_c_manda_%s'%fieldNumber:newCode})
             
         if newType == 'optional':
             
             # update selected level
             result['value'].update({'nomen_sub_%s'%fieldNumber:newId})
-            result['value'].update({'nomen_c_sub_%s'%fieldNumber:newCode})
             
         result = context['result']
         
@@ -612,75 +627,6 @@ class product_product(osv.osv):
                 nameToRemove = 'nomen_sub_%i'%fieldNumber
                 result['value'].pop(nameToRemove, False)
     
-        return result
-
-    def codeChange(self, cr, uid, id, fieldNumber, code, nomenclatureType,
-            nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context=None, *optionalList):
-        '''
-        the code changes
-        - select the corresponding nomenclature and update the field
-        - clear below fields
-        
-        if the selected code does not exist, nomenclature and code are set to False
-        
-        possible improvement:
-        - context management with context= in xml view. maybe some fields in context.
-          breakpoint in osv line 167 for test
-        
-        '''
-        assert context, 'No context, error on function call'
-        
-        result={}
-        # values to be updated
-        result.update({'value':{}, 'warning':{}})
-        context['result']=result
-        
-        if code:
-            # fetch nomenclatureIds of corresponding nomenclatures# mandatory : the parent_id must be equal to top level
-            domainList = [('code', '=', code.upper())]
-            if nomenclatureType == 'mandatory':
-                # mandatory : the parent_id must be equal to top level id and type must be 'mandatory'
-                domainList.append(('type', '=', 'mandatory'))
-                
-                if  fieldNumber != 0:
-                    domainList.append(('parent_id', '=', eval('nomen_manda_%i'%(fieldNumber-1))))
-                    
-            elif nomenclatureType == 'optional':
-                # optional : the parent_id must be in the mandatory fields and type must be 'optional'
-                domainList.append(('type', '=', 'optional'))
-                ### NOTE added False in order to have main optional levels available
-                domainList.append(('parent_id', 'in', [nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False]))
-                
-            nomenclatureIds = self.pool.get('product.nomenclature').search(cr, uid, domainList)
-            
-            # check on nomenclatureIds length
-            if len(nomenclatureIds) > 1:
-                # too much nomenclatures
-                newId = False
-                result['warning'].update({'title': _('Error!'),
-                                          'message': _("Received %s different nomenclatures : %s. Nomenclature codes must be unique."%(len(nomenclatureIds), nomenclatureIds)),
-                                          })
-            
-            elif not nomenclatureIds:
-                # no corresponding nomenclature
-                newId = False
-                result['warning'].update({'title': _('Error!'),
-                                          'message': _("No nomenclature found with selected code (%s)."%(code)),
-                                          })
-            
-            else:
-                # found one nomenclature
-                newId = nomenclatureIds[0]
-            
-        else:
-            # the field has been cleared, we simply want to clear the code field as well, no warning messages
-            newId = False
-        
-        # arguments unpacking for optionalList
-        self.nomenChange(cr, uid, id, fieldNumber, newId, nomenclatureType,
-                                nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
-        
-        result = context['result']
         return result
         
 product_product()
