@@ -66,7 +66,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = []
+            ids = [ids]
         # Prepare some values
         aml_obj = self.pool.get('account.move.line')
         # Add context in order to know we come from a correction wizard
