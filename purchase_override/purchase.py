@@ -326,8 +326,14 @@ class purchase_order(osv.osv):
             for order_line in order.order_line:
                 if not order_line.product_id:
                     continue
-                if order_line.product_id.product_tmpl_id.type in ('product', 'consu'):
+                if order_line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep',):
                     dest = order.location_id.id
+                    # service with reception are directed to Service Location
+                    if order_line.product_id.product_tmpl_id.type == 'service_recep':
+                        service_loc = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
+                        if service_loc:
+                            dest = service_loc[0]
+                            
                     move_values = {
                         'name': order.name + ': ' +(order_line.name or ''),
                         'product_id': order_line.product_id.id,

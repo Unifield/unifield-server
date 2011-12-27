@@ -113,8 +113,13 @@ class tender(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
+            # check some supplier have been selected
             if not tender.supplier_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one supplier!'))
+            # check some products have been selected
+            tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
+            if not tender_line_ids:
+                raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
                 # create a purchase order for each supplier
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['delivery'])['delivery']
