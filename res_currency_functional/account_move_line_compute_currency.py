@@ -190,7 +190,6 @@ class account_move_line_compute_currency(osv.osv):
         ret = {}
         for line in self.browse(cr, uid, ids):
             ret[line.id] = line.journal_id and line.journal_id.instance_id or False
-        print ret
         return ret
 
     def _get_journal_move_line(self, cr, uid, ids, context=None):
