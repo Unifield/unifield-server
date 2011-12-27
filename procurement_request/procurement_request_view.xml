@@ -52,7 +52,8 @@
                                     <field name="notes" />
                                     <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />
-                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True)]"/>
+				    <field name="my_company_id" invisible="1" />
+                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"/>
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>

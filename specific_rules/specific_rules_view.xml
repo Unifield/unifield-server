@@ -1,6 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data>
+	
+		<act_window
+            context="{'product_id': active_id, 'compute_child': False,}"
+            id="act_stock_product_location_open"
+            name="Stock by Location"
+            res_model="stock.location"
+            src_model="product.product"
+            groups="base.group_extended"/>
+	
+		<record id="view_location_tree2" model="ir.ui.view">
+            <field name="name">stock.location.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="2"/>
+            <field name="inherit_id" ref="stock.view_location_tree2" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+					<field name="stock_real" position="replace">
+						<field name="stock_real" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+						<field name="stock_real_specific" invisible="'specific_rules_tree_view' not in context" />
+					</field>
+					
+					<field name="stock_virtual" position="replace">
+						<field name="stock_virtual" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
+						<field name="stock_virtual_specific" invisible="'specific_rules_tree_view' not in context" />
+					</field>
+            	
+            	</data>
+            </field>
+        </record>
 
 		<record id="product_normal_form_view" model="ir.ui.view">
             <field name="name">product.normal.form</field>
@@ -61,16 +92,42 @@
             <field name="arch" type="xml">
             	<data>
 					
+					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
+            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            		</xpath>
+            		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  'search_default_real': True}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-	                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_dg" />
+						<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
 					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
+						<field name="expired_date" />
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
+	           			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
+					</xpath>
+					
+					<!-- MERGED FROM REASON_TYPES_MOVES "usage in" -->
+					<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
+						<field name="location_id" domain="[('usage','in',('internal', 'procurement', 'production'))]"
+								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+            		</xpath>
             	
             	</data>
             </field>
@@ -84,22 +141,72 @@
             <field name="arch" type="xml">
             	<data>
             	
+            		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
+            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            		</xpath>
+            		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+	                    			  'search_default_real': True}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-	                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_dg" />
+						<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
 					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
+						<field name="expired_date" />
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
+	           			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
+					</xpath>
+					
+					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
+					<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
+						<field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]"
+								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+            		</xpath>
             	
             	</data>
             </field>
 		</record>
-		
-		
+		<!--
+		<record id="view_location_search" model="ir.ui.view">
+            <field name="name">stock.location.search</field>
+            <field name="model">stock.location</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="name" position="after">
+            			<separator orientation="vertical"/>
+            			<filter icon="terp-check" name="real"
+                        	string="Real" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
+            		</field>
+            	
+            	</data>
+                    <filter icon="terp-go-home" name="in_location"
+                        string="Internal" domain="[('usage', '=', 'internal')]" help="Internal Locations" />
+                    <filter icon="terp-personal" name="customer"
+                        string="Customer" domain="[('usage', '=', 'customer')]" help="Customer Locations" />
+                    <filter icon="terp-personal" name="supplier"
+                        string="Supplier" domain="[('usage', '=', 'supplier')]" help="Supplier Locations" />
+                    <separator orientation="vertical"/>
+                    <field name="name"/>
+            </field>
+        </record>
+		-->
 		<record id="view_picking_in_form" model="ir.ui.view">
             <field name="name">stock.picking.in.form</field>
             <field name="model">stock.picking</field>
@@ -108,16 +215,41 @@
             <field name="arch" type="xml">
             	<data>
             	
+            		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
+            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            		</xpath>
+            		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
                         <field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-	                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_dg" />
+						<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
 					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
+						<field name="expired_date" />
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
+	           			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
+					</xpath>
+					
+					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
+					<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
+						<field name="location_id" domain="[('usage','&lt;&gt;','view'), ('quarantine_location', '=', False),]"
+								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False,}" />
+            		</xpath>
             	
             	</data>
             </field>
@@ -139,10 +271,28 @@
             		<field name="prefix" position="replace" />
             		
             		<field name="stock_available" position="after">
-            			<field name="stock_real" />
+            			<field name="stock_virtual" />
             		</field>
             	
             	</data>
+            </field>
+        </record>
+        
+        <record id="view_production_lot_expiry_date_tree" model="ir.ui.view">
+            <field name="name">stock.production.lot.expiry.date.tree</field>
+            <field name="model">stock.production.lot</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Expiry Dates">
+                    <field name="prefix" invisible="True" />
+                    <field name="type" invisible="True" />
+            		<field name="life_date" />
+            		<field name="name" />
+                    <field name="product_id"/>
+                    <field name="stock_available"/>
+                    <field name="stock_virtual" />
+                    <field name="date"/>
+                </tree>
             </field>
         </record>
         
@@ -155,8 +305,8 @@
             	<data>
             	
             		<filter name="available" position="replace">
-            			<filter icon="terp-check" name="available" string="Available" domain="[('stock_available', '&gt;', 0)]" help="Available Product Lots" />
-            			<filter icon="terp-check" name="real" string="Real" domain="[('stock_real', '&gt;', 0)]" help="Real Stock" />
+            			<filter icon="terp-check" name="real" string="Real" domain="[('stock_available', '&gt;', 0)]" help="Real Product Lots" />
+            			<filter icon="terp-check" name="virtual" string="Available" domain="[('stock_virtual', '&gt;', 0)]" help="Available Product Lots" />
             		</filter>
             		<field name="prefix" position="replace" />
             		<field name="ref" position="replace" />
@@ -178,7 +328,7 @@
             	<data>
             		
             		<field name="stock_available" position="after">
-            			<field name="stock_real" colspan="4" />
+            			<field name="stock_virtual" colspan="4" />
             		</field>
             		
             		
@@ -228,13 +378,17 @@
             	
 	                <field name="prodlot_id" position="replace">
 	                	<field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-	                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_dg" />
+	                  	<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
 	                </field>
             	
             	</data>
@@ -252,18 +406,102 @@
             	
 	                <field name="prodlot_id" position="replace">
 	                	<field name="prodlot_id" groups="base.group_extended"
-	                    	context="{'location_id':location_id, 'product_id':product_id}"
+	                    	context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 	                    	domain="[('product_id','=?',product_id), ('check_type','=', True),]"
 	                    	on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-	                    	attrs="{'readonly': [('hidden_prod_mandatory','=',False)],}" />
-	                    <field name="hidden_prod_mandatory" invisible="True" />
+	                    	attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False),],}" />
+	                    <field name="hidden_batch_management_mandatory" invisible="True" />
+	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_dg" />
+	                  	<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
 	                </field>
             	
             	</data>
             </field>
         </record>
+        
+        <record id="stock_move_tree" model="ir.ui.view">
+            <field name="name">Stock Moves</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="field_parent">move_history_ids</field>
+            <field name="inherit_id" ref="stock.stock_move_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<button name="action_done" position="after">
+            			<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
+            		</button>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="stock_move_tree2" model="ir.ui.view">
+            <field name="name">Stock Moves</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="field_parent">move_history_ids2</field>
+            <field name="inherit_id" ref="stock.stock_move_tree2" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<field name="state" position="after">
+            			<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
+            		</field>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="view_move_tree" model="ir.ui.view">
+            <field name="name">stock.move.tree</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field eval="6" name="priority"/>
+            <field name="inherit_id" ref="stock.view_move_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<button name="action_done" position="after">
+            			<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
+            		</button>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="view_move_tree_reception_picking" model="ir.ui.view">
+            <field name="name">stock.move.tree2</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="6" />
+            <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<button name="%(stock.action_partial_move_server)d" position="after">
+            			<field name="kc_check" />
+	          			<field name="ssl_check" />
+	          			<field name="dg_check" />
+	          			<field name="np_check" />
+            		</button>
+            	
+            	</data>
+           	</field>
+       	</record>
         
         <record id="stock_inventory_line_tree" model="ir.ui.view">
             <field name="name">stock.inventory.line.tree</field>
@@ -281,7 +519,7 @@
 	           			<field name="prod_lot_id"
 	                       	on_change="change_lot(prod_lot_id)"
 	                       	groups="base.group_extended"
-	                       	context="{'location_id':location_id, 'product_id':product_id}"
+	                       	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 	                       	domain="[('check_type','=', True), ('product_id', '=', product_id)]"
 	                       	attrs="{'required': [('hidden_batch_management_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)],}" />
 	                       <field name="expiry_date"
@@ -291,6 +529,10 @@
 	           			<field name="hidden_perishable_mandatory" invisible="True" />
 	           			<field name="hidden_batch_management_mandatory" invisible="True" />
 	           			<field name="type_check" invisible="True" />
+	           			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
 	           		</field>
             	</data>
             </field>
@@ -308,7 +550,7 @@
 	            		<field name="prod_lot_id"
 	                        	on_change="change_lot(prod_lot_id)"
 	                        	groups="base.group_extended"
-	                        	context="{'location_id':location_id, 'product_id':product_id}"
+	                        	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
 	                        	domain="[('check_type','=', True), ('product_id', '=', product_id)]"
 	                        	attrs="{'required': [('hidden_batch_management_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)],}" />
 	                    <field name="expiry_date"
@@ -318,6 +560,10 @@
 	           			<field name="hidden_perishable_mandatory" invisible="True" />
 	           			<field name="hidden_batch_management_mandatory" invisible="True" />
 	           			<field name="type_check" invisible="True" />
+	           			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
            			</field>
             	
             	</data>
@@ -332,11 +578,41 @@
             <field name="arch" type="xml">
                 <data>
                 
+                	<xpath expr="//tree[@string='Products']//field[@name='location_id']" position="replace">
+                		<field colspan="4" domain="[('usage','=','internal')]" name="location_id"
+                			on_change="on_change_location_id(location_id,product_id,prod_lot_id,product_uom,parent.date)"
+                			context="{'product_id': product_id, 'prodlot_id': prod_lot_id, 'specific_rules_tree_view': True, 'compute_child': False,}" />
+                	</xpath>
+                	
+	                <xpath expr="//tree[@string='Products']//field[@name='product_id']" position="replace">
+	                	<field context="location=location_id,uom=product_uom,to_date=parent.date" name="product_id" on_change="on_change_product_id_specific_rules(location_id,product_id,prod_lot_id,product_uom,parent.date)"  domain="[('type','not in',('service','service_recep'))]" />
+	                </xpath>
+                
                     <xpath expr="//tree[@string='Products']//field[@name='prod_lot_id']" position="replace">
                         <field name="prod_lot_id"
-                        	on_change="change_lot(prod_lot_id)"
+                        	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
                         	groups="base.group_extended"
-                        	context="{'location_id':location_id, 'product_id':product_id}"
+                        	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory, 'search_default_real': True,}"
+                        	domain="[('check_type','=', True), ('product_id', '=?', product_id),]"
+                        	attrs="{'required': [('hidden_batch_management_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)],}" />
+                        <field name="expiry_date"
+                        	on_change="change_expiry(expiry_date, product_id, type_check)"
+                        	attrs="{'required': [('hidden_perishable_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False),],}" />
+            			
+            			<field name="hidden_perishable_mandatory" invisible="True" />
+            			<field name="hidden_batch_management_mandatory" invisible="True" />
+            			<field name="type_check" invisible="True" />
+            			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
+                    </xpath>
+                    
+                    <xpath expr="//form[@string='Products ']//field[@name='prod_lot_id']" position="replace">
+                    	<field name="prod_lot_id"
+                        	on_change="change_lot(location_id,product_id,prod_lot_id,product_uom,parent.date)"
+                        	groups="base.group_extended"
+                        	context="{'location_id':location_id, 'product_id': product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,}"
                         	domain="[('check_type','=', True), ('product_id', '=', product_id),]"
                         	attrs="{'required': [('hidden_batch_management_mandatory', '=', True),], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)],}" />
                         <field name="expiry_date"
@@ -346,6 +622,11 @@
             			<field name="hidden_perishable_mandatory" invisible="True" />
             			<field name="hidden_batch_management_mandatory" invisible="True" />
             			<field name="type_check" invisible="True" />
+            			<field name="kc_check" />
+            			<field name="ssl_check" />
+            			<field name="dg_check" />
+            			<field name="np_check" />
+                    
                     </xpath>
                     
                 </data>

@@ -34,11 +34,14 @@
     ],
     'update_xml': [
         'consumption_data.xml',
+        'consumption_sequence.xml',
         'consumption_view.xml',
         'expiry_calculation_view.xml',
+        'history_consumption_view.xml',
         'wizard/wizard_import_fmc_view.xml',
         'wizard/wizard_import_rac_view.xml',
         'wizard/wizard_export_fmc_rac_view.xml',
+	'wizard/wizard_valid_lines_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

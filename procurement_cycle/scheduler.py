@@ -208,8 +208,8 @@ class procurement_order(osv.osv):
         review_obj = self.pool.get('monthly.review.consumption')
         review_line_obj = self.pool.get('monthly.review.consumption.line')
         
-        product = product_obj.browse(cr, uid, product_id)
-        location = location_obj.browse(cr, uid, location_id)
+        product = product_obj.browse(cr, uid, product_id, context=context)
+        location = location_obj.browse(cr, uid, location_id, context=context)
 
         
         # Get the delivery lead time
@@ -230,14 +230,9 @@ class procurement_order(osv.osv):
         monthly_consumption = 0.00
         
         if 'reviewed_consumption' in d_values and d_values.get('reviewed_consumption'):
-            review_ids = review_obj.search(cr, uid, [('cons_location_id', '=', location_id)], context=context)
-            review_line_ids = review_line_obj.search(cr, uid, [('mrc_id', 'in', review_ids), ('name', '=', product_id)], context=context)
-            for line in review_line_obj.browse(cr, uid, review_line_ids, context=context):
-                last_date = False
-                if not last_date or last_date < line.mrc_id.period_to:
-                    monthly_consumption = line.fmc
+            monthly_consumption = product.reviewed_consumption
         elif 'monthly_consumption' in d_values and d_values.get('monthly_consumption'):
-            monthly_consumption = product_obj.compute_amc(cr, uid, product.id, context=context)
+            monthly_consumption = product.product_amc
         else:
             monthly_consumption = d_values.get('manual_consumption', 0.00)
             
@@ -247,7 +242,9 @@ class procurement_order(osv.osv):
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
         
-        return (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
+        qty_to_order = (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
+        
+        return round(self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_to_order, product.uom_id.id), 2)
         
         
     def get_available(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
@@ -334,54 +331,6 @@ class procurement_order(osv.osv):
         return available_stock + quantity_on_order.get(product.id) - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
 
 #        return product.virtual_available - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
-     
-     
-    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, d_values={}, context={}):
-        '''
-        Compute the expiry quantities
-        
-        INFO : This method is not use on Sprint1 because the algorithm is
-        not determined
-        '''
-        product_obj = self.pool.get('product.product')
-        stock_obj = self.pool.get('stock.location')
-        batch_obj = self.pool.get('stock.production.lot')
-        move_obj = self.pool.get('stock.move')
-        
-        res = 0.00
-        
-        location_ids = stock_obj.search(cr, uid, [('location_id', 'child_of', location_id)])
-        available_stock = 0.00
-        
-        # Get all batches for this product
-        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id)], offset=0, limit=None, order='life_date')
-        if len(batch_ids) == 1:
-            # Search all moves with this batch number
-            for location in location_ids:
-                context.update({'location_id': location})
-                available_stock += batch_obj.browse(cr, uid, batch_ids, context=context)[0].stock_available
-            expiry_date = batch_obj.browse(cr, uid, batch_ids)[0].life_date or time.strftime('%Y-%m-%d')
-            nb_month = self.get_diff_date(expiry_date)
-            res = available_stock - (nb_month * monthly_consumption)
-        else:
-            # Get the stock available for the product
-            for location in location_ids:
-                context.update({'location_id': location})
-                for batch in batch_obj.browse(cr, uid, batch_ids, context=context):
-                    available_stock += batch.stock_available
-                    
-            last_nb_month = 0
-            sum_nb_month = 0
-            res = 0
-            for batch in batch_obj.browse(cr, uid, batch_ids):
-                nb_month = self.get_diff_date(batch.life_date)
-                if (nb_month - sum_nb_month) > 0:
-                    tmp_qty = (nb_month - sum_nb_month) * monthly_consumption 
-                    res += available_stock - (last_nb_month * monthly_consumption) - tmp_qty
-                else:
-                    break 
-            
-        return res
     
     def get_diff_date(self, date):
         '''

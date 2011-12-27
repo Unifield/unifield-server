@@ -240,7 +240,10 @@ class procurement_request_line(osv.osv):
         '''
         Adds the date_planned value
         '''
-        if not 'date_planned' in vals:
+        if context is None:
+            context = {}
+
+        if not 'date_planned' in vals and context.get('procurement_request'):
             if 'date_planned' in context:
                 vals.update({'date_planned': context.get('date_planned')})
             else:
@@ -253,11 +256,22 @@ class procurement_request_line(osv.osv):
         'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
+        'my_company_id': fields.many2one('res.company','Company',select=1),
+        'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
     }
     
+    def _get_planned_date(self, cr, uid, c={}):
+        if c is None:
+            c = {}
+        if 'procurement_request' in c:
+            return c.get('date_planned', False)
+
+        return super(procurement_request_line, self)._get_planned_date(cr, uid, c)
+
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
-        'date_planned': lambda self, cr, uid, c: c.get('date_planned', False),
+        'date_planned': _get_planned_date,
+        'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):

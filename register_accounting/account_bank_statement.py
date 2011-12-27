@@ -1081,6 +1081,33 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
 
+    def copy(self, cr, uid, id, default={}, context={}):
+        """
+        Create a copy of given line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        # Update vals
+        default.update({
+            'analytic_account_id': False,
+            'analytic_distribution_id': False,
+            'direct_invoice': False,
+            'first_move_line_id': False,
+            'from_cash_return': False,
+            'from_import_cheque_id': False,
+            'imported_invoice_line_ids': False,
+            'invoice_id': False,
+            'move_ids': False,
+            'reconciled': False,
+            'sequence': False,
+            'sequence_for_reference': False,
+            'state': 'draft',
+        })
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+
     def posting(self, cr, uid, ids, postype, context={}):
         """
         Write some statement line into some account move lines with a state that depends on postype.
@@ -1246,6 +1273,26 @@ class account_bank_statement_line(osv.osv):
                 'active_ids': ids,
             }
         }
+
+    def button_duplicate(self, cr, uid, ids, context={}):
+        """
+        Copy given lines and delete all links
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse lines
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.statement_id and line.statement_id.state != 'open':
+                raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
+
+            default_vals = ({
+                'name': '(copy) ' + line.name,
+            })
+            self.copy(cr, uid, line.id, default_vals, context=context)
+        return True
 
     def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
         """

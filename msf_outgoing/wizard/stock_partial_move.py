@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import time
+import decimal_precision as dp
 
 class stock_partial_move_memory_picking(osv.osv_memory):
     '''
@@ -55,7 +56,7 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     '''
     _name = "stock.move.memory.returnproducts"
     _inherit = "stock.move.memory.picking"
-    _columns = {'qty_to_return': fields.integer(string='Qty to return'),
+    _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
                 }
     
     _defaults = {

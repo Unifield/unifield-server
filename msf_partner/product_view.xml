@@ -9,6 +9,10 @@
             <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
                 <xpath expr="/form/field[@name='product_uom']" position="replace"/>
+                <xpath expr="/form/field[@name='name']" position="replace">
+                	<field name="company_id" invisible="1" />
+                	<field name="name" domain="[('supplier','=',True), ('id', '!=', company_id)]" />
+                </xpath>
                 <xpath expr="/form/field[@name='min_qty']" position="replace">
                     <field name="manufacturer_id"/>
                     <field name="product_uom"/>
