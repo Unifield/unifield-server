@@ -364,4 +364,36 @@ class sale_order(osv.osv):
 
 sale_order()
 
+
+class sale_order_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit = 'sale.order.line'
+
+    _columns = {
+        'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    }
+
+    def open_split_wizard(self, cr, uid, ids, context={}):
+        '''
+        Open the wizard to split the line
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            data = {'sale_line_id': line.id, 'original_qty': line.product_uom_qty, 'old_line_qty': line.product_uom_qty}
+            wiz_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'split.sale.order.line.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+sale_order_line()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

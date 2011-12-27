@@ -363,6 +363,41 @@ class purchase_order(osv.osv):
     
 purchase_order()
 
+
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+
+
+    _columns = {
+        'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
+    }
+
+    def open_split_wizard(self, cr, uid, ids, context={}):
+        '''
+        Open the wizard to split the line
+        '''
+        if not context:
+            context = {}
+ 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            data = {'purchase_line_id': line.id, 'original_qty': line.product_qty, 'old_line_qty': line.product_qty}
+            wiz_id = self.pool.get('split.purchase.order.line.wizard').create(cr, uid, data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'split.purchase.order.line.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+
+purchase_order_line()
+
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'

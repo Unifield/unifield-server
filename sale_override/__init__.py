@@ -9,3 +9,4 @@ ORDER_CATEGORY = [('medical', 'Medical'),
 
 import sale
 import report
+import wizard
