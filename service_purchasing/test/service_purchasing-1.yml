@@ -56,14 +56,14 @@
   Change the source location to Service location
 -
   !python {model: stock.move}: |
-    from osv.orm import except_orm
+    from osv import osv
     service_location = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
     assert service_location, 'No Service Location available'
     service_location = service_location[0]
     
     try:
       self.write(cr, uid, ref("stock_move_1"), {'location_id': service_location} ,context=context)
-    except except_orm as e:
+    except osv.except_osv as e:
       # ok the constraint has been raised
       pass
     else:

@@ -67,11 +67,11 @@
   Change the destination location to non Service location
 -
   !python {model: stock.move}: |
-    from osv.orm import except_orm
+    from osv import osv
     
     try:
       self.write(cr, uid, ref("stock_move_3"), {'location_dest_id': ref("stock.stock_location_stock"),}, context=context)
-    except except_orm as e:
+    except osv.except_osv, e:
       # ok the constraint has been raised
       #print e
       pass
