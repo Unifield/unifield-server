@@ -249,10 +249,17 @@ class stock_picking(osv.osv):
         # update quantity
         if out_move_id:
             # decrease/increase depending on diff_qty sign the qty by diff_qty
-            present_qty = move_obj.read(cr, uid, [out_move_id], ['product_qty'], context=context)[0]['product_qty']
+            data = move_obj.read(cr, uid, [out_move_id], ['product_qty', 'picking_id', 'name', 'product_uom'], context=context)[0]
+            picking_out_name = data['picking_id'][1]
+            stock_move_name = data['name']
+            uom_name = data['product_uom'][1]
+            present_qty = data['product_qty']
             new_qty = max(present_qty + diff_qty, 0)
             move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
                                                     'product_uos_qty': new_qty,}, context=context)
+            # log the modification
+            # log creation message
+            move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.'%(stock_move_name, picking_out_name, new_qty, uom_name)))
         # return updated move or False
         return out_move_id
     
@@ -412,11 +419,12 @@ class stock_picking(osv.osv):
                 diff_qty = -data_back['product_qty']
                 # update corresponding out move
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
-                if out_move_id:
-                    out_move = self.browse(cr, uid, out_move_id, context=context)
-                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
-                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
-                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
+#                if out_move_id:
+#                    out_move = self.browse(cr, uid, out_move_id, context=context)
+#                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
+#                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
+#                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
+#                        
                 # cancel the IN move - the IN picking workflow is triggered automatically if needed
                 move_obj.action_cancel(cr, uid, [move.id], context=context)
         
