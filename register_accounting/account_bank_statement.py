@@ -370,6 +370,54 @@ class account_bank_statement(osv.osv):
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
 
+    def button_open_advances(self, cr, uid, ids, context={}):
+        """
+        Open a list of open advances
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        domain = []
+        registers = self.browse(cr, uid, ids, context=context)
+        register = registers and registers[0] or False
+        if not register:
+            raise osv.except_osv(_('Error'), _('Please select a register first.'))
+        domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0)]
+        name = _('Open Advances')
+        if register.journal_id and register.journal_id.currency:
+            # prepare some values
+            register_operator = search_operator = operator = 'in'
+            name += ' - ' + register.journal_id.currency.name
+            # To find register line that have same currency, we have to find journals that have selected currency, then find all register that have
+            #+ one of these journals. Then we can find all register line that have one of registers.
+            # NB: this method is due to non-working request: """self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id.currency', '=', currency_id)])"""
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('currency', '=', register.journal_id.currency.id)], context=context)
+            if journal_ids and len(journal_ids) == 1:
+                register_operator = '='
+            register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', register_operator, journal_ids)])
+            if register_ids and len(register_ids) == 1:
+                search_operator = '='
+            search_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('statement_id', search_operator, register_ids)], context=context)
+            if search_ids and len(search_ids) == 1:
+                operator = '='
+            domain.append(('id', operator, search_ids))
+#        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', '')
+#        if view:
+#            view_id = view[1]
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': domain,
+            'context': context,
+            'target': 'current',
+        }
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
@@ -1370,7 +1418,6 @@ class account_bank_statement_line(osv.osv):
         return res
 
 account_bank_statement_line()
-
 
 class ir_values(osv.osv):
     _name = 'ir.values'
