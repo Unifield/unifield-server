@@ -37,8 +37,9 @@ class product_template(osv.osv):
     '''
     _inherit = "product.template"
     
-    _columns = {'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service'), ('service_recep', 'Service with Reception'),], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
-                }
+    _columns = {
+        'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable'),('service','Service'), ('service_recep', 'Service with Reception'),], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+    }
     
 product_template()
 
@@ -70,8 +71,9 @@ class stock_location(osv.osv):
     '''
     _inherit = 'stock.location'
     
-    _columns = {'service_location': fields.boolean(string='Service Location', readonly=True,),
-                }
+    _columns = {
+        'service_location': fields.boolean(string='Service Location', readonly=True,),
+    }
     
 stock_location()
 
@@ -103,7 +105,7 @@ class stock_move(osv.osv):
         
         return result
     
-    def _check_source_location_service(self, cr, uid, ids, context=None):
+    def _check_constaints_service(self, cr, uid, ids, context=None):
         """
         You cannot select Service Location as Source Location.
         """
@@ -111,47 +113,19 @@ class stock_move(osv.osv):
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.location_id.service_location:
-                return False
+                raise osv.except_osv(_('Error'), _('You cannot select Service Location as Source Location.'))
+            if obj.product_id.type in ('service_recep', 'service'):
+                if not obj.picking_id or obj.picking_id.type != 'in':
+                    raise osv.except_osv(_('Error'), _('Only Incoming Shipment can manipulate Service Products.'))
+                if not obj.location_dest_id.service_location:
+                    raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+            elif obj.location_dest_id.service_location:
+                raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
         return True
     
-    def _check_picking_type_for_service(self, cr, uid, ids, context=None):
-        """
-        Only Incoming Shipment can manipulate Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type in ('service_recep', 'service',) and (not obj.picking_id or obj.picking_id.type != 'in'):
-                return False
-        return True
-    
-    def _check_dest_location_for_service_product(self, cr, uid, ids, context=None):
-        """
-        Service Products must have Service Location as Destination Location.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type in ('service_recep', 'service',) and not obj.location_dest_id.service_location:
-                return False
-        return True
-    
-    def _check_product_for_service_location(self, cr, uid, ids, context=None):
-        """
-        Service Location cannot be used for non Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type not in ('service_recep', 'service',) and obj.location_dest_id.service_location:
-                return False
-        return True
-    
-    _constraints = [(_check_source_location_service, 'You cannot select Service Location as Source Location.', ['location_id']),
-                    (_check_picking_type_for_service, 'Only Incoming Shipment can manipulate Service Products.', []),
-                    (_check_dest_location_for_service_product, 'Service Products must have Service Location as Destination Location.', ['product_id', 'location_dest_id']),
-                    (_check_product_for_service_location, 'Service Location cannot be used for non Service Products.', ['product_id', 'location_dest_id']),
-                    ]
+    _constraints = [
+        (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),
+    ]
 
 stock_move()
 
@@ -188,8 +162,9 @@ class purchase_order(osv.osv):
                 
         return result
     
-    _constraints = [(_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
-                    ]
+    _constraints = [
+        (_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
+    ]
     
 purchase_order()
 
@@ -211,8 +186,9 @@ class purchase_order_line(osv.osv):
                 return False
         return True
     
-    _constraints = [(_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
-                    ]
+    _constraints = [
+        (_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
+    ]
     
 purchase_order_line()
 
@@ -272,13 +248,14 @@ class stock_picking(osv.osv):
         result = picking_obj.search(cr, uid, [('sale_id', 'in', ids)], context=context)
         return result
     
-    _columns = {'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
-                                                  store={'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id',], 10),
-                                                         'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['sale_id',], 10),
-                                                         'purchase.order': (_get_purchase_ids, ['categ',], 10),
-                                                         'sale.order': (_get_sale_ids, ['categ',], 10),
-                                                         },
-                                                  ),
-                }
+    _columns = {
+            'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
+                store= {
+                    'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
+                    'purchase.order': (_get_purchase_ids, ['categ',], 10),
+                    'sale.order': (_get_sale_ids, ['categ',], 10),
+                },
+            ),
+    }
 
 stock_picking()

@@ -437,7 +437,6 @@ class stock_move(osv.osv):
             context = {}
         if 'product_id' in vals:
             prod = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
-            prod.type
             vals.update({'subtype': prod.product_tmpl_id.subtype})
             
         result = super(stock_move, self).create(cr, uid, vals, context=context)
