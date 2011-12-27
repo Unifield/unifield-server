@@ -106,11 +106,23 @@ class wizard_compare_rfq(osv.osv_memory):
                 # check if a supplier has been selected for this product
                 if wiz_line.po_line_id:
                     # update the tender lines with corresponding product_id
+                    updated_lines = [] # use to store the on-the-fly lines
                     for tender in tender_obj.browse(cr, uid, [wiz.tender_id.id], context=context):
                         for tender_line in tender.tender_line_ids:
                             if tender_line.product_id.id == wiz_line.product_id.id:
                                 values = {'purchase_order_line_id': wiz_line.po_line_id.id,}
                                 tender_line.write(values, context=context)
+                                updated_lines.append(tender_line.id);
+                                
+                        # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
+                        # for proceeding to other actions (create PO, Done etc)
+                        if tender.internal_state == 'draft':
+                            flag = True
+                            for line in tender.tender_line_ids:
+                                if line.id not in updated_lines and not line.purchase_order_line_id:
+                                    flag = False
+                            if flag:
+                                cr.execute('update tender set internal_state=%s where id=%s', ('updated', tender.id))
 
             # display the corresponding tender                                
             return {'type': 'ir.actions.act_window',
