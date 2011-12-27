@@ -298,6 +298,28 @@ class product_template(osv.osv):
     _inherit = "product.template"
     _description = "Product Template"
 
+    def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
+        value = {}
+        for f in fields:
+            value[f] = False
+
+        ret = {}
+        for id in ids:
+            ret[id] = value
+        return ret
+    
+    def _search_nomen_s(self, cr, uid, obj, name, args, context={}):
+
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            el = arg[0].split('_')
+            el.pop()
+            narg=[('_'.join(el), arg[1], arg[2])]
+        
+        return narg
+
     ### EXACT COPY-PASTE TO order_nomenclature
     _columns = {
                 # mandatory nomenclature levels
@@ -313,6 +335,19 @@ class product_template(osv.osv):
                 'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4', select=1),
                 'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5', select=1),
                 'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6', select=1),
+                
+# for search view :(
+                'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+
+                'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
 
                 # concatenation of nomenclature in a visible way
                 'nomenclature_description': fields.char('Nomenclature', size=1024),
@@ -456,6 +491,11 @@ class product_product(osv.osv):
                     values[optName%(sublevel)].append((id, name + ' (%s)'%number))
                 else:
                     values[optName%(sublevel)].append((id, name))
+        if num:
+            newval = {}
+            for x in values:
+                newval['%s_s'%x] = values[x]
+            result['value'] = newval
         return result
     
     def _resetNomenclatureFields(self, values):
