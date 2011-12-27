@@ -30,6 +30,8 @@ import netsvc
 import pooler
 import time
 
+from mx import DateTime
+
 # warning messages
 SHORT_SHELF_LIFE_MESS = 'Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.'
 
@@ -532,15 +534,17 @@ class stock_move(osv.osv):
                 return False
         return True
             
-    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
-                # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
-                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
-                'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                }
+    _columns = {
+        'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
+        # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
+        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Production lot is used to put a serial number on the production", select=True),
+    }
     
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
@@ -861,10 +865,24 @@ class stock_production_lot(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
-        reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref'], context)
+        if context is None:
+            context = {}
+
+        reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref', 'life_date'], context)
         res = []
+# TODO replace by _get_format in uf-651
+        if context.get('with_expiry'):
+            user_obj = self.pool.get('res.users')
+            lang_obj = self.pool.get('res.lang')
+            user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+            lang_id = lang_obj.search(cr, uid, [('code','=',user_lang)])
+            date_format = lang_id and lang_obj.read(cr, uid, lang_id[0], ['date_format'], context=context)['date_format'] or '%m/%d/%Y'
+
         for record in reads:
-            name = record['name']
+            if context.get('with_expiry') and record['life_date']:
+                name = '%s - %s'%(record['name'], DateTime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format))
+            else:
+                name = record['name']
             res.append((record['id'], name))
         return res
     
@@ -1201,15 +1219,17 @@ class stock_inventory_line(osv.osv):
                     return False
         return True
     
-    _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
-                'expiry_date': fields.date(string='Expiry Date'),
-                'type_check': fields.char(string='Type Check', size=1024,),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                }
+    _columns = {
+        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
+        'expiry_date': fields.date(string='Expiry Date'),
+        'type_check': fields.char(string='Type Check', size=1024,),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+    }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
@@ -1291,7 +1311,16 @@ CREATE OR REPLACE view report_stock_inventory AS (
 );
         """)
     
-    _columns = {'expired_date': fields.date(string='Expiry Date'),
-                }
-    
+    _columns = {
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', readonly=True),
+        'expired_date': fields.date(string='Expiry Date',),
+    }
+   
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        if context is None:
+            context = {}
+        if fields is None:
+            fields = []
+        context['with_expiry'] = 1
+        return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 report_stock_inventory()

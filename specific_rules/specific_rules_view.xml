@@ -642,11 +642,15 @@
 	        	<data>
 	        	
 	        		<field name="prodlot_id" position="after">
-	        			<field name="expired_date" />
+    	        		<field name="expired_date" />
 	        		</field>
 	        	
-	        		<filter name="group_lot" position="after">
-	        			<filter name="group_expiry" string="Expiry Date" icon="terp-accessories-archiver" context="{'group_by':'expired_date'}"/>
+	        		<filter name="group_lot" position="replace">
+	        			<filter name="group_lot" string="Batch" icon="terp-accessories-archiver" context="{'group_by':'prodlot_id'}"/>
+	        		</filter>
+	        		
+	        		<filter name="group_lot" position="before">
+	        			<filter name="group_expiry" string="Expiry Month" icon="terp-accessories-archiver" context="{'group_by':'expired_date'}"/>
 	        		</filter>
 	        	
 	        	</data>
@@ -660,11 +664,14 @@
 	        <field name="inherit_id" ref="stock.view_stock_inventory_tree" />
 	        <field name="arch" type="xml">
 	        	<data>
-	        	
-	        		<field name="prodlot_id" position="after">
-	        			<field name="expired_date" invisible="1"/>
+	        		<field name="prodlot_id" position="replace">
+	        			<field name="prodlot_id" string="Batch" invisible="1" />
 	        		</field>
-	        	
+
+	        		<field name="prodlot_id" position="after">
+	        			<field name="expired_date" invisible="1" string="Expiry Month"/>
+	        		</field>
+	        		
 	        	</data>
 	       	</field>
        	</record>
