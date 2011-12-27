@@ -92,7 +92,7 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        # objetcts
+        # objects
         so_line_obj = self.pool.get('sale.order.line')
             
         res = {}
@@ -212,6 +212,17 @@ class stock_picking(osv.osv):
             
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
+    def create_data_back(self, cr, uid, move, context=None):
+        '''
+        build data_back dictionary
+        '''
+        res = {'id': move.id,
+               'product_id': move.product_id.id,
+               'product_uom': move.product_uom.id,
+               'product_qty': move.product_qty,
+               }
+        return res
+    
     def _update_mirror_move(self, cr, uid, ids, data_back, diff_qty, out_move=False, context=None):
         '''
         update the mirror move with difference quantity diff_qty
@@ -278,10 +289,7 @@ class stock_picking(osv.osv):
             missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
-                data_back = {'id': move.id,
-                             'product_id': move.product_id.id,
-                             'product_uom': move.product_uom.id,
-                             }
+                data_back = self.create_data_back(cr, uid, move, context=context)
                 # qty selected
                 count = 0
                 # flag to update the first move - if split was performed during the validation, new stock moves are created
@@ -385,6 +393,34 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
 
         return {'type': 'ir.actions.act_window_close'}
+    
+    def cancel_and_update_out(self, cr, uid, ids, context=None):
+        '''
+        update corresponding out picking if exists and cancel the picking
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            for move in obj.move_lines:
+                data_back = self.create_data_back(cr, uid, move, context=context)
+                diff_qty = -data_back['product_qty']
+                # update corresponding out move
+                out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
+                if out_move_id:
+                    out_move = self.browse(cr, uid, out_move_id, context=context)
+                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
+                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
+                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
+                # cancel the IN move - the IN picking workflow is triggered automatically if needed
+                move_obj.action_cancel(cr, uid, [move.id], context=context)
+        
+        return True
         
 stock_picking()
 
