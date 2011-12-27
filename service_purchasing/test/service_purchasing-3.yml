@@ -1,3 +1,11 @@
+-
+   Creating a service location
+-
+  !record {model: stock.location, id: location_service}:
+    name: Test Service
+    location_category: other
+    usage: view
+    service_location: True
 - 
   Creating a res.partner record
 - 
@@ -59,7 +67,7 @@
     name: test stock move
     product_id: product_service_recep_p1
     product_uom: product.product_uom_unit
-    location_dest_id: msf_profile.stock_location_service
+    location_dest_id: location_service
     location_id: stock.stock_location_stock
     picking_id: stock_picking_3
 

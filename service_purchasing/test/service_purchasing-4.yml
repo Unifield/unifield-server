@@ -1,3 +1,11 @@
+-
+   Creating a service location
+-
+  !record {model: stock.location, id: location_service}:
+    name: Test Service
+    location_category: other
+    usage: view
+    service_location: True
 - 
   Creating a res.partner record
 - 
