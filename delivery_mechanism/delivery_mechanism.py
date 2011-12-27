@@ -73,7 +73,7 @@ class stock_move(osv.osv):
         result = super(stock_move, self).create(cr, uid, vals, context=context)
         return result
     
-    def get_mirror_move(self, cr, uid, ids, context=None):
+    def get_mirror_move(self, cr, uid, ids, data_back, context=None):
         '''
         return a dictionary with IN for OUT and OUT for IN, if exists, False otherwise
         
@@ -109,7 +109,8 @@ class stock_move(osv.osv):
                         so_line_ids = so_line_obj.search(cr, uid, [('procurement_id', '=', procurement_id)], context=context)
                         assert len(so_line_ids) == 1, 'number of so line is wrong - 1 - %s'%len(so_line_ids)
                         # find the corresponding OUT move
-                        move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                        # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                        move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
                         # list of matching out moves
                         integrity_check = []
                         for move in self.browse(cr, uid, move_ids, context=context):
@@ -211,7 +212,7 @@ class stock_picking(osv.osv):
             
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
-    def _update_mirror_move(self, cr, uid, ids, move, diff_qty, out_move=False, context=None):
+    def _update_mirror_move(self, cr, uid, ids, data_back, diff_qty, out_move=False, context=None):
         '''
         update the mirror move with difference quantity diff_qty
         
@@ -225,12 +226,12 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
-        out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], context=context)[move.id]
+        out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
         if not out_move_id and out_move:
             # copy existing out_move with move properties:
-            values = {'product_id': move.product_id.id,
+            values = {'product_id': data_back['product_id'],
                       'product_qty': 0,
-                      'product_uom': move.product_uom.id,
+                      'product_uom': data_back['product_uom'],
                       'state': 'assigned',
                       }
             out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
@@ -277,7 +278,10 @@ class stock_picking(osv.osv):
             missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
-                product_id_back = move.product_id.id keep all data to pass to update function and for backorder creation... cannot finish now :(
+                data_back = {'id': move.id,
+                             'product_id': move.product_id.id,
+                             'product_uom': move.product_uom.id,
+                             }
                 # qty selected
                 count = 0
                 # flag to update the first move - if split was performed during the validation, new stock moves are created
@@ -289,7 +293,7 @@ class stock_picking(osv.osv):
                 # update out flag
                 update_out = len(partial_datas[pick.id][move.id]) > 1
                 # corresponding out move
-                out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], context=context)[move.id]
+                out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
                     # the quantity
@@ -341,7 +345,9 @@ class stock_picking(osv.osv):
                                                                     'state':'draft',
                                                                     })
                     # create the corresponding move in the backorder - reset productionlot
-                    defaults = {'product_qty': diff_qty,
+                    defaults = {'product_id': data_back['product_id'],
+                                'product_uom': data_back['product_uom'],
+                                'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
                                 'picking_id': backorder_id,
                                 'prodlot_id': False,
@@ -354,14 +360,14 @@ class stock_picking(osv.osv):
                     # if split happened
                     if update_out:
                         # update out move - quantity is increased, to match the original qty
-                        self._update_mirror_move(cr, uid, ids, move, diff_qty, context=context)
+                        self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=out_move_id, context=context)
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
                         update_qty = -diff_qty
-                        self._update_mirror_move(cr, uid, ids, move, update_qty, context=context)
+                        self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=context)
             # what to do with missing moves - we set to 0 - or delete ? see with Magali
             move_obj.write(cr, uid, missing_move_ids, {'product_qty': 0}, context=context)
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
