@@ -208,13 +208,7 @@
 				nomenclature.</field>
 		</record>
 		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
-			groups="base.group_extended" parent="base.menu_product" sequence="10" />
-		
-		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_purchases"
-			groups="base.group_extended" parent="purchase.menu_procurement_management_product" sequence="10" />
-			
-		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_warehouse"
-			groups="base.group_extended" parent="stock.menu_stock_product" sequence="10" />
+			groups="base.group_extended" parent="base.menu_product" sequence="4" />
 		
 		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
 			<field name="name">Products Nomenclature</field>

@@ -344,6 +344,13 @@
                 </search>
             </field>
         </record>
+
+        <menuitem id="menu_main_product" name="Products" sequence="1" 
+                  web_icon_hover="images/products.png"
+                  web_icon="images/products-hover.png" />
+        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" />
+        <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
+        <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9"/>
         
     </data>
 </openerp>

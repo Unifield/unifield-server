@@ -2,6 +2,7 @@
 <openerp>
     <data>
     
+        <menuitem name="Deliveries" id="menu_warehouse_deliveries" parent="stock.menu_stock_warehouse_mgmt" sequence="3"/>
     	<menuitem id="menu_report_config" name="Report Customization" parent="stock.menu_stock_configuration" sequence="1"/>
     
         # -------------------------------------------------------------
@@ -85,8 +86,7 @@
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
             <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
         </record>
-    	<!-- delete outgoing delivery menuitem -->
-    	<!-- <delete model="ir.ui.menu" id="stock.menu_action_picking_tree"/> -->
+        <menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" />
     	
     	<record id="view_warehouse" model="ir.ui.view">
             <field name="name">stock.warehouse</field>
@@ -132,7 +132,7 @@
         <menuitem action="action_pack_type_tree" id="menu_action_pack_type_tree"
             groups="base.group_extended"
             sequence="6"
-            parent="stock.menu_traceability"/>
+            parent="stock.menu_product_in_config_stock"/>
     	
     	<!-- Changed name to 'Picking Tickets' -->
 		<record id="view_picking_ticket_tree" model="ir.ui.view">
@@ -408,7 +408,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_picking_ticket"/>
         </record>
-        <menuitem action="action_picking_ticket" id="menu_action_picking_ticket" parent="stock.menu_stock_warehouse_mgmt" sequence="5"/>
+        <menuitem action="action_picking_ticket" id="menu_action_picking_ticket" parent="menu_warehouse_deliveries" sequence="4"/>
 
        	
         <!-- Changed name to 'PPL' -->
@@ -652,7 +652,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_ppl"/>
         </record>
-        <menuitem action="action_ppl" id="menu_action_ppl" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
+        <menuitem action="action_ppl" id="menu_action_ppl" parent="menu_warehouse_deliveries" sequence="5"/>
         
         <!-- Changed name to 'Packing' -->
 		<record id="view_packing_tree" model="ir.ui.view">
@@ -1098,7 +1098,7 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_shipment"/>
         </record>
-        <menuitem action="action_shipment" id="menu_action_shipment" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>
+        <menuitem action="action_shipment" id="menu_action_shipment" parent="menu_warehouse_deliveries" sequence="6"/>
         
         <!-- 
         <record id="action_create_shipment_wizard" model="ir.actions.act_window">

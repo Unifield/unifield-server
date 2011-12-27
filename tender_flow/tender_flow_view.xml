@@ -83,10 +83,11 @@
             <field name="arch" type="xml">
                 <tree string="Tender">
                     <field name="name" />
-                    <field name="sale_order_id" />
-                    <field name="rfq_name_list" />
-                    <field name="categ" />
                     <field name="priority" />
+                    <field name="categ" />
+                    <field name="creation_date" />
+                    <field name="requested_date" />
+                    <field name="sale_order_id" />
                     <field name="state" />
                 </tree>
             </field>
@@ -104,20 +105,45 @@
                             domain="[('state', '=', 'comparison'),]" />
                     <filter name="done" icon="gtk-apply" string="Done"
                             domain="[('state', '=', 'done'),]" />
-                    <filter name="cancel" icon="gtk-cancel" string="Cancel"
+                    <filter name="cancel" icon="gtk-cancel" string="Cancelled"
                             domain="[('state', '=', 'cancel'),]" />
 					<field name="name" />
-					<field name="sale_order_id" />
-					<field name="rfq_ids" />
-					<field name="state" />
+                    <field name="supplier_ids" string="Supplier" widget="many2one" />
+                    <field name="product_id" string="Product" widget="many2one" />
+					<field name="sale_order_id" string="Sale Order" />
+                    <field name="creator" />
+                    <field name="creation_date" />
 					
 					<newline />
-					<group expand="0" string="Group By..." colspan="11" col="11"
-						groups="base.group_extended">
-						<filter string="Sale Order" icon="terp-accessories-archiver" domain="[]"
-							context="{'group_by':'sale_order_id'}" />
-						<filter string="Tender State" icon="terp-rating-rated"
-							domain="[]" context="{'group_by':'state'}" />
+
+                    <group string="Priority" expand="0">
+                      <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                      <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                      <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                    </group>
+                    
+                    <newline />
+                
+                    <group string="Category" expand="0">
+                      <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                      <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                      <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>
+                    </group> 
+                    
+                    <newline />
+					
+                    <group expand="0" string="Group By..." colspan="11" col="11" 
+                           groups="base.group_extended">
+                        <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
+                        <separator orientation="vertical" />
+                        <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Sale Order" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'sale_order_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date'}"/>
+                        <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'requested_date'}" />
 					</group>
 				</search>
 			</field>
@@ -133,7 +159,7 @@
 		</record>
 
 		<menuitem icon="STOCK_INDENT" action="tender_action"
-			id="menu_tender" parent="purchase.menu_procurement_management" sequence="100" />
+			id="menu_tender" parent="purchase.menu_procurement_management" sequence="3" />
 			
         <record id="purchase_order_form" model="ir.ui.view">
             <field name="name">purchase.order.form</field>
@@ -179,9 +205,9 @@
             <field name="arch" type="xml">
                 <form string="Request for Quotation">
                     <group col="6" colspan="4">
-                        <field name="name"/>
+                        <field name="name" />
                         <field name="rfq_ok" invisible="1" />
-                        <field name="date_order"/>
+                        <field name="date_order" string="Creation date"/>
                         <field name="invoiced"/>
                         <newline/>
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
@@ -296,16 +322,19 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Purchase Order">
-                 <group col='10' colspan='4'>
-                    <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Purchase order which are in draft state"/>
+                  <group col='10' colspan='4'>
+                    <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
                     <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
-                    <filter icon="gtk-edit" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
+                    <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
                     <filter icon="gtk-yes" name="done" string="Done" domain="[('state','=','done')]" separator="1" />
+                    <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
                     <separator orientation="vertical"/>
                     <field name="name" select="1" string="Reference"/>
-                    <field name="partner_id" select="1"/>
-                    <field name="product_id" select="1"/>
+                    <field name="partner_id" select="1" string="Supplier" />
+                    <field name="product_id" select="1" />
+                    <field name="origin" />
                     <field name="create_uid" select="1"/>
+                    <field name="date_order" string="Creation date"/>
                     <newline />
                     <group string="Type" expand="0">
 	                        <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
@@ -317,38 +346,65 @@
 	                        <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
 	                    </group>
 	                    <newline />
+
 	                    <group string="Priority" expand="0">
                             <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
                             <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
                             <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
 	                    </group>
+
 	                    <newline />
+
 	                    <group string="Category" expand="0">
                             <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                             <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                             <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
                             <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                    </group>
+
                         <newline />
-                </group>
-                <newline/>
-                  <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
-                  <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
-                        <separator orientation="vertical"/>
-                        <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
-                        <separator orientation="vertical"/>
-                    <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                     <separator orientation="vertical"/>
-                    <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
-                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
-                     <separator orientation="vertical"/>
-                    <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
-                    <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'minimum_planned_date'}"/>
 
                 </group>
+
+                <newline/>
+
+                <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
+                  <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                  <separator orientation="vertical"/>
+                  <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                  <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'delivery_requested_date'}"/>
+                </group>
               </search>
+            </field>
+        </record>
+
+        <record id="view_rfq_tree" model="ir.ui.view">
+            <field name="name">view.rfq.tree</field>
+            <field name="model">purchase.order</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="300" />
+            <field name="arch" type="xml">
+                <tree string="Requests for Quotation">
+                    <field name="name" />
+                    <field name="order_type" />
+                    <field name="priority" />
+                    <field name="categ" />
+                    <field name="date_order" string="Creation date"/>
+                    <field name="partner_id" />
+                    <field name="delivery_requested_date" />
+                    <field name="origin" />
+                    <field name="amount_total" sum="Total amount" />
+                    <field name="state" />
+                </tree>
             </field>
         </record>
         
@@ -362,6 +418,13 @@
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="search_view_id" ref="view_rfq_filter"/>
             <field name="help">You can create a request for quotation when you want to buy products to a supplier but the purchase is not confirmed yet. Use also this menu to review requests for quotation created automatically based on your logistic rules (minimum stock, MTO, etc). You can convert the request for quotation into a purchase order once the order is confirmed. If you use the extended interface (from user's preferences), you can select the way to control your supplier invoices: based on the order, based on the receptions or manual encoding.</field>
+        </record>
+
+        <record id="purchase_rfq_tree_view_action" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="purchase.purchase_rfq" />
+            <field name="sequence">1</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_rfq_tree" />
         </record>
         
         <record id="purchase.purchase_form_action" model="ir.actions.act_window">

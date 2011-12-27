@@ -131,6 +131,7 @@
         <menuitem
              id="warehouse_consumption_menu"
              name="Consumption"
+             sequence="-20"
              parent="stock.next_id_61" />
              
         <menuitem

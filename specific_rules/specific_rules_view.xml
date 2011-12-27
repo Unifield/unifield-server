@@ -305,8 +305,8 @@
             	<data>
             	
             		<filter name="available" position="replace">
-            			<filter icon="terp-check" name="real" string="Real" domain="[('stock_available', '&gt;', 0)]" help="Real Product Lots" />
-            			<filter icon="terp-check" name="virtual" string="Available" domain="[('stock_virtual', '&gt;', 0)]" help="Available Product Lots" />
+            			<filter icon="terp-check" name="real" string="Real" domain="[('stock_available', '&gt;', 0)]" help="Real Stock" />
+            			<filter icon="terp-check" name="virtual" string="Available" domain="[('stock_virtual', '&gt;', 0)]" help="Available Product Batch numbers" />
             		</filter>
             		<field name="prefix" position="replace" />
             		<field name="ref" position="replace" />
