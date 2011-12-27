@@ -594,17 +594,21 @@ class product_product(osv.osv):
         # Get all lots for the product product_id
         lot_ids = lot_obj.search(cr, uid, [('product_id', '=', product_id), ('stock_available', '>', 0.00), ('id', 'in', lots)], \
                                 order='life_date', context=context)
+
+
         
         # Sum of months before expiry
         sum_ni = 0.00      
         expired_qty = 0.00
         last_date = now()
-        last_qty = 0.00
+        last_qty = False
         
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             life_date = strptime(lot.life_date, '%Y-%m-%d')
             rel_time = RelativeDateDiff(life_date, now())
             ni = round((rel_time.months*30 + rel_time.days)/30.0, 2)
+            if last_qty == False:
+                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
             if last_date > life_date:
                 expired_qty = lot.stock_available                
             elif ni - sum_ni > 0.00:
