@@ -36,7 +36,7 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
     _columns = {'line_number': fields.integer(string='Line', required=True),
-                'change_reason': fields.char(string='Change Reason', size=1024),
+                'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     _defaults = {'line_number': 0,}
     _order = 'line_number'
@@ -290,10 +290,10 @@ class stock_picking(osv.osv):
                 force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
-                # update out flag
-                update_out = len(partial_datas[pick.id][move.id]) > 1
                 # corresponding out move
                 out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                # update out flag
+                update_out = (len(partial_datas[pick.id][move.id]) > 1)
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
                     # the quantity
@@ -310,13 +310,14 @@ class stock_picking(osv.osv):
                                   }
                         move_obj.write(cr, uid, [move.id], values, context=context)
                         # if split happened, we update the corresponding OUT move
-                        if update_out:
-                            move_obj.write(cr, uid, [out_move_id], values, context=context)
-                        elif move.product_id.id != partial['product_id']:
-                            # no split but product changed, we have to update the corresponding out move
-                            move_obj.write(cr, uid, [out_move_id], values, context=context)
-                            # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
-                            update_out = True
+                        if out_move_id:
+                            if update_out:
+                                move_obj.write(cr, uid, [out_move_id], values, context=context)
+                            elif move.product_id.id != partial['product_id']:
+                                # no split but product changed, we have to update the corresponding out move
+                                move_obj.write(cr, uid, [out_move_id], values, context=context)
+                                # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
+                                update_out = True
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
@@ -329,7 +330,8 @@ class stock_picking(osv.osv):
                                   'state': 'assigned',
                                   }
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
-                        new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
+                        if out_move_id:
+                            new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
@@ -383,7 +385,7 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
 
         return {'type': 'ir.actions.act_window_close'}
-    
+        
 stock_picking()
 
 
