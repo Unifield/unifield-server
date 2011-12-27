@@ -61,7 +61,7 @@ class account_line_csv_export(osv.osv_memory):
         if not currency_id:
             head += ['Func. Debit', 'Func. Credit', 'Func. currency']
         else:
-            head += ['Output amount','Output currency']
+            head += ['Output debit', 'Output credit', 'Output currency']
         head += ['State', 'Reconcile']
         writer.writerow(head)
         # Then write lines
@@ -101,9 +101,14 @@ class account_line_csv_export(osv.osv_memory):
                 #functional_currency_id
                 csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
             else:
-                #output amount regarding booking currency
+                #output amount (debit/credit) regarding booking currency
                 amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-                csv_line.append(amount or 0.0)
+                if amount < 0.0:
+                    csv_line.append(0.0)
+                    csv_line.append(abs(amount) or 0.0)
+                else:
+                    csv_line.append(abs(amount) or 0.0)
+                    csv_line.append(0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
             #state
@@ -152,7 +157,7 @@ class account_line_csv_export(osv.osv_memory):
         # Prepare csv head
         head = ['Journal Code', 'Date', 'Instance', 'Description', 'Reference', 'Amount', 'Company currency', 'Amount currency', 'Currency']
         if currency_id:
-            head += ['Output amount','Output currency']
+            head += ['Output amount', 'Output currency']
         head += ['Analytic Account']
         writer.writerow(head)
         # Then write lines
