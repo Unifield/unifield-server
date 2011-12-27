@@ -55,8 +55,11 @@ class product_list(osv.osv):
         '''
         if not context:
             context = {}
+
+        name = self.browse(cr, uid, id, context=context).name + ' (copy)'
             
         return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'name': name,
                                                             'reviewer_id': False}, context=context)
     
     _columns = {
@@ -81,6 +84,10 @@ class product_list(osv.osv):
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
+    ]
 
     def change_product_line(self, cr, uid, ids, context={}):
         '''
