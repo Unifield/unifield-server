@@ -68,7 +68,7 @@
     from osv import osv
     
     try:
-      self.write(cr, uid, ref("stock_move_4"), {'location_dest_id': ref("msf_profile.stock_location_service"),}, context=context)
+      self.write(cr, uid, ref("stock_move_4"), {'location_dest_id': ref("location_service"),}, context=context)
     except osv.except_osv, e:
       # ok the constraint has been raised
       #print e
