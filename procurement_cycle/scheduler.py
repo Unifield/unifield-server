@@ -267,7 +267,7 @@ class procurement_order(osv.osv):
         
         product = product_obj.browse(cr, uid, product_id, context=context)
         location_name = location_obj.browse(cr, uid, location_id, context=context).name
-        
+
         ''' Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
         
             To do validate by Magali
@@ -326,7 +326,7 @@ class procurement_order(osv.osv):
         expiry_quantity = product_obj.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
         expiry_quantity = expiry_quantity and available_stock - expiry_quantity or 0.00
         #expiry_quantity = 0.00
-        
+
         # Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock
         return available_stock + quantity_on_order.get(product.id) - safety_stock - (safety_time * monthly_consumption) - expiry_quantity
 
