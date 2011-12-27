@@ -42,7 +42,7 @@
                     <xpath expr="/form/notebook/page[@string='Purchase Order']" position="after">
                         <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
                             <separator colspan="4" string="Purchase Order" />
-                            <field name="transport_order_id" />
+                            <field name="transport_order_id" domain="[('rfq_ok', '=', False)]" />
                             <newline />
                             <separator colspan="2" string="Delivery documents" />
                             <separator colspan="2" string="Shipment documents" />
