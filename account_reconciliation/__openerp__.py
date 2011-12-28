@@ -31,7 +31,6 @@
     #+ res_currency_functional for credit_currency and debit_currency fields (and to redefine some functions)
     #+ account_override module add 'is_addendum_line' attribute that permits to avoid corrections on this kind of line.
     "init_xml" : [
-        "data/account_journal.xml",
     ],
     "update_xml" : [
         "wizard/account_reconcile_view.xml",
