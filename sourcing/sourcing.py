@@ -118,7 +118,7 @@ class sourcing_line(osv.osv):
             # gather sale order line state
             result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
             # display confirm button - display if state == draft and not proc or state == progress and proc
-            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and not obj.procurement_request) or (obj.sale_order_state == 'progress' and obj.procurement_request)
+            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
         
         return result
     
@@ -176,7 +176,7 @@ class sourcing_line(osv.osv):
         if args[0][1] != '=' or not args[0][2]:
             raise osv.except_osv(_('Error !'), _('Filter not implemented'))
 
-        return ['|', '&', ('state', '=', 'draft'), ('procurement_request', '=', False), '&', ('sale_order_state', '=', 'progress'), ('procurement_request', '=', True)]
+        return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
 
     _columns = {
         # sequence number
@@ -380,7 +380,10 @@ class sourcing_line(osv.osv):
                     linesConfirmed = False
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
-                wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                if sl.sale_order_id.procurement_request:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
+                else:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
                 
         return result
     

@@ -210,6 +210,10 @@ class procurement_request(osv.osv):
         Confirmed the request
         '''
         self.write(cr, uid, ids, {'state': 'progress'}, context=context)
+
+        for request in self.browse(cr, uid, ids, context=context):
+            message = _("The internal request '%s' has been confirmed.") %(request.name,)
+            self.log(cr, uid, request.id, message)
         
         return True
     
