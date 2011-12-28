@@ -15,7 +15,7 @@
 					</field>
 					
 					<field name="product_id" position="after">
-						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" />
+						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
 					</field>
 					
 					<field name="product_id" position="attributes">
@@ -48,7 +48,7 @@
 					</field>
 					
 					<field name="product_id" position="after">
-						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" />
+						<button name="change_product" string="Change Product" colspan="1" type="object" icon="gtk-convert" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
 					</field>
 					
 					<field name="product_id" position="attributes">
