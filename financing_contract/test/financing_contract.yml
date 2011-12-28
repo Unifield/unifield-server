@@ -94,7 +94,7 @@
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
-    - analytic_id: funding_pool.analytic_account_msf_private_funds
+    - analytic_id: analytic_distribution.analytic_account_msf_private_funds
       cost_center_id: analytic_account_OC1
       amount: 2121.0
       currency_id: base.CHF
