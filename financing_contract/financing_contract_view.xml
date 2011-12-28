@@ -22,9 +22,10 @@
 			                        <field name="donor_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 			                        <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 		                        </group>
-                                <group colspan="4" col="6">
+                                <group colspan="4" col="8">
 			                        <field name="grant_amount" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="reporting_currency" colspan="2"  attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
                             </page>
                             <page string="Funding pools">

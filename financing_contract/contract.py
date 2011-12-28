@@ -248,7 +248,8 @@ class financing_contract_contract(osv.osv):
                                     ('open','Open'),
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
-        'report_line': fields.many2one('financing.contract.donor.reporting.line', 'Parent Report Line')
+        'report_line': fields.many2one('financing.contract.donor.reporting.line', 'Parent Report Line'),
+        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table')
     }
     
     _defaults = {
@@ -294,6 +295,27 @@ class financing_contract_contract(osv.osv):
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, format_id, context=context)
         return {'value': format_vals}
     
+    def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context={}):
+        values = {'reporting_currency': False}
+        if reporting_currency_id:
+            # it can be a currency from another table
+            reporting_currency = self.pool.get('res.currency').browse(cr, uid, reporting_currency_id, context=context)
+            # Search if the currency is in the table, and active
+            if reporting_currency.reference_currency_id:
+                currency_results = self.pool.get('res.currency').search(cr, uid, [('reference_currency_id', '=', reporting_currency.reference_currency_id.id),
+                                                                                  ('currency_table_id', '=', currency_table_id),
+                                                                                  ('active', '=', True)], context=context)
+            else:
+                currency_results = self.pool.get('res.currency').search(cr, uid, [('reference_currency_id', '=', reporting_currency_id),
+                                                                                  ('currency_table_id', '=', currency_table_id),
+                                                                                  ('active', '=', True)], context=context)
+            if len(currency_results) > 0:
+                # it's here, we keep the currency
+                values['reporting_currency'] = reporting_currency_id
+        # Restrain domain to selected table (or None if none selected
+        domains = {'reporting_currency': [('currency_table_id', '=', currency_table_id)]}
+        return {'value': values, 'domain': domains}
+    
     def create(self, cr, uid, vals, context=None):
         if not context:
             context={}
@@ -334,6 +356,7 @@ class financing_contract_contract(osv.osv):
         # update the context with reporting type (used for "get analytic_lines" action)
         context.update({'reporting_currency': contract_obj.reporting_currency.id,
                         'reporting_type': contract_obj.reporting_type,
+                        'currency_table_id': contract_obj.currency_table_id.id,
                         'active_id': ids[0],
                         'active_ids': ids})
         # retrieve the corresponding_view
