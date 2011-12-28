@@ -14,8 +14,8 @@
                                attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <separator string="Dates"/>
-                        <field name="eligibility_from_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                        <field name="eligibility_to_date" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_from_date" required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_to_date" required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                         <notebook colspan="4">
                             <page string="Contract information">
                                 <group colspan="4" col="6">
@@ -23,17 +23,28 @@
 			                        <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 		                        </group>
                                 <group colspan="4" col="8">
-			                        <field name="grant_amount" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="grant_amount" widget="integer_finance" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                     <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-			                        <field name="reporting_currency" colspan="2"  attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
                             </page>
                             <page string="Funding pools">
                                 <field colspan="4" name="funding_pool_ids" nolabel="1"
-                                       domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
-                                    <tree string="Funding pools" >
-                                        <field name="code"/>
+                                       attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Funding pools" editable="top">
+                                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]"/>
+                                        <field name="funded"/>
+                                        <field name="total_project" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Cost centers">
+                                <field colspan="4" name="cost_center_ids" nolabel="1"
+                                       domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                                       attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Cost centers">
                                         <field name="name"/>
+                                        <field name="code"/>
                                     </tree>
                                 </field>
                             </page>
@@ -43,44 +54,53 @@
                                     <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
                                         <field name="code"/>
                                         <field name="name"/>
-                                        <field name="line_type" invisible="1"/>
-                                        <field name="allocated_amount" sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
-                                        <field name="project_amount" sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
+                                        <field name="line_type"/>
+                                        <field name="allocated_budget" widget="integer_finance" real_sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
+                                        <field name="project_budget" widget="integer_finance" real_sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
                                     </tree>
                                     <form string="Reporting lines">
-                                        <group colspan="4" col="6">
+                                        <group colspan="4" col="4">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4">
                                             <field name="parent_id" colspan="2"
                                                    domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
+	                                        <field name="line_type" colspan="2"/>
                                         </group>
-                                        <field name="line_type"/>
-                                        <field name="allocated_amount" attrs="{'invisible': [('line_type', '=', 'view')]}" invisible="context.get('reporting_type')=='project'"/>
-                                        <field name="project_amount" attrs="{'invisible': [('line_type', '=', 'view')]}" invisible="context.get('reporting_type')=='allocated'"/>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', 'in', ('view', 'overhead'))]}">
+	                                        <field name="allocated_budget_value"
+	                                               string="Funded amount - Budget"
+	                                               invisible="context.get('reporting_type')=='project'"
+	                                               colspan="2"
+	                                               widget="integer_finance"/>
+	                                        <field name="project_budget_value"
+	                                               string="Total project amount - Budget"
+	                                               invisible="context.get('reporting_type')=='allocated'"
+	                                               colspan="2"
+	                                               widget="integer_finance"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'consumption')]}">
+                                            <field name="allocated_real_value"
+                                                   string="Funded amount - Actuals"
+                                                   invisible="context.get('reporting_type')=='project'"
+                                                   colspan="2"
+                                                   widget="integer_finance"/>
+                                            <field name="project_real_value"
+                                                   string="Total project amount - Actuals"
+                                                   invisible="context.get('reporting_type')=='allocated'"
+                                                   colspan="2"
+                                                   widget="integer_finance"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
+                                            <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" widget="integer_finance" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                        </group>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
                                                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
                                                attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                     </form>
                                 </field>
-                            </page>
-                            <page string="Other lines">
-                                <separator colspan="4" string="Overhead"/>
-                                <field name="overhead_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="budget_allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="budget_project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="allocated_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="project_overhead" colspan="2" attrs="{'invisible': ['|', ('overhead_type', '!=', 'amount'), ('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <separator colspan="4" string="Lump sum"/>
-                                <field name="budget_allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="budget_project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="allocated_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="project_lump_sum" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <separator colspan="4" string="Consumption"/>
-                                <field name="budget_allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="budget_project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="allocated_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'project')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-                                <field name="project_consumption" colspan="2" attrs="{'invisible': [('reporting_type', '=', 'allocated')], 'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                             </page>
                             <page string="Comments">
 	                           <field name="notes" nolabel="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
@@ -109,7 +129,7 @@
 	                    <field name="code"/>
 	                    <field name="name"/>
 	                    <field name="donor_id"/>
-                        <field name="grant_amount"/>
+                        <field name="grant_amount" widget="integer_finance"/>
                         <field name="reporting_currency"/>
 	                    <field name="eligibility_from_date"/>
 	                    <field name="eligibility_to_date"/>
@@ -167,23 +187,24 @@
                                         <field name="line_type" invisible="1"/>
                                     </tree>
                                     <form string="Reporting lines">
-                                        <group colspan="4" col="6">
+                                        <group colspan="4" col="4">
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4">
                                             <field name="parent_id" colspan="2"
                                                    domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
+                                            <field name="line_type" colspan="2"/>
                                         </group>
-                                        <field name="line_type"/>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
+                                            <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" widget="integer_finance" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                        </group>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
                                                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
                                                attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                     </form>
                                 </field>
-                            </page>
-                            <page string="Other lines">
-                                <separator colspan="4" string="Overhead"/>
-                                <field name="overhead_type" colspan="2"/>
-                                <field name="overhead_percentage" colspan="2" attrs="{'invisible': [('overhead_type', '=', 'amount')]}"/>
                             </page>
                         </notebook>
                     </form>
@@ -249,10 +270,10 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="allocated_budget"/>
-                        <field name="allocated_real"/>
-                        <field name="project_budget"/>
-                        <field name="project_real"/>
+                        <field name="allocated_budget" widget="integer_finance"/>
+                        <field name="allocated_real" widget="integer_finance"/>
+                        <field name="project_budget" widget="integer_finance"/>
+                        <field name="project_real" widget="integer_finance"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
@@ -267,8 +288,8 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="allocated_budget"/>
-                        <field name="allocated_real"/>
+                        <field name="allocated_budget" widget="integer_finance"/>
+                        <field name="allocated_real" widget="integer_finance"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
@@ -283,8 +304,8 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="project_budget"/>
-                        <field name="project_real"/>
+                        <field name="project_budget" widget="integer_finance"/>
+                        <field name="project_real" widget="integer_finance"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
