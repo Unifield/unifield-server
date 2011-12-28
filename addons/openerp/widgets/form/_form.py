@@ -407,6 +407,18 @@ class Integer(TinyInputWidget):
 
 register_widget(Integer, ["integer"])
 
+class IntegerFinance(Integer):
+    template = "/openerp/widgets/form/templates/integer.mako"
+
+    def __init__(self, **attrs):
+        super(IntegerFinance, self).__init__(**attrs)
+        self.validator = validators.IntFinance()
+
+    def set_value(self, value):
+        self.default = value or 0
+
+register_widget(IntegerFinance, ["integer_finance"])
+
 class BooleanLabel(InputWidgetLabel):
     template = "/openerp/widgets/form/templates/boolean_label.mako"
 class Boolean(TinyInputWidget):
