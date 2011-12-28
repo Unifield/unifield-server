@@ -19,14 +19,13 @@
                         <notebook colspan="4">
                             <page string="Contract information">
                                 <group colspan="4" col="6">
-			                        <field name="grant_name" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 			                        <field name="donor_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 			                        <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 		                        </group>
-                                <group colspan="4" col="6">
+                                <group colspan="4" col="8">
 			                        <field name="grant_amount" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
-			                        <field name="contract_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="reporting_currency" colspan="2"  attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
                             </page>
                             <page string="Funding pools">
@@ -53,7 +52,7 @@
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
                                             <field name="parent_id" colspan="2"
-                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
                                         </group>
                                         <field name="line_type"/>
                                         <field name="allocated_amount" attrs="{'invisible': [('line_type', '=', 'view')]}" invisible="context.get('reporting_type')=='project'"/>
@@ -172,7 +171,7 @@
                                             <field name="code" colspan="2"/>
                                             <field name="name" colspan="2"/>
                                             <field name="parent_id" colspan="2"
-                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view')]"/>
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
                                         </group>
                                         <field name="line_type"/>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
@@ -224,11 +223,22 @@
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
             </record>
-            <menuitem id="donor_reporting_menu" name="Donor Reporting" parent="account.menu_finance"/>
+            <menuitem id="donor_reporting_menu" name="Donor Management" parent="account.menu_finance"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
             <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
             
+            <record id="view_financing_contract_actual_line_tree" model="ir.ui.view">
+                <field name="name">financing.contract.actual.line.tree</field>
+                <field name="model">financing.contract.actual.line</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Reporting Lines">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
+            </record>
             
             <record id="view_donor_reporting_line_tree_all" model="ir.ui.view">
                 <field name="name">financing.contract.donor.reporting.line.tree.all</field>

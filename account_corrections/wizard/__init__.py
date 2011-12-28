@@ -21,7 +21,7 @@
 #
 ##############################################################################
 
-import funding_pool
+import analytic_distribution_wizard
 import journal_items_corrections
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

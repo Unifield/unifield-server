@@ -166,7 +166,7 @@
   We copy the procurement request
 -
   !python {model: sale.order}: |
-    pr_id = self.copy(cr, uid, ref('pr4'))
+    pr_id = self.copy(cr, uid, ref('pr4'), context=context)
     new_pr = self.browse(cr, uid, pr_id)
     assert len(new_pr.order_line) == 2, "Bad number of lines on copy"
     assert new_pr.state == 'draft', "Bad state on copy"
@@ -188,4 +188,4 @@
     try:
       self.unlink(cr, uid, [ref('pr1')])
     except osv.except_osv, e:
-      assert False, "Error on deletion of a draft procurement request %s" % e.tostring()
+      assert False, "Error on deletion of a draft procurement request"

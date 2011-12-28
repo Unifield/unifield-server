@@ -27,7 +27,7 @@
         Journals view and datas
     ''',
     'init_xml': [],
-    "depends" : ["account", "analytic", "account_override", "funding_pool"],
+    "depends" : ["account", "analytic", "account_override", "analytic_distribution"],
     'update_xml': [
         'account_journal_view.xml',
         'project/project_view.xml',

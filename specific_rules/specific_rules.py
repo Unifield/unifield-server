@@ -30,6 +30,8 @@ import netsvc
 import pooler
 import time
 
+from mx import DateTime
+
 # warning messages
 SHORT_SHELF_LIFE_MESS = 'Product with Short Shelf Life, check the accuracy of the order quantity, frequency and mode of transport.'
 
@@ -413,7 +415,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done':
                 if move.product_id.batch_management:
-                    if not move.prodlot_id:
+                    if not move.prodlot_id and move.product_qty:
                         return False
         return True
     
@@ -425,7 +427,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done':
                 if move.product_id.perishable:
-                    if not move.prodlot_id:
+                    if not move.prodlot_id and move.product_qty:
                         return False
         return True
     
@@ -482,6 +484,11 @@ class stock_move(osv.osv):
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result['warning'] = {'title': _('Info'),
                                      'message': _('The selected product is Perishable.')}
+                
+        # quantities are set to False
+        result.setdefault('value', {}).update({'product_qty': 0.00,
+                                               'product_uos_qty': 0.00,
+                                               })
             
         return result
     
@@ -510,16 +517,34 @@ class stock_move(osv.osv):
                 result[obj.id]['np_check'] = True
             
         return result
+    
+    def _check_tracking(self, cr, uid, ids, context=None):
+        """ Checks if production lot is assigned to stock move or not.
+        @return: True or False
+        """
+        for move in self.browse(cr, uid, ids, context=context):
+            if not move.prodlot_id and move.product_qty and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+               )):
+                return False
+        return True
             
-    _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
-                # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
-                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
-                'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                }
+    _columns = {
+        'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
+        # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
+        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Production lot is used to put a serial number on the production", select=True),
+    }
     
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number for this product (Batch Number Mandatory)',
@@ -536,6 +561,9 @@ class stock_move(osv.osv):
                     (_check_prodlot_need_perishable,
                      'The selected product is Expiry Date Mandatory while the selected Production Lot corresponds to Batch Number Mandatory.',
                      ['prodlot_id']),
+                     (_check_tracking,
+                      'You must assign a production lot for this product',
+                      ['prodlot_id']),
                     ]
 
 stock_move()
@@ -703,48 +731,74 @@ class stock_production_lot(osv.osv):
         for id in ids:
           result[id] = False
         return result
+
+    def _stock_search_virtual(self, cr, uid, obj, name, args, context=None):
+        """ Searches Ids of products
+        @return: Ids of locations
+        """
+        if context is None:
+            context = {}
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        else:
+            locations = context['location_id'] and [context['location_id']] or []
+        
+        ids = [('id', 'in', [])]
+        if locations:
+            cr.execute('''select
+                    prodlot_id,
+                    sum(qty)
+                from
+                    stock_report_prodlots_virtual
+                where
+                    location_id IN %s group by prodlot_id
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+            res = cr.fetchall()
+            ids = [('id', 'in', map(lambda x: x[0], res))]
+        return ids
     
-    def _get_stock(self, cr, uid, ids, field_name, arg, context=None):
+    def _stock_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        call super method, as fields.function does not work with inheritance
+        '''
+        return super(stock_production_lot, self)._stock_search(cr, uid, obj, name, args, context=context)
+
+    def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
         @return: Dictionary of values
         """
         if context is None:
             context = {}
-            
+        # when the location_id = False results now in showing stock for all internal locations
+        # *previously*, was showing the location of no location (= 0.0 for all prodlot)
+        if 'location_id' not in context or not context['location_id']:
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        else:
+            locations = context['location_id'] and [context['location_id']] or []
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        product_obj = self.pool.get('product.product')
-        
-        result = {}
-        for id in ids:
-            result[id] = 0.0
-        
-        for lot in self.browse(cr, uid, ids, context=context):
-            # because the lot_id changes we have to loop one lot id at a time
-            c = context.copy()
-            # if you remove the coma after done, it will no longer work properly
-            c.update({'what': ('in', 'out'),
-                      'prodlot_id': lot.id,
-                      #'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                      #'warehouse': warehouse_id,
-                      #'uom': product_uom_id
-                      })
-            
-            if field_name == 'stock_available':
-                # available stock
-                c.update(states=('confirmed','waiting','assigned','done'))
-            elif field_name == 'stock_real':
-                # real stock
-                c.update(states=('done',))
-            else:
-                assert False, 'This line should not be reached: field_name: %s'%field_name
-            
-            qty = product_obj.get_product_available(cr, uid, [lot.product_id.id], context=c)
-            overall_qty = sum(qty.values())
-            result[lot.id] = overall_qty
-        
-        return result
+
+        res = {}.fromkeys(ids, 0.0)
+        if locations:
+            cr.execute('''select
+                    prodlot_id,
+                    sum(qty)
+                from
+                    stock_report_prodlots_virtual
+                where
+                    location_id IN %s and prodlot_id IN %s group by prodlot_id''',(tuple(locations),tuple(ids),))
+            res.update(dict(cr.fetchall()))
+
+        return res
+    
+    def _get_stock(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        call super method, as fields.function does not work with inheritance
+        '''
+        return super(stock_production_lot, self)._get_stock(cr, uid, ids, field_name, arg, context=context)
     
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -778,12 +832,13 @@ class stock_production_lot(osv.osv):
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique production lot, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
                 'sequence_id': fields.many2one('ir.sequence', 'Lot Sequence', required=True,),
-                'stock_available': fields.function(_get_stock, method=True, type="float", string="Available", select=True,
-                                                   help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
-                'stock_real': fields.function(_get_stock, method=True, type="float", string="Real", select=True,
-                                                   help="Current quantity of products with this Production Lot Number available in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM'), readonly=True,),
+                'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
+                                                 help="Current available quantity of products with this Production Lot Number in company warehouses",
+                                                 digits_compute=dp.get_precision('Product UoM'), readonly=True,
+                                                 fnct_search=_stock_search_virtual,),
+                'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
+                                                   help="Current real quantity of products with this Production Lot Number in company warehouses",
+                                                   digits_compute=dp.get_precision('Product UoM')),
                 'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
@@ -810,14 +865,89 @@ class stock_production_lot(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
-        reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref'], context)
+        if context is None:
+            context = {}
+
+        reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref', 'life_date'], context)
         res = []
+# TODO replace by _get_format in uf-651
+        if context.get('with_expiry'):
+            user_obj = self.pool.get('res.users')
+            lang_obj = self.pool.get('res.lang')
+            user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+            lang_id = lang_obj.search(cr, uid, [('code','=',user_lang)])
+            date_format = lang_id and lang_obj.read(cr, uid, lang_id[0], ['date_format'], context=context)['date_format'] or '%m/%d/%Y'
+
         for record in reads:
-            name = record['name']
+            if context.get('with_expiry') and record['life_date']:
+                name = '%s - %s'%(record['name'], DateTime.strptime(record['life_date'],'%Y-%m-%d').strftime(date_format))
+            else:
+                name = record['name']
             res.append((record['id'], name))
         return res
     
 stock_production_lot()
+
+
+class stock_location(osv.osv):
+    '''
+    override stock location to add:
+    - stock_real
+    - stock_virtual
+    '''
+    _inherit = 'stock.location'
+    
+    def replace_field_key(self, fieldsDic, search, replace):
+        '''
+        will replace 'stock_real' by 'stock_real_specific'
+        and 'stock_virtual' by 'stock_virtual_specific'
+        
+        and return a new dictionary
+        '''
+        return dict((replace if key == search else key, (self.replace_field_key(value, search, replace) if isinstance(value, dict) else value)) for key, value in fieldsDic.items())
+    
+    def _product_value_specific_rules(self, cr, uid, ids, field_names, arg, context=None):
+        '''
+        add two fields for custom stock computation, if no product selected, both stock are set to 0.0
+        '''
+        if context is None:
+            context = {}
+        # initialize data
+        result = {}
+        for id in ids:
+            result[id] = {}
+            for f in field_names:
+                result[id].update({f: False,})
+        # if product is set to False, it does not make sense to return a stock value, return False for each location
+        if 'product_id' in context and not context['product_id']:
+            return result
+        
+        result = super(stock_location, self)._product_value(cr, uid, ids, ['stock_real', 'stock_virtual'], arg, context=context)
+        # replace stock real
+        result = self.replace_field_key(result, 'stock_real', 'stock_real_specific')
+        # replace stock virtual
+        result = self.replace_field_key(result, 'stock_virtual', 'stock_virtual_specific')
+        return result
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        display the modified stock values (stock_real_specific, stock_virtual_specific) if needed
+        """
+        if context is None:
+            context = {}
+        # warehouse wizards or inventory screen
+        if view_type == 'tree' and context.get('specific_rules_tree_view', False):
+            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_location_tree2')
+            if view:
+                view_id = view[1]
+        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        return result
+    
+    _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
+                'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),
+                }
+    
+stock_location()
 
 
 class stock_production_lot_revision(osv.osv):
@@ -878,18 +1008,38 @@ class stock_inventory_line(osv.osv):
     '''
     _inherit = 'stock.inventory.line'
     
-    def change_lot(self, cr, uid, id, prod_lot_id, context=None):
+    def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
+        '''
+        commmon qty computation
+        '''
+        if result is None:
+            result = {}
+        if not product:
+            return result
+        product_obj = self.pool.get('product.product').browse(cr, uid, product)
+        uom = uom or product_obj.uom_id.id
+        stock_context = {'uom': uom, 'to_date': to_date,
+                         'prodlot_id':prod_lot_id,}
+        if location_id:
+            # if a location is specified, we do not list the children locations, otherwise yes
+            stock_context.update({'compute_child': False,})
+        amount = self.pool.get('stock.location')._product_get(cr, uid, location_id, [product], stock_context)[product]
+        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': uom})
+        return result
+    
+    def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
         '''
         prod lot changes, update the expiry date
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}}
-        
+        # reset expiry date or fill it
         if prod_lot_id:
-            result['value'].update(expiry_date=prodlot_obj.browse(cr, uid, prod_lot_id, context).life_date)
+            result['value'].update(expiry_date=prodlot_obj.browse(cr, uid, prod_lot_id).life_date)
         else:
             result['value'].update(expiry_date=False)
-        
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
     
     def change_expiry(self, cr, uid, id, expiry_date, product_id, type_check, context=None):
@@ -919,13 +1069,98 @@ class stock_inventory_line(osv.osv):
             else:
                 # return first prodlot
                 result['value'].update(prod_lot_id=prod_ids[0])
-                
         else:
             # clear expiry date, we clear production lot
             result['value'].update(prod_lot_id=False,
                                    expiry_date=False,
                                    )
+        return result
+    
+    def on_change_location_id(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
+        """ Changes UoM and name if product_id changes.
+        @param location_id: Location id
+        @param product: Changed product_id
+        @param uom: UoM product
+        @return:  Dictionary of changed values
+        """
+        result = {}
+        if not product:
+            # do nothing
+            result.setdefault('value', {}).update({'product_qty': 0.0,})
+            return result
+        # compute qty
+        result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
+        return result
+    
+    def on_change_product_id_specific_rules(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
+        '''
+        the product changes, set the hidden flag if necessary
+        '''
+        result = super(stock_inventory_line, self).on_change_product_id(cr, uid, ids, location_id, product, uom, to_date)
+        # product changes, prodlot is always cleared
+        result.setdefault('value', {})['prod_lot_id'] = False
+        result.setdefault('value', {})['expiry_date'] = False
+        # reset the hidden flags
+        result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
+        result.setdefault('value', {})['hidden_perishable_mandatory'] = False
+        if product:
+            product_obj = self.pool.get('product.product').browse(cr, uid, product)
+            if product_obj.batch_management:
+                result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
+            elif product_obj.perishable:
+                result.setdefault('value', {})['hidden_perishable_mandatory'] = True
+            # if not product, result is 0.0 by super
+            # compute qty
+            result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
+        return result
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        complete info normally generated by javascript on_change function
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if product.batch_management:
+                vals.update(hidden_batch_management_mandatory=True)
+            elif product.perishable:
+                vals.update(hidden_perishable_mandatory=True)
+            else:
+                vals.update(hidden_batch_management_mandatory=False,
+                            hidden_perishable_mandatory=False,
+                            )
+        # complete expiry date from production lot - needed if not created from GUI
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if vals.get('prod_lot_id', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
+        # call super
+        result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
+        return result
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        complete info normally generated by javascript on_change function
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id', False):
+            # complete hidden flags - needed if not created from GUI
+            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
+            if product.batch_management:
+                vals.update(hidden_batch_management_mandatory=True)
+            elif product.perishable:
+                vals.update(hidden_perishable_mandatory=True)
+            else:
+                vals.update(hidden_batch_management_mandatory=False,
+                            hidden_perishable_mandatory=False,
+                            )
+        # complete expiry date from production lot - needed if not created from GUI
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if vals.get('prod_lot_id', False):
+            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
         
+        # call super
+        result = super(stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
         return result
     
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
@@ -984,15 +1219,17 @@ class stock_inventory_line(osv.osv):
                     return False
         return True
     
-    _columns = {'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-                'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
-                'expiry_date': fields.date(string='Expiry Date'),
-                'type_check': fields.char(string='Type Check', size=1024,),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                }
+    _columns = {
+        'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
+        'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
+        'expiry_date': fields.date(string='Expiry Date'),
+        'type_check': fields.char(string='Type Check', size=1024,),
+        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
+        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
+        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
+        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+    }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
@@ -1008,76 +1245,6 @@ class stock_inventory_line(osv.osv):
                      'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
                      ['prod_lot_id']),
                     ]
-    
-    def on_change_product_id(self, cr, uid, ids, location_id, product, uom=False, to_date=False):
-        '''
-        the product changes, set the hidden flag if necessary
-        '''
-        result = super(stock_inventory_line, self).on_change_product_id(cr, uid, ids, location_id, product, uom, to_date)
-        
-        # product changes, prodlot is always cleared
-        result.setdefault('value', {})['prod_lot_id'] = False
-        result.setdefault('value', {})['expiry_date'] = False
-        # reset the hidden flags
-        result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
-        result.setdefault('value', {})['hidden_perishable_mandatory'] = False
-        if product:
-            product_obj = self.pool.get('product.product').browse(cr, uid, product)
-            if product_obj.batch_management:
-                result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
-            elif product_obj.perishable:
-                result.setdefault('value', {})['hidden_perishable_mandatory'] = True
-            
-        return result
-    
-    def create(self, cr, uid, vals, context=None):
-        '''
-        complete info normally generated by javascript on_change function
-        '''
-        prod_obj = self.pool.get('product.product')
-        if vals.get('product_id', False):
-            # complete hidden flags - needed if not created from GUI
-            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
-            if product.batch_management:
-                vals.update(hidden_batch_management_mandatory=True)
-            elif product.perishable:
-                vals.update(hidden_perishable_mandatory=True)
-            else:
-                vals.update(hidden_batch_management_mandatory=False,
-                            hidden_perishable_mandatory=False,
-                            )
-        # complete expiry date from production lot - needed if not created from GUI
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if vals.get('prod_lot_id', False):
-            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
-        # call super
-        result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
-        return result
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        complete info normally generated by javascript on_change function
-        '''
-        prod_obj = self.pool.get('product.product')
-        if vals.get('product_id', False):
-            # complete hidden flags - needed if not created from GUI
-            product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
-            if product.batch_management:
-                vals.update(hidden_batch_management_mandatory=True)
-            elif product.perishable:
-                vals.update(hidden_perishable_mandatory=True)
-            else:
-                vals.update(hidden_batch_management_mandatory=False,
-                            hidden_perishable_mandatory=False,
-                            )
-        # complete expiry date from production lot - needed if not created from GUI
-        prodlot_obj = self.pool.get('stock.production.lot')
-        if vals.get('prod_lot_id', False):
-            vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prod_lot_id'), context=context).life_date)
-        
-        # call super
-        result = super(stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
-        return result
 
 stock_inventory_line()
 
@@ -1144,7 +1311,16 @@ CREATE OR REPLACE view report_stock_inventory AS (
 );
         """)
     
-    _columns = {'expired_date': fields.date(string='Expiry Date'),
-                }
-    
+    _columns = {
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', readonly=True),
+        'expired_date': fields.date(string='Expiry Date',),
+    }
+   
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+        if context is None:
+            context = {}
+        if fields is None:
+            fields = []
+        context['with_expiry'] = 1
+        return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 report_stock_inventory()

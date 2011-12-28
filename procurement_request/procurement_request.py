@@ -264,6 +264,8 @@ class procurement_request_line(osv.osv):
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
+        'my_company_id': fields.many2one('res.company','Company',select=1),
+        'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
     }
     
     def _get_planned_date(self, cr, uid, c={}):
@@ -277,6 +279,7 @@ class procurement_request_line(osv.osv):
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
+        'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):

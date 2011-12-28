@@ -87,8 +87,14 @@
                         </page>
                         <page string="Miscellaneous">
                             <group colspan="2" col="2">
-                                <separator string="List" colspan="2"/>
-                                <field name="sublist" colspan="2"/>
+                                <separator string="Lists/Sublists" colspan="2"/>
+	                            <field name="list_ids" colspan="2" nolabel="1" mode="tree">
+	                                <tree string="Lists/Sublists">
+	                                    <field name="type" />
+	                                    <field name="name" />
+	                                    <field name="ref" />
+	                                </tree>
+	                            </field>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Information" colspan="2"/>
@@ -114,13 +120,6 @@
                             <field name="library" colspan="2"/>
                             <separator string="Associated Products" colspan="4"/>
                             <field name="options_ids" colspan="4" nolabel="1"/>
-                            <separator string="Lists/Sublists" colspan="4"/>
-                            <field name="list_ids" colspan="4" nolabel="1" mode="tree">
-                                <tree string="Lists/Sublists">
-                                    <field name="type" />
-                                    <field name="name" />
-                                </tree>
-                            </field>
                         </page>
                         <page string="Suppliers">
                             <field colspan="4" name="seller_ids" nolabel="1"/>
@@ -345,6 +344,15 @@
                 </search>
             </field>
         </record>
+
+        <menuitem id="menu_main_product" name="Products" sequence="1" 
+                  web_icon_hover="images/products.png"
+                  web_icon="images/products-hover.png" 
+                  action="product.product_normal_action"
+                />
+        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" />
+        <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
+        <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
         
     </data>
 </openerp>

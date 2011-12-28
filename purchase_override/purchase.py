@@ -23,8 +23,8 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
-
 from mx.DateTime import *
+import logging
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -67,25 +67,64 @@ class purchase_order(osv.osv):
     # @@@end
     
     _columns = {
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'details': fields.char(size=30, string='Details', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'date_order':fields.date('Creation Date', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]}, select=True, help="Date on which this document has been created."),
+        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
+                            help="unique number of the purchase order,computed automatically when the purchase order is created"),
+        'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
+        'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
+        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
+        'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
+            states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
     }
     
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'mixed',
+        'categ': lambda *a: 'other',
         'loan_duration': 2,
+        'from_yml_test': lambda *a: False,
     }
+
+    def _check_user_company(self, cr, uid, company_id, context={}):
+        '''
+        Remove the possibility to make a PO to user's company
+        '''
+        user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        if company_id == user_company_id:
+            raise osv.except_osv(_('Error'), _('You cannot made a purchase order to your own company !'))
+
+        return True
+
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Check if the partner is correct
+        '''
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+    
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Check if the partner is correct
+        '''
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+
+        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id):
         '''
@@ -236,6 +275,18 @@ class purchase_order(osv.osv):
         
         return invoice_id
     
+    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
+        
+        - allow to choose whether or not the source location of the corresponding outgoing stock move should
+        match the destination location of incoming stock move
+        '''
+        order_line = kwargs['order_line']
+        # by default, we change the destination stock move if the destination stock move exists
+        return order_line.move_dest_id
+    
     # @@@override@purchase.purchase.order.action_picking_create
     def action_picking_create(self,cr, uid, ids, context={}, *args):
         picking_id = False
@@ -277,8 +328,14 @@ class purchase_order(osv.osv):
             for order_line in order.order_line:
                 if not order_line.product_id:
                     continue
-                if order_line.product_id.product_tmpl_id.type in ('product', 'consu'):
+                if order_line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep',):
                     dest = order.location_id.id
+                    # service with reception are directed to Service Location
+                    if order_line.product_id.product_tmpl_id.type == 'service_recep':
+                        service_loc = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
+                        if service_loc:
+                            dest = service_loc[0]
+                            
                     move_values = {
                         'name': order.name + ': ' +(order_line.name or ''),
                         'product_id': order_line.product_id.id,
@@ -302,7 +359,7 @@ class purchase_order(osv.osv):
                         move_values.update({'reason_type_id': reason_type_id})
                     
                     move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
-                    if order_line.move_dest_id:
+                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line,):
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)
             self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)
@@ -311,7 +368,18 @@ class purchase_order(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
         return picking_id
         # @@@end
-    
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Filled in 'from_yml_test' to True if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('PO: set from yml test to True')
+            vals['from_yml_test'] = True
+        return super(purchase_order, self).create(cr, uid, vals, context)
+
 purchase_order()
 
 class account_invoice(osv.osv):

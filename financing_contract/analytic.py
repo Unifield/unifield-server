@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'

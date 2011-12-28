@@ -130,5 +130,11 @@
             <field name="code">ENG</field>
             <field name="type">engagement</field>
         </record>
+        
+        <record id="miscellaneous_transactions" model="account.journal">
+            <field name="name">Miscellaneous Transactions</field>
+            <field name="code">MT</field>
+            <field name="type">cur_adj</field>
+        </record>
     </data>
 </openerp>
