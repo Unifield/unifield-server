@@ -31,6 +31,7 @@
     partner_shipping_id: res_partner_address_0
     pricelist_id: product.list0
     shop_id: sale.shop  
+    
 - 
   Creating a sale.order.line record
 - 

@@ -435,11 +435,13 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 if type(old_value) == tuple:
                     old_value = old_value[0]
                 # Get the readable name of the related field
-                old_value = pool.get(field['relation']).name_get(cr, uid, [old_value])[0][1]
+                if old_value:
+                    old_value = pool.get(field['relation']).name_get(cr, uid, [old_value])[0][1]
                 if type(new_value) == tuple:
                     new_value = new_value[0]
                 # Get the readable name of the related field
-                new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
+                if new_value:
+                    new_value = pool.get(field['relation']).name_get(cr, uid, [new_value])[0][1]
             elif field['ttype'] in ('date', 'datetime', 'many2many'):
                 old_value = old_value_text
                 new_value = new_value_text

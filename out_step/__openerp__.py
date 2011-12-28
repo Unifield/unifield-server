@@ -28,7 +28,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock",],
+    "depends" : ["stock", "sale"],
     'update_xml': [
         'out_step_view.xml',
     ],
