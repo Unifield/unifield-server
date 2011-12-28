@@ -385,6 +385,7 @@ def get_pg_type(f):
 
 class orm_template(object):
     _name = None
+    _trace = False
     _columns = {}
     _constraints = []
     _defaults = {}
