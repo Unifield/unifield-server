@@ -102,6 +102,7 @@ class procurement_request(osv.osv):
             ('waiting_date', 'Waiting Schedule'),
             ('manual', 'Confirmed'),
             ('progress', 'Confirmed'),
+            ('validated', 'Validated'),
             ('shipping_except', 'Shipping Exception'),
             ('invoice_except', 'Invoice Exception'),
             ('done', 'Closed'),

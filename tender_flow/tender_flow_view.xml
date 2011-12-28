@@ -64,7 +64,7 @@
                     </notebook>
                     <group col="13" colspan="4">
                         <field name="state"/>
-                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('sale_order_id','!=', False),],}" />
+                        <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':['|', ('sale_order_id','!=', False), ('state', '=', 'done')],}" />
                         <button name="button_generate" states="draft" string="Create RfQ" icon="gtk-convert" />
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" />
@@ -145,7 +145,7 @@
             	<data>
             		<field name="details" position="after">
             			<field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
-            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['draft', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
             			<field name="rfq_ok" invisible="True" />
             		</field>
 
