@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,39 +19,33 @@
 #
 ##############################################################################
 
+
 {
-    "name": "MSF Order dates",
-    "version": "1.0",
-    "depends": [
-                "base",
-                "sale",
-                "purchase",
-                "account",
-                "stock_override",
-                ],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        This module aims at defining the dates of orders (purchase and sales orders).
+    'name': 'MSF Audit Trail',
+    'version': '1.0',
+    'category': 'Generic Modules/Others',
+    'description': """
+    This module gives the administrator the rights
+    to track every user operation on all the objects
+    of the system.
+
+    Administrator can subscribe rules for read,write and
+    delete on objects and can check logs.
     """,
-    "init_xml": [
-    ],
+    'author': 'OpenERP SA − TeMPO Consulting − MSF',
+    'website': 'http://www.unifield.org',
+    'depends': ['base', 'purchase'],
+    'init_xml': [],
     'update_xml': [
-        'security/msf_order_date_groups.xml',
+        'wizard/audittrail_view_log_view.xml',
+        'audittrail_view.xml',
         'security/ir.model.access.csv',
-        'order_dates_view.xml',
+        'security/audittrail_security.xml',
+        'audittrail_data.yml',
+        'audittrail_report.xml',
     ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/create_data.yml',
-        'test/purchase_dates.yml',
-        'test/sale_dates.yml',
-    ],
+    'demo_xml': [],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
 }
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

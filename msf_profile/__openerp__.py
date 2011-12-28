@@ -31,6 +31,7 @@
         "data.xml",
     ],
     "depends" : [
+        "msf_audittrail",
         "base_report_designer",
         "msf_partner",
         "register_accounting",

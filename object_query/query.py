@@ -449,7 +449,7 @@ class ir_fields(osv.osv):
         '''
         res = {}
         
-        for field in self.search(cr, uid, ids, context=context):
+        for field in self.browse(cr, uid, ids, context=context):
             res[field.id] = field.model_id.id
             
         return res
