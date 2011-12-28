@@ -90,18 +90,18 @@
   !record {model: analytic.distribution, id: distribution_test}:
     cost_center_lines: 
     - analytic_id: analytic_account_OC1
-      amount: 4242.0
+      percentage: 100
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
     - analytic_id: analytic_distribution.analytic_account_msf_private_funds
       cost_center_id: analytic_account_OC1
-      amount: 2121.0
+      percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_FP1
       cost_center_id: analytic_account_OC1
-      amount: 2121.0
+      percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
 -
@@ -155,7 +155,7 @@
                "reporting_type": "all",
                "currency_table_id": None}
     contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 2121.0, ("Allocation is not what is expected!")
+    assert contract.report_line.allocated_real == 2121.0, ("Allocation is not what is expected! %s!=2121.0"%contract.report_line.allocated_real)
 -
   Assert that total retrieved for funded is 212100 EUR
 -
@@ -164,7 +164,7 @@
                "reporting_type": "all",
                "currency_table_id": None}
     contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 212100.0, ("Allocation is not what is expected!")
+    assert contract.report_line.allocated_real == 212100.0, ("Allocation is not what is expected! %s!=212100.0"%contract.report_line.allocated_real)
 -
   Create a currency table
 -
@@ -191,5 +191,5 @@
                "reporting_type": "all",
                "currency_table_id": ref("test_table")}
     contract = self.browse(cr, uid, ref("contract1"), context=context)
-    assert contract.report_line.allocated_real == 21210.0, ("Allocation is not what is expected!")
+    assert contract.report_line.allocated_real == 21210.0, ("Allocation is not what is expected! %s!=21210.0"%contract.report_line.allocated_real)
     
