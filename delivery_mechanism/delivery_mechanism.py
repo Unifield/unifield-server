@@ -387,7 +387,7 @@ class stock_picking(osv.osv):
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             for move in pick.move_lines:
-                if not move.product_qty:
+                if not move.product_qty and move.state not in ('done', 'cancel'):
                     move.unlink(context=dict(context, call_unlink=True))
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
