@@ -145,7 +145,7 @@ class account_move_line(osv.osv):
             date = time.strftime('%Y-%m-%d')
             j_obj = self.pool.get('account.journal')
             # Search Miscellaneous Transactions journal
-            j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], context=context)
+            j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
             if not j_ids:
                 raise osv.except_osv(_('Error'), ('No Currency Adjustement journal found!'))
             journal_id = j_ids[0]
