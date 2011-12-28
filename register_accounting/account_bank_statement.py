@@ -410,8 +410,7 @@ class account_bank_statement(osv.osv):
         # Prepare search view
         search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
         search_view_id = search_view and search_view[1] or False
-#        reg_act = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'action_open_advance_tree')
-#        return self.pool.get('ir.actions.act_window').read(cr, uid, reg_act[1], [], context=context)
+        context.update({'open_advance': register.id})
         return {
             'name': name,
             'type': 'ir.actions.act_window',
@@ -421,6 +420,7 @@ class account_bank_statement(osv.osv):
             'view_id': [view_id],
             'search_view_id': search_view_id,
             'domain': domain,
+            'context': context,
             'target': 'current',
         }
 
@@ -1250,6 +1250,8 @@ class account_bank_statement_line(osv.osv):
         # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
         st_obj = self.pool.get('account.bank.statement.line')
         st = st_obj.browse(cr, uid, ids[0]).statement_id
+        if 'open_advance' in context:
+            st = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         if st and st.state != 'open':
             raise osv.except_osv(_('Error'), _('You cannot do a cash return in Register which is in another state that "open"!'))
         statement_id = st.id
@@ -1259,6 +1261,13 @@ class account_bank_statement_line(osv.osv):
         wiz_obj = self.pool.get('wizard.cash.return')
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
             'currency_id': st_line.statement_id.currency.id}, context=context)
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+            'statement_line_id': ids[0],
+            'statement_id': statement_id,
+            'amount': amount
+        })
         if statement_id:
             return {
                 'name' : "Advance Return",
@@ -1268,14 +1277,7 @@ class account_bank_statement_line(osv.osv):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'res_id': [wiz_id],
-                'context': 
-                {
-                    'active_id': ids[0],
-                    'active_ids': ids,
-                    'statement_line_id': ids[0],
-                    'statement_id': statement_id,
-                    'amount': amount
-                }
+                'context': context,
             }
         else:
             return False
