@@ -358,8 +358,8 @@ class account_commitment_line(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', string="Account", required=True),
-        'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=True),
-        'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=False, readonly=True),
+        'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
+        'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
@@ -418,12 +418,14 @@ class account_commitment_line(osv.osv):
             account = self.pool.get('account.account').browse(cr, uid, [account_id], context=context)[0]
             if account.type in ['view']:
                 raise osv.except_osv(_('Error'), _("You cannot create a commitment voucher line on a 'view' account type!"))
-        # Update initial amount
-        if not vals.get('initial_amount', 0.0) and vals.get('amount', 0.0):
-            vals.update({'initial_amount': vals.get('amount')})
         # Verify amount validity
         if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount should be superior to 0!'))
+            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
+        if 'initial_amount' in vals and 'amount' in vals:
+            if vals.get('initial_amount') < vals.get('amount'):
+                raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to Amount Left'))
         res = super(account_commitment_line, self).create(cr, uid, vals, context={})
         if res:
             for cl in self.browse(cr, uid, [res], context=context):
@@ -448,9 +450,22 @@ class account_commitment_line(osv.osv):
                 raise osv.except_osv(_('Error'), _("You cannot write a commitment voucher line on a 'view' account type!"))
         # Verify amount validity
         if 'amount' in vals and vals.get('amount', 0.0) < 0.0:
-            raise osv.except_osv(_('Warning'), _('Amount should be superior to 0!'))
+            raise osv.except_osv(_('Warning'), _('Amount Left should be equal or superior to 0!'))
+        if 'initial_amount' in vals and vals.get('initial_amount', 0.0) <= 0.0:
+            raise osv.except_osv(_('Warning'), _('Initial Amount should be superior to 0!'))
         # Update analytic distribution if needed and initial_amount
         for line in self.browse(cr, uid, ids, context=context):
+            # verify that initial amount is superior to amount left
+            message = _('Initial Amount should be superior to Amount Left')
+            if 'amount' in vals and 'initial_amount' in vals:
+                if vals.get('initial_amount') < vals.get('amount'):
+                    raise osv.except_osv(_('Warning'), message)
+            elif 'amount' in vals:
+                if line.initial_amount < vals.get('amount'):
+                    raise osv.except_osv(_('Warning'), message)
+            elif 'initial_amount' in vals:
+                if vals.get('initial_amount') < line.amount:
+                    raise osv.except_osv(_('Warning'), message)
             # verify analytic distribution only on 'open' commitments
             if line.commit_id and line.commit_id.state and line.commit_id.state == 'open':
                 # Search distribution
@@ -472,8 +487,6 @@ class account_commitment_line(osv.osv):
                     # Update analytic lines
                     if distrib_id:
                         self.update_analytic_lines(cr, uid, [line.id], vals.get('amount'), account_id, context=context)
-            elif line.commit_id and line.commit_id.state and line.commit_id.state == 'draft' and vals.get('amount', 0.0):
-                vals.update({'initial_amount': vals.get('amount')})
         return super(account_commitment_line, self).write(cr, uid, ids, vals, context={})
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):

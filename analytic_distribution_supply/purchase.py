@@ -219,7 +219,7 @@ class purchase_order(osv.osv):
                 for line in po_lines[account_id]:
                     total_amount += line.price_subtotal
                 # Create commitment lines
-                line_id = self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
+                line_id = self.pool.get('account.commitment.line').create(cr, uid, {'commit_id': commit_id, 'amount': total_amount, 'initial_amount': total_amount, 'account_id': account_id, 'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]}, context=context)
                 created_commitment_lines.append(line_id)
             # Create analytic distribution on this commitment line
             self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
