@@ -687,8 +687,8 @@ class shipment(osv.osv):
                 if new_packing.sale_id and not new_packing.sale_id.shipment_date:
                     # get the date format
                     date_tools = self.pool.get('date.tools')
-                    date_format = date_tools.get_datetime_format(cr, uid, context=context)
-                    db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                    date_format = date_tools.get_date_format(cr, uid, context=context)
+                    db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)

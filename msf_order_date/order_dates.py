@@ -65,10 +65,12 @@ def get_type(self):
     
     return False
 
-def get_field_description(self, cr, uid, field, context={}):
+def get_field_description(self, cr, uid, field, context=None):
     '''
     Returns the description of the field
     '''
+    if context is None:
+        context = {}
     field_obj = self.pool.get('ir.model.fields')
     field_ids = field_obj.search(cr, uid, [('model', '=', self._name), ('name', '=', field)])
     if not field_ids:
@@ -76,7 +78,7 @@ def get_field_description(self, cr, uid, field, context={}):
     
     return field_obj.browse(cr, uid, field_ids[0]).field_description
 
-def check_date_order(self, cr, uid, date=False, context={}):
+def check_date_order(self, cr, uid, date=False, context=None):
     '''
     Checks if the creation date of the order is in an opened period
     
@@ -85,6 +87,8 @@ def check_date_order(self, cr, uid, date=False, context={}):
     
     deprecated
     '''
+    if context is None:
+        context = {}
     if not date:
         return True
             
@@ -102,7 +106,7 @@ def check_date_order(self, cr, uid, date=False, context={}):
             
     return res
 
-def check_delivery_requested(self, date=False, context={}):
+def check_delivery_requested(self, date=False, context=None):
     '''
     Checks if the delivery requested date is equal of a date between today and today + 24 months
     
@@ -111,6 +115,8 @@ def check_delivery_requested(self, date=False, context={}):
     
     deprecated
     '''
+    if context is None:
+        context = {}
     if not date:
         return True
 
@@ -126,7 +132,7 @@ def check_delivery_requested(self, date=False, context={}):
         
     return res
 
-def check_delivery_confirmed(self, confirmed_date=False, date_order=False, context={}):
+def check_delivery_confirmed(self, confirmed_date=False, date_order=False, context=None):
     '''
     Checks if the delivery confirmed date is older than the creation date
     
@@ -135,6 +141,8 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
     
     deprecated
     '''
+    if context is None:
+        context = {}
     if not confirmed_date or not date_order:
         return True
 
@@ -152,12 +160,14 @@ def check_delivery_confirmed(self, confirmed_date=False, date_order=False, conte
         
     return res 
 
-def check_dates(self, cr, uid, data, context={}):
+def check_dates(self, cr, uid, data, context=None):
     '''
     Runs all tests on dates
     
     deprecated
     '''
+    if context is None:
+        context = {}
     # Comment this line if you would check date on PO/SO creation/write
     return True
     
@@ -177,10 +187,12 @@ def check_dates(self, cr, uid, data, context={}):
     
     return True
 
-def create_history(self, cr, uid, ids, data, class_name, field_name, fields, context={}):
+def create_history(self, cr, uid, ids, data, class_name, field_name, fields, context=None):
     '''
     Creates an entry in dates history of the object self._name
     '''
+    if context is None:
+        context = {}
     history_obj = self.pool.get('history.order.date')
     
     for order in self.pool.get(class_name).read(cr, uid, ids, fields, context=context):
@@ -195,24 +207,28 @@ def create_history(self, cr, uid, ids, data, class_name, field_name, fields, con
                 
     return
 
-def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+def common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
     '''
     Common function when type of order is changing
     
     deprecated
     '''
+    if context is None:
+        context = {}
     v = {}
 #    if internal_type == 'international' and rts and not shipment_date:
 #        v.update({'shipment_date': rts})
         
     return v
     
-def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
+def common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=None):
     '''
     Common function when ready_to_ship date is changing
     
     deprecated
     '''
+    if context is None:
+        context = {}
     message = {}
     v = {}
     if not ready_to_ship or not date_order:
@@ -278,6 +294,8 @@ def compute_transport_type(self, cr, uid, part=False, type=False, context=None):
     '''
     return the preferred transport type of partner
     '''
+    if context is None:
+        context = {}
     field = 'transport_0'
     if part:
         partner_obj = self.pool.get('res.partner')
@@ -290,6 +308,8 @@ def compute_internal_type(self, cr, uid, part=False, type=False, context=None):
     '''
     return the zone of partner
     '''
+    if context is None:
+        context = {}
     field = 'zone'
     if part:
         partner_obj = self.pool.get('res.partner')
@@ -302,6 +322,8 @@ def compute_partner_type(self, cr, uid, part=False, type=False, context=None):
     '''
     return the partner type
     '''
+    if context is None:
+        context = {}
     field = 'partner_type'
     if part:
         partner_obj = self.pool.get('res.partner')
@@ -426,12 +448,14 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False,
     
     return res
     
-def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, parent_class, context={}):
+def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, parent_class, context=None):
     '''
     Checks if dates are later than header dates
     
     deprecated
     '''
+    if context is None:
+        context = {}
     min_confirmed = min_requested = False
     
     order_id = context.get('active_id', [])
@@ -455,7 +479,6 @@ def common_create(self, cr, uid, data, type, context=None):
     '''
     if context is None:
         context = {}
-        
     # if comes from automatic data - fill confirmed date
     if context.get('update_mode') in ['init', 'update'] or data.get('from_yml_test'):
         data['delivery_confirmed_date'] = '2011-12-06'
@@ -539,10 +562,12 @@ class purchase_order(osv.osv):
         
         return super(purchase_order, self).create(cr, uid, data, context=context)
     
-    def _get_receipt_date(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_receipt_date(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the date of the first picking for the the PO
         '''
+        if context is None:
+            context = {}
         res = {}
         pick_obj = self.pool.get('stock.picking')
         
@@ -559,6 +584,8 @@ class purchase_order(osv.osv):
         '''
         Return function values
         '''
+        if context is None:
+            context = {}
         res = {}
         pick_obj = self.pool.get('stock.picking')
         
@@ -584,6 +611,8 @@ class purchase_order(osv.osv):
         - date is set to False
         - date_expected is set to delivery_confirmed_date
         '''
+        if context is None:
+            context = {}
         move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
         order_line = kwargs['order_line']
         move_values.update({'date': order_line.confirmed_delivery_date,'date_expected': order_line.confirmed_delivery_date,})
@@ -596,7 +625,7 @@ class purchase_order(osv.osv):
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.datetime(string='Shipment Date', help='Date on which picking is created at supplier'),
+                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -620,21 +649,25 @@ class purchase_order(osv.osv):
                  'confirmed_date_by_synchro': False,
                  }
     
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return {}
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
         
-    def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
+    def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=None):
         '''
         Checks the entered value
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
@@ -704,12 +737,16 @@ class purchase_order(osv.osv):
         '''
         data for requested
         '''
+        if context is None:
+            context = {}
         return {'name': _('Do you want to update the Requested Date of all order lines ?'),}
     
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
         data for confirmed
         '''
+        if context is None:
+            context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'),}
     
     def update_date(self, cr, uid, ids, context=None):
@@ -757,10 +794,12 @@ class purchase_order_line(osv.osv):
     _name= 'purchase.order.line'
     _inherit = 'purchase.order.line'
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Create history if date values changed
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
             
@@ -793,15 +832,19 @@ class purchase_order_line(osv.osv):
         '''
         self is purchase.order
         '''
+        if context is None:
+            context = {}
         result = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
         return result
     
-    def _get_planned_date(self, cr, uid, context):
+    def _get_planned_date(self, cr, uid, context=None):
         '''
         Returns planned_date
         
         SPRINT3 validated
         '''
+        if context is None:
+            context = {}
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
@@ -817,6 +860,8 @@ class purchase_order_line(osv.osv):
         
         SPRINT3 validated
         '''
+        if context is None:
+            context = {}
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
        
@@ -858,12 +903,14 @@ class purchase_order_line(osv.osv):
                  'confirmed_delivery_date': _get_confirmed_date,
                  }
     
-    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
+    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''
         Checks if dates are later than header dates
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'purchase.order', context=context)
 
 purchase_order_line()
@@ -873,10 +920,12 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Checks if dates are good before writing
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -919,10 +968,12 @@ class sale_order(osv.osv):
         res = super(sale_order, self).copy_data(cr, uid, id, default=default, context=context)
         return res
     
-    def _get_receipt_date(self, cr, uid, ids, field_name, arg, context={}):
+    def _get_receipt_date(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Returns the date of the first picking for the the PO
         '''
+        if context is None:
+            context = {}
         res = {}
         pick_obj = self.pool.get('stock.picking')
         
@@ -941,7 +992,7 @@ class sale_order(osv.osv):
                                                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
-                'shipment_date': fields.datetime(string='Shipment Date', readonly=True,),
+                'shipment_date': fields.date(string='Shipment Date', readonly=True,),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
@@ -965,21 +1016,25 @@ class sale_order(osv.osv):
                  'confirmed_date_by_synchro': False,
                  }
     
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
+    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
         '''
         Set the shipment date if the internal_type == international
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return {}
         return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
         
-    def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context={}):
+    def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=None):
         '''
         Checks the entered value
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
@@ -1052,12 +1107,16 @@ class sale_order(osv.osv):
         '''
         data for requested for change line wizard
         '''
+        if context is None:
+            context = {}
         return {'name': _('Do you want to update the Requested Date of all order lines ?'),}
     
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
         data for confirmed for change line wizard
         '''
+        if context is None:
+            context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'),}
     
     def update_date(self, cr, uid, ids, context=None):
@@ -1125,6 +1184,8 @@ class sale_order(osv.osv):
         
         - allow to modify the data for procurement order creation
         '''
+        if context is None:
+            context = {}
         # objects
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
@@ -1152,10 +1213,12 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Create history if date values changed
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -1163,10 +1226,12 @@ class sale_order_line(osv.osv):
                     
         return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
     
-    def _get_planned_date(self, cr, uid, context, *a):
+    def _get_planned_date(self, cr, uid, context=None, *a):
         '''
             Returns planned_date
         '''
+        if context is None:
+            context = {}
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
@@ -1180,10 +1245,12 @@ class sale_order_line(osv.osv):
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context, *a):
+    def _get_confirmed_date(self, cr, uid, context=None, *a):
         '''
             Returns confirmed date
         '''
+        if context is None:
+            context = {}
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
@@ -1225,12 +1292,14 @@ class sale_order_line(osv.osv):
                  'so_state_stored': _get_default_state,
                  }
     
-    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context={}):
+    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
         '''
         Checks if dates are later than header dates 
         
         deprecated
         '''
+        if context is None:
+            context = {}
         return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'sale.order', context=context)
     
 sale_order_line()
@@ -1272,6 +1341,8 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order line creation
         '''
+        if context is None:
+            context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
         # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
@@ -1286,6 +1357,8 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order creation
         '''
+        if context is None:
+            context = {}
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         line = kwargs['line']
         procurement = kwargs['procurement']
@@ -1308,6 +1381,8 @@ class stock_picking(osv.osv):
         '''
         call super - modify logic for min_date (Expected receipt date)
         '''
+        if context is None:
+            context = {}
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1339,6 +1414,8 @@ class stock_picking(osv.osv):
         '''
         call super
         '''
+        if context is None:
+            context = {}
         result = super(stock_picking, self)._set_minimum_date(cr, uid, ids, name, value, arg, context=context)
         return result
 
@@ -1353,6 +1430,8 @@ class stock_picking(osv.osv):
         '''
         shipment date of sale order is updated and logged
         '''
+        if context is None:
+            context = {}
         date_tools = self.pool.get('date.tools')
         res = super(stock_picking, self).do_partial(cr, uid, ids, partial_datas, context=context)
 
@@ -1361,8 +1440,8 @@ class stock_picking(osv.osv):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.sale_id and not picking.sale_id.shipment_date:
                 sale_id = picking.sale_id.id
-                date_format = date_tools.get_datetime_format(cr, uid, context=context)
-                db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                date_format = date_tools.get_date_format(cr, uid, context=context)
+                db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
@@ -1383,6 +1462,8 @@ class stock_move(osv.osv):
         '''
         update shipment date and logged
         '''
+        if context is None:
+            context = {}
         date_tools = self.pool.get('date.tools')
         res = super(stock_move, self).do_partial(cr, uid, ids, partial_datas, context=context)
         
@@ -1391,8 +1472,8 @@ class stock_move(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.picking_id and obj.picking_id.sale_id and not obj.picking_id.sale_id.shipment_date:
                 sale_id = obj.picking_id.sale_id.id
-                date_format = date_tools.get_datetime_format(cr, uid, context=context)
-                db_date_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+                date_format = date_tools.get_date_format(cr, uid, context=context)
+                db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
@@ -1413,6 +1494,8 @@ class lang(osv.osv):
         '''
         generic function
         '''
+        if context is None:
+            context = {}
         type = type + '_format'
         assert type in self._columns, 'Specified format field does not exist'
         user_obj = self.pool.get('res.users')
@@ -1428,6 +1511,8 @@ class lang(osv.osv):
         '''
         generic function - for now constant values
         '''
+        if context is None:
+            context = {}
         if type == 'date':
             return '%Y-%m-%d'
         if type == 'time':
