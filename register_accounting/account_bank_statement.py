@@ -404,15 +404,24 @@ class account_bank_statement(osv.osv):
             if search_ids and len(search_ids) == 1:
                 operator = '='
             domain.append(('id', operator, search_ids))
-#        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', '')
-#        if view:
-#            view_id = view[1]
+        # Prepare view
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_for_open_advance_tree')
+        if view:
+            view_id = view[1]
+        # Prepare search view
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_for_open_advance_filter')
+        if search_view:
+            search_view_id = search_view[1]
+        reg_act = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'action_open_advance_tree')
+        return self.pool.get('ir.actions.act_window').read(cr, uid, reg_act[1], [], context=context)
         return {
             'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.bank.statement.line',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': search_view_id,
             'domain': domain,
             'context': context,
             'target': 'current',

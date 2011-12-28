@@ -808,5 +808,71 @@
     <!-- UF-426: remove Journal Items in Cash and Bank -->
         <delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
 
+    <!-- List of Open Advance Tree -->
+        <record model="ir.ui.view" id="account_bank_statement_line_for_open_advance_tree">
+            <field name="name">account.bank.statement.line.for.open.advance.tree</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="30"/>
+            <field name="arch" type="xml">
+                <tree string="Register Lines">
+                    <button name="button_advance" states="hard" string="Advance return" type="object" icon="terp-stock_effects-object-colorize" context="context"/>
+                    <field name="date"/>
+                    <field name="name" string="Description"/>
+                    <field name="account_id"/>
+                    <field name="partner_type"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="register_id" invisible="1"/>
+                    <field name="amount_in"/>
+                    <field name="amount_out"/>
+                    <field name="currency_id"/>
+                    <field name="functional_in"/>
+                    <field name="functional_out"/>
+                    <field name="functional_currency_id"/>
+                    <field name="state"/>
+                    <field name="statement_id"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Open Advance Search View -->
+        <record id="account_bank_statement_line_for_open_advance_filter" model="ir.ui.view">
+            <field name="name">account.bank.statement.line.for.open.advance.filter</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="30"/>
+            <field name="arch" type="xml">
+                <search string="Register Lines">
+                    <group col='10' colspan='4'>
+                        <field name="date" select='1'/>
+                        <field name="name" select='1'/>
+                        <field name="account_id" select='1'/>
+                        <field name="employee_id" select='1'/>
+                        <field name="amount" select='1'/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By…" colspan="12" col="10">
+                        <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                        <filter string="3rd party Register" icon="terp-dolar" domain="[]" context="{'group_by': 'register_id'}"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_open_advance_tree" model="ir.actions.act_window">
+            <field name="name">Open Advances</field>
+            <field name="res_model">account.bank.statement.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account_bank_statement_line_for_open_advance_filter"/>
+            <field name="view_id" ref="account_bank_statement_line_for_open_advance_tree"/>
+        </record>
+
     </data>
 </openerp>
