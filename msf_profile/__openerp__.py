@@ -77,7 +77,6 @@
 #        "analytic_distribution_purchase",
         "service_purchasing",
         "account_reconciliation",
-        "analytic_distribution_purchase",
         "vat_management",
         "analytic_distribution_supply",
         "account_mcdb",
