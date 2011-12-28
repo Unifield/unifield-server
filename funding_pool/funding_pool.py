@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 import decimal_precision as dp
-from tools.misc import flatten
 
 class analytic_distribution(osv.osv):
     _name = "analytic.distribution"

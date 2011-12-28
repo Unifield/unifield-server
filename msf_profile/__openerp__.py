@@ -76,6 +76,7 @@
         "analytic_distribution_invoice",
 #        "analytic_distribution_purchase",
         "service_purchasing",
+        "account_reconciliation",
     ],
     "update_xml": [
         "report.xml",
