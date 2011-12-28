@@ -26,7 +26,8 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
-                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" />
+                        <field name="rfq_ok" invisible="1" />
+                        <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('rfq_ok', '=', True)]}" />
                     </xpath>
                 </data>
             </field>

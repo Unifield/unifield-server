@@ -693,6 +693,7 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
+                'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 }
     
 purchase_order_line()
