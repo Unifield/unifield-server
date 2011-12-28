@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,21 +21,6 @@
 #
 ##############################################################################
 
-{
-    "name" : "Analytic Distribution on Purchase Order",
-    "version" : "1.0",
-    "description" : "This permits to have analytic distribution wizard on a Purchase Order",
-    "author" : "TeMPO Consulting, MSF",
-    "category" : "Tools",
-    "depends" : ["base", "analytic_distribution", "purchase"],
-    "init_xml" : [],
-    "update_xml" : [
-            "purchase_view.xml",
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+from period import *
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

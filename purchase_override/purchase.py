@@ -380,6 +380,28 @@ class purchase_order(osv.osv):
             vals['from_yml_test'] = True
         return super(purchase_order, self).create(cr, uid, vals, context)
 
+    def action_cancel(self, cr, uid, ids, context={}):
+        """
+        Cancel activity in workflow.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+
+    def action_done(self, cr, uid, ids, context={}):
+        """
+        Done activity in workflow.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.write(cr, uid, ids, {'state':'done'}, context=context)
+
 purchase_order()
 
 class account_invoice(osv.osv):

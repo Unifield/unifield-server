@@ -1,6 +1,6 @@
 <openerp>
     <data>
-    
+
         <record id="view_analytic_account_form" model="ir.ui.view">
             <field name="name">analytic.account.form</field>
             <field name="model">account.analytic.account</field>
@@ -36,7 +36,7 @@
                 </data>
             </field>
         </record>
-        
+
         <record id="view_analytic_account_search" model="ir.ui.view">
             <field name="name">analytic.account.search</field>
             <field name="model">account.analytic.account</field>
@@ -52,7 +52,7 @@
                 </filter>
             </field>
         </record>
-        
+
         <record id="view_account_analytic_account_tree_inherit" model="ir.ui.view">
             <field name="name">account.analytic.account.tree.inherit</field>
             <field name="model">account.analytic.account</field>
@@ -74,7 +74,6 @@
                 </tree>
             </field>
         </record>
-        
         
         <record id="view_account_analytic_account_list_inherit" model="ir.ui.view">
             <field name="name">account.analytic.account.list.inherit</field>
@@ -104,12 +103,11 @@
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
             <field name="context">{'search_default_active': 1}</field>
         </record>
-        
+
         <menuitem action="action_account_analytic_account_form"
                   id="account.account_analytic_def_account"
                   parent="account.menu_analytic_accounting"
                   groups="analytic.group_analytic_accounting"/>
-        
-            
+
     </data>
 </openerp>

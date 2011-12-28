@@ -65,6 +65,21 @@ class account_invoice(osv.osv):
             return False
         return True
 
+    def _hook_period_id(self, cr, uid, inv, context={}):
+        """
+        Give matches period that are not draft and not HQ-closed from given date
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not inv:
+            return False
+        # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
+        res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
+            ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
+            ('company_id', '=', inv.company_id.id)], context=context, order="date_start ASC, name ASC")
+        return res
+
 account_invoice()
 
 class account_invoice_line(osv.osv):

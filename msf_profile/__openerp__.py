@@ -79,6 +79,8 @@
         "account_reconciliation",
         "analytic_distribution_purchase",
         "vat_management",
+        "analytic_distribution_supply",
+        "account_mcdb",
     ],
     "update_xml": [
         "report.xml",

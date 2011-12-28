@@ -21,17 +21,19 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
+{
+    "name" : "Account Tools",
+    "version" : "0.1",
+    "description" : "Some tools in order to develop accounting modules for OpenERP",
+    "author" : "MSF - TeMPO Consulting",
+    "category" : "Tools",
+    "depends" : ["base", "account"],
+    "init_xml" : [],
+    "update_xml" : [],
+    "demo_xml" : [],
+    "test": [],
+    "installable": True,
+    "active": False
+}
 
-class account_invoice_line(osv.osv):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
-
-    _columns = {
-        'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
-    }
-
-account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

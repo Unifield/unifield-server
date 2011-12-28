@@ -364,6 +364,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify invoice line state
             if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 res[el.id] = False
+            # verify commitment state
+            if el.commitment_id and el.commitment_id.state in ['done']:
+                res[el.id] = False
+            # verify commitment line state
+            if el.commitment_line_id and el.commitment_line_id.commit_id and el.commitment_line_id.commit_id.state in ['done']:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context={}):
@@ -386,6 +392,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[wiz.id] = True
             elif wiz.direct_invoice_line_id and wiz.direct_invoice_line_id.invoice_id and wiz.direct_invoice_line_id.invoice_id.analytic_distribution_id:
                 res[wiz.id] = True
+            elif wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.analytic_distribution_id:
+                res[wiz.id] = True
 
         return res
 
@@ -405,6 +413,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'register_line_id': fields.many2one('account.bank.statement.line', string="Register Line"),
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
+        'commitment_id': fields.many2one('account.commitment', string="Commitment Voucher"),
+        'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True, 
             help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
@@ -538,10 +548,25 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Verify that invoice from invoice line is in good state if necessary
             if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that commitment is in good state if necessary
+            if wiz.commitment_id and wiz.commitment_id.state in ['done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            if wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.state in ['done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
-            if not wiz.line_ids and wiz.purchase_id:
+            if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id):
                 raise osv.except_osv(_('Warning'), _('No Cost Center Allocation done!'))
-            if wiz.invoice_id and not wiz.fp_line_ids:
+            # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
+            #+ move line, commitment or commitment line
+            if not wiz.fp_line_ids and (wiz.invoice_id or wiz.invoice_line_id) :
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            if not wiz.fp_line_ids and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            if not wiz.fp_line_ids and wiz.register_line_id:
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            if not wiz.fp_line_ids and wiz.move_line_id:
+                raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
+            if not wiz.fp_line_ids and (wiz.commitment_id or wiz.commitment_line_id):
                 raise osv.except_osv(_('Warning'), _('No Funding Pool Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
             for lines in [wiz.line_ids, wiz.fp_line_ids, wiz.f1_line_ids, wiz.f2_line_ids]:
@@ -707,7 +732,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'), 
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
-                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), ('direct_invoice_line_id', 'wizard.account.invoice.line')]:
+                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
+                    ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
+                    ('commitment_line_id', 'account.commitment.line')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
@@ -807,9 +834,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 il = wiz.invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
             # Same thing for purchase order line
-            if wiz.purchase_line_id:
+            elif wiz.purchase_line_id:
                 pl = wiz.purchase_line_id
                 distrib = pl.order_id and pl.order_id.analytic_distribution_id and pl.order_id.analytic_distribution_id or False
+            elif wiz.commitment_line_id:
+                pl = wiz.commitment_line_id
+                distrib = pl.commit_id and pl.commit_id.analytic_distribution_id or False
+
             if distrib:
                 # First delete all current lines
                 self.pool.get('analytic.distribution.wizard.lines').unlink(cr, uid, [x.id for x in wiz.line_ids], context=context)
@@ -877,24 +908,42 @@ class analytic_distribution_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             distrib = wizard.distribution_id or False
-            move_lines = [x.id for x in distrib.move_line_ids]
             aal_obj = self.pool.get('account.analytic.line')
             ml_obj = self.pool.get('account.move.line')
             if not distrib:
                 return False
-            # Search account analytic lines attached to this move lines
-            operator = 'in'
-            if len(move_lines) == 1:
-                operator = '='
-            aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
-            if aal_ids:
-                # delete old analytic lines
-                aal_obj.unlink(cr, uid, aal_ids, context=context)
-                # create new analytic lines
-                ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
-
-            if not move_lines and wizard.invoice_line_id:
-                self.pool.get('account.invoice.line').create_engagement_lines(cr, uid, [wizard.invoice_line_id.id], context=context)
+            if wizard.move_line_id:
+                move_lines = [x.id for x in distrib.move_line_ids]
+                # Search account analytic lines attached to this move lines
+                operator = 'in'
+                if len(move_lines) == 1:
+                    operator = '='
+                aal_ids = aal_obj.search(cr, uid, [('move_id', operator, move_lines)], context=context)
+                if aal_ids:
+                    # delete old analytic lines
+                    aal_obj.unlink(cr, uid, aal_ids, context=context)
+                    # create new analytic lines
+                    ml_obj.create_analytic_lines(cr, uid, move_lines, context=context)
+            elif wizard.commitment_line_id:
+                # Do process only if commitment is on 'open' state
+                if wizard.commitment_line_id.commit_id and wizard.commitment_line_id.commit_id.state == 'open':
+                    self.pool.get('account.commitment.line').update_analytic_lines(cr, uid, [wizard.commitment_line_id.id], wizard.total_amount, context=context)
+            elif wizard.commitment_id:
+                if wizard.commitment_id.state == 'open':
+                    # Search commitment lines that doesn't have any distribution and that are linked to this commitment
+                    cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', wizard.commitment_id.id), 
+                        ('analytic_distribution_id', '=', False)], context=context)
+                    if cl_ids:
+                        operator = 'in'
+                        if len(cl_ids) == 1:
+                            operator = '='
+                        # Search all analytic lines linked to this commitment lines
+                        aal_ids = aal_obj.search(cr, uid, [('commitment_line_id', operator, cl_ids)], context=context)
+                        if aal_ids:
+                            # delete old analytic lines
+                            aal_obj.unlink(cr, uid, aal_ids, context=context)
+                            # create new analytic lines
+                            self.pool.get('account.commitment').create_analytic_lines(cr, uid, [wizard.commitment_id.id], context=context)
         return True
 
 analytic_distribution_wizard()

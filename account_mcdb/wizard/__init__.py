@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -21,8 +21,6 @@
 #
 ##############################################################################
 
-import invoice
-import purchase
-import analytic_distribution
+import output_currency_for_export
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

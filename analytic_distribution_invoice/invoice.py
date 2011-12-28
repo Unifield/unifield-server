@@ -158,51 +158,10 @@ class account_invoice_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            # Default value is invalid
-            res[line.id] = 'invalid'
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            # Verify that the distribution is compatible with line account
-            if line.analytic_distribution_id:
-                total = 0.0
-                for fp_line in line.analytic_distribution_id.funding_pool_lines:
-                    # If fp_line is MSF Private Fund, all is ok
-                    if fp_line.analytic_id.id == fp_id:
-                        total += 1
-                        continue
-                    # If account don't be on ONLY ONE funding_pool, then continue
-                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
-                        continue
-                    else:
-                        total += 1
-                if total and total == len(line.analytic_distribution_id.funding_pool_lines):
-                    res[line.id] = 'valid'
-            # If no analytic_distribution on invoice line, check with invoice distribution
-            elif line.invoice_id.analytic_distribution_id:
-                total = 0.0
-                for fp_line in line.invoice_id.analytic_distribution_id.funding_pool_lines:
-                    # If fp_line is MSF Private Fund, all is ok
-                    if fp_line.analytic_id.id == fp_id:
-                        total += 1
-                        continue
-                    # If account don't be on ONLY ONE funding_pool, then continue
-                    if line.account_id.id not in [x.id for x in fp_line.analytic_id.account_ids]:
-                        continue
-                    else:
-                        total += 1
-                if total and total == len(line.invoice_id.analytic_distribution_id.funding_pool_lines):
-                    res[line.id] = 'valid'
-            # If no analytic distribution on invoice line, but come from a yaml test, then set to 'valid'
-            elif line.from_yml_test:
+            if line.from_yml_test:
                 res[line.id] = 'valid'
-            # If no analytic distribution on invoice line and on invoice, then give 'none' state
             else:
-                # no analytic distribution on invoice line or invoice => 'none'
-                res[line.id] = 'none'
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.invoice_id.analytic_distribution_id.id, line.account_id.id)
         return res
 
     def _get_distribution_line_count(self, cr, uid, ids, name, args, context={}):
