@@ -78,6 +78,7 @@
         "service_purchasing",
         "account_reconciliation",
         "analytic_distribution_purchase",
+        "vat_management",
     ],
     "update_xml": [
         "report.xml",
