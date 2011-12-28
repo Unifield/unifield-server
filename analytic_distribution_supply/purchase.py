@@ -223,6 +223,13 @@ class purchase_order(osv.osv):
                 created_commitment_lines.append(line_id)
             # Create analytic distribution on this commitment line
             self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
+            # Display a message to inform that a commitment was created
+            commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
+            commit_name = commit_data and commit_data.get('name') or ''
+            message = _("Commitment Voucher %s has been created.") % commit_name
+            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
+            view_id = view_ids and view_ids[1] or False
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_id})
         return True
 
     def wkf_approve_order(self, cr, uid, ids, context={}):
