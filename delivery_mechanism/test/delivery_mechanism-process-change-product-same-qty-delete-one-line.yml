@@ -106,7 +106,7 @@
     back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
     assert back_ids, 'backorder should exist'
     # check the moves in IN - products have changed !
-    b_qty = [0.0]
+    b_qty = [] # b qty is 0.0 and therefore removed
     c_qty = [10.0]
     for obj in self.browse(cr, uid, in_ids, context=context):
       for move in obj.move_lines:

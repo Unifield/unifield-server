@@ -384,6 +384,11 @@ class stock_picking(osv.osv):
                     if not update_out:
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=context)
+            # clean the picking object - removing lines with 0 qty - force unlink
+            # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
+            for move in pick.move_lines:
+                if not move.product_qty:
+                    move.unlink(context=dict(context, call_unlink=True))
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
