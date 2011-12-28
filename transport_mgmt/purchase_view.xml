@@ -80,7 +80,7 @@
                 <data>
 
                     <xpath expr="/form/notebook//field[@name='origin']" position="after">
-                        <button name="display_transport_line" type="object" string="Display/Hide Transport line" icon="gtk-execute" colspan="2" attrs="{'invisible': ['|', '|', '|', ('rfq_ok', '=', True), ('state', 'in', ['approved', 'done']), ('categ', '=', 'transport'), ('intl_supplier_ok', '=', True)]}"/>
+<!--                        <button name="display_transport_line" type="object" string="Display/Hide Transport line" icon="gtk-execute" colspan="2" attrs="{'invisible': ['|', '|', '|', ('rfq_ok', '=', True), ('state', 'in', ['approved', 'done']), ('categ', '=', 'transport'), ('intl_supplier_ok', '=', True)]}"/>-->
                     </xpath>
 
                     <xpath expr="/form//field[@name='pricelist_id']" position="replace">
