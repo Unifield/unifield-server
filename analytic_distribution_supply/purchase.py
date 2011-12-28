@@ -262,7 +262,7 @@ class purchase_order(osv.osv):
 
     def _finish_commitment(self, cr, uid, ids, context={}):
         """
-        Delete attached commitment(s) from given Purchase Order.
+        Change commitment(s) to Done state from given Purchase Order.
         """
         # Some verifications
         if not context:
@@ -273,7 +273,7 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             # Change commitment state if exists
             if po.commitment_ids:
-                self.pool.get('account.commitment').write(cr, uid, [x.id for x in po.commitment_ids], {'state': 'done'}, context=context)
+                self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
     def action_cancel(self, cr, uid, ids, context={}):
@@ -285,7 +285,7 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Delete commitments if exists
+        # Change commitments state if exists
         self._finish_commitment(cr, uid, ids, context=context)
         return super(purchase_order, self).action_cancel(cr, uid, ids, context=context)
 
