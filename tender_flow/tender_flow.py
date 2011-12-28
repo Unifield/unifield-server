@@ -643,7 +643,7 @@ class purchase_order(osv.osv):
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
-                'valid_till': fields.date(string='Valid Till', states={'rfq_sent':[('required',True), ('readonly', False),]}, readonly=True,),
+                'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 'name': fields.char('Order Reference', size=64, required=True, states={'done':[('readonly',True)],}, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
                 'date_order':fields.date('Date Ordered', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)],}, select=True, help="Date on which this document has been created."),
@@ -680,6 +680,26 @@ class purchase_order(osv.osv):
         return {'type': 'ir.actions.report.xml',
                 'report_name': 'purchase.quotation',
                 'datas': datas}
+
+    def check_rfq_updated(self, cr, uid, ids, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+        for rfq in self.browse(cr, uid, ids, context=context):
+            if not rfq.valid_till:
+                raise osv.except_osv(_('Error'), _('You must specify a Valid Till date.'))
+
+            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_mode': 'form,tree,graph,calendar',
+                'view_type': 'form',
+                'target': 'crush',
+                'context': {'rfq_ok': True, 'search_default_draft_rfq': 1,},
+                'domain': [('rfq_ok', '=', True)],
+                'res_id': rfq.id}
     
 purchase_order()
 
