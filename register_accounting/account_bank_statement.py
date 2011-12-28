@@ -405,15 +405,13 @@ class account_bank_statement(osv.osv):
                 operator = '='
             domain.append(('id', operator, search_ids))
         # Prepare view
-        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_for_open_advance_tree')
-        if view:
-            view_id = view[1]
+        view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        view_id = view and view[1] or False
         # Prepare search view
-        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_for_open_advance_filter')
-        if search_view:
-            search_view_id = search_view[1]
-        reg_act = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'action_open_advance_tree')
-        return self.pool.get('ir.actions.act_window').read(cr, uid, reg_act[1], [], context=context)
+        search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
+        search_view_id = search_view and search_view[1] or False
+#        reg_act = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'action_open_advance_tree')
+#        return self.pool.get('ir.actions.act_window').read(cr, uid, reg_act[1], [], context=context)
         return {
             'name': name,
             'type': 'ir.actions.act_window',
@@ -423,7 +421,6 @@ class account_bank_statement(osv.osv):
             'view_id': [view_id],
             'search_view_id': search_view_id,
             'domain': domain,
-            'context': context,
             'target': 'current',
         }
 
