@@ -80,7 +80,7 @@ class account_commitment(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_line_count': fields.function(_get_distribution_line_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
-        'type': fields.selection([('manual', 'Manual'), ('external', 'From external supplier'), ('esc', 'From Esc supplier')], string="Type", readonly=True),
+        'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Automatic - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
     }
 
