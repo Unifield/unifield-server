@@ -99,7 +99,7 @@
     so = sale_order_obj.browse(cr, uid, ref("sale_order_so7"))
     invoice_id = self.search(cr, uid, [('origin','like',so.name),('state','=','open')])
     self.pay_and_reconcile(cr, uid, invoice_id,
-        255000.0, ref('account.cash'), ref('account.period_8'),
+        100000.0, ref('account.cash'), ref('account.period_8'),
         ref('sale.account_journal_bankjournal0'), ref('account.cash'),
         ref('account.period_8'), ref('sale.account_journal_bankjournal0'),
         name='test')
