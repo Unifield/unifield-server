@@ -90,7 +90,7 @@ class account_move_line_compute_currency(osv.osv):
         if 'period_id' in vals and 'date' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'])
             if vals['date'] < period.date_start or vals['date'] > period.date_stop:
-                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period!'))
+                raise osv.except_osv(_('Warning !'), _('Posting date is outside of defined period: %s!') % period.name or '')
 
     def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
         newvals = {}
