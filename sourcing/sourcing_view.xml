@@ -106,7 +106,7 @@
 			<field name="res_model">sourcing.line</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
-			<field name="domain">[('sale_order_state','!=','procurement')]</field>
+			<field name="domain">[('sale_order_state','!=','draft')]</field>
 			<field name="context">{'search_default_sale_order_state': 'draft'}</field>
 			<field name="search_view_id" ref="sourcing_line_search_form_view" />
 		</record>

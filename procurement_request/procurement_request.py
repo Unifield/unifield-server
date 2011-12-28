@@ -120,7 +120,7 @@ class procurement_request(osv.osv):
         if not context:
             context = {}
 
-        if context.get('procurement_request'):
+        if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
             if not vals.get('name', False):
                 vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
@@ -155,7 +155,7 @@ class procurement_request(osv.osv):
             elif not request.procurement_request:
                 normal_ids.append(request.id)
             else:
-                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Internal Request(s) which are already confirmed !'))
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Internal Request(s) which are already validated !'))
                 
         if del_ids:
             osv.osv.unlink(self, cr, uid, del_ids, context=context)
@@ -196,12 +196,20 @@ class procurement_request(osv.osv):
         })
         
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+
+    def validate_procurement(self, cr, uid, ids, context={}):
+        '''
+        Validate the request
+        '''
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
     
     def confirm_procurement(self, cr, uid, ids, context={}):
         '''
         Confirmed the request
         '''
-        self.write(cr, uid, ids, {'state': 'progress'})
+        self.write(cr, uid, ids, {'state': 'progress'}, context=context)
         
         return True
     
