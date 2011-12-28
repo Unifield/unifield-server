@@ -27,10 +27,9 @@
     "description" : "This module add somes elements to manage VAT @ MSF",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Accounting",
-    "depends" : ["base", "account", "register_accounting", "account_activable", "msf_chart_of_account", "purchase_msf"],
+    "depends" : ["base", "account", "register_accounting", "account_activable", "purchase_msf"],
     "init_xml" : [
         'data/account_type.xml',
-        'data/chart_of_account.xml',
     ],
     "update_xml" : [],
     "demo_xml" : [],
