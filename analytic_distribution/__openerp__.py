@@ -33,10 +33,7 @@
         'security/ir.model.access.csv',
         'analytic_account_view.xml',
         'wizard/account_analytic_chart_view.xml',
-        'wizard/wizard_costcenter_distribution_view.xml',
-        'wizard/wizard_fundingpool_distribution_view.xml',
-        'wizard/wizard_free1_distribution_view.xml',
-        'wizard/wizard_free2_distribution_view.xml',
+        'analytic_distribution_wizard_view.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',

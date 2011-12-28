@@ -103,7 +103,7 @@
               assert len(line.outgoing_ids) == 0, "Number of outgoing deliveries is different than 0 (1/P2)"
               assert line.outgoing_status == 'No deliveries (0)', "Outgoing status is different than 'No deliveries (0)' (1/P2)"
               
-            if line.product_id.id == ref('product3'):              
+            if line.product_id.id == ref('product3'):
               assert line.sourced_ok == 'No', "Sourced is not equal to 'No' (1/P3)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (1/P3)"
               assert line.tender_status == 'N/A (0)', "Tender status is different than 'N/A (0)' (1/P3)"
@@ -307,6 +307,7 @@
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (4)"
         
         for line in wiz.line_ids:
+            
             if line.product_id.id == ref('product1'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'Done' (4/P1)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P1)"
@@ -319,6 +320,9 @@
               assert line.available_qty == 0.0, "The available qty is not equal to 0.00 (4/P1)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P1)"
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (4/P1)"
+              
+              # write on PO in order to avoid analytic distribution error
+              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
               for quotation in line.purchase_ids:
                 wf_service = netsvc.LocalService("workflow")
@@ -364,6 +368,9 @@
               assert line.available_qty == 0.00, "The available qty is not equal to 0.00 (4/P4)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P4)"
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (4/P4)"
+              
+              # write on PO in order to avoid analytic distribution error
+              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
               for quotation in line.purchase_ids:
                 wf_service = netsvc.LocalService("workflow")

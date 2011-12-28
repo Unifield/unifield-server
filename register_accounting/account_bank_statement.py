@@ -711,8 +711,11 @@ class account_bank_statement_line(osv.osv):
             'period_id': st.period_id.id,
             'currency_id': st.currency.id,
             'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False,
-            'analytic_distribution_id': st_line.analytic_distribution_id and st_line.analytic_distribution_id.id or False,
         }
+
+        if st_line.analytic_distribution_id:
+            val.update({'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, 
+                st_line.analytic_distribution_id.id, {}, context=context) or False})
 
         if st.currency.id <> company_currency_id:
             amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,

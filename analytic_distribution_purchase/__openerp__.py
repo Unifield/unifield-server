@@ -27,7 +27,7 @@
     "description" : "This permits to have analytic distribution wizard on a Purchase Order",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Tools",
-    "depends" : ["base", "funding_pool", "purchase"],
+    "depends" : ["base", "analytic_distribution", "purchase"],
     "init_xml" : [],
     "update_xml" : [
             "purchase_view.xml",

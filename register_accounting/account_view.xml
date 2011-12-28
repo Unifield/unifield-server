@@ -54,7 +54,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="date" string="Posting Date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -67,12 +67,12 @@
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)]}"
                                         />
                                         <field name="partner_type" 
-                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 
-                                            'required': [('partner_type_mandatory', '=', True)]}"
+                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency}" />
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
@@ -111,9 +111,7 @@
                                             domain="[('filter_for_third_party', '=', account_id)]" 
                                             context="{'curr': parent.currency}" />
                                         <field name="display_analytic_button" invisible="1"/>
-                                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"
-                                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
                                         <field name="amount" invisible="1"/>
@@ -180,7 +178,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
@@ -201,9 +199,7 @@
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency}" 
                                             />
-                                        <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" groups="analytic.group_analytic_accounting"
-                                                invisible="1" />
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -241,8 +237,7 @@
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency}" 
                                             />
-                                        <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1" groups="analytic.group_analytic_accounting" /> 
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -579,7 +574,7 @@
                     <notebook colspan="4">
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
@@ -596,8 +591,7 @@
                                             context="{'curr': parent.currency}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
-                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
                                     <field name="amount" invisible="1"/>
@@ -634,8 +628,7 @@
                                         context="{'curr': parent.currency}" 
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
-                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
                                     <field name="amount" invisible="1"/>

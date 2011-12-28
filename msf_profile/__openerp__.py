@@ -34,7 +34,7 @@
         "base_report_designer",
         "msf_partner",
         "register_accounting",
-        "funding_pool",
+        "analytic_distribution",
         "account_period_closing_level",
         "account_activable",
         "msf_order_date",
@@ -77,6 +77,7 @@
 #        "analytic_distribution_purchase",
         "service_purchasing",
         "account_reconciliation",
+        "analytic_distribution_purchase",
     ],
     "update_xml": [
         "report.xml",
