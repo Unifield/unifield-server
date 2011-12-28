@@ -59,6 +59,7 @@
              'test/delivery_mechanism-process-split-less-cancel-backorder-update-out.yml', #G
              'test/delivery_mechanism-process-split-less-cancel-backorder.yml', #H
              'test/delivery_mechanism-process-split-less-cancel-backorder-update-out-NO-OUT.yml', # in B
+             'test/delivery_mechanism-process-change-product-same-qty-delete-one-line.yml', #I
              ],
     'installable': True,
     'active': False,

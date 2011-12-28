@@ -293,8 +293,6 @@ class stock_picking(osv.osv):
             move_ids = partial_datas[pick.id].keys()
             # all moves
             all_move_ids = [move.id for move in pick.move_lines]
-            # these moves will be set to 0 - not present in the wizard
-            missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -386,8 +384,6 @@ class stock_picking(osv.osv):
                     if not update_out:
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=context)
-            # what to do with missing moves - we set to 0 - or delete ? see with Magali
-            move_obj.write(cr, uid, missing_move_ids, {'product_qty': 0}, context=context)
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)

@@ -113,6 +113,23 @@ class stock_partial_picking(osv.osv_memory):
                                                                                'force_complete': move.force_complete,
                                                                                'change_reason': move.change_reason,
                                                                                })
+            # treated moves
+            move_ids = partial_datas[pick.id].keys()
+            # all moves
+            all_move_ids = [move.id for move in pick.move_lines]
+            # these moves will be set to 0 - not present in the wizard - create partial objects with qty 0
+            missing_move_ids = [x for x in all_move_ids if x not in move_ids]
+            # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
+            for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
+                partial_datas[pick.id].setdefault(missing_move.id, []).append({'product_id': missing_move.product_id.id,
+                                                                               'product_qty': 0,
+                                                                               'product_uom': missing_move.product_uom.id,
+                                                                               'prodlot_id': False,
+                                                                               'asset_id': False,
+                                                                               'force_complete': False,
+                                                                               'change_reason': False,
+                                                                               })
+            
         # integrity check on wizard data
         if not self.integrity_check_do_incoming_shipment(cr, uid, ids, partial_datas, context=context):
             # inline integrity status not yet implemented - will trigger the wizard update
