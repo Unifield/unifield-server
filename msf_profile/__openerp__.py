@@ -74,12 +74,12 @@
         "consumption_calculation",
         "threshold_value",
         "analytic_distribution_invoice",
-#        "analytic_distribution_purchase",
         "service_purchasing",
         "account_reconciliation",
         "vat_management",
         "analytic_distribution_supply",
         "account_mcdb",
+        "out_step",
     ],
     "update_xml": [
         "report.xml",
