@@ -25,6 +25,7 @@ from osv import osv
 import time
 import netsvc
 from reconciliation_tools import _get_addendum_line_account_id
+from tools.translate import _
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -147,7 +148,7 @@ class account_move_line(osv.osv):
             # Search Miscellaneous Transactions journal
             j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
             if not j_ids:
-                raise osv.except_osv(_('Error'), ('No Currency Adjustement journal found!'))
+                raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
             journal_id = j_ids[0]
             # Search attached period
             period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
