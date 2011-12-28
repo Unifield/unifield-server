@@ -191,7 +191,6 @@
     name: "Contract"
     code: "TEST"
     donor_id: donor1
-    grant_name: "Grant Name"
     grant_amount: 100000.0
     eligibility_from_date: !eval "'%s-01-01' %(datetime.now().year+1)"
     eligibility_to_date: !eval "'%s-12-31' %(datetime.now().year+1)"

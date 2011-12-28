@@ -42,7 +42,7 @@ class product_history_consumption(osv.osv_memory):
     }
 
     _defaults = {
-        'date_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'date_to': lambda *a: (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
     }
 
     def open_history_consumption(self, cr, uid, ids, context={}):
@@ -52,7 +52,7 @@ class product_history_consumption(osv.osv_memory):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.history.consumption',
                 'res_id': new_id,
-                'context': context,
+                'context': {'active_id': new_id, 'active_ids': [new_id]},
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'dummy'}
@@ -63,12 +63,19 @@ class product_history_consumption(osv.osv_memory):
         '''
         if not context:
             context = {}
-        res = {}
+        res = {'value': {}}
         month_obj = self.pool.get('product.history.consumption.month')
+        
+        if date_from:
+            date_from = (DateFrom(date_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            res['value'].update({'date_from': date_from})
+        if date_to:
+            date_to = (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            res['value'].update({'date_to': date_to})
 
         # If a period is defined
         if date_from and date_to:
-            res['value'] = {'month_ids': []}
+            res['value'].update({'month_ids': []})
             current_date = DateFrom(date_from) + RelativeDateTime(day=1)
             # For all months in the period
             while current_date <= (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
@@ -213,7 +220,7 @@ class product_product(osv.osv):
         if not context:
            context={}
 
-        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context)
+        res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
             line_view = """<tree string="Historical consumption">
@@ -271,17 +278,17 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals, context={}, load='_classic_read'):
+    def read(self, cr, uid, ids, vals=None, context={}, load='_classic_read'):
         '''
         Set value for each month
         '''
-
+        if context is None:
+            context = {}
         if context.get('history_cons', False):
-            vals = ['default_code', 'name']
-            for month in context.get('months'):
-                vals.append(DateFrom(month.get('date_from')).strftime('%m/%Y'))
-
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
+
+            if 'average' not in vals:
+                return res
 
             if not context.get('amc'):
                 raise osv.except_osv(_('Error'), _('No Consumption type has been choosen !'))

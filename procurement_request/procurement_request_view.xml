@@ -32,7 +32,7 @@
             <field name="type">form</field>
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
-                <form string="Procurement Request">
+                <form string="Internal Request">
                     <group col="6" colspan="4">
                         <field name="name"/>
                         <field name="date_order" attrs="{'readonly': [('state', '!=', 'procurement')]}" />
@@ -52,7 +52,8 @@
                                     <field name="notes" />
                                     <field name="type" on_change="requested_product_id_change(product_id, type)"/>
                                     <field name="latest" />
-                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True)]"/>
+				    <field name="my_company_id" invisible="1" />
+                                    <field name="supplier" context="{'product_id': product_id, 'choose_supplier': True}" attrs="{'readonly': [('type', '=', 'make_to_stock')]}" domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"/>
                                     <!-- <button name="split_line" type="object" string="Split Line" icon="terp-stock_effects-object-colorize" />
                                     <button name="merge_line" type="object" string="Merge Line" icon="terp-gtk-jump-to-ltr" context="{'wizard_id': active_id}" /> -->
                                 </tree>
@@ -98,7 +99,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
-                <tree string="Procurement Requests">
+                <tree string="Internal Requests">
                     <field name="name" />
                     <field name="date_order" />
                     <field name="requested_date" />
@@ -115,7 +116,7 @@
             <field name="type">search</field>
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
-                <search string="Procurment Requests">
+                <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'procurement')]" />
                         <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
@@ -139,7 +140,7 @@
         </record>
         
         <record id="action_procurement_request" model="ir.actions.act_window">
-            <field name="name">Procurement Requests</field>
+            <field name="name">Internal Requests</field>
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -164,6 +165,7 @@
 	
         <menuitem action="action_procurement_request"
                   id="menu_procurement_request"
+                  sequence="2"
                   parent="base.menu_sales" />
     
     </data>

@@ -3,28 +3,24 @@
 		<!-- MANDATORY -->
 		<!--FIRST LEVEL -->
 		<record model="product.nomenclature" id="nomen_med">
-			<field name="code">01</field>
 			<field name="name">MED</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log">
-			<field name="code">02</field>
 			<field name="name">LOG</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
 		</record>
 
 		<record model="product.nomenclature" id="nomen_mix">
-			<field name="code">03</field>
 			<field name="name">MIX</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
 		</record>
 
 		<record model="product.nomenclature" id="nomen_service">
-			<field name="code">04</field>
 			<field name="name">SERVICE</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
@@ -34,7 +30,6 @@
 		<!-- SECOND LEVEL -->
 		<!-- MED -->
 		<record model="product.nomenclature" id="nomen_med_drugs">
-			<field name="code">D</field>
 			<field name="name">Drugs</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -42,7 +37,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalequipment">
-			<field name="code">E</field>
 			<field name="name">Medical Equipment</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -50,7 +44,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_kits">
-			<field name="code">K</field>
 			<field name="name">Kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -58,7 +51,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup">
-			<field name="code">S</field>
 			<field name="name">Medical renewable sup.</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -67,7 +59,6 @@
 
 		<!-- LOG -->
 		<record model="product.nomenclature" id="nomen_log_administration">
-			<field name="code">A</field>
 			<field name="name">Administration</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -75,7 +66,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_camps">
-			<field name="code">C</field>
 			<field name="name">Camps</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -83,7 +73,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits">
-			<field name="code">K</field>
 			<field name="name">Kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -91,7 +80,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_library">
-			<field name="code">L</field>
 			<field name="name">Library</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -99,7 +87,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport">
-			<field name="code">P</field>
 			<field name="name">Program support</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -107,7 +94,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport">
-			<field name="code">T</field>
 			<field name="name">Transport</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -116,7 +102,6 @@
 
 		<!-- MIX -->
 		<record model="product.nomenclature" id="nomen_mix_kits">
-			<field name="code">K</field>
 			<field name="name">Kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_mix" />
@@ -125,7 +110,6 @@
 
 		<!-- SERVICE -->
 		<record model="product.nomenclature" id="nomen_service_administration">
-			<field name="code">A</field>
 			<field name="name">Administration</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service" />
@@ -133,7 +117,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_service_transport">
-			<field name="code">T</field>
 			<field name="name">Transport</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service" />
@@ -141,7 +124,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_service_camps">
-			<field name="code">C</field>
 			<field name="name">Camps</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service" />
@@ -151,7 +133,6 @@
 		<!-- THIRD LEVEL -->
 		<!-- MED - DRUGS -->
 		<record model="product.nomenclature" id="nomen_med_drugs_infusions">
-			<field name="code">INF</field>
 			<field name="name">Infusions</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs" />
@@ -159,7 +140,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs">
-			<field name="code">ORA</field>
 			<field name="name">Oral Drugs</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs" />
@@ -167,7 +147,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_vaccines">
-			<field name="code">VAC</field>
 			<field name="name">Vaccines</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs" />
@@ -175,7 +154,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs">
-			<field name="code">INJ</field>
 			<field name="name">Injectable drugs</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs" />
@@ -185,7 +163,6 @@
 		<!-- MED - MEDICAL EQUIPMENT -->
 		<record model="product.nomenclature"
 			id="nomen_med_medicalequipment_surgicalinstforextfix">
-			<field name="code">SUF</field>
 			<field name="name">Surgical instruments for external fixator</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment" />
@@ -193,7 +170,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingmannequins">
-			<field name="code">TMA</field>
 			<field name="name">Training mannequins</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment" />
@@ -201,7 +177,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingposters">
-			<field name="code">TPO</field>
 			<field name="name">Training posters</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment" />
@@ -210,7 +185,6 @@
 
 		<!-- MED - KITS -->
 		<record model="product.nomenclature" id="nomen_med_kits_medicalkits">
-			<field name="code">MED</field>
 			<field name="name">Medical kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits" />
@@ -218,7 +192,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_kits_dentalinstbox">
-			<field name="code">SUD</field>
 			<field name="name">Dental instrument box</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits" />
@@ -226,7 +199,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox">
-			<field name="code">SUO</field>
 			<field name="name">Ophtalmic instrument box</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits" />
@@ -235,7 +207,6 @@
 
 		<!-- MED - MEDICAL RENEWABLE SUP -->
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_surgicalinstsets">
-			<field name="code">SUR</field>
 			<field name="name">Surgical instruments sets</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
@@ -244,7 +215,6 @@
 
 		<record model="product.nomenclature"
 			id="nomen_med_medicalrenewablesup_smallmedicalsupplies">
-			<field name="code">MSU</field>
 			<field name="name">Small medical supplies</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
@@ -252,7 +222,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery">
-			<field name="code">MST</field>
 			<field name="name">Medical stationery</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
@@ -261,7 +230,6 @@
 
 		<!-- LOG - ADMINISTRATION -->
 		<record model="product.nomenclature" id="nomen_log_administration_furnitures">
-			<field name="code">FUR</field>
 			<field name="name">Furnitures</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration" />
@@ -269,7 +237,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_teamlife">
-			<field name="code">LIF</field>
 			<field name="name">Team life</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration" />
@@ -277,7 +244,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_stationery">
-			<field name="code">STA</field>
 			<field name="name">Stationery</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration" />
@@ -286,7 +252,6 @@
 
 		<!-- LOG - CAMPS -->
 		<record model="product.nomenclature" id="nomen_log_camps_shelters">
-			<field name="code">SHE</field>
 			<field name="name">Shelters</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps" />
@@ -294,7 +259,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_camps_semipermshelter">
-			<field name="code">SEM</field>
 			<field name="name">Semipermanent shelter</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps" />
@@ -302,7 +266,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_camps_watersanitation">
-			<field name="code">WAT</field>
 			<field name="name">Water and sanitation</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps" />
@@ -311,7 +274,6 @@
 
 		<!-- LOG - KITS -->
 		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits">
-			<field name="code">PRO</field>
 			<field name="name">Programme support kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits" />
@@ -319,7 +281,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits_adminkits">
-			<field name="code">ADM</field>
 			<field name="name">Administration kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits" />
@@ -327,7 +288,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits">
-			<field name="code">WAT</field>
 			<field name="name">Water and sanitation kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits" />
@@ -336,7 +296,6 @@
 
 		<!-- LOG - LIBRARY -->
 		<record model="product.nomenclature" id="nomen_log_library_languages">
-			<field name="code">077</field>
 			<field name="name">Languages</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library" />
@@ -344,7 +303,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_library_nutrition">
-			<field name="code">016</field>
 			<field name="name">Nutrition</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library" />
@@ -352,7 +310,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_library_humaniassist">
-			<field name="code">070</field>
 			<field name="name">Humanitarian assistance</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library" />
@@ -361,7 +318,6 @@
 
 		<!-- LOG - PROGRAM SUPPORT -->
 		<record model="product.nomenclature" id="nomen_log_programsupport_identi">
-			<field name="code">IDE</field>
 			<field name="name">Identification</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport" />
@@ -369,7 +325,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain">
-			<field name="code">COL</field>
 			<field name="name">Cold chain</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport" />
@@ -377,7 +332,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_lighting">
-			<field name="code">LIG</field>
 			<field name="name">Lighting</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport" />
@@ -386,7 +340,6 @@
 
 		<!-- LOG - TRANSPORT -->
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota">
-			<field name="code">XTO</field>
 			<field name="name">Spare parts Toyota</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport" />
@@ -394,7 +347,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha">
-			<field name="code">XYA</field>
 			<field name="name">Spare parts Yamaha</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport" />
@@ -402,7 +354,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_boats">
-			<field name="code">BOA</field>
 			<field name="name">Boats</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport" />
@@ -411,7 +362,6 @@
 
 		<!-- MIX - KITS -->
 		<record model="product.nomenclature" id="nomen_mix_kits_emergencykits">
-			<field name="code">EME</field>
 			<field name="name">Emergency kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_mix_kits" />
@@ -419,7 +369,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_mix_kits_explokits">
-			<field name="code">EXP</field>
 			<field name="name">Exploration kits</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_mix_kits" />
@@ -428,7 +377,6 @@
 
 		<!-- SERVICE - ADMINISTRATION -->
 		<record model="product.nomenclature" id="nomen_service_administration_tempworkers">
-			<field name="code">TEM</field>
 			<field name="name">Temporary workers</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_administration" />
@@ -436,7 +384,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_service_administration_officesupport">
-			<field name="code">OFF</field>
 			<field name="name">Office support</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_administration" />
@@ -445,7 +392,6 @@
 
 		<!-- SERVICE - TRANSPORT -->
 		<record model="product.nomenclature" id="nomen_service_transport_clearingagent">
-			<field name="code">CLE</field>
 			<field name="name">Clearing agent</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_transport" />
@@ -453,7 +399,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_service_transport_transpbyroad">
-			<field name="code">ROA</field>
 			<field name="name">Transport by road</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_transport" />
@@ -462,7 +407,6 @@
 
 		<!-- SERVICE - CAMPS -->
 		<record model="product.nomenclature" id="nomen_service_camps_reparing">
-			<field name="code">REP</field>
 			<field name="name">Reparing</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_camps" />
@@ -472,7 +416,6 @@
 		<!-- FOURTH LEVEL -->
 		<!-- MED - DRUGS - INFUSIONS -->
 		<record model="product.nomenclature" id="nomen_med_drugs_infusions_dex">
-			<field name="code">DEXT</field>
 			<field name="name">Dextrose</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_infusions" />
@@ -480,7 +423,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_infusions_halfstrdarr">
-			<field name="code">HSDA</field>
 			<field name="name">Half strength darrows</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_infusions" />
@@ -488,7 +430,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_infusions_mannitol">
-			<field name="code">MANN</field>
 			<field name="name">Mannitol</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_infusions" />
@@ -497,7 +438,6 @@
 
 		<!-- MED - DRUGS - ORAL DRUGS -->
 		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_albe">
-			<field name="code">ALBE</field>
 			<field name="name">Albendazole</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
@@ -505,7 +445,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_gris">
-			<field name="code">GRIS</field>
 			<field name="name">Griseovulvine</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
@@ -513,7 +452,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_halo">
-			<field name="code">HALF</field>
 			<field name="name">Halofantrine</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
@@ -522,7 +460,6 @@
 
 		<!-- MED - DRUGS - VACCINES -->
 		<record model="product.nomenclature" id="nomen_med_drugs_vaccines_typh">
-			<field name="code">VTYP</field>
 			<field name="name">Vaccine Typhoid</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_vaccines" />
@@ -530,7 +467,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_vaccines_yellowfev">
-			<field name="code">VYEF</field>
 			<field name="name">Vaccine Yellow Fever</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_vaccines" />
@@ -539,7 +475,6 @@
 
 		<!-- MED - DRUGS - INJECTABLE DRUGS -->
 		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs_oxy">
-			<field name="code">OXYT</field>
 			<field name="name">Oxytocine</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_injectabledrugs" />
@@ -547,7 +482,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs_paracet">
-			<field name="code">PARA</field>
 			<field name="name">Paracetamol</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_drugs_injectabledrugs" />
@@ -556,7 +490,6 @@
 
 		<!-- MED - MEDICAL EQUIPMENT - SURGICAL INSTRUMENTS FOR EXTERNAL FIXATOR -->
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_surgicalinstforextfix_perf">
-			<field name="code">PERF</field>
 			<field name="name">Perforator</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment_surgicalinstforextfix" />
@@ -564,7 +497,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_surgicalinstforextfix_pin">
-			<field name="code">PING</field>
 			<field name="name">PIN</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment_surgicalinstforextfix" />
@@ -573,7 +505,6 @@
 
 		<!-- MED - MEDICAL EQUIPMENT - TRAINING MANNEQUINS -->
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingmannequins_newborn">
-			<field name="code">NRES</field>
 			<field name="name">Newborn rescucitation</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment_trainingmannequins" />
@@ -582,7 +513,6 @@
 
 		<!-- MED - MEDICAL EQUIPMENT - TRAINING POSTERS -->
 		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingposters_mencycle">
-			<field name="code">MECY</field>
 			<field name="name">Menstruation cycle</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalequipment_trainingposters" />
@@ -591,7 +521,6 @@
 
 		<!-- MED - KITS - MEDICAL KITS -->
 		<record model="product.nomenclature" id="nomen_med_kits_medicalkits_basis">
-			<field name="code">KBAS</field>
 			<field name="name">Basis kit</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits_medicalkits" />
@@ -599,7 +528,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_kits_medicalkits_cholera">
-			<field name="code">KCHO</field>
 			<field name="name">Cholera kit</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits_medicalkits" />
@@ -608,7 +536,6 @@
 
 		<!-- MED - KITS - DENTAL INSTRUMENT BOX -->
 		<record model="product.nomenclature" id="nomen_med_kits_dentalinstbox_dental">
-			<field name="code">BDEN</field>
 			<field name="name">Box Dental</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits_dentalinstbox" />
@@ -617,7 +544,6 @@
 
 		<!-- MED - KITS - OPHTALMIC INSTRUMENT BOX -->
 		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox_anae">
-			<field name="code">BANO</field>
 			<field name="name">Box Anaesthesia Ophtalmic</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits_ophtalmicinstbox" />
@@ -625,7 +551,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox_cata">
-			<field name="code">BCAT</field>
 			<field name="name">Box Cataract</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_kits_ophtalmicinstbox" />
@@ -634,7 +559,6 @@
 
 		<!-- MED - MEDICAL RENEWABLE SUP - SURGICAL INSTRUMENTS SETS -->
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_surgicalinstsets_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_surgicalinstsets" />
@@ -643,7 +567,6 @@
 
 		<!-- MED - MEDICAL RENEWABLE SUP - SMALL MEDICAL SUPPLIES -->
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa">
-			<field name="code">GLEN</field>
 			<field name="name">Gloves examination nitrile</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
@@ -651,7 +574,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_cleaglov">
-			<field name="code">GLOC</field>
 			<field name="name">Cleaning gloves</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
@@ -659,7 +581,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_dispglo">
-			<field name="code">GLOD</field>
 			<field name="name">Disp. gloves</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
@@ -668,7 +589,6 @@
 
 		<!-- MED - MEDICAL RENEWABLE SUP - MEDICAL STATIONERY -->
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery_gloprotec">
-			<field name="code">GLOP</field>
 			<field name="name">Gloves protection</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_medicalstationery" />
@@ -676,7 +596,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery_guide">
-			<field name="code">GUID</field>
 			<field name="name">Guide</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_med_medicalrenewablesup_medicalstationery" />
@@ -685,7 +604,6 @@
 
 		<!-- LOG - ADMINISTRATION - FURNITURES -->
 		<record model="product.nomenclature" id="nomen_log_administration_furnitures_desk">
-			<field name="code">DESK</field>
 			<field name="name">Desk</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_furnitures" />
@@ -693,7 +611,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_furnitures_shelv">
-			<field name="code">SHEL</field>
 			<field name="name">Shelve</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_furnitures" />
@@ -701,7 +618,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_furnitures_table">
-			<field name="code">TABL</field>
 			<field name="name">Table</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_furnitures" />
@@ -710,7 +626,6 @@
 
 		<!-- LOG - ADMINISTRATION - TEAM LIFE -->
 		<record model="product.nomenclature" id="nomen_log_administration_teamlife_ear">
-			<field name="code">EARP</field>
 			<field name="name">Ear protector</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_teamlife" />
@@ -718,7 +633,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_teamlife_godust">
-			<field name="code">GGDP</field>
 			<field name="name">Googles dust protection</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_teamlife" />
@@ -726,7 +640,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_teamlife_glo">
-			<field name="code">GLOV</field>
 			<field name="name">Gloves</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_teamlife" />
@@ -735,7 +648,6 @@
 
 		<!-- LOG - ADMINISTRATION - STATIONERY -->
 		<record model="product.nomenclature" id="nomen_log_administration_stationery_paper">
-			<field name="code">PAPE</field>
 			<field name="name">Paper</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_stationery" />
@@ -743,7 +655,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_administration_stationery_pencil">
-			<field name="code">PENC</field>
 			<field name="name">Pencil</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_administration_stationery" />
@@ -752,7 +663,6 @@
 
 		<!-- LOG - CAMPS - SHELTERS -->
 		<record model="product.nomenclature" id="nomen_log_camps_shelters_heater">
-			<field name="code">HEAT</field>
 			<field name="name">Heater</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps_shelters" />
@@ -760,7 +670,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_camps_shelters_net">
-			<field name="code">NETB</field>
 			<field name="name">Net</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps_shelters" />
@@ -769,7 +678,6 @@
 
 		<!-- LOG - CAMPS - SEMIPERMANENT SHELTER -->
 		<record model="product.nomenclature" id="nomen_log_camps_semipermshelter_contai">
-			<field name="code">CONT</field>
 			<field name="name">Container</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps_semipermshelter" />
@@ -778,7 +686,6 @@
 
 		<!-- LOG - CAMPS - WATER AND SANITATION -->
 		<record model="product.nomenclature" id="nomen_log_camps_watersanitation_stainer">
-			<field name="code">STAI</field>
 			<field name="name">Stainer</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps_watersanitation" />
@@ -786,7 +693,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_camps_watersanitation_tank">
-			<field name="code">TANK</field>
 			<field name="name">Tank</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_camps_watersanitation" />
@@ -795,7 +701,6 @@
 
 		<!-- LOG - KITS - PROGRAMME SUPPORT KITS -->
 		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits_hard">
-			<field name="code">MHDW</field>
 			<field name="name">Module hardware</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_progsuppkits" />
@@ -803,7 +708,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits_ident">
-			<field name="code">MIDE</field>
 			<field name="name">Module identification</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_progsuppkits" />
@@ -812,7 +716,6 @@
 
 		<!-- LOG - KITS - ADMINISTRATION KITS -->
 		<record model="product.nomenclature" id="nomen_log_kits_adminkits_furni">
-			<field name="code">MFUR</field>
 			<field name="name">Module furniture</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_adminkits" />
@@ -820,7 +723,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits_adminkits_life">
-			<field name="code">MLIF</field>
 			<field name="name">Module life</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_adminkits" />
@@ -829,7 +731,6 @@
 
 		<!-- LOG - KITS - WATER AND SANITATION KITS -->
 		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits_wtank">
-			<field name="code">MTAN</field>
 			<field name="name">Module watertank</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_watersanitationkits" />
@@ -837,7 +738,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits_tools">
-			<field name="code">MTOO</field>
 			<field name="name">Module tools</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_kits_watersanitationkits" />
@@ -846,7 +746,6 @@
 
 		<!-- LOG - LIBRARY - LANGUAGES -->
 		<record model="product.nomenclature" id="nomen_log_library_languages_book">
-			<field name="code">DICB</field>
 			<field name="name">Dictionary book</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library_languages" />
@@ -854,7 +753,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_library_languages_guide">
-			<field name="code">DICG</field>
 			<field name="name">Dictionary guide</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library_languages" />
@@ -863,7 +761,6 @@
 
 		<!-- LOG - LIBRARY - NUTRITION -->
 		<record model="product.nomenclature" id="nomen_log_library_nutrition_video">
-			<field name="code">NUTV</field>
 			<field name="name">Nutrition video</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library_nutrition" />
@@ -871,7 +768,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_library_nutrition_paed">
-			<field name="code">PEDB</field>
 			<field name="name">Paediatric</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library_nutrition" />
@@ -880,7 +776,6 @@
 
 		<!-- LOG - LIBRARY - HUMANITARIAN ASSISTANCE -->
 		<record model="product.nomenclature" id="nomen_log_library_humaniassist_book">
-			<field name="code">MEDB</field>
 			<field name="name">Medecine Humanitary Book</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_library_humaniassist" />
@@ -889,7 +784,6 @@
 
 		<!-- LOG - PROGRAM SUPPORT - IDENTIFICATION -->
 		<record model="product.nomenclature" id="nomen_log_programsupport_identi_stick">
-			<field name="code">STIM</field>
 			<field name="name">Sticker MSF</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_identi" />
@@ -897,7 +791,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_identi_supp">
-			<field name="code">SUPP</field>
 			<field name="name">Support</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_identi" />
@@ -905,7 +798,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_identi_tshirt">
-			<field name="code">TEES</field>
 			<field name="name">Tee shirt</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_identi" />
@@ -914,7 +806,6 @@
 
 		<!-- LOG - PROGRAM SUPPORT - COLD CHAIN -->
 		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain_box">
-			<field name="code">BOXC</field>
 			<field name="name">Box Cold Box Ice Box</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -922,7 +813,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain_contr">
-			<field name="code">CONT</field>
 			<field name="name">Control</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -931,7 +821,6 @@
 
 		<!-- LOG - PROGRAM SUPPORT - LIGHTING -->
 		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_fluo">
-			<field name="code">FLUO</field>
 			<field name="name">Fluo lamp compacte</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
@@ -939,7 +828,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_white">
-			<field name="code">FLCW</field>
 			<field name="name">White</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
@@ -947,7 +835,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_holder">
-			<field name="code">HOLD</field>
 			<field name="name">Holder</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
@@ -955,7 +842,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_panel">
-			<field name="code">PANE</field>
 			<field name="name">Panel</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
@@ -964,7 +850,6 @@
 
 		<!-- LOG - TRANSPORT - SPARE PARTS TOYOTA -->
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_filter">
-			<field name="code">FILT</field>
 			<field name="name">Filter</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
@@ -972,7 +857,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_fuse">
-			<field name="code">FUSE</field>
 			<field name="name">Fuse</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
@@ -980,7 +864,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_lspring">
-			<field name="code">LEAS</field>
 			<field name="name">Leaf spring</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
@@ -989,7 +872,6 @@
 
 		<!-- LOG - TRANSPORT - SPARE PARTS YAMAHA -->
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_carbu">
-			<field name="code">CARB</field>
 			<field name="name">Carburator</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
@@ -997,7 +879,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_pumpturb">
-			<field name="code">PUMW</field>
 			<field name="name">Water pump turbine</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
@@ -1005,7 +886,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_spring">
-			<field name="code">SPRI</field>
 			<field name="name">Spring</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
@@ -1014,7 +894,6 @@
 
 		<!-- LOG - TRANSPORT - BOATS -->
 		<record model="product.nomenclature" id="nomen_log_transport_boats_engidie">
-			<field name="code">ENGD</field>
 			<field name="name">Diesel engine</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_boats" />
@@ -1022,7 +901,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_boats_jacket">
-			<field name="code">JACK</field>
 			<field name="name">Jacket</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_boats" />
@@ -1030,7 +908,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log_transport_boats_overcra">
-			<field name="code">OVER</field>
 			<field name="name">Overcraft</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_log_transport_boats" />
@@ -1039,7 +916,6 @@
 
 		<!-- MIX - KITS - EMERGENCY KITS -->
 		<record model="product.nomenclature" id="nomen_mix_kits_emergencykits_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_mix_kits_emergencykits" />
@@ -1048,7 +924,6 @@
 
 		<!-- MIX - KITS - EXPLORATION KITS -->
 		<record model="product.nomenclature" id="nomen_mix_kits_explokits_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_mix_kits_explokits" />
@@ -1057,7 +932,6 @@
 
 		<!-- SERVICE - ADMINISTRATION - TEMPORARY WORKERS -->
 		<record model="product.nomenclature" id="nomen_service_administration_tempworkers_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_administration_tempworkers" />
@@ -1066,7 +940,6 @@
 
 		<!-- SERVICE - ADMINISTRATION - OFFICE SUPPORT -->
 		<record model="product.nomenclature" id="nomen_service_administration_officesupport_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_administration_officesupport" />
@@ -1075,7 +948,6 @@
 
 		<!-- SERVICE - TRANSPORT - CLEARING AGENT -->
 		<record model="product.nomenclature" id="nomen_service_transport_clearingagent_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_transport_clearingagent" />
@@ -1084,7 +956,6 @@
 
 		<!-- SERVICE - TRANSPORT - TRANSPORT BY ROAD -->
 		<record model="product.nomenclature" id="nomen_service_transport_transpbyroad_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_transport_transpbyroad" />
@@ -1093,7 +964,6 @@
 
 		<!-- SERVICE - CAMPS - REPARING -->
 		<record model="product.nomenclature" id="nomen_service_camps_reparing_XXX">
-			<field name="code">XXX</field>
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_camps_reparing" />
@@ -1104,7 +974,6 @@
 		<!-- MED -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno0_med_blank">
-			<field name="code">5.00</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1114,7 +983,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno0_med_200">
-			<field name="code">5.01</field>
 			<field name="name">200mg</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1123,7 +991,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_400">
-			<field name="code">5.02</field>
 			<field name="name">400mg</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1132,7 +999,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_c">
-			<field name="code">5.03</field>
 			<field name="name">C</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1141,7 +1007,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_d">
-			<field name="code">5.04</field>
 			<field name="name">D</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1150,7 +1015,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_module">
-			<field name="code">5.05</field>
 			<field name="name">Module</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1159,7 +1023,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_su">
-			<field name="code">5.06</field>
 			<field name="name">S.U.</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1168,7 +1031,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_g">
-			<field name="code">5.07</field>
 			<field name="name">G</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1177,7 +1039,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_H">
-			<field name="code">5.08</field>
 			<field name="name">H</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1186,7 +1047,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_med_I">
-			<field name="code">5.09</field>
 			<field name="name">I</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1197,7 +1057,6 @@
 		<!-- LOG -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno0_log_blank">
-			<field name="code">5.10</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1207,7 +1066,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno0_log_flexi">
-			<field name="code">5.11</field>
 			<field name="name">Flexible</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1216,7 +1074,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_module">
-			<field name="code">5.12</field>
 			<field name="name">Module</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1225,7 +1082,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_ac">
-			<field name="code">5.13</field>
 			<field name="name">AC</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1234,7 +1090,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_leatpro">
-			<field name="code">5.14</field>
 			<field name="name">Leather prot</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1243,7 +1098,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_2">
-			<field name="code">5.15</field>
 			<field name="name">2&apos;&apos;</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1252,7 +1106,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_4">
-			<field name="code">5.16</field>
 			<field name="name">4&apos;&apos;</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1261,7 +1114,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_ag">
-			<field name="code">5.17</field>
 			<field name="name">AG</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1272,7 +1124,6 @@
 		<!-- LOG - P - COL -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_blank">
-			<field name="code">5.18</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1282,7 +1133,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_electro">
-			<field name="code">5.19</field>
 			<field name="name">Electrolux</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1291,7 +1141,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAB">
-			<field name="code">5.20</field>
 			<field name="name">AAB</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1300,7 +1149,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAC">
-			<field name="code">5.21</field>
 			<field name="name">AAC</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1309,7 +1157,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAD">
-			<field name="code">5.22</field>
 			<field name="name">AAD</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1318,7 +1165,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAE">
-			<field name="code">5.23</field>
 			<field name="name">AAE</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1327,7 +1173,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAF">
-			<field name="code">5.24</field>
 			<field name="name">AAF</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1336,7 +1181,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAG">
-			<field name="code">5.25</field>
 			<field name="name">AAG</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1345,7 +1189,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAH">
-			<field name="code">5.26</field>
 			<field name="name">AAH</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1354,7 +1197,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAI">
-			<field name="code">5.27</field>
 			<field name="name">AAI</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1366,7 +1208,6 @@
 		<!-- MED -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno1_med_blank">
-			<field name="code">6.00</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1376,7 +1217,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno1_med_noinf">
-			<field name="code">6.01</field>
 			<field name="name">No infusion</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1385,7 +1225,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_nonster">
-			<field name="code">6.02</field>
 			<field name="name">Non sterile</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1394,7 +1233,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_13">
-			<field name="code">6.03</field>
 			<field name="name">13</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1403,7 +1241,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_14">
-			<field name="code">6.04</field>
 			<field name="name">14</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1412,7 +1249,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_15">
-			<field name="code">6.05</field>
 			<field name="name">15</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1421,7 +1257,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_16">
-			<field name="code">6.06</field>
 			<field name="name">16</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1430,7 +1265,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_17">
-			<field name="code">6.07</field>
 			<field name="name">17</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1439,7 +1273,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_18">
-			<field name="code">6.08</field>
 			<field name="name">18</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1448,7 +1281,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_med_19">
-			<field name="code">6.09</field>
 			<field name="name">19</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_med" />
@@ -1459,7 +1291,6 @@
 		<!-- LOG -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno1_log_blank">
-			<field name="code">6.10</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1469,7 +1300,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno1_log_20">
-			<field name="code">6.11</field>
 			<field name="name">20</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1478,7 +1308,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_21">
-			<field name="code">6.12</field>
 			<field name="name">21</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1487,7 +1316,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_22">
-			<field name="code">6.13</field>
 			<field name="name">22</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1496,7 +1324,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_23">
-			<field name="code">6.14</field>
 			<field name="name">23</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1505,7 +1332,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_24">
-			<field name="code">6.15</field>
 			<field name="name">24</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1514,7 +1340,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_25">
-			<field name="code">6.16</field>
 			<field name="name">25</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1523,7 +1348,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_26">
-			<field name="code">6.17</field>
 			<field name="name">26</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1532,7 +1356,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_27">
-			<field name="code">6.18</field>
 			<field name="name">27</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1541,7 +1364,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_28">
-			<field name="code">6.19</field>
 			<field name="name">28</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1550,7 +1372,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_29">
-			<field name="code">6.20</field>
 			<field name="name">29</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log" />
@@ -1561,7 +1382,6 @@
 		<!-- LOG - P - COL -->
 		<!-- 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_blank">
-			<field name="code">6.21</field>
 			<field name="name"> </field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1571,7 +1391,6 @@
 		 -->
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_30">
-			<field name="code">6.22</field>
 			<field name="name">30</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1580,7 +1399,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_31">
-			<field name="code">6.23</field>
 			<field name="name">31</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1589,7 +1407,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_32">
-			<field name="code">6.24</field>
 			<field name="name">32</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1598,7 +1415,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_33">
-			<field name="code">6.25</field>
 			<field name="name">33</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1607,7 +1423,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_34">
-			<field name="code">6.26</field>
 			<field name="name">34</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
@@ -1616,7 +1431,6 @@
 		</record>
 
 		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_35">
-			<field name="code">6.27</field>
 			<field name="name">35</field>
 			<field name="type">optional</field>
 			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />

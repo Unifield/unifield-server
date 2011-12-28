@@ -25,18 +25,19 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", "procurement_cycle"],
+    # depends on specific_locations because of view_picking_out_form -> stock_moves>form>location_id>quarantine domain
+    # depends on reason_types_moves because of view_picking_form -> stock_moves>form>location_id>domain restriction
+    "depends" : ["sale", "purchase", "stock", "procurement_cycle", "specific_locations", "reason_types_moves",],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
     Specific Management Rules
     """,
     'test': ['test/specific_rules.yml',],
-    'update_xml': [
-        'specific_rules_view.xml',
-        'wizard/stock_partial_move_view.xml',
-        'stock_sequence.xml',
-    ],
+    'update_xml': ['security/ir.model.access.csv',
+                   'specific_rules_view.xml',
+                   'wizard/stock_partial_move_view.xml',
+                   'stock_sequence.xml',
+                   ],
     'installable': True,
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -25,7 +25,7 @@
     "version" : "0.1",
     "author" : "MSF pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification"],
+    "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification", "procurement_request"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -33,6 +33,7 @@
     """,
     'test': [
              'test/sourcing.yml',
+             'test/2lines_supplier.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',
