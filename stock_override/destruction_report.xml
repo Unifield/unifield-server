@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report auto="True" 
+                id="destruction_location_report" 
+                model="stock.move" 
+                name="destruction.location"
+                header="True"
+                rml="addons/stock_override/report/destruction_location.rml"
+                string="Destruction Location Report"
+                 />
+    </data>
+</openerp>

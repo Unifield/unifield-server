@@ -403,4 +403,42 @@ class stock_move(osv.osv):
         return [move.id for move in complete]
     # @@@override end
 
+    def _get_destruction_products(self, cr, uid, ids, product_ids=False, context=None, recursive=False):
+        """ Finds the product quantity and price for particular location.
+        """
+        if context is None:
+            context = {}
+
+        for move in self.browse(cr, uid, ids, context=context):
+            # add this move into the list of result
+            dg_check_flag = ''
+            if move.dg_check:
+                dg_check_flag = 'x'
+                
+            np_check_flag = ''
+            if move.np_check:
+                np_check_flag = 'x'
+            sub_total = move.product_qty * move.product_id.standard_price
+            
+            currency = ''
+            if move.purchase_line_id and move.purchase_line_id.currency_id:
+                currency = move.purchase_line_id.currency_id.name
+            elif move.sale_line_id and move.sale_line_id.currency_id:
+                currency = move.sale_line_id.currency_id.name
+            
+            result.append({
+                'prod_name': move.product_id.name,
+                'prod_code': move.product_id.code,
+                'prod_price': move.product_id.standard_price,
+                'sub_total': sub_total,
+                'currency': currency,
+                'expired_date': move.expired_date,
+                'prodlot_id': move.prodlot_id.name,
+                'dg_check': dg_check_flag,
+                'np_check': np_check_flag,
+                'uom': move.product_uom.name,
+                'prod_qty': move.product_qty,
+            })
+        return result
+
 stock_move()
