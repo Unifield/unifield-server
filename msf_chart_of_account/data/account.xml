@@ -2568,7 +2568,7 @@
             <field name="name">Taxes</field>
             <field name="parent_id" ref="msf_chart_of_account.44" />
             <field name="reconcile" eval="False" />
-            <field name="user_type" ref="account_type_tax" />
+            <field name="user_type" ref="vat_management.account_type_tax" />
         </record>
 
         <record model="account.account" id="vat_management.445000">
@@ -2578,7 +2578,7 @@
             <field name="name">Global Tax</field>
             <field name="parent_id" ref="vat_management.445" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account_type_tax" />
+            <field name="user_type" ref="vat_management.account_type_tax" />
         </record>
 
         <!-- VAT codes -->
