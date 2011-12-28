@@ -69,7 +69,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'requestor': fields.char(size=128, string='Requestor'),
-        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'requested_date': fields.date(string='Requested date'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
@@ -110,7 +110,7 @@ class procurement_request(osv.osv):
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or '',
+        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
     }
@@ -154,7 +154,7 @@ class procurement_request(osv.osv):
             elif not request.procurement_request:
                 normal_ids.append(request.id)
             else:
-                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Procurement Request(s) which are already confirmed !'))
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Internal Request(s) which are already confirmed !'))
                 
         if del_ids:
             osv.osv.unlink(self, cr, uid, del_ids, context=context)
@@ -252,7 +252,7 @@ class procurement_request_line(osv.osv):
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     _columns = {
-        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
     }
