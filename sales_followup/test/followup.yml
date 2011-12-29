@@ -74,7 +74,7 @@
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
         assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (1)"
-        assert wiz.state == 'Quotation', "The state on the wizard is different than the state of the Sale Order (1)"
+        assert wiz.state == 'Draft', "The state on the wizard is different than the state of the Sale Order (1)"
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (1)"
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
