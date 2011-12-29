@@ -64,13 +64,18 @@
                     </notebook>
                     <group col="13" colspan="4">
                         <field name="state" />
+                        <field name="internal_state" invisible="True"/>
                         <button name="tender_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible':['|', ('sale_order_id','!=', False), ('state', 'in', ('cancel', 'done',)),],}" />
                         <button name="button_generate" states="draft" string="Generate RfQs" icon="gtk-convert" />
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
-                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" />
-                        <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','=', False),],}" />
-                        <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
-                        <button name="done" string="Done" type="object" icon="gtk-go-forward" attrs="{'invisible':['|', ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
+                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit" 
+                            attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'),],}" />
+                        <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward" 
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False),],}" />
+                        <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" 
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
+                        <button name="done" string="Done" type="object" icon="gtk-go-forward" 
+                            attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False),],}" />
                     </group>
                 </form>
             </field>

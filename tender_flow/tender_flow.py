@@ -37,6 +37,12 @@ class tender(osv.osv):
     '''
     _name = 'tender'
     _description = 'Tender'
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        if not default:
+            default = {}
+        default['internal_state'] = 'draft' # UF-733: Reset the internal_state
+        return super(osv.osv, self).copy(cr, uid, id, default, context=context)
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -74,11 +80,13 @@ class tender(osv.osv):
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
+                'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
                 }
     
     _defaults = {'state': 'draft',
+                 'internal_state': 'draft',
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'tender'),
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
