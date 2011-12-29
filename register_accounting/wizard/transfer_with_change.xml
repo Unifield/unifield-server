@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Transfer with change Form -->
+        <record model="ir.ui.view" id="wizard_transfer_with_change_form">
+            <field name='name'>wizard.transfer.with.change.form</field>
+            <field name='model'>wizard.transfer.with.change</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Transfer with change">
+                    <label string="Please indicates an amount and a currency in which the transfer with change will be done or come from." align="0.0" colspan="4"/>
+                    <newline/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <group col="6" colspan="4">
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2"/>
+                        <button name="button_validate" type="object" string="Validate" icon="gtk-ok" attrs="{'readonly': [('state', '=', 'closed')]}" colspan="2"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

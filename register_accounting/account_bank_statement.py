@@ -104,7 +104,6 @@ class account_journal(osv.osv):
     }
 account_journal()
 
-
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
     _inherit = "account.bank.statement"
@@ -169,7 +168,8 @@ class account_bank_statement(osv.osv):
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
             help="Closing balance"),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
-        'name': fields.char('Register Name', size=64, required=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself', states={'confirm': [('readonly', True)]}),
+        'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
+            help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
         'code': fields.char('Register Code', size=10, ),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
@@ -609,19 +609,38 @@ class account_bank_statement_line(osv.osv):
             ret[i['id']] = len(i['imported_invoice_line_ids'])
         return ret
 
+    def _get_transfer_with_change_state(self, cr, uid, ids, field_name=None, args=None, context={}):
+        """
+        If account is a transfer with change, then True. Otherwise False.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse elements
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'transfer':
+                res[line.id] = True
+        return res
+
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
         'transfer_journal_id': fields.many2one("account.journal", "Journal"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
-        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[('draft', 'Draft'), 
-            ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
+        'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
+            ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-            multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
+            ('account.bank.statement', 'Register')], multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", type='boolean', store=False),
+        'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
+            type='boolean', store=False),
         'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
         'document_date': fields.date(string="Document Date"),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -630,12 +649,17 @@ class account_bank_statement_line(osv.osv):
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-            help="To use for python code when registering", multi="third_parties_key"),
-        'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', string="Imported Invoices", 
-            required=False, readonly=True),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
+            ('account.bank.statement', 'Register')], help="To use for python code when registering", multi="third_parties_key"),
+        'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', 
+            string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
-        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
+        'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", 
+            help="This move line has been taken for create an Import Cheque in a bank register."),
+        'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?", 
+            type='boolean', store=False),
+        'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
+        'transfer_currency': fields.many2one('res.currency', string="Currency", help="Currency used for Transfers"),
     }
 
     _defaults = {
@@ -1097,7 +1121,8 @@ class account_bank_statement_line(osv.osv):
                 continue
             move_obj.post(cr, uid, [st_line.move_ids[0].id], context=context    )
             # Search the line that would be reconcile after hard post
-            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], context=context)
+            move_line_id = move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', st_line.first_move_line_id.id)], 
+                context=context)
             # Do reconciliation
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
@@ -1371,6 +1396,45 @@ class account_bank_statement_line(osv.osv):
             })
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
+
+    def button_transfer(self, cr, uid, ids, context={}):
+        """
+        Open Transfer with change wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        absl = self.browse(cr, uid, ids[0], context=context)
+        if absl.account_id and absl.account_id.type_for_register and absl.account_id.type_for_register != 'transfer':
+            raise osv.except_osv(_('Error'), _('Open transfer with change wizard is only possible with transfer account in other currency!'))
+        # Create wizard
+        vals = {'absl_id': ids[0],}
+        if absl and absl.transfer_amount:
+            vals.update({'amount': absl.transfer_amount,})
+        if absl and absl.transfer_currency:
+            vals.update({'currency_id': absl.transfer_currency.id,})
+        if absl and absl.state == 'hard':
+            vals.update({'state': 'closed',})
+        wiz_id = self.pool.get('wizard.transfer.with.change').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+            'register_line_id': ids[0],
+        })
+        return {
+            'name': _("Transfer with change"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.transfer.with.change',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
 
     def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
         """
