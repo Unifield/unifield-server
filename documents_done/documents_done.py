@@ -327,14 +327,7 @@ class documents_done_wizard(osv.osv):
         '''
         wf_service = netsvc.LocalService("workflow")
         for doc in self.browse(cr, uid, ids, context=context):
-            #if doc.problem:
-            #    raise osv.except_osv(_('Error'), _('This document has some other documents not done or cancelled which blocked the process !'))
-            if doc.real_model == 'tender':
-                if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state == 'draft':
-                    wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'tender_cancel', cr)
-                else:
-                    self.pool.get('tender').set_manually_done(cr, uid, doc.res_id, context=context)
-            elif self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
+            if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, context=context)
 
         return {'type': 'ir.actions.act_window',

@@ -395,16 +395,25 @@ class tender(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        wf_service = netsvc.LocalService("workflow")
+
         for tender in self.browse(cr, uid, ids, context=context):
-            print tender.state
-            rfq_ids = []
-            for rfq in tender.rfq_ids:
-                rfq_ids.append(rfq.id)
+            if tender.state not in ('done', 'cancel'):
+                # Cancel or done all RfQ related to the tender
+                for rfq in tender.rfq_ids:
+                    if rfq.state not in ('done', 'cancel'):
+                        if rfq.state == 'draft':
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
+                        else:
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-            if rfq_ids:
-                self.pool.get('purchase.order').set_manually_done(cr, uid, rfq_ids, context=context)
-
-            netsvc.LocalService("workflow").trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                if tender.state == 'draft':
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                else:
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
 
         return True
 
