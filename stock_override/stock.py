@@ -409,6 +409,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        result = []
         for move in self.browse(cr, uid, ids, context=context):
             # add this move into the list of result
             dg_check_flag = ''
