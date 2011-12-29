@@ -88,19 +88,19 @@ class purchase_order(osv.osv):
         
         return True
 
-    def onchange_partner_id(self, cr, uid, ids, partner_id, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, part=False, *a, **b):
         '''
         Display or not the line of international transport costs
         '''
-        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, partner_id, *a, **b)
+        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
         func_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         currency_id = False
 
         if not 'domain' in res:
             res.update({'domain': {}})
 
-        if partner_id:
-            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+        if part:
+            partner = self.pool.get('res.partner').browse(cr, uid, part)
             # Update the currency of the PO
             currency_id = partner.property_product_pricelist_purchase.currency_id.id
             if partner.partner_type == 'esc' or partner.zone == 'international':

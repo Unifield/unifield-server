@@ -709,7 +709,7 @@ class purchase_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
+        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
@@ -1053,7 +1053,7 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
