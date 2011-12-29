@@ -765,11 +765,9 @@ class procurement_order(osv.osv):
         values = kwargs['values']
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
-        requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
 
         purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
-                                               ('delivery_requested_date', '=', requested_date)], context=context)
-
+                                               ('delivery_requested_date', '=', values.get('delivery_requested_date'))], context=context)
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
