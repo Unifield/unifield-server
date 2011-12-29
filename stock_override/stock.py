@@ -82,7 +82,24 @@ procurement_order()
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _description = "Picking List"
-    
+
+    _columns = {
+        'state': fields.selection([
+            ('draft', 'Draft'),
+            ('auto', 'Waiting'),
+            ('confirmed', 'Confirmed'),
+            ('assigned', 'Available'),
+            ('done', 'Closed'),
+            ('cancel', 'Cancelled'),
+            ], 'State', readonly=True, select=True,
+            help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
+                 "* Confirmed: still waiting for the availability of products\n"\
+                 "* Available: products reserved, simply waiting for confirmation.\n"\
+                 "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
+                 "* Closed: has been processed, can't be modified or cancelled anymore\n"\
+                 "* Cancelled: has been cancelled, can't be confirmed anymore"),
+
+    }
     
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -268,6 +285,13 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
+
+    _columns = {
+        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
+              help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Done\'.\
+              \nThe state is \'Waiting\' if the move is waiting for another one.'),
+    }
+    
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

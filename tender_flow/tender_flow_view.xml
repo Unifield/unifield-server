@@ -9,21 +9,21 @@
             <field name="arch" type="xml">
                 <form string="Tender">
                     <group col="6" colspan="4">
-                    	<field name="creator" />
-                    	<field name="creation_date" />
-                    	<field name="requested_date" />
-                        <field name="name"/>
-                        <field name="sale_order_id"/>
-                        <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" />
-                        <field name="location_id" />
+                    	<field name="creator" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    	<field name="creation_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    	<field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="sale_order_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="company_id" invisible="True" />
-                        <field name="categ" />
-                        <field name="priority" />
+                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="details" />
                     </group>
                     <notebook colspan="5">
                         <page string="Tender Lines">
-                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
+                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id)" />
@@ -41,7 +41,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />
@@ -51,7 +51,7 @@
                             </field>
                         </page>
                         <page string="RfQs">
-                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1">
+                        	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="RfQs">
                                     <field name="name" />
                                     <field name="state" />
@@ -174,12 +174,85 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
             	<data>
-            		
             		<field name="details" position="after">
-            			<field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],}" />
-            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],}" />
+            			<field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
             			<field name="rfq_ok" invisible="True" />
             		</field>
+
+                    <xpath expr="/form//field[@name='date_order']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='partner_ref']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='order_type']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='priority']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='categ']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='name']" position="attributes">
+                        <attribute name="readonly">True</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='invoiced']" position="attributes">
+                        <attribute name="readonly">True</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='shipped']" position="attributes">
+                        <attribute name="readonly">True</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='delivery_requested_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='transport_type']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='ready_to_ship_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='est_transport_lead_time']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='shipment_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='arrival_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[2]" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group[3]" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='delivery_confirmed_date']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                    </xpath>
+
 
 			<xpath expr="/form/notebook/page/group[2]" position="replace">
 				<group colspan="4" col="13">
@@ -190,11 +263,11 @@
 	                                <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
         	                        <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                         	        <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                                	<button name="purchase_approve" states="confirmed" string="Approved" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
+                                	<button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'confirmed')]}"/>
 	                                <button name="%(purchase.report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'approved')]}"/>
-            				<button name="purchase_confirm" states="draft" string="Convert to Purchase Order" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft'),],}" />
-            				<button name="rfq_sent" states="draft" string="RfQ Sent" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft'),],}" />
-            				<button name="rfq_updated" states="draft" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent'),],}" />
+            				<button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft'),],}" />
+            				<button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft'),],}" />
+            				<button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent'),],}" />
             			    <button name="rfq_done" states="rfq_updated" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'),],}" />
 				</group>
             		</xpath>

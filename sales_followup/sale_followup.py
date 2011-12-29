@@ -885,15 +885,15 @@ class purchase_order_line(osv.osv):
 
     STATE_SELECTION = [
                        ('draft', 'Draft'),
-                       ('wait', 'Waiting'),
-                       ('confirmed', 'Waiting Approval'),
-                       ('approved', 'Approved'),
-                       ('except_picking', 'Shipping Exception'),
+                       ('wait', 'Wait'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
                        ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Done'),
+                       ('done', 'Closed'),
                        ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'RfQ Sent'),
-                       ('rfq_updated', 'RfQ Updated'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
     ]
 
     ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 

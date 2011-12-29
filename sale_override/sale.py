@@ -179,6 +179,11 @@ class sale_order(osv.osv):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+    def wkf_validated(self, cr, uid, ids, context={}):
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
     
     def action_wait(self, cr, uid, ids, *args):
         '''

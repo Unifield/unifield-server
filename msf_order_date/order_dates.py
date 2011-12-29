@@ -316,7 +316,7 @@ class purchase_order(osv.osv):
 #            data['delivery_confirmed_date'] = requested_date
             
         check_dates(self, cr, uid, data, context=context)
-        
+
         return super(purchase_order, self).create(cr, uid, data, context=context)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
@@ -353,7 +353,7 @@ class purchase_order(osv.osv):
                 res[order.id] = False
             else:
                 res[order.id] = pick_obj.browse(cr, uid, pick_ids[0]).date_done
-            
+
         return res
 
     
@@ -372,7 +372,7 @@ class purchase_order(osv.osv):
                                           help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
-        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
+        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, readonly=True,
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -595,7 +595,7 @@ class sale_order(osv.osv):
                                           help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
-        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
+        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, readonly=True,
                                          string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         'internal_type': fields.selection([('national', 'National'), #('internal', 'Internal'),
                                         ('international', 'International')], string='Type', readonly=True, states={'draft': [('readonly', False)]}),

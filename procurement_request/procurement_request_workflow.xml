@@ -10,11 +10,16 @@
         <record id="act_procurement" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale"/>
             <field name="flow_start" eval="False" />
-            <field name="kind">function</field>
-            <field name="action">write({'state': 'procurement'})</field>
+            <field name="kind">dummy</field>
             <field name="name">procurement</field>
         </record>
 
+        <record id="act_proc_validate" model="workflow.activity">
+            <field name="wkf_id" ref="sale.wkf_sale" />
+            <field name="name">procurement_validate</field>
+            <field name="kind">function</field>
+            <field name="action">validate_procurement()</field>
+        </record>
         <record id="act_proc_confirm" model="workflow.activity">
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">procurement_confirm</field>
@@ -39,11 +44,17 @@
         <record id="trans_proc_draft" model="workflow.transition">
             <field name="act_from" ref="sale.act_draft"/>
             <field name="act_to" ref="act_procurement"/>
-            <field name="condition">procurement_request</field>
+            <field name="condition">procurement_request==True</field>
         </record>
 
-        <record id="trans_proc_confirm" model="workflow.transition">
+        <record id="trans_proc_validate" model="workflow.transition">
             <field name="act_from" ref="act_procurement"/>
+            <field name="act_to" ref="act_proc_validate"/>
+            <field name="condition">procurement_request==True</field>
+            <field name="signal">procurement_validate</field>
+        </record>
+        <record id="trans_proc_validate_confirm" model="workflow.transition">
+            <field name="act_from" ref="act_proc_validate"/>
             <field name="act_to" ref="act_proc_confirm"/>
             <field name="condition">procurement_request==True</field>
             <field name="signal">procurement_confirm</field>

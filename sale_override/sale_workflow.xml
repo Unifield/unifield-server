@@ -13,6 +13,24 @@
             <field name="wkf_id" ref="sale.wkf_sale" />
             <field name="name">loan_done</field>
         </record>
+
+        <record id="act_sale_order_validated" model="workflow.activity">
+            <field name="wkf_id" ref="sale.wkf_sale" />
+            <field name="name">order_validated</field>
+            <field name="kind">function</field>
+            <field name="action">wkf_validated()</field>
+        </record>
+
+        <record id="trans_draft_validated" model="workflow.transition">
+            <field name="act_from" ref="sale.act_draft" />
+            <field name="act_to" ref="act_sale_order_validated" />
+            <field name="signal">order_validated</field>
+        </record>
+        <record id="trans_draft_router" model="workflow.transition">
+            <field name="act_from" ref="act_sale_order_validated"/>
+            <field name="act_to" ref="sale.act_router"/>
+            <field name="signal">order_confirm</field>
+        </record>
         
         <record id="trans_sale_router_loan" model="workflow.transition">
             <field name="act_from" ref="sale.act_router" />

@@ -40,9 +40,33 @@
                             <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
                         </group>
                     </button>
+
+                    <xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+                        <group>
+                            <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply"/>
+                            <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
+                        </group>
+                    </xpath>
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
+
+                    <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='user_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='payment_term']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+
                 </data>
             </field>
         </record>

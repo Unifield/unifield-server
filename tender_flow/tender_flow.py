@@ -191,7 +191,7 @@ class tender(osv.osv):
                 
             # if some rfq have wrong state, we display a message
             if rfq_list:
-                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Canceled."))
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
             
             # integrity check, all lines must have purchase_order_line_id
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids]):
@@ -217,7 +217,7 @@ class tender(osv.osv):
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('draft', 'rfq_sent',)),], context=context)
         if rfq_ids:
-            raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Canceled."))
+            raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
         # at least one rfq must be updated and not canceled
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
                                           ('state', 'in', ('rfq_updated',)),], context=context)
@@ -534,10 +534,10 @@ class procurement_order(osv.osv):
                 'state': fields.selection([('draft','Draft'),
                                            ('confirmed','Confirmed'),
                                            ('exception','Exception'),
-                                           ('running','Running'),
-                                           ('cancel','Cancel'),
+                                           ('running','Converted'),
+                                           ('cancel','Cancelled'),
                                            ('ready','Ready'),
-                                           ('done','Done'),
+                                           ('done','Closed'),
                                            ('tender', 'Tender'),
                                            ('waiting','Waiting'),], 'State', required=True,
                                           help='When a procurement is created the state is set to \'Draft\'.\n If the procurement is confirmed, the state is set to \'Confirmed\'.\
@@ -651,14 +651,14 @@ class purchase_order(osv.osv):
     STATE_SELECTION = [
                        ('draft', 'Draft'),
                        ('wait', 'Waiting'),
-                       ('confirmed', 'Waiting Approval'),
-                       ('approved', 'Approved'),
-                       ('except_picking', 'Shipping Exception'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
                        ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Done'),
+                       ('done', 'Closed'),
                        ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'RfQ Sent'),
-                       ('rfq_updated', 'RfQ Updated'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
                        #('rfq_done', 'RfQ Done'),
                        ]
     
@@ -670,11 +670,10 @@ class purchase_order(osv.osv):
                 return False
         return True
     
-    
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
-                'valid_till': fields.date(string='Valid Till', states={'rfq_sent':[('required',True), ('readonly', False),]}, readonly=True,),
+                'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 }
 
@@ -698,6 +697,37 @@ class purchase_order(osv.osv):
             if obj.rfq_ok:
                 result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
+
+    def rfq_sent(self, cr, uid, ids, context={}):
+        for rfq in self.browse(cr, uid, ids, context=context):
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': 'purchase.quotation',
+                'datas': datas}
+
+    def check_rfq_updated(self, cr, uid, ids, context={}):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+        for rfq in self.browse(cr, uid, ids, context=context):
+            if not rfq.valid_till:
+                raise osv.except_osv(_('Error'), _('You must specify a Valid Till date.'))
+
+            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_mode': 'form,tree,graph,calendar',
+                'view_type': 'form',
+                'target': 'crush',
+                'context': {'rfq_ok': True, 'search_default_draft_rfq': 1,},
+                'domain': [('rfq_ok', '=', True)],
+                'res_id': rfq.id}
     
 purchase_order()
 
