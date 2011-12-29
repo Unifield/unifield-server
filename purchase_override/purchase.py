@@ -178,14 +178,14 @@ class purchase_order(osv.osv):
         
         return {'value': v}
     
-    def onchange_partner_id(self, cr, uid, ids, part):
+    def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
+        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
         
         if part:
             partner_obj = self.pool.get('res.partner')
