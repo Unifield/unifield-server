@@ -64,6 +64,9 @@ class List(SecuredController):
 
                 data = frm.chain_get(source)
 
+                if data is None:
+                    return dict(error_field=error_field, error=error, id=id, ids=str([int(i) for i in ids]))
+
                 if '__id' in data: data.pop('__id')
                 if 'id' in data: data.pop('id')
 
@@ -92,6 +95,7 @@ class List(SecuredController):
             error_field = e.field
             error = ustr(e)
         except Exception, e:
+            raise
             error = ustr(e)
 
         return dict(error_field=error_field, error=error, id=id, ids=str([int(i) for i in ids]))
