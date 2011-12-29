@@ -24,7 +24,6 @@ import xml.dom.minidom
 import re
 from openerp import utils
 from itertools import chain, count
-from babel import numbers
 
 import cherrypy
 from openerp.utils import rpc, icons, common, expr_eval, node_attributes
@@ -611,17 +610,6 @@ class Int(Char):
 
         return 0
 
-class IntFinance(Char):
-
-    def get_text(self):
-        value = 0
-        if self.value:
-            if isinstance(self.value, (unicode, str)):
-                value = eval(value)
-            else:
-                value = self.value
-        return numbers.format_number(value or 0)
-
 class ProgressBar(Char):
     template = "/openerp/widgets/templates/listgrid/progressbar.mako"
 
@@ -756,7 +744,6 @@ CELLTYPES = {
         'float':Float,
         'float_time':FloatTime,
         'integer':Int,
-        'integer_finance':IntFinance,
         'boolean' : Boolean,
         'progressbar' : ProgressBar
 }
