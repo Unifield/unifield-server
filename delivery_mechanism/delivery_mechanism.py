@@ -293,6 +293,8 @@ class stock_picking(osv.osv):
             move_ids = partial_datas[pick.id].keys()
             # all moves
             all_move_ids = [move.id for move in pick.move_lines]
+            # related moves - swap if a backorder is created - openERP logic
+            done_moves = []
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -323,6 +325,7 @@ class stock_picking(osv.osv):
                                   'change_reason': partial['change_reason'],
                                   }
                         move_obj.write(cr, uid, [move.id], values, context=context)
+                        done_moves.append(move.id)
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
                             if update_out:
@@ -344,6 +347,7 @@ class stock_picking(osv.osv):
                                   'state': 'assigned',
                                   }
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                        done_moves.append(new_move)
                         if out_move_id:
                             new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
                 # decrement the initial move, cannot be less than zero
@@ -365,14 +369,14 @@ class stock_picking(osv.osv):
                                 'product_uom': data_back['product_uom'],
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
-                                'picking_id': backorder_id,
+                                'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
                                 }
-                    move_obj.copy(cr, uid, move.id, defaults, context=context)
+                    new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=context)
                     # if split happened
                     if update_out:
                         # update out move - quantity is increased, to match the original qty
@@ -388,14 +392,17 @@ class stock_picking(osv.osv):
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             for move in pick.move_lines:
                 if not move.product_qty and move.state not in ('done', 'cancel'):
+                    done_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
+                # done moves go to new picking object
+                move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id}, context=context)
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [backorder_id], {'backorder_id': pick.id}, context=context)
-                self.action_move(cr, uid, [pick.id])
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id}, context=context)
+                self.action_move(cr, uid, [backorder_id])
+                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
             else:
                 self.action_move(cr, uid, [pick.id])
