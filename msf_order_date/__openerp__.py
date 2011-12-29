@@ -51,7 +51,6 @@
         'test/create_data.yml',
         'test/purchase_dates.yml',
         'test/sale_dates.yml',
-        'test/history_dates.yml',
         'test/lang_format.yml',
         'test/order_date.yml',
     ],
