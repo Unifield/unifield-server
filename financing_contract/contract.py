@@ -73,8 +73,6 @@ class financing_contract_contract(osv.osv):
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
-        'eligibility_from_date': fields.date('Eligibility date from'),
-        'eligibility_to_date': fields.date('Eligibility date to'),
         'grant_amount': fields.float('Grant amount', size=64, required=True),
         'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
         'notes': fields.text('Notes'),
