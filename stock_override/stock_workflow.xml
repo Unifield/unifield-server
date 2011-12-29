@@ -31,7 +31,7 @@
         </record>
         <record id="trans_manual_done_done" model="workflow.transition">
             <field name="act_from" ref="act_manually_done" />
-            <field name="act_to" ref="stock.act_done" />
+            <field name="act_to" ref="stock.act_cancel" />
         </record>
 
     </data>

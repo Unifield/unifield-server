@@ -94,7 +94,7 @@ class stock_picking(osv.osv):
 
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
-                if move.state not in ('cancel', 'done', 'manual_done'):
+                if move.state not in ('cancel', 'done'):
                     move_ids.append(move.id)
 
         #Set all stock moves to done
@@ -291,8 +291,7 @@ class stock_move(osv.osv):
                          ('confirmed', 'Not Available'),
                          ('assigned', 'Available'),
                          ('done', 'Done'),
-                         ('cancel', 'Cancel'),
-                         ('manual_done', 'Manually Done')]
+                         ('cancel', 'Cancel'),]
 
     _columns = {
         'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
@@ -302,7 +301,7 @@ class stock_move(osv.osv):
         '''
         Set the stock move to manually done
         '''
-        return self.write(cr, uid, ids, {'state': 'manual_done'}, context=context)
+        return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''

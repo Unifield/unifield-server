@@ -10,7 +10,6 @@
             <field name="arch" type="xml">
                 <data>
                 	<xpath expr="/form//field[@name='partner_id']" position="replace">
-                        <button name="set_manually_done" type="object" string="done" />
                 		<field name="company_id2" invisible="1" />
                 		<field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
                 	</xpath>

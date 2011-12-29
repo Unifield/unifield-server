@@ -103,7 +103,7 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
-        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done', 'manual_done']), (field, 'in', line_ids)], context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
 
     def _get_problem_sale_order(self, cr, uid, order, context={}):
         '''
@@ -221,7 +221,7 @@ class documents_done_wizard(osv.osv):
         line_obj = self.pool.get('documents.done.problem.line')
         picking_ids = []
         for move in self.pool.get('stock.move').browse(cr, uid, moves, context=context):
-            if move.picking_id and (move.type != 'out' or move.picking_id.converted_to_standard) and move.picking_id.id not in picking_ids:
+            if move.picking_id and (move.type != 'out' or move.picking_id.converted_to_standard or move.picking_id.subtype == 'picking') and move.picking_id.id not in picking_ids:
                 picking_ids.append(move.picking_id.id)
                 doc_type = 'Internal move'
                 if move.type == 'out':
