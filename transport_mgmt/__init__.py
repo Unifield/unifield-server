@@ -19,18 +19,10 @@
 #
 ##############################################################################
 
-ORDER_PRIORITY = [('emergency', 'Emergency'), 
-                  ('normal', 'Normal'), 
-                  ('priority', 'Priority'),]
-
-ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'),
-                  ('service', 'Service'),
-                  ('transport', 'Transport'),
-                  ('other', 'Other')]
-
 import stock
+import purchase
+import product
+import sale
 import report
-import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

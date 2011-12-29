@@ -83,6 +83,7 @@
         "out_step",
         "delivery_mechanism",
         "msf_tools",
+        "transport_mgmt",
     ],
     "update_xml": [
         "report.xml",

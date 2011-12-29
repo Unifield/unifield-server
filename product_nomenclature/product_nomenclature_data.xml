@@ -405,6 +405,14 @@
 			<field name="level">2</field>
 		</record>
 
+		<record model="product.nomenclature" id="nomen_service_transport_other">
+			<field name="code">OTH</field>
+			<field name="name">Other</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport" />
+			<field name="level">2</field>
+		</record>
+
 		<!-- SERVICE - CAMPS -->
 		<record model="product.nomenclature" id="nomen_service_camps_reparing">
 			<field name="name">Reparing</field>
@@ -959,6 +967,15 @@
 			<field name="name">XXX</field>
 			<field name="type">mandatory</field>
 			<field name="parent_id" ref="nomen_service_transport_transpbyroad" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - TRANSPORT - OTHER -->
+		<record model="product.nomenclature" id="nomen_service_transport_other_XXX">
+			<field name="code">XXX</field>
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport_other" />
 			<field name="level">3</field>
 		</record>
 

@@ -122,7 +122,7 @@ class res_partner(osv.osv):
         return {'value': {'supplier_lt': transport_0_lt + procurement_lt,
                           'customer_lt': transport_0_lt + procurement_lt}}
     
-    _columns = {'zone': fields.selection(selection=ZONE_SELECTION, string='Zone',),
+    _columns = {'zone': fields.selection(selection=ZONE_SELECTION, string='Zone', required=True),
                 'customer_lt': fields.integer('Customer Lead Time'),
                 'supplier_lt': fields.integer('Supplier Lead Time'),
                 'procurement_lt': fields.integer('Internal Lead Time'),

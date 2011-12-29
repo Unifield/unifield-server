@@ -19,18 +19,7 @@
 #
 ##############################################################################
 
-ORDER_PRIORITY = [('emergency', 'Emergency'), 
-                  ('normal', 'Normal'), 
-                  ('priority', 'Priority'),]
-
-ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'),
-                  ('service', 'Service'),
-                  ('transport', 'Transport'),
-                  ('other', 'Other')]
-
-import stock
-import report
-import wizard
+import intl_transport
+import local_transport
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
