@@ -791,9 +791,22 @@ class procurement_order(osv.osv):
         
         return result
     
+    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order line creation
+        '''
+        line = kwargs['line']
+        return line
+    
     def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        data for the purchase order creation
+        Please copy this to your module's method also.
+        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+        
+        - allow to modify the data for purchase order creation
         '''
         values = kwargs['values']
         return values
@@ -862,6 +875,9 @@ class procurement_order(osv.osv):
                 'move_dest_id': res_id,
                 'notes': product.description_purchase,
             }
+            
+            # line values modification from hook
+            line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement,)
 
             taxes_ids = procurement.product_id.product_tmpl_id.supplier_taxes_id
             taxes = acc_pos_obj.map_tax(cr, uid, partner.property_account_position, taxes_ids)
@@ -879,7 +895,7 @@ class procurement_order(osv.osv):
                       'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
                       }
             # values modification from hook
-            values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement)
+            values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)
             # purchase creation from hook
             purchase_id = self.create_po_hook(cr, uid, ids, context=context, values=values, procurement=procurement)
             res[procurement.id] = purchase_id
