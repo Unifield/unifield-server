@@ -27,12 +27,6 @@
             <field name="flow_stop">True</field>
             <field name="signal_send">subflow.tender_done</field>
         </record>
-        <record id="act_manual_done" model="workflow.activity">
-            <field name="wkf_id" ref="wkf_tender" />
-            <field name="name">manually_done</field>
-            <field name="kind">function</field>
-            <field name="action">set_manually_done()</field>
-        </record>
         
 		<record id="act_cancel" model="workflow.activity">
             <field name="wkf_id" ref="wkf_tender" />
@@ -48,24 +42,12 @@
             <field name="signal">button_generate</field>
         </record>
 
-        <record id="trans_draft_manual_done" model="workflow.transition">
-            <field name="act_from" ref="act_draft" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        
         <record id="trans_comparison_done" model="workflow.transition">
             <field name="act_from" ref="act_comparison" />
             <field name="act_to" ref="act_done" />
             <field name="signal">button_done</field>
         </record>
 
-        <record id="trans_comparison_manual_done" model="workflow.transition">
-            <field name="act_from" ref="act_comparison" />
-            <field name="act_to" ref="act_manual_done" />
-            <field name="signal">manually_done</field>
-        </record>
-        
         <record id="trans_draft_cancel" model="workflow.transition">
             <field name="act_from" ref="act_draft" />
             <field name="act_to" ref="act_cancel" />
@@ -78,11 +60,6 @@
             <field name="signal">tender_cancel</field>
         </record>
 
-        <record id="trans_manual_done_done" model="workflow.transition">
-            <field name="act_from" ref="act_manual_done" />
-            <field name="act_to" ref="act_done" />
-        </record>
-        
         <!-- PROCUREMENT WORKFLOW -->
  		<record id="procurement.act_tender" model="workflow.activity">
             <field name="wkf_id" ref="procurement.wkf_procurement"/>

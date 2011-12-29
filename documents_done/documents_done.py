@@ -329,11 +329,6 @@ class documents_done_wizard(osv.osv):
         for doc in self.browse(cr, uid, ids, context=context):
             if doc.problem:
                 raise osv.except_osv(_('Error'), _('This document has some other documents not done or cancelled which blocked the process !'))
-            elif doc.real_model == 'tender':
-                if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state == 'draft':
-                    wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'purchase_cancel', cr)
-                else:
-                    wf_service.trg_validate(uid, doc.real_model, doc.res_id, 'manually_done', cr)
             elif self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, context=context)
 

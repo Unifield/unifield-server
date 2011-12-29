@@ -405,14 +405,27 @@ class tender(osv.osv):
         po_ids = []
         nb_up_lines = 0
         for tender in self.browse(cr, uid, ids, context=context):
-            for rfq in tender.rfq_ids:
-                if rfq.state not in ('done', 'cancel'):
-                    wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
-                    wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+            if tender.state not in ('done', 'cancel'):
+                line_updated = False
+                for line in tender.tender_line_ids:
+                    # if a supplier has been selected
+                    if line.purchase_order_line_id:
+                        line_updated = True
+                # Cancel or done all RfQ related to the tender
+                for rfq in tender.rfq_ids:
+                    if rfq.state not in ('done', 'cancel'):
+                        if rfq.state == 'draft':
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
+                        else:
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-            # Call the done method of the tender
-            wf_service.trg_delete(uid, 'tender', tender.id, cr)
-        self.pool.get('tender').write(cr, uid, )
+                if tender.state == 'draft' or not line_updated:
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                else:
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
 
         return True
 
