@@ -81,6 +81,7 @@
         "analytic_distribution_supply",
         "account_mcdb",
         "out_step",
+        "delivery_mechanism",
     ],
     "update_xml": [
         "report.xml",

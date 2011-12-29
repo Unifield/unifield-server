@@ -1,0 +1,50 @@
+- 
+  Partner A
+- 
+  !record {model: res.partner, id: partner_A}:
+    name: A
+    supplier: true
+    customer: true
+- 
+  Address for Partner A
+- 
+  !record {model: res.partner.address, id: address_A}:
+    partner_id: partner_A
+    street: AddressA
+-
+  Product A
+- 
+  !record {model: product.product, id: product_A}:
+    name: ProdA
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product B
+-
+  !record {model: product.product, id: product_B}:
+    name: ProdB
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product C
+-
+  !record {model: product.product, id: product_C}:
+    name: ProdC
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+-
+  Product D
+-
+  !record {model: product.product, id: product_D}:
+    name: ProdD
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: partner_A
+        

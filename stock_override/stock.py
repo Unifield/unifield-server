@@ -109,7 +109,6 @@ class stock_picking(osv.osv):
         assert defaults is not None, 'missing defaults'
         
         return defaults
-        
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):

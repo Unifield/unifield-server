@@ -173,12 +173,12 @@
             <field name="priority">300</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
-            	<data>
-            		<field name="details" position="after">
-            			<field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
-            			<field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
-            			<field name="rfq_ok" invisible="True" />
-            		</field>
+                <data>
+                    <field name="details" position="after">
+                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False),],'readonly': [('state', 'in', ['rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="rfq_ok" invisible="1" />
+                    </field>
 
                     <xpath expr="/form//field[@name='date_order']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
@@ -220,7 +220,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='delivery_requested_date']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
@@ -280,6 +280,7 @@
             <field name="name">rfq.form</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">500</field>
             <field name="arch" type="xml">
                 <form string="Request for Quotation">
                     <group col="6" colspan="4">
