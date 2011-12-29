@@ -23,7 +23,7 @@
 			                        <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 		                        </group>
                                 <group colspan="4" col="8">
-			                        <field name="grant_amount" widget="integer_finance" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+			                        <field name="grant_amount" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                     <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
 			                        <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
                                 </group>
@@ -55,8 +55,8 @@
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="line_type"/>
-                                        <field name="allocated_budget" widget="integer_finance" real_sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
-                                        <field name="project_budget" widget="integer_finance" real_sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
+                                        <field name="allocated_budget" real_sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
+                                        <field name="project_budget" real_sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
                                     </tree>
                                     <form string="Reporting lines">
                                         <group colspan="4" col="4">
@@ -72,29 +72,25 @@
 	                                        <field name="allocated_budget_value"
 	                                               string="Funded amount - Budget"
 	                                               invisible="context.get('reporting_type')=='project'"
-	                                               colspan="2"
-	                                               widget="integer_finance"/>
+	                                               colspan="2"/>
 	                                        <field name="project_budget_value"
 	                                               string="Total project amount - Budget"
 	                                               invisible="context.get('reporting_type')=='allocated'"
-	                                               colspan="2"
-	                                               widget="integer_finance"/>
+	                                               colspan="2"/>
                                         </group>
                                         <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'consumption')]}">
                                             <field name="allocated_real_value"
                                                    string="Funded amount - Actuals"
                                                    invisible="context.get('reporting_type')=='project'"
-                                                   colspan="2"
-                                                   widget="integer_finance"/>
+                                                   colspan="2"/>
                                             <field name="project_real_value"
                                                    string="Total project amount - Actuals"
                                                    invisible="context.get('reporting_type')=='allocated'"
-                                                   colspan="2"
-                                                   widget="integer_finance"/>
+                                                   colspan="2"/>
                                         </group>
                                         <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
-                                            <field name="overhead_percentage" widget="integer_finance" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
                                                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
@@ -129,7 +125,7 @@
 	                    <field name="code"/>
 	                    <field name="name"/>
 	                    <field name="donor_id"/>
-                        <field name="grant_amount" widget="integer_finance"/>
+                        <field name="grant_amount"/>
                         <field name="reporting_currency"/>
 	                    <field name="eligibility_from_date"/>
 	                    <field name="eligibility_to_date"/>
@@ -198,7 +194,7 @@
                                         </group>
                                         <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
-                                            <field name="overhead_percentage" widget="integer_finance" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
                                         <field name="account_ids" colspan="4" string="Expense accounts"
                                                domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"
@@ -270,10 +266,10 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="allocated_budget" widget="integer_finance"/>
-                        <field name="allocated_real" widget="integer_finance"/>
-                        <field name="project_budget" widget="integer_finance"/>
-                        <field name="project_real" widget="integer_finance"/>
+                        <field name="allocated_budget"/>
+                        <field name="allocated_real"/>
+                        <field name="project_budget"/>
+                        <field name="project_real"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
@@ -288,8 +284,8 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="allocated_budget" widget="integer_finance"/>
-                        <field name="allocated_real" widget="integer_finance"/>
+                        <field name="allocated_budget"/>
+                        <field name="allocated_real"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
@@ -304,8 +300,8 @@
                     <tree string="Interactive Report">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="project_budget" widget="integer_finance"/>
-                        <field name="project_real" widget="integer_finance"/>
+                        <field name="project_budget"/>
+                        <field name="project_real"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
