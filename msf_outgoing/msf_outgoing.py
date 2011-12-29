@@ -777,7 +777,11 @@ class shipment(osv.osv):
             # validate should only be called on shipped shipments
             assert shipment.state in ('shipped',), 'shipment state is not shipped'
             # corresponding packing objects - only the distribution -> customer ones
-            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id),], context=context)
+            # we have to discard picking object with state done, because when we return from shipment
+            # all object of a given picking object, he is set to Done and still belong to the same shipment_id
+            # another possibility would be to unlink the picking object from the shipment, set shipment_id to False
+            # but in this case the returned pack families would not be displayed anymore in the shipment
+            packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '!=', 'done'),], context=context)
             
             for packing in pick_obj.browse(cr, uid, packing_ids, context=context):
                 assert packing.subtype == 'packing' and packing.state == 'assigned'

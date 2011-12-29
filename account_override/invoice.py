@@ -23,17 +23,40 @@
 
 
 from osv import osv
+from osv import fields
 from time import strftime
 from tools.translate import _
+import logging
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    _columns = {
+        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+    }
+
+    _defaults = {
+        'from_yml_test': lambda *a: False,
+    }
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Filled in 'from_yml_test' to True if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('INV: set from yml test to True')
+            vals['from_yml_test'] = True
+        return super(account_invoice, self).create(cr, uid, vals, context)
+
     def action_open_invoice(self, cr, uid, ids, context={}, *args):
         """
         Give function to use when changing invoice to open state
         """
+        if not context:
+            context = {}
         if not self.action_date_assign(cr, uid, ids, context, args):
             return False
         if not self.action_move_create(cr, uid, ids, context, args):
@@ -42,5 +65,45 @@ class account_invoice(osv.osv):
             return False
         return True
 
+    def _hook_period_id(self, cr, uid, inv, context={}):
+        """
+        Give matches period that are not draft and not HQ-closed from given date
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not inv:
+            return False
+        # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
+        res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
+            ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
+            ('company_id', '=', inv.company_id.id)], context=context, order="date_start ASC, name ASC")
+        return res
+
 account_invoice()
+
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    _columns = {
+        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+    }
+
+    _defaults = {
+        'from_yml_test': lambda *a: False,
+    }
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Filled in 'from_yml_test' to True if we come from tests
+        """
+        if not context:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            logging.getLogger('init').info('INV: set from yml test to True')
+            vals['from_yml_test'] = True
+        return super(account_invoice_line, self).create(cr, uid, vals, context)
+
+account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

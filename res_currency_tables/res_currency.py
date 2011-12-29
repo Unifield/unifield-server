@@ -38,12 +38,12 @@ class res_currency(osv.osv):
         source_currency = self.browse(cr, uid, currency_id, context=context)
         if not source_currency.reference_currency_id or not source_currency.currency_table_id :
             # "Real" currency; the one from the table is retrieved
-            return self.search(cr, uid, [('currency_table_id', '=', table_id),
-                                         ('reference_currency_id', '=', currency_id)], context=context)[0]
+            res = self.search(cr, uid, [('currency_table_id', '=', table_id), ('reference_currency_id', '=', currency_id)], context=context)
+            return res and res[0] or currency_id
         elif source_currency.currency_table_id.id != table_id:
             # Reference currency defined, not the wanted table
-            return self.search(cr, uid, [('currency_table_id', '=', table_id),
-                                         ('reference_currency_id', '=', source_currency.reference_currency_id.id)], context=context)[0]
+            res = self.search(cr, uid, [('currency_table_id', '=', table_id), ('reference_currency_id', '=', source_currency.reference_currency_id.id)], context=context)
+            return  res and res[0] or currency_id
         else:
             # already ok
             return currency_id
@@ -61,7 +61,7 @@ class res_currency(osv.osv):
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
         if context is None:
             context={}
-        if 'currency_table_id' in context and context['currency_table_id']:
+        if context.get('currency_table_id', False):
             # A currency table is set, retrieve the correct currency ids
             new_from_currency_id = self._get_table_currency(cr, uid, from_currency_id, context['currency_table_id'], context=context)
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)

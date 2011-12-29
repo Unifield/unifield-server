@@ -109,18 +109,18 @@
   !record {model: analytic.distribution, id: distribution_test}:
     cost_center_lines: 
     - analytic_id: analytic_account_OC1
-      amount: 4242.0
+      percentage: 100
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
-    - analytic_id: funding_pool.analytic_account_msf_private_funds
+    - analytic_id: analytic_distribution.analytic_account_msf_private_funds
       cost_center_id: analytic_account_OC1
-      amount: 2121.0
+      percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_FP1
       cost_center_id: analytic_account_OC1
-      amount: 2121.0
+      percentage: 50
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
 -
@@ -129,22 +129,22 @@
   !record {model: analytic.distribution, id: distribution_test_2}:
     cost_center_lines: 
     - analytic_id: analytic_account_OC1
-      amount: 10000.0
+      percentage: 81.0045
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_OC2
-      amount: 2345.0
+      percentage: 18.9955
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     funding_pool_lines:
     - analytic_id: analytic_account_FP2
       cost_center_id: analytic_account_OC1
-      amount: 10000.0
+      percentage: 81.0045
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
     - analytic_id: analytic_account_FP2
       cost_center_id: analytic_account_OC2
-      amount: 2345.0
+      percentage: 18.9955
       currency_id: base.CHF
       date: !eval "'%s-03-12' %(datetime.now().year+1)"
 -
@@ -258,4 +258,3 @@
     assert len(contract.actual_line_ids) == 1, ("No reporting line!")
     assert contract.actual_line_ids[0].allocated_real == 21210, ("Allocation is not what is expected!")
     assert contract.actual_line_ids[0].project_real == 121210, ("Project is not what is expected!")
-    

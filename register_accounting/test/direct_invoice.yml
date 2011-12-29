@@ -23,10 +23,12 @@
           product_id: product_food_for_staff0
           quantity: 1.0
           uos_id: product.product_uom_unit
+          from_yml_test: False
     type: 'in_invoice'
     currency_id: base.EUR
     journal_id: account_journal_expenses_0
     register_id: account_bank_statement_8
+    from_yml_test: False
 -
   I validate this invoice and check reconcilation
 -
@@ -42,7 +44,7 @@
     rec = False
     # Find the account move line reconciled
     rec_line = filter(lambda a:a.reconcile_id, line_id.move_ids[0].line_id)
-
+    
     # Check this line is reconciled with the invoice
     for move_rec in rec_line[0].reconcile_id.line_id:
         if move_rec.invoice and move_rec.invoice.id == inv.id:

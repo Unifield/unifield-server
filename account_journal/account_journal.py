@@ -52,23 +52,25 @@ class account_journal(osv.osv):
 
 
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank'), \
-                ('cash','Cash'), \
-                ('purchase', 'Purchase'), \
-                ('correction','Correction'), \
-                ('cheque', 'Cheque'), \
-                ('hq', 'HQ'), \
-                ('hr', 'HR'), \
-                ('accrual', 'Accrual'), \
-                ('stock', 'Stock'), \
-                ('depreciation', 'Depreciation'), \
+        return [('bank', 'Bank'),
+                ('cash','Cash'),
+                ('purchase', 'Purchase'),
+                ('correction','Correction'),
+                ('cheque', 'Cheque'),
+                ('hq', 'HQ'),
+                ('hr', 'HR'),
+                ('accrual', 'Accrual'),
+                ('stock', 'Stock'),
+                ('depreciation', 'Depreciation'), 
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
-                ('sale', 'Sale'), \
-                ('sale_refund','Sale Refund'), \
-                ('purchase_refund','Purchase Refund'), \
-                ('general', 'General'), \
-                ('situation', 'Opening/Closing Situation')]
+                ('sale', 'Sale'), 
+                ('sale_refund','Sale Refund'), 
+                ('purchase_refund','Purchase Refund'), 
+                ('general', 'General'), 
+                ('situation', 'Opening/Closing Situation'),
+                ('cur_adj', 'Currency Adjustement'),
+        ]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),

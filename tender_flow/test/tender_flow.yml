@@ -216,7 +216,7 @@
       # update valid till date
       po.write({'valid_till': '2011-10-31',})
       for pol in po.order_line:
-        pol.write({'price_unit':1024})
+        pol.write({'price_unit':10024})
       tender_id = po.tender_id
       # trigger the workflow
       import netsvc
@@ -251,7 +251,7 @@
   !python {model: tender}: |
     ids = self.search(cr, uid, [('sale_order_id', '=', ref("sale_order_tender_so0")),], context=context)
     tender = self.browse(cr, uid, ids[0])
-    assert tender.tender_line_ids[0].price_unit == 1024, 'price_unit has not been updated. %s-1024'%tender.tender_line_ids[0].price_unit
+    assert tender.tender_line_ids[0].price_unit == 10024, 'price_unit has not been updated. %s-10024'%tender.tender_line_ids[0].price_unit
     po_id = self.create_po(cr, uid, tender.id, context=context)
     
     import netsvc
