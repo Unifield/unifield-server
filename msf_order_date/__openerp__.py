@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,13 +21,15 @@
 
 {
     "name": "MSF Order dates",
-    "version": "1.0",
-    "depends": [
-                "base",
+    "version": "3.0",
+    "depends": ["base",
                 "sale",
                 "purchase",
                 "account",
                 "stock_override",
+                "sale_override",
+                "purchase_override",
+                "partner_modification",
                 ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -41,6 +43,7 @@
         'security/msf_order_date_groups.xml',
         'security/ir.model.access.csv',
         'order_dates_view.xml',
+        'wizard/update_lines_view.xml',
     ],
     'demo_xml': [
     ],
@@ -48,10 +51,10 @@
         'test/create_data.yml',
         'test/purchase_dates.yml',
         'test/sale_dates.yml',
+        'test/history_dates.yml',
+        'test/lang_format.yml',
+        'test/order_date.yml',
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
 }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

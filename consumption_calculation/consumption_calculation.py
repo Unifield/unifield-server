@@ -1244,7 +1244,7 @@ class product_product(osv.osv):
     }
     
     _defaults = {
-        'procure_delay': lambda *a: 1,
+        'procure_delay': lambda *a: 60,
     }
 
     

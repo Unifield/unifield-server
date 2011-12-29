@@ -147,7 +147,7 @@
 		    <field name="reason_type_id" />
                     <field name="origin"/>
                     <field name="date"/>
-                    <field name="min_date"/>
+                    <field name="min_date" string="Expected Pick Date" />
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="invoice_state"/>
                     <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
@@ -196,8 +196,8 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date"/>
-                            <field name="min_date" readonly="1"/>
                             <field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+                            <field name="min_date" readonly="1" string="Expected Pick Date" />
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
@@ -219,7 +219,7 @@
                                     <field name="location_id" string="Src. Loc" />
                                     <field name="location_dest_id" string="Dest. Loc" />
                                     <field name="virtual_available" />
-                                    <field name="date"/>
+                                    <field name="date" string="Actual Pick Date" />
                                     <field name="state"/>
                                     <field name="kc_check" />
 			            			<field name="ssl_check" />
@@ -249,8 +249,8 @@
                                     <group colspan="2" col="2">
                                         <separator string="Dates" colspan="2" />
                                         <field name="create_date" invisible="1"/>
-                                        <field name="date"/>
-                                        <field name="date_expected"/>
+                                        <field name="date" string="Actual Pick Date" />
+                                        <field name="date_expected" string="Expected Pick Date" />
                                     </group>
 
                                     <group colspan="2" col="4" groups="base.group_extended">
@@ -424,7 +424,7 @@
                     <field name="origin"/>
 		    		<field name="reason_type_id" />
                     <field name="date"/>
-                    <field name="min_date"/>
+                    <field name="min_date" string="Expected Pack Date" />
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="invoice_state"/>
                     <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
@@ -473,8 +473,8 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date"/>
-                            <field name="min_date" readonly="1"/>
                             <field name="stock_journal_id" groups="base.group_extended" widget="selection" invisible="True" />
+                            <field name="min_date" readonly="1" string="Expected Pack Date" />
                             <field name="reason_type_id" widget="selection"/>
                             <field name="sale_id" invisible="True" />
                             <field name="subtype" invisible="True" />
@@ -499,7 +499,7 @@
                                     <field name="qty_per_pack" />
                                     <field name="from_pack" />
                                     <field name="to_pack" />
-                                    <field name="date"/>
+                                    <field name="date" string="Actual Pack Date" />
                                     <field name="state"/>
                                     <field name="kc_check" />
 			            			<field name="ssl_check" />
@@ -529,8 +529,8 @@
                                     <group colspan="2" col="2">
                                         <separator string="Dates" colspan="2" />
                                         <field name="create_date" invisible="1"/>
-                                        <field name="date"/>
-                                        <field name="date_expected"/>
+                                        <field name="date" string="Actual Pack Date" />
+                                        <field name="date_expected" string="Expected Pack Date" />
                                     </group>
 
                                     <group colspan="2" col="4" groups="base.group_extended">
@@ -917,6 +917,7 @@
                     <field name="num_of_packs" />
                     <field name="total_weight" />
                     <field name="date" />
+                    <field name="shipment_expected_date" />
                     <field name="state"/>
                     <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add"/>
                     <button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo"/>
@@ -935,6 +936,8 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="date" readonly="True" />
+                            <field name="shipment_actual_date" />
+                            <field name="shipment_expected_date" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
                             <field name="transport_type" />
                             <field name="partner_id" readonly="1"/>
                             <field name="backshipment_id" readonly="True" />

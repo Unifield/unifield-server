@@ -157,8 +157,8 @@ class sale_order(osv.osv):
 
         return True
     
-    def create(self, cr, uid, vals, context={}):
-        if not context:
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('SO: set from yml test to True')
@@ -212,12 +212,14 @@ class sale_order(osv.osv):
             
         return super(sale_order, self).action_wait(cr, uid, ids, args)
 
-    def action_purchase_order_create(self, cr, uid, ids, context={}):
+    def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
         Create a purchase order as counterpart for the loan.
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         purchase_obj = self.pool.get('purchase.order')
         purchase_line_obj = self.pool.get('purchase.order.line')
@@ -225,17 +227,21 @@ class sale_order(osv.osv):
             
         for order in self.browse(cr, uid, ids):
             two_months = today() + RelativeDateTime(months=+2)
-            order_id = purchase_obj.create(cr, uid, {'partner_id': order.partner_id.id,
-                                                 'partner_address_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
-                                                 'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
-                                                 'loan_id': order.id,
-                                                 'loan_duration': order.loan_duration,
-                                                 'origin': order.name,
-                                                 'order_type': 'loan',
-                                                 'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                 'categ': order.categ,
-                                                 'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
-                                                 'priority': order.priority,})
+            # from yml test is updated according to order value
+            values = {'partner_id': order.partner_id.id,
+                      'partner_address_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
+                      'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
+                      'loan_id': order.id,
+                      'loan_duration': order.loan_duration,
+                      'origin': order.name,
+                      'order_type': 'loan',
+                      'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
+                      'categ': order.categ,
+                      'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                      'priority': order.priority,
+                      'from_yml_test': order.from_yml_test,
+                      }
+            order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
                 purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
                                                    'product_uom': line.product_uom.id,

@@ -39,7 +39,6 @@
         'security/ir.model.access.csv',
         'sourcing_sequence.xml',
         'sourcing_view.xml',
-        #'wizard/picking_create_picking_ticket_view.xml'
     ],
     'installable': True,
 }

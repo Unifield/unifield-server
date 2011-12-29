@@ -82,6 +82,7 @@
         "account_mcdb",
         "out_step",
         "delivery_mechanism",
+        "msf_tools",
     ],
     "update_xml": [
         "report.xml",

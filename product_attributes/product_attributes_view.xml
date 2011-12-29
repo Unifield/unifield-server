@@ -160,8 +160,8 @@
                         <page string="Procurement &amp; Locations">
                             <group colspan="2" col="2" name="delay">
                                 <separator string="Delays" colspan="2"/>
-                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}"/>
-                                <field name="produce_delay"/>
+                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}" invisible="True" />
+                                <field name="produce_delay" invisible="True" />
                             </group>
                             <group colspan="2" col="2" name="store">
                                 <separator string="Storage Localisation" colspan="2"/>

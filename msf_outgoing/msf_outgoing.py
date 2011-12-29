@@ -29,6 +29,7 @@ import decimal_precision as dp
 import netsvc
 import logging
 import tools
+import time
 from os import path
 
 class stock_warehouse(osv.osv):
@@ -176,7 +177,9 @@ class shipment(osv.osv):
         return result 
     
     _columns = {'name': fields.char(string='Reference', size=1024),
-                'date': fields.date(string='Date'),
+                'date': fields.datetime(string='Creation Date'),
+                'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
+                'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
                 'transport_type': fields.selection([('by_road', 'By road')],
                                                    string="Transport Type", readonly=True),
                 'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer"),
@@ -226,6 +229,9 @@ class shipment(osv.osv):
                                          store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
                 }
+    _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
+    
+    
     _order = 'name desc'
     
     def create_shipment(self, cr, uid, ids, context=None):
@@ -274,7 +280,8 @@ class shipment(osv.osv):
             shipment_number = sequence.get_id(test='id', context=context)
             # state is a function - not set
             shipment_name = draft_shipment.name + '-' + shipment_number
-            values = {'name': shipment_name, 'address_id': address_id}
+            # 
+            values = {'name': shipment_name, 'address_id': address_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date,}
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
             for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):
@@ -646,12 +653,20 @@ class shipment(osv.osv):
         - trigger the workflow button_confirm for the new packing
         - trigger the workflow to terminate the initial packing
         - update the draft_picking_id fields of pack_families
+        - update the shipment_date of the corresponding sale_order if not set yet
         '''
         pick_obj = self.pool.get('stock.picking')
         pf_obj = self.pool.get('pack.family')
+        so_obj = self.pool.get('sale.order')
+        # objects
+        date_tools = self.pool.get('date.tools')
+        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
         
         for shipment in self.browse(cr, uid, ids, context=context):
             # the state does not need to be updated - function
+            # update actual ship date (shipment_actual_date) to today + time
+            today = time.strftime(db_datetime_format)
+            shipment.write({'shipment_actual_date': today,})
             # corresponding packing objects
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id)], context=context)
             
@@ -668,18 +683,21 @@ class shipment(osv.osv):
                                                                      'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True, allow_copy=True,))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
+                # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
+                if new_packing.sale_id and not new_packing.sale_id.shipment_date:
+                    # get the date format
+                    date_tools = self.pool.get('date.tools')
+                    date_format = date_tools.get_date_format(cr, uid, context=context)
+                    db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+                    today = time.strftime(date_format)
+                    today_db = time.strftime(db_date_format)
+                    so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(new_packing.sale_id.name, today)))
+                
                 # update locations of stock moves
                 for move in new_packing.move_lines:
                     move.write({'location_id': new_packing.warehouse_id.lot_distribution_id.id,
                                 'location_dest_id': new_packing.warehouse_id.lot_output_id.id}, context=context)
-                
-                # update the pack families
-#                pf_ids = pf_obj.search(cr, uid, [('draft_packing_id', '=', packing.id)], context=context)
-#                pf_obj.write(cr, uid, pf_ids, {'draft_packing_id': new_packing.id}, context=context)
-                
-                # update old moves - unlink so we don't see old moves when we open the pack families
-#                for move in packing.move_lines:
-#                    move.write({'pack_family_id': False}, context=context)
                 
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
@@ -1500,6 +1518,12 @@ class stock_picking(osv.osv):
         special behavior :
          - creation of corresponding shipment
         '''
+        # objects
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
+        
         if context is None:
             context = {}
         # the action adds subtype in the context depending from which screen it is created
@@ -1631,12 +1655,25 @@ class stock_picking(osv.osv):
                 shipment_ids = shipment_obj.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', vals['address_id'])], context=context)
                 # only one 'draft' shipment should be available
                 assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time - %s'%len(shipment_ids)
+                # get rts of corresponding sale order
+                sale_id = self.read(cr, uid, [new_packing_id], ['sale_id'], context=context)
+                sale_id = sale_id[0]['sale_id'][0]
+                # today
+                today = time.strftime(db_datetime_format)
+                rts = self.pool.get('sale.order').read(cr, uid, [sale_id], ['ready_to_ship_date'], context=context)[0]['ready_to_ship_date']
+                # rts + shipment lt
+                shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                rts_obj = datetime.strptime(rts, db_date_format)
+                rts = rts_obj + relativedelta(days=shipment_lt or 0)
+                rts = rts.strftime(db_date_format)
                 
                 if not len(shipment_ids):
                     # no shipment, create one - no need to specify the state, it's a function
                     name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
                     values = {'name': name,
                               'address_id': vals['address_id'],
+                              'shipment_expected_date': rts,
+                              'shipment_actual_date': rts,
                               'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                             'code':name,
                                                                             'prefix':'',
@@ -1646,7 +1683,12 @@ class stock_picking(osv.osv):
                     shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.'%name))
                 else:
                     shipment_id = shipment_ids[0]
-                    shipment_name = shipment_obj.browse(cr, uid, shipment_id, context=context).name
+                    shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
+                    # if expected ship date of shipment is greater than rts, update shipment_expected_date and shipment_actual_date
+                    shipment_expected = datetime.strptime(shipment.shipment_expected_date, db_datetime_format)
+                    if rts_obj < shipment_expected:
+                        shipment.write({'shipment_expected_date': rts, 'shipment_actual_date': rts,}, context=context)
+                    shipment_name = shipment.name
                     shipment_obj.log(cr, uid, shipment_id, _('The ppl has been added to the existing Draft Shipment %s.'%shipment_name))
             
             # update the new pick with shipment_id
@@ -1682,6 +1724,11 @@ class stock_picking(osv.osv):
         
         only one picking object at a time
         '''
+        # objects
+        date_tools = self.pool.get('date.tools')
+        fields_tools = self.pool.get('fields.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.backorder_ids:
                 raise osv.except_osv(_('Warning !'), _('You cannot convert a picking which has already been started.'))
@@ -1695,8 +1742,17 @@ class stock_picking(osv.osv):
                        'converted_to_standard': True,
                        }, context=context)
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
+            # if corresponding sale order, date and date_expected are updated to rts + shipment lt
             for move in obj.move_lines:
-                move.write({'location_dest_id': obj.warehouse_id.lot_output_id.id,}, context=context)
+                vals = {'location_dest_id': obj.warehouse_id.lot_output_id.id,}
+                if obj.sale_id:
+                    # compute date
+                    shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+                    rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
+                    rts = rts + relativedelta(days=shipment_lt or 0)
+                    rts = rts.strftime(db_date_format)
+                    vals.update({'date': rts, 'date_expected': rts})
+                move.write(vals, context=context)
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         
@@ -1824,6 +1880,11 @@ class stock_picking(osv.osv):
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
         
+        # objects
+        date_tools = self.pool.get('date.tools')
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        today = time.strftime(db_date_format)
+        
         # stock move object
         move_obj = self.pool.get('stock.move')
         # create picking object
@@ -1890,7 +1951,9 @@ class stock_picking(osv.osv):
                 if move.product_qty:
                     move_obj.write(cr, uid, [move.id], {'initial_location': move.location_id.id,
                                                         'location_id': move.location_dest_id.id,
-                                                        'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id}, context=context)
+                                                        'location_dest_id': new_ppl.warehouse_id.lot_dispatch_id.id,
+                                                        'date': today,
+                                                        'date_expected': today,}, context=context)
                 else:
                     move_obj.unlink(cr, uid, [move.id], context=context)
             

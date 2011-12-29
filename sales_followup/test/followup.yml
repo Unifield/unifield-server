@@ -207,8 +207,9 @@
 -
   I run the scheduler.
 -
-  !python {model: procurement.order}: |
-    self.run_scheduler(cr, uid)
+  !function {model: procurement.order, name: run_scheduler, context: "{'update_mode':'init'}"}:
+    - model: procurement.order
+      search: "[]"
 -
   I create again a wizard
 -
@@ -325,6 +326,8 @@
               self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
               for quotation in line.purchase_ids:
+                # Delivery confirmed date is mandatory at confirmed state (unifield naming) (== 'approved' state openERP naming)
+                quotation.write({'delivery_confirmed_date': '2011-03-04'}, context=context)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
             
@@ -373,6 +376,8 @@
               self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
               
               for quotation in line.purchase_ids:
+                # Delivery confirmed date is mandatory at confirmed state (unifield naming) (== 'approved' state openERP naming)
+                quotation.write({'delivery_confirmed_date': '2011-03-03'}, context=context)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
         
