@@ -612,7 +612,7 @@ class purchase_order(osv.osv):
                 'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
                 # FIELDS PART OF CREATE/WRITE methods
                 # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-                'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Type',
+                'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
                         help='Number of days this field has to be associated with a transport mode selection'),
                 # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
                 'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time',
@@ -967,7 +967,7 @@ class sale_order(osv.osv):
         'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
         # FIELDS PART OF CREATE/WRITE methods
         # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Type',
+        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
                         help='Number of days this field has to be associated with a transport mode selection'),
         # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
         'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
