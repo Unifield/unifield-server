@@ -1233,8 +1233,11 @@ class account_bank_statement_line(osv.osv):
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
 
             if postype == "hard":
+                # some verifications
                 if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
+                if absl.is_transfer_with_change and not absl.transfer_amount and not absl.transfer_currency:
+                    raise osv.except_osv(_('Error'), _('Transfer amount and transfer currency is missing!'))
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
