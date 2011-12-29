@@ -244,7 +244,7 @@ class tender(osv.osv):
         integrity_test = kwargs.get('integrity_test', False)
         for tender in self.browse(cr, uid, ids, context=context):
             # flag if at least one update
-            updated = False
+            updated = tender.tender_line_ids and False or True
             # check if corresponding rfqs are in the good state
             if integrity_test:
                 self.tender_integrity(cr, uid, tender, context=context)
@@ -408,7 +408,7 @@ class tender(osv.osv):
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-                if tender.state == 'draft':
+                if tender.state == 'draft' or not tender.tender_line_ids:
                     # Call the cancel method of the tender
                     wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
                 else:
@@ -476,7 +476,8 @@ class tender_line(osv.osv):
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 }
-    _defaults = {'qty': 1.0,
+    _defaults = {'qty': lambda *a: 1.0,
+                 'state': lambda *a: 'draft',
                  }
     
 tender_line()
@@ -487,7 +488,7 @@ class tender(osv.osv):
     tender class
     '''
     _inherit = 'tender'
-    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)]}, readonly=True),
+    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)], 'comparison': [('readonly',False)]}, readonly=True),
                 }
     
     def copy(self, cr, uid, id, default=None, context=None):
