@@ -1143,7 +1143,8 @@ class sale_order(osv.osv):
         check delivery_confirmed_date field
         '''
         for obj in self.browse(cr, uid, ids):
-            if not obj.delivery_confirmed_date:
+            # deactivated
+            if not obj.delivery_confirmed_date and False:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             for line in obj.order_line:

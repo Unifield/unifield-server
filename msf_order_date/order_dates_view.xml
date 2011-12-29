@@ -143,7 +143,7 @@
 		                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
 	                            </group>
 	                            <group colspan="2" col="3">
-		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', '!=', 'draft')], 'required':[('state', '==', 'confirmed')]}" />
+		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ('done','cancel'))]}" />
 		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order',}" icon="gtk-indent" 
 		                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
 	                            </group>
@@ -159,7 +159,7 @@
                     
                     <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
                         <field name="date_planned" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
-                        <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
+                        <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('done','cancel'))]}" />
                     </xpath>
                     
                     <!-- Give the context when create a new SO line -->
