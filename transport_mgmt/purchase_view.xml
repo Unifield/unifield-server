@@ -100,7 +100,8 @@
             <field name="name">purchase.order.search.description.view</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
-            <field name="inherit_id" ref="purchase_override.purchase_order_type_search_view" />
+            <field name="priority">100</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_filter" />
             <field name="arch" type="xml">
                 <data>
 
