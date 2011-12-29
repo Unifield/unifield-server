@@ -869,20 +869,20 @@ class account_bank_statement_line(osv.osv):
             return False
 
         # Prepare some values
-        move_line_values = values.copy()
+        move_line_values = dict(values)
         acc_move_line_obj = self.pool.get('account.move.line')
         st_line = self.browse(cr, uid, st_line_id, context=context)
         # Get first line (from Register account)
         register_line = st_line.first_move_line_id
         # Delete 'from_import_cheque_id' field not to break the account move line write
-        if 'from_import_cheque_id' in values:
-            del(values['from_import_cheque_id'])
+        if 'from_import_cheque_id' in move_line_values:
+            del(move_line_values['from_import_cheque_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
             other_line = acc_move_line_obj.browse(cr, uid, other_line_id, context=context)
-            other_account_id = values.get('account_id', other_line.account_id.id)
-            amount = values.get('amount', st_line.amount)
+            other_account_id = move_line_values.get('account_id', other_line.account_id.id)
+            amount = move_line_values.get('amount', st_line.amount)
             # Search all data for move lines
             register_account_id = st_line.statement_id.journal_id.default_debit_account_id.id
             if amount < 0:
@@ -904,7 +904,7 @@ class account_bank_statement_line(osv.osv):
                 # Prepare value
                 res_currency_obj = self.pool.get('res.currency')
                 # Get date for having a good change rate
-                context.update({'date': values.get('date', st_line.date)})
+                context.update({'date': move_line_values.get('date', st_line.date)})
                 # Change amount
                 new_amount = res_currency_obj.compute(cr, uid, \
                     st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
@@ -927,15 +927,21 @@ class account_bank_statement_line(osv.osv):
                 # Amount currency for "other line" is the opposite of "register line"
                 other_amount_currency = -register_amount_currency
             # Update values for register line
-            values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
+            move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
                 'amount_currency': register_amount_currency, 'currency_id': currency_id})
+            if st_line.is_transfer_with_change:
+                move_line_values.update({'is_transfer_with_change': True})
+                if st_line.transfer_amount:
+                    move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
+                if st_line.transfer_currency:
+                    move_line_values.update({'transfer_currency': st_line.transfer_currency and st_line.transfer_currency.id or False})
             # Write move line object for register line
-            acc_move_line_obj.write(cr, uid, [register_line.id], values, context=context)
+            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context)
             # Update values for other line
-            values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
-                'currency_id': currency_id})
+            move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
+                'currency_id': currency_id, 'is_transfer_with_change': False, 'transfer_amount': False, 'transfer_currency': False})
             # Write move line object for other line
-            acc_move_line_obj.write(cr, uid, [other_line.id], values, context=context)
+            acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
             # Update analytic distribution lines
             analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.id], ['amount_currency'], context=context)[0].get('amount_currency', False)
             if analytic_amount:
