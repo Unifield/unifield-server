@@ -981,7 +981,6 @@ class stock_picking(osv.osv):
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
         pick = kwargs['pick']
         obj_data = self.pool.get('ir.model.data')
-        print pick.subtype
         view_list = {'standard': ('stock', 'view_picking_out_form'),
                      'picking': ('msf_outgoing', 'view_picking_ticket_form'),
                      'ppl': ('msf_outgoing', 'view_ppl_form'),
