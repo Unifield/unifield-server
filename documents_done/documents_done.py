@@ -230,12 +230,14 @@ class documents_done_wizard(osv.osv):
                     doc_type = 'Incoming Shipment'
                 line_obj.create(cr, uid, {'problem_id': problem_id,
                                           'doc_name': move.picking_id.name,
+                                          'doc_state': move.picking_id.state,
                                           'doc_model': 'stock.picking',
                                           'doc_id': move.picking_id.id,
                                           'doc_type': doc_type})
             elif not move.picking_id:
                 line_obj.create(cr, uid, {'problem_id': problem_id,
                                           'doc_name': move.name,
+                                          'doc_state': move.state,
                                           'doc_model': 'stock.move',
                                           'doc_id': move.id,
                                           'doc_type': 'Stock move'})
@@ -249,6 +251,7 @@ class documents_done_wizard(osv.osv):
         for order in self.pool.get('purchase.order').browse(cr, uid, po_ids, context=context):
             line_obj.create(cr, uid, {'problem_id': problem_id,
                                       'doc_name': order.name,
+                                      'doc_state': order.state,
                                       'doc_model': 'purchase.order',
                                       'doc_id': order.id,
                                       'doc_type': order.rfq_ok and 'Request for Quotation' or 'Purchase Order'})
@@ -294,6 +297,7 @@ class documents_done_wizard(osv.osv):
             for tender in self.pool.get('tender').browse(cr, uid, tender_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
                                              'doc_name': tender.name,
+                                             'doc_state': tender.state,
                                              'doc_model': 'tender',
                                              'doc_id': tender.id,
                                              'doc_type': 'Tender'})
@@ -301,6 +305,7 @@ class documents_done_wizard(osv.osv):
             for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
                                              'doc_name': proc.name,
+                                             'doc_state': proc.state,
                                              'doc_model': 'procurement.order',
                                              'doc_id': proc.id,
                                              'doc_type': 'Procurement Order'})
@@ -309,6 +314,7 @@ class documents_done_wizard(osv.osv):
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
                                              'doc_name': inv.name,
+                                             'doc_state': inv.state,
                                              'doc_model': 'account.invoice',
                                              'doc_id': inv.id,
                                              'doc_type': 'Invoice'})
@@ -498,9 +504,35 @@ documents_done_problem()
 class documents_done_problem_line(osv.osv_memory):
     _name = 'documents.done.problem.line'
 
+    def _get_state(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Return the state of the related doc
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            sel = self.pool.get(line.doc_model).fields_get(cr, uid, ['state'])
+            res_state = dict(sel['state']['selection']).get(line.doc_state, line.doc_state)
+            name = '%s,state' % line.doc_model
+            tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res_state)])
+            if tr_ids:
+                res[line.id] = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+            else:
+                res[line.id] = res_state
+
+        return res
+
     _columns = {
         'problem_id': fields.many2one('documents.done.problem', string='Problem'),
         'doc_name': fields.char(size='64', string='Reference'),
+        'doc_state': fields.char(size=64, string='DB state'),
+        'doc_state_str': fields.function(_get_state, method=True, string='State', type='char', readonly=True),
         'doc_type': fields.char(size=64, string='Doc. Type'),
         'doc_model': fields.char(size=64, string='Doc. Model'),
         'doc_id': fields.integer(string='Doc. Id'),

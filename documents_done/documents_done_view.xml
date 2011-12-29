@@ -70,6 +70,7 @@
                         <tree string="Documents">
                             <field name="doc_name" />
                             <field name="doc_type" />
+                            <field name="doc_state_str" />
                             <button name="go_to_doc" type="object" icon="terp-stock_zoom" string="Go to document" />
                         </tree>
                     </field>
