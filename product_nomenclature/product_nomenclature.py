@@ -93,7 +93,6 @@ class product_nomenclature(osv.osv):
         
         #test = self._columns.get('parent_id')
         #test = self._columns['name']
-        #print test
         
         # get the parent object's level + 1
         #result = self.browse(cr, uid, self.parent_id, context).level + 1

@@ -111,99 +111,98 @@ class account_invoice(osv.osv):
             co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids])], context=context)
             if not co_ids:
                 continue
-            if len(co_ids) > 1:
-                raise osv.except_osv(_('Error'), _('Multiple Commitment Voucher for the same invoice is not supported yet!'))
-            co = self.pool.get('account.commitment').browse(cr, uid, co_ids, context=context)[0]
-            # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
-            # NB: This permits to avoid modification on commitment voucher when receiving some goods
-            if co.state == 'draft':
-                self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
-            # Try to update engagement lines regarding invoice line amounts and account
-            invoice_lines = defaultdict(list)
-            # Group by account
-            for invl in inv.invoice_line:
-                invoice_lines[invl.account_id.id].append(invl)
-            # Browse result
-            diff_lines = []
-            processed_commitment_line = []
-            for account_id in invoice_lines:
-                total_amount = 0.0
-                # compute total amount of all invoice lines that have the same account_id
-                for line in invoice_lines[account_id]:
-                    total_amount += line.price_subtotal
-                # search for matching commitment line
-                cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1, 
-                    context=context)
-                # Do nothing if no commitment line exists for this invoice line. FIXME: waiting for a decision about this case
-                if not cl_ids:
-                    continue
-                cl = self.pool.get('account.commitment.line').browse(cr, uid, cl_ids, context=context)[0]
-                # if no difference between invoice lines and commitment line: delete engagement lines that come from this commitment_line
-                eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
-                if cl.amount == total_amount:
-                    processed_commitment_line.append(cl.id)
-                    if eng_ids:
-                        self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
-                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
-                else:
-                    # Remember difference in diff_lines list
-                    diff_lines.append({'cl': cl, 'diff': cl.amount - total_amount, 'new_mnt': total_amount})
-            # Difference lines process
-            if diff_lines:
-                for diff_line in diff_lines:
-                    # Prepare some values
-                    cl = diff_line.get('cl', False)
-                    diff = diff_line.get('diff', 0.0)
-                    new_mnt = diff_line.get('new_mnt', 0.0)
-                    company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    if not cl:
-                        raise osv.except_osv(_('Error'), _('No commitment line found. Please contact an administrator to resolve this problem.'))
-                    distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or cl.commit_id and cl.commit_id.analytic_distribution_id \
-                        and cl.commit_id.analytic_distribution_id.id or False
-                    if not distrib_id:
-                        raise osv.except_osv(_('Error'), _('No analytic distribution found.'))
-                    # Browse distribution
-                    distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
-                    engagement_lines = distrib.analytic_lines
-                    for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
-                        for distrib_line in distrib_lines:
-                            vals = {
-                                'account_id': distrib_line.analytic_id.id,
-                                'general_account_id': cl.account_id.id,
-                            }
-                            if distrib_line._name == 'funding.pool.distribution.line':
-                                vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
-                            # Browse engagement lines to found out matching elements
-                            for i in range(0,len(engagement_lines)):
-                                if engagement_lines[i]:
-                                    eng_line = engagement_lines[i]
-                                    cmp_vals = {
-                                        'account_id': eng_line.account_id.id,
-                                        'general_account_id': eng_line.general_account_id.id,
-                                    }
-                                    if eng_line.cost_center_id:
-                                        cmp_vals.update({'cost_center_id': eng_line.cost_center_id.id})
-                                    if cmp_vals == vals:
-                                        # Update analytic line with new amount
-                                        anal_amount = (distrib_line.percentage * diff) / 100
-                                        amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency, 
-                                            anal_amount, round=False, context=context)
-                                        # write new amount to corresponding engagement line
-                                        eng_res = self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id], 
-                                            {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
-                                        # delete processed engagement lines
-                                        engagement_lines[i] = None
-                    # update existent commitment line with new amount (new_mnt)
-                    commitment_line_new_amount = cl.amount - new_mnt
-                    if commitment_line_new_amount < 0.0:
-                        commitment_line_new_amount = 0.0
-                    self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': commitment_line_new_amount}, context=context)
-                    # add cl to processed_commitment_line
-                    processed_commitment_line.append(cl.id)
-            # Update commitment voucher state (if total_amount is inferior to 0.0, then state is done)
-            c_total = self.pool.get('account.commitment')._get_total(cr, uid, [co.id], {}, {}, context=context)
-            if c_total and c_total.get(co.id, 1.0) <= 0.0:
-                self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
+            for co in self.pool.get('account.commitment').browse(cr, uid, co_ids, context=context):
+                # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
+                # NB: This permits to avoid modification on commitment voucher when receiving some goods
+                if co.state == 'draft':
+                    self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
+                # Try to update engagement lines regarding invoice line amounts and account
+                invoice_lines = defaultdict(list)
+                # Group by account
+                for invl in inv.invoice_line:
+                    if invl.order_line_id and invl.order_line_id.order_id and invl.order_line_id.order_id.commitment_ids and co.id in [x.id for x in invl.order_line_id.order_id.commitment_ids]:
+                        invoice_lines[invl.account_id.id].append(invl)
+                # Browse result
+                diff_lines = []
+                processed_commitment_line = []
+                for account_id in invoice_lines:
+                    total_amount = 0.0
+                    # compute total amount of all invoice lines that have the same account_id
+                    for line in invoice_lines[account_id]:
+                        total_amount += line.price_subtotal
+                    # search for matching commitment line
+                    cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1, 
+                        context=context)
+                    # Do nothing if no commitment line exists for this invoice line. FIXME: waiting for a decision about this case
+                    if not cl_ids:
+                        continue
+                    cl = self.pool.get('account.commitment.line').browse(cr, uid, cl_ids, context=context)[0]
+                    # if no difference between invoice lines and commitment line: delete engagement lines that come from this commitment_line
+                    eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
+                    if cl.amount == total_amount:
+                        processed_commitment_line.append(cl.id)
+                        if eng_ids:
+                            self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
+                        self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
+                    else:
+                        # Remember difference in diff_lines list
+                        diff_lines.append({'cl': cl, 'diff': cl.amount - total_amount, 'new_mnt': total_amount})
+                # Difference lines process
+                if diff_lines:
+                    for diff_line in diff_lines:
+                        # Prepare some values
+                        cl = diff_line.get('cl', False)
+                        diff = diff_line.get('diff', 0.0)
+                        new_mnt = diff_line.get('new_mnt', 0.0)
+                        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                        if not cl:
+                            raise osv.except_osv(_('Error'), _('No commitment line found. Please contact an administrator to resolve this problem.'))
+                        distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or cl.commit_id and cl.commit_id.analytic_distribution_id \
+                            and cl.commit_id.analytic_distribution_id.id or False
+                        if not distrib_id:
+                            raise osv.except_osv(_('Error'), _('No analytic distribution found.'))
+                        # Browse distribution
+                        distrib = self.pool.get('analytic.distribution').browse(cr, uid, [distrib_id], context=context)[0]
+                        engagement_lines = distrib.analytic_lines
+                        for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
+                            for distrib_line in distrib_lines:
+                                vals = {
+                                    'account_id': distrib_line.analytic_id.id,
+                                    'general_account_id': cl.account_id.id,
+                                }
+                                if distrib_line._name == 'funding.pool.distribution.line':
+                                    vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,})
+                                # Browse engagement lines to found out matching elements
+                                for i in range(0,len(engagement_lines)):
+                                    if engagement_lines[i]:
+                                        eng_line = engagement_lines[i]
+                                        cmp_vals = {
+                                            'account_id': eng_line.account_id.id,
+                                            'general_account_id': eng_line.general_account_id.id,
+                                        }
+                                        if eng_line.cost_center_id:
+                                            cmp_vals.update({'cost_center_id': eng_line.cost_center_id.id})
+                                        if cmp_vals == vals:
+                                            # Update analytic line with new amount
+                                            anal_amount = (distrib_line.percentage * diff) / 100
+                                            amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency, 
+                                                anal_amount, round=False, context=context)
+                                            # write new amount to corresponding engagement line
+                                            eng_res = self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id], 
+                                                {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
+                                            # delete processed engagement lines
+                                            engagement_lines[i] = None
+                        # update existent commitment line with new amount (new_mnt)
+                        commitment_line_new_amount = cl.amount - new_mnt
+                        if commitment_line_new_amount < 0.0:
+                            commitment_line_new_amount = 0.0
+                        self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': commitment_line_new_amount}, context=context)
+                        # add cl to processed_commitment_line
+                        processed_commitment_line.append(cl.id)
+                # Update commitment voucher state (if total_amount is inferior to 0.0, then state is done)
+                c_total = self.pool.get('account.commitment')._get_total(cr, uid, [co.id], {}, {}, context=context)
+                if c_total and c_total.get(co.id, 1.0) <= 0.0:
+                    self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
         return True
 
     def action_open_invoice(self, cr, uid, ids, context={}):
