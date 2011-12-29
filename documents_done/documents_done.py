@@ -390,7 +390,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         sale_order ir
                     WHERE
-                        state NOT IN ('procurement_done', 'procurement_cancel')
+                        state NOT IN ('done', 'cancel')
                       AND
                         procurement_request = True)
                 UNION
