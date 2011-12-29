@@ -121,6 +121,9 @@ class documents_done_wizard(osv.osv):
             if line.procurement_id:
                 if line.procurement_id.state not in ('cancel', 'done'):
                     proc_ids.append(line.procurement_id.id)
+                # Check PO
+                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('cancel', 'done'):
+                    po_ids.append(line.procurement_id.purchase_id.id)
                 # Check tenders
                 if line.procurement_id.tender_id and line.procurement_id.tender_id.state not in ('cancel', 'done'):
                     tender_ids.append(line.procurement_id.tender_id.id)
