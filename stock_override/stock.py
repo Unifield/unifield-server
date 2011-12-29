@@ -433,6 +433,7 @@ class stock_move(osv.osv):
                 'prod_price': move.product_id.standard_price,
                 'sub_total': sub_total,
                 'currency': currency,
+                'origin': move.origin,
                 'expired_date': move.expired_date,
                 'prodlot_id': move.prodlot_id.name,
                 'dg_check': dg_check_flag,

@@ -8,7 +8,7 @@
                 name="destruction.location"
                 header="True"
                 rml="addons/stock_override/report/destruction_location.rml"
-                string="Destruction Location Report"
+                string="Destruction Report"
                  />
     </data>
 </openerp>
