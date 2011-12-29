@@ -608,13 +608,12 @@ class purchase_order(osv.osv):
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-                'history_ids': fields.one2many('history.order.date', 'purchase_id', string='Dates History'),
                 # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
                 'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
                 # FIELDS PART OF CREATE/WRITE methods
                 # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
                 'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Type',
-                        help='Number of days this field has to be associated with a transport mode selection')),
+                        help='Number of days this field has to be associated with a transport mode selection'),
                 # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
                 'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time',
                         help="Estimated Transport Lead-Time in weeks"),
@@ -624,14 +623,11 @@ class purchase_order(osv.osv):
                 # not a function because a function value is only filled when saved, not with on change of partner id
                 # from partner_id object
                 'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
-                    #JFB TODO: states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}
                 }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
         'confirmed_date_by_synchro': False,
-# JFB TODO internal_type': lambda *a: 'national',
-
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context={}):
@@ -779,19 +775,6 @@ class purchase_order_line(osv.osv):
     _name= 'purchase.order.line'
     _inherit = 'purchase.order.line'
     
-    def write(self, cr, uid, ids, data, context=None):
-        '''
-        Create history if date values changed
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            
-        create_history(self, cr, uid, ids, data, 'purchase.order.line', 'purchase_line_id', fields_date_line, context=context)
-                    
-        return super(purchase_order_line, self).write(cr, uid, ids, data, context=context)
-    
     def _vals_get_order_date(self, cr, uid, ids, fields, arg, context=None):
         '''
         get values for functions
@@ -876,7 +859,6 @@ class purchase_order_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
-                'history_ids': fields.one2many('history.order.date', 'purchase_line_id', string='Dates History'),
                 # not replacing the po_state from sale_followup - should ?
                 'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
                 'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
@@ -995,14 +977,11 @@ class sale_order(osv.osv):
         # not a function because a function value is only filled when saved, not with on change of partner id
         # from partner_id object
         'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
-           # TODO JFB states={'draft': [('readonly', False)]}
     }
     
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
         'confirmed_date_by_synchro': False,
-# TODO JFB
-#'internal_type': lambda *a: 'national',
     }
     
     def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
@@ -1203,19 +1182,6 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def write(self, cr, uid, ids, data, context=None):
-        '''
-        Create history if date values changed
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        
-        create_history(self, cr, uid, ids, data, 'sale.order.line', 'sale_line_id', fields_date_line, context=context)
-                    
-        return super(sale_order_line, self).write(cr, uid, ids, data, context=context)
-    
     def _get_planned_date(self, cr, uid, context=None, *a):
         '''
             Returns planned_date
@@ -1273,7 +1239,6 @@ class sale_order_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
                 'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
                                                        help='Header level dates has to be populated by default with the possibility of manual updates.'),
-                'history_ids': fields.one2many('history.order.date', 'sale_line_id', string='Dates History'),
                 'so_state_stored': fields.related('order_id', 'state', type='selection', selection=SALE_ORDER_STATE_SELECTION, string='So State', readonly=True,),
                 }
 
