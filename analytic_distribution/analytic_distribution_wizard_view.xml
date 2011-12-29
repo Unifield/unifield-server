@@ -2,6 +2,7 @@
 <openerp>
     <data>
 
+    <!-- Analytic distribution wizard -->
         <record model="ir.ui.view" id="analytic_distribution_wizard_lines_tree">
             <field name="name">analytic.distribution.wizard.lines.tree"</field>
             <field name="model">analytic.distribution.wizard.lines</field>
@@ -100,6 +101,86 @@
                     <field name="state" invisible="1"/>
                     <field name="is_writable" invisible="1"/>
                     <field name="account_id" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <act_window id="action_mass_reallocation"
+            name="Mass reallocation"
+            res_model="mass.reallocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"/>
+
+    <!-- Mass reallocation wizard -->
+        <record id="mass_reallocation_wizard_view" model="ir.ui.view">
+            <field name="name">Mass Reallocation Wizard</field>
+            <field name="model">mass.reallocation.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="line_ids" nolabel="1" colspan="4"/>
+                    <group col="6" colspan="4"/>
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Verify" icon="terp-camera_test" colspan="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Mass reallocation verification wizard -->
+        <record id="mass_reallocation_verification_wizard_view" model="ir.ui.view">
+            <field name="name">Mass Reallocation Verification Wizard</field>
+            <field name="model">mass.reallocation.verification.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group col="6" colspan="4">
+                        <field name="nb_process" colspan="2"/>
+                        <field name="nb_error" colspan="2"/>
+                        <field name="nb_other" colspan="2"/>
+                    </group>
+                    <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="error_ids" colspan="4" nolabel="1">
+                        <tree string="Non reallocatable lines" noteditable="1">
+                            <field name="date"/>
+                            <field name="ref"/>
+                            <field name="name"/>
+                            <field name="journal_id" string="Analytic Journal"/>
+                            <field name="amount"/>
+                            <field name="amount_currency"/>
+                            <field name="currency_id"/>
+                            <field name="account_id"/>
+                            <field name="cost_center_id" string="Cost Center"/>
+                            <field name="general_account_id"/>
+                        </tree>
+                    </field>
+                    <newline />
+                    <field name="process_ids" colspan="4" nolabel="1">
+                        <tree string="Reallocatable lines" noteditable="1">
+                            <field name="date"/>
+                            <field name="ref"/>
+                            <field name="name"/>
+                            <field name="journal_id" string="Analytic Journal"/>
+                            <field name="amount"/>
+                            <field name="amount_currency"/>
+                            <field name="currency_id"/>
+                            <field name="account_id"/>
+                            <field name="cost_center_id" string="Cost Center"/>
+                            <field name="general_account_id"/>
+                        </tree>
+                    </field>
+                    <newline />
+                    <group col="6" colspan="4"/>
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" colspan="1"/>
                 </form>
             </field>
         </record>

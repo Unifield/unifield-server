@@ -1,4 +1,31 @@
 -
+  I create an account type tax
+-
+  !record {model: account.account.type, id: type_tax}:
+    name: TAX
+    code: CTAXE
+    close_method: unreconciled
+-
+ I create an vat account
+-
+  !record {model: account.account, id: account_1}:
+    code: 5645345
+    type_for_register: none
+    type: other
+    name: TAX
+    reconcile: True
+    user_type: type_tax
+-
+  I create a VAT
+-
+  !record {model: account.tax, id: normal_vat}:
+    name: TVA
+    description: TVA
+    amount: 0.042
+    type: percent
+    account_collected_id: account_1
+    account_paid_id: account_1
+-
   I create a partner
 -
   !record {model: res.partner, id: res_partner_africom0}:

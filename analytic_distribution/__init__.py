@@ -24,6 +24,7 @@ import account
 import account_bank_statement
 import account_move_line
 import analytic_account
+import account_commitment
 import analytic_line
 import invoice
 import wizard

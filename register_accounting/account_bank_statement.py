@@ -1271,7 +1271,7 @@ class account_bank_statement_line(osv.osv):
             # verify that there is a third party, particularly an employee_id in order to do something
             if not st_line.employee_id:
                 raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
-        # then print the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
+        # then display the wizard with an active_id = cash_register_id, and giving in the context a number of the bank statement line
         st_obj = self.pool.get('account.bank.statement.line')
         st = st_obj.browse(cr, uid, ids[0]).statement_id
         if st and st.state != 'open':

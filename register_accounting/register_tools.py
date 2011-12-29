@@ -183,17 +183,17 @@ def previous_period_id(self, cr, uid, period_id, context={}):
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
     first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
-    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], 
-        order='date_start desc', limit=1, context=context)
+    previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id), 
+        ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
     if period_id == first_period_id: 
         # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
         previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)], 
-            limit=1, order="date_start desc", context=context)
+            order="date_start desc", context=context)
         if not previous_fiscalyear:
             raise osv.except_osv(_('Error'), 
                 _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
-        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0])], 
-            limit=1, order='date_stop desc, name desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
+        previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)], 
+            order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14" 
             # and "Period 15"
     if previous_period_ids:
         return previous_period_ids[0]

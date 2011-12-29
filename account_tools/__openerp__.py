@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -22,16 +22,14 @@
 ##############################################################################
 
 {
-    "name" : "Analytic Distribution on Purchase Order",
-    "version" : "1.0",
-    "description" : "This permits to have analytic distribution wizard on a Purchase Order",
-    "author" : "TeMPO Consulting, MSF",
+    "name" : "Account Tools",
+    "version" : "0.1",
+    "description" : "Some tools in order to develop accounting modules for OpenERP",
+    "author" : "MSF - TeMPO Consulting",
     "category" : "Tools",
-    "depends" : ["base", "analytic_distribution", "purchase"],
+    "depends" : ["base", "account"],
     "init_xml" : [],
-    "update_xml" : [
-            "purchase_view.xml",
-    ],
+    "update_xml" : [],
     "demo_xml" : [],
     "test": [],
     "installable": True,

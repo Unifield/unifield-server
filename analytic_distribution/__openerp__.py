@@ -24,7 +24,7 @@
     "author" : "MSF - TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
     "depends" : ["analytic", "account", "account_override", "account_budget"],
-    "description": """Module for defining analytic accounting object.
+    "description": """Module for defining analytic accounting object and commitment voucher.
     """,
     "init_xml" : [
         'data/analytic_account_data.xml',
@@ -32,8 +32,12 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'analytic_account_view.xml',
+        'analytic_line_view.xml',
         'wizard/account_analytic_chart_view.xml',
         'analytic_distribution_wizard_view.xml',
+        'account_commitment_workflow.xml',
+        'account_commitment_sequence.xml',
+        'account_commitment_view.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
