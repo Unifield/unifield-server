@@ -278,7 +278,7 @@ class tender(osv.osv):
         integrity_test = kwargs.get('integrity_test', False)
         for tender in self.browse(cr, uid, ids, context=context):
             # flag if at least one update
-            updated = False
+            updated = tender.tender_line_ids and False or True
             # check if corresponding rfqs are in the good state
             if integrity_test:
                 self.tender_integrity(cr, uid, tender, context=context)
@@ -386,6 +386,7 @@ class tender(osv.osv):
                              'fiscal_position': line.supplier_id.property_account_position and line.supplier_id.property_account_position.id or False,
                              'categ': tender.categ,
                              'priority': tender.priority,
+                             'origin_tender_id': tender.id,
                              #'tender_id': tender.id, # not for now, because tender_id is the flag for a po to be considered as RfQ
                              'warehouse_id': tender.warehouse_id.id,
                              'details': tender.details,
@@ -419,6 +420,35 @@ class tender(osv.osv):
             for rfq_id in rfq_ids:
                 wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'purchase_cancel', cr)
                 
+        return True
+
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the tender and all related documents to done state
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+
+        for tender in self.browse(cr, uid, ids, context=context):
+            if tender.state not in ('done', 'cancel'):
+                # Cancel or done all RfQ related to the tender
+                for rfq in tender.rfq_ids:
+                    if rfq.state not in ('done', 'cancel'):
+                        if rfq.state == 'draft':
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
+                        else:
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+
+                if tender.state == 'draft' or not tender.tender_line_ids:
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                else:
+                    # Call the cancel method of the tender
+                    wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
+
         return True
 
 tender()
@@ -480,7 +510,8 @@ class tender_line(osv.osv):
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
                 }
-    _defaults = {'qty': 1.0,
+    _defaults = {'qty': lambda *a: 1.0,
+                 'state': lambda *a: 'draft',
                  }
     
 tender_line()
@@ -491,7 +522,7 @@ class tender(osv.osv):
     tender class
     '''
     _inherit = 'tender'
-    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)]}, readonly=True),
+    _columns = {'tender_line_ids': fields.one2many('tender.line', 'tender_id', string="Tender lines", states={'draft':[('readonly',False)], 'comparison': [('readonly',False)]}, readonly=True),
                 }
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -675,6 +706,7 @@ class purchase_order(osv.osv):
                 return False
         return True
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
+                'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),

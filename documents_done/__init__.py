@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,25 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name" : "Stock override",
-    "version" : "1.0",
-    "author" : "MSF",
-    "description" : """
-    Add hook to stock class and wizard
-    """,
-    "website": "http://unifield.msf.org",
-    "depends" : ["stock", "reason_types_moves"],
-    "category" : "Generic Modules/Inventory Control",
-    "init_xml" : [],
-    "demo_xml" : [],
-    "update_xml" : [
-        "stock_workflow.xml",
-        "report/report_stock_move_view.xml",
-        "procurement_view.xml",
-        "report/report_destruction_location_view.xml",
-    ],
-    'test': [],
-    'installable': True,
-    'active': False,
-}
+import documents_done
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

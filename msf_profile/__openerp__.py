@@ -84,6 +84,7 @@
         "delivery_mechanism",
         "msf_tools",
         "transport_mgmt",
+        "documents_done",
     ],
     "update_xml": [
         "report.xml",
