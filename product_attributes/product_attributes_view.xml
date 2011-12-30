@@ -226,9 +226,6 @@
             <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="sequence" position="replace">
-                        <field name="sequence" string="Ranking"/>
-                     </field>
                     <field name="company_id" position="replace"/>
                 </data>
             </field>
