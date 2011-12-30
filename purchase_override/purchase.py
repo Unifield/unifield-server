@@ -87,6 +87,7 @@ class purchase_order(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+        'merged_line_ids': fields.one2many('purchase.order.merged.line', 'order_id', string='Merged line'),
     }
     
     _defaults = {
@@ -364,13 +365,163 @@ class purchase_order(osv.osv):
 purchase_order()
 
 
+class purchase_order_merged_line(osv.osv):
+    _name = 'purchase.order.merged.line'
+    _inherit = 'purchase.order.line'
+    _description = 'Purchase Order Merged Lines'
+    _table = 'purchase_order_merged_line'
+
+    _columns = {
+        'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines')
+    }
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Update unit price of PO lines attached to the merged line
+        '''
+        if 'price_unit' in vals:
+            for merged_line in self.browse(cr, uid, ids, context=context):
+                for po_line in merged_line.order_line_ids:
+                    self.pool.get('purchase.order.line').write(cr, uid, [po_line.id], {'price_unit': vals['price_unit']}, context=context)
+
+        return super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
+
+    def _update(self, cr, uid, id, product_qty, context={}):
+        '''
+        Update the quantity and the unit price according to the new qty
+        '''
+        line = self.browse(cr, uid, id, context=context)
+
+        # If no PO line attached to this merged line, remove the merged line
+        if not line.order_line_ids:
+            self.unlink(cr, uid, [id], context=context)
+            return False
+
+        new_qty = line.product_qty + product_qty
+        new_price = self.pool.get('product.pricelist').price_get(cr, uid, 
+                                                          [line.order_id.pricelist_id.id],
+                                                          line.product_id.id,
+                                                          new_qty,
+                                                          line.order_id.partner_id.id,
+                                                          {'uom': line.product_uom.id,
+                                                           'date': line.order_id.date_order})[line.order_id.pricelist_id.id]
+
+        self.write(cr, uid, [id], {'product_qty': new_qty,
+                                   'price_unit': new_price}, context=context)
+
+        return id
+
+
+purchase_order_merged_line()
+
+
 class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
+    def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id=False, context={}):
+        '''
+        Check if a merged line exist. If not, create a new one and attach them to the Po line
+        '''
+        line_obj = self.pool.get('purchase.order.merged.line')
+        domain = [('product_id', '=', product_id), ('order_id', '=', order_id)]
+
+        if uom_id:
+            domain.append(('product_uom', '=', uom_id))
+
+        merged_ids = line_obj.search(cr, uid, domain, context=context)
+
+        if not merged_ids:
+            vals['merged_id'] = line_obj.create(cr, uid, vals, context=context)
+        else:
+            vals['merged_id'] = line_obj._update(cr, uid, merged_ids[0], product_qty, context=context)
+
+        return vals
+
+    def _update_merged_line(self, cr, uid, line_id, vals, context={}):
+        '''
+        Update the merged line
+        '''
+        merged_line_obj = self.pool.get('purchase.order.merged.line')
+
+        # If it's an update of a line
+        if vals and line_id:
+            line = self.browse(cr, uid, line_id, context=context)
+            # If the user has changed the product on the PO line
+            if 'product_id' in vals and line.product_id.id != vals['product_id']:
+                # Need removing the merged_id link before update the merged line because the merged line
+                # will be removed if it hasn't attached PO line
+                self.write(cr, uid, line_id, {'merged_id': False}, context=context)
+                merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
+                # Create or update an existing merged line with the new product
+                vals = self.link_merged_line(cr, uid, vals, product_id, order_id, product_qty, context=context)
+            if 'product_uom' in vals and line.product_uom != vals['product_uom']:
+                # TODO: Voir avec Magali dans le cas où les UoM sont différentes
+                pass
+            if 'product_qty' in vals and line.product_qty != vals['product_qty']:
+                merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, context=context)
+                
+        # If it's a new line
+        elif not line_id:
+            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], context=context)
+        # If the line is removed
+        elif not vals:
+            line = self.browse(cr, uid, line_id, context=context)
+            # Remove the qty from the merged line
+            if line.merged_id:
+                # Need removing the merged_id link before update the merged line because the merged line
+                # will be removed if it hasn't attached PO line
+                self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
+                merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
+
+        return vals
+
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Create or update a merged line
+        '''
+        if not context:
+            context = {}
+
+        vals = self._update_merged_line(cr, uid, False, vals, context=context)
+
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Update merged line
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'product_id' in vals or 'product_qty' in vals or 'product_uom' in vals:
+            for line_id in ids:
+                vals = self._update_merged_line(cr, uid, line_id, vals, context=context)
+
+        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Update the merged line
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line_id in ids:
+            self._update_merged_line(cr, uid, line_id, False, context=context)
+
+        return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
+
 
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
+        'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
     }
 
     def open_split_wizard(self, cr, uid, ids, context={}):
@@ -396,7 +547,6 @@ class purchase_order_line(osv.osv):
 
 
 purchase_order_line()
-
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
