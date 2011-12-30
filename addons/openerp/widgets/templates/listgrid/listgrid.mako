@@ -278,7 +278,7 @@
                                 </tr>
                             % endfor
                         </tbody>
-                        % if field_total:
+                        % if field_total or field_real_total:
                             <tfoot>
                                 <tr class="field_sum">
                                     % if selector:
@@ -294,6 +294,12 @@
                                             <td class="grid-cell" id="total_sum_value" nowrap="nowrap">
                                                 % if 'sum' in field_attrs:
                                                     % for key, val in field_total.items():
+                                                        % if field == key:
+                                                            <span class="sum_value_field" id="${field}">${val[1]}</span>
+                                                        % endif
+                                                    % endfor
+                                                % elif 'real_sum' in field_attrs:
+                                                    % for key, val in field_real_total.items():
                                                         % if field == key:
                                                             <span class="sum_value_field" id="${field}">${val[1]}</span>
                                                         % endif
