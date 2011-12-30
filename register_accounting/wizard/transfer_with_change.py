@@ -30,8 +30,12 @@ class wizard_transfer_with_change(osv.osv_memory):
 
     _columns = {
         'absl_id': fields.many2one('account.bank.statement.line', string='Register Line', required=True),
+        'absl_amount': fields.float(string="Register line absolute amount", readonly=True),
+        'converted_amount': fields.float(string="Converted amount", readonly=True, 
+            help="Register line converted amount using given third party journal currency."),
+        'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
         'amount': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
-        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
+        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, help="This currency is those from given third party journal."),
         'state': fields.selection([('draft', 'Draft'), ('closed', 'Closed')], string="State", required=True),
     }
 
@@ -46,13 +50,21 @@ class wizard_transfer_with_change(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        if 'amount' not in vals or vals.get('amount', 0.0) == 0.0:
-            if 'absl_id' in vals:
-                absl = self.pool.get('account.bank.statement.line').browse(cr, uid, vals.get('absl_id'), context=context)
-                if absl and absl.transfer_journal_id and absl.currency_id:
+        if 'absl_id' in vals:
+            absl = self.pool.get('account.bank.statement.line').browse(cr, uid, vals.get('absl_id'), context=context)
+            if absl and absl.amount:
+                vals.update({'absl_amount': abs(absl.amount)})
+                if absl.transfer_journal_id and absl.currency_id:
                     context.update({'date': absl.date})
-                    amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id, abs(absl.amount), context=context)
-                    vals.update({'amount': amount or 0.0})
+                    converted_amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id, 
+                        abs(absl.amount), round=False, context=context)
+                    if converted_amount:
+                        vals.update({'converted_amount': converted_amount or 0.0})
+            if absl and absl.currency_id:
+                vals.update({'absl_currency': absl.currency_id.id or False})
+        if 'amount' not in vals or vals.get('amount', 0.0) == 0.0:
+            if 'converted_amount' in vals:
+                vals.update({'amount': vals.get('converted_amount') or 0.0})
         # Default behaviour
         return super(wizard_transfer_with_change, self).create(cr, uid, vals, context=context)
 

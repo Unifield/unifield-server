@@ -9,7 +9,18 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Transfer with change">
+                    <separator string="Message" colspan="4"/>
+                    <newline/>
                     <label string="Please indicates an amount and a currency in which the transfer with change will be done or come from." align="0.0" colspan="4"/>
+                    <newline/>
+                    <separator string="Informations" colspan="4"/>
+                    <group col="4" colspan="4">
+                        <field name="absl_amount" colspan="2"/>
+                        <field name="absl_currency" nolabel="1" colspan="1"/>
+                        <label string="" colspan="1"/>
+                        <field name="converted_amount" colspan="2"/>
+                    </group>
+                    <separator string="Your choice" colspan="4"/>
                     <newline/>
                     <field name="amount"/>
                     <field name="currency_id"/>
