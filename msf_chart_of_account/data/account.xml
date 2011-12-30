@@ -562,7 +562,7 @@
 
         <record model="account.account" id="msf_chart_of_account.4203">
             <field name="code">4203</field>
-            <field name="type_for_register">none</field>
+            <field name="type_for_register">down_payment</field>
             <field name="type">receivable</field>
             <field name="name">advances to suppliers and various advances (including other MSF section &lt; €10.000)</field>
             <field name="parent_id" ref="msf_chart_of_account.420" />

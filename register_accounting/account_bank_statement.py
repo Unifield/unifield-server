@@ -609,6 +609,24 @@ class account_bank_statement_line(osv.osv):
             ret[i['id']] = len(i['imported_invoice_line_ids'])
         return ret
 
+    def _get_down_payment_state(self, cr, uid, ids, field_name=None, args=None, context={}):
+        """
+        If account is a down_payment, then True. Otherwise False.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse elements
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'down_payment':
+                res[line.id] = True
+        return res
+
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
         'transfer_journal_id': fields.many2one("account.journal", "Journal"),
@@ -636,6 +654,9 @@ class account_bank_statement_line(osv.osv):
             required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", help="This move line has been taken for create an Import Cheque in a bank register."),
+        'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?", 
+            type='boolean', store=False),
+        'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
     }
 
     _defaults = {
