@@ -32,8 +32,6 @@
         dom = xml.dom.minidom.parseString(res['arch'])
         
         root = dom.childNodes[0]
-        if view.type == 'search':
-            continue
         try:
             pparse(root, view.model, view.type, view['id'], [])
         except:
