@@ -375,6 +375,14 @@ class purchase_order_merged_line(osv.osv):
         'order_line_ids': fields.one2many('purchase.order.line', 'merged_id', string='Purchase Lines')
     }
 
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Set the line number to 0
+        '''
+        if self._name == 'purchase.order.merged.line':
+            vals.update({'line_number': 0})
+        return super(purchase_order_merged_line, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Update unit price of PO lines attached to the merged line
@@ -398,6 +406,7 @@ class purchase_order_merged_line(osv.osv):
             return False
 
         new_qty = line.product_qty + product_qty
+        # Get the price according to the total qty
         new_price = self.pool.get('product.pricelist').price_get(cr, uid, 
                                                           [line.order_id.pricelist_id.id],
                                                           line.product_id.id,
@@ -419,20 +428,20 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id=False, context={}):
+    def link_merged_line(self, cr, uid, vals, product_id, order_id, product_qty, uom_id, context={}):
         '''
         Check if a merged line exist. If not, create a new one and attach them to the Po line
         '''
         line_obj = self.pool.get('purchase.order.merged.line')
-        domain = [('product_id', '=', product_id), ('order_id', '=', order_id)]
+        domain = [('product_id', '=', product_id), ('order_id', '=', order_id), ('product_uom', '=', uom_id)]
+        new_vals = vals.copy()
 
-        if uom_id:
-            domain.append(('product_uom', '=', uom_id))
-
+        # Search if a merged line already exist for the same product, the same order and the same UoM
         merged_ids = line_obj.search(cr, uid, domain, context=context)
 
         if not merged_ids:
-            vals['merged_id'] = line_obj.create(cr, uid, vals, context=context)
+            new_vals['order_id'] = order_id
+            vals['merged_id'] = line_obj.create(cr, uid, new_vals, context=context)
         else:
             vals['merged_id'] = line_obj._update(cr, uid, merged_ids[0], product_qty, context=context)
 
@@ -448,22 +457,19 @@ class purchase_order_line(osv.osv):
         if vals and line_id:
             line = self.browse(cr, uid, line_id, context=context)
             # If the user has changed the product on the PO line
-            if 'product_id' in vals and line.product_id.id != vals['product_id']:
+            if ('product_id' in vals and line.product_id.id != vals['product_id']) or ('product_uom' in vals and line.product_uom.id != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, line_id, {'merged_id': False}, context=context)
                 merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
                 # Create or update an existing merged line with the new product
-                vals = self.link_merged_line(cr, uid, vals, product_id, order_id, product_qty, context=context)
-            if 'product_uom' in vals and line.product_uom != vals['product_uom']:
-                # TODO: Voir avec Magali dans le cas où les UoM sont différentes
-                pass
+                vals = self.link_merged_line(cr, uid, vals, vals['product_id'], line.order_id.id, vals.get('product_qty', line.product_qty), vals.get('product_uom', line.product_uom.id), context=context)
             if 'product_qty' in vals and line.product_qty != vals['product_qty']:
                 merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, context=context)
                 
         # If it's a new line
         elif not line_id:
-            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], context=context)
+            vals = self.link_merged_line(cr, uid, vals, vals['product_id'], vals['order_id'], vals['product_qty'], vals['product_uom'], context=context)
         # If the line is removed
         elif not vals:
             line = self.browse(cr, uid, line_id, context=context)

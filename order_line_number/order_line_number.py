@@ -170,11 +170,12 @@ class purchase_order_line(osv.osv):
         
         add the corresponding line number
         '''
-        # gather the line number from the sale order sequence
-        order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
-        sequence = order.sequence_id
-        line = sequence.get_id(test='id', context=context)
-        vals.update({'line_number': line})
+        if not 'line_number' in vals:
+            # gather the line number from the sale order sequence
+            order = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context)
+            sequence = order.sequence_id
+            line = sequence.get_id(test='id', context=context)
+            vals.update({'line_number': line})
         
         # create the new sale order line
         result = super(purchase_order_line, self).create(cr, uid, vals, context=context)
