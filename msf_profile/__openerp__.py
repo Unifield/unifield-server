@@ -93,6 +93,7 @@
     "demo_xml": [
     ],
     "test": [
+        'test/unique_fields_views.yml',
         'test/inherited_views.yml',
     ],
     "installable": True,
