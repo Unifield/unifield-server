@@ -68,6 +68,7 @@
   !python {model: stock.picking}: |
     proc_obj = self.pool.get('procurement.order')
     sol_obj = self.pool.get('sale.order.line')
+    po_obj = self.pool.get('purchase.order')
     # get the corresponding procurement order
     data = sol_obj.read(cr, uid, [ref("sol_H1")], ['procurement_id'], context=context)[0]
     proc_id = data['procurement_id'][0]
@@ -194,8 +195,11 @@
       wiz_obj.write(cr, uid, [obj.id], {'change_reason': 'test yml'}, context=context)
       
     wiz_obj.do_cancel(cr, uid, [dic['res_id']], context=dic['context'])
-    data = self.read(cr, uid, back_ids, ['state'], context=context)[0]
+    data = self.read(cr, uid, back_ids, ['state', 'purchase_id'], context=context)[0]
     assert data['state'] == 'cancel', 'the incoming shipment is not Canceled - cancel - %s'%data['state']
+    # check the corresponding purchase state
+    data = po_obj.read(cr, uid, [data['purchase_id'][0]], ['state'], context=context)[0]
+    assert data['state'] == 'except_picking', 'the corresponding po is not in shipping exception state - except_picking - %s'%data['state']
     # check the moves in OUT - back order contained 3 A and 1 B, should not have been decreased in OUT
     a_qty = [3.0]
     b_qty = [1.0]

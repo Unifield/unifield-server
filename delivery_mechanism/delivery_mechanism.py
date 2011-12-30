@@ -243,11 +243,12 @@ class stock_picking(osv.osv):
         out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
         if not out_move_id and out_move:
             # copy existing out_move with move properties: - update the name of the stock move
+            # the state is confirmed, we dont know if available yet - should be in input location before stock
             values = {'name': data_back['name'],
                       'product_id': data_back['product_id'],
                       'product_qty': 0,
                       'product_uom': data_back['product_uom'],
-                      'state': 'assigned',
+                      'state': 'confirmed',
                       }
             out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
         # update quantity
