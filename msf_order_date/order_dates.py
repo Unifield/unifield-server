@@ -596,10 +596,9 @@ class purchase_order(osv.osv):
         move_values.update({'date': order_line.confirmed_delivery_date,'date_expected': order_line.confirmed_delivery_date,})
         return move_values
     
-    _columns = {'date_order':fields.date(string='Creation Date', readonly=True, required=True,
-                                         states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
+    _columns = {
                 'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True, readonly=True,
-                                states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
+                                states={'draft': [('readonly', False)]}),
                 'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
                                     help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
