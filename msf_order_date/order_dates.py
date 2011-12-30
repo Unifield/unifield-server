@@ -604,7 +604,7 @@ class purchase_order(osv.osv):
                 'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
                                                   help='Commitment date = date on which delivery of product is to/can be made.'),
                 'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
+                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                                 string='Receipt Date', help='for a PO, date of the first godd receipt.'),
                 # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
@@ -959,7 +959,7 @@ class sale_order(osv.osv):
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
                         help='Commitment date = date on which delivery of product is to/can be made.'),
         'shipment_date': fields.date(string='Shipment Date', readonly=True, help='Date on which picking is created at supplier'),
-        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrical of the goods at custom'),
+        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
                                     string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
