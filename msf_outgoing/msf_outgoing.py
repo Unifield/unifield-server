@@ -989,8 +989,7 @@ class stock_picking(osv.osv):
             except ValueError, e:
                 pass
         
-        module, view = view_list.get(pick.type,('stock', 'view_picking_form'))
-        return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)
+        return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
