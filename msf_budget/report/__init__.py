@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,36 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name": "Documents to Done",
-    "version": "1.0",
-    "depends": [
-        "sale_override",
-        "purchase_override",
-        "stock_override",
-        "tender_flow",
-        "stock",
-        "msf_outgoing",
-        "object_query",
-    ],
-    "author": "TeMPO Consulting, MSF",
-    "website": "http://www.unifield.org",
-    "category": "Specific Modules",
-    "description": """
-        This module aims at set documents to 'Done' state.
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'documents_done_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-    ],
-    'installable': True,
-    'active': False,
-}
+import report_budget_criteria
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

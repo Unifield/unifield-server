@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,37 +18,27 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 {
-    "name": "Documents to Done",
-    "version": "1.0",
-    "depends": [
-        "sale_override",
-        "purchase_override",
-        "stock_override",
-        "tender_flow",
-        "stock",
-        "msf_outgoing",
-        "object_query",
-    ],
-    "author": "TeMPO Consulting, MSF",
-    "website": "http://www.unifield.org",
-    "category": "Specific Modules",
-    "description": """
-        This module aims at set documents to 'Done' state.
-    """,
-    "init_xml": [
-    ],
+    'name': 'MSF Budget Management',
+    'version': '1.0',
+    'category': 'Generic Modules/Accounting',
+    'author': 'MSF: Matthieu Dietrich',
+    'depends': ['res_currency_tables'],
+    'description': '''
+        Budget view
+    ''',
+    'init_xml': [],
     'update_xml': [
         'security/ir.model.access.csv',
-        'documents_done_view.xml',
-    ],
-    'demo_xml': [
+        'msf_budget_report.xml',
+        'msf_budget_view.xml',
+        'msf_budget_workflow.xml',
+        'wizard/wizard_budget_criteria_export_view.xml'
     ],
     'test': [
     ],
     'installable': True,
     'active': False,
+#    'certificate': 'certificate',
 }
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
