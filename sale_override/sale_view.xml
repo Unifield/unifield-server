@@ -66,7 +66,9 @@
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
                     </xpath>
-
+                    <xpath expr="//field[@name='create_date']" position="replace" />
+                    <xpath expr="//field[@name='date_confirm']" position="replace" />
+                    <xpath expr="//page[2]//separator[@string='Dates']" position="replace" />
                 </data>
             </field>
         </record>
