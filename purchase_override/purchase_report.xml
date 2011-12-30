@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+          <report auto="False" id="report_purchase_order_merged" model="purchase.order" name="purchase.order.merged" rml="purchase_override/report/merged_order.rml" string="Purchase Order (Merged)"/>
+
+
+    </data>
+</openerp>

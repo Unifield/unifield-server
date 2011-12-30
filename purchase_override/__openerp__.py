@@ -38,6 +38,7 @@
     "update_xml": [
         "purchase_view.xml",
         "purchase_workflow.xml",
+        "purchase_report.xml",
         "wizard/split_order_line_view.xml",
         "report/purchase_report_view.xml",
     ],
