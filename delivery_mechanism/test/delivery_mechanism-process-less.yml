@@ -86,11 +86,15 @@
           out.write({'quantity': 1})
       
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
-    data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
-    assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
+    # openERP swap IN -> backorder
+    data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]
+    new_in_ids = [data['backorder_id'][0]]
+    data = self.read(cr, uid, new_in_ids, ['state'], context=context)[0]
+    assert data['state'] == 'done', 'the incoming shipment is not done - done - %s'%data['state']
     # assert the backorder
-    back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
+    back_ids = in_ids
     data = self.read(cr, uid, back_ids, ['state'], context=context)[0]
+    assert data['state'] == 'assigned', 'the backorder is not assigned - assigned - %s'%data['state']
     # check quantities
     for obj in self.browse(cr, uid, back_ids, context=context):
       for move in obj.move_lines:

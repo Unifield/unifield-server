@@ -124,11 +124,17 @@
           change_obj.change_product(cr, uid, change_ids, context=change_c)
 
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
+    # openERP swap IN -> backorder
+    data = self.read(cr, uid, in_ids, ['backorder_id'], context=context)[0]
+    back_ids = in_ids
+    in_ids = [data['backorder_id'][0]]
+    # assert a backorder has been created
+    assert in_ids, 'backorder does not exist'
     data = self.read(cr, uid, in_ids, ['state'], context=context)[0]
     assert data['state'] == 'done', 'the incoming shipment is not Done - done - %s'%data['state']
-    # assert a backorder has been created
-    back_ids = self.search(cr, uid, [('backorder_id', 'in', in_ids)], context=context)
-    assert back_ids, 'backorder does not exist'
+    # assert the backorder
+    data = self.read(cr, uid, back_ids, ['state'], context=context)[0]
+    assert data['state'] == 'assigned', 'the backorder is not assigned - assigned - %s'%data['state']
     # check the moves in backorder
     a_qty = [3.0]
     b_qty = [1.0]

@@ -218,6 +218,7 @@ class stock_picking(osv.osv):
         build data_back dictionary
         '''
         res = {'id': move.id,
+               'name': move.product_id.partner_ref,
                'product_id': move.product_id.id,
                'product_uom': move.product_uom.id,
                'product_qty': move.product_qty,
@@ -236,12 +237,14 @@ class stock_picking(osv.osv):
         '''
         # stock move object
         move_obj = self.pool.get('stock.move')
+        product_obj = self.pool.get('product.product')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
         out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
         if not out_move_id and out_move:
-            # copy existing out_move with move properties:
-            values = {'product_id': data_back['product_id'],
+            # copy existing out_move with move properties: - update the name of the stock move
+            values = {'name': data_back['name'],
+                      'product_id': data_back['product_id'],
                       'product_qty': 0,
                       'product_uom': data_back['product_uom'],
                       'state': 'assigned',
@@ -317,7 +320,8 @@ class stock_picking(osv.osv):
                     if first:
                         first = False
                         # update existing move
-                        values = {'product_id': partial['product_id'],
+                        values = {'name': partial['name'],
+                                  'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
@@ -338,7 +342,8 @@ class stock_picking(osv.osv):
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
-                        values = {'product_id': partial['product_id'],
+                        values = {'name': partial['name'],
+                                  'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
@@ -365,7 +370,8 @@ class stock_picking(osv.osv):
                                                                     'state':'draft',
                                                                     })
                     # create the corresponding move in the backorder - reset productionlot
-                    defaults = {'product_id': data_back['product_id'],
+                    defaults = {'name': data_back['name'],
+                                'product_id': data_back['product_id'],
                                 'product_uom': data_back['product_uom'],
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
@@ -436,6 +442,9 @@ class stock_picking(osv.osv):
             
         # objects
         move_obj = self.pool.get('stock.move')
+        purchase_obj = self.pool.get('purchase.order')
+        # workflow
+        wf_service = netsvc.LocalService("workflow")
         
         for obj in self.browse(cr, uid, ids, context=context):
             for move in obj.move_lines:
@@ -443,6 +452,9 @@ class stock_picking(osv.osv):
                 diff_qty = -data_back['product_qty']
                 # update corresponding out move
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
+                # for out cancellation, two points:
+                # - if pick/pack/ship: check that nothing is in progress (a function should be developped)
+                # - if trigger the move to correct the corresponding so manually
 #                if out_move_id:
 #                    out_move = self.browse(cr, uid, out_move_id, context=context)
 #                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
@@ -451,6 +463,10 @@ class stock_picking(osv.osv):
 #                        
                 # cancel the IN move - the IN picking workflow is triggered automatically if needed
                 move_obj.action_cancel(cr, uid, [move.id], context=context)
+            # correct the corresponding po manually if exists - should be in shipping exception
+            if obj.purchase_id:
+                wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
         
         return True
         
