@@ -72,7 +72,7 @@ class account_move_line(osv.osv):
                     res[ml.id] = False
             # False if one of move line account is reconciliable and reconciled
             for aml in ml.move_id.line_id:
-                if aml.account_id.reconcile and not (aml.reconcile_id or aml.reconcile_partial_id):
+                if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
                     res[aml.id] = False
         return res
 
