@@ -6,6 +6,7 @@
             <field name="name">purchase.order.dates.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">300</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -83,6 +84,7 @@
             <field name="name">sale.order.dates.form.view</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
+            <field name="priority">300</field>
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>

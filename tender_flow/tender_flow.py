@@ -711,7 +711,6 @@ class purchase_order(osv.osv):
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
-                'name': fields.char('Order Reference', size=64, required=True, states={'done':[('readonly',True)],}, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
                 }
 
     _defaults = {
