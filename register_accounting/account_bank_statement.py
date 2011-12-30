@@ -735,6 +735,8 @@ class account_bank_statement_line(osv.osv):
             'period_id': st.period_id.id,
             'currency_id': st.currency.id,
             'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False,
+            'transfer_amount': st_line.transfer_amount or 0.0,
+            'transfer_currency': st_line.transfer_currency and st_line.transfer_currency.id or False,
         }
 
         if st_line.analytic_distribution_id:
@@ -927,9 +929,11 @@ class account_bank_statement_line(osv.osv):
                 # Amount currency for "other line" is the opposite of "register line"
                 other_amount_currency = -register_amount_currency
             # Update values for register line
+            for el in ['is_transfer_with_change', 'transfer_amount', 'transfer_currency']:
+                if el in move_line_values:
+                    del(move_line_values[el])
             move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
-                'amount_currency': register_amount_currency, 'currency_id': currency_id, 'is_transfer_with_change': False, 
-                'transfer_amount': False, 'transfer_currency': False})
+                'amount_currency': register_amount_currency, 'currency_id': currency_id,})
             # Write move line object for register line
             acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context)
             # Update values for other line
@@ -1424,14 +1428,23 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('Open transfer with change wizard is only possible with transfer account in other currency!'))
         # Create wizard
         vals = {'absl_id': ids[0],}
+        transfer_type = 'to'
+        amount_field = 'amount_to'
+        curr_field = 'currency_to'
+        if absl and absl.amount:
+            if absl.amount >= 0:
+                transfer_type = 'from'
+                amount_field = 'amount_from'
+                curr_field = 'currency_from'
         if absl and absl.transfer_amount:
-            vals.update({'amount': absl.transfer_amount,})
+            vals.update({amount_field: absl.transfer_amount,})
         if absl and absl.transfer_currency:
-            vals.update({'currency_id': absl.transfer_currency.id,})
+            vals.update({'currency_id': absl.transfer_currency.id, curr_field: absl.transfer_currency.id})
         elif absl and absl.transfer_journal_id:
-            vals.update({'currency_id': absl.transfer_journal_id.currency.id})
+            vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':
             vals.update({'state': 'closed',})
+        vals.update({'type': transfer_type,})
         wiz_id = self.pool.get('wizard.transfer.with.change').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({

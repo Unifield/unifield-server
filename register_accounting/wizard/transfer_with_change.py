@@ -34,9 +34,13 @@ class wizard_transfer_with_change(osv.osv_memory):
         'converted_amount': fields.float(string="Converted amount", readonly=True, 
             help="Register line converted amount using given third party journal currency."),
         'absl_currency': fields.many2one('res.currency', string="Register line currency", readonly=True, help="Register line currency"),
-        'amount': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'amount_from': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'amount_to': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
         'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, help="This currency is those from given third party journal."),
+        'currency_from': fields.many2one('res.currency', string="Currency", readonly=True),
+        'currency_to': fields.many2one('res.currency', string="Currency", readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('closed', 'Closed')], string="State", required=True),
+        'type': fields.selection([('from', 'From'), ('to', 'To')], string="Type", readonly=True),
     }
 
     _defaults = {
@@ -50,9 +54,12 @@ class wizard_transfer_with_change(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
+        transfer_type = 'to'
         if 'absl_id' in vals:
             absl = self.pool.get('account.bank.statement.line').browse(cr, uid, vals.get('absl_id'), context=context)
             if absl and absl.amount:
+                if absl.amount >= 0:
+                    transfer_type = 'from'
                 vals.update({'absl_amount': abs(absl.amount)})
                 if absl.transfer_journal_id and absl.currency_id:
                     context.update({'date': absl.date})
@@ -62,9 +69,18 @@ class wizard_transfer_with_change(osv.osv_memory):
                         vals.update({'converted_amount': converted_amount or 0.0})
             if absl and absl.currency_id:
                 vals.update({'absl_currency': absl.currency_id.id or False})
-        if 'amount' not in vals or vals.get('amount', 0.0) == 0.0:
-            if 'converted_amount' in vals:
-                vals.update({'amount': vals.get('converted_amount') or 0.0})
+        # Fill in 'amount_from' if transfer type is 'from'
+        if 'amount_from' not in vals and transfer_type == 'from':
+            if absl and absl.transfer_amount:
+                vals.update({'amount_from': absl.transfer_amount})
+            elif 'converted_amount' in vals:
+                vals.update({'amount_from': vals.get('converted_amount')})
+        # Fill in 'amount_to' if transfer type is 'to'
+        if 'amount_to' not in vals and transfer_type == 'to':
+            if absl and absl.transfer_amount:
+                vals.update({'amount_to': absl.transfer_amount})
+            elif 'converted_amount' in vals:
+                vals.update({'amount_to': vals.get('converted_amount')})
         # Default behaviour
         return super(wizard_transfer_with_change, self).create(cr, uid, vals, context=context)
 
@@ -82,8 +98,14 @@ class wizard_transfer_with_change(osv.osv_memory):
         # Browse elements
         for wiz in self.browse(cr, uid, ids, context=context):
             vals = {}
-            if wiz.amount:
-                vals.update({'transfer_amount': wiz.amount})
+            # Fetch transfer amount
+            if (wiz.amount_to or wiz.amount_from) and wiz.type:
+                amount = 0.0
+                if wiz.type == 'to':
+                    amount = wiz.amount_to
+                elif wiz.type == 'from':
+                    amount = wiz.amount_from
+                vals.update({'transfer_amount': amount})
             # Take currency from account_bank_statement_line transfer_journal_id field
             if wiz.absl_id and wiz.absl_id.transfer_journal_id:
                 vals.update({'transfer_currency': wiz.absl_id.transfer_journal_id.currency.id})
