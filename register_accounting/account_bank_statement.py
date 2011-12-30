@@ -1428,6 +1428,8 @@ class account_bank_statement_line(osv.osv):
             vals.update({'amount': absl.transfer_amount,})
         if absl and absl.transfer_currency:
             vals.update({'currency_id': absl.transfer_currency.id,})
+        elif absl and absl.transfer_journal_id:
+            vals.update({'currency_id': absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':
             vals.update({'state': 'closed',})
         wiz_id = self.pool.get('wizard.transfer.with.change').create(cr, uid, vals, context=context)

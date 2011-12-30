@@ -31,13 +31,30 @@ class wizard_transfer_with_change(osv.osv_memory):
     _columns = {
         'absl_id': fields.many2one('account.bank.statement.line', string='Register Line', required=True),
         'amount': fields.float(string='Amount', readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
-        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, states={'draft': [('readonly', False), ('required', True)]}),
+        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('closed', 'Closed')], string="State", required=True),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
     }
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Compute amount from register line currency to journal currency
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'amount' not in vals or vals.get('amount', 0.0) == 0.0:
+            if 'absl_id' in vals:
+                absl = self.pool.get('account.bank.statement.line').browse(cr, uid, vals.get('absl_id'), context=context)
+                if absl and absl.transfer_journal_id and absl.currency_id:
+                    context.update({'date': absl.date})
+                    amount = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, absl.transfer_journal_id.currency.id, abs(absl.amount), context=context)
+                    vals.update({'amount': amount or 0.0})
+        # Default behaviour
+        return super(wizard_transfer_with_change, self).create(cr, uid, vals, context=context)
 
     def button_validate(self, cr, uid, ids, context={}):
         """
@@ -55,8 +72,9 @@ class wizard_transfer_with_change(osv.osv_memory):
             vals = {}
             if wiz.amount:
                 vals.update({'transfer_amount': wiz.amount})
-            if wiz.currency_id:
-                vals.update({'transfer_currency': wiz.currency_id.id})
+            # Take currency from account_bank_statement_line transfer_journal_id field
+            if wiz.absl_id and wiz.absl_id.transfer_journal_id:
+                vals.update({'transfer_currency': wiz.absl_id.transfer_journal_id.currency.id})
             if vals and wiz.absl_id:
                 self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.absl_id.id], vals, context=context)
         # Close wizard
