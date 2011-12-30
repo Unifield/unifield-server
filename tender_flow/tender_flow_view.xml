@@ -94,8 +94,6 @@
                     <field name="requested_date" />
                     <field name="sale_order_id" />
                     <field name="rfq_name_list" />
-                    <field name="categ" />
-                    <field name="priority" />
                     <field name="state" />
                 </tree>
             </field>
