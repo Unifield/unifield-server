@@ -32,7 +32,8 @@ class account_move_line_reconcile(osv.osv_memory):
     _name = 'account.move.line.reconcile'
 
     _columns = {
-        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation')], string="State", 
+        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
+            ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
             required=True, readonly=True),
     }
 
@@ -71,7 +72,7 @@ class account_move_line_reconcile(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         account_move_line_obj = self.pool.get('account.move.line')
-        credit = debit = 0
+        credit = debit = fcredit = fdebit = 0
         state = 'partial'
         account_id = False
         count = 0
@@ -101,6 +102,8 @@ class account_move_line_reconcile(osv.osv_memory):
                             transfer_with_change = True
                         else:
                             raise osv.except_osv(_('Warning'), _("Transfer amounts and transfer currencies doesn't match."))
+        if transfer_with_change:
+            state = 'partial_change'
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
             account_id = line.account_id.id
@@ -129,11 +132,17 @@ class account_move_line_reconcile(osv.osv_memory):
                 count += 1
                 credit += line.credit_currency
                 debit += line.debit_currency
-            # FIXME: Do currency verification and change wizard state regarding currency: In case of transfer with change then state is 
-            #+ 'total_change' or 'partial_change'
+                if transfer_with_change:
+                    fcredit += line.credit
+                    fdebit += line.debit
         # Adapt state value
         if (debit - credit) == 0.0:
             state = 'total'
+        if transfer_with_change:
+            debit = fdebit
+            credit = fcredit
+            if (fdebit - fcredit) == 0.0:
+                state = 'total_change'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
     def total_reconcile(self, cr, uid, ids, context={}):
