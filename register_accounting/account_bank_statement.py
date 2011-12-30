@@ -928,18 +928,19 @@ class account_bank_statement_line(osv.osv):
                 other_amount_currency = -register_amount_currency
             # Update values for register line
             move_line_values.update({'account_id': register_account_id, 'debit': register_debit, 'credit': register_credit, 
-                'amount_currency': register_amount_currency, 'currency_id': currency_id})
+                'amount_currency': register_amount_currency, 'currency_id': currency_id, 'is_transfer_with_change': False, 
+                'transfer_amount': False, 'transfer_currency': False})
+            # Write move line object for register line
+            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context)
+            # Update values for other line
+            move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
+                'currency_id': currency_id,})
             if st_line.is_transfer_with_change:
                 move_line_values.update({'is_transfer_with_change': True})
                 if st_line.transfer_amount:
                     move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
                 if st_line.transfer_currency:
                     move_line_values.update({'transfer_currency': st_line.transfer_currency and st_line.transfer_currency.id or False})
-            # Write move line object for register line
-            acc_move_line_obj.write(cr, uid, [register_line.id], move_line_values, context=context)
-            # Update values for other line
-            move_line_values.update({'account_id': other_account_id, 'debit': other_debit, 'credit': other_credit, 'amount_currency': other_amount_currency, 
-                'currency_id': currency_id, 'is_transfer_with_change': False, 'transfer_amount': False, 'transfer_currency': False})
             # Write move line object for other line
             acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
             # Update analytic distribution lines
@@ -1214,6 +1215,8 @@ class account_bank_statement_line(osv.osv):
             'sequence': False,
             'sequence_for_reference': False,
             'state': 'draft',
+            'transfer_amount': False,
+            'transfer_currency': False,
         })
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
