@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report id="allocated_expenses"
+        string="Allocated Expenses"
+        model="financing.contract.contract"
+        name="financing.allocated.expenses"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
+        <report id="project_expenses"
+        string="Project Expenses"
+        model="financing.contract.contract"
+        name="financing.project.expenses"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
+        <report id="interactive"
+        string="Interactive Report"
+        model="financing.contract.contract"
+        name="financing.interactive"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
+        <report id="contract"
+        string="Financing Contract"
+        model="financing.contract.contract"
+        name="financing.contract"
+        rml="financing_contract/report/financing_contract.rml"
+        auto="False"
+        menu="True"/>
+
+    </data>
+</openerp>
+

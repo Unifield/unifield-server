@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,12 +19,15 @@
 #
 ##############################################################################
 
-import donor_reporting_line
-import format
-import format_line
-import donor
-import contract
-import analytic
-import wizard
-import report
+import time
+
+from report import report_sxw
+
+class contract(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(contract, self).__init__(cr, uid, name, context=context)
+
+report_sxw.report_sxw('report.financing.contract', 'financing.contract.contract', 'addons/financing_contract/report/financing_contract.rml', parser=contract, header="external")
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

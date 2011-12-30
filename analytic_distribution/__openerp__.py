@@ -38,6 +38,7 @@
         'account_commitment_workflow.xml',
         'account_commitment_sequence.xml',
         'account_commitment_view.xml',
+        'funding_pool_report.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
