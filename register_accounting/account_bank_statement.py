@@ -1393,6 +1393,43 @@ class account_bank_statement_line(osv.osv):
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
 
+    def button_down_payment(self, cr, uid, ids, context={}):
+        """
+        Open Down Payment wizard
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        vals = {}
+        register_line = self.browse(cr, uid, ids[0], context=context)
+        vals.update({'register_line_id': register_line.id})
+        if register_line and register_line.down_payment_id:
+            vals.update({'purchase_id': register_line.down_payment_id.id})
+        if register_line and register_line.state and register_line.state != 'hard':
+            vals.update({'state': 'draft'})
+        if register_line and register_line.currency_id:
+            vals.update({'currency_id': register_line.currency_id.id})
+        wiz_id = self.pool.get('wizard.down.payment').create(cr, uid, vals, context=context)
+        # Return view with register_line id
+        context.update({
+            'active_id': wiz_id,
+            'active_ids': [wiz_id],
+            'register_line_id': ids[0],
+        })
+        return {
+            'name': _("Down Payment"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.down.payment',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
     def onchange_account(self, cr, uid, ids, account_id=None, statement_id=None, context={}):
         """
         Update Third Party type regarding account type_for_register field.

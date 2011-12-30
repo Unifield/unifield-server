@@ -86,6 +86,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -213,6 +216,9 @@
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
                                             string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object" 
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                         <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
@@ -604,6 +610,9 @@
                                         string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                     <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}" 
                                         string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                    <field name="is_down_payment" invisible="1"/>
+                                    <button name="button_down_payment" string="Down payment" type="object" 
+                                        icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
                                     <field name="reconciled"/>
                                     <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                         context="context"/>
