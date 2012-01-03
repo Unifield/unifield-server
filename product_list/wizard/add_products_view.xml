@@ -22,5 +22,16 @@
             </field>
         </record>
 
+        <record id="action_add_product_in_list" model="ir.actions.act_window">
+            <field name="name">Add multiple products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.list.add.products</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="product_list_add_products_form_view" />
+            <field name="target">new</field>
+        </record>
+
+
     </data>
 </openerp>

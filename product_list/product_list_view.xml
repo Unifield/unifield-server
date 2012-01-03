@@ -77,7 +77,7 @@
                     <notebook colspan="4">
                         <page string='Products'>
                             <separator colspan="4" string="Products" />
-                            <button name="call_add_products" type="object" string="Add multiple products" colspan="4" />
+                            <button name="%(action_add_product_in_list)d" type="action" string="Add multiple products" colspan="4" />
                             <field name="product_ids" mode="tree" colspan="4" nolabel="1" on_change="change_product_line()">
                                 <tree string="Products" editable="top">
                                     <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />

@@ -34,6 +34,22 @@ class product_list_add_products(osv.osv_memory):
                                         'wiz_list_id', 'product_id', string='Products'),
     }
 
+    def default_get(self, cr, uid, fields, context={}):
+        '''
+        To get default values for the object.
+        '''
+        if not context:
+            context = {}
+
+        list_id = context and context.get('active_id', False) or False
+        if not list_id:
+            raise osv.except_osv(_('Error'), _('No list found !'))
+
+        res = super(product_list_add_products, self).default_get(cr, uid, fields, context=context)
+        res.update({'list_id': list_id})
+
+        return res
+
     def fill_list(self, cr, uid, ids, context={}):
         '''
         Fill the list with the selected products
@@ -55,6 +71,8 @@ class product_list_add_products(osv.osv_memory):
                 if product.id not in products:
                     line_obj.create(cr, uid, {'name': product.id,
                                               'list_id': wiz.list_id.id}, context=context)
+
+            context.update({'active_id': wiz.list_id.id})
 
         return {'type': 'ir.actions.act_window_close'}
 
