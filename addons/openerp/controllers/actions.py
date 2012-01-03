@@ -345,10 +345,9 @@ def act_window_opener(action, data):
     # when perform any button action on unsaved-record which returns 'ir.action.act_window'
     # which pop-up new window but 'appcontent' is not reloaded
     # for that passing active_id in headers, to get it in openAction
-    if getattr(cherrypy.request, 'params', []):
+    if getattr(cherrypy.request, 'params', []) and not cherrypy.request.params.get('_terp_id', False):
         if getattr(cherrypy.request.params, 'context', {}):
-            cherrypy.response.headers['active_id'] = cherrypy.request.params.get('_terp_id')\
-            or cherrypy.request.params.context.get('active_id')
+            cherrypy.response.headers['active_id'] = cherrypy.request.params.context.get('active_id')
 
     # Add 'opened' mark to indicate we're now within the popup and can
     # continue on during the second round of execution
