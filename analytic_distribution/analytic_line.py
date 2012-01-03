@@ -101,7 +101,7 @@ class analytic_line(osv.osv):
                 # Period verification
                 period = aline.move_id and aline.move_id.period_id or False
                 # if period not 'Draft' (created) or 'Open' (draft), so reverse line before recreating them with right values
-                if period and period.state not in ['created', 'draft']:
+                if period and period.state not in ['created', 'draft', 'field-closed']:
                     # First reverse lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, fp_line_ids, context=context) # for Funding Pool Lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
