@@ -65,7 +65,7 @@ class product_list_add_products(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             products = []
             for line in wiz.list_id.product_ids:
-                products.append(line.name)
+                products.append(line.name.id)
 
             for product in wiz.product_ids:
                 if product.id not in products:
