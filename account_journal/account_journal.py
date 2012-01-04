@@ -103,10 +103,10 @@ class account_journal(osv.osv):
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
         analytic_journal_obj = self.pool.get('account.analytic.journal')
-        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
+#        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
         value =  {'value': {}, 'domain': {}}
-        if type in ('cash', 'bank', 'cheque'):
+        if type in ('cash', 'bank', 'cheque', 'cur_adj'):
             default_dom += [('code', '=like', '5%' )]
         value['domain']['default_debit_account_id'] = default_dom
         value['domain']['default_crebit_account_id'] = default_dom
@@ -121,7 +121,6 @@ class account_journal(osv.osv):
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         return value
-
 
     def create(self, cr, uid, vals, context=None):
         
@@ -161,6 +160,13 @@ class account_journal(osv.osv):
         # create journal
         journal_obj = super(account_journal, self).create(cr, uid, vals, context)
         
+        # Some verification for cash, bank, cheque and cur_adj type
+        if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
+            if not vals.get('default_debit_account_id'):
+                raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
+            if not vals.get('default_credit_account_id'):
+                raise osv.except_osv(_('Warning'), _('Default Credit Account is missing.'))
+        
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
             # 'from_journal_creation' in context permits to pass register creation that have a
@@ -172,9 +178,31 @@ class account_journal(osv.osv):
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)
-                
         return journal_obj
-    
+
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Verify that default_debit_account_id and default_credit_account_id are not missing for these types:
+         - cash
+         - bank
+         - cheque
+         - cur_adj
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse elements
+        for line in self.browse(cr, uid, ids):
+        # si type dans vals et type in ['cash, bank, cheque, cur_adj'] ou bien line.type dans cash gnagna
+            if (vals.get('type', False) and vals.get('type') in ['cash', 'bank', 'cheque', 'cur_adj']) or \
+                (not vals.get('type', False) and line.type in ['cash', 'bank', 'cheque', 'cur_adj']):
+                if not line.default_debit_account_id and not 'default_debit_account_id' in vals:
+                    raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
+                if not line.default_credit_account_id and not 'default_credit_account_id' in vals:
+                    raise osv.except_osv(_('Warning'), _('Default Credit Account is missing.'))
+        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
