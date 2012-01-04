@@ -35,6 +35,7 @@
         "stock_workflow.xml",
         "report/report_stock_move_view.xml",
         "procurement_view.xml",
+        "destruction_report.xml",
         "report/report_destruction_location_view.xml",
     ],
     'test': [],
