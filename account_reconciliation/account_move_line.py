@@ -24,7 +24,6 @@
 from osv import osv
 import time
 import netsvc
-from reconciliation_tools import _get_addendum_line_account_id
 from tools.translate import _
 
 class account_move_line(osv.osv):
@@ -140,8 +139,6 @@ class account_move_line(osv.osv):
         ### Addendum line verification and creation if necessary ###
         ############################################################
         if func_balance != 0.0:
-            # Get default account for addendum_line
-            addendum_line_account_id = _get_addendum_line_account_id(self, cr, uid, ids, context=context)
             # Prepare some values
             date = time.strftime('%Y-%m-%d')
             j_obj = self.pool.get('account.journal')
@@ -150,6 +147,11 @@ class account_move_line(osv.osv):
             if not j_ids:
                 raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
             journal_id = j_ids[0]
+            # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
+            journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
+            if not journal.default_debit_account_id:
+                raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
+            addendum_line_account_id = journal.default_debit_account_id.id
             # Search attached period
             period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
                 limit=1, order='date_start, name')

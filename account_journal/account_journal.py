@@ -164,8 +164,6 @@ class account_journal(osv.osv):
         if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
             if not vals.get('default_debit_account_id'):
                 raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
-            if not vals.get('default_credit_account_id'):
-                raise osv.except_osv(_('Warning'), _('Default Credit Account is missing.'))
         
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
@@ -195,13 +193,10 @@ class account_journal(osv.osv):
             ids = [ids]
         # Browse elements
         for line in self.browse(cr, uid, ids):
-        # si type dans vals et type in ['cash, bank, cheque, cur_adj'] ou bien line.type dans cash gnagna
             if (vals.get('type', False) and vals.get('type') in ['cash', 'bank', 'cheque', 'cur_adj']) or \
                 (not vals.get('type', False) and line.type in ['cash', 'bank', 'cheque', 'cur_adj']):
                 if not line.default_debit_account_id and not 'default_debit_account_id' in vals:
                     raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
-                if not line.default_credit_account_id and not 'default_credit_account_id' in vals:
-                    raise osv.except_osv(_('Warning'), _('Default Credit Account is missing.'))
         return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()

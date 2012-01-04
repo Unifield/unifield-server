@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
-from ..reconciliation_tools import _get_addendum_line_account_id
 
 class account_move_line_reconcile(osv.osv_memory):
     _inherit = 'account.move.line.reconcile'
