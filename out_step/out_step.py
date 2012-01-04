@@ -75,6 +75,18 @@ class stock_picking(osv.osv):
         'delivered': False,
     }
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        set delivered to False
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        default.update(delivered=False)
+        res = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
+        return res
+    
     def set_delivered(self, cr, uid, ids, context=None):
         '''
         set the delivered flag

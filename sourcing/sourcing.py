@@ -501,14 +501,6 @@ class sale_order(osv.osv):
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
         
-        date_planned = None
-        if line.sourcing_line_ids:
-            for sourcing_line in line.sourcing_line_ids:
-                if not date_planned or sourcing_line.estimated_delivery_date < date_planned:
-                    date_planned = sourcing_line.estimated_delivery_date
-            if date_planned:
-                result['date_planned'] = date_planned
-        
         return result
 
 sale_order()

@@ -243,6 +243,7 @@ class stock_picking(osv.osv):
             # copy existing out_move with move properties:
             values = {'product_id': data_back['product_id'],
                       'product_qty': 0,
+                      'product_uos_qty': 0,
                       'product_uom': data_back['product_uom'],
                       'state': 'assigned',
                       }
@@ -317,6 +318,7 @@ class stock_picking(osv.osv):
                         # update existing move
                         values = {'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
                                   'asset_id': partial['asset_id'],
@@ -337,6 +339,7 @@ class stock_picking(osv.osv):
                         # copy the stock move and set the quantity
                         values = {'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'product_uom': partial['product_uom'],
                                   'asset_id': partial['asset_id'],
