@@ -89,7 +89,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         Permits to adapt invoice creation
         """
-        res = inv_obj.create(cr, uid, data, {})
+        res = self.pool.get('account.invoice').create(cr, uid, data, {})
         return res
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
