@@ -440,7 +440,7 @@ class stock_picking(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        
         # objects
         move_obj = self.pool.get('stock.move')
         purchase_obj = self.pool.get('purchase.order')
@@ -454,16 +454,20 @@ class stock_picking(osv.osv):
                 # update corresponding out move
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
                 # for out cancellation, two points:
-                # - if pick/pack/ship: check that nothing is in progress (a function should be developped)
-                # - if trigger the move to correct the corresponding so manually
-#                if out_move_id:
-#                    out_move = self.browse(cr, uid, out_move_id, context=context)
-#                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
-#                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
-#                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
-#                        
-                # cancel the IN move - the IN picking workflow is triggered automatically if needed
-                move_obj.action_cancel(cr, uid, [move.id], context=context)
+                # - if pick/pack/ship: check that nothing is in progress
+                # - if nothing in progress, and the out picking is canceled, trigger the so to correct the corresponding so manually
+                if out_move_id:
+                    out_move = move_obj.browse(cr, uid, out_move_id, context=context)
+                    cond1 = out_move.picking_id.subtype == 'standard'
+                    cond2 = out_move.picking_id.subtype == 'picking' and not out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
+                    if (cond1 or cond2) and out_move.picking_id.type == 'out' and not out_move.product_qty:
+                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
+                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
+                        # open points:
+                        # - when searching for open picking tickets - we should take into account the specific move (only product id ?)
+                        # - and also the state of the move not in (cancel done)
+                    # correct the corresponding so manually if exists - could be in shipping exception
+                    # -> no need due to OEB-92
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)

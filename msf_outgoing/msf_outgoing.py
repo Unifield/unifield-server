@@ -1072,13 +1072,38 @@ class stock_picking(osv.osv):
         
         return res and not context.get('keep_prodlot', False)
     
+    def has_picking_ticket_in_progress(self, cr, uid, ids, context=None):
+        '''
+        ids is the list of draft picking object we want to test
+        completed means, we recursively check that next_step link object is cancel or done
+        
+        return true if picking tickets are in progress, meaning picking ticket or ppl or shipment not done exist
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = []
+        res = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # by default, nothing is in progress
+            res[obj.id] = False
+            # treat only draft picking
+            assert obj.subtype == 'picking' and obj.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
+            for picking in obj.backorder_ids:
+                # take care, is_completed returns a dictionary
+                if not picking.is_completed()[picking.id]:
+                    res[obj.id] = True
+                    break
+        
+        return res
+    
     def validate(self, cr, uid, ids, context=None):
         '''
         validate or not the draft picking ticket
         '''
         for draft_picking in self.browse(cr, uid, ids, context=context):
             # the validate function should only be called on draft picking ticket
-            assert draft_picking.subtype == 'picking' and draft_picking.state == 'draft', 'the validate function should only be called on draft picking objects'
+            assert draft_picking.subtype == 'picking' and draft_picking.state == 'draft', 'the validate function should only be called on draft picking ticket objects'
             #check the qty of all stock moves
             treat_draft = True
             for move in draft_picking.move_lines:
@@ -1089,6 +1114,7 @@ class stock_picking(osv.osv):
                 # then all child picking must be fully completed, meaning:
                 # - all picking must be 'completed'
                 # completed means, we recursively check that next_step link object is cancel or done
+                # TODO should use has_picking_ticket_in_progress()
                 for picking in draft_picking.backorder_ids:
                     # take care, is_completed returns a dictionary
                     if not picking.is_completed()[picking.id]:
@@ -1181,6 +1207,15 @@ class stock_picking(osv.osv):
     def is_completed(self, cr, uid, ids, context=None):
         '''
         recursive test of completion
+        - to be applied on picking ticket
+        
+        ex:
+        for picking in draft_picking.backorder_ids:
+            # take care, is_completed returns a dictionary
+            if not picking.is_completed()[picking.id]:
+                ...balbala
+        
+        ***BEWARE: RETURNS A DICTIONARY !
         '''
         result = {}
         for stock_picking in self.browse(cr, uid, ids, context=context):
