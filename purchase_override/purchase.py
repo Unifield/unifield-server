@@ -480,12 +480,17 @@ class purchase_order(osv.osv):
             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'subflow.cancel', cr)
 
         # Detach the PO from his workflow and set the state to done
-        for order_id in ids:        
-            wf_service.trg_delete(uid, 'purchase.order', order_id, cr)
-            # Search the method called when the workflow enter in last activity
-            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
-            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-            res = _eval_expr(cr, [uid, 'purchase.order', order_id], False, activity.action)
+        for order_id in self.browse(cr, uid, ids, context=context):
+            if order_id.rfq_ok and order_id.state == 'draft':
+                wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
+            elif order_id.tender_id:
+                raise osv.except_osv(_('Error'), _('You cannot \'Done\' a Request for Quotation attached to a tender. Please make the tender %s to \'Done\' before !') % order_id.tender_id.name)
+            else:
+                wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
+                # Search the method called when the workflow enter in last activity
+                wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
+                activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+                res = _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
 
         return True
     

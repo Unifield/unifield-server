@@ -440,6 +440,8 @@ class tender(osv.osv):
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
                         else:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                            if not rfq.valid_till:
+                                self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'valid_till': time.strftime('%Y-%m-%d')}, context=context)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
                 if tender.state == 'draft' or not tender.tender_line_ids:
