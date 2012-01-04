@@ -197,6 +197,16 @@ class purchase_order(osv.osv):
                 res['value']['invoice_method'] = 'manual'
         
         return res
+
+    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+        '''
+        Change the logged message
+        '''
+        if 'po' in kwargs:
+            po = kwargs['po']
+            return _("Purchase order '%s' is validated.") % (po.name,)
+        else:
+            return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
     
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
@@ -212,6 +222,9 @@ class purchase_order(osv.osv):
                          order.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
                 line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
+
+            message = _("Purchase order '%s' is confirmed.") % (order.name,)
+            self.log(cr, uid, order.id, message)
             
         return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
     
