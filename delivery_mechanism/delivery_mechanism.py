@@ -231,6 +231,8 @@ class stock_picking(osv.osv):
         if out_move is provided, it is used for copy if another cannot be found (meaning the one provided does
         not fit anyhow)
         
+        # NOTE: the price is not update in OUT move according to average price computation. this is an open point.
+        
         if diff_qty < 0, the qty is decreased
         if diff_qty > 0, the qty is increased
         '''
@@ -282,6 +284,9 @@ class stock_picking(osv.osv):
         sequence_obj = self.pool.get('ir.sequence')
         # stock move object
         move_obj = self.pool.get('stock.move')
+        product_obj = self.pool.get('product.product')
+        currency_obj = self.pool.get('res.currency')
+        uom_obj = self.pool.get('product.uom')
         # create picking object
         create_picking_obj = self.pool.get('create.picking')
         # workflow
@@ -294,6 +299,8 @@ class stock_picking(osv.osv):
             move_ids = partial_datas[pick.id].keys()
             # all moves
             all_move_ids = [move.id for move in pick.move_lines]
+            # average price computation
+            product_avail = {}
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -309,8 +316,53 @@ class stock_picking(osv.osv):
                 out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 # update out flag
                 update_out = (len(partial_datas[pick.id][move.id]) > 1)
+                # average price computation, new values - should be the same for every partial
+                average_values = {}
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
+                    # original openERP logic - average price computation - To be validated by Matthias
+                    # Average price computation
+                    # selected product from wizard must be tested
+                    product = product_obj.browse(cr, uid, partial['product_id'], context=context)
+                    if (pick.type == 'in') and (product.cost_method == 'average'):
+                        move_currency_id = move.company_id.currency_id.id
+                        context['currency_id'] = move_currency_id
+                        # datas from partial
+                        product_uom = partial['product_uom']
+                        product_qty = partial['product_qty']
+                        product_currency = partial['product_currency']
+                        product_price = partial['product_price']
+                        qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
+    
+                        if product.id in product_avail:
+                            product_avail[product.id] += qty
+                        else:
+                            product_avail[product.id] = product.qty_available
+    
+                        if qty > 0:
+                            new_price = currency_obj.compute(cr, uid, product_currency,
+                                    move_currency_id, product_price)
+                            new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
+                                    product.uom_id.id)
+                            if product.qty_available <= 0:
+                                new_std_price = new_price
+                            else:
+                                # Get the standard price
+                                amount_unit = product.price_get('standard_price', context)[product.id]
+                                # check no division by zero
+                                if product_avail[product.id] + qty:
+                                    new_std_price = ((amount_unit * product_avail[product.id])\
+                                        + (new_price * qty))/(product_avail[product.id] + qty)
+                                else:
+                                    new_std_price = 0.0
+                                            
+                            # Write the field according to price type field
+                            product_obj.write(cr, uid, [product.id], {'standard_price': new_std_price})
+    
+                            # Record the values that were chosen in the wizard, so they can be
+                            # used for inventory valuation if real-time valuation is enabled.
+                            average_values = {'price_unit': product_price,
+                                              'price_currency_id': product_currency}
                     # the quantity
                     count = count + partial['product_qty']
                     if first:
@@ -324,6 +376,8 @@ class stock_picking(osv.osv):
                                   'asset_id': partial['asset_id'],
                                   'change_reason': partial['change_reason'],
                                   }
+                        # average computation - empty if not average
+                        values.update(average_values)
                         move_obj.write(cr, uid, [move.id], values, context=context)
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
@@ -346,6 +400,8 @@ class stock_picking(osv.osv):
                                   'change_reason': partial['change_reason'],
                                   'state': 'assigned',
                                   }
+                        # average computation - empty if not average
+                        values.update(average_values)
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
                         if out_move_id:
                             new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
@@ -375,6 +431,8 @@ class stock_picking(osv.osv):
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
                                 }
+                    # average computation - empty if not average
+                    defaults.update(average_values)
                     move_obj.copy(cr, uid, move.id, defaults, context=context)
                     # if split happened
                     if update_out:
