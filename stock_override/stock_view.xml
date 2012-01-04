@@ -14,6 +14,18 @@
             </field>
         </record>
 
+        <record id="view_picking_out_form_inherit_sale" model="ir.ui.view">
+            <field name="name">view.picking.form.out.inherit.sale</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.stock_picking_out_inherit_sale" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='sale_id']" position="attributes">
+                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
+                </xpath>
+            </field>
+        </record>
+
         <record id="view_picking_form_inherit" model="ir.ui.view">
             <field name="name">view.picking.form.inherit</field>
             <field name="model">stock.picking</field>
