@@ -9,6 +9,10 @@
             <field name="inherit_id" ref="stock.view_picking_in_form" />
             <field name="arch" type="xml">
             	<data>
+            	
+            		<xpath expr="/form" position="attributes">
+            			<attribute name="string">Incoming Shipments</attribute>
+            		</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
 						<field name="line_number" />

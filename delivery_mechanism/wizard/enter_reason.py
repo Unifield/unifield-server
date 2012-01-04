@@ -63,10 +63,11 @@ class enter_reason(osv.osv_memory):
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
+            # cancel the IN
+            wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
+            # if full cancel (no resource), we updated corresponding out and correct po state
             if cancel_type == 'update_out':
                 picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
-            else:
-                wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
                 
         return {'type': 'ir.actions.act_window_close'}
     
