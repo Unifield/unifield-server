@@ -88,8 +88,8 @@ class stock_partial_picking(osv.osv_memory):
                             if move.type_check == 'in':
                                 # double check to find the corresponding prodlot
                                 prodlot_ids = prodlot_obj.search(cr, uid, [('life_date', '=', move.expiry_date),
-                                                                            ('type', '=', 'internal'),
-                                                                            ('product_id', '=', move.product_id.id)], context=context)
+                                                                           ('type', '=', 'internal'),
+                                                                           ('product_id', '=', move.product_id.id)], context=context)
                                 # no prodlot, create a new one
                                 if not prodlot_ids:
                                     vals = {'product_id': move.product_id.id,
@@ -105,7 +105,8 @@ class stock_partial_picking(osv.osv_memory):
                                 # should not be reached thanks to UI checks
                                 raise osv.except_osv(_('Error !'), _('No Batch Number with Expiry Date for Expiry Date Mandatory and not Incoming Shipment should not happen. Please hold...'))
                 # fill partial data
-                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'product_id': move.product_id.id,
+                partial_datas[pick.id].setdefault(move.move_id.id, []).append({'name': move.product_id.partner_ref,
+                                                                               'product_id': move.product_id.id,
                                                                                'product_qty': move.quantity,
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': prodlot_id,
@@ -121,7 +122,8 @@ class stock_partial_picking(osv.osv_memory):
             missing_move_ids = [x for x in all_move_ids if x not in move_ids]
             # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
             for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
-                partial_datas[pick.id].setdefault(missing_move.id, []).append({'product_id': missing_move.product_id.id,
+                partial_datas[pick.id].setdefault(missing_move.id, []).append({'name': move.product_id.partner_ref,
+                                                                               'product_id': missing_move.product_id.id,
                                                                                'product_qty': 0,
                                                                                'product_uom': missing_move.product_uom.id,
                                                                                'prodlot_id': False,

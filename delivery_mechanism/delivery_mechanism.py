@@ -218,6 +218,7 @@ class stock_picking(osv.osv):
         build data_back dictionary
         '''
         res = {'id': move.id,
+               'name': move.product_id.partner_ref,
                'product_id': move.product_id.id,
                'product_uom': move.product_uom.id,
                'product_qty': move.product_qty,
@@ -236,16 +237,19 @@ class stock_picking(osv.osv):
         '''
         # stock move object
         move_obj = self.pool.get('stock.move')
+        product_obj = self.pool.get('product.product')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
         out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
         if not out_move_id and out_move:
-            # copy existing out_move with move properties:
-            values = {'product_id': data_back['product_id'],
+            # copy existing out_move with move properties: - update the name of the stock move
+            # the state is confirmed, we dont know if available yet - should be in input location before stock
+            values = {'name': data_back['name'],
+                      'product_id': data_back['product_id'],
                       'product_qty': 0,
                       'product_uos_qty': 0,
                       'product_uom': data_back['product_uom'],
-                      'state': 'assigned',
+                      'state': 'confirmed',
                       }
             out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
         # update quantity
@@ -294,6 +298,8 @@ class stock_picking(osv.osv):
             move_ids = partial_datas[pick.id].keys()
             # all moves
             all_move_ids = [move.id for move in pick.move_lines]
+            # related moves - swap if a backorder is created - openERP logic
+            done_moves = []
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -316,7 +322,8 @@ class stock_picking(osv.osv):
                     if first:
                         first = False
                         # update existing move
-                        values = {'product_id': partial['product_id'],
+                        values = {'name': partial['name'],
+                                  'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
@@ -325,6 +332,7 @@ class stock_picking(osv.osv):
                                   'change_reason': partial['change_reason'],
                                   }
                         move_obj.write(cr, uid, [move.id], values, context=context)
+                        done_moves.append(move.id)
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
                             if update_out:
@@ -337,7 +345,8 @@ class stock_picking(osv.osv):
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
-                        values = {'product_id': partial['product_id'],
+                        values = {'name': partial['name'],
+                                  'product_id': partial['product_id'],
                                   'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
@@ -347,6 +356,7 @@ class stock_picking(osv.osv):
                                   'state': 'assigned',
                                   }
                         new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                        done_moves.append(new_move)
                         if out_move_id:
                             new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=context)
                 # decrement the initial move, cannot be less than zero
@@ -364,18 +374,19 @@ class stock_picking(osv.osv):
                                                                     'state':'draft',
                                                                     })
                     # create the corresponding move in the backorder - reset productionlot
-                    defaults = {'product_id': data_back['product_id'],
+                    defaults = {'name': data_back['name'],
+                                'product_id': data_back['product_id'],
                                 'product_uom': data_back['product_uom'],
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
-                                'picking_id': backorder_id,
+                                'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)
                                 'prodlot_id': False,
                                 'state': 'assigned',
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
                                 }
-                    move_obj.copy(cr, uid, move.id, defaults, context=context)
+                    new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=context)
                     # if split happened
                     if update_out:
                         # update out move - quantity is increased, to match the original qty
@@ -391,14 +402,17 @@ class stock_picking(osv.osv):
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             for move in pick.move_lines:
                 if not move.product_qty and move.state not in ('done', 'cancel'):
+                    done_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
+                # done moves go to new picking object
+                move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id}, context=context)
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [backorder_id], {'backorder_id': pick.id}, context=context)
-                self.action_move(cr, uid, [pick.id])
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id}, context=context)
+                self.action_move(cr, uid, [backorder_id])
+                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
             else:
                 self.action_move(cr, uid, [pick.id])
@@ -429,9 +443,12 @@ class stock_picking(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        
         # objects
         move_obj = self.pool.get('stock.move')
+        purchase_obj = self.pool.get('purchase.order')
+        # workflow
+        wf_service = netsvc.LocalService("workflow")
         
         for obj in self.browse(cr, uid, ids, context=context):
             for move in obj.move_lines:
@@ -439,14 +456,26 @@ class stock_picking(osv.osv):
                 diff_qty = -data_back['product_qty']
                 # update corresponding out move
                 out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
-#                if out_move_id:
-#                    out_move = self.browse(cr, uid, out_move_id, context=context)
-#                    if not out_move.product_qty and out_move.picking_id.subtype == 'standard' and out_move.picking_id.type == 'out':
-#                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
-#                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
-#                        
-                # cancel the IN move - the IN picking workflow is triggered automatically if needed
-                move_obj.action_cancel(cr, uid, [move.id], context=context)
+                # for out cancellation, two points:
+                # - if pick/pack/ship: check that nothing is in progress
+                # - if nothing in progress, and the out picking is canceled, trigger the so to correct the corresponding so manually
+                if out_move_id:
+                    out_move = move_obj.browse(cr, uid, out_move_id, context=context)
+                    cond1 = out_move.picking_id.subtype == 'standard'
+                    cond2 = out_move.picking_id.subtype == 'picking' and not out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
+                    if (cond1 or cond2) and out_move.picking_id.type == 'out' and not out_move.product_qty:
+                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
+                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
+                        # open points:
+                        # - when searching for open picking tickets - we should take into account the specific move (only product id ?)
+                        # - and also the state of the move not in (cancel done)
+                        # correct the corresponding so manually if exists - could be in shipping exception
+                        if out_move.picking_id and out_move.picking_id.sale_id:
+                            wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
+            # correct the corresponding po manually if exists - should be in shipping exception
+            if obj.purchase_id:
+                wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
         
         return True
         
