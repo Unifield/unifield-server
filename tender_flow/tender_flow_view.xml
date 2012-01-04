@@ -23,7 +23,7 @@
                     </group>
                     <notebook colspan="5">
                         <page string="Tender Lines">
-                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" >
+                            <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
