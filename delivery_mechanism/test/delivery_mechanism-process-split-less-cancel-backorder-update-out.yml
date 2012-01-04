@@ -212,15 +212,22 @@
       for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):
           a_qty.remove(move.product_qty)
+          # the move should be canceled
+          assert move.state == 'cancel', 'the out move should be canceled - cancel - %s'%move.state
         if move.product_id.id == ref("product_B"):
           b_qty.remove(move.product_qty)
+          # the move should be canceled
+          assert move.state == 'cancel', 'the out move should be canceled - cancel - %s'%move.state
         if move.product_id.id == ref("product_C"):
           c_qty.remove(move.product_qty)
         if move.product_id.id == ref("product_D"):
           d_qty.remove(move.product_qty)
+      # check the sale order, it should be manually corrected
+      assert obj.sale_id.state == 'manual', 'corresponding sale order state is wrong - manual - %s'%obj.sale_id.state
     # all qty must be empty
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
     assert not c_qty, 'Quantity for product C is not empty - %s'%c_qty
     assert not d_qty, 'Quantity for product D is not empty - %s'%d_qty
+    
     

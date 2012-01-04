@@ -466,8 +466,9 @@ class stock_picking(osv.osv):
                         # open points:
                         # - when searching for open picking tickets - we should take into account the specific move (only product id ?)
                         # - and also the state of the move not in (cancel done)
-                    # correct the corresponding so manually if exists - could be in shipping exception
-                    # -> no need due to OEB-92
+                        # correct the corresponding so manually if exists - could be in shipping exception
+                        if out_move.picking_id and out_move.picking_id.sale_id:
+                            wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
