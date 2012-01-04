@@ -180,9 +180,9 @@
 
         <!--model: financing.contract.format, id: 12-->
         <record model="financing.contract.format" id="financing_contract_format_format_12">
-            <field name="eligibility_to_date">2011-12-31</field>
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
             <field name="format_name">Format</field>
-            <field name="eligibility_from_date">2011-01-01</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
             <field name="reporting_type">project</field>
             <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
         </record>
@@ -700,9 +700,9 @@
 
         <!--model: financing.contract.format, id: 13-->
         <record model="financing.contract.format" id="financing_contract_format_format_13">
-            <field name="eligibility_to_date">2011-12-31</field>
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
             <field name="format_name">Format</field>
-            <field name="eligibility_from_date">2011-01-01</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
             <field name="reporting_type">all</field>
             <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
         </record>
@@ -1280,9 +1280,9 @@
 
         <!--model: financing.contract.format, id: 16-->
         <record model="financing.contract.format" id="financing_contract_format_format_16">
-            <field name="eligibility_to_date">2011-12-31</field>
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
             <field name="format_name">Format</field>
-            <field name="eligibility_from_date">2011-01-01</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
             <field name="reporting_type">allocated</field>
             <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___kachin_27'),ref('account_analytic_account_oc___myanmar_mission_-_oca___shan_s_28'),ref('account_analytic_account_oc___myanmar_mission_-_oca___yangon_29'),ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
         </record>
@@ -1409,9 +1409,9 @@
 
         <!--model: financing.contract.format, id: 17-->
         <record model="financing.contract.format" id="financing_contract_format_format_17">
-            <field name="eligibility_to_date">2011-12-31</field>
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
             <field name="format_name">Format</field>
-            <field name="eligibility_from_date">2011-01-01</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
             <field name="reporting_type">allocated</field>
             <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___kachin_27'),ref('account_analytic_account_oc___myanmar_mission_-_oca___shan_s_28'),ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
         </record>
@@ -1612,9 +1612,9 @@
 
         <!--model: financing.contract.format, id: 18-->
         <record model="financing.contract.format" id="financing_contract_format_format_18">
-            <field name="eligibility_to_date">2011-12-31</field>
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
             <field name="format_name">Format</field>
-            <field name="eligibility_from_date">2011-01-01</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
             <field name="reporting_type">project</field>
             <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
         </record>
