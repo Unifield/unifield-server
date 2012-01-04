@@ -354,11 +354,12 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
-        wf_service = netsvc.LocalService("workflow")
-        #order = kwargs['order']
-        #proc_id = kwargs['proc_id']
-        #if order.procurement_request and order.state == 'progress':
-        #    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+        # Comment because the confirmation of the Internal Request confirmed automatically the associated procurement order
+#        wf_service = netsvc.LocalService("workflow")
+#        order = kwargs['order']
+#        proc_id = kwargs['proc_id']
+#        if order.procurement_request and order.state == 'progress':
+#            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         
         return True
     
