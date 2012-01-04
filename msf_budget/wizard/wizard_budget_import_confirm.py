@@ -27,13 +27,16 @@ class wizard_budget_import_confirm(osv.osv_memory):
         if context is None:
             context = {}
         budget_obj = self.pool.get('msf.budget')
+        budget_line_obj = self.pool.get('msf.budget.line')
         if 'budget_vals' in context and 'latest_budget_id' in context and 'budget_line_vals' in context:
-            # Remove old budget
-            budget_obj.unlink(cr, uid, [context['latest_budget_id']], context=context)
-            # Create the final budget and its lines
-            created_budget_id = budget_obj.create(cr, uid, vals=context['budget_vals'], context=context)
+            # Overwrite budget
+            budget_obj.write(cr, uid, [context['latest_budget_id']], vals=context['budget_vals'], context=context)
+            # Delete old lines
+            old_line_ids = budget_line_obj.search(cr, uid, [('budget_id','=',context['latest_budget_id'])], context=context)
+            budget_line_obj.unlink(cr, uid, old_line_ids, context=context)
+            # Recreate the lines
             for line_vals in context['budget_line_vals']:
-                line_vals.update({'budget_id': created_budget_id})
+                line_vals.update({'budget_id': context['latest_budget_id']})
                 self.pool.get('msf.budget.line').create(cr, uid, vals=line_vals, context=context)
         # we open a wizard
         return {
