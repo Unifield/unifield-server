@@ -959,6 +959,16 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
 #
 def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None):
     doc = etree.parse(xmlfile)
+    xpath = '//*[@id]'
+
+    logger = logging.getLogger('init')
+    id_found = []
+    for elem in doc.xpath(xpath):
+        nid = elem.get('id')
+        if nid in id_found:
+            logger.error("Module %s, xml id %s duplicated"%(module, nid))
+        id_found.append(nid)
+
     relaxng = etree.RelaxNG(
         etree.parse(os.path.join(config['root_path'],'import_xml.rng' )))
     try:
