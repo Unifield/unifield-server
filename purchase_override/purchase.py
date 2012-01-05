@@ -418,7 +418,7 @@ class purchase_order_merged_line(osv.osv):
         self.write(cr, uid, [id], {'product_qty': new_qty,
                                    'price_unit': new_price}, context=context)
 
-        return id
+        return id, new_price
 
 
 purchase_order_merged_line()
@@ -443,7 +443,7 @@ class purchase_order_line(osv.osv):
             new_vals['order_id'] = order_id
             vals['merged_id'] = line_obj.create(cr, uid, new_vals, context=context)
         else:
-            vals['merged_id'] = line_obj._update(cr, uid, merged_ids[0], product_qty, context=context)
+            vals['merged_id'], vals['price_unit'] = line_obj._update(cr, uid, merged_ids[0], product_qty, context=context)
 
         return vals
 
@@ -461,11 +461,13 @@ class purchase_order_line(osv.osv):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, line_id, {'merged_id': False}, context=context)
-                merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
+		vals.update({'price_unit': res_merged[1]})
                 # Create or update an existing merged line with the new product
                 vals = self.link_merged_line(cr, uid, vals, vals['product_id'], line.order_id.id, vals.get('product_qty', line.product_qty), vals.get('product_uom', line.product_uom.id), context=context)
             if 'product_qty' in vals and line.product_qty != vals['product_qty']:
-                merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, context=context)
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, vals['product_qty']-line.product_qty, context=context)
+		vals.update({'price_unit': res_merged[1]})
                 
         # If it's a new line
         elif not line_id:
@@ -478,7 +480,7 @@ class purchase_order_line(osv.osv):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
-                merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
+                res_merged = merged_line_obj._update(cr, uid, line.merged_id.id, -line.product_qty, context=context)
 
         return vals
 
