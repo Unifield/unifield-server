@@ -489,18 +489,6 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
-class purchase_order(osv.osv):
-    '''
-    add the id of the origin purchase order
-    '''
-    _inherit = 'purchase.order'
-#    _columns = {'on_order_procurement_id': fields.many2one('procurement.order', string='On Order Procurement Reference', readonly=True,),
-#                }
-#    _defaults = {'on_order_procurement_id': False,}
-    
-purchase_order()
-
-
 class purchase_order_line(osv.osv):
     '''
     add the link to procurement order
@@ -519,18 +507,6 @@ class procurement_order(osv.osv):
     inherit po_values_hook
     '''
     _inherit = 'procurement.order'
-    
-#    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-#        '''
-#        data for the purchase order creation
-#        add a link to corresponding procurement order
-#        '''
-#        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-#        procurement = kwargs['procurement']
-#        
-#        values['on_order_procurement_id'] = procurement.id
-#        
-#        return values
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
