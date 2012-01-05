@@ -75,6 +75,10 @@
     po_id = data['purchase_id'][0]
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+    pick = self.browse(cr, uid, in_ids[0], context=context)
+    # get the weird openERP picking type
+    picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # process wizard
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_model = dic['res_model']
     wiz_id = dic['res_id']
@@ -82,7 +86,7 @@
     # reduce qty and then split moves
     wiz_obj = self.pool.get(wiz_model)
     for obj in wiz_obj.browse(cr, uid, [wiz_id], context=wiz_c):
-      for out in obj.product_moves_out:
+      for out in getattr(obj, 'product_moves_%s'%picking_type): # -> because is now IN with average product cost method !!!
         # call the split wizard
         dic_split = out.split(context=wiz_c)
         split_model = dic_split['res_model']
