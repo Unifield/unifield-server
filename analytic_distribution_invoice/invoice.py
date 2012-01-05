@@ -50,7 +50,8 @@ class account_invoice(osv.osv):
 
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
-        Add analytic_distribution_id field to result.
+        Add these fields to result:
+         - analytic_distribution_id
         """
         res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
@@ -58,7 +59,8 @@ class account_invoice(osv.osv):
 
     def _hook_fields_m2o_for_refund(self, cr, uid, *args):
         """
-        Add analytic_distribution_id field to result.
+        Add these fields to result:
+         - analytic_distribution_id
         """
         res = super(account_invoice, self)._hook_fields_m2o_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
@@ -66,12 +68,15 @@ class account_invoice(osv.osv):
 
     def _hook_refund_data(self, cr, uid, data, *args):
         """
-        Delete analytic distribution for refund invoice
+        Copy analytic distribution for refund invoice
         """
         if not data:
             return False
         if 'analytic_distribution_id' in data:
-            data['analytic_distribution_id'] = False
+            if data.get('analytic_distribution_id', False):
+                data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, data.get('analytic_distribution_id'), {}) or False
+            else:
+                data['analytic_distribution_id'] = False
         return data
 
     def _refund_cleanup_lines(self, cr, uid, lines):
@@ -83,17 +88,23 @@ class account_invoice(osv.osv):
             if el[2]:
                 # Give analytic distribution on line
                 if 'analytic_distribution_id' in el[2]:
-                    el[2]['new_distribution_id'] = el[2].get('analytic_distribution_id') and el[2].get('analytic_distribution_id')[0]
-                    # default value
-                    el[2]['analytic_distribution_id'] = False
+                    if el[2].get('analytic_distribution_id', False) and el[2].get('analytic_distribution_id')[0]:
+                        distrib_id = el[2].get('analytic_distribution_id')[0]
+                        el[2]['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {}) or False
+                    else:
+                        # default value
+                        el[2]['analytic_distribution_id'] = False
                 # Give false analytic lines for 'line' in order not to give an error
                 if 'analytic_line_ids' in el[2]:
                     el[2]['analytic_line_ids'] = False
+                # Give false order_line_id in order not to give an error
+                if 'order_line_id' in el[2]:
+                    el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
 
     def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
         """
-        Reverse lines for given invoice (that are not from an engagement journal)
+        Reverse lines for given invoice
         """
         if isinstance(ids, (int, long)):
             ids = [ids]

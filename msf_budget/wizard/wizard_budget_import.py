@@ -92,22 +92,22 @@ class wizard_budget_import(osv.osv_memory):
                     elif account.type != 'view':
                         # Only create "normal" budget lines (view accounts are just discarded)
                         budget_line_vals.update({'account_id': account_ids[0]})
-            budget_values = "["
-            for budget_value in import_line[1:13]:
-                if budget_value == "":
-                    budget_values += "0"
-                else:
-                    # try to parse as int
-                    try:
-                        test_value = int(budget_value)
-                    except:
-                        raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
-                    budget_values += budget_value
-                budget_values += ","
-            budget_values = budget_values[:-1] + "]"
-            budget_line_vals.update({'budget_values': budget_values})
-            
-            result.append(budget_line_vals)
+                        budget_values = "["
+                        for budget_value in import_line[1:13]:
+                            if budget_value == "":
+                                budget_values += "0"
+                            else:
+                                # try to parse as int
+                                try:
+                                    test_value = int(budget_value)
+                                except:
+                                    raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
+                                budget_values += budget_value
+                            budget_values += ","
+                        budget_values = budget_values[:-1] + "]"
+                        budget_line_vals.update({'budget_values': budget_values})
+                        
+                        result.append(budget_line_vals)
             
         return result
 
@@ -148,7 +148,7 @@ class wizard_budget_import(osv.osv_memory):
                 if latest_budget['version'] and latest_budget['state']:
                     if latest_budget['state'] == 'draft':
                         # latest budget is draft
-                        # Prepare creation of the "new" one
+                        # Prepare creation of the "new" one (with no lines)
                         budget_vals.update({'version': latest_budget['version'],
                                             'latest_version': True})
                         # add to context

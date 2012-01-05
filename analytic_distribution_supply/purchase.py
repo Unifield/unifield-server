@@ -178,6 +178,8 @@ class purchase_order(osv.osv):
             today = strftime('%Y-%m-%d')
             period_ids = get_period_from_date(self, cr, uid, po.delivery_requested_date or today, context=context)
             period_id = period_ids and period_ids[0] or False
+            if not period_id:
+                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (po.delivery_requested_date or today))
             date = get_date_in_period(self, cr, uid, po.delivery_requested_date or today, period_id, context=context)
             po_lines = defaultdict(list)
             # update period and date

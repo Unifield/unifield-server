@@ -112,12 +112,12 @@
     amount_untaxed: 1.0
     categ: other
     company_id: base.main_company
-    date_order: '2011-08-29'
-    delivery_requested_date: '2011-08-31'
+    date_order: !eval "'%s-08-29'%(time.strftime('%Y'),)"
+    delivery_requested_date: !eval "'%s-08-31'%(time.strftime('%Y'),)"
     est_transport_lead_time: 0.0
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: '2011-08-29'
+    minimum_planned_date: !eval "'%s-08-29'%(time.strftime('%Y'),)"
     name: PO test
     order_type: regular
     partner_address_id: res_partner_address_0
@@ -131,7 +131,7 @@
 - 
   !record {model: purchase.order.line, id: purchase_order_line_testproduct0}:
     company_id: base.main_company
-    date_planned: '2011-08-29'
+    date_planned: !eval "'%s-08-29'%(time.strftime('%Y'),)"
     default_code: test
     default_name: test product
     internal_code: test

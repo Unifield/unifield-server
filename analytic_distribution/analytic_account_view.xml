@@ -5,7 +5,7 @@
             <field name="name">analytic.account.form</field>
             <field name="model">account.analytic.account</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="account_budget.view_account_analytic_account_form_inherit_budget"/>
+            <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <data>
                     <field name="parent_id" position="replace">
@@ -32,7 +32,6 @@
                             <field name="account_ids" nolabel="1" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
                         </page>
                     </page>
-                    <page string="Budget Lines" position="replace"/>
                 </data>
             </field>
         </record>

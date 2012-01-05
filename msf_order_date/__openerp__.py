@@ -53,6 +53,7 @@
         'test/sale_dates.yml',
         'test/lang_format.yml',
         'test/order_date.yml',
+        'test/order_date_full_process.yml',
     ],
     'installable': True,
     'active': False,

@@ -23,6 +23,8 @@ from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
 
+from sale_override import SALE_ORDER_STATE_SELECTION
+
 class procurement_request(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -78,7 +80,7 @@ class procurement_request(osv.osv):
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
@@ -97,17 +99,7 @@ class procurement_request(osv.osv):
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
-        'state': fields.selection([
-            ('draft', 'Draft'),
-            ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Confirmed'),
-            ('progress', 'Confirmed'),
-            ('validated', 'Validated'),
-            ('shipping_except', 'Shipping Exception'),
-            ('invoice_except', 'Invoice Exception'),
-            ('done', 'Closed'),
-            ('cancel', 'Cancelled')
-            ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
     }
     
     _defaults = {

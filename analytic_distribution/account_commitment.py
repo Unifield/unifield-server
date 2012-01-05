@@ -286,8 +286,6 @@ class account_commitment(osv.osv):
         for c in self.browse(cr, uid, ids, context=context):
             # Search analytic lines that have commitment line ids
             search_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', 'in', [x.id for x in c.line_ids])], context=context)
-            if not search_ids:
-                return True
             # Delete them
             res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
             # And finally update commitment voucher state and lines amount

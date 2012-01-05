@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,31 +16,29 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# 
 ##############################################################################
-
 {
-    "name" : "Accounting Corrections",
+    "name" : "Finance Data",
     "version" : "1.0",
-    "description" : """
-        Permits some corrections from Journal Items.
+    "author" : "TeMPO Consulting, MSF",
+    "category": "Others",
+    "description": """
+        Modules for Unifield
     """,
-    "author" : "TeMPO Consulting",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal'],
-    "init_xml" : [],
-    "update_xml" : [
-        'account_view.xml',
-        'account_wizard_view.xml',
+    "website": "http://unifield.msf.org",
+    "init_xml": [
     ],
-    "demo_xml" : [],
+    "depends" : [
+        "msf_chart_of_account", "financing_contract"
+    ],
+    "update_xml": [
+        "data.xml",
+    ],
+    "demo_xml": [
+    ],
     "test": [
-        'test/account_data.yml',
-        'test/invoice_correction.yml'
     ],
     "installable": True,
-    "active": False
+    "active": False,
 }
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

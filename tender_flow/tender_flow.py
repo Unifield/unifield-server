@@ -84,7 +84,7 @@ class tender(osv.osv):
     
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
-                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Done'), ('cancel', 'Canceled'),], string="State", readonly=True),
+                'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'),], string="State", readonly=True),
                 'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
                                                  states={'draft':[('readonly',False)]}, readonly=True,
                                                  context={'search_default_supplier': 1,}),
@@ -440,6 +440,8 @@ class tender(osv.osv):
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
                         else:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+                            if not rfq.valid_till:
+                                self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'valid_till': time.strftime('%Y-%m-%d')}, context=context)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
                 if tender.state == 'draft' or not tender.tender_line_ids:
@@ -711,9 +713,6 @@ class purchase_order(osv.osv):
                 'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
-                'name': fields.char('Order Reference', size=64, required=True, states={'done':[('readonly',True)],}, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
-                'date_order':fields.date('Date Ordered', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)],}, select=True, help="Date on which this document has been created."),
-# TODO JFB: date_order to delete ??
                 }
 
     _defaults = {

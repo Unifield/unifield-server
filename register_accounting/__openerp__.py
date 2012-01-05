@@ -65,7 +65,8 @@
         'test/direct_invoice.yml',
         'test/import_cheque_from_bank.yml',
         'test/wizard_register_creation.yml',
-        'test/bug_closing_balance_on_cashbox.yml'
+        'test/bug_closing_balance_on_cashbox.yml',
+        'test/import_invoice.yml',
     ],
     "installable": True,
     "active": False

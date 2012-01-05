@@ -43,34 +43,39 @@ class account_invoice_refund(osv.osv_memory):
         res.append('analytic_distribution_id')
         return res
 
-    def _hook_create_invoice(self, cr, uid, data, *args):
-        """
-        Change analytical distribution to have a copy and create invoice without invoice lines then create invoice lines in order not to lose 
-        analytical distribution on each line
-        """
-        if not data:
-            return False
-        # Prepare some values
-        lines = []
-        # Change analytic distribution (make a copy)
-        if data.get('analytic_distribution_id'):
-            data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, data['analytic_distribution_id'], 
-                {'global_distribution': True}) or False
-        # Retrieve invoice lines if exists
-        if 'invoice_line' in data:
-            lines = [x[2] for x in data.get('invoice_line')]
-            data['invoice_line'] = False
-        # Create invoice
-        res = self.pool.get('account.invoice').create(cr, uid, data)
-        # Create invoice lines
-        if res and lines:
-            for line in lines:
-                if line.get('new_distribution_id'):
-                    line['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, line.get('new_distribution_id'), 
-                        {'global_distribution': False}) or False
-                line.update({'invoice_id': res})
-                self.pool.get('account.invoice.line').create(cr, uid, line)
-        return res
+#####
+## _hook_create_invoice was developed for "SP2, Unifield project, MSF" in order not to generate engagement lines.
+## But @ SP3, engagement lines differs. That's why this method is useless @ SP3 and have spawned/generated some modification in 
+## analytic_distribution_invoice/invoice.py.
+###
+#    def _hook_create_invoice(self, cr, uid, data, *args):
+#        """
+#        Change analytical distribution to have a copy and create invoice without invoice lines then create invoice lines in order not to lose 
+#        analytical distribution on each line
+#        """
+#        if not data:
+#            return False
+#        # Prepare some values
+#        lines = []
+#        # Change analytic distribution (make a copy)
+#        if data.get('analytic_distribution_id'):
+#            data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, data['analytic_distribution_id'], 
+#                {'global_distribution': True}) or False
+#        # Retrieve invoice lines if exists
+#        if 'invoice_line' in data:
+#            lines = [x[2] for x in data.get('invoice_line')]
+#            data['invoice_line'] = False
+#        # Create invoice
+#        res = self.pool.get('account.invoice').create(cr, uid, data)
+#        # Create invoice lines
+#        if res and lines:
+#            for line in lines:
+#                if line.get('new_distribution_id'):
+#                    line['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, line.get('new_distribution_id'), 
+#                        {'global_distribution': False}) or False
+#                line.update({'invoice_id': res})
+#                self.pool.get('account.invoice.line').create(cr, uid, line)
+#        return res
 
 account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -17,7 +17,6 @@
             <field name="active">True</field>
             <field name="category">OC</field>
             <field name="parent_id" ref="analytic_account_project" />
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
     
         <record id="analytic_account_funding_pool" model="account.analytic.account">
@@ -51,7 +50,6 @@
             <field name="active">True</field>
             <field name="category">FUNDING</field>
             <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
-            <field name="date_start" eval="time.strftime('%Y-%m-%d')"/>
         </record>
         
     </data>
