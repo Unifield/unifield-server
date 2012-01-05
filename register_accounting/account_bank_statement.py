@@ -611,7 +611,9 @@ class account_bank_statement_line(osv.osv):
 
     def _get_down_payment_state(self, cr, uid, ids, field_name=None, args=None, context={}):
         """
-        If account is a down_payment, then True. Otherwise False.
+        Verify down payment eligibility:
+         - account should be a down_payment type for register
+         - amount should be negative
         """
         # Some verifications
         if not context:
@@ -623,7 +625,7 @@ class account_bank_statement_line(osv.osv):
         # Browse elements
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = False
-            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'down_payment':
+            if line.account_id and line.account_id.user_type and line.account_id.type_for_register == 'down_payment' and line.amount < 0.0:
                 res[line.id] = True
         return res
 
@@ -1178,7 +1180,13 @@ class account_bank_statement_line(osv.osv):
             if saveddate:
                 values['date'] = saveddate
         # Update the bank statement lines with 'values'
-        return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        # Amount verification regarding Down payments
+        for line in self.browse(cr, uid, ids):
+            if line.is_down_payment and line.down_payment_id:
+                if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.id, line.down_payment_id.id, context=context):
+                    raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+        return res
 
     def copy(self, cr, uid, id, default={}, context={}):
         """

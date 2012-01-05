@@ -51,6 +51,7 @@
         'wizard/wizard_confirm_bank.xml',
         'wizard/invoice_date.xml',
         'wizard/down_payment.xml',
+        'purchase_view.xml',
     ],
     "demo_xml" : [],
     "test": [

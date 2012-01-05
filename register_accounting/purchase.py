@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,16 @@
 #
 ##############################################################################
 
-import wizard
-import partner
-import account_move_line
-import account_bank_statement
-import account_cash_statement
-import account
-import account_cheque_register
-import invoice
-import purchase
+from osv import osv
+from osv import fields
 
+class purchase_order(osv.osv):
+    _name = 'purchase.order'
+    _inherit = 'purchase.order'
+
+    _columns = {
+        'down_payment_ids': fields.one2many('account.bank.statement.line', 'down_payment_id', string="Down Payments", readonly=True),
+    }
+
+purchase_order()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

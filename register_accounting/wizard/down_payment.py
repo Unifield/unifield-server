@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class wizard_down_payment(osv.osv_memory):
     _name = 'wizard.down.payment'
@@ -40,6 +41,31 @@ class wizard_down_payment(osv.osv_memory):
         'state': lambda *a: 'closed',
     }
 
+    def check_register_line_and_po(self, cr, uid, absl_id, po_id, context={}):
+        """
+        Verify that register line amount is not superior to (PO total_amount - all down payments).
+        """
+        # Some verifications
+        if not absl_id or not po_id:
+            return False
+        if not context:
+            context = {}
+        if isinstance(absl_id, list):
+            absl_id = absl_id[0]
+        if isinstance(po_id, list):
+            po_id = po_id[0]
+        # Prepare some values
+        po = self.pool.get('purchase.order').browse(cr, uid, po_id)
+        absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
+        total = po.amount_total
+        for dp in po.down_payment_ids:
+            if dp.id != absl_id:
+                total += dp.amount
+        if (-1 * absl.amount) > total:
+            raise osv.except_osv(_('Warning'), 
+                _('Register line amount is superior to (PO total amount - down payments). Maximum amount should be: %s') % (total))
+        return True
+
     def button_validate(self, cr, uid, ids, context={}):
         """
         Validate the wizard to remember which PO have been selected from this register line.
@@ -51,6 +77,17 @@ class wizard_down_payment(osv.osv_memory):
             ids = [ids]
         # Browse all wizards
         for wiz in self.browse(cr, uid, ids, context=context):
+            # Some verifications
+            if not wiz.register_line_id:
+                raise osv.except_osv(_('Warning'), _('Please select a Register Line before.'))
+            if not wiz.purchase_id:
+                raise osv.except_osv(_('Warning'), _('Please choose a Purchase Order.'))
+            # Verify that the PO is not invoiced
+            if wiz.purchase_id.invoiced:
+                raise osv.except_osv(_('Error'), _('You cannot add Down Payment on an invoiced PO.'))
+            # Verify that the register line amount is not superior to (PO amount - all its down_payments (draft, temp and hard posted))
+            self.check_register_line_and_po(cr, uid, wiz.register_line_id.id, wiz.purchase_id.id, context=context)
+            # Write result to register line
             self.pool.get('account.bank.statement.line').write(cr, uid, [wiz.register_line_id.id], {'down_payment_id': wiz.purchase_id.id}, context=context)
         return {'type' : 'ir.actions.act_window_close'}
 

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Down Payment Wizard Form -->
+        <record model="ir.ui.view" id="purchase_order_down_payments_form">
+            <field name='name'>purchase.order.down.payments.form</field>
+            <field name='model'>purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_ids']" position="after">
+                        <newline/>
+                        <separator string="Down Payments" colspan="4"/>
+                        <newline/>
+                        <field name="down_payment_ids" nolabel="1" colspan="4">
+                            <tree string="Down Payment">
+                                <field name="statement_id" string="Register"/>
+                                <field name="date"/>
+                                <field name="name" string="Description"/>
+                                <field name="account_id"/>
+                                <field name="amount" sum="Total Amount"/>
+                                <field name="currency_id"/>
+                                <field name="state"/>
+                            </tree>
+                        </field>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
