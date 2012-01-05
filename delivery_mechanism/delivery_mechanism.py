@@ -451,6 +451,8 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # corresponding sale ids to be manually corrected after purchase workflow trigger
+            sale_ids = []
             for move in obj.move_lines:
                 data_back = self.create_data_back(cr, uid, move, context=context)
                 diff_qty = -data_back['product_qty']
@@ -471,11 +473,16 @@ class stock_picking(osv.osv):
                         # - and also the state of the move not in (cancel done)
                         # correct the corresponding so manually if exists - could be in shipping exception
                         if out_move.picking_id and out_move.picking_id.sale_id:
-                            wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
+                            if out_move.picking_id.sale_id.id not in sale_ids:
+                                sale_ids.append(out_move.picking_id.sale_id.id)
+                            
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
                 purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
+            # correct the corresponding so
+            for sale_id in sale_ids:
+                wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
         
         return True
         
