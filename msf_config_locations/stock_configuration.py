@@ -30,8 +30,8 @@ class stock_location(osv.osv):
     '''
     _name = "stock.location"
     _inherit = 'stock.location'
-    _parent_order = 'posz'
-    _order = 'posz'
+    _parent_order = 'location_id, posz'
+    _order = 'location_id, posz'
     
 stock_location()
 

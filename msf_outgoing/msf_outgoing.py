@@ -1692,7 +1692,7 @@ class stock_picking(osv.osv):
                        }, context=context)
             # all destination location of the stock moves must be output location of warehouse - lot_output_id
             for move in obj.move_lines:
-                move.write({'location_dest_id': obj.warehouse_id.lot_output_id.id,}, context=context)
+                move.write({'location_dest_id': obj.warehouse_id.lot_output_id.id, 'state': 'draft'}, context=context)
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])
         
