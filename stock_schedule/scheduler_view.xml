@@ -192,7 +192,7 @@
 
 
         <menuitem id="stock_automatic_procurements_menu"
-                  name="Automatic Procurements"
+                  name="Replenishment Rules"
                   sequence="4"
                   parent="stock.menu_stock_root" />
 
