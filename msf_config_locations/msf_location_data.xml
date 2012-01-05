@@ -118,6 +118,7 @@
         <field name="chained_location_type">customer</field>
         <field name="chained_auto_packing">transparent</field>
         <field name="chained_picking_type">out</field>
+	<field name="chained_journal_id" eval="False" />
         <field name="posz">3</field>
     </record>
 
