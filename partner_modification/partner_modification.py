@@ -29,7 +29,9 @@ import netsvc
 import pooler
 import time
 
-TRANSPORTS = [('',''), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),]
+from msf_order_date import TRANSPORT_TYPE
+from msf_order_date import ZONE_SELECTION
+
 NUMBER_OF_CHOICE = 3
 
 class product_template(osv.osv):
@@ -96,16 +98,20 @@ class res_partner(osv.osv):
         '''
         for a given transport name (road, air, sea), 
         '''
-        list_of_vals = [x[0] for x in TRANSPORTS]
-        assert transport_name in list_of_vals, 'The transport name is not supported.'
+        if not ids:
+            return 0.0
+        if ids and isinstance(ids, (int, long)):
+            ids = [ids]
         # result values
         result = {}
+        # get corresponding lt
         for partner in self.browse(cr, uid, ids, context=context):
             result[partner.id] = 0
-            for i in range(NUMBER_OF_CHOICE):
-                if getattr(partner, 'transport_%s'%i) == transport_name:
-                    val = getattr(partner, 'transport_%s_lt'%i)
-                    result[partner.id] = val
+            if transport_name:
+                for i in range(NUMBER_OF_CHOICE):
+                    if getattr(partner, 'transport_%s'%i) == transport_name:
+                        val = getattr(partner, 'transport_%s_lt'%i)
+                        result[partner.id] = val
                     
         return result
     
@@ -116,16 +122,16 @@ class res_partner(osv.osv):
         return {'value': {'supplier_lt': transport_0_lt + procurement_lt,
                           'customer_lt': transport_0_lt + procurement_lt}}
     
-    _columns = {'zone': fields.selection([('national','National'),('international','International'),], string='Zone',),
+    _columns = {'zone': fields.selection(selection=ZONE_SELECTION, string='Zone', required=True),
                 'customer_lt': fields.integer('Customer Lead Time'),
                 'supplier_lt': fields.integer('Supplier Lead Time'),
                 'procurement_lt': fields.integer('Internal Lead Time'),
                 'transport_0_lt': fields.integer('1st Transport Lead Time'),
-                'transport_0': fields.selection(selection=TRANSPORTS, string='1st (favorite) Mode of Transport',),
+                'transport_0': fields.selection(selection=TRANSPORT_TYPE, string='1st (favorite) Mode of Transport',),
                 'transport_1_lt': fields.integer('2nd Transport Lead Time'),
-                'transport_1': fields.selection(selection=TRANSPORTS, string='2nd Mode of Transport'),
+                'transport_1': fields.selection(selection=TRANSPORT_TYPE, string='2nd Mode of Transport'),
                 'transport_2_lt': fields.integer('3rd Transport Lead Time'),
-                'transport_2': fields.selection(selection=TRANSPORTS, string='3nd Mode of Transport'),
+                'transport_2': fields.selection(selection=TRANSPORT_TYPE, string='3nd Mode of Transport'),
                 'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time (computed)', multi="seller_delay"),
                 }
     
@@ -133,11 +139,11 @@ class res_partner(osv.osv):
                  'customer_lt': 0,
                  'supplier_lt': 0,
                  'procurement_lt': 0,
-                 'transport_0': TRANSPORTS[0][0], # empty
+                 'transport_0': TRANSPORT_TYPE[0][0], # empty
                  'transport_0_lt': 0,
-                 'transport_1': TRANSPORTS[0][0], # empty
+                 'transport_1': TRANSPORT_TYPE[0][0], # empty
                  'transport_1_lt': 0,
-                 'transport_2': TRANSPORTS[0][0], # empty
+                 'transport_2': TRANSPORT_TYPE[0][0], # empty
                  'transport_2_lt': 0,
                  }
 

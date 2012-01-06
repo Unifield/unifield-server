@@ -60,30 +60,54 @@ class journal_items_corrections_lines(osv.osv_memory):
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
-        Open Analytic Distribution wizard
+        Open an analytic distribution wizard
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = []
+            ids = [ids]
         # Prepare some values
         aml_obj = self.pool.get('account.move.line')
         # Add context in order to know we come from a correction wizard
-        this_wizard = self.browse(cr, uid, ids[0], context=context).wizard_id
-        context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': this_wizard.id or False})
-        # Get wizard_id for cost_center_distribution before launching it
-        wizard = aml_obj.button_analytic_distribution(cr, uid, [this_wizard.move_line_id.id], context=context)
-        if 'res_model' in wizard and 'res_id' in wizard:
-            wiz_obj = self.pool.get(wizard.get('res_model'))
-            wiz_obj.write(cr, uid, wizard.get('res_id'), {'state': 'correction', 'date': this_wizard.date or strftime('%Y-%m-%d')}, context=context)
+        wiz = self.browse(cr, uid, ids[0], context=context).wizard_id
+        context.update({'from': 'wizard.journal.items.corrections', 'wiz_id': wiz.id or False})
+        # Get distribution
+        if wiz and wiz.move_line_id and wiz.move_line_id.analytic_distribution_id:
+            distrib_id = wiz.move_line_id.analytic_distribution_id.id or False
+        if distrib_id:
+            # Prepare values
+            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            currency = wiz.move_line_id.currency_id and wiz.move_line_id.currency_id.id or company_currency
+            amount = wiz.move_line_id.amount_currency and wiz.move_line_id.amount_currency or 0.0
+            vals = {
+                'total_amount': amount,
+                'move_line_id': wiz.move_line_id and wiz.move_line_id.id,
+                'currency_id': currency or False,
+                'state': 'dispatch',
+                'account_id': wiz.move_line_id and wiz.move_line_id.account_id and wiz.move_line_id.account_id.id or False,
+                'distribution_id': distrib_id,
+                'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
+                'date': wiz.date or strftime('%Y-%m-%d'),
+            }
+            # Create the wizard
+            wiz_obj = self.pool.get('analytic.distribution.wizard')
+            wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+            # Change wizard state to 'correction' in order to display mandatory fields
+            wiz_obj.write(cr, uid, [wiz_id], {'state': 'correction'}, context=context)
+            # Update some context values
+            context.update({
+                'active_id': ids[0],
+                'active_ids': ids,
+            })
+            # Open it!
             return {
                     'type': 'ir.actions.act_window',
-                    'res_model': wizard.get('res_model'),
+                    'res_model': 'analytic.distribution.wizard',
                     'view_type': 'form',
                     'view_mode': 'form',
                     'target': 'new',
-                    'res_id': wizard.get('res_id'),
+                    'res_id': [wiz_id],
                     'context': context,
             }
         return False

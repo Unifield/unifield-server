@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <report id="funding_pool"
+        string="Funding Pool"
+        model="account.analytic.account"
+        name="funding.pool"
+        rml="funding_pool/report/funding_pool.rml"
+        auto="False"
+        menu="True"/>
+
+    </data>
+</openerp>
+

@@ -40,7 +40,7 @@
 -
   !record {model: account.bank.statement, id: cashbox_bug_01}:
     date: !eval "'%s-01-02' %(datetime.now().year+6)"
-    journal_id: account_journal_cash_1
+    journal_id: account_journal_cash_usd
     name: Cashbox in USD
     period_id: cashbox_creation_period_01
     user_id: base.user_root
@@ -71,7 +71,7 @@
 -
   !record {model: account.bank.statement, id: cashbox_bug_02}:
     date: !eval "'%s-01-02' %(datetime.now().year+6)"
-    journal_id: account_journal_cash_2
+    journal_id: account_journal_cash_chf
     name: Cashbox in CHF
     period_id: cashbox_creation_period_01
     user_id: base.user_root
@@ -86,7 +86,7 @@
 -
   !record {model: account.bank.statement, id: cashbox_bug_02_next}:
     date: !eval "'%s-01-02' %(datetime.now().year+6)"
-    journal_id: account_journal_cash_2
+    journal_id: account_journal_cash_chf
     name: Cashbox in CHF (2)
     period_id: cashbox_creation_period_02
     user_id: base.user_root
@@ -105,7 +105,7 @@
 -
   !record {model: account.bank.statement, id: cashbox_bug_01_next}:
     date: !eval "'%s-01-02' %(datetime.now().year+6)"
-    journal_id: account_journal_cash_1
+    journal_id: account_journal_cash_usd
     name: Cashbox in USD (2)
     period_id: cashbox_creation_period_02
     user_id: base.user_root

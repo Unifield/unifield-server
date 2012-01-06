@@ -2,6 +2,11 @@
 <openerp>
     <data>
     	
+    	<menuitem id="menu_warehouse_expiry"
+                  name="Expiry"
+                  sequence="-10"
+    			  parent="stock.next_id_61" />
+    	
     	<record id="expiry_quantity_report_init_view" model="ir.ui.view">
     		<field name="name">expiry.quantity.report.init.view</field>
     		<field name="model">expiry.quantity.report</field>
@@ -39,11 +44,11 @@
     					<tree string="Expired products">
     						<field name="product_code" />
     						<field name="product_name" />
+    						<field name="location_id" />
     						<field name="real_stock" />
-    						<field name="expired_qty" />
     						<field name="batch_number" />
     						<field name="expiry_date" widget="date" />
-    						<field name="location_id" />
+    						<field name="expired_qty" />
     					</tree>
     				</field>
     			</form>
@@ -60,7 +65,8 @@
     	
     	<menuitem id="menu_expired_products"
     			  action="action_expired_products"
-    			  parent="stock.next_id_61" />
+                  sequence="-10"
+    			  parent="menu_warehouse_expiry" />
     			  
     			  
     	<record id="product_likely_expire_report_form_init" model="ir.ui.view">
@@ -76,8 +82,8 @@
     				<field name="only_non_zero" />
     				<separator colspan="4" string="Consumption parameters" />
     				<field name="consumption_type" colspan="4" />
-    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
-    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" />
+    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
     				<separator colspan="4" string="Location" />
     				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
 				<newline />
@@ -129,7 +135,8 @@
     	
     	<menuitem id="menu_products_to_expire"
     			  action="action_products_to_expire"
-    			  parent="stock.next_id_61" />
+                  sequence="-1"
+    			  parent="menu_warehouse_expiry" />
     			  
     	 <record id="product_likely_expire_report_item_form" model="ir.ui.view">
     	 	<field name="name">product.likely.expire.report.item.form</field>

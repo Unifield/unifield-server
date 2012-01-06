@@ -1,0 +1,136 @@
+-
+  I create an analytic Correction Journal
+-
+  !record {model: account.analytic.journal, id: analytic_journal_correction}:
+    name: Analytic Correction Journal
+    code: ACOR
+    type: correction
+-
+  I create a Correction Journal
+-
+  !record {model: account.journal, id: journal_correction}:
+    name: Correction Journal
+    code: CORR
+    type: correction
+    analytic_journal_id: analytic_journal_correction
+-
+  I create an analytic account attached to OC (Operation Center) named Gabon
+-
+  !record {model: account.analytic.account, id: analytic_account_gabon}:
+    name: "Gabon"
+    currency_id: 1
+    code: GAB
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+-
+  I create an analytic account attached to OC (Operation Center) named Kenya
+-
+  !record {model: account.analytic.account, id: analytic_account_kenya}:
+    name: "Kenya"
+    currency_id: 1
+    code: KEN
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date: !eval "'%s-01-01' %(datetime.now().year + 2)"
+-
+  I create a global analytical distribution
+-
+  !record {model: analytic.distribution, id: global_distrib_1}:
+    name: GLOB DISTR 1
+    global_distribution: True
+-
+  I create a cost center distribution line for gabon
+-
+  !record {model: cost.center.distribution.line, id: cost_center_gabon}:
+    name: CC Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: 1
+    analytic_id: analytic_account_gabon
+    distribution_id: global_distrib_1
+-
+  I create a cost center distribution line for kenya
+-
+  !record {model: cost.center.distribution.line, id: cost_center_kenya}:
+    name: CC Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: 1
+    analytic_id: analytic_account_kenya
+    distribution_id: global_distrib_1
+-
+  I create a funding pool distribution line for gabon
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_gabon}:
+    name: FP Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: 1
+    analytic_id: analytic_account_gabon
+    distribution_id: global_distrib_1
+-
+  I create a funding pool distribution line for kenya
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_kenya}:
+    name: FP Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: 1
+    analytic_id: analytic_account_kenya
+    distribution_id: global_distrib_1
+-
+  I create an Expense Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_expense0}:
+    close_method: unreconciled
+    code: expense
+    name: Expense
+    sign: 1
+-
+  I create a 6101 Expense Account.
+-
+  !record {model: account.account, id: account_account_expense0}:
+    code: '6101-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense Account
+    type: other
+    user_type: account_account_type_expense0
+    activation_date: !eval datetime.today().strftime('%Y-01-01')
+-
+  I create an invoice
+-
+  !record {model: account.invoice, id: invoice_account_correction_1}:
+    account_id: account.a_pay
+    address_contact_id: base.res_partner_address_3000
+    address_invoice_id: base.res_partner_address_3000
+    check_total: 250.0
+    company_id: base.main_company
+    currency_id: base.EUR
+    journal_id: account.expenses_journal
+    partner_id: base.res_partner_desertic_hispafuentes
+    reference_type: none
+    type: in_invoice
+    analytic_distribution_id: global_distrib_1
+    date_invoice: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Then I add an invoice line in order it takes analytic distribution from invoice
+-
+  !python {model: account.invoice.line}: |
+    vals = {
+        'account_id': ref('account.a_expense'),
+        'name': 'Product PC1',
+        'price_unit': 50.0,
+        'product_id': ref('product.product_product_pc1'),
+        'quantity': 5.0,
+        'uos_id': ref('product.product_uom_unit'),
+        'invoice_id': ref('account_corrections.invoice_account_correction_1'),
+    }
+    self.create(cr, uid, vals)
+-
+  I validate the invoice
+-
+  !workflow {model: account.invoice, ref: invoice_account_correction_1, action: invoice_open}

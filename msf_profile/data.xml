@@ -17,6 +17,13 @@
         <field name="quarantine_location" eval="True" />
          <field name="location_category">stock</field>
     </record>
+    <record id="stock_location_service" model="stock.location">
+        <field name="name">Service</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="service_location">True</field>
+    </record>
     <record id="stock_location_input" model="stock.location">
         <field name="name">Input</field>
         <field name="location_id" ref="stock.stock_location_company"/>
@@ -132,6 +139,15 @@
     </record>
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
+    </record>
+    <record id="uom_category_percentage" model="product.uom.categ">
+        <field name="name">Percentage</field>
+    </record>
+    <record id="uom_percentage" model="product.uom">
+        <field name="name">%</field>
+        <field name="category_id" ref="uom_category_percentage" />
+        <field name="factor" eval="1.0" />
+        <field name="factor_inv" eval="1.0" />
     </record>
     </data>
 </openerp>

@@ -2,6 +2,8 @@
 <openerp>
     <data>
 
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="4"
+                groups="account.group_account_user,account.group_account_manager"/>
     <!-- Bank Register Form => Inheritance -->
         <record id="inherit_view_bank_statement_form" model="ir.ui.view">
             <field name='name'>inherit.view.bank.statement.form</field>
@@ -52,7 +54,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="date" string="Posting Date"/>
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -65,10 +67,12 @@
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)]}"
                                         />
                                         <field name="partner_type" 
-                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 
-                                            'required': [('partner_type_mandatory', '=', True)]}"/>
+                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency}" />
                                         <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
@@ -103,11 +107,11 @@
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)]}"
                                             />
                                         <field name="partner_type" 
-                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"/>
+                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]" 
+                                            context="{'curr': parent.currency}" />
                                         <field name="display_analytic_button" invisible="1"/>
-                                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]"
-                                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
                                         <field name="amount" invisible="1"/>
@@ -174,7 +178,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
@@ -192,10 +196,10 @@
                                             attrs="{'readonly': [('number_imported_invoice', '>', 0)]}" />
                                         <field name="partner_type"  
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency}" 
                                             />
-                                        <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" groups="analytic.group_analytic_accounting"
-                                                invisible="1" />
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -208,7 +212,8 @@
                                         <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}" 
                                             string="Open invoice" type="object" icon="gtk-index" context="context"/>
                                         <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
-                                            string="Open invoice" type="object" icon="gtk-index" context="context"/>
+                                            string="Open invoices" type="object" icon="gtk-index" context="context"/>
+                                        <field name="reconciled"/>
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr" 
                                             context="context"/>
                                         <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
@@ -229,9 +234,10 @@
                                             attrs="{'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency}" 
                                             />
-                                        <field name="analytic_account_id" 
-                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1" groups="analytic.group_analytic_accounting" /> 
+                                        <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>
                                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
@@ -401,8 +407,8 @@
                     <field name="period_id"/>
                     <field name="journal_id"/>
                     <field name="balance_start"/>
+                    <field name="balance_end" />
                     <field name="balance_end_real"/>
-                    <field name="balance_end" invisible="1"/>
                     <field name="state"/>
                     <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
@@ -423,8 +429,8 @@
                     <field name="period_id"/>
                     <field name="journal_id"/>
                     <field name="balance_start"/>
-                    <field name="balance_end_real"/>
                     <field name="balance_end"/>
+                    <field name="balance_end_real"/>
                     <field name="state"/>
                     <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Confirm" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
@@ -568,7 +574,7 @@
                     <notebook colspan="4">
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and not analytic_distribution_id">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <field name="date" string="Posting Date"/>
                                     <field name="document_date"/>
@@ -580,10 +586,12 @@
                                     <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                     <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"/>
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency}"
+                                        />
                                     <field name="display_analytic_button" invisible="1"/>
-                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
                                     <field name="amount" invisible="1"/>
@@ -615,10 +623,12 @@
                                     <field domain="[('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': [('number_imported_invoice', '>', 0)]}"/>
                                     <field name="partner_type"
-                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"/>
+                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                        domain="[('filter_for_third_party', '=', account_id)]" 
+                                        context="{'curr': parent.currency}" 
+                                        />
                                     <field name="display_analytic_button" invisible="1"/>
-                                    <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
-                                        domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
                                             context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
                                     <field name="amount" invisible="1"/>
@@ -659,6 +669,7 @@
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="journal_id"/>
+                    <field name="balance_end" />
                     <field name="state"/>
                     <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Confirm" type="object"  icon="terp-camera_test"/>
@@ -750,14 +761,15 @@
                         <field name="partner_type" />
                         <field name="partner_type_mandatory" invisible="1"/>
                     </xpath>
+                    <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='account_id']" position="replace" />
                     <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='partner_id']" position="replace">
+                        <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                         <field name="partner_id" invisible="1"/>
                         <field name="partner_type" on_change="onchange_partner_type(partner_type, credit, debit)" 
-                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
+                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                            domain="[('filter_for_third_party', '=', account_id)]" 
+                            context="{'curr': currency_id}"/>
                         <field name="partner_type_mandatory" invisible="1"/>
-                    </xpath>
-                    <xpath expr="/form/notebook/page/field[@name='line_id']/tree/field[@name='account_id']" position="replace">
-                        <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
                     </xpath>
                 </data>
             </field>

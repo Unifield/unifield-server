@@ -23,6 +23,8 @@ from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
 
+from sale_override import SALE_ORDER_STATE_SELECTION
+
 class procurement_request(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -69,7 +71,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'requestor': fields.char(size=128, string='Requestor'),
-        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'requested_date': fields.date(string='Requested date'),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
@@ -78,7 +80,7 @@ class procurement_request(osv.osv):
                                       'request_id', 'order_id', string='Orders', readonly=True),
         
         # Remove readonly parameter from sale.order class
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'procurement': [('readonly', False)], 'draft': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
@@ -97,30 +99,20 @@ class procurement_request(osv.osv):
                 'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
             },
             multi='sums', help="The total amount."),
-        'state': fields.selection([
-            ('procurement', 'Internal Supply Requirement'),
-            ('draft', 'Quotation'),
-            ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Manual In Progress'),
-            ('progress', 'In Progress'),
-            ('shipping_except', 'Shipping Exception'),
-            ('invoice_except', 'Invoice Exception'),
-            ('done', 'Done'),
-            ('cancel', 'Cancelled')
-            ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or '',
+        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
-        'state': lambda self, cr, uid, c: c.get('procurement_request', False) and 'procurement' or 'draft',
+        'state': 'draft',
     }
 
     def create(self, cr, uid, vals, context={}):
         if not context:
             context = {}
 
-        if context.get('procurement_request'):
+        if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
             if not vals.get('name', False):
                 vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
@@ -150,12 +142,12 @@ class procurement_request(osv.osv):
         normal_ids = []
         
         for request in self.browse(cr, uid, ids, context=context):
-            if request.procurement_request and request.state in ['procurement', 'cancel']:
+            if request.procurement_request and request.state in ['draft', 'cancel']:
                 del_ids.append(request.id)
             elif not request.procurement_request:
                 normal_ids.append(request.id)
             else:
-                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Procurement Request(s) which are already confirmed !'))
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete Internal Request(s) which are already validated !'))
                 
         if del_ids:
             osv.osv.unlink(self, cr, uid, del_ids, context=context)
@@ -196,12 +188,24 @@ class procurement_request(osv.osv):
         })
         
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
+
+    def validate_procurement(self, cr, uid, ids, context={}):
+        '''
+        Validate the request
+        '''
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
     
     def confirm_procurement(self, cr, uid, ids, context={}):
         '''
         Confirmed the request
         '''
-        self.write(cr, uid, ids, {'state': 'progress'})
+        self.write(cr, uid, ids, {'state': 'progress'}, context=context)
+
+        for request in self.browse(cr, uid, ids, context=context):
+            message = _("The internal request '%s' has been confirmed.") %(request.name,)
+            self.log(cr, uid, request.id, message)
         
         return True
     
@@ -253,9 +257,11 @@ class procurement_request_line(osv.osv):
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     _columns = {
-        'procurement_request': fields.boolean(string='Procurement Request', readonly=True),
+        'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
+        'my_company_id': fields.many2one('res.company','Company',select=1),
+        'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
     }
     
     def _get_planned_date(self, cr, uid, c={}):
@@ -269,6 +275,7 @@ class procurement_request_line(osv.osv):
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
+        'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, type, context={}):

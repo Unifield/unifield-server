@@ -33,7 +33,6 @@
     """,
     'test': ['test/partner_modification.yml'],
     'update_xml': [
-        'security/ir.model.access.csv',
         'partner_modification_view.xml',
     ],
     'installable': True,

@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -29,7 +30,9 @@ class account_fiscalyear_closing_level(osv.osv):
     def create_period(self,cr, uid, ids, context=None, interval=1):
         for fy in self.browse(cr, uid, ids, context=context):
             ds = datetime.datetime.strptime(fy.date_start, '%Y-%m-%d')
+            i = 0
             while ds.strftime('%Y-%m-%d')<fy.date_stop:
+                i += 1
                 de = ds + relativedelta(months=interval, days=-1)
 
                 if de.strftime('%Y-%m-%d')>fy.date_stop:
@@ -41,7 +44,8 @@ class account_fiscalyear_closing_level(osv.osv):
                     'date_start': ds.strftime('%Y-%m-%d'),
                     'date_stop': de.strftime('%Y-%m-%d'),
                     'fiscalyear_id': fy.id,
-                    'special': False
+                    'special': False,
+                    'number': i,
                 })
                 ds = ds + relativedelta(months=interval)
                  
@@ -53,7 +57,8 @@ class account_fiscalyear_closing_level(osv.osv):
                     'date_start': '%d-12-01' % (ds.year),
                     'date_stop': '%d-12-31' % (ds.year),
                     'fiscalyear_id': fy.id,
-                    'special': True
+                    'special': True,
+                    'number': period_nb,
                 })
         return True
 

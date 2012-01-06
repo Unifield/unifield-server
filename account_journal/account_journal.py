@@ -52,23 +52,25 @@ class account_journal(osv.osv):
 
 
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank'), \
-                ('cash','Cash'), \
-                ('purchase', 'Purchase'), \
-                ('correction','Correction'), \
-                ('cheque', 'Cheque'), \
-                ('hq', 'HQ'), \
-                ('hr', 'HR'), \
-                ('accrual', 'Accrual'), \
-                ('stock', 'Stock'), \
-                ('depreciation', 'Depreciation'), \
+        return [('bank', 'Bank'),
+                ('cash','Cash'),
+                ('purchase', 'Purchase'),
+                ('correction','Correction'),
+                ('cheque', 'Cheque'),
+                ('hq', 'HQ'),
+                ('hr', 'HR'),
+                ('accrual', 'Accrual'),
+                ('stock', 'Stock'),
+                ('depreciation', 'Depreciation'), 
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
-                ('sale', 'Sale'), \
-                ('sale_refund','Sale Refund'), \
-                ('purchase_refund','Purchase Refund'), \
-                ('general', 'General'), \
-                ('situation', 'Opening/Closing Situation')]
+                ('sale', 'Sale'), 
+                ('sale_refund','Sale Refund'), 
+                ('purchase_refund','Purchase Refund'), 
+                ('general', 'General'), 
+                ('situation', 'Opening/Closing Situation'),
+                ('cur_adj', 'Currency Adjustement'),
+        ]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
@@ -100,13 +102,24 @@ class account_journal(osv.osv):
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
         value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
-        value.setdefault('domain',{})
+        value =  {'value': {}, 'domain': {}}
         if type in ('cash', 'bank', 'cheque'):
             default_dom += [('code', '=like', '5%' )]
         value['domain']['default_debit_account_id'] = default_dom
         value['domain']['default_crebit_account_id'] = default_dom
+        # Analytic journal associated
+        if type == 'cash':
+            analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_cash_journal
+        elif type == 'bank': 
+            analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_bank_journal
+        elif type == 'cheque': 
+            analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
+            value['value']['analytic_journal_id'] = analytic_cheque_journal
         return value
 
 

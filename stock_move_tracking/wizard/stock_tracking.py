@@ -110,6 +110,7 @@ class stock_move_tracking(osv.osv_memory):
         
         res_ids = self.get_ids(cr, uid, ids, context=context)
         result['domain'] = [('id', 'in', res_ids[0])]
+        result['target'] = 'crush'
         
         if res_ids[1]:
             result['context'] = {'search_default_group_product': 1}

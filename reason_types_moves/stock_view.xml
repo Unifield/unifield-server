@@ -174,6 +174,7 @@
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                        <attribute name="on_change">onchange_move()</attribute>
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
@@ -201,6 +202,7 @@
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         	<attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                        	<attribute name="on_change">onchange_move()</attribute>
                     	</xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
@@ -214,9 +216,12 @@
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_dest_id']" position="replace">
                                 <field name="location_dest_id" domain="[('usage','in',('internal', 'inventory', 'procurement', 'production'))]" on_change="location_dest_change(location_dest_id)" />
                         </xpath>
+                        
+                        <!-- MOVED TO SPECIFIC_RULES
                         <xpath expr="/form//field[@name='move_lines']/form//field[@name='location_id']" position="replace">
                                 <field name="location_id" domain="[('usage','in',('internal', 'procurement', 'production'))]" />
                         </xpath>
+                        -->
 
                </data>
             </field>
@@ -231,6 +236,7 @@
                 <data>
                         <xpath expr="/form//field[@name='move_lines']" position="attributes">
                         <attribute name="context">{'reason_type_id': reason_type_id}</attribute>
+                        <attribute name="on_change">onchange_move()</attribute>
                     </xpath>
 
                         <xpath expr="/form/group//field[@name='stock_journal_id']" position="replace">
