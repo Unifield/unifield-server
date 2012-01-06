@@ -27,7 +27,7 @@
     "description" : "This permits to have a chart of account for Unifield Project at MSF",
     "author" : "Tempo Consulting",
     "category" : "Localisation/Account Charts",
-    "depends" : ["base", "account_activable", "register_accounting"],
+    "depends" : ["base", "account_activable", "register_accounting", "account_journal"],
     "init_xml" : [
         "data/account.xml",
     ],

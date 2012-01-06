@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import logging
+from lxml import etree
 
 class account_budget_definition(osv.osv):
     
@@ -70,8 +71,20 @@ class account_budget_definition(osv.osv):
             budget_lines_obj.write(cr, uid, budget_line_id, budget_line_vals)
         
         return super(account_budget_definition,self).write(cr, uid, ids, vals, context)
-    
-    
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        view = super(account_budget_definition, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+        if view_type=='form':
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('/form/field[@name="analytic_account_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+            view['arch'] = etree.tostring(tree)
+        return view
+
 account_budget_definition()
 
 class crossovered_budget_definition_lines(osv.osv):

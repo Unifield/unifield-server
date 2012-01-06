@@ -10,7 +10,7 @@
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <form string="Account Journal" position="replace">
-                    <form string="Account Journal">
+                    <form string="Account Journal" hide_duplicate_button="1">
 	                    <group colspan="4" col="6">
 	                        <field name="name" select="1"/>
 	                        <field name="code" select="1"/>
@@ -25,7 +25,7 @@
                             <separator string="Company" colspan="4"/>
                             <field name="instance_id" readonly="1"/>
                             <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
-                            <field name="analytic_journal_id"/>
+                            <field name="analytic_journal_id" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
                         </group>
                     </form>
                 </form>

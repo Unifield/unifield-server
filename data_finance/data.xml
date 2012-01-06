@@ -1,0 +1,1728 @@
+<openerp>
+    <data>
+        <!--model: account.analytic.account, id: 26-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca_26">
+            <field name="category">OC</field>
+            <field name="code">MM000</field>
+            <field name="name">MYANMAR MISSION - OCA</field>
+            <field name="type">view</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_project"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 27-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca___kachin_27">
+            <field name="category">OC</field>
+            <field name="code">MM002</field>
+            <field name="name">Kachin State STI/HIV/AIDS - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___myanmar_mission_-_oca_26"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 28-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca___shan_s_28">
+            <field name="category">OC</field>
+            <field name="code">MM004</field>
+            <field name="name">Shan State STI/HIV/AIDS - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___myanmar_mission_-_oca_26"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 29-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca___yangon_29">
+            <field name="category">OC</field>
+            <field name="code">MM005</field>
+            <field name="name">Yangon STI/HIV/AIDS - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___myanmar_mission_-_oca_26"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 30-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca___northe_30">
+            <field name="category">OC</field>
+            <field name="code">MM009</field>
+            <field name="name">Northern Rakhine PHC/RH/HIV&amp;TB - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___myanmar_mission_-_oca_26"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 31-->
+        <record model="account.analytic.account" id="account_analytic_account_oc___myanmar_mission_-_oca___easter_31">
+            <field name="category">OC</field>
+            <field name="code">MM010</field>
+            <field name="name">Eastern Rakhine PHC/RH/HIV&amp;TB - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="account_analytic_account_oc___myanmar_mission_-_oca_26"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 22-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___cofinancing_myanmar__22">
+            <field name="category">FUNDING</field>
+            <field name="code">MM-COFI-11</field>
+            <field name="name">COFINANCING MYANMAR 2011 - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.61801'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6309'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.612512'),ref('msf_chart_of_account.612519'),ref('msf_chart_of_account.61259'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.61302'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.6160'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.61701'),ref('msf_chart_of_account.61800'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.61900'),ref('msf_chart_of_account.61901'),ref('msf_chart_of_account.61999'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6265'),ref('msf_chart_of_account.6295'),ref('msf_chart_of_account.6300'),ref('msf_chart_of_account.6301'),ref('msf_chart_of_account.6302'),ref('msf_chart_of_account.6303'),ref('msf_chart_of_account.6304'),ref('msf_chart_of_account.6305'),ref('msf_chart_of_account.6306'),ref('msf_chart_of_account.6307'),ref('msf_chart_of_account.6308'),ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6135'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.6110'),ref('msf_chart_of_account.6120'),ref('msf_chart_of_account.61809')])]"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 24-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___global_fund_hiv_-_my_24">
+            <field name="category">FUNDING</field>
+            <field name="code">MM-GFH-11</field>
+            <field name="name">GLOBAL FUND HIV - MYANMAR 2011 - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 25-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___global_fund_malaria__25">
+            <field name="category">FUNDING</field>
+            <field name="code">MM-GFM-11</field>
+            <field name="name">GLOBAL FUND MALARIA - MYANMAR 2011 - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+        </record>
+
+        <!--model: account.analytic.account, id: 23-->
+        <record model="account.analytic.account" id="account_analytic_account_funding_pool___sida_-_myanmar_2011__23">
+            <field name="category">FUNDING</field>
+            <field name="code">MM-SIDA-11</field>
+            <field name="name">SIDA - MYANMAR 2011 - OCA</field>
+            <field name="type">normal</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.61801'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6309'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61052'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.612512'),ref('msf_chart_of_account.612519'),ref('msf_chart_of_account.61259'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.61302'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.6160'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.61701'),ref('msf_chart_of_account.61800'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.61900'),ref('msf_chart_of_account.61901'),ref('msf_chart_of_account.61999'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6265'),ref('msf_chart_of_account.6295'),ref('msf_chart_of_account.6300'),ref('msf_chart_of_account.6301'),ref('msf_chart_of_account.6302'),ref('msf_chart_of_account.6303'),ref('msf_chart_of_account.6304'),ref('msf_chart_of_account.6305'),ref('msf_chart_of_account.6306'),ref('msf_chart_of_account.6307'),ref('msf_chart_of_account.6308'),ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6135'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.6110'),ref('msf_chart_of_account.6120'),ref('msf_chart_of_account.61809')])]"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 4-->
+        <record model="financing.contract.format" id="financing_contract_format_format_4">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">project</field>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 50-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriate_staff_50">
+            <field name="code">61</field>
+            <field name="name">EXPATRIATE STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 51-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_51">
+            <field name="code">62</field>
+            <field name="name">NATIONAL STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 52-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_running_costs_52">
+            <field name="code">63</field>
+            <field name="name">RUNNING COSTS</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.605013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 53-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_&amp;_nutrition_53">
+            <field name="code">64</field>
+            <field name="name">MEDICAL &amp; NUTRITION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 54-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistics,_constr__&amp;_sanitati_54">
+            <field name="code">65</field>
+            <field name="name">LOGISTICS, CONSTR. &amp; SANITATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.6135')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 55-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_com__visibility_&amp;_information_55">
+            <field name="code">66</field>
+            <field name="name">COM. VISIBILITY &amp; INFORMATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6160')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 56-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport,_freight,_storage_56">
+            <field name="code">67</field>
+            <field name="name">TRANSPORT, FREIGHT, STORAGE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.6140')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.donor, id: 2-->
+        <record model="financing.contract.donor" id="financing_contract_donor_european_commission_humanitarian_aid_2">
+            <field name="active" eval="1"/>
+            <field name="code">ECHO</field>
+            <field name="name">European Commission Humanitarian aid Office</field>
+            <field name="format_id" ref="financing_contract_format_format_4"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 12-->
+        <record model="financing.contract.format" id="financing_contract_format_format_12">
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
+            <field name="reporting_type">project</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 30-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_30_30">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_12"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___cofinancing_myanmar__22"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 35-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_35_35">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_12"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_hiv_-_my_24"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 36-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_36_36">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_12"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_malaria__25"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 37-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_37_37">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_12"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___sida_-_myanmar_2011__23"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 72-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriate_staff_72">
+            <field name="code">61</field>
+            <field name="name">EXPATRIATE STAFF</field>
+            <field name="project_budget_value">154800.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 73-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_73">
+            <field name="code">62</field>
+            <field name="name">NATIONAL STAFF</field>
+            <field name="project_budget_value">50000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 74-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_running_costs_74">
+            <field name="code">63</field>
+            <field name="name">RUNNING COSTS</field>
+            <field name="project_budget_value">150900.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.605013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 75-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_&amp;_nutrition_75">
+            <field name="code">64</field>
+            <field name="name">MEDICAL &amp; NUTRITION</field>
+            <field name="project_budget_value">145000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.6010')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 76-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistics,_constr__&amp;_sanitati_76">
+            <field name="code">65</field>
+            <field name="name">LOGISTICS, CONSTR. &amp; SANITATION</field>
+            <field name="project_budget_value">105000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.6135')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 77-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_com__visibility_&amp;_information_77">
+            <field name="code">66</field>
+            <field name="name">COM. VISIBILITY &amp; INFORMATION</field>
+            <field name="project_budget_value">21000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6160')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 78-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport,_freight,_storage_78">
+            <field name="code">67</field>
+            <field name="name">TRANSPORT, FREIGHT, STORAGE</field>
+            <field name="project_budget_value">74200.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.6140')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 79-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_overheads_79">
+            <field name="code">68</field>
+            <field name="name">OVERHEADS</field>
+            <field name="overhead_percentage">7.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">overhead</field>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 3-->
+        <record model="financing.contract.contract" id="financing_contract_contract_echo_myanmar_2011_3">
+            <field name="code">ECHO-MM-11</field>
+            <field name="name">Echo Myanmar 2011</field>
+            <field name="donor_grant_reference">2011-MSF Holland Myanmar</field>
+            <field name="hq_grant_reference">5879TT87</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">750000.0</field>
+            <field name="donor_id" ref="financing_contract_donor_european_commission_humanitarian_aid_2"/>
+            <field name="reporting_currency" ref="base.EUR"/>
+            <field name="format_id" ref="financing_contract_format_format_12"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 3-->
+        <record model="financing.contract.format" id="financing_contract_format_format_3">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">all</field>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 1-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_staff_1">
+            <field name="code">A</field>
+            <field name="name">STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 2-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_2">
+            <field name="code">B</field>
+            <field name="name">MEDICAL</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 3-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_and_sanitation_3">
+            <field name="code">C</field>
+            <field name="name">LOGISTIC AND SANITATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 4-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_temporary_shelter_4">
+            <field name="code">D</field>
+            <field name="name">TEMPORARY SHELTER</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 5-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transportation_5">
+            <field name="code">E</field>
+            <field name="name">TRANSPORTATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 6-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_training_6">
+            <field name="code">F</field>
+            <field name="name">TRAINING</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 7-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_elements_7">
+            <field name="code">G</field>
+            <field name="name">OTHER ELEMENTS</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 8-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriates_8">
+            <field name="code">A1</field>
+            <field name="name">Expatriates</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_staff_1"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6265')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 9-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_9">
+            <field name="code">A2</field>
+            <field name="name">National staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_staff_1"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6295')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 10-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medicines_10">
+            <field name="code">B1</field>
+            <field name="name">Medicines</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_2"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 11-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_material_and_equipmen_11">
+            <field name="code">B2</field>
+            <field name="name">Medical material and equipment</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_2"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.6005')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 12-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vaccines,_laboratory_&amp;__cold__12">
+            <field name="code">B3</field>
+            <field name="name">Vaccines, laboratory &amp;  cold chain material</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_2"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 13-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_food_13">
+            <field name="code">B4</field>
+            <field name="name">Food</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_2"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60350')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 14-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_structures_rent_and_c_14">
+            <field name="code">B5</field>
+            <field name="name">Medical structures rent and charges / Hosp fees</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_2"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60604')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 29-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_construction,_rehabilitation__29">
+            <field name="code">C1</field>
+            <field name="name">Construction, rehabilitation and logistic materials</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_3"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 30-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_energy_equipment_30">
+            <field name="code">C2</field>
+            <field name="name">Energy equipment</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_3"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606018')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 31-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_sanitation_material_and_equip_31">
+            <field name="code">C3</field>
+            <field name="name">Sanitation material and equipment</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_3"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.606017')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 32-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_relief_items_32">
+            <field name="code">C4</field>
+            <field name="name">Relief items</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_3"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604020')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 33-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_33">
+            <field name="code">C5</field>
+            <field name="name">Fuel</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">consumption</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_3"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 34-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_plastic_sheeting_34">
+            <field name="code">D1</field>
+            <field name="name">Plastic sheeting</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_temporary_shelter_4"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604024')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 35-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_purchase_35">
+            <field name="code">E1</field>
+            <field name="name">Vehicle purchase</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60602')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 36-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_repair,_maintenance,__36">
+            <field name="code">E2</field>
+            <field name="name">Vehicle repair, maintenance, spare parts &amp; insurances</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.61301')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 37-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_for_vehicles__37">
+            <field name="code">E3</field>
+            <field name="name">Fuel for vehicles </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 38-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_international_freight_38">
+            <field name="code">E4</field>
+            <field name="name">International freight</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 39-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_local_freight_vehicle_rental_39">
+            <field name="code">E5</field>
+            <field name="name">Local freight/vehicle rental</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.61701')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 40-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_local_transport_msf_staff_40">
+            <field name="code">E6</field>
+            <field name="name">Local Transport MSF Staff</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61802')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 41-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_storage_rent_and_charges_41">
+            <field name="code">E7</field>
+            <field name="name">Storage rent and charges</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">consumption</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_5"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 42-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_didactic_material_and_documen_42">
+            <field name="code">F1</field>
+            <field name="name">Didactic material and documentation</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605011')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 43-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_supplies,_furnitures_&amp;_43">
+            <field name="code">F2</field>
+            <field name="name">Office supplies, furnitures &amp; documentation </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.605013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 44-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_equipment_&amp;_hardware__44">
+            <field name="code">F3</field>
+            <field name="name">Office equipment &amp; hardware </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 45-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_rent_&amp;_maintenance_45">
+            <field name="code">F4</field>
+            <field name="name">Office rent &amp; maintenance</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 46-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_communication_costs__46">
+            <field name="code">F5</field>
+            <field name="name">Communication costs </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6160')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 47-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_sundries_47">
+            <field name="code">F6</field>
+            <field name="name">Sundries</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 48-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_consultants,_surveys_&amp;_evalua_48">
+            <field name="code">F7</field>
+            <field name="name">Consultants, surveys &amp; evaluations</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 49-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_audit_costs_49">
+            <field name="code">G1</field>
+            <field name="name">Audit costs</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_6"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61053')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.donor, id: 1-->
+        <record model="financing.contract.donor" id="financing_contract_donor_swedish_international_development_co_1">
+            <field name="active" eval="1"/>
+            <field name="code">SIDA</field>
+            <field name="name">Swedish International Development cooperation Agency</field>
+            <field name="format_id" ref="financing_contract_format_format_3"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 13-->
+        <record model="financing.contract.format" id="financing_contract_format_format_13">
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
+            <field name="reporting_type">all</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 31-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_31_31">
+            <field name="total_project" eval="1"/>
+            <field name="funded" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_13"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___sida_-_myanmar_2011__23"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 32-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_32_32">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_13"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___cofinancing_myanmar__22"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 33-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_33_33">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_13"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_hiv_-_my_24"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 34-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_34_34">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_13"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_malaria__25"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 80-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_staff_80">
+            <field name="code">A</field>
+            <field name="name">STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 81-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriates_81">
+            <field name="code">A1</field>
+            <field name="name">Expatriates</field>
+            <field name="project_budget_value">3380932.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">1163407.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_staff_80"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6265')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 82-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_82">
+            <field name="code">A2</field>
+            <field name="name">National staff</field>
+            <field name="project_budget_value">3926458.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">1297476.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_staff_80"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6295')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 83-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_83">
+            <field name="code">B</field>
+            <field name="name">MEDICAL</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 84-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medicines_84">
+            <field name="code">B1</field>
+            <field name="name">Medicines</field>
+            <field name="project_budget_value">821390.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">282647.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_83"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 85-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_material_and_equipmen_85">
+            <field name="code">B2</field>
+            <field name="name">Medical material and equipment</field>
+            <field name="project_budget_value">290803.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">100068.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_83"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.6005')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 86-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vaccines,_laboratory_&amp;__cold__86">
+            <field name="code">B3</field>
+            <field name="name">Vaccines, laboratory &amp;  cold chain material</field>
+            <field name="project_budget_value">81629.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">28089.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_83"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 87-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_food_87">
+            <field name="code">B4</field>
+            <field name="name">Food</field>
+            <field name="project_budget_value">229581.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">79001.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_83"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60350')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 88-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_structures_rent_and_c_88">
+            <field name="code">B5</field>
+            <field name="name">Medical structures rent and charges / Hosp fees</field>
+            <field name="project_budget_value">200807.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">69099.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_medical_83"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60604')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 89-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_and_sanitation_89">
+            <field name="code">C</field>
+            <field name="name">LOGISTIC AND SANITATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 90-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_construction,_rehabilitation__90">
+            <field name="code">C1</field>
+            <field name="name">Construction, rehabilitation and logistic materials</field>
+            <field name="project_budget_value">142850.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">49156.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_89"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 91-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_energy_equipment_91">
+            <field name="code">C2</field>
+            <field name="name">Energy equipment</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_89"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606018')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 92-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_sanitation_material_and_equip_92">
+            <field name="code">C3</field>
+            <field name="name">Sanitation material and equipment</field>
+            <field name="project_budget_value">61222.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">21067.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_89"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.606017')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 93-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_relief_items_93">
+            <field name="code">C4</field>
+            <field name="name">Relief items</field>
+            <field name="project_budget_value">44692.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">15379.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_89"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.604020')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 94-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_94">
+            <field name="allocated_real_value">10885.0</field>
+            <field name="project_real_value">98417.0</field>
+            <field name="code">C5</field>
+            <field name="name">Fuel</field>
+            <field name="project_budget_value">31631.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">consumption</field>
+            <field name="allocated_budget_value">10885.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_logistic_and_sanitation_89"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 95-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_temporary_shelter_95">
+            <field name="code">D</field>
+            <field name="name">TEMPORARY SHELTER</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 96-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_plastic_sheeting_96">
+            <field name="code">D1</field>
+            <field name="name">Plastic sheeting</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_temporary_shelter_95"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604024')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 97-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transportation_97">
+            <field name="code">E</field>
+            <field name="name">TRANSPORTATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 98-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_purchase_98">
+            <field name="code">E1</field>
+            <field name="name">Vehicle purchase</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60602')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 99-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_vehicle_repair,_maintenance,__99">
+            <field name="code">E2</field>
+            <field name="name">Vehicle repair, maintenance, spare parts &amp; insurances</field>
+            <field name="project_budget_value">245039.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">84320.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.61301')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 100-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_fuel_for_vehicles__100">
+            <field name="code">E3</field>
+            <field name="name">Fuel for vehicles </field>
+            <field name="project_budget_value">261416.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">89955.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 101-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_international_freight_101">
+            <field name="code">E4</field>
+            <field name="name">International freight</field>
+            <field name="project_budget_value">306108.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">105334.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 102-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_local_freight_vehicle_rental_102">
+            <field name="code">E5</field>
+            <field name="name">Local freight/vehicle rental</field>
+            <field name="project_budget_value">849960.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">292478.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.61701')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 103-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_local_transport_msf_staff_103">
+            <field name="code">E6</field>
+            <field name="name">Local Transport MSF Staff</field>
+            <field name="project_budget_value">10204.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">3511.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61802')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 104-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_storage_rent_and_charges_104">
+            <field name="allocated_real_value">117.0</field>
+            <field name="project_real_value">117.0</field>
+            <field name="code">E7</field>
+            <field name="name">Storage rent and charges</field>
+            <field name="project_budget_value">3061.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">consumption</field>
+            <field name="allocated_budget_value">1053.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_transportation_97"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 105-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_training_105">
+            <field name="code">F</field>
+            <field name="name">TRAINING</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 106-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_didactic_material_and_docume_106">
+            <field name="code">F1</field>
+            <field name="name">Didactic material and documentation</field>
+            <field name="project_budget_value">30611.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605011')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 107-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_supplies,_furnitures__107">
+            <field name="code">F2</field>
+            <field name="name">Office supplies, furnitures &amp; documentation </field>
+            <field name="project_budget_value">71425.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.605013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 108-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_equipment_&amp;_hardware__108">
+            <field name="code">F3</field>
+            <field name="name">Office equipment &amp; hardware </field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 109-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_office_rent_&amp;_maintenance_109">
+            <field name="code">F4</field>
+            <field name="name">Office rent &amp; maintenance</field>
+            <field name="project_budget_value">32652.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 110-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_communication_costs__110">
+            <field name="code">F5</field>
+            <field name="name">Communication costs </field>
+            <field name="project_budget_value">47957.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6160')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 111-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_sundries_111">
+            <field name="code">F6</field>
+            <field name="name">Sundries</field>
+            <field name="project_budget_value">5102.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 112-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_consultants,_surveys_&amp;_evalu_112">
+            <field name="code">F7</field>
+            <field name="name">Consultants, surveys &amp; evaluations</field>
+            <field name="project_budget_value">4592.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 113-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_audit_costs_113">
+            <field name="code">G1</field>
+            <field name="name">Audit costs</field>
+            <field name="project_budget_value">48569.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">48569.0</field>
+            <field name="parent_id" ref="financing_contract_format_line_training_105"/>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61053')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 114-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_elements_114">
+            <field name="code">G</field>
+            <field name="name">OTHER ELEMENTS</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">view</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 115-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_administration_costs_115">
+            <field name="code">H</field>
+            <field name="name">ADMINISTRATION COSTS</field>
+            <field name="overhead_percentage">7.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">overhead</field>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 4-->
+        <record model="financing.contract.contract" id="financing_contract_contract_sida_myanmar_2011-oca_4">
+            <field name="code">SIDA-MM-11</field>
+            <field name="name">Sida Myanmar 2011-OCA</field>
+            <field name="donor_grant_reference">MSF Myanmar 2011</field>
+            <field name="hq_grant_reference">2011SIDA-14</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">4000000.0</field>
+            <field name="donor_id" ref="financing_contract_donor_swedish_international_development_co_1"/>
+            <field name="reporting_currency" ref="base.SEK"/>
+            <field name="format_id" ref="financing_contract_format_format_13"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 6-->
+        <record model="financing.contract.format" id="financing_contract_format_format_6">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">allocated</field>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 63-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_human_resources_63">
+            <field name="code">A</field>
+            <field name="name">HUMAN RESOURCES</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61302'),ref('msf_chart_of_account.61800'),ref('msf_chart_of_account.61801'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.61809'),ref('msf_chart_of_account.61900'),ref('msf_chart_of_account.61901'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6265'),ref('msf_chart_of_account.6295')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 64-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_technical_&amp;_management_assita_64">
+            <field name="code">B</field>
+            <field name="name">TECHNICAL &amp; MANAGEMENT ASSITANCE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.612512'),ref('msf_chart_of_account.612519'),ref('msf_chart_of_account.61259'),ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.6135'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.61701'),ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 65-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_training_65">
+            <field name="code">C</field>
+            <field name="name">TRAINING</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6110')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 66-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_health_products_and_health_eq_66">
+            <field name="code">D</field>
+            <field name="name">HEALTH PRODUCTS AND HEALTH EQUIPMENT</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 67-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_pharmaceutical_products_(medi_67">
+            <field name="code">E</field>
+            <field name="name">PHARMACEUTICAL PRODUCTS (MEDICIINES)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 68-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_communication_material_68">
+            <field name="code">F</field>
+            <field name="name">COMMUNICATION MATERIAL</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.61450')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 69-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_monitoring_&amp;_evaluation_69">
+            <field name="code">G</field>
+            <field name="name">MONITORING &amp; EVALUATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 70-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_living_support_to_clients___t_70">
+            <field name="code">H</field>
+            <field name="name">LIVING SUPPORT TO CLIENTS / TARGET POPULATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 71-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_71">
+            <field name="code">I</field>
+            <field name="name">OTHER</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6120'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.6160'),ref('msf_chart_of_account.61999'),ref('msf_chart_of_account.6300'),ref('msf_chart_of_account.6301'),ref('msf_chart_of_account.6302'),ref('msf_chart_of_account.6303'),ref('msf_chart_of_account.6304'),ref('msf_chart_of_account.6305'),ref('msf_chart_of_account.6306'),ref('msf_chart_of_account.6307'),ref('msf_chart_of_account.6308'),ref('msf_chart_of_account.6309')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.donor, id: 3-->
+        <record model="financing.contract.donor" id="financing_contract_donor_the_global_fund_3">
+            <field name="active" eval="1"/>
+            <field name="code">GF</field>
+            <field name="name">The Global Fund</field>
+            <field name="format_id" ref="financing_contract_format_format_6"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 16-->
+        <record model="financing.contract.format" id="financing_contract_format_format_16">
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
+            <field name="reporting_type">allocated</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___kachin_27'),ref('account_analytic_account_oc___myanmar_mission_-_oca___shan_s_28'),ref('account_analytic_account_oc___myanmar_mission_-_oca___yangon_29'),ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 38-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_38_38">
+            <field name="total_project" eval="1"/>
+            <field name="funded" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_16"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_hiv_-_my_24"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 116-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_human_resources_116">
+            <field name="code">A</field>
+            <field name="name">HUMAN RESOURCES</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">740000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61302'),ref('msf_chart_of_account.61800'),ref('msf_chart_of_account.61801'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.61900'),ref('msf_chart_of_account.61901'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6265'),ref('msf_chart_of_account.6295'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 117-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_technical_&amp;_management_assit_117">
+            <field name="code">B</field>
+            <field name="name">TECHNICAL &amp; MANAGEMENT ASSITANCE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">136000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.612512'),ref('msf_chart_of_account.612519'),ref('msf_chart_of_account.61259'),ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.6135'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.61701')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 118-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_training_118">
+            <field name="code">C</field>
+            <field name="name">TRAINING</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">310000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6110')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 119-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_health_products_and_health_e_119">
+            <field name="code">D</field>
+            <field name="name">HEALTH PRODUCTS AND HEALTH EQUIPMENT</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">247000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.6010')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 120-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_pharmaceutical_products_(med_120">
+            <field name="code">E</field>
+            <field name="name">PHARMACEUTICAL PRODUCTS (MEDICIINES)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">650000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 121-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_communication_material_121">
+            <field name="code">F</field>
+            <field name="name">COMMUNICATION MATERIAL</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">89000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.61450')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 122-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_monitoring_&amp;_evaluation_122">
+            <field name="code">G</field>
+            <field name="name">MONITORING &amp; EVALUATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">55000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 123-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_living_support_to_clients____123">
+            <field name="code">H</field>
+            <field name="name">LIVING SUPPORT TO CLIENTS / TARGET POPULATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">78000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 124-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_124">
+            <field name="code">I</field>
+            <field name="name">OTHER</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">9136.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.6160'),ref('msf_chart_of_account.61999'),ref('msf_chart_of_account.6300'),ref('msf_chart_of_account.6301'),ref('msf_chart_of_account.6302'),ref('msf_chart_of_account.6303'),ref('msf_chart_of_account.6304'),ref('msf_chart_of_account.6305'),ref('msf_chart_of_account.6306'),ref('msf_chart_of_account.6307'),ref('msf_chart_of_account.6308'),ref('msf_chart_of_account.6309'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.6120')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 5-->
+        <record model="financing.contract.contract" id="financing_contract_contract_global_fund_hiv_myanmar_5">
+            <field name="code">GF-MM-2011</field>
+            <field name="name">Global Fund HIV Myanmar</field>
+            <field name="donor_grant_reference">MSF Holland My. HIV</field>
+            <field name="hq_grant_reference">87445521747989845</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">2314136.0</field>
+            <field name="donor_id" ref="financing_contract_donor_the_global_fund_3"/>
+            <field name="reporting_currency" ref="base.USD"/>
+            <field name="format_id" ref="financing_contract_format_format_16"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 17-->
+        <record model="financing.contract.format" id="financing_contract_format_format_17">
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
+            <field name="reporting_type">allocated</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___kachin_27'),ref('account_analytic_account_oc___myanmar_mission_-_oca___shan_s_28'),ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 39-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_39_39">
+            <field name="total_project" eval="1"/>
+            <field name="funded" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_17"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_malaria__25"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 125-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_human_resources_125">
+            <field name="code">A</field>
+            <field name="name">HUMAN RESOURCES</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">202500.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61302'),ref('msf_chart_of_account.61800'),ref('msf_chart_of_account.61801'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.61900'),ref('msf_chart_of_account.61901'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.62151'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.6265'),ref('msf_chart_of_account.6295'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 126-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_technical_&amp;_management_assit_126">
+            <field name="code">B</field>
+            <field name="name">TECHNICAL &amp; MANAGEMENT ASSITANCE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">12700.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.60401'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.605000'),ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.606000'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.606018'),ref('msf_chart_of_account.60602'),ref('msf_chart_of_account.60603'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.60605'),ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.612512'),ref('msf_chart_of_account.612519'),ref('msf_chart_of_account.61259'),ref('msf_chart_of_account.61300'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.6135'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.61701')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 127-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_training_127">
+            <field name="code">C</field>
+            <field name="name">TRAINING</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">2200.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6110')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 128-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_health_products_and_health_e_128">
+            <field name="code">D</field>
+            <field name="name">HEALTH PRODUCTS AND HEALTH EQUIPMENT</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">41000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60350'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013'),ref('msf_chart_of_account.6010')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 129-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_pharmaceutical_products_(med_129">
+            <field name="code">E</field>
+            <field name="name">PHARMACEUTICAL PRODUCTS (MEDICIINES)</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">279000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 130-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_communication_material_130">
+            <field name="code">F</field>
+            <field name="name">COMMUNICATION MATERIAL</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">3500.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.61450')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 131-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_monitoring_&amp;_evaluation_131">
+            <field name="code">G</field>
+            <field name="name">MONITORING &amp; EVALUATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">13000.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61000'),ref('msf_chart_of_account.61001'),ref('msf_chart_of_account.61050'),ref('msf_chart_of_account.61051')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 132-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_living_support_to_clients____132">
+            <field name="code">H</field>
+            <field name="name">LIVING SUPPORT TO CLIENTS / TARGET POPULATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">15600.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.604021'),ref('msf_chart_of_account.604024'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.604020'),ref('msf_chart_of_account.604022'),ref('msf_chart_of_account.604023')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 133-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_other_133">
+            <field name="code">I</field>
+            <field name="name">OTHER</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="allocated_budget_value">35313.0</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6308'),ref('msf_chart_of_account.6309'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.6120'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.61051'),ref('msf_chart_of_account.61053'),ref('msf_chart_of_account.6140'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155'),ref('msf_chart_of_account.6160'),ref('msf_chart_of_account.61999'),ref('msf_chart_of_account.6300'),ref('msf_chart_of_account.6301'),ref('msf_chart_of_account.6302'),ref('msf_chart_of_account.6303'),ref('msf_chart_of_account.6304'),ref('msf_chart_of_account.6305'),ref('msf_chart_of_account.6306'),ref('msf_chart_of_account.6307')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 6-->
+        <record model="financing.contract.contract" id="financing_contract_contract_global_fund_malaria_myanmar_6">
+            <field name="code">GF-MM-2011/2</field>
+            <field name="name">Global Fund Malaria Myanmar</field>
+            <field name="donor_grant_reference">MSF Holland My. MAL</field>
+            <field name="hq_grant_reference">87445521747989856</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">604813.0</field>
+            <field name="donor_id" ref="financing_contract_donor_the_global_fund_3"/>
+            <field name="reporting_currency" ref="base.USD"/>
+            <field name="format_id" ref="financing_contract_format_format_17"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 11-->
+        <record model="financing.contract.format" id="financing_contract_format_format_11">
+            <field name="format_name">Format</field>
+            <field name="reporting_type">all</field>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 57-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriates_57">
+            <field name="code">1</field>
+            <field name="name">EXPATRIATES</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 58-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_58">
+            <field name="code">2</field>
+            <field name="name">NATIONAL STAFF</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 59-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_operations_running_costs_59">
+            <field name="code">3</field>
+            <field name="name">OPERATIONS RUNNING COSTS</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 60-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_&amp;_nutrition_60">
+            <field name="code">4</field>
+            <field name="name">MEDICAL &amp; NUTRITION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 61-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_&amp;_sanitation_61">
+            <field name="code">5</field>
+            <field name="name">LOGISTIC &amp; SANITATION</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.6135')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 62-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport_&amp;_storage_62">
+            <field name="code">6</field>
+            <field name="name">TRANSPORT &amp; STORAGE</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.6140')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.donor, id: 6-->
+        <record model="financing.contract.donor" id="financing_contract_donor_norway_ministry_of_foreign_affairs_6">
+            <field name="active" eval="1"/>
+            <field name="code">NRMFA</field>
+            <field name="name">Norway Ministry of Foreign Affairs</field>
+            <field name="format_id" ref="financing_contract_format_format_11"/>
+        </record>
+
+        <!--model: financing.contract.format, id: 18-->
+        <record model="financing.contract.format" id="financing_contract_format_format_18">
+            <field name="eligibility_to_date" eval="time.strftime('%Y-12-31')" />
+            <field name="format_name">Format</field>
+            <field name="eligibility_from_date" eval="time.strftime('%Y-01-01')" />
+            <field name="reporting_type">project</field>
+            <field name="cost_center_ids" eval="[(6,0,[ref('account_analytic_account_oc___myanmar_mission_-_oca___northe_30'),ref('account_analytic_account_oc___myanmar_mission_-_oca___easter_31')])]"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 40-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_40_40">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_18"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___cofinancing_myanmar__22"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 41-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_41_41">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_18"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___sida_-_myanmar_2011__23"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 42-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_42_42">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_18"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_hiv_-_my_24"/>
+        </record>
+
+        <!--model: financing.contract.funding.pool.line, id: 43-->
+        <record model="financing.contract.funding.pool.line" id="financing_contract_funding_pool_line_43_43">
+            <field name="total_project" eval="1"/>
+            <field name="contract_id" ref="financing_contract_format_format_18"/>
+            <field name="funding_pool_id" ref="account_analytic_account_funding_pool___global_fund_malaria__25"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 134-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_expatriates_134">
+            <field name="code">1</field>
+            <field name="name">EXPATRIATES</field>
+            <field name="project_budget_value">350000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.61250'),ref('msf_chart_of_account.61802'),ref('msf_chart_of_account.62500'),ref('msf_chart_of_account.62501'),ref('msf_chart_of_account.6260'),ref('msf_chart_of_account.61809')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 135-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_national_staff_135">
+            <field name="code">2</field>
+            <field name="name">NATIONAL STAFF</field>
+            <field name="project_budget_value">250000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.62150'),ref('msf_chart_of_account.6200'),ref('msf_chart_of_account.6205'),ref('msf_chart_of_account.6210'),ref('msf_chart_of_account.62151')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 136-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_operations_running_costs_136">
+            <field name="code">3</field>
+            <field name="name">OPERATIONS RUNNING COSTS</field>
+            <field name="project_budget_value">155000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.605001'),ref('msf_chart_of_account.605010'),ref('msf_chart_of_account.605011'),ref('msf_chart_of_account.605012'),ref('msf_chart_of_account.605013'),ref('msf_chart_of_account.60502'),ref('msf_chart_of_account.60503'),ref('msf_chart_of_account.606014'),ref('msf_chart_of_account.606015'),ref('msf_chart_of_account.606016'),ref('msf_chart_of_account.60604'),ref('msf_chart_of_account.61450'),ref('msf_chart_of_account.61451'),ref('msf_chart_of_account.6150'),ref('msf_chart_of_account.6155')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 137-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_medical_&amp;_nutrition_137">
+            <field name="code">4</field>
+            <field name="name">MEDICAL &amp; NUTRITION</field>
+            <field name="project_budget_value">465200.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.6000'),ref('msf_chart_of_account.6005'),ref('msf_chart_of_account.6010'),ref('msf_chart_of_account.60150'),ref('msf_chart_of_account.60151'),ref('msf_chart_of_account.6020'),ref('msf_chart_of_account.6025'),ref('msf_chart_of_account.6030'),ref('msf_chart_of_account.60351'),ref('msf_chart_of_account.606001'),ref('msf_chart_of_account.606010'),ref('msf_chart_of_account.606011'),ref('msf_chart_of_account.606012'),ref('msf_chart_of_account.606013')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 138-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_logistic_&amp;_sanitation_138">
+            <field name="code">5</field>
+            <field name="name">LOGISTIC &amp; SANITATION</field>
+            <field name="project_budget_value">155000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.60400'),ref('msf_chart_of_account.604023'),ref('msf_chart_of_account.604030'),ref('msf_chart_of_account.604031'),ref('msf_chart_of_account.604032'),ref('msf_chart_of_account.60404'),ref('msf_chart_of_account.606017'),ref('msf_chart_of_account.6135')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.format.line, id: 139-->
+        <record model="financing.contract.format.line" id="financing_contract_format_line_transport_&amp;_storage_139">
+            <field name="code">6</field>
+            <field name="name">TRANSPORT &amp; STORAGE</field>
+            <field name="project_budget_value">190000.0</field>
+            <field name="overhead_type">cost_percentage</field>
+            <field name="line_type">actual</field>
+            <field name="account_ids" eval="[(6,0,[ref('msf_chart_of_account.612510'),ref('msf_chart_of_account.612511'),ref('msf_chart_of_account.61301'),ref('msf_chart_of_account.617000'),ref('msf_chart_of_account.617001'),ref('msf_chart_of_account.617002'),ref('msf_chart_of_account.6140')])]"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+
+        <!--model: financing.contract.contract, id: 7-->
+        <record model="financing.contract.contract" id="financing_contract_contract_nrmfa_myanmar_2011_-_oca_7">
+            <field name="code">NRMFA-MM-2011</field>
+            <field name="name">NRMFA Myanmar 2011 - OCA</field>
+            <field name="donor_grant_reference">MM</field>
+            <field name="state">draft</field>
+            <field name="grant_amount">1565200.0</field>
+            <field name="donor_id" ref="financing_contract_donor_norway_ministry_of_foreign_affairs_6"/>
+            <field name="reporting_currency" ref="base.NOK"/>
+            <field name="format_id" ref="financing_contract_format_format_18"/>
+        </record>
+    </data>
+</openerp>

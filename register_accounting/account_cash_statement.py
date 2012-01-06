@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import create_starting_cashbox_lines
+from register_tools import create_cashbox_lines
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -51,8 +51,8 @@ class account_cash_statement(osv.osv):
                        if end[2]['pieces'] == dict_val['pieces']:
                            end[2]['number'] += dict_val['number']
             vals.update({
-                 'ending_details_ids': open_close['start'],
-                'starting_details_ids': open_close['end']
+#                'ending_details_ids': open_close['start'],
+                'starting_details_ids': open_close['end'],
             })
         else:
             vals.update({
@@ -71,7 +71,7 @@ class account_cash_statement(osv.osv):
         res_id = super(osv.osv, self).create(cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
-            create_starting_cashbox_lines(self, cr, uid, [prev_reg_id], context=context)
+            create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
         return res_id
@@ -80,10 +80,13 @@ class account_cash_statement(osv.osv):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
+        # Some verifications
         if not context:
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Prepare some values
+        st = self.browse(cr, uid, ids)[0]
         # Calculate the starting balance
         res = self._get_starting_balance(cr, uid, ids)
         for rs in res:
@@ -93,9 +96,23 @@ class account_cash_statement(osv.osv):
             if register and not register.prev_reg_id:
                 if not register.balance_start > 0:
                     raise osv.except_osv(_('Error'), _("Please complete Opening Balance before opening register '%s'!") % register.name)
+        # Complete closing balance with all elements of starting balance
+        cashbox_line_obj = self.pool.get('account.cashbox.line')
+        # Search lines from current register starting balance
+        cashbox_line_ids = cashbox_line_obj.search(cr, uid, [('starting_id', '=', st.id)], context=context)
+        # Search lines from current register ending balance and delete them
+        cashbox_line_end_ids = cashbox_line_obj.search(cr, uid, [('ending_id', '=', st.id)], context=context)
+        cashbox_line_obj.unlink(cr, uid, cashbox_line_end_ids, context=context)
+        # Recreate all lines from starting to ending
+        for line in cashbox_line_obj.browse(cr, uid, cashbox_line_ids, context=context):
+            vals = {
+                'ending_id': st.id,
+                'pieces': line.pieces,
+                'number': 0.0,
+            }
+            cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition : 
         #+ Cash Journal Code + A Sequence Number (like /02)
-        st = self.browse(cr, uid, ids)[0]
         if st.journal_id and st.journal_id.code:
             seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.register')
             name = st.journal_id.code + seq
@@ -173,6 +190,9 @@ class account_cash_statement(osv.osv):
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
+        if context is None:
+            context = {}
+        context['type_posting'] = 'temp'
         return {
             'name': 'Temp Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',
@@ -189,6 +209,9 @@ class account_cash_statement(osv.osv):
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
+        if context is None:
+            context = {}
+        context['type_posting'] = 'hard'
         return {
             'name': 'Hard Posting from %s' % self.browse(cr, uid, ids[0]).name,
             'type': 'ir.actions.act_window',

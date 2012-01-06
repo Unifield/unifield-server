@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 MSF, TeMPO Consulting
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import fields, osv
+from tools.translate import _
+import time
+
+
+class stock_partial_move_memory_out(osv.osv_memory):
+    _inherit = "stock.move.memory.out"
+    
+    _columns = {'force_complete' : fields.boolean(string='Force'),
+                'line_number': fields.integer(string='Line'),
+                'change_reason': fields.char(string='Change Reason', size=1024),
+                }
+    _defaults = {'force_complete': False,}
+    _order = 'line_number asc'
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        remove force_complete if not incoming
+        
+        temporary hack
+        because problem: attrs does not work : <field name="force_complete" attrs="{'invisible': [('type_check', '!=', 'in')]}" />
+        
+        Deactivated: Force complete check box is now obsolete, we cancel the backorder if needed
+        '''
+        res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        picking_obj = self.pool.get('stock.picking')
+        picking_id = context.get('active_ids')
+        if picking_id:
+            picking_id = picking_id[0]
+            picking_type = picking_obj.browse(cr, uid, picking_id, context=context).type
+            if picking_type != 'in' or True:
+                arch = res['arch']
+                arch = arch.replace('<field name="force_complete"/>', '')
+                res['arch'] = arch
+        return res
+    
+    def change_product(self, cr, uid, ids, context=None):
+        '''
+        open the change product wizard, the user can select the new product
+        '''
+        # we need the context for the wizard switch
+        assert context, 'no context defined'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        wiz_obj = self.pool.get('wizard')
+        # data - no step needed for present split wizard
+        name = _("Change Product of Selected Stock Move")
+        model = 'change.product.memory.move'
+        # we need to get the memory move id to know which line to split
+        # and class name, to know which type of moves
+        data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
+        product_id = data['product_id']
+        uom_id = data['product_uom']
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
+                                   type='create', context=dict(context,
+                                                               memory_move_ids=ids,
+                                                               class_name=self._name,
+                                                               product_id=product_id,
+                                                               uom_id=uom_id))
+    
+stock_partial_move_memory_out()
+
+
+class stock_partial_move_memory_in(osv.osv_memory):
+    _inherit = "stock.move.memory.out"
+    _name = "stock.move.memory.in"
+    
+stock_partial_move_memory_in()
+

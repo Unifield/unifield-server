@@ -34,7 +34,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number","reason_types_moves", "specific_rules",],
+    "depends" : ["stock", "purchase", "sale", "product_asset", "order_line_number","reason_types_moves", "specific_rules", "msf_order_date",],
     'update_xml': [
         'data/msf_outgoing_data.xml',
         'outgoing_sequence.xml',

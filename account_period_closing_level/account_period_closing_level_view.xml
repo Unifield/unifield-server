@@ -37,7 +37,6 @@
                             <button name="action_set_state" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" context="{'state': 'field-closed'}" colspan="1"/>
                             <button name="action_set_state" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" context="{'state': 'mission-closed'}" colspan="1"/>
                             <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
-                            <button name="button_overdue_invoice" type="object" string="Open overdue invoices" icon="gtk-open" colspan="1" states="draft"/>
                         </group>
                     </button>
                 </data>
@@ -69,6 +68,7 @@
                         <field name="date_stop"/>
                         <field name="special"/>
                         <field name="state"/>
+                        <field name="number" invisible="1"/>
                         <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
                         <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
                     </tree>
@@ -108,7 +108,6 @@
                             - Check list of monthly accruals (all records, by account)<br/>
                             - Check list of recurring entries for the period (check that they have been generated)<br/>
                             - P&amp;L in local currency and in functional currency<br/>
-                            - List of open supplier invoices with due date over<br/>
                             - Balances and aged balances of all third party accounts, grouped by partners (ie check list of all open invoices)<br />
                             - Calculation for unrealized gain / loss has run (see chapter 8)
                             </p>
@@ -125,6 +124,8 @@
                 </form>
             </field>
         </record>
+
+        <delete model="ir.values" id="account.action_idea_post_vote_values"/>
 
     </data>
 </openerp>

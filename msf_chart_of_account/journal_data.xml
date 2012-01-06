@@ -125,11 +125,16 @@
             <field name="analytic_journal_id" ref="cheque_analytic_journal"/>
         </record>
         
-        <delete model="account.analytic.journal" id="account_journal.engagement_journal"/>
-        <record id="engagement_journal" model="account.analytic.journal">
+        <record id="account_journal.engagement_journal" model="account.analytic.journal">
             <field name="name">Engagement Journal</field>
             <field name="code">ENG</field>
             <field name="type">engagement</field>
+        </record>
+        
+        <record id="miscellaneous_transactions" model="account.journal">
+            <field name="name">Miscellaneous Transactions</field>
+            <field name="code">MT</field>
+            <field name="type">cur_adj</field>
         </record>
     </data>
 </openerp>

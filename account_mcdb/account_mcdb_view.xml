@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Account Multi-Criteria Data Browser Form -->
+        <record model="ir.ui.view" id="account_mcdb_form">
+            <field name="name">account.mcdb.form</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Journal Items MCDB" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <separator string="General"/>
+                    <group col="4" colspan="6">
+                        <field name="company_id" widget="selection" colspan="2"/><label string="" colspan="4"/>
+                        <field name="posting_date_from" colspan="1" string="Posting date"/>
+                        <field name="posting_date_to" colspan="1" string="to"/>
+                        <field name="document_date_from" colspan="1" string="Document date"/>
+                        <field name="document_date_to" colspan="1" string="to"/>
+                    </group>
+                    <separator string="Accounting"/>
+                    <group col="4" colspan="6">
+                        <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <field name="journal_ids" colspan="2" nolabel="1">
+                                <tree string="Journal">
+                                    <field name="code"/>
+                                    <field name="name" string="Name"/>
+                                    <field name="type"/>
+                                </tree>
+                            </field>
+                            <field name="period_ids" colspan="2" nolabel="1">
+                                <tree string="Period">
+                                    <field name="name" string="Name"/>
+                                    <field name="date_start" string="Start"/>
+                                    <field name="date_stop" string="Stop"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                                <tree string="Analytic Journal">
+                                    <field name="code"/>
+                                    <field name="name" string="Name"/>
+                                    <field name="type"/>
+                                </tree>
+                            </field>
+                            <label string="" colspan="2"/>
+                        </group>
+                    </group>
+                    <separator string="Account"/>
+                    <group col="4" colspan="6">
+                        <field name="rev_account_ids"/>
+                        <newline/>
+                        <group col="4" colspan="6">
+                            <field name="account_ids" colspan="2" nolabel="1">
+                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="type" string="Type"/>
+                                </tree>
+                            </field>
+                            <field name="account_type_ids" colspan="2" nolabel="1">
+                                <tree string="Account type">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                            <newline/>
+                            <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <newline/>
+                            <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                                <tree string="Analytic Accounts">
+                                    <field name="code" string="Ana. Code"/>
+                                    <field name="name" string="Ana. Name"/>
+                                    <field name="type" string="Ana. Type"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <separator string="Reconciliation"/>
+                            <field name="reconciled"/><field name="reconcile_id"/>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <separator string="Reallocation"/>
+                            <field name="reallocated"/><field name="reversed"/>
+                        </group>
+                    </group>
+                    <separator string="Amount &amp; Currency"/>
+                    <group col="8" colspan="6">
+                        <field name="currency_choice" colspan="2" on_change="onchange_currency_choice(currency_choice, functional_currency_id, amount_from, amount_to)"/>
+                        <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" colspan="2" on_change="onchange_currency(currency_choice, currency_id)" domain="[('currency_table_id', '=', False)]"/>
+                        <field name="amount_from" string="Amount" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
+                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
+                        <newline/>
+                        <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
+                        <field name="display_in_output_currency" colspan="2" domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"/>
+                    </group>
+                    <group col="6" colspan="6">
+                        <field name="functional_currency_id" colspan="2" invisible="1"/>
+                        <field name="amount_func_from" string="Amount" colspan="2" invisible="1"/>
+                        <field name="amount_func_to" string="to" colspan="2" invisible="1"/>
+                        <field name="booking_currency_id" widget="selection" colspan="2" invisible="1"/>
+                        <field name="amount_book_from" string="Amount" colspan="2" invisible="1"/>
+                        <field name="amount_book_to" string="to" colspan="2" invisible="1"/>
+                    </group>
+                    <group col="6" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                        <separator string="Third Party" colspan="6"/>
+                        <field name="partner_id" colspan="2"/>
+                        <field name="employee_id" colspan="2"/>
+                        <field name="register_id" colspan="2"/>
+                    </group>
+                    <separator string="Others"/>
+                    <group col="4" colspan="6">
+                        <field name="ref" colspan="2"/>
+                        <field name="name" colspan="2"/>
+                    </group>
+                    <separator string=" "/>
+                    <group col="4" colspan="6">
+                        <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
+                        <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
+                    </group>
+                    <field name="model" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Actions -->
+        <record id="action_account_mcdb_form" model="ir.actions.act_window">
+            <field name="name">Journal Items MCDB</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+        </record>
+
+        <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
+            <field name="name">Analytic Journal Items MCDB</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+            <field name="context">{'from': 'account.analytic.line'}</field>
+        </record>
+
+    <!-- Menu -->
+        <menuitem id="menu_finance_mcdb" name="Multi-Criteria Data Browser" parent="account.menu_finance" sequence="12"/>
+        <menuitem string="Journal Items MCDB" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
+        <menuitem string="Analytic Journal Items MCDB" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
+
+    </data>
+</openerp>

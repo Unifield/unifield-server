@@ -20,218 +20,99 @@
 ##############################################################################
 
 from osv import fields, osv
+import datetime
+
+class financing_contract_funding_pool_line(osv.osv):
+    # 
+    _name = "financing.contract.funding.pool.line"
+    
+    _columns = {
+        'contract_id': fields.many2one('financing.contract.format', 'Contract', required=True),
+        'funding_pool_id': fields.many2one('account.analytic.account', 'Funding pool name', required=True),
+        'funded': fields.boolean('Funded'),
+        'total_project': fields.boolean('Total project'),
+    }
+        
+    _defaults = {
+        'funded': False,
+        'total_project': True,
+    }
+    
+financing_contract_funding_pool_line()
 
 class financing_contract_contract(osv.osv):
     
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
+
+    def contract_open(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'open',
+            'open_date': datetime.date.today().strftime('%Y-%m-%d'),
+            'soft_closed_date': None
+        })
+        return True
+
+    def contract_soft_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'soft_closed',
+            'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
+
+    def contract_hard_closed(self, cr, uid, ids, *args):
+        self.write(cr, uid, ids, {
+            'state': 'hard_closed',
+            'hard_closed_date': datetime.date.today().strftime('%Y-%m-%d')
+        })
+        return True
     
-    def _create_parent_line(self, cr, uid, contract_id, context=None):
-        # create parent reporting line (representing the contract in the tree view)
-        report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
-        contract = self.browse(cr, uid, contract_id, context=context)
-        if contract.report_line:
-            # delete existing parent reporting line (representing the contract in the tree view)
-            report_line_obj.unlink(cr, uid, contract.report_line.id, context=context)
-        parent_line_id = False
-        vals = {}
-        general_information = self._get_general_information(cr, uid, contract, context=context)
-        if contract.name and contract.code and contract.reporting_type:
-            parent_line_vals = {
-                'name': contract.name,
-                'code': contract.code,
-                'date_domain': general_information['date_domain'],
-                'funding_pool_domain': general_information['funding_pool_domain'],
-                'cost_center_domain': general_information['cost_center_domain'],
-                'computation_type': 'children_sum',
-            }
-            vals['report_line'] = report_line_obj.create(cr, uid, parent_line_vals, context=context)
-        super(financing_contract_contract, self).write(cr, uid, contract_id, vals, context=context)
-        return
-    
-    def _get_general_information(self, cr, uid, browse_contract, context=None):
-        # common part of the analytic domain
-        date_domain = "[('date', '>=', '"
-        date_domain += browse_contract.eligibility_from_date
-        date_domain += "'), ('date', '<=', '"
-        date_domain += browse_contract.eligibility_to_date
-        date_domain += "')]"
-        funding_pool_domain = "('account_id', 'in', ["
-        # list of expense accounts in the funding pools.
-        # Unicity is not important, it's just for a future comparison
-        funding_pool_account_ids = []
-        # list of cost centers in the funding pools.
-        # Unicity is important
-        cost_center_ids = []
-        if len(browse_contract.funding_pool_ids) > 0:
-            for funding_pool in browse_contract.funding_pool_ids:
-                funding_pool_domain += str(funding_pool.id)
-                funding_pool_domain += ", "
-                for account in funding_pool.account_ids:
-                    funding_pool_account_ids.append(account.id)
-                if len(funding_pool.cost_center_ids) > 0:
-                    for cost_center in funding_pool.cost_center_ids:
-                        cost_center_ids.append(cost_center.id)
-            funding_pool_domain = funding_pool_domain[:-2]
-        funding_pool_domain += "])"
-        cost_center_domain = "('cost_center_id', 'in', ["
-        if len(cost_center_ids) > 0:
-            cost_center_set = set(cost_center_ids)
-            for cost_center_id in cost_center_set:
-                cost_center_domain += str(cost_center_id)
-                cost_center_domain += ', '
-            cost_center_domain = cost_center_domain[:-2]
-        cost_center_domain += "])"
-        return {'date_domain': date_domain,
-                'funding_pool_domain': funding_pool_domain,
-                'cost_center_domain': cost_center_domain,
-                'account_ids': funding_pool_account_ids}
-    
-    def _create_actual_reporting_line(self, cr, uid, browse_actual_line, general_information, parent_line_id=False, context=None):
-        report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
-        if general_information \
-           and 'date_domain' in general_information \
-           and 'funding_pool_domain' in general_information \
-           and 'cost_center_domain' in general_information \
-           and 'account_ids' in general_information:
-            line_vals = {
-                'name': browse_actual_line.name,
-                'code': browse_actual_line.code,
-                'parent_id': parent_line_id,
-                'date_domain': general_information['date_domain'],
-                'funding_pool_domain': general_information['funding_pool_domain'],
-                'cost_center_domain': general_information['cost_center_domain'],
-            }
-            if browse_actual_line.line_type == 'view':
-                # view lines have no information, they take it from their children
-                line_vals['computation_type'] = 'children_sum'
-            elif browse_actual_line.line_type == 'normal':
-                # normal actual lines retrieve their amounts from the analytic lines
-                line_vals['computation_type'] = 'analytic_sum'
-                line_vals['allocated_budget_value'] = browse_actual_line.allocated_amount
-                line_vals['project_budget_value'] = browse_actual_line.project_amount
-                # compute domain from accounts
-                account_ids = [account.id for account in browse_actual_line.account_ids if account.id in general_information['account_ids']]
-                account_domain = "('general_account_id', 'in', ["
-                if len(account_ids) > 0:
-                    for account_id in account_ids:
-                        account_domain += str(account_id)
-                        account_domain += ", "
-                    account_domain = account_domain[:-2]
-                account_domain += "])"
-                line_vals['account_domain'] = account_domain
-            new_line_id = report_line_obj.create(cr, uid, line_vals, context=context)
-            # create children, and retrieve their list of accounts
-            for child_line in browse_actual_line.child_ids:
-                self._create_actual_reporting_line(cr, uid, child_line, general_information, new_line_id, context=context)
-        return
-    
-    def _create_actual_lines(self, cr, uid, contract_id, context=None):
-        contract = self.browse(cr, uid, contract_id, context=context)
-        if contract.report_line:
-            # retrieve parent reporting line
-            parent_line_id = contract.report_line.id
-            # common part of the analytic domain
-            general_information = self._get_general_information(cr, uid, contract, context=context)
-            for line in contract.actual_line_ids:
-                if not line.parent_id:
-                    # "top" actual lines; the other are created recursively
-                    self._create_actual_reporting_line(cr, uid, line, general_information, parent_line_id, context=context)   
-        return
-    
-    def _create_nonactual_lines(self, cr, uid, contract_id, context=None):
-        contract = self.browse(cr, uid, contract_id, context=context)
-        report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
-        if contract.report_line:
-            # retrieve parent reporting line
-            parent_line_id = contract.report_line.id
-            # create overhead line
-            overhead_line_vals = {}
-            if contract.overhead_type != 'amount' and contract.overhead_percentage > 0.0:
-                # create overhead line
-                overhead_line_vals = {
-                    'name': 'Overheads',
-                    'code': 'OH',
-                    'parent_id': parent_line_id,
-                    'computation_type': contract.overhead_type,
-                    'overhead_percentage': contract.overhead_percentage,
-                }
-                report_line_obj.create(cr, uid, overhead_line_vals, context=context)
-            elif contract.budget_allocated_overhead > 0.0 \
-              or contract.budget_project_overhead > 0.0 \
-              or contract.allocated_overhead > 0.0 \
-              or contract.project_overhead > 0.0:
-                overhead_line_vals = {
-                    'name': 'Overheads',
-                    'code': 'OH',
-                    'parent_id': parent_line_id,
-                    'computation_type': contract.overhead_type,
-                    'allocated_budget_value': contract.budget_allocated_overhead,
-                    'project_budget_value': contract.budget_project_overhead,
-                    'allocated_real_value': contract.allocated_overhead,
-                    'project_real_value': contract.project_overhead,
-                }
-                report_line_obj.create(cr, uid, overhead_line_vals, context=context)
-            # Lump sum line
-            if contract.budget_allocated_lump_sum > 0.0 \
-              or contract.budget_project_lump_sum > 0.0 \
-              or contract.allocated_lump_sum > 0.0 \
-              or contract.project_lump_sum > 0.0:
-                lump_sum_line_vals = {
-                    'name': 'Lump sum',
-                    'code': 'LS',
-                    'parent_id': parent_line_id,
-                    'computation_type': 'amount',
-                    'allocated_budget_value': contract.budget_allocated_lump_sum,
-                    'project_budget_value': contract.budget_project_lump_sum,
-                    'allocated_real_value': contract.allocated_lump_sum,
-                    'project_real_value': contract.project_lump_sum,
-                }
-                report_line_obj.create(cr, uid, lump_sum_line_vals, context=context)
-            # Consumption line
-            if contract.budget_allocated_consumption > 0.0 \
-              or contract.budget_project_consumption > 0.0 \
-              or contract.allocated_consumption > 0.0 \
-              or contract.project_consumption > 0.0:
-                consumption_line_vals = {
-                    'name': 'Consumption',
-                    'code': 'CSP',
-                    'parent_id': parent_line_id,
-                    'computation_type': 'amount',
-                    'allocated_budget_value': contract.budget_allocated_consumption,
-                    'project_budget_value': contract.budget_project_consumption,
-                    'allocated_real_value': contract.allocated_consumption,
-                    'project_real_value': contract.project_consumption,
-                }
-                report_line_obj.create(cr, uid, consumption_line_vals, context=context)
-        return
-    
-#    def dummy(self, cr, uid, ids, *args, **kwargs):
-#        mode = self.read(cr, uid, ids, ['reporting_type'])[0]['reporting_type']
-#        next_mode = False
-#        if mode == 'allocated':
-#            next_mode = 'project'
-#        elif mode == 'project':
-#            next_mode = 'all'
-#        else:
-#            next_mode = 'allocated'
-#        self.write(cr, uid, [ids[0]], {'reporting_type': next_mode})
-#        return True
+    def get_contract_domain(self, cr, uid, browse_contract, reporting_type=None, context={}):
+        # we update the context with the contract reporting type and currency
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        # Values to be set
+        account_ids = []
+        if reporting_type is None:
+            reporting_type = browse_contract.reporting_type
+        # general domain
+        general_domain = format_line_obj._get_general_domain(cr,
+                                                             uid,
+                                                             browse_contract.format_id,
+                                                             reporting_type,
+                                                             context=context)
+        
+        # parse parent lines (either value or sum of children's values)
+        for line in browse_contract.actual_line_ids:
+            if not line.parent_id:
+                account_ids += format_line_obj._get_account_ids(line, general_domain['funding_pool_account_ids'])
+                
+        # create the domain
+        analytic_domain = []
+        account_domain = format_line_obj._create_domain('general_account_id', account_ids)
+        date_domain = eval(general_domain['date_domain'])
+        if reporting_type == 'allocated':
+            analytic_domain = [date_domain[0],
+                               date_domain[1],
+                               eval(account_domain),
+                               eval(general_domain['funding_pool_domain'])]
+        else: 
+            analytic_domain = [date_domain[0],
+                               date_domain[1],
+                               eval(account_domain),
+                               eval(general_domain['funding_pool_domain']),
+                               eval(general_domain['cost_center_domain'])]
+            
+        return analytic_domain
     
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True),
-        'grant_name': fields.char('Grant name', size=64, required=True),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
-        'contract_type': fields.selection([('', ''), ('ear_marked','Ear-marked'), ('global_contribution','Global Contribution')], 'Financing contract type', required=True),
-        'eligibility_from_date': fields.date('Eligibility date from', required=True),
-        'eligibility_to_date': fields.date('Eligibility date to', required=True),
         'grant_amount': fields.float('Grant amount', size=64, required=True),
         'reporting_currency': fields.many2one('res.currency', 'Reporting currency', required=True),
         'notes': fields.text('Notes'),
-        'funding_pool_ids': fields.many2many('account.analytic.account', 'financing_contract_funding_pool', 'contract_id', 'funding_pool_id', string='Funding Pools'),
         'open_date': fields.date('Open date'),
         'soft_closed_date': fields.date('Soft-closed date'),
         'hard_closed_date': fields.date('Hard-closed date'),
@@ -239,7 +120,7 @@ class financing_contract_contract(osv.osv):
                                     ('open','Open'),
                                     ('soft_closed', 'Soft-closed'),
                                     ('hard_closed', 'Hard-closed')], 'State'),
-        'report_line': fields.many2one('financing.contract.donor.reporting.line', 'Parent Report Line')
+        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
     }
     
     _defaults = {
@@ -247,6 +128,28 @@ class financing_contract_contract(osv.osv):
         'reporting_currency': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'format_id': lambda self,cr,uid,context: self.pool.get('financing.contract.format').create(cr, uid, {}, context=context)
     }
+
+    def _check_unicity(self, cr, uid, ids, context={}):
+        if not context:
+            context={}
+        for contract in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', contract.name),('code', '=ilike', contract.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between contracts!', ['code', 'name']),
+    ]
+
+    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+        contract = self.browse(cr, uid, id, context=context)
+        if not default:
+            default = {}
+        default = default.copy()
+        default['code'] = (contract['code'] or '') + '(copy)'
+        default['name'] = (contract['name'] or '') + '(copy)'
+        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
     
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
@@ -257,58 +160,103 @@ class financing_contract_contract(osv.osv):
                 format_vals = {
                     'format_name': source_format.format_name,
                     'reporting_type': source_format.reporting_type,
-                    'overhead_type': source_format.overhead_type,
-                    'overhead_percentage': source_format.overhead_percentage,
                 }
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, format_id, context=context)
         return {'value': format_vals}
     
-    def create(self, cr, uid, vals, context=None):
-        if not context:
-            context={}
-        contract_id = super(financing_contract_contract, self).create(cr, uid, vals, context=context)
-        # write actual lines
-        self._create_parent_line(cr, uid, contract_id, context=context)
-        self._create_actual_lines(cr, uid, contract_id, context=context)
-        self._create_nonactual_lines(cr, uid, contract_id, context=context)
-        return contract_id
+    def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context={}):
+        values = {'reporting_currency': False}
+        if reporting_currency_id:
+            # it can be a currency from another table
+            reporting_currency = self.pool.get('res.currency').browse(cr, uid, reporting_currency_id, context=context)
+            # Search if the currency is in the table, and active
+            if reporting_currency.reference_currency_id:
+                currency_results = self.pool.get('res.currency').search(cr, uid, [('reference_currency_id', '=', reporting_currency.reference_currency_id.id),
+                                                                                  ('currency_table_id', '=', currency_table_id),
+                                                                                  ('active', '=', True)], context=context)
+            else:
+                currency_results = self.pool.get('res.currency').search(cr, uid, [('reference_currency_id', '=', reporting_currency_id),
+                                                                                  ('currency_table_id', '=', currency_table_id),
+                                                                                  ('active', '=', True)], context=context)
+            if len(currency_results) > 0:
+                # it's here, we keep the currency
+                values['reporting_currency'] = reporting_currency_id
+        # Restrain domain to selected table (or None if none selected
+        domains = {'reporting_currency': [('currency_table_id', '=', currency_table_id)]}
+        return {'value': values, 'domain': domains}
     
-    def write(self, cr, uid, ids, vals, context=None):
-        if not context:
-            context={}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        result = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
-        for contract in self.browse(cr, uid, ids, context=context):
-            # delete existing parent reporting line (representing the contract in the tree view)
-            self._create_parent_line(cr, uid, contract.id, context=context)
-            self._create_actual_lines(cr, uid, contract.id, context=context)
-            self._create_nonactual_lines(cr, uid, contract.id, context=context)
-        return result
-    
-    def unlink(self, cr, uid, ids, context=None):
-        if not context:
-            context={}
-        report_line_obj = self.pool.get('financing.contract.donor.reporting.line')
-        for contract in self.browse(cr, uid, ids, context=context):
-            # delete existing parent reporting line (representing the contract in the tree view)
-            report_line_obj.unlink(cr, uid, contract.report_line.id, context=context)
-        return super(financing_contract_contract, self).unlink(cr, uid, ids, context=context)
-    
+    def create_reporting_line(self, cr, uid, browse_contract, browse_format_line, parent_report_line_id=None, context=None):
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        reporting_line_obj = self.pool.get('financing.contract.donor.reporting.line')
+        analytic_domain = format_line_obj._get_analytic_domain(cr,
+                                                               uid,
+                                                               browse_format_line,
+                                                               browse_contract.reporting_type,
+                                                               context=context)
+        vals = {'name': browse_format_line.name,
+                'code': browse_format_line.code,
+                'allocated_budget': round(browse_format_line.allocated_budget),
+                'project_budget': round(browse_format_line.project_budget),
+                'allocated_real': round(browse_format_line.allocated_real),
+                'project_real': round(browse_format_line.project_real),
+                'analytic_domain': analytic_domain,
+                'parent_id': parent_report_line_id}
+        reporting_line_id = reporting_line_obj.create(cr,
+                                                      uid,
+                                                      vals,
+                                                      context=context)
+        # create child lines
+        for child_line in browse_format_line.child_ids:
+            self.create_reporting_line(cr, uid, browse_contract, child_line, reporting_line_id, context=context)
+        return reporting_line_id
     
     def menu_interactive_report(self, cr, uid, ids, context={}):
         # we update the context with the contract reporting type
-        contract_obj = self.browse(cr, uid, ids[0], context=context)
-        model_data_obj = self.pool.get('ir.model.data')
-        # update the context with reporting type (used for "get analytic_lines" action)
-        context.update({'reporting_type': contract_obj.reporting_type,
+        contract = self.browse(cr, uid, ids[0], context=context)
+        context.update({'reporting_currency': contract.reporting_currency.id,
+                        'reporting_type': contract.reporting_type,
+                        'currency_table_id': contract.currency_table_id.id,
                         'active_id': ids[0],
                         'active_ids': ids})
+        reporting_line_obj = self.pool.get('financing.contract.donor.reporting.line')
+        # Create reporting lines
+        # Contract line first (we'll fill it later)
+        contract_line_id = reporting_line_obj.create(cr,
+                                                     uid,
+                                                     vals = {'name': contract.name,
+                                                             'code': contract.code},
+                                                     context=context)
+        
+        # Values to be set
+        allocated_budget = 0
+        project_budget = 0
+        allocated_real = 0
+        project_real = 0
+        
+        # create "real" lines
+        for line in contract.actual_line_ids:
+            if not line.parent_id:
+                allocated_budget += line.allocated_budget
+                project_budget += line.project_budget
+                allocated_real += line.allocated_real
+                project_real += line.project_real
+                reporting_line_id = self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
+        
+        # Refresh contract line with general infos
+        analytic_domain = self.get_contract_domain(cr, uid, contract, context=context)
+        contract_values = {'allocated_budget': allocated_budget,
+                           'project_budget': project_budget,
+                           'allocated_real': allocated_real,
+                           'project_real': project_real,
+                           'analytic_domain': analytic_domain}
+        reporting_line_obj.write(cr, uid, [contract_line_id], vals=contract_values, context=context)
+        
         # retrieve the corresponding_view
+        model_data_obj = self.pool.get('ir.model.data')
         view_id = False
         view_ids = model_data_obj.search(cr, uid, 
                                         [('module', '=', 'financing_contract'), 
-                                         ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract_obj.reporting_type))],
+                                         ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract.reporting_type))],
                                         offset=0, limit=1)
         if len(view_ids) > 0:
             view_id = model_data_obj.browse(cr, uid, view_ids[0]).res_id
@@ -318,8 +266,55 @@ class financing_contract_contract(osv.osv):
                'view_type': 'tree',
                'view_id': [view_id],
                'target': 'current',
-               'domain': [('contract_id', '=', ids[0])],
+               'domain': [('id', '=', contract_line_id)],
                'context': context
+        }
+        
+    def menu_allocated_expense_report(self, cr, uid, ids, context={}):
+        wiz_obj = self.pool.get('wizard.expense.report')
+        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'allocated',
+                                          'filename': 'allocated_expenses.csv',
+                                          'contract_id': ids[0]}, context=context)
+        # we open a wizard
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.expense.report',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+        
+    def menu_project_expense_report(self, cr, uid, ids, context={}):
+        wiz_obj = self.pool.get('wizard.expense.report')
+        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
+                                          'filename': 'project_expenses.csv',
+                                          'contract_id': ids[0]}, context=context)
+        # we open a wizard
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.expense.report',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+        
+    def menu_csv_interactive_report(self, cr, uid, ids, context={}):
+        wiz_obj = self.pool.get('wizard.interactive.report')
+        wiz_id = wiz_obj.create(cr, uid, {'filename': 'interactive_report.csv',
+                                          'contract_id': ids[0]}, context=context)
+        # we open a wizard
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.interactive.report',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
         }
     
 financing_contract_contract()

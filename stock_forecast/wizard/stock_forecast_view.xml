@@ -36,6 +36,7 @@
                     <field name="doc" />
                     <field name="state" />
                     <field name="order_type" />
+                    <field name="origin" />
                     <field name="reference" />
                     <field name="qty" />
                     <field name="stock_situation" />

@@ -24,6 +24,7 @@
 -
   !record {model: sale.order, id: pr1, context: {'procurement_request': True}}:
     name: PR1
+    requested_date: !eval time.strftime('%Y-%m-%d')
 -
   We check if the new procurement request is a good procurement request
 -
@@ -44,6 +45,7 @@
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr2
+    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We create a second line
 -
@@ -54,8 +56,13 @@
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr2
+    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We validate this procurement request
+-
+  !workflow {model: sale.order, action: procurement_validate, ref: pr2}
+-
+  We confirm this procurement request
 -
   !workflow {model: sale.order, action: procurement_confirm, ref: pr2}
 -
@@ -84,6 +91,7 @@
     name: P1
     product_id: product1
     product_uom: product.product_uom_unit
+    date_planned: !eval time.strftime('%Y-%m-%d')
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr3
@@ -97,6 +105,7 @@
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr3
+    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We validate this procurement request
 -
@@ -128,6 +137,7 @@
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr4
+    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We create a second line
 -
@@ -138,6 +148,7 @@
     product_uom_qty: 150.00
     type: make_to_order
     order_id: pr4
+    date_planned: !eval time.strftime('%Y-%m-%d')
 -
   We validate this procurement request
 -
@@ -155,10 +166,10 @@
   We copy the procurement request
 -
   !python {model: sale.order}: |
-    pr_id = self.copy(cr, uid, ref('pr4'))
+    pr_id = self.copy(cr, uid, ref('pr4'), context=context)
     new_pr = self.browse(cr, uid, pr_id)
     assert len(new_pr.order_line) == 2, "Bad number of lines on copy"
-    assert new_pr.state == 'procurement', "Bad state on copy"
+    assert new_pr.state == 'draft', "Bad state on copy"
 -
   We check if it's no possible to unlink a confirmed purchase_order
 -

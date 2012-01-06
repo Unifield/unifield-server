@@ -562,7 +562,7 @@
 
         <record model="account.account" id="msf_chart_of_account.4203">
             <field name="code">4203</field>
-            <field name="type_for_register">advance</field>
+            <field name="type_for_register">none</field>
             <field name="type">receivable</field>
             <field name="name">advances to suppliers and various advances (including other MSF section &lt; €10.000)</field>
             <field name="parent_id" ref="msf_chart_of_account.420" />
@@ -1108,7 +1108,7 @@
             <field name="type">other</field>
             <field name="name">Bank transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1118,7 +1118,7 @@
             <field name="type">other</field>
             <field name="name">cash transfer with HQ</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1128,7 +1128,7 @@
             <field name="type">other</field>
             <field name="name">transfer to another financial mission: Same section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1138,17 +1138,17 @@
             <field name="type">other</field>
             <field name="name">transfer to another MSF section</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.5815">
             <field name="code">5815</field>
-            <field name="type_for_register">transfer</field>
+            <field name="type_for_register">transfer_same</field>
             <field name="type">other</field>
             <field name="name">Internal transfer same currency</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -1158,7 +1158,7 @@
             <field name="type">other</field>
             <field name="name">Internal transfer with currency exchange</field>
             <field name="parent_id" ref="msf_chart_of_account.581" />
-            <field name="reconcile" eval="False" />
+            <field name="reconcile" eval="True" />
             <field name="user_type" ref="account.account_type_cash_moves" />
         </record>
 
@@ -2559,6 +2559,36 @@
             <field name="fields_id" search="[('model','=','product.category'),('name','=','property_account_expense_categ')]"/>
             <field eval="'account.account,'+str(ref('msf_chart_of_account.6309'))" name="value"/>
             <field name="company_id" ref="base.main_company"/>
+        </record>
+    
+        <record model="account.account" id="vat_management.445">
+            <field name="code">445</field>
+            <field name="type_for_register">none</field>
+            <field name="type">view</field>
+            <field name="name">Taxes</field>
+            <field name="parent_id" ref="msf_chart_of_account.44" />
+            <field name="reconcile" eval="False" />
+            <field name="user_type" ref="vat_management.account_type_tax" />
+        </record>
+
+        <record model="account.account" id="vat_management.445000">
+            <field name="code">445000</field>
+            <field name="type_for_register">none</field>
+            <field name="type">other</field>
+            <field name="name">Global Tax</field>
+            <field name="parent_id" ref="vat_management.445" />
+            <field name="reconcile" eval="True" />
+            <field name="user_type" ref="vat_management.account_type_tax" />
+        </record>
+
+        <!-- VAT codes -->
+        <record model="account.tax" id="normal_vat">
+            <field name="name">Normal VAT 4,2%</field>
+            <field name="description">1</field>
+            <field name="amount" eval="0.042"/>
+            <field name="type">percent</field>
+            <field name="account_collected_id" ref="vat_management.445000"/>
+            <field name="account_paid_id" ref="vat_management.445000"/>
         </record>
 
     </data>

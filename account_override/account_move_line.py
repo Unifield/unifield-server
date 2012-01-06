@@ -27,6 +27,7 @@ import re
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
+    _name = 'account.move.line'
     
     def join_without_redundancy(self, text='', string=''):
         """
@@ -54,7 +55,31 @@ class account_move_line(osv.osv):
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
             help="This indicates the state of the Journal Entry."),
+        'is_addendum_line': fields.boolean('Is an addendum line?', 
+            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
+        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True),
     }
+
+    def _accounting_balance(self, cr, uid, ids, context={}):
+        """
+        Get the accounting balance of given lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Create an sql query
+        sql =  """
+            SELECT SUM(debit - credit)
+            FROM account_move_line
+            WHERE id in %s
+        """
+        cr.execute(sql, [tuple(ids)])
+        res = cr.fetchall()
+        if isinstance(ids, list):
+            res = res[0]
+        return res
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

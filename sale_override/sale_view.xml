@@ -9,6 +9,10 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                	<xpath expr="/form//field[@name='partner_id']" position="replace">
+                		<field name="company_id2" invisible="1" />
+                		<field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
+                	</xpath>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
                         <field name="order_type" />
@@ -36,9 +40,35 @@
                             <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
                         </group>
                     </button>
+
+                    <xpath expr="/form/notebook/page//button[@name='order_confirm']" position="replace">
+                        <group>
+                            <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply"/>
+                            <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
+                        </group>
+                    </xpath>
                     <!-- <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_policy')"/>
                     </xpath> -->
+
+                    <xpath expr="/form/notebook//field[@name='incoterm']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='user_id']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='payment_term']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="attributes">
+                        <attribute name="attrs">{'readonly': [('state', '!=', 'state')]}</attribute>
+                    </xpath>
+                    <xpath expr="//field[@name='create_date']" position="replace" />
+                    <xpath expr="//field[@name='date_confirm']" position="replace" />
+                    <xpath expr="//page[2]//separator[@string='Dates']" position="replace" />
                 </data>
             </field>
         </record>
@@ -52,6 +82,8 @@
                 <data>
                     <xpath expr="/tree/field[@name='date_order']" position="before">
                         <field name="order_type" />
+                        <field name="priority" />
+                        <field name="categ" />
                     </xpath>
                 </data>
             </field>
@@ -64,6 +96,9 @@
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
+		    <xpath expr="/search/field[@name='name']" position="after">
+			<field name="client_order_ref" />
+		    </xpath>
                     <xpath expr="/search/field[@name='user_id']" position="after">
                     	<newline />
                         <group string="Type" expand="0">
@@ -82,10 +117,8 @@
                         <group string="Category" expand="0">
                             <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                             <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
-                            <filter icon="terp-accessories-archiver" string="Food" domain="[('categ','=','food')]"/>
                             <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
-                            <filter icon="gtk-network" string="Asset" domain="[('categ','=','asset')]"/>
-                            <filter icon="terp-stock_symbol-selection" string="Mixed" domain="[('categ','=','mixed')]"/>
+                            <filter icon="gtk-network" string="Other" domain="[('categ','=','other')]"/>
                         </group>
                         <newline />
                     </xpath>
@@ -100,6 +133,38 @@
                 </data>
             </field>
         </record>
-    
+
+        <!-- REWORK THE SALE MENU ACCORDING TO UF-657 ERGONOMIC IMPROVEMENTS -->
+        <delete id="base.menu_partner_address_form" model="ir.ui.menu" />
+        <delete id="base.menu_address_book" model="ir.ui.menu" />
+        <delete id="sale.menu_invoiced" model="ir.ui.menu" />
+        <delete id="sale.menu_action_picking_list_to_invoice" model="ir.ui.menu" />
+        <delete id="sale.menu_invoicing_sales_order_lines" model="ir.ui.menu" />
+
+        <menuitem action="sale.action_order_form" id="sale.menu_sale_order" parent="base.menu_sales" sequence="1" groups="base.group_sale_salesman,base.group_sale_manager"/>
+
+        <menuitem action="base.action_partner_form"
+                  id="base.menu_partner_form"
+                  parent="base.menu_sales"
+                  sequence="4" />
+
+        <menuitem id="base.menu_base_partner" sequence="3" />
+
+        <!-- Deliver Products -->
+        <menuitem id="menu_sales_deliver_products"
+                  name="Deliver Products"
+                  sequence="5"
+                  parent="base.menu_base_partner" />
+
+        <menuitem action="stock.action_out_picking_move" id="menu_sale_action_picking_tree_out_move"
+                  parent="menu_sales_deliver_products" sequence="10"/>
+
+        <!-- Products -->
+        <menuitem action="product.product_category_action"
+                  id="product.menu_products_category"
+                  groups="base.group_extended"
+                  parent="base.menu_product"
+                  sequence="5" />
+
     </data>
 </openerp>

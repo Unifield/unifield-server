@@ -23,15 +23,19 @@
     "version": "1.1",
     "author" : "MSF: Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["funding_pool"],
+    "depends" : ["res_currency_tables"],
     "description": """Module for defining financing contract and donor objects.
     """,
     "init_xml" : [],
     "update_xml": [
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
+        'financing_contract_workflow.xml',
+        'financing_contract_report.xml'
     ],
-    'test': [],
+    'test': [
+        'test/financing_contract.yml'
+    ],
     'demo_xml': [
     ],
     'installable': True,

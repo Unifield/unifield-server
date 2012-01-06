@@ -30,17 +30,40 @@ import pooler
 import time
 
 
-#
-# Model definition
-#
-
 class purchase_order_line(osv.osv):
-
+    '''
+    information from product are repacked
+    '''
     _inherit = 'purchase.order.line'
-    #_name = 'purchase.order.line'
-    _description = 'Purchase Order Line modified for MSF'
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        update the name attribute if a product is selected
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id'):
+            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
+        elif vals.get('comment'):
+            vals.update(name=vals.get('comment'),)
+            
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        update the name attribute if a product is selected
+        '''
+        prod_obj = self.pool.get('product.product')
+        if vals.get('product_id'):
+            vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
+        elif vals.get('comment'):
+            vals.update(name=vals.get('comment'),)
+            
+        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
     
     def _get_manufacturers(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        get manufacturers info
+        '''
         result = {}
         for record in self.browse(cr, uid, ids, context=context):
             result[record.id] = {
@@ -49,115 +72,69 @@ class purchase_order_line(osv.osv):
                                  'third_manufacturer_id': False,
                                 }
             po_supplier = record.order_id.partner_id
-            for seller_id in record.product_id.seller_ids:
-                if seller_id.name == po_supplier:
-                    result[record.id] = {
-                                         'manufacturer_id': seller_id.manufacturer_id.id,
-                                         'second_manufacturer_id': seller_id.second_manufacturer_id.id,
-                                         'third_manufacturer_id': seller_id.third_manufacturer_id.id,
-                                        }
-                    break
+            if record.product_id:
+                for seller_id in record.product_id.seller_ids:
+                    if seller_id.name == po_supplier:
+                        result[record.id] = {
+                                             'manufacturer_id': seller_id.manufacturer_id.id,
+                                             'second_manufacturer_id': seller_id.second_manufacturer_id.id,
+                                             'third_manufacturer_id': seller_id.third_manufacturer_id.id,
+                                             }
+                        break
 
         return result
     
-    def _getProductInfo(self, cr, uid, ids, field_name, arg, context):
-        
-        # ACCESS to product_id ??
-        
+    def _getProductInfo(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        compute function fields related to product identity
+        '''
+        prod_obj = self.pool.get('product.product')
         # the name of the field is used to select the data to display
         result = {}
         for i in ids:
-            result[i] = i
-            
+            result[i] = {}
+            for f in field_name:
+                result[i].update({f:False,})
+                
+        for obj in self.browse(cr, uid, ids, context=context):
+            # default values
+            internal_code = False
+            internal_name = False
+            supplier_code = False
+            supplier_name = False
+            if obj.product_id:
+                prod = obj.product_id
+                # new fields
+                internal_code = prod.default_code
+                internal_name = prod.name
+                # filter the seller list - only select the seller which corresponds
+                # to the supplier selected during PO creation
+                # if no supplier selected in product, there is no specific supplier info
+                if prod.seller_ids:
+                    partner_id = obj.order_id.partner_id.id
+                    sellers = filter(lambda x: x.name.id == partner_id, prod.seller_ids)
+                    if sellers:
+                        seller = sellers[0]
+                        supplier_code = seller.product_code
+                        supplier_name = seller.product_name
+            # update dic
+            result[obj.id].update(internal_code=internal_code,
+                                  internal_name=internal_name,
+                                  supplier_code=supplier_code,
+                                  supplier_name=supplier_name,
+                                  )
+        
         return result
 
-    _columns = {
-        #function test column
-        #'temp': fields.function(_getProductInfo,
-        #                        type='char',
-        #                        obj=None,
-        #                        method=True,
-        #                        string='Test function'),
-        #new column internal_code
-        'internal_code': fields.char('Internal code', size=256),
-        #new column internal_name
-        'internal_name': fields.char('Internal name', size=256),
-        #new column supplier_code
-        'supplier_code': fields.char('Supplier code', size=256),
-        #new column supplier_name
-        'supplier_name': fields.char('Supplier name', size=256),
-        # new colums to display product manufacturers linked to the purchase order supplier
-        'manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Manufacturer", store=False, multi="all"),
-        'second_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Second Manufacturer", store=False, multi="all"),
-        'third_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Third Manufacturer", store=False, multi="all"),
-    }
-    
-    _defaults = {
-    }
-    
-    
-    def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
-        
-        # 1. call the original method
-        result = super(purchase_order_line, self).product_id_change(
-                                                                      cr, uid, ids, pricelist, product, qty, uom,
-                                                                      partner_id, date_order=False, fiscal_position=False,
-                                                                      date_planned=False, name=False, price_unit=False,
-                                                                      notes=False)
-        
-        # when we erase the field, it is empty, so no product information but modified
-        if not product:
-            # reset values
-            result['value'].update({'name': False,
-                          'internal_code': False,
-                          'internal_name': False,
-                          'supplier_code': False,
-                          'supplier_name': False})
-            return result
-        
-        # 2. complete the new fields
-        # - internal code
-        # - internal name
-        # - supplier code
-        # - supplier name
-        
-        #@@@override@purchase>purchase.py>purchase_order_line.product_id_change : copied from original method, is everything needed ?
-        if partner_id:
-            lang=self.pool.get('res.partner').read(cr, uid, partner_id, ['lang'])['lang']
-        context={'lang':lang}
-        context['partner_id'] = partner_id
-        
-        prod = self.pool.get('product.product').browse(cr, uid, product, context=context)
-        #@@@end
-        
-        # new fields
-        internal_code = prod.default_code
-        internal_name = prod.name
-        supplier_code = False
-        supplier_name = False
-        
-        # filter the seller list - only select the seller which corresponds
-        # to the supplier selected during PO creation
-        # if no supplier selected in product, there is no specific supplier info
-        if prod.seller_ids:
-            sellers = filter(lambda x: x.name.id == partner_id, prod.seller_ids)
-            if sellers:
-                seller = sellers[0]
-                supplier_code = seller.product_code
-                supplier_name = seller.product_name
-            
-        # 3 .modify the description ('name' attribute)
-        result['value'].update({'name': internal_name,
-                      'internal_code': internal_code,
-                      'internal_name': internal_name,
-                      'supplier_code': supplier_code,
-                      'supplier_name': supplier_name})
-        
-        # return the dictionary to update the view
-        return result
-        
+    _columns = {'internal_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Internal code', multi='get_vals',),
+                'internal_name': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Internal name', multi='get_vals',),
+                'supplier_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Supplier code', multi='get_vals',),
+                'supplier_name': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Supplier name', multi='get_vals',),
+                # new colums to display product manufacturers linked to the purchase order supplier
+                'manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Manufacturer", store=False, multi="all"),
+                'second_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Second Manufacturer", store=False, multi="all"),
+                'third_manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Third Manufacturer", store=False, multi="all"),
+                }
 
 purchase_order_line()
 

@@ -20,14 +20,14 @@
 ##############################################################################
 
 {
-    "name": "Procurement Request",
+    "name": "Internal Request",
     "version": "1.0",
-    "depends": ["base", "sale", "sale_override", "stock_override"],
+    "depends": ["base", "sale", "sale_override", "stock_override", "msf_order_date"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchases",
     "description": """
-    This modules aims to create a new document called Procurement Request to 
+    This modules aims to create a new document called Internal Request to 
     identify the needs of all and source from stock or from order
     """,
     "init_xml": [

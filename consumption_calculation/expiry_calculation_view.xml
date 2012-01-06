@@ -2,6 +2,11 @@
 <openerp>
     <data>
     	
+    	<menuitem id="menu_warehouse_expiry"
+                  name="Expiry"
+                  sequence="-10"
+    			  parent="stock.next_id_61" />
+    	
     	<record id="expiry_quantity_report_init_view" model="ir.ui.view">
     		<field name="name">expiry.quantity.report.init.view</field>
     		<field name="model">expiry.quantity.report</field>
@@ -11,37 +16,12 @@
     			<form string="Expiry Quantities">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" />
+				<field name="input_output_ok" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="week_nb" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
-    			</form>
-    		</field>
-    	</record>
-    	
-    	<record id="expiry_quantity_report_processed_view" model="ir.ui.view">
-    		<field name="name">expiry.quantity.report.processed.view</field>
-    		<field name="model">expiry.quantity.report</field>
-    		<field name="type">form</field>
-    		<field name="priority" eval="99" />
-    		<field name="arch" type="xml">
-    			<form string="Expired quantity">
-    				<separator colspan="4" string="Location" />
-    				<field name="location_id" readonly="1" />
-    				<separator colspan="4" string="Period of calculation" />
-    				<field name="week_nb" readonly="1" />
-    				<field name="date_to" readonly="1" />
-    				<separator colspan="4" string="Expired products" />
-    				<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1" >
-    					<tree string="Expired products">
-    						<field name="product_code" />
-    						<field name="product_name" />
-    						<field name="real_stock" />
-    						<field name="expired_qty" />
-    						<field name="batch_number" />
-    					</tree>
-    				</field>
     			</form>
     		</field>
     	</record>
@@ -55,6 +35,7 @@
     			<form string="Expired quantity">
     				<separator colspan="4" string="Location" />
     				<field name="location_id" readonly="1" />
+				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="week_nb" readonly="1" />
     				<field name="date_to" readonly="1" />
@@ -63,10 +44,11 @@
     					<tree string="Expired products">
     						<field name="product_code" />
     						<field name="product_name" />
-    						<field name="real_stock" />
-    						<field name="expired_qty" />
-    						<field name="batch_number" />
     						<field name="location_id" />
+    						<field name="real_stock" />
+    						<field name="batch_number" />
+    						<field name="expiry_date" widget="date" />
+    						<field name="expired_qty" />
     					</tree>
     				</field>
     			</form>
@@ -83,7 +65,8 @@
     	
     	<menuitem id="menu_expired_products"
     			  action="action_expired_products"
-    			  parent="stock.next_id_61" />
+                  sequence="-10"
+    			  parent="menu_warehouse_expiry" />
     			  
     			  
     	<record id="product_likely_expire_report_form_init" model="ir.ui.view">
@@ -93,12 +76,18 @@
     		<field name="priority" eval="16" />
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
-    				<separator colspan="4" string="Location" />
-    				<field name="location_id" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" />
     				<field name="date_to" />
+    				<field name="only_non_zero" />
+    				<separator colspan="4" string="Consumption parameters" />
     				<field name="consumption_type" colspan="4" />
+    				<field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+    				<field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+    				<separator colspan="4" string="Location" />
+    				<field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+				<newline />
+				<field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
     				<separator colspan="4" string="Actions" />
     				<button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
     				<button name="process_lines" string="Process" type="object" colspan="2" icon="gtk-execute" />
@@ -114,7 +103,11 @@
     		<field name="arch" type="xml">
     			<form string="Products list likely to expire">
     				<separator colspan="4" string="Location" />
-    				<field name="location_id" readonly="1" />
+				<group colspan="2" col="2">
+	    				<field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
+    					<field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
+				</group>
+				<field name="input_output_ok" readonly="1" />
     				<separator colspan="4" string="Period of calculation" />
     				<field name="date_from" readonly="1" />
     				<field name="date_to" readonly="1" />
@@ -122,9 +115,9 @@
     				<separator colspan="4" string="Expired products" />
     				<field colspan="4" nolabel="1" name="line_ids" mode="tree" readonly="1">
     					<tree string="Expired products">
-    						<field name="product_code" />
-    						<field name="product_name" />
-    						<field name="real_stock" />
+    						<field name="product_id" />
+    						<field name="consumption" />
+    						<field name="in_stock" />
     						<field name="total_expired" />
     					</tree>
     				</field>
@@ -142,7 +135,33 @@
     	
     	<menuitem id="menu_products_to_expire"
     			  action="action_products_to_expire"
-    			  parent="stock.next_id_61" />
+                  sequence="-1"
+    			  parent="menu_warehouse_expiry" />
+    			  
+    	 <record id="product_likely_expire_report_item_form" model="ir.ui.view">
+    	 	<field name="name">product.likely.expire.report.item.form</field>
+    	 	<field name="model">product.likely.expire.report.item</field>
+    	 	<field name="type">form</field>
+    	 	<field name="arch" type="xml">
+    	 		<form string="Lot likely to expire">
+    	 			<separator string="General information" colspan="4" />
+    	 			<field name="name" string="Month" readonly="1" />
+				<field name="period_start" readonly="1" />
+    	 			<field name="available_qty" readonly="1" />
+    	 			<field name="expired_qty" readonly="1" />
+    	 			<separator string="Batchs" colspan="4" />
+    	 			<field name="line_ids" mode="tree" colspan="4" nolabel="1" readonly="1">
+    	 				<tree string="Batch">
+    	 					<field name="lot_id" />
+    	 					<field name="expired_date" />
+    	 					<field name="location_id" />
+    	 					<field name="available_qty" />
+    	 					<field name="expired_qty" />
+    	 				</tree>
+    	 			</field>
+    	 		</form>
+    	 	</field>
+    	 </record>
     
     </data>
 </openerp>

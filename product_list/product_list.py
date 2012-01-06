@@ -55,8 +55,11 @@ class product_list(osv.osv):
         '''
         if not context:
             context = {}
+
+        name = self.browse(cr, uid, id, context=context).name + ' (copy)'
             
         return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'name': name,
                                                             'reviewer_id': False}, context=context)
     
     _columns = {
@@ -73,6 +76,7 @@ class product_list(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'location_id': fields.many2one('stock.location', string='Stock Location'),
         'product_ids': fields.one2many('product.list.line', 'list_id', string='Products'),
+        'old_product_ids': fields.one2many('old.product.list.line', 'list_id', string='Old Products'),
         'nb_products': fields.function(_get_nb_products, method=True, type='integer', string='# of products'),
         
     }
@@ -80,6 +84,24 @@ class product_list(osv.osv):
     _defaults = {
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
+    ]
+
+    def change_product_line(self, cr, uid, ids, context={}):
+        '''
+        Refresh the old product list
+        '''
+        res = {}
+        old_products = []
+        for list in self.browse(cr, uid, ids, context=context):
+            for old_line in list.old_product_ids:
+                old_products.append(old_line.id)
+
+            res.update({'old_product_ids': old_products})
+
+        return {'value': res}
     
 product_list()
 
@@ -95,6 +117,99 @@ class product_list_line(osv.osv):
         'comment': fields.char(size=256, string='Comment'),
     }
 
+    def unlink(self, cr, uid, ids, context={}):
+        '''
+        Create old product list line on product list line deletion
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if not context.get('import_error', False):
+            for line in self.read(cr, uid, ids, context=context):
+                self.pool.get('old.product.list.line').create(cr, uid, {'removal_date': time.strftime('%Y-%m-%d'),
+                                                                        'comment': 'comment' in line and line['comment'] or '',
+                                                                        'name': line['name'][0],
+                                                                        'list_id': line['list_id'][0]}, context=context)
+
+        return super(product_list_line, self).unlink(cr, uid, ids, context=context)
+
+
 product_list_line()
+
+
+class old_product_list_line(osv.osv):
+    _name = 'old.product.list.line'
+    _inherit = 'product.list.line'
+    _order = 'removal_date'
+
+    _columns = {
+        'removal_date': fields.date(string='Removal date', readonly=True),
+    }
+
+    _defaults = {
+        'removal_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+
+old_product_list_line()
+
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+
+
+    def _get_list_sublist(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns all lists/sublists where the product is in
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (long,int)):
+            ids = [ids]
+            
+        res = {}
+            
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = []
+            line_ids = self.pool.get('product.list.line').search(cr, uid, [('name', '=', product.id)], context=context)
+            for line in self.pool.get('product.list.line').browse(cr, uid, line_ids, context=context):
+                if line.list_id and line.list_id.id not in res[product.id]:
+                    res[product.id].append(line.list_id.id)
+                    
+        return res
+    
+    def _search_list_sublist(self, cr, uid, obj, name, args, context={}):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if not context:
+            context = {}
+            
+        ids = []
+            
+        for arg in args:
+            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
+                list = self.pool.get('product.list').browse(cr, uid, int(arg[2]), context=context)
+                for line in list.product_ids:
+                    ids.append(line.name.id)
+            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
+                for list in self.pool.get('product.list').browse(cr, uid, arg[2], context=context):
+                    for line in list.product_ids:
+                        ids.append(line.name.id)
+            else:
+                return []
+            
+        return [('id', 'in', ids)]
+
+    _columns = {
+        'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
+                                    type='many2many', relation='product.list', method=True, string='Lists'),
+    }
+
+product_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

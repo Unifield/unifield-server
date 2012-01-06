@@ -69,7 +69,7 @@ class account_cheque_register(osv.osv):
     }
 
     _defaults = {
-        'display_type': 'not_reconciled',
+        'display_type': 'all',
     }
 
     def button_open_cheque(self, cr, uid, ids, context={}):
