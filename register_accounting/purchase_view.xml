@@ -20,9 +20,8 @@
                                 <field name="date"/>
                                 <field name="name" string="Description"/>
                                 <field name="account_id"/>
-                                <field name="amount" sum="Total Amount"/>
+                                <field name="amount_currency" string="Amount" sum="Total Amount"/>
                                 <field name="currency_id"/>
-                                <field name="state"/>
                             </tree>
                         </field>
                     </xpath>

@@ -29,7 +29,7 @@ class purchase_order(osv.osv):
     _inherit = 'purchase.order'
 
     _columns = {
-        'down_payment_ids': fields.one2many('account.bank.statement.line', 'down_payment_id', string="Down Payments", readonly=True),
+        'down_payment_ids': fields.one2many('account.move.line', 'down_payment_id', string="Down Payments", readonly=True),
     }
 
 purchase_order()

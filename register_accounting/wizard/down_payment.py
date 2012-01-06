@@ -59,8 +59,14 @@ class wizard_down_payment(osv.osv_memory):
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
         total = po.amount_total
         for dp in po.down_payment_ids:
-            if dp.id != absl_id:
-                total += dp.amount
+            move_ids = [x.id or None for x in absl.move_ids]
+            operator = 'in'
+            if len(move_ids) == 1:
+                operator = '='
+            move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), 
+                ('move_id', operator, move_ids)])
+            if dp.id not in move_line_ids:
+                total -= dp.amount_currency
         if (-1 * absl.amount) > total:
             raise osv.except_osv(_('Warning'), 
                 _('Register line amount is superior to (PO total amount - down payments). Maximum amount should be: %s') % (total))

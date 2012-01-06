@@ -180,6 +180,8 @@ class account_move_line(osv.osv):
                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                         }),
         'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
+        'down_payment_id': fields.many2one('purchase.order', string="Purchase Order for Down Payment", readonly=True, ondelete='cascade'),
+        'down_payment': fields.float(string='Down Payment used amount', readonly=True),
     }
 
     _defaults = {

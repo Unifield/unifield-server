@@ -876,6 +876,9 @@ class account_bank_statement_line(osv.osv):
         # Delete 'from_import_cheque_id' field not to break the account move line write
         if 'from_import_cheque_id' in values:
             del(values['from_import_cheque_id'])
+        # Delete down_payment value not to be given to account_move_line
+        if 'down_payment_id' in values:
+            del(values['down_payment_id'])
         if register_line:
             # Search second move line
             other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -1142,6 +1145,28 @@ class account_bank_statement_line(osv.osv):
             return True
         return False
 
+    def create_down_payment_link(self, cr, uid, ids, context={}):
+        """
+        Copy down_payment link to right move line
+        """
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # browse all bank statement line
+        for absl in self.browse(cr, uid, ids):
+            if not absl.is_down_payment:
+                continue
+            move_ids = [x.id or None for x in absl.move_ids]
+            operator = 'in'
+            if len(move_ids) == 1:
+                operator = '='
+            # Search line that have same account for given register line
+            line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), ('move_id', operator, move_ids)])
+            # Add down_payment link
+            for line_id in line_ids:
+                self.pool.get('account.move.line').write(cr, uid, [line_id], {'down_payment_id': absl.down_payment_id.id})
+        return True
+
     def create(self, cr, uid, values, context={}):
         """
         Create a new account bank statement line with values
@@ -1242,6 +1267,9 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 if absl.is_down_payment and not absl.down_payment_id:
                     raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
+                elif absl.is_down_payment:
+                    self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
+                    self.create_down_payment_link(cr, uid, absl.id, context=context)
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
                 # Case where this line come from an "Import Invoices" Wizard
