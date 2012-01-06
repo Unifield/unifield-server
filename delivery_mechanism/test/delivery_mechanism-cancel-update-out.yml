@@ -58,6 +58,8 @@
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
+    # change Invoicing control to From Picking
+    self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
     wf_service = netsvc.LocalService("workflow")
     wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
@@ -90,8 +92,9 @@
     data = self.read(cr, uid, in_ids, ['state', 'purchase_id'], context=context)[0]
     assert data['state'] == 'cancel', 'the incoming shipment is not Canceled - cancel - %s'%data['state']
     # check the corresponding purchase state - the state has been automaticly manually corrected because the cancelation of incoming is definitive (out updated)
+    # as the invoice control is From Picking, we do not wait for the invoice, the po state is therefore Done
     data = po_obj.read(cr, uid, [data['purchase_id'][0]], ['state'], context=context)[0]
-    assert data['state'] == 'approved', 'the corresponding po is not in Approved state - approved - %s'%data['state']
+    assert data['state'] == 'done', 'the corresponding po is not in Done state - done - %s'%data['state']
     # check the moves in OUT - back order contained 10 A and 5 B, should have been decreased in OUT
     a_qty = [0.0]
     b_qty = [0.0]
