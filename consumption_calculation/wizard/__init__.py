@@ -23,5 +23,4 @@ import wizard_import_fmc
 import wizard_import_rac
 import wizard_export_fmc_rac
 import wizard_valid_lines
-import wizard_nomenclature
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

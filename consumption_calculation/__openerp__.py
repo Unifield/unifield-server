@@ -42,7 +42,6 @@
         'wizard/wizard_import_rac_view.xml',
         'wizard/wizard_export_fmc_rac_view.xml',
         'wizard/wizard_valid_lines_view.xml',
-        'wizard/wizard_nomenclature_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [
