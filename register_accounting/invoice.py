@@ -82,8 +82,131 @@ class account_invoice(osv.osv):
                 # Finally do reconciliation
                 ml_reconcile_id = ml_obj.reconcile_partial(cr, uid, [invoice_move_line_id, register_move_line_id])
         return True
-    
-    def invoice_open(self, cr, uid, ids, context=None):
+
+    def create_down_payments(self, cr, uid, ids, amount, context={}):
+        """
+        Create down payments for given invoices
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not amount:
+            raise osv.except_osv(_('Warning'), _('Amount for Down Payment is missing!'))
+        # Prepare some values
+        res = []
+        # Browse all elements
+        for inv in self.browse(cr, uid, ids):
+            # some verification
+            if amount > inv.amount_total:
+                raise osv.except_osv(_('Error'), _('Given down payment amount is superior to given invoice. Please check both.'))
+            # prepare some values
+            total = 0.0
+            to_use = [] # should contains tuple with: down payment line id, amount
+            
+            # Create down payment until given amount is reached
+            # browse all invoice purchase, then all down payment attached to purchases
+            for po in inv.purchase_ids:
+                for dp in po.down_payment_ids:
+                    # verify that total is not superior to amount
+                    if total >= amount:
+                        continue
+                    # Take only line that have a down_payment_amount not superior or equal to line amount
+                    if not dp.down_payment_amount > dp.amount_currency:
+                        diff = 0.0
+                        if dp.amount_currency <= (amount - total):
+                            diff = dp.amount_currency
+                        else:
+                            diff = (amount - total)
+                    # Have a tuple containing line id and amount to use for create a payment on invoice
+                    to_use.append((dp.id, diff))
+                    # Increment processed total
+                    total += diff
+            # Create counterparts and reconcile them
+            for el in to_use:
+                # create down payment counterpart on dp account
+                # first create the move
+                vals = {
+                    'journal_id': inv.journal_id.id,
+                    'period_id': inv.period_id.id,
+                    'date': inv.date_invoice,
+                    'name': 'Down payment to supplier' + inv.partner_id.name or '',
+                    'partner_id': inv.partner_id.id,
+                }
+                move_id = self.pool.get('account.move').create(cr, uid, vals)
+                # then 2 lines for this move
+                vals.update({
+                    'move_id': move_id,
+                    'partner_type_mandatory': True,
+                    'currency_id': inv.currency_id.id,
+                })
+                # create dp counterpart line
+                dp_account = self.pool.get('account.move.line').read(cr, uid, el[0], ['account_id']).get('account_id', False)
+                debit = 0.0
+                credit = el[1]
+                if amount < 0:
+                    credit = 0.0
+                    debit = el[1]
+                vals.update({
+                    'account_id': dp_account and dp_account[0] or False,
+                    'debit': debit,
+                    'credit': credit,
+                })
+                dp_counterpart_id = self.pool.get('account.move.line').create(cr, uid, vals)
+                # create supplier line
+                vals.update({
+                    'account_id': inv.account_id.id,
+                    'debit': credit, # opposite of dp counterpart line
+                    'credit': debit, # opposite of dp counterpart line
+                })
+                supplier_line_id = self.pool.get('account.move.line').create(cr, uid, vals)
+                # post move
+                self.pool.get('account.move').post(cr, uid, [move_id])
+                # and reconcile down payment counterpart
+                self.pool.get('account.move.line').reconcile_partial(cr, uid, [el[0], dp_counterpart_id], type='manual')
+#                # and link payment to invoice
+#                link_payment = self.pool.get('account.invoice').write(cr, uid, [inv.id], {'payment_ids': [(4, dp_counterpart_id)]})
+                # and reconcile invoice and supplier_line
+                to_reconcile = [supplier_line_id]
+                for line in inv.move_id.line_id:
+                    if line.account_id.id == inv.account_id.id:
+                        to_reconcile.append(line.id)
+                if not len(to_reconcile) > 1:
+                    raise osv.except_osv(_('Error'), _('Did not achieve invoice reconciliation with down payment.'))
+                self.pool.get('account.move.line').reconcile_partial(cr, uid, to_reconcile)
+                # add amount of invoice down_payment line on purchase order to keep used amount
+                current_amount = self.pool.get('account.move.line').read(cr, uid, el[0], ['down_payment_amount']).get('down_payment_amount')
+                self.pool.get('account.move.line').write(cr, uid, [el[0]], {'down_payment_amount': current_amount + diff})
+                # add payment to result
+                res.append(dp_counterpart_id)
+        return res
+
+    def check_down_payments(self, cr, uid, ids, context={}):
+        """
+        Verify that PO have down payments. If yes, launch down payment creation and attach it to invoice
+        """
+        # Some verification
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse all invoice and check PO
+        for inv in self.browse(cr, uid, ids):
+            total_payments = 0.0
+            for po in inv.purchase_ids:
+                for dp in po.down_payment_ids:
+                    if abs(dp.down_payment_amount) < abs(dp.amount_currency):
+                        total_payments += dp.amount_currency
+            if total_payments == 0.0:
+                continue
+            elif (inv.amount_total - total_payments) > 0.0:
+                # Attach a down payment to this invoice
+                self.create_down_payments(cr, uid, inv.id, total_payments)
+            elif (inv.amount_total - total_payments) <= 0.0:
+                # In this case, down payment permits to pay entirely invoice, that's why the down payment equals invoice total
+                self.create_down_payments(cr, uid, inv.id, inv.amount_total)
+        return True
+
+    def invoice_open(self, cr, uid, ids, context={}):
         """
         No longer fills the date automatically, but requires it to be set
         """
@@ -110,6 +233,20 @@ class account_invoice(osv.osv):
             
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
         return True
+
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Add down payment check after others verifications
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)
+        for inv in self.browse(cr, uid, ids):
+            # Create down payments for invoice that come from a purchase
+            if inv.purchase_ids:
+                self.check_down_payments(cr, uid, ids)
+        return res
 
 account_invoice()
 

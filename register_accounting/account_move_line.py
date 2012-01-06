@@ -181,11 +181,12 @@ class account_move_line(osv.osv):
                         }),
         'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
         'down_payment_id': fields.many2one('purchase.order', string="Purchase Order for Down Payment", readonly=True, ondelete='cascade'),
-        'down_payment': fields.float(string='Down Payment used amount', readonly=True),
+        'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
     }
 
     _defaults = {
         'partner_txt': lambda *a: '',
+        'down_payment_amount': lambda *a: 0.0,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
