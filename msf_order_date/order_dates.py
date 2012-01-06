@@ -1221,10 +1221,10 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context= {}
-        if context.get('purchase_id', False):
-            order_obj= self.pool.get('purchase.order')
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            return po.state
+        if context.get('sale_id', False):
+            order_obj= self.pool.get('sale.order')
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            return so.state
         
         return False
     
