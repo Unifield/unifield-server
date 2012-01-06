@@ -21,7 +21,7 @@
 
 import tools
 from osv import fields, osv
-from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from order_types import ORDER_PRIORITY, SALE_ORDER_CATEGORY
 
 class sale_report(osv.osv):
     _name = "sale.report"
@@ -94,7 +94,7 @@ class sale_report(osv.osv):
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'categ': fields.selection(SALE_ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'order_id': fields.many2one('sale.order', string='Order'),
     }
     _order = 'date desc'

@@ -29,7 +29,7 @@ import netsvc
 import pooler
 import time
 
-from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from order_types import ORDER_PRIORITY, SALE_ORDER_CATEGORY
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
@@ -189,7 +189,7 @@ class sourcing_line(osv.osv):
                                   store={'sale.order.line': (_get_sale_order_line_ids, ['state'], 10),
                                          'sourcing.line': (_get_souring_lines_ids, ['sale_order_line_id'], 10)}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
-        'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
+        'categ': fields.selection(SALE_ORDER_CATEGORY, string='Category', readonly=True),
         'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
         'line_number': fields.integer(string='Line', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),

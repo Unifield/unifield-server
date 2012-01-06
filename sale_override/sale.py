@@ -20,7 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
-from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from order_types import ORDER_PRIORITY, SALE_ORDER_CATEGORY
 import netsvc
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -128,7 +128,7 @@ class sale_order(osv.osv):
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'categ': fields.selection(SALE_ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
