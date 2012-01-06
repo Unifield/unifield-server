@@ -75,7 +75,6 @@
                       <field name="origin" />
                       <field name="create_uid" />
                       <field name="date_order" />
-                      <!-- Creation date from/to − TODO: To validate with Magali -->
                     </group>
                     <newline />
                     <group string="Type" expand="0">
@@ -98,6 +97,7 @@
                       <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                       <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                       <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
                       <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
 	                </group>
                     <newline />
