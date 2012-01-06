@@ -22,12 +22,11 @@
                         <field name="register_posting_date" />
                         <field name="state" invisible="1"/>
                         <field name="amount_total"/>
-                        <group colspan="6">
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}" />
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}" />
-                            <field name="analytic_distribution_id" invisible="1"/>
-                            <label string=" " />
-                        </group>
+                        <newline/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <label string=" " colspan="2"/>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
@@ -107,10 +106,11 @@
                         <group colspan="2" col="1" groups="account.group_account_user">
                             <label align="0.0" string="(keep empty to use the current period)"/>
                         </group>
-                        <group colspan="6">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" colspan="2"/>
-                            <label string="" colspan="4"/>
-                        </group>
+                        <newline/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <label string=" " colspan="2"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Invoice">
