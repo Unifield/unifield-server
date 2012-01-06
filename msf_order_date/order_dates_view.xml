@@ -31,7 +31,7 @@
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
-	                            <field name="delivery_requested_date"
+	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}"
 	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order',}" icon="gtk-indent"
 	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
@@ -110,15 +110,15 @@
 	                        <group colspan="4" col="4" name="date">
 	                            <separator colspan="4" string="Dates" />
 	                            <group colspan="2" col="3">
-		                            <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"
+		                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}"
 		                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)" />
 		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order',}" icon="gtk-indent"
-		                            	attrs="{'invisible': [('state', 'not in', ['draft', 'validated'])]}" />
+		                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
 	                            </group>
 	                            <group colspan="2" col="3">
-		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft','validated'])]}" />
+		                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ['cancel','done'])]}" />
 		                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order',}" icon="gtk-indent" 
-		                            	attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
+		                            	attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}" />
 	                            </group>
 	                            <field name="transport_type" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"
 	                            	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" />
@@ -131,8 +131,9 @@
                     </xpath>
                     
                     <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
-                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', 'not in', ('draft','validated'))]}" />
-                        <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'not in', ('draft','validated'))]}" />
+                    	<field name="so_state_stored" invisible="True" />
+                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
+                        <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}" />
                     </xpath>
                     
                     <!-- Give the context when create a new SO line -->

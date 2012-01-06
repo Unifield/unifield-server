@@ -597,12 +597,9 @@ class purchase_order(osv.osv):
         return move_values
     
     _columns = {
-                'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True, readonly=True,
-                                states={'draft': [('readonly', False)]}),
-                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
-                                    help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-                'ready_to_ship_date': fields.date(string='Ready To Ship Date', 
-                                                  help='Commitment date = date on which delivery of product is to/can be made.'),
+                'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+                'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
                 'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
                 'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
                 'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
@@ -952,12 +949,9 @@ class sale_order(osv.osv):
     
     _columns = {
         'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created."),
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', readonly=True,
-                        states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]}),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date',
-                        help='Will be confirmed by supplier for SO could be equal to RTS + estimated transport Lead-Time'),
-        'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True,
-                        help='Commitment date = date on which delivery of product is to/can be made.'),
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True),
         'shipment_date': fields.date(string='Shipment Date', readonly=True, help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True, 
@@ -1111,7 +1105,7 @@ class sale_order(osv.osv):
         '''
         for obj in self.browse(cr, uid, ids):
             # deactivated
-            if not obj.delivery_confirmed_date:
+            if not obj.delivery_confirmed_date and False:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             for line in obj.order_line:
