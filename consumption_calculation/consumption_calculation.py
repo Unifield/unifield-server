@@ -271,6 +271,7 @@ class real_average_consumption(osv.osv):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        self.write(cr, uid, ids, {'created_ok': True})    
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
@@ -308,11 +309,16 @@ class real_average_consumption(osv.osv):
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
+                    batch_mandatory = product.batch_management or product.perishable
+                    date_mandatory = not product.batch_management and product.perishable
                     self.pool.get('real.average.consumption.line').create(cr, uid, {'product_id': product.id,
                                                                                     'uom_id': product.uom_id.id,
                                                                                     'consumed_qty': 0.00,
+                                                                                    'batch_mandatory': batch_mandatory,
+                                                                                    'date_mandatory': date_mandatory,
                                                                                     'rac_id': report.id})
         
+        self.write(cr, uid, ids, {'created_ok': False})    
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
@@ -655,7 +661,6 @@ class monthly_review_consumption(osv.osv):
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
-            
             # Get all products for the defined nomenclature
             if report.nomen_id:
                 nomen_id = report.nomen_id.id
