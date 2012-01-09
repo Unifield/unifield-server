@@ -109,6 +109,19 @@
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
+
+        <record id="purchase_order_line_form_view_inherit" model="ir.ui.view">
+            <field name="name">purchase.order.line.form.view</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='price_unit']" position="replace">
+                    <field name="price_unit" 
+                        on_change="price_unit_change(product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, context)" />
+                </xpath>
+            </field>
+        </record>
     
     </data>
 </openerp>

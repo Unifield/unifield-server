@@ -532,6 +532,33 @@ class purchase_order_line(osv.osv):
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
     }
 
+    def price_unit_change(self, cr, uid, ids, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context={}):
+        '''
+        Display a warning message on change price unit if there are other lines with the same product and the same uom
+        '''
+        res = {}
+
+        if not product_id or not product_uom or not product_qty:
+            return res
+
+
+        price = self.pool.get('product.pricelist').price_get(cr,uid,[pricelist], product_id, product_qty, partner_id,
+                                                                {'uom': product_uom, 'date': date_order})[pricelist]
+
+        order_id = context.get('purchase_id', False)
+        if not order_id:
+            return res
+
+        lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)])
+        if lines and (price is False or price == 0.00):
+            warning = {
+                'title': 'Other lines updated !',
+                'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be updated too !',}
+            res.update({'warning': warning})
+
+        return res
+
+
     def open_split_wizard(self, cr, uid, ids, context={}):
         '''
         Open the wizard to split the line
