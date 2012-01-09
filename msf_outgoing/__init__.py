@@ -19,6 +19,17 @@
 #
 ##############################################################################
 
+INTEGRITY_STATUS_SELECTION = [('empty', ''),
+                              ('ok', 'Ok'),
+                              ('negative', 'Negative Value'),
+                              ('missing_lot', 'Production Lot/Expiry Date is Missing'),
+                              ('no_lot_needed', 'No Production Lot/Expiry Date Needed'),
+                              ('wrong_lot_type', 'Wrong Production Lot Type'),
+                              ('wrong_lot_type_need_internal', 'Need Expiry Date (Internal) not Production Lot (Standard)'),
+                              ('wrong_lot_type_need_standard', 'Need Production Lot (Standard) not Expiry Date (Internal)'),
+                              ('empty_picking', 'Empty Picking Ticket'),
+                              ]
+
 import msf_outgoing
 import wizard
 import report

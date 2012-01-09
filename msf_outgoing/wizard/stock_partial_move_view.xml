@@ -8,6 +8,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree editable="bottom" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
+					<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" />
                     <field name="quantity" />
@@ -39,6 +40,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree editable="bottom" string="Product Moves">
+                	<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" readonly="True" />
                     <field name="quantity" readonly="True" />
@@ -59,6 +61,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree editable="bottom" string="Product Moves">
+                	<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" readonly="True" />
                     <field name="quantity" readonly="True" />

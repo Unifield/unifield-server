@@ -136,16 +136,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                'integrity_status': fields.selection(string='Integrity Status', selection=[('empty', ''),
-                                                                                           ('ok', 'Ok'),
-                                                                                           ('negative', 'Negative'),
-                                                                                           ('missing_lot', 'Production Lot is Missing'),
-                                                                                           ('no_lot_needed', 'No Production Lot Needed'),
-                                                                                           ('wrong_lot_type', 'Wrong Production Lot Type'),
-                                                                                           ],),
     }
-
-    _defaults = {'integrity_status': 'empty',}
 
 stock_partial_move_memory_out()
 

@@ -24,6 +24,8 @@ from tools.translate import _
 import time
 import decimal_precision as dp
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
+
 
 class stock_partial_move_memory_out(osv.osv_memory):
     '''
@@ -47,6 +49,11 @@ class stock_partial_move_memory_out(osv.osv_memory):
         # we need to get the memory move id to know which line to split
         # and class name, to know which type of moves
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
+    
+    _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+              }
+    
+    _defaults = {'integrity_status': 'empty'}
 
 stock_partial_move_memory_out()
 

@@ -29,7 +29,6 @@
                 "stock_override",
                 "purchase_override",
                 "sale_override",
-                "msf_outgoing",
                 "product_asset", # because of asset_id
                 ],
     "author": "MSF",

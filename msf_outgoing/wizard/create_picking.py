@@ -102,6 +102,7 @@ class create_picking(osv.osv_memory):
             if move.state in ('done', 'cancel'):
                 continue
             move_memory = {
+                'line_number': move.line_number,
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
                 'quantity' : move.product_qty,
@@ -386,13 +387,22 @@ class create_picking(osv.osv_memory):
                         for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
                             partial.update(family)
                             
-    def set_integrity_status(self, cr, uid, ids, status='ok', context=None):
+    def set_integrity_status(self, cr, uid, ids, status='empty', context=None):
         '''
         for all moves set the status to ok (default value) or other if specified
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
             for memory_move in wiz.product_moves_picking:
                 memory_move.write({'integrity_status': status,}, context=context)
+                
+    def set_integrity_status_for_empty_moves(self, cr, uid, ids, status='empty_picking', context=None):
+        '''
+        for all moves set the status to empty_picking if move qty is 0
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for memory_move in wiz.product_moves_picking:
+                if not memory_move.quantity:
+                    memory_move.write({'integrity_status': status,}, context=context)
                 
 #    def _check_batch_management(self, cr, uid, ids, context=None):
 #        """
@@ -427,14 +437,14 @@ class create_picking(osv.osv_memory):
         return True/Fals
         '''
         memory_move_obj = self.pool.get('stock.move.memory.picking')
-        # total sum not including negative values
-        sum_qty = 0
-        # flag to detect negative values
-        negative_value = False
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, context=context)
         # validate the data
         for picking_data in data.values():
+            # total sum not including negative values
+            sum_qty = 0
+            # flag to detect negative values
+            negative_value = False
             for move_data in picking_data.values():
                 for list_data in move_data:
                     # quantity check
@@ -445,19 +455,23 @@ class create_picking(osv.osv_memory):
                         memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
                     else:
                         sum_qty += list_data.get('product_qty', False)
-        
-        # if error, return False
-        if not sum_qty or negative_value:
-            return False
+            # if no quantity and no negative values, we flag the 0 qty selected
+            if not sum_qty and not negative_value:
+                self.set_integrity_status_for_empty_moves(cr, uid, ids, context=context)
+            # if error, return False
+            if not sum_qty or negative_value:
+                return False
         return True
     
-    def integrity_check_prodlot(self, cr, uid, ids, data, context=None):
+    def integrity_check_prodlot(self, cr, uid, ids, data, validate=True, context=None):
         '''
         check production lot
         - product.perishable: a prodlot of type 'internal'
           -> integrity_status is set to 'perishable'
         - product.batch_management: a prodlot of type 'standard'
           -> integrity_status is set to 'batch_management'
+          
+        - the production lot is mandatory only if it is the validation stage
         '''
         prod_obj = self.pool.get('product.product')
         memory_move_obj = self.pool.get('stock.move.memory.picking')
@@ -488,12 +502,13 @@ class create_picking(osv.osv_memory):
                         # perishable -> the prod lot must be of type 'internal'
                         if prod.perishable and not prod.batch_management and lot.type != 'internal':
                             wrong_lot_type = True
-                            memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type',}, context=context)
+                            memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_internal',}, context=context)
                         # batch_management -> the prod lot must be of type 'standard'
                         if prod.batch_management and lot.type != 'standard':
                             wrong_lot_type = True
-                            memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type',}, context=context)
-                    else:
+                            memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_standard',}, context=context)
+                    # only mandatory at validation stage
+                    elif validate:
                         # no production lot defined, corresponding checks
                         if prod.perishable or prod.batch_management:
                             missing_lot = True
@@ -540,9 +555,11 @@ class create_picking(osv.osv_memory):
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    })
-                    
-        # integrity check on wizard data
-        if not self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context):
+        # integrity check on wizard data - quantities
+        quantity_check = self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context)
+        # prodlot - in separate method because is not checked at picking ticket creation
+        prodlot_check = self.integrity_check_prodlot(cr, uid, ids, partial_datas, validate=False, context=context)
+        if not quantity_check or not prodlot_check:
             # the windows must be updated to trigger tree colors - so no raise
             return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
