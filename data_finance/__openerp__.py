@@ -34,6 +34,7 @@
     ],
     "update_xml": [
         "data.xml",
+        "import_analytic_lines_view.xml",
     ],
     "demo_xml": [
     ],
