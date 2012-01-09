@@ -547,6 +547,7 @@ class purchase_order_line(osv.osv):
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
+        'origin': fields.char(size=64, string='Origin'),
     }
 
     def price_unit_change(self, cr, uid, ids, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context={}):
