@@ -2450,7 +2450,7 @@ class product_product(osv.osv):
         return result
     
     _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Production Lots',),
+                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Batch Numbers',),
                 }
     
 product_product()

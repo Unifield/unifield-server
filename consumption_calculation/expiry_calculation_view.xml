@@ -143,7 +143,7 @@
     	 	<field name="model">product.likely.expire.report.item</field>
     	 	<field name="type">form</field>
     	 	<field name="arch" type="xml">
-    	 		<form string="Lot likely to expire">
+    	 		<form string="Batch likely to expire">
     	 			<separator string="General information" colspan="4" />
     	 			<field name="name" string="Month" readonly="1" />
 				<field name="period_start" readonly="1" />

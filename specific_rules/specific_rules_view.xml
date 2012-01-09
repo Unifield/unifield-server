@@ -297,7 +297,7 @@
         </record>
         
         <record model="ir.ui.view" id="search_product_lot_filter">
-            <field name="name">Production Lots Filter</field>
+            <field name="name">Batch Numbers Filter</field>
             <field name="model">stock.production.lot</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="stock.search_product_lot_filter" />
