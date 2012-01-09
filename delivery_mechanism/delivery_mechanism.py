@@ -482,7 +482,7 @@ class stock_picking(osv.osv):
                 purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
             # correct the corresponding so
             for sale_id in sale_ids:
-                wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
+                wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
         
         return True
         
