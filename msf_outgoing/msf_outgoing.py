@@ -1415,20 +1415,26 @@ class stock_picking(osv.osv):
         seq_pool = self.pool.get('ir.sequence')
         seq_typ_pool = self.pool.get('ir.sequence.type')
         
-        assert vals, 'no vals dictionary'
-        assert 'name' in vals, 'Missing Name'
-        assert 'code' in vals, 'Missing Code'
-        assert 'prefix' in vals, 'Missing prefix'
-        assert 'padding' in vals, 'Missing padding'
+        default_name = 'Stock Picking'
+        default_code = 'stock.picking'
+        default_prefix = ''
+        default_padding = 0
+        
+        if vals is None:
+            vals = {}
 
-        name = vals['name']
+        name = vals.get('name', False)
         if not name:
-            name = 'default_name'
-        code = vals['code']
+            name = default_name
+        code = vals.get('code', False)
         if not code:
-            code = 'default_code'
-        prefix = vals['prefix']
-        padding = vals['padding']
+            code = default_code
+        prefix = vals.get('prefix', False)
+        if not prefix:
+            prefix = default_prefix
+        padding = vals.get('padding', False)
+        if not padding:
+            padding = default_padding
 
         types = {
             'name': name,
