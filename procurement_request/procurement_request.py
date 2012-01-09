@@ -207,13 +207,14 @@ class procurement_request(osv.osv):
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             self.log(cr, uid, request.id, message)
         
+        self.action_ship_create(cr, uid, ids, context=context)
+        
         return True
     
     def procurement_done(self, cr, uid, ids, context={}):
         '''
         Creates all procurement orders according to lines
         '''
-        self.action_ship_create(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'done'})
         
         return True

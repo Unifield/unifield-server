@@ -371,6 +371,7 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        
         result = result and not line.order_id.procurement_request
         return result
 

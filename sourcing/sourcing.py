@@ -500,6 +500,10 @@ class sale_order(osv.osv):
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
+
+        # If the line comes from a internal request and sourcing to stock, the system mustn't create procurement order.        
+#        if line.order_id.procurement_request and line.type == 'make_to_stock':
+#            return False
         
         return result
 
@@ -746,6 +750,18 @@ class procurement_order(osv.osv):
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
     }
+    
+    def action_check_finished(self, cr, uid, ids):
+        res = super(procurement_order, self).action_check_finished(cr, uid, ids)
+        
+        # If the procurement has been generated from an internal request, close the order
+        for order in self.browse(cr, uid, ids):
+            line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', order.id)])
+            for line in self.pool.get('sale.order.line').browse(cr, uid, line_ids):
+                if line.order_id.procurement_request:
+                    return True
+        
+        return res
 
     def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
