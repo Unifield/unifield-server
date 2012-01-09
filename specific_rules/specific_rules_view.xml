@@ -262,6 +262,10 @@
             <field name="inherit_id" ref="stock.view_production_lot_tree" />
             <field name="arch" type="xml">
                 <data>
+
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
             	
             		<field name="ref" position="replace">
             			<field name="type" />
@@ -326,6 +330,10 @@
             <field name="inherit_id" ref="stock.view_production_lot_form" />
             <field name="arch" type="xml">
             	<data>
+
+                    <xpath expr="/form/group/separator" position="replace">
+                        <separator string="Batch Number Identification" colspan="4"/>
+                    </xpath>
             		
             		<field name="stock_available" position="after">
             			<field name="stock_virtual" colspan="4" />
@@ -675,6 +683,30 @@
 	        	</data>
 	       	</field>
        	</record>
+
+        <record id="batch_view_production_lot_revision_form" model="ir.ui.view">
+            <field name="name">batch.view.production.lot.revision.form</field>
+            <field name="model">stock.production.lot.revision</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_production_lot_revision_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="attributes">
+                    <attribute name="string">Batch Number Revisions</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="batch_view_production_lot_revision_tree" model="ir.ui.view">
+            <field name="name">batch.view.production.lot.revision.form</field>
+            <field name="model">stock.production.lot.revision</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_production_lot_revision_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree" position="attributes">
+                    <attribute name="string">Batch Number Revisions</attribute>
+                </xpath>
+            </field>
+        </record>
 
 	</data>
 </openerp>

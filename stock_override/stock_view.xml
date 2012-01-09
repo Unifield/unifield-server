@@ -116,5 +116,17 @@
             </field>
         </record>
 
+        <record id="batch_view_inventory_tree" model="ir.ui.view">
+            <field name="name">batch.view.inventory.tree</field>
+            <field name="model">stock.inventory</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_inventory_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree" position="attributes">
+                    <attribute name="string">Batch inventory</attribute>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
