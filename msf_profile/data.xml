@@ -5,144 +5,15 @@
         <field name="date_format">%d/%m/%Y</field>
         <field name="time_format">%H:%M</field>
     </record>
-    <record id="stock.stock_location_company" model="stock.location">
-        <field name="name">MSF Coordination</field>
-        <field name="usage">view</field>
-        <field name="location_id" ref="stock.stock_location_locations"/>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_quarantine" model="stock.location">
-        <field name="name">Quarantine</field>
-        <field name="location_category">stock</field>
-        <field name="quarantine_location" eval="True" />
-         <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_service" model="stock.location">
-        <field name="name">Service</field>
-        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
-        <field name="location_category">other</field>
-        <field name="usage">view</field>
-        <field name="service_location">True</field>
-    </record>
-    <record id="stock_location_input" model="stock.location">
-        <field name="name">Input</field>
-        <field name="location_id" ref="stock.stock_location_company"/>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_medical" model="stock.location">
-        <field name="name">Medical Stock</field>
-        <field name="location_id" ref="stock.stock_location_stock"/>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_logistic" model="stock.location">
-        <field name="name">Logistic Stock</field>
-        <field name="location_id" ref="stock.stock_location_stock"/>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_cons_u1" model="stock.location">
-        <field name="name">Consumption Unit U1</field>
-        <field name="location_id" ref="stock_location_medical"/>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="msf_outgoing.stock_location_packing" model="stock.location">
-        <field name="name">Packing</field>
-        <field name="location_id" ref="stock.stock_location_output"/>
-        <field name="usage">internal</field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="msf_outgoing.stock_location_dispatch" model="stock.location">
-        <field name="name">Dispatch</field>
-        <field name="location_id" ref="stock.stock_location_output"/>
-        <field name="usage">internal</field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="msf_outgoing.stock_location_distribution" model="stock.location">
-        <field name="name">Distribution</field>
-        <field name="location_id" ref="stock.stock_location_output"/>
-        <field name="usage">internal</field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_eprep" model="stock.location">
-         <field name="name">Eprep</field>
-         <field name="location_id" ref="stock.stock_location_company"/>
-         <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_internal_suppliers" model="stock.location">
-        <field name="name">MSF Supplier</field>
-        <field name="location_id" ref="stock.stock_location_suppliers"/>
-        <field name="usage">supplier</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_project1" model="stock.location">
-        <field name="name">Project P1</field>
-        <field name="location_id" ref="stock.stock_location_customers"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_project2" model="stock.location">
-        <field name="name">Project P2</field>
-        <field name="location_id" ref="stock.stock_location_customers"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_project3" model="stock.location">
-        <field name="name">Project P3</field>
-        <field name="location_id" ref="stock.stock_location_customers"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock.stock_location_internal_cust" model="stock.location">
-        <field name="name">MSF Customer</field>
-        <field name="location_id" ref="stock.stock_location_customers"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_cons_u2" model="stock.location">
-        <field name="name">Consumption Unit U2</field>
-        <field name="location_id" ref="stock.stock_location_internal_cust"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock_location_cons_u3" model="stock.location">
-        <field name="name">Consumption Unit U3</field>
-        <field name="location_id" ref="stock.stock_location_internal_cust"/>
-        <field name="usage">customer</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock.location_inventory" model="stock.location">
-        <field name="name">Inventory</field>
-        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
-        <field name="usage">inventory</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock.stock_location_scrapped" model="stock.location">
-        <field name="name">Destruction</field>
-        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
-        <field name="scrap_location">True</field>
-        <field name="usage">inventory</field>
-        <field name="company_id"></field>
-        <field name="location_category">stock</field>
-    </record>
-    <record id="stock.warehouse0" model="stock.warehouse">
-        <field name="name">MSF Coordination C1</field>
-        <field name="lot_input_id" ref="stock_location_input"/>
-        <field name="lot_stock_id" ref="stock.stock_location_stock"/>
-        <field name="lot_output_id" ref="stock.stock_location_output"/>
-    </record>
+
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
     </record>
+
     <record id="uom_category_percentage" model="product.uom.categ">
         <field name="name">Percentage</field>
     </record>
+
     <record id="uom_percentage" model="product.uom">
         <field name="name">%</field>
         <field name="category_id" ref="uom_category_percentage" />

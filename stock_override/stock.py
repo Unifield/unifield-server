@@ -534,3 +534,66 @@ class stock_move(osv.osv):
         return result
 
 stock_move()
+
+class stock_location(osv.osv):
+    _name = 'stock.location'
+    _inherit = 'stock.location'
+
+    _columns = {
+        'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
+                                'Chained Location Type', required=True,
+                                help="Determines whether this location is chained to another location, i.e. any incoming product in this location \n" \
+                                     "should next go to the chained location. The chained location is determined according to the type :"\
+                                     "\n* None: No chaining at all"\
+                                     "\n* Customer: The chained location will be taken from the Customer Location field on the Partner form of the Partner that is specified in the Picking list of the incoming products." \
+                                     "\n* Fixed Location: The chained location is taken from the next field: Chained Location if Fixed." \
+                                     "\n* Nomenclature: The chained location is taken from the options field: Chained Location is according to the nomenclature level of product."\
+                                    ),
+        'chained_options_ids': fields.one2many('stock.location.chained.options', 'location_id', string='Chained options'),
+        'optional_loc': fields.boolean(string='Is an optional location ?'),
+    }
+
+    #####
+    # Chained location on nomenclature level
+    #####
+    def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
+        '''
+        Return the location according to nomenclature level
+        '''
+        location = kwargs['location']
+        product = kwargs['product']
+        result = kwargs['result']
+
+        if location.chained_location_type == 'nomenclature':
+            for opt in location.chained_options_ids:
+                if opt.nomen_id.id == product.nomen_manda_0.id:
+                    return opt.dest_location_id
+
+        return result
+
+
+    def on_change_location_type(self, cr, uid, ids, chained_location_type, context={}):
+        '''
+        If the location type is changed to 'Nomenclature', set some other fields values
+        '''
+        if chained_location_type and chained_location_type == 'nomenclature':
+            return {'value': {'chained_auto_packing': 'transparent',
+                              'chained_picking_type': 'internal',
+                              'chained_delay': 0}}
+
+        return {}
+
+
+stock_location()
+
+class stock_location_chained_options(osv.osv):
+    _name = 'stock.location.chained.options'
+    _rec_name = 'location_id'
+    
+    _columns = {
+        'dest_location_id': fields.many2one('stock.location', string='Destination Location', required=True),
+        'nomen_id': fields.many2one('product.nomenclature', string='Nomenclature Level', required=True),
+        'location_id': fields.many2one('stock.location', string='Location', required=True),
+    }
+
+stock_location_chained_options()

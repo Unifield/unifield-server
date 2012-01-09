@@ -1786,7 +1786,7 @@ class stock_picking(osv.osv):
                     rts = datetime.strptime(obj.sale_id.ready_to_ship_date, db_date_format)
                     rts = rts + relativedelta(days=shipment_lt or 0)
                     rts = rts.strftime(db_date_format)
-                    vals.update({'date': rts, 'date_expected': rts})
+                    vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
             # trigger workflow
             self.draft_force_assign(cr, uid, [obj.id])

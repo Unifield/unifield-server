@@ -20,28 +20,31 @@
 ##############################################################################
 
 {
-    "name" : "Stock override",
+    "name" : "MSF Locations configuration",
     "version" : "1.0",
-    "author" : "MSF",
+    "author" : "TeMPO Consulting/MSF",
     "description" : """
-    Add hook to stock class and wizard
+    Allow users with specific rights to configure
+    optionnal stock locations
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["stock", "reason_types_moves"],
-    "category" : "Generic Modules/Inventory Control",
-    "init_xml" : [],
-    "demo_xml" : [],
+    "category" : "Generic Modules/Warehouse",
+    "depends" : [
+        'stock',
+        'product_nomenclature',
+        'msf_outgoing',
+        'stock_override',
+    ],
+    "init_xml" : [
+    ],
     "update_xml" : [
-        "stock_view.xml",
-        "stock_workflow.xml",
-        "report/report_stock_move_view.xml",
-        "procurement_view.xml",
-        "destruction_report.xml",
-        "report/report_destruction_location_view.xml",
-        "wizard/stock_analyze_view_view.xml",
-        "security/ir.model.access.csv",
-        ],
-    'test': ['test/chained_nomen_loc.yml'],
+        'stock_configuration_view.xml',
+        'msf_location_data.xml',
+    ],
+    "demo_xml" : [
+    ],
+    'test': [
+    ],
     'installable': True,
     'active': False,
 }
