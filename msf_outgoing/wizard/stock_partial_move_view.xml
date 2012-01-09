@@ -7,7 +7,7 @@
             <field name="model">stock.move.memory.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" string="Product Moves" colors="red:integrity_status not in ('ok');">
+                <tree editable="bottom" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" />
                     <field name="quantity" />
@@ -28,7 +28,7 @@
            			<field name="ssl_check" />
            			<field name="dg_check" />
            			<field name="np_check" />
-					<field name="integrity_status" invisible="True" />
+					<field name="integrity_status" invisible="False" />
                 </tree>
             </field>
         </record>
