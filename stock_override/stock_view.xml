@@ -218,5 +218,93 @@
             </field>
         </record>        
 
+        <record id="view_split_in_lots" model="ir.ui.view">
+            <field name="name">view.split.in.lots</field>
+            <field name="model">stock.move.split</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_split_in_lots" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='use_exist']" position="attributes">
+                        <attribute name="string">Ues existing batches</attribute>
+                    </xpath>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="string">Split in batches</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/tree" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/tree/field[@name='name']" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/form" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/form/field[@name='name']" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/tree" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/tree/field[@name='prodlot_id']" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/form" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/form/field[@name='prodlot_id']" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_split_in_lots_inherit" model="ir.ui.view">
+            <field name="name">Split Inventory Line</field>
+            <field name="model">stock.inventory.line.split</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_split_in_lots_inherit" />
+            <field name="arch" type="xml">
+                <data>
+
+                    <xpath expr="/form//field[@name='use_exist']" position="attributes">
+                        <attribute name="string">Ues existing batches</attribute>
+                    </xpath>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="string">Split in batches</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/tree" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/tree/field[@name='name']" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/form" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_ids']/form/field[@name='name']" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/tree" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/tree/field[@name='prodlot_id']" position="attributes">
+                        <attribute name="string">Batch numbers</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/form" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='line_exist_ids']/form/field[@name='prodlot_id']" position="attributes">
+                        <attribute name="string">Batch number</attribute>
+                    </xpath>
+
+                </data>
+            </field>
+        </record>
+
+        <record id="stock.track_line" model="ir.actions.act_window">
+            <field name="name">Split in batches</field>
+        </record>
+
     </data>
 </openerp>
