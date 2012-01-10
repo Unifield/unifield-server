@@ -45,7 +45,7 @@ class procurement_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PRO: set from yml test to True')
             vals['from_yml_test'] = True
         return super(procurement_order, self).create(cr, uid, vals, context=context)
