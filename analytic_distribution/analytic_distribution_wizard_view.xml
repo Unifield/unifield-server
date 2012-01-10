@@ -80,7 +80,7 @@
                         <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
-                        <separator colspan="4" string="Funding Pool"/>
+                        <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
                         <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
