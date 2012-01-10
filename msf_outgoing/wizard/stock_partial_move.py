@@ -50,10 +50,40 @@ class stock_partial_move_memory_out(osv.osv_memory):
         # and class name, to know which type of moves
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
     
-    _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
-              }
+    def change_product(self, cr, uid, ids, context=None):
+        '''
+        open the change product wizard, the user can select the new product
+        '''
+        # we need the context for the wizard switch
+        assert context, 'no context defined'
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        wiz_obj = self.pool.get('wizard')
+        # data - no step needed for present split wizard
+        name = _("Change Product of Selected Stock Move")
+        model = 'change.product.memory.move'
+        # we need to get the memory move id to know which line to split
+        # and class name, to know which type of moves
+        data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
+        product_id = data['product_id']
+        uom_id = data['product_uom']
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
+                                   type='create', context=dict(context,
+                                                               memory_move_ids=ids,
+                                                               class_name=self._name,
+                                                               product_id=product_id,
+                                                               uom_id=uom_id))
     
-    _defaults = {'integrity_status': 'empty'}
+    _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+              'force_complete' : fields.boolean(string='Force'),
+              'line_number': fields.integer(string='Line'),
+              'change_reason': fields.char(string='Change Reason', size=1024),
+              }
+    _defaults = {'integrity_status': 'empty',
+                 'force_complete': False,
+                 }
+    _order = 'line_number asc'
 
 stock_partial_move_memory_out()
 
