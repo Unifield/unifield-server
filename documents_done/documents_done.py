@@ -188,11 +188,11 @@ class documents_done_wizard(osv.osv):
         for doc in self.browse(cr, uid, ids, context=context):
             order = self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context)
             if doc.real_model == 'sale.order':
-                res[doc.id] = self._get_problem_sale_order(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_sale_order(cr, uid, order, context=c) and True or False
             elif doc.real_model == 'purchase.order':
-                res[doc.id] = self._get_problem_purchase_order(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_purchase_order(cr, uid, order, context=c) and True or False
             elif doc.real_model == 'tender':
-                res[doc.id] = self._get_problem_tender(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_tender(cr, uid, order, context=c) and True or False
             else:
                 res[doc.id] = False
 
@@ -270,6 +270,10 @@ class documents_done_wizard(osv.osv):
         proc_obj = self.pool.get('procurement.order')
 
         for wiz in self.browse(cr, uid, ids, context=context):
+
+            if not wiz.problem:
+                return self.cancel_line(cr, uid, [wiz.id], context=context)
+
             pick_ids = []
             order = False
             move_ids = []
