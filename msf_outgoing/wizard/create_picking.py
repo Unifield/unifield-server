@@ -387,46 +387,24 @@ class create_picking(osv.osv_memory):
                         for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
                             partial.update(family)
                             
-    def set_integrity_status(self, cr, uid, ids, status='empty', context=None):
+    def set_integrity_status(self, cr, uid, ids, field_name, status='empty', context=None):
         '''
         for all moves set the status to ok (default value) or other if specified
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
-            for memory_move in wiz.product_moves_picking:
+            for memory_move in getattr(wiz, field_name):
                 memory_move.write({'integrity_status': status,}, context=context)
                 
-    def set_integrity_status_for_empty_moves(self, cr, uid, ids, status='empty_picking', context=None):
+    def set_integrity_status_for_empty_moves(self, cr, uid, ids, field_name, status='empty_picking', context=None):
         '''
         for all moves set the status to empty_picking if move qty is 0
+        
+        deprecated - not used, by default the validation is empty not ok
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
-            for memory_move in wiz.product_moves_picking:
+            for memory_move in getattr(wiz, field_name):
                 if not memory_move.quantity:
                     memory_move.write({'integrity_status': status,}, context=context)
-                
-#    def _check_batch_management(self, cr, uid, ids, context=None):
-#        """
-#        check for batch management
-#        @return: True or False
-#        """
-#        for move in self.browse(cr, uid, ids, context=context):
-#            if move.state == 'done':
-#                if move.product_id.batch_management:
-#                    if not move.prodlot_id:
-#                        return False
-#        return True
-#    
-#    def _check_perishable(self, cr, uid, ids, context=None):
-#        """
-#        check for perishable
-#        @return: True or False
-#        """
-#        for move in self.browse(cr, uid, ids, context=context):
-#            if move.state == 'done':
-#                if move.product_id.perishable:
-#                    if not move.prodlot_id:
-#                        return False
-#        return True
                             
     def integrity_check_create_picking(self, cr, uid, ids, data, context=None):
         '''
@@ -437,8 +415,6 @@ class create_picking(osv.osv_memory):
         return True/Fals
         '''
         memory_move_obj = self.pool.get('stock.move.memory.picking')
-        # reset the integrity status of all lines
-        self.set_integrity_status(cr, uid, ids, context=context)
         # validate the data
         for picking_data in data.values():
             # total sum not including negative values
@@ -455,9 +431,6 @@ class create_picking(osv.osv_memory):
                         memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
                     else:
                         sum_qty += list_data.get('product_qty', False)
-            # if no quantity and no negative values, we flag the 0 qty selected
-            if not sum_qty and not negative_value:
-                self.set_integrity_status_for_empty_moves(cr, uid, ids, context=context)
             # if error, return False
             if not sum_qty or negative_value:
                 return False
@@ -482,8 +455,6 @@ class create_picking(osv.osv_memory):
         lot_not_needed = False
         # wrong production lot type
         wrong_lot_type = False
-        # reset the integrity status of all lines
-        self.set_integrity_status(cr, uid, ids, context=context)
         # validate the data
         for picking_data in data.values():
             for move_data in picking_data.values():
@@ -533,6 +504,8 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_picking'
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
@@ -555,6 +528,8 @@ class create_picking(osv.osv_memory):
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    })
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
         quantity_check = self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context)
         # prodlot - in separate method because is not checked at picking ticket creation
@@ -608,6 +583,8 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_picking'
         
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
@@ -630,6 +607,8 @@ class create_picking(osv.osv_memory):
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'asset_id': move.asset_id.id,
                                                                                })
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
         quantity_check = self.integrity_check_create_picking(cr, uid, ids, partial_datas, context=context)
         # prodlot - in separate method because is not checked at picking ticket creation
@@ -651,6 +630,35 @@ class create_picking(osv.osv_memory):
         
         return False
     
+    def integrity_check_return_products(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on create picking data
+        - no negative values (<0)
+        - at least one positive one (>0)
+        
+        return True/Fals
+        '''
+        memory_move_obj = self.pool.get('stock.move.memory.returnproducts')
+        # validate the data
+        for picking_data in data.values():
+            # total sum not including negative values
+            sum_qty = 0
+            # flag to detect negative values
+            negative_value = False
+            for move_data in picking_data.values():
+                # quantity check
+                if move_data.get('qty_to_return', False) < 0.0:
+                    # a negative value has been selected, update the memory line
+                    # update the new value for integrity check with 'negative' value (selection field)
+                    negative_value = True
+                    memory_move_obj.write(cr, uid, [move_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
+                else:
+                    sum_qty += move_data.get('qty_to_return', False)
+            # if error, return False
+            if not sum_qty or negative_value:
+                return False
+        return True
+    
     def do_return_products(self, cr, uid, ids, context=None):
         '''
         process data and call do_return_products from stock picking
@@ -667,6 +675,8 @@ class create_picking(osv.osv_memory):
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         partial_datas = {}
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_returnproducts'
         
         # picking ids
         picking_ids = context['active_ids']
@@ -678,17 +688,22 @@ class create_picking(osv.osv_memory):
             # organize data according to move id
             for move in memory_moves_list:
                 if move.qty_to_return:
-                    partial_datas[pick.id][move.move_id.id] = {'product_id': move.product_id.id,
-                                                               'asset_id': move.asset_id.id,
+                    partial_datas[pick.id][move.move_id.id] = {'memory_move_id': move.id,
+                                                               'product_id': move.product_id.id,
                                                                'product_qty': move.quantity,
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
+                                                               'asset_id': move.asset_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
                     
-        # integrity check on wizard data
-        if not self.integrity_check(cr, uid, ids, partial_datas, context=context):
-            raise osv.except_osv(_('Warning !'), _('You must select something to return!'))
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - quantities -> no prodlot check as the screen is readonly
+        quantity_check = self.integrity_check_return_products(cr, uid, ids, partial_datas, context=context)
+        if not quantity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         
         return pick_obj.do_return_products(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
         

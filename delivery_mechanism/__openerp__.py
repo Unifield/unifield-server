@@ -30,6 +30,7 @@
                 "purchase_override",
                 "sale_override",
                 "product_asset", # because of asset_id
+                "msf_outgoing",
                 ],
     "author": "MSF",
     "website": "",

@@ -42,7 +42,6 @@
                  "reason_types_moves",
                  "specific_rules",
                  "msf_order_date",
-                 "delivery_mechanism",
                  ],
     'update_xml': [
         'data/msf_outgoing_data.xml',
