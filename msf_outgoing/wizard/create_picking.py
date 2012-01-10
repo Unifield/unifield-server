@@ -334,7 +334,7 @@ class create_picking(osv.osv_memory):
                 partial_datas_ppl1[pick.id] \
                     .setdefault(move.from_pack, {}) \
                     .setdefault(move.to_pack, {}) \
-                    .setdefault(move.move_id.id, []).append({
+                    .setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                              'product_id': move.product_id.id,
                                                              'product_qty': move.quantity,
                                                              'product_uom': move.product_uom.id,
@@ -481,9 +481,12 @@ class create_picking(osv.osv_memory):
                     # only mandatory at validation stage
                     elif validate:
                         # no production lot defined, corresponding checks
-                        if prod.perishable or prod.batch_management:
+                        if prod.batch_management:
                             missing_lot = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_lot',}, context=context)
+                        elif prod.perishable:
+                            missing_lot = True
+                            memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_date',}, context=context)
         
         # if error, return False
         if missing_lot or lot_not_needed or wrong_lot_type:
@@ -704,8 +707,81 @@ class create_picking(osv.osv_memory):
         if not quantity_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
-        
         return pick_obj.do_return_products(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
+        
+    def integrity_check_sequences(self, cr, uid, ids, data, context=None):
+        '''
+        integrity check on ppl1 data for sequence validation
+        - first from value must be 1
+        - sequence can share the exact same from/to value
+        - the numbering  must be a monotonically increasing function
+        - the must be no gap within sequence
+        
+        return True/False
+        
+        {145: {1: {1: {
+        417: [{'memory_move_id': 1, 'asset_id': False, 'from_pack': 1, 'prodlot_id': 28, 'qty_per_pack': 10.0,'product_id': 68, 'product_uom': 1, 'product_qty': 10.0, 'to_pack': 1, 'move_id': 417}],
+        418: [{'memory_move_id': 2, 'asset_id': False, 'from_pack': 1, 'prodlot_id': 30, 'qty_per_pack': 20.0, 'product_id': 69, 'product_uom': 1, 'product_qty': 20.0, 'to_pack': 1, 'move_id': 418}]
+        }}}}
+        '''
+        memory_move_obj = self.pool.get('stock.move.memory.ppl')
+        # validate the data
+        for picking_data in data.values():
+            # list of sequences for each picking
+            sequences = []
+            # flag for detecting missing 1 initial from
+            missing_1 = False
+            # flag for detecting to value smaller than from value
+            to_samller_than_from = False
+            # flag for detecting overlapping sequences
+            overlap = False
+            # flag for detecting gap
+            gap = False
+            # gather the sequences
+            for from_data in picking_data.values():
+                for to_data in from_data.values():
+                    for move_data in to_data.values():
+                        for data in move_data:
+                            # we have to treat all partial (split) data for each move as many sequence can exists for the same move
+                            # [0]: FROM PACK / [1]: TO PACK / [2]: MEMORY MOVE ID
+                            sequences.append((data['from_pack'], data['to_pack'], data['memory_move_id']))
+            # if no data, we return False
+            if not sequences:
+                return False
+            # sort the sequences according to from value
+            sequences = sorted(sequences, key=lambda seq: seq[0])
+
+            # rule #1, the first from value must be equal to 1
+            if sequences[0][0] != 1:
+                missing_1 = True
+                memory_move_obj.write(cr, uid, [sequences[0][2]], {'integrity_status': 'missing_1',}, context=context)
+            # go through the list of sequences applying the rules
+            for i in range(len(sequences)):
+                seq = sequences[i]
+                # rules 2-3 applies from second element
+                if i > 0:
+                    # previsous sequence
+                    seqb = sequences[i-1]
+                    # rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+                    if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
+                        overlap = True
+                        memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'overlap',}, context=context)
+                    # rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1]+1):
+                        if seq[0] < seqb[1]+1:
+                            overlap = True
+                            memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'overlap',}, context=context)
+                        if seq[0] > seqb[1]+1:
+                            gap = True
+                            memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'gap',}, context=context)
+                # rule #4: to[i] >= from[i]
+                if not (seq[1] >= seq[0]):
+                    to_samller_than_from = True
+                    memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'to_smallaer_than_from',}, context=context)
+            # if error, return False
+            if missing_1 or to_samller_than_from or overlap or gap:
+                return False
+        return True
         
     def do_ppl1(self, cr, uid, ids, context=None):
         '''
@@ -715,12 +791,22 @@ class create_picking(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
-        
+        # objects
         pick_obj = self.pool.get('stock.picking')
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_ppl'
+        
         # picking ids
         picking_ids = context['active_ids']
         # generate data structure
         partial_datas_ppl1 = self.generate_data_from_partial(cr, uid, ids, context=context)
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
+        sequence_check = self.integrity_check_sequences(cr, uid, ids, partial_datas_ppl1, context=context)
+        if not sequence_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_ppl1(cr, uid, picking_ids, context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
     
@@ -768,12 +854,15 @@ class create_picking(osv.osv_memory):
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
         
         pick_obj = self.pool.get('stock.picking')
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_families'
         # picking ids
         picking_ids = context['active_ids']
         # update data structure
         self.update_data_from_partial(cr, uid, ids, context=context)
         # integrity check on wizard data
         partial_datas_ppl1 = context['partial_datas_ppl1']
+        
         if not self.integrity_check_weight(cr, uid, ids, partial_datas_ppl1, context=context):
             raise osv.except_osv(_('Warning !'), _('You must specify a weight for each pack family!'))
         # call stock_picking method which returns action call

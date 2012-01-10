@@ -22,12 +22,20 @@
 INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('ok', 'Ok'),
                               ('negative', 'Negative Value'),
-                              ('missing_lot', 'Production Lot/Expiry Date is Missing'),
+                              ('missing_lot', 'Production Lot is Missing'),
+                              ('missing_date', 'Expiry Date is Missing'),
                               ('no_lot_needed', 'No Production Lot/Expiry Date Needed'),
                               ('wrong_lot_type', 'Wrong Production Lot Type'),
                               ('wrong_lot_type_need_internal', 'Need Expiry Date (Internal) not Production Lot (Standard)'),
                               ('wrong_lot_type_need_standard', 'Need Production Lot (Standard) not Expiry Date (Internal)'),
                               ('empty_picking', 'Empty Picking Ticket'),
+                              # ppl1
+                              ('missing_1', 'The first sequence must start with 1'),
+                              ('to_smallaer_than_from', 'To value must be greater or equal to From value'),
+                              ('overlap', 'The sequence overlaps previous one'),
+                              ('gap', 'A gap exist in the sequence'),
+                              # ppl2
+                              ('missing_weight', 'Weight is Missing'),
                               ]
 
 import msf_outgoing

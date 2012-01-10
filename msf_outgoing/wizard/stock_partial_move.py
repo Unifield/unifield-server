@@ -171,33 +171,18 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             vals.update(to_pack=1)
             
         return super(stock_partial_move_memory_ppl, self).create(cr, uid, vals, context)
-        
     
-    def _check_qty_per_pack(self, cr, uid, ids, context=None):
-        """ Checks if qty_per_pack is assigned to memory move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if not move.qty_per_pack:
-                return False
-        return True
-    
-    def _check_from_pack(self, cr, uid, ids, context=None):
+    def _check_from_to_pack(self, cr, uid, ids, context=None):
         """ Checks if from_pack is assigned to memory move or not.
         @return: True or False
         """
         for move in self.browse(cr, uid, ids, context=context):
             if not move.from_pack:
-                return False
-        return True
-    
-    def _check_to_pack(self, cr, uid, ids, context=None):
-        """ Checks if to_pack is assigned to memory move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive "from pack" value.'))
             if not move.to_pack:
-                return False
+                raise osv.except_osv(_('Warning !'), _('You must assign a positive "to pack" value.'))
+            if move.to_pack < move.from_pack:
+                raise osv.except_osv(_('Warning !'), _('"to pack" value must be greater or equal to "from pack" value.'))
         return True
     
     # existence integrity
@@ -205,16 +190,10 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
     # want to wait until the end of ppl2 and stock.move update to validate
     # the data of this wizard. this is possible because we set default values
     # for qty_per_pack, from_pack and to_pack different from 0
-    _constraints = [
-        (_check_qty_per_pack,
-            'You must assign a positive "quantity per pack" value',
-            ['qty_per_pack']),
-        (_check_from_pack,
-            'You must assign a positive "from pack" value',
-            ['from_pack']),
-        (_check_to_pack,
-            'You must assign a positive "to pack" value',
-            ['to_pack']),]
+    _constraints = [(_check_from_to_pack,
+                     'You must assign a positive "from/to pack" value',
+                     ['']),
+                    ]
 
 stock_partial_move_memory_ppl()
 
