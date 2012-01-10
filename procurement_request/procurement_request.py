@@ -106,7 +106,7 @@ class procurement_request(osv.osv):
         'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
-        'warehouse_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'warehouse0')[0],
+        'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
     }
 
     def create(self, cr, uid, vals, context={}):
