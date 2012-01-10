@@ -397,6 +397,11 @@
             <field name="name">Stock initialisation</field>
         </record>
 
+        <!--model: stock.inventory, id: 2-->
+        <record model="stock.inventory" id="stock_inventory_stock_initialisation_2_2">
+            <field name="name">Stock initialisation 2</field>
+        </record>
+
         <!--model: stock.inventory.line, id: 1-->
         <record model="stock.inventory.line" id="stock_inventory_line_1_1">
             <field name="type_check">in</field>
@@ -407,6 +412,7 @@
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJCHLO1V-'), ('name', '=', 'CHLORAMPHENICOL, 1 g powder, vial')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prod_lot_id" ref="stock_production_lot_lot0005_5"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_medical"/>
         </record>
@@ -421,6 +427,7 @@
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prod_lot_id" ref="stock_production_lot_lot0004_4"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_medical"/>
         </record>
@@ -435,6 +442,7 @@
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prod_lot_id" ref="stock_production_lot_lot0003_3"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_medical"/>
         </record>
@@ -449,6 +457,7 @@
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prod_lot_id" ref="stock_production_lot_lot0002_2"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_medical"/>
         </record>
@@ -463,13 +472,9 @@
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prod_lot_id" ref="stock_production_lot_lot0001_1"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_medical"/>
-        </record>
-
-        <!--model: stock.inventory, id: 2-->
-        <record model="stock.inventory" id="stock_inventory_stock_initialisation_2_2">
-            <field name="name">Stock initialisation 2</field>
         </record>
 
         <!--model: stock.inventory.line, id: 6-->
@@ -480,6 +485,7 @@
             <field name="product_qty">5.0</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL1S-'), ('name', '=', '(computer) CABLE, SERIAL interface for two PC (fem/fem)')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_logistic"/>
         </record>
@@ -492,6 +498,7 @@
             <field name="product_qty">10.0</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL2S-'), ('name', '=', '(computer) CABLE, SERIAL interface PC/Mini-M, female/male')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_logistic"/>
         </record>
@@ -504,6 +511,7 @@
             <field name="product_qty">3.0</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCART02-'), ('name', '=', '(printer Laserwriter ) CARTRIDGE INKING')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_logistic"/>
         </record>
@@ -516,6 +524,7 @@
             <field name="product_qty">7.0</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ALIFVEST3LL'), ('name', '=', 'VEST, polyester/cotton, polyester lined, size L')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_logistic"/>
         </record>
@@ -528,6 +537,7 @@
             <field name="product_qty">20.0</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CWATBEAK1P-'), ('name', '=', 'BEAKER, plastic, 1 litre, graduated')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
             <field name="location_id" ref="msf_profile.stock_location_logistic"/>
         </record>
