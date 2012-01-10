@@ -30,7 +30,7 @@
     "init_xml": [
     ],
     "depends" : [
-        "purchase_override", "sale_override", "specific_rules", "order_nomenclature", "specific_locations",
+        "purchase_override", "sale_override",
     ],
     "update_xml": [
         "data.xml",
