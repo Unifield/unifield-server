@@ -501,11 +501,21 @@ class sale_order(osv.osv):
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
 
-        # If the line comes from a internal request and sourcing to stock, the system mustn't create procurement order.        
-#        if line.order_id.procurement_request and line.type == 'make_to_stock':
-#            return False
-        
         return result
+
+    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to customize the execution condition
+        '''
+        line = kwargs['line']
+        
+        if line.type == 'make_to_stock' and line.order_id.procurement_request:
+            return False
+
+        return True
 
 sale_order()
 
