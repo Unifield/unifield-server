@@ -628,5 +628,18 @@
             <field name="location_id" ref="msf_profile.stock_location_internal_suppliers"/>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
         </record>
+
+        <function model="stock.inventory" name="action_confirm">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_1'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_done">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_1'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_confirm">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_2_2'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_done">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_2_2'))]]"/>
+        </function>
     </data>
 </openerp>
