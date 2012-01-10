@@ -31,7 +31,7 @@
             <field model="product.product" name="product_id" search="[]"/>
             <field model="product.uom" name="product_uom" search="[]"/>
             <field name="price_unit">150</field>
-            <field name="product_qty">5</field>
+            <field name="product_qty" eval="5" />
         </record>
 
         <record id="line2_purchase" model="purchase.order.line">
@@ -41,7 +41,7 @@
             <field name="product_id" ref="product.product_product_pc1"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="price_unit">450</field>
-            <field name="product_qty">2</field>
+            <field name="product_qty" eval="2" />
         </record>
 
         <record id="line3_purchase" model="purchase.order.line">
@@ -51,7 +51,7 @@
             <field name="product_id" ref="product.product_product_pc3"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="price_unit">900</field>
-            <field name="product_qty">1</field>
+            <field name="product_qty" eval="1" />
         </record>
 
         <workflow action="purchase_confirm" model="purchase.order" ref="order_purchase2"/>
