@@ -20,7 +20,7 @@
 
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta, relativedelta
-from order_types import ORDER_PRIORITY, SALE_ORDER_CATEGORY
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
@@ -92,7 +92,7 @@ class tender(osv.osv):
                 'company_id': fields.many2one('res.company','Company',required=True, states={'draft':[('readonly',False)]}, readonly=True),
                 'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
                 'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft':[('readonly',False)],}, readonly=True,),
-                'categ': fields.selection(SALE_ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
+                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creation_date': fields.date(string="Creation Date", readonly=True),

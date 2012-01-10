@@ -29,11 +29,6 @@ ORDER_CATEGORY = [('medical', 'Medical'),
                   ('transport', 'Transport'),
                   ('other', 'Other')]
 
-SALE_ORDER_CATEGORY = [('medical', 'Medical'), 
-                       ('log', 'Logistic'),
-                       ('service', 'Service'),
-                       ('other', 'Other')]
-
 import stock
 import report
 import wizard
