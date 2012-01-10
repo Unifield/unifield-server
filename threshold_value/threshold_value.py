@@ -97,7 +97,7 @@ class threshold_value(osv.osv):
             
             # If the user hasn't fill manually the qty to order value, compute them
             if not qty_order_manual_ok:
-                qty_order = amc * (lead_time + safety_month + frequency) - product.real_available + product.incoming_qty - product.outgoing_qty
+                qty_order = amc * (lead_time + safety_month + frequency) - product.qty_available + product.incoming_qty - product.outgoing_qty
                 qty_order = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_order, product.uom_id.id)
                 
                 v.update({'qty_to_order': qty_order})
