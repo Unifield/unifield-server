@@ -30,6 +30,7 @@ import pooler
 import time
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
@@ -178,6 +179,21 @@ class sourcing_line(osv.osv):
 
         return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
 
+    def _search_sale_order_state(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        newargs = []
+
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+            if arg[2] == 'progress':
+                newargs.append(('sale_order_state', 'in', ['progress', 'manual']))
+            else:
+                newargs.append(('sale_order_state', arg[1], arg[2]))
+        return newargs
+
     _columns = {
         # sequence number
         'name': fields.char('Name', size=128),
@@ -191,6 +207,7 @@ class sourcing_line(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
         'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        'sale_order_state_search': fields.function(_get_fake, string="Order State", type='selection', method=True, selection=[x for x in SALE_ORDER_STATE_SELECTION if x[0] != 'manual'], fnct_search=_search_sale_order_state),
         'line_number': fields.integer(string='Line', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
