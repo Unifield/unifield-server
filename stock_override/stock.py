@@ -128,7 +128,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
             vals['from_yml_test'] = True
         return super(stock_picking, self).create(cr, uid, vals, context=context)
