@@ -33,11 +33,13 @@ from openobject.i18n.format import DT_SERVER_FORMATS
 from openobject.tools import url, expose
 
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, cache, icons, common, TinyDict
+from openerp.utils import rpc, cache, icons, common, TinyDict, expr_eval
 from openerp.widgets import tree_view
+from babel import numbers
 
 FORMATTERS = {
-    'integer': lambda value, _i: str(value),
+    'integer': lambda value, _i: '%s' % int(value),
+    'integer_finance': lambda value, _i: numbers.format_number(int(value), locale='en_US'),
     'float': lambda value, _i: '%.02f' % (value),
     'date': lambda value, _i: time.strftime('%x', time.strptime(value, DT_SERVER_FORMATS['date'])),
     'datetime': lambda value, _i: time.strftime('%x', time.strptime(value, DT_SERVER_FORMATS['datetime'])),
@@ -131,7 +133,7 @@ class Tree(SecuredController):
 
     @expose('json')
     def data(self, ids, model, fields, field_parent=None, icon_name=None,
-             domain=[], context={}, sort_by=None, sort_order="asc", fields_info=None):
+             domain=[], context={}, sort_by=None, sort_order="asc", fields_info=None, colors={}):
         
         if ids == 'None' or ids == '':
             ids = []
@@ -150,6 +152,9 @@ class Tree(SecuredController):
         if isinstance(context, basestring):
             context = eval(context)
         
+        if isinstance(colors, basestring):
+            colors = eval(colors)
+            
         if isinstance(fields_info, basestring):
             fields_info = simplejson.loads(fields_info)
 
@@ -173,9 +178,21 @@ class Tree(SecuredController):
             fields_info_type = simplejson.loads(fields_info[sort_by])
             result.sort(lambda a,b: self.sort_callback(a, b, sort_by, sort_order, type=fields_info_type['type']))
 
+        for item in result:
+            if colors:
+                for color, expr in colors.items():
+                    try:
+                        if expr_eval(expr,item or False):
+                            item['color'] = color
+                            break
+                    except:
+                            pass
+
         # format the data
         for field in fields:
             field_info = simplejson.loads(fields_info[field])
+            if field_info.get('widget',''):
+                field_info['type'] = field_info['widget']
             formatter = FORMATTERS.get(field_info['type'])
             for x in result:
                 if x[field] and formatter:
