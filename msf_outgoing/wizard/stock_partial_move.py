@@ -146,6 +146,12 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
                     
         return result
     
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
+    
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 # functions
@@ -215,7 +221,17 @@ class stock_partial_move_memory_families(osv.osv_memory):
         'height' : fields.float(digits=(16,2), string='Height [cm]'),
         'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
         'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
+        'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
     }
+    
+    _defaults = {'integrity_status': 'empty',
+                 }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        unlink of moves from first ppl screen is forbidden
+        '''
+        raise osv.except_osv(_('Warning !'), _('You must specify packing policy for all moves.'))
     
 stock_partial_move_memory_families()
 

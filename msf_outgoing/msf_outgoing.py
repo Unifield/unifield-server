@@ -1698,10 +1698,14 @@ class stock_picking(osv.osv):
                 assert len(shipment_ids) in (0, 1), 'Only one draft shipment should be available for a given address at a time - %s'%len(shipment_ids)
                 # get rts of corresponding sale order
                 sale_id = self.read(cr, uid, [new_packing_id], ['sale_id'], context=context)
-                sale_id = sale_id[0]['sale_id'][0]
-                # today
-                today = time.strftime(db_datetime_format)
-                rts = self.pool.get('sale.order').read(cr, uid, [sale_id], ['ready_to_ship_date'], context=context)[0]['ready_to_ship_date']
+                sale_id = sale_id[0]['sale_id']
+                if sale_id:
+                    sale_id = sale_id[0]
+                    # today
+                    today = time.strftime(db_datetime_format)
+                    rts = self.pool.get('sale.order').read(cr, uid, [sale_id], ['ready_to_ship_date'], context=context)[0]['ready_to_ship_date']
+                else:
+                    rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
                 shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
                 rts_obj = datetime.strptime(rts, db_date_format)

@@ -382,7 +382,7 @@ class create_picking(osv.osv_memory):
                     assert len(family_ids) == 1, 'No the good number of families : %i'%len(family_ids)
                     family = family_obj.read(cr, uid, family_ids, ['pack_type', 'length', 'width', 'height', 'weight'], context=context)[0]
                     # remove id key
-                    family.pop('id')
+                    family['memory_move_id'] = family.pop('id')
                     for move in partial_datas_ppl1[picking_id][from_pack][to_pack]:
                         for partial in partial_datas_ppl1[picking_id][from_pack][to_pack][move]:
                             partial.update(family)
@@ -800,6 +800,7 @@ class create_picking(osv.osv_memory):
         picking_ids = context['active_ids']
         # generate data structure
         partial_datas_ppl1 = self.generate_data_from_partial(cr, uid, ids, context=context)
+        
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
@@ -807,6 +808,7 @@ class create_picking(osv.osv_memory):
         if not sequence_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+        
         # call stock_picking method which returns action call
         return pick_obj.do_ppl1(cr, uid, picking_ids, context=dict(context, partial_datas_ppl1=partial_datas_ppl1))
     
@@ -824,14 +826,20 @@ class create_picking(osv.osv_memory):
     
     def integrity_check_weight(self, cr, uid, ids, data, context=None):
         '''
-        integrity check on ppl2 data for weight
+        integrity check on ppl2 data for weight validation
+        - weight must exist if not quick flow type
+        return True/False
         
-        dict: {189L: {1: {1: {439: [{'asset_id': False, 'weight': False, 'product_id': 246, 'product_uom': 1, 
-            'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 
-            'qty_per_pack': 1.0, 'product_qty': 1.0, 'width': False, 'move_id': 439}]}}}}
+        {145: {1: {1: {
+        417: [{'memory_move_id': 1, 'asset_id': False, 'from_pack': 1, 'prodlot_id': 28, 'qty_per_pack': 10.0,'product_id': 68, 'product_uom': 1, 'product_qty': 10.0, 'to_pack': 1, 'move_id': 417}],
+        418: [{'memory_move_id': 2, 'asset_id': False, 'from_pack': 1, 'prodlot_id': 30, 'qty_per_pack': 20.0, 'product_id': 69, 'product_uom': 1, 'product_qty': 20.0, 'to_pack': 1, 'move_id': 418}]
+        }}}}
         '''
+        memory_move_obj = self.pool.get('stock.move.memory.families')
         move_obj = self.pool.get('stock.move')
         for picking_data in data.values():
+            # flag for missing weight
+            missing_weight = False
             for from_data in picking_data.values():
                 for to_data in from_data.values():
                     for move_data in to_data.values():
@@ -840,8 +848,11 @@ class create_picking(osv.osv_memory):
                                 move = move_obj.browse(cr, uid, data.get('move_id'), context=context)
                                 flow_type = move.picking_id.flow_type
                                 if flow_type != 'quick':
-                                    return False
-        
+                                    missing_weight = True
+                                    memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'missing_weight',}, context=context)
+        # return false if weight is missing
+        if missing_weight:
+            return False
         return True
         
     def do_ppl2(self, cr, uid, ids, context=None):
@@ -863,8 +874,13 @@ class create_picking(osv.osv_memory):
         # integrity check on wizard data
         partial_datas_ppl1 = context['partial_datas_ppl1']
         
-        if not self.integrity_check_weight(cr, uid, ids, partial_datas_ppl1, context=context):
-            raise osv.except_osv(_('Warning !'), _('You must specify a weight for each pack family!'))
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
+        weight_check = self.integrity_check_weight(cr, uid, ids, partial_datas_ppl1, context=context)
+        if not weight_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 
