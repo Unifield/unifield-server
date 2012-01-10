@@ -193,8 +193,8 @@ class import_analytic_lines(osv.osv_memory):
                 gl_acc[account] = acc_id[0]
 
             distri_id = distri_obj.create(cr, uid, {
-                'cost_center_lines': [(0, 0, {'analytic_id': cc[row[2]],'pecentage': 100, 'currency_id': curr_name[row[1]]})],
-                'funding_pool_lines': [(0, 0, {'analytic_id': fp[row[3]], 'pecentage': 100, 'cost_center_id': cc[row[2]], 'currency_id': curr_name[row[1]]})],
+                'cost_center_lines': [(0, 0, {'analytic_id': cc[row[2]],'percentage': 100, 'currency_id': curr_name[row[1]]})],
+                'funding_pool_lines': [(0, 0, {'analytic_id': fp[row[3]], 'percentage': 100, 'cost_center_id': cc[row[2]], 'currency_id': curr_name[row[1]]})],
             })
             st_line_id = st_line_obj.create(cr, uid, {
                 'statement_id': register_id[key_reg],
@@ -206,6 +206,10 @@ class import_analytic_lines(osv.osv_memory):
             })
             i+=1
             created_line.append(st_line_id)
+            if len(created_line) == 100 and obj['state'] in ('temp', 'hard'):
+                st_line_obj.posting(cr, uid, created_line, obj['state'])
+                created_line = []
+
 
         if created_line and obj['state'] in ('temp', 'hard'):
             st_line_obj.posting(cr, uid, created_line, obj['state'])
