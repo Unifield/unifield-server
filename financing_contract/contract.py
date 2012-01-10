@@ -195,6 +195,7 @@ class financing_contract_contract(osv.osv):
                                                                context=context)
         vals = {'name': browse_format_line.name,
                 'code': browse_format_line.code,
+                'line_type': browse_format_line.line_type,
                 'allocated_budget': round(browse_format_line.allocated_budget),
                 'project_budget': round(browse_format_line.project_budget),
                 'allocated_real': round(browse_format_line.allocated_real),
@@ -224,7 +225,8 @@ class financing_contract_contract(osv.osv):
         contract_line_id = reporting_line_obj.create(cr,
                                                      uid,
                                                      vals = {'name': contract.name,
-                                                             'code': contract.code},
+                                                             'code': contract.code,
+                                                             'line_type': 'view'},
                                                      context=context)
         
         # Values to be set
