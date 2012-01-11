@@ -45,8 +45,8 @@
  ...a funding pool...
 -
   !record {model: account.analytic.account, id: analytic_account_FP2}:
-    name: "FP1"
-    code: "FP1"
+    name: "FP2"
+    code: "FP2"
     category: FUNDING
     cost_center_ids:
       - analytic_account_OC1
