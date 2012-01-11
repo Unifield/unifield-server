@@ -73,6 +73,7 @@
             <field name="price_unit">12.0</field>
             <field name="product_qty">2.0</field>
             <field name="name">(large copier Canon IR2020) 2 TONER CARTRIDGES, CEXV14T</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AOFFPHOTLCT'), ('name', '=', '(large copier Canon IR2020) 2 TONER CARTRIDGES, CEXV14T')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="purchase_order_po00006_3"/>
@@ -84,6 +85,7 @@
             <field name="price_unit">110.0</field>
             <field name="product_qty">1.0</field>
             <field name="name">Transpot Express</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'XTRA0004---'), ('name', '=', 'Transpot Express')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="purchase_order_po00004_2"/>
@@ -94,6 +96,7 @@
             <field name="date_planned">2012-03-03</field>
             <field name="price_unit">15.8</field>
             <field name="product_qty">2.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">BALLOON, ANAESTHESIA, &#216; 22 mm, 1 l</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEBALA1--'), ('name', '=', u'BALLOON, ANAESTHESIA, \xd8 22 mm, 1 l')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -106,6 +109,7 @@
             <field name="price_unit">14.8</field>
             <field name="product_qty">8.0</field>
             <field name="name">CHAIR, office, adjustable height, wheeled</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURCHAIRO-'), ('name', '=', 'CHAIR, office, adjustable height, wheeled')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="purchase_order_po00008_4"/>
@@ -117,6 +121,7 @@
             <field name="price_unit">33.5</field>
             <field name="product_qty">2.0</field>
             <field name="name">CUPBOARD, WOODEN, 2 doors, w: 150 , d: 40, h: 100 cm</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURCUPB1W4'), ('name', '=', 'CUPBOARD, WOODEN, 2 doors, w: 150 , d: 40, h: 100 cm')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="purchase_order_po00008_4"/>
@@ -127,6 +132,7 @@
             <field name="date_planned">2012-03-03</field>
             <field name="price_unit">4.2</field>
             <field name="product_qty">8.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">MASK LARYNGEAL, reusable size 2</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEMALA02-'), ('name', '=', 'MASK LARYNGEAL, reusable size 2')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -138,6 +144,7 @@
             <field name="date_planned">2012-01-30</field>
             <field name="price_unit">30.0</field>
             <field name="product_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">REPAIR (service)</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'XREPAAAA---'), ('name', '=', 'REPAIR (service)')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -149,6 +156,7 @@
             <field name="date_planned">2012-02-21</field>
             <field name="price_unit">4.3</field>
             <field name="product_qty">4.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">BIN RUBBISH, stainless steel, 12 litres</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ALIFBINR12S'), ('name', '=', 'BIN RUBBISH, stainless steel, 12 litres')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -160,6 +168,7 @@
             <field name="date_planned">2012-03-03</field>
             <field name="price_unit">2.3</field>
             <field name="product_qty">150.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">FLUCONAZOLE, 100 mg, caps.</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAFLUC1C-'), ('name', '=', 'FLUCONAZOLE, 100 mg, caps.')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -171,6 +180,7 @@
             <field name="date_planned">2012-03-03</field>
             <field name="price_unit">3.1</field>
             <field name="product_qty">120.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">PROTAMINE sulfate, 10 mg/ml, 5 ml, amp.</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJPROT5A-'), ('name', '=', 'PROTAMINE sulfate, 10 mg/ml, 5 ml, amp.')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -182,6 +192,7 @@
             <field name="date_planned">2012-03-03</field>
             <field name="price_unit">9.2</field>
             <field name="product_qty">12.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="name">TEST, TRYPANO (CATT), reagent, whole blood, 1 test</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DDGTTRYT2RT'), ('name', '=', 'TEST, TRYPANO (CATT), reagent, whole blood, 1 test')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
@@ -194,6 +205,7 @@
             <field name="name">T/00001</field>
             <field name="supplier_ids" search="['|', '&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA'), '&amp;', ('name', '=', 'BLUE CHIP TECHNOLOGIES LTD'), ('ref', '=', 'BCTL')]"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="requested_date">2012-02-15</field>
             <field name="location_id" ref="msf_profile.stock_location_input"/>
         </record>
 
@@ -240,6 +252,7 @@
             <field name="from_yml_test" eval="0"/>
             <field name="priority">normal</field>
             <field name="delivery_requested_date">2012-02-20</field>
+            <field name="requested_date">2012-02-20</field>
             <field name="partner_shipping_id" ref="base.main_address"/>
             <field name="partner_order_id" ref="base.main_address"/>
             <field name="partner_invoice_id" ref="base.main_address"/>
@@ -253,6 +266,7 @@
             <field name="type">make_to_order</field>
             <field name="price_unit">1.0</field>
             <field name="product_uom_qty">2.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL2S-'), ('name', '=', '(computer) CABLE, SERIAL interface PC/Mini-M, female/male')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="sale_order_so001_1"/>
@@ -275,6 +289,7 @@
             <field name="type">make_to_order</field>
             <field name="price_unit">1.0</field>
             <field name="product_uom_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CWATPUMD024'), ('name', '=', &quot;MOTOR PUMP DIESEL Lister AA1, 24 m3/h. max. 30 m max., 2'&quot;)]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="sale_order_so001_1"/>
@@ -297,6 +312,7 @@
             <field name="type">make_to_stock</field>
             <field name="price_unit">59.0</field>
             <field name="product_uom_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPMODE56-'), ('name', '=', 'MODEM, external (U.S.Robotics 56K), CCITT standard')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="sale_order_so001_1"/>
@@ -561,6 +577,7 @@
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
             <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
         </record>
 
@@ -574,7 +591,8 @@
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000003_8"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
             <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
-            <field name="location_id" ref="msf_profile.stock_location_internal_suppliers"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
         </record>
 
@@ -588,7 +606,8 @@
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000004_9"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
             <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
-            <field name="location_id" ref="msf_profile.stock_location_internal_suppliers"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
         </record>
 
@@ -602,7 +621,8 @@
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000005_10"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
             <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
-            <field name="location_id" ref="msf_profile.stock_location_input"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>
         </record>
 
@@ -624,8 +644,9 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000001_6"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_input"/>
-            <field name="location_id" ref="msf_profile.stock_location_internal_suppliers"/>
+            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00001_1" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
         </record>
 
