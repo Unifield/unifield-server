@@ -23,7 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import logging
 
-class account_period_closing_level(osv.osv):
+class account_period(osv.osv):
+    _name = "account.period"
     _inherit = "account.period"
     
     # To avoid issues with existing OpenERP code (account move line for example),
@@ -147,7 +148,7 @@ class account_period_closing_level(osv.osv):
             logging.getLogger('init').info('Loading default draft state for account.period')
             vals['state'] = 'draft'
 
-        return super(account_period_closing_level, self).create(cr, uid, vals, context=context)
+        return super(account_period, self).create(cr, uid, vals, context=context)
 
     _defaults = {
         'state': lambda *a: 'created',
@@ -193,6 +194,6 @@ class account_period_closing_level(osv.osv):
                     'context': context,
                 }
 
-account_period_closing_level()
+account_period()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
