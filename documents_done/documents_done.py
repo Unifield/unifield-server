@@ -330,8 +330,9 @@ class documents_done_wizard(osv.osv):
                 'res_model': 'documents.done.problem',
                 'view_mode': 'form',
                 'view_type': 'form',
+                'context': context,
                 'res_id': pb_id,
-                'target': 'new'}
+                'target': 'popup'}
                         
 
     def cancel_line(self, cr, uid, ids, context={}):
