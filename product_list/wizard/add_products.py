@@ -30,6 +30,7 @@ class product_list_add_products(osv.osv_memory):
 
     _columns = {
         'list_id': fields.many2one('product.list', string='List', readonly=True),
+        'parent_list_id': fields.many2one('product.list', string='Parent List', readonly=True),
         'product_ids': fields.many2many('product.product', 'product_add_product_list_rel', 
                                         'wiz_list_id', 'product_id', string='Products'),
     }
@@ -46,7 +47,7 @@ class product_list_add_products(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No list found !'))
 
         res = super(product_list_add_products, self).default_get(cr, uid, fields, context=context)
-        res.update({'list_id': list_id})
+        res.update({'list_id': list_id, 'parent_list_id': self.pool.get('product.list').browse(cr, uid, list_id, context=context).parent_id.id})
 
         return res
 

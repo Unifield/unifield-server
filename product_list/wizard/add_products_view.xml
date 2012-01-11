@@ -8,8 +8,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Add products">
+                    <field name="parent_list_id" invisible="1" />
                     <separator colspan="4" string="Products" />
-                    <field name="product_ids" nolabel="1" colspan="4" mode="tree">
+                    <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="[('list_ids', '=', parent_list_id)]">
                         <tree string="Products">
                             <field name="default_code" />
                             <field name="name" />
