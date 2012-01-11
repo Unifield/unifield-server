@@ -49,6 +49,9 @@
                                      ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
                                      ('date', '=', False)]"/>
                 </filter>
+                <field name="user_id" position="after">
+                    <field name="category"/>
+                </field>
             </field>
         </record>
 
@@ -68,6 +71,7 @@
                         <field name="type"/>
                         <field name="date_start"/>
                         <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" context="context"/>
                     </tree>
                 </tree>
@@ -89,6 +93,7 @@
 	                    <field name="type"/>
 	                    <field name="date_start"/>
 	                    <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
 	                </tree>
                 </tree>
             </field>
