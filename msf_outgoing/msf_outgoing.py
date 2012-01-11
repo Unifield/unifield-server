@@ -1024,17 +1024,6 @@ class stock_picking(osv.osv):
         if pick.subtype == 'packing':
             return False
 
-        # Don't display log message if the picking is a backorder
-        back = self.search(cr, uid, [('backorder_id', '=', pick.id)])
-        back_ids = []
-        for b in back:
-            if b.id not in back_ids:
-                back_ids.append(b.id)
-
-        if back_ids:
-            self.log_picking(cr, uid, back_ids)
-            return False
-
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
