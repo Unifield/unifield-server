@@ -1,5 +1,5 @@
 <openerp>
-    <data>
+    <data noupdate="1">
         <!--model: purchase.order, id: 4-->
         <record model="purchase.order" id="purchase_order_po00008_4">
             <field name="transport_mode">road</field>
