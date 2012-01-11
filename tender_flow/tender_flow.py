@@ -432,11 +432,15 @@ class tender(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for tender in self.browse(cr, uid, ids, context=context):
+            line_updated = False
             if tender.state not in ('done', 'cancel'):
+                for line in tender.tender_line_ids:
+                    if line.purchase_order_line_id:
+                        line_updated = True
                 # Cancel or done all RfQ related to the tender
                 for rfq in tender.rfq_ids:
                     if rfq.state not in ('done', 'cancel'):
-                        if rfq.state == 'draft':
+                        if rfq.state == 'draft' or not line_updated:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'purchase_cancel', cr)
                         else:
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
@@ -444,7 +448,7 @@ class tender(osv.osv):
                                 self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'valid_till': time.strftime('%Y-%m-%d')}, context=context)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-                if tender.state == 'draft' or not tender.tender_line_ids:
+                if tender.state == 'draft' or not tender.tender_line_ids or not line_updated:
                     # Call the cancel method of the tender
                     wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
                 else:
