@@ -34,6 +34,7 @@
     ],
     "update_xml": [
         "data.xml",
+        "data2.xml",
     ],
     "demo_xml": [
     ],
