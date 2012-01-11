@@ -90,7 +90,7 @@ class report_batch_recall(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number', readonly=True),
         'expired_date': fields.date('Expired Date', readonly=True),
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
