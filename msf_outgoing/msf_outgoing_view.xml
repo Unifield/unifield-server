@@ -418,7 +418,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
+                <tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
@@ -908,7 +908,7 @@
             <field name="model">shipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Shipment">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="address_id"/>
@@ -931,7 +931,7 @@
             <field name="model">shipment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Shipment">
+                <form string="Shipment" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
