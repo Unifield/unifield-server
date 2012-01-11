@@ -25,6 +25,8 @@ import logging
 from os import path
 import tools
 
+from tools.translate import _
+
 class account_journal(osv.osv):
     _inherit = "account.journal"
 
@@ -177,27 +179,6 @@ class account_journal(osv.osv):
                                   'currency': vals.get('currency')}, \
                                   context=context)
         return journal_obj
-
-    def write(self, cr, uid, ids, vals, context={}):
-        """
-        Verify that default_debit_account_id and default_credit_account_id are not missing for these types:
-         - cash
-         - bank
-         - cheque
-         - cur_adj
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Browse elements
-        for line in self.browse(cr, uid, ids):
-            if (vals.get('type', False) and vals.get('type') in ['cash', 'bank', 'cheque', 'cur_adj']) or \
-                (not vals.get('type', False) and line.type in ['cash', 'bank', 'cheque', 'cur_adj']):
-                if not line.default_debit_account_id and not 'default_debit_account_id' in vals:
-                    raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
-        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -44,6 +44,28 @@
     name: Cash Analytic Journal
     type: general
 -
+  I create a cash account type
+-
+  !record {model: account.account.type, id: account_account_type_cash_0}:
+    close_method: balance
+    code: cash
+    name: Cash
+    sign: 1
+    report_type: asset
+
+-
+I create a X11003 Cash Account.
+-
+  !record {model: account.account, id: account_account_cash0}:
+    code: 'X11003-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash_0
+    activation_date: !eval time.strftime('%Y-01-01')
+-
   ...a journal, ...
 -
   !record {model: account.journal, id: account_journal_1}:
@@ -52,6 +74,8 @@
     currency: currency_test
     type: cash
     analytic_journal_id: analytic_journal_1
+    default_debit_account_id: account_account_cash0
+    default_credit_account_id: account_account_cash0
 -
   ...a fiscal year, ...
 -
