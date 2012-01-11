@@ -13,7 +13,7 @@
                     <xpath expr="/form/notebook/page[@string='Transport Information']/group" position="before">
                         <group colspan="3" col="3">
                             <separator colspan="3" string="Transport Purchase Order" />
-                            <field name="transport_order_id" colspan="3" />
+                            <field name="transport_order_id" colspan="3" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}" />
                         </group>
                         <newline />
                     </xpath>
@@ -31,7 +31,7 @@
                 <data>
             
                     <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='type']" position="after">
-                        <field name="transport_order_id" />
+                        <field name="transport_order_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}" />
                     </xpath>
 
                 </data>

@@ -48,6 +48,28 @@ class account_installer(osv.osv_memory):
     _defaults = {
         'charts': 'msf_chart_of_account',
     }
+    
+    # Fix for UF-768: correcting fiscal year and name
+    def execute(self, cr, uid, ids, context=None):
+        super(account_installer, self).execute(cr, uid, ids, context=context)
+        # Retrieve created fiscal year
+        fy_obj = self.pool.get('account.fiscalyear')
+        for res in self.read(cr, uid, ids, context=context):
+            if 'date_start' in res and 'date_stop' in res:
+                f_ids = fy_obj.search(cr, uid, [('date_start', '<=', res['date_start']), ('date_stop', '>=', res['date_stop']), ('company_id', '=', res['company_id'])], context=context)
+                if len(f_ids) > 0:
+                    # we have one
+                    new_name = "FY " + res['date_start'][:4]
+                    new_code = "FY" + res['date_start'][:4]
+                    if int(res['date_start'][:4]) != int(res['date_stop'][:4]):
+                        new_name = "FY " + res['date_start'][:4] +'-'+ res['date_stop'][:4]
+                        new_code = "FY" + res['date_start'][2:4] +'-'+ res['date_stop'][2:4]
+                    vals = {
+                        'name': new_name,
+                        'code': new_code,
+                    }
+                    fy_obj.write(cr, uid, f_ids, vals, context=context)
+        return
 
 account_installer()
 

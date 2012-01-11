@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,20 +16,29 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# 
 ##############################################################################
-
-def _get_addendum_line_account_id(self, cr, uid, ids, context={}):
-    """
-    Give addendum line account id.
-    """
-    # Some verifications
-    if not context:
-        context = {}
-    if isinstance(ids, (int, long)):
-        ids = [ids]
-    # Retrieve 6308 account
-    account_id = self.pool.get('account.account').search(cr, uid, [('code', '=', '6308')], context=context, limit=1)
-    return account_id and account_id[0] or False
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+{
+    "name" : "Supply Data",
+    "version" : "1.0",
+    "author" : "TeMPO Consulting, MSF",
+    "category": "Others",
+    "description": """
+        Modules for Unifield
+    """,
+    "website": "http://unifield.msf.org",
+    "init_xml": [
+    ],
+    "depends" : [
+        "msf_profile",
+    ],
+    "update_xml": [
+        "data.xml",
+    ],
+    "demo_xml": [
+    ],
+    "test": [
+    ],
+    "installable": True,
+    "active": False,
+}

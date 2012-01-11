@@ -161,7 +161,7 @@ class sale_order(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        if context.get('update_mode') in ['init', 'update']:
+        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
@@ -175,9 +175,13 @@ class sale_order(osv.osv):
         '''
         Remove the possibility to make a SO to user's company
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
-            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+                for obj in self.read(cr, uid, ids, ['procurement_request']):
+                    if not obj['procurement_request']:
+                        self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
