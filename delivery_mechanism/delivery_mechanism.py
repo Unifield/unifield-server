@@ -64,7 +64,7 @@ class stock_move(osv.osv):
                 line = sol_obj.read(cr, uid, [vals.get('sale_line_id')], ['line_number'], context=context)[0]['line_number']
             else:
                 # new numbers - gather the line number from the sequence
-                sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['move_sequence_id'], context=context)[0]['move_sequence_id'][0]
                 line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
             # update values with line value
             vals.update({'line_number': line})
@@ -134,7 +134,7 @@ class stock_picking(osv.osv):
     do_partial modification
     '''
     _inherit = 'stock.picking'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
+    _columns = {'move_sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     
@@ -196,7 +196,7 @@ class stock_picking(osv.osv):
         so_obj = self.pool.get('sale.order')
         
         new_seq_id = self.create_sequence(cr, uid, vals, context=context)
-        vals.update({'sequence_id': new_seq_id,})
+        vals.update({'move_sequence_id': new_seq_id,})
         # if from order, we udpate the sequence to match the order's one
         # line number correspondance to be checked with Magali
         seq_value = False
@@ -451,6 +451,8 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         
         for obj in self.browse(cr, uid, ids, context=context):
+            # corresponding sale ids to be manually corrected after purchase workflow trigger
+            sale_ids = []
             for move in obj.move_lines:
                 data_back = self.create_data_back(cr, uid, move, context=context)
                 diff_qty = -data_back['product_qty']
@@ -471,27 +473,20 @@ class stock_picking(osv.osv):
                         # - and also the state of the move not in (cancel done)
                         # correct the corresponding so manually if exists - could be in shipping exception
                         if out_move.picking_id and out_move.picking_id.sale_id:
-                            wf_service.trg_validate(uid, 'sale.order', out_move.picking_id.sale_id.id, 'ship_corrected', cr)
+                            if out_move.picking_id.sale_id.id not in sale_ids:
+                                sale_ids.append(out_move.picking_id.sale_id.id)
+                            
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
                 purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s received.'%(obj.purchase_id.name, obj.purchase_id.shipped_rate)))
+            # correct the corresponding so
+            for sale_id in sale_ids:
+                wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
         
         return True
         
 stock_picking()
-
-
-class purchase_order(osv.osv):
-    '''
-    add the id of the origin purchase order
-    '''
-    _inherit = 'purchase.order'
-#    _columns = {'on_order_procurement_id': fields.many2one('procurement.order', string='On Order Procurement Reference', readonly=True,),
-#                }
-#    _defaults = {'on_order_procurement_id': False,}
-    
-purchase_order()
 
 
 class purchase_order_line(osv.osv):
@@ -512,18 +507,6 @@ class procurement_order(osv.osv):
     inherit po_values_hook
     '''
     _inherit = 'procurement.order'
-    
-#    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-#        '''
-#        data for the purchase order creation
-#        add a link to corresponding procurement order
-#        '''
-#        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-#        procurement = kwargs['procurement']
-#        
-#        values['on_order_procurement_id'] = procurement.id
-#        
-#        return values
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''

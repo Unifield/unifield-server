@@ -135,6 +135,7 @@
             <field name="name">Miscellaneous Transactions</field>
             <field name="code">MT</field>
             <field name="type">cur_adj</field>
+            <field name="default_debit_account_id" ref="msf_chart_of_account.6308" />
         </record>
     </data>
 </openerp>

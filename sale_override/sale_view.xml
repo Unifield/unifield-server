@@ -96,6 +96,9 @@
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/search//filter[@string='Quotations']" position="after">
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Sales Order validated"/>
+                    </xpath>
 		    <xpath expr="/search/field[@name='name']" position="after">
 			<field name="client_order_ref" />
 		    </xpath>
