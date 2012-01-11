@@ -285,6 +285,12 @@ class purchase_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': time.strftime('%Y-%m-%d')})
         return True
 
+    def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
+        '''
+        Add a hook to modify the logged message
+        '''
+        return kwargs['message']
+
     #TODO: implement messages system
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         todo = []
@@ -295,6 +301,7 @@ class purchase_order(osv.osv):
                 if line.state=='draft':
                     todo.append(line.id)
             message = _("Purchase order '%s' is confirmed.") % (po.name,)
+            message = self._hook_confirm_order_message(cr, uid, context=context, message=message, po=po)
             self.log(cr, uid, po.id, message)
 #        current_name = self.name_get(cr, uid, ids)[0][1]
         self.pool.get('purchase.order.line').action_confirm(cr, uid, todo, context)

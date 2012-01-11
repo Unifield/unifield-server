@@ -881,6 +881,7 @@ class stock_picking(osv.osv):
         @return: True
         """
         self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')})
+        self.log_picking(cr, uid, ids, context=context)
         return True
 
     def action_move(self, cr, uid, ids, context=None):
@@ -1310,7 +1311,6 @@ class stock_picking(osv.osv):
                 if new_picking:
                     defaults.update(picking_id=new_picking)
                 move_obj.write(cr, uid, [move.id], defaults)
-
 
             # At first we confirm the new picking (if necessary)
             if new_picking:
