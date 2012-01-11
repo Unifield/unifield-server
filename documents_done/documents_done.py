@@ -320,7 +320,7 @@ class documents_done_wizard(osv.osv):
             # Process all invoices
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
-                                             'doc_name': inv.name,
+                                             'doc_name': inv.number or inv.name,
                                              'doc_state': inv.state,
                                              'doc_model': 'account.invoice',
                                              'doc_id': inv.id,
@@ -378,7 +378,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         sale_order so
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         procurement_request = False)
                 UNION
@@ -394,7 +394,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         sale_order ir
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         procurement_request = True)
                 UNION
@@ -410,7 +410,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         purchase_order po
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         rfq_ok = False)
                 UNION
@@ -426,7 +426,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         purchase_order rfq
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         rfq_ok = True)
                 UNION
@@ -442,7 +442,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         tender t
                     WHERE
-                        state NOT IN ('done', 'cancel'))) AS dnd
+                        state NOT IN ('draft', 'done', 'cancel'))) AS dnd
         );""")
     
 documents_done_wizard()
@@ -528,7 +528,7 @@ class documents_done_problem_line(osv.osv_memory):
             res_state = dict(sel['state']['selection']).get(line.doc_state, line.doc_state)
             name = '%s,state' % line.doc_model
             tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res_state)])
-            if tr_ids:
+            if tr_ids and self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']:
                 res[line.id] = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
             else:
                 res[line.id] = res_state
