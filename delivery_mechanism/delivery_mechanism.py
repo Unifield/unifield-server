@@ -64,7 +64,7 @@ class stock_move(osv.osv):
                 line = sol_obj.read(cr, uid, [vals.get('sale_line_id')], ['line_number'], context=context)[0]['line_number']
             else:
                 # new numbers - gather the line number from the sequence
-                sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
+                sequence_id = picking_obj.read(cr, uid, [vals['picking_id']], ['move_sequence_id'], context=context)[0]['move_sequence_id'][0]
                 line = seq_pool.get_id(cr, uid, sequence_id, test='id', context=context)
             # update values with line value
             vals.update({'line_number': line})
@@ -134,7 +134,7 @@ class stock_picking(osv.osv):
     do_partial modification
     '''
     _inherit = 'stock.picking'
-    _columns = {'sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
+    _columns = {'move_sequence_id': fields.many2one('ir.sequence', string='Moves Sequence', help="This field contains the information related to the numbering of the moves of this picking.", required=True, ondelete='cascade'),
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     
@@ -168,7 +168,7 @@ class stock_picking(osv.osv):
         so_obj = self.pool.get('sale.order')
         
         new_seq_id = self.create_sequence(cr, uid, vals, context=context)
-        vals.update({'sequence_id': new_seq_id,})
+        vals.update({'move_sequence_id': new_seq_id,})
         # if from order, we udpate the sequence to match the order's one
         # line number correspondance to be checked with Magali
         seq_value = False

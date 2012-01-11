@@ -412,7 +412,7 @@ class create_picking(osv.osv_memory):
         - no negative values (<0)
         - at least one positive one (>0)
         
-        return True/Fals
+        return True/False
         '''
         memory_move_obj = self.pool.get('stock.move.memory.picking')
         # validate the data
@@ -622,22 +622,12 @@ class create_picking(osv.osv_memory):
         # call stock_picking method which returns action call
         return pick_obj.do_validate_picking(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     
-    def integrity_check(self, cr, uid, ids, data, context=None):
-        '''
-        integrity check on shipment data
-        '''
-        for picking_data in data.values():
-            for move_data in picking_data.values():
-                if move_data.get('qty_to_return', False):
-                    return True
-        
-        return False
-    
     def integrity_check_return_products(self, cr, uid, ids, data, context=None):
         '''
         integrity check on create picking data
         - no negative values (<0)
         - at least one positive one (>0)
+        - no more than available quantity
         
         return True/Fals
         '''
@@ -648,17 +638,23 @@ class create_picking(osv.osv_memory):
             sum_qty = 0
             # flag to detect negative values
             negative_value = False
+            # flag to detect excessive return quantity
+            too_much = False
             for move_data in picking_data.values():
                 # quantity check
-                if move_data.get('qty_to_return', False) < 0.0:
+                if move_data['qty_to_return'] < 0.0:
                     # a negative value has been selected, update the memory line
                     # update the new value for integrity check with 'negative' value (selection field)
                     negative_value = True
                     memory_move_obj.write(cr, uid, [move_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
+                elif move_data['qty_to_return'] > move_data['product_qty']:
+                    # cannot return more products than available
+                    too_much = True
+                    memory_move_obj.write(cr, uid, [move_data['memory_move_id']], {'integrity_status': 'return_qty_too_much',}, context=context)
                 else:
-                    sum_qty += move_data.get('qty_to_return', False)
+                    sum_qty += move_data['qty_to_return']
             # if error, return False
-            if not sum_qty or negative_value:
+            if not sum_qty or negative_value or too_much:
                 return False
         return True
     

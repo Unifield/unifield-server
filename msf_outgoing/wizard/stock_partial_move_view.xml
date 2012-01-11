@@ -104,7 +104,7 @@
             <field name="model">stock.move.memory.shipment.create</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" string="Pack Families">
+                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
@@ -114,6 +114,7 @@
 					<field name="weight" readonly="True" />
 					<field name="selected_number" string="Number to Ship" />
 					<field name="selected_weight" string="Weight to Ship [kg]" readonly="True" />
+					<field name="integrity_status" />
                 </tree>
             </field>
         </record>
@@ -123,7 +124,7 @@
             <field name="model">stock.move.memory.shipment.returnpacks</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" string="Pack Families">
+                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
@@ -133,6 +134,7 @@
 					<field name="weight" readonly="True" />
 					<field name="selected_number" string="Number to Return" />
 					<field name="selected_weight" string="Weight to Return" readonly="True" />
+					<field name="integrity_status" />
                 </tree>
             </field>
         </record>
@@ -142,7 +144,7 @@
             <field name="model">stock.move.memory.shipment.returnpacksfromshipment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" string="Pack Families">
+                <tree editable="bottom" hide_new_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                 	<field name="sale_order_id" readonly="True" />
                 	<field name="ppl_id" readonly="True" />
                     <field name="from_pack" readonly="True" />
@@ -153,6 +155,7 @@
 					<field name="return_to" />
 					<field name="selected_weight" string="Weight to Return" readonly="True" />
 					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+					<field name="integrity_status" />
                 </tree>
             </field>
         </record>

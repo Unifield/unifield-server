@@ -252,6 +252,23 @@ class shipment_wizard(osv.osv_memory):
         
         structure :
         {shipment_id: {draft_packing_id: {from_pack: {to_pack: {[partial,]}]}}}}
+        
+        fields:
+        {'selected_weight': {'function': '_vals_get', 'digits': (16, 2), 'fnct_inv': False, 'string': 'Selected Weight [kg]', 'fnct_inv_arg': False, 'readonly': 1, 'fnct_search': False, 'func_obj': False, 'type': 'float', 'store': False, 'func_method': True},
+        'weight': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Weight p.p [kg]'},
+        'pack_type': {'domain': [], 'string': 'Pack Type', 'relation': 'pack.type', 'context': {}, 'selectable': True, 'type': 'many2one'},
+        'ppl_id': {'domain': [], 'string': 'PPL Ref', 'relation': 'stock.picking', 'context': {}, 'selectable': True, 'type': 'many2one'},
+        'draft_packing_id': {'domain': [], 'string': 'Draft Packing Ref', 'relation': 'stock.picking', 'context': {}, 'selectable': True, 'type': 'many2one'},
+        'wizard_id': {'domain': [], 'string': 'Wizard', 'relation': 'stock.partial.move', 'context': {}, 'selectable': True, 'type': 'many2one'},
+        'height': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Height [cm]'},
+        'from_pack': {'selectable': True, 'type': 'integer', 'string': 'From p.'},
+        'length': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Length [cm]'},
+        'to_pack': {'selectable': True, 'type': 'integer', 'string': 'To p.'},
+        'integrity_status': {'selectable': True, 'readonly': True, 'selection': [('empty', ''), ('ok', u'Ok'), ('negative', u'Negative Value'), ('missing_lot', u'Production Lot is Missing'), ('missing_date', u'Expiry Date is Missing'), ('no_lot_needed', u'No Production Lot/Expiry Date Needed'), ('wrong_lot_type', u'Wrong Production Lot Type'), ('wrong_lot_type_need_internal', u'Need Expiry Date (Internal) not Production Lot (Standard)'), ('wrong_lot_type_need_standard', u'Need Production Lot (Standard) not Expiry Date (Internal)'), ('empty_picking', u'Empty Picking Ticket'), ('missing_1', u'The first sequence must start with 1'), ('to_smallaer_than_from', u'To value must be greater or equal to From value'), ('overlap', u'The sequence overlaps previous one'), ('gap', u'A gap exist in the sequence'), ('missing_weight', u'Weight is Missing')], 'type': 'selection', 'string': ' '},
+        'num_of_packs': {'function': '_vals_get', 'digits': (16, 2), 'fnct_inv': False, 'string': '#Packs', 'fnct_inv_arg': False, 'readonly': 1, 'fnct_search': False, 'func_obj': False, 'type': 'integer', 'store': False, 'func_method': True},
+        'selected_number': {'selectable': True, 'type': 'integer', 'string': 'Selected Number'},
+        'width': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Width [cm]'},
+        'sale_order_id': {'domain': [], 'string': 'Sale Order Ref', 'relation': 'sale.order', 'context': {}, 'selectable': True, 'type': 'many2one'}}
         '''
         # integrity check
         assert context, 'no context, method call is wrong'
@@ -285,6 +302,8 @@ class shipment_wizard(osv.osv_memory):
                     # retrieve fields from object
                     fields = memory_move_obj.fields_get(cr, uid, context=context)
                     values = {}
+                    # add the id of memory move
+                    values.update({'memory_move_id': memory_move.id})
                     for key in fields.keys():
                         type= fields[key]['type']
                         if type not in ('one2many', 'many2one', 'one2one'):
@@ -295,6 +314,10 @@ class shipment_wizard(osv.osv_memory):
                         else:
                             assert False, 'copy of %s value is not implemented'%type
 
+                    # openerp bug, function with int type returns a string
+                    if isinstance(values['num_of_packs'], str):
+                        values['num_of_packs'] = int(values['num_of_packs'])
+
                     partial_datas_shipment[ship.id] \
                         .setdefault(memory_move.draft_packing_id.id, {}) \
                         .setdefault(memory_move.from_pack, {}) \
@@ -302,19 +325,55 @@ class shipment_wizard(osv.osv_memory):
                 
         return partial_datas_shipment
     
-    def integrity_check_create_shipment(self, cr, uid, ids, data, context=None):
+    def integrity_check_packs(self, cr, uid, ids, data, context=None):
         '''
-        integrity check on shipment data
-        '''
-        for shipment_data in data.values():
-            for packing_data in shipment_data.values():
-                for from_pack_data in packing_data.values():
-                    for to_pack_data in from_pack_data.values():
-                        for partial in to_pack_data:
-                            if partial.get('selected_number', False):
-                                return True
+        integrity check on create shipment data
+        - no negative values (<0)
+        - at least one positive one (>0)
+        - no more than available quantity #packs
         
-        return False
+        {12: {176: {1: {1: [{'selected_weight': 0.0, 'weight': 0.0, 'pack_type': False, 'ppl_id': 175, 'draft_packing_id': 176, 'wizard_id': 1, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': '1', 'selected_number': 1, 'width': 0.0, 'sale_order_id': False}]}}}}
+        
+        return True/False
+        '''
+        memory_move_obj = self.pool.get('stock.move.memory.shipment.create')
+        # validate the data
+        for shipment_data in data.values():
+            # total sum not including negative values
+            sum_qty = 0
+            # flag to detect negative values
+            negative_value = False
+            # flag to detect excessive return quantity
+            too_much = False
+            for packing_data in shipment_data.values():
+                for from_data in packing_data.values():
+                    for to_data in from_data.values():
+                        for data in to_data:
+                            # quantity check
+                            if data['selected_number'] < 0.0:
+                                # a negative value has been selected, update the memory line
+                                # update the new value for integrity check with 'negative' value (selection field)
+                                negative_value = True
+                                memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'negative'}, context=context)
+                            elif data['selected_number'] > int(data['num_of_packs']):
+                                # cannot return more products than available
+                                too_much = True
+                                memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'return_qty_too_much',}, context=context)
+                            else:
+                                sum_qty += data['selected_number']
+                            
+            # if error, return False
+            if not sum_qty or negative_value or too_much:
+                return False
+        return True
+    
+    def set_integrity_status(self, cr, uid, ids, field_name, status='empty', context=None):
+        '''
+        for all moves set the status to ok (default value) or other if specified
+        '''
+        for wiz in self.browse(cr, uid, ids, context=context):
+            for memory_move in getattr(wiz, field_name):
+                memory_move.write({'integrity_status': status,}, context=context)
     
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
@@ -325,13 +384,19 @@ class shipment_wizard(osv.osv_memory):
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         
         ship_obj = self.pool.get('shipment')
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_shipment_create'
         # shipment ids
         shipment_ids = context['active_ids']
-        # generate data structure - selected_number must be non zero to be taken into accound
+        # generate data structure - selected_number must be non zero to be taken into account
         partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
-        # integrity check on wizard data
-        if not self.integrity_check_create_shipment(cr, uid, ids, partial_datas_shipment, context=context):
-            raise osv.except_osv(_('Warning !'), _('You must at least select one pack to ship!'))
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
+        packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas_shipment, context=context)
+        if not packs_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
     

@@ -29,6 +29,8 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('wrong_lot_type_need_internal', 'Need Expiry Date (Internal) not Production Lot (Standard)'),
                               ('wrong_lot_type_need_standard', 'Need Production Lot (Standard) not Expiry Date (Internal)'),
                               ('empty_picking', 'Empty Picking Ticket'),
+                              # return ppl
+                              ('return_qty_too_much', 'Too much quantity selected'),
                               # ppl1
                               ('missing_1', 'The first sequence must start with 1'),
                               ('to_smallaer_than_from', 'To value must be greater or equal to From value'),
@@ -36,6 +38,8 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('gap', 'A gap exist in the sequence'),
                               # ppl2
                               ('missing_weight', 'Weight is Missing'),
+                              # create shipment
+                              ('too_many_packs', 'Too many packs selected'),
                               ]
 
 import msf_outgoing
