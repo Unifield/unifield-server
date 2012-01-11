@@ -89,7 +89,7 @@
         
         <menuitem id="menu_threshold_value"
         		  action="action_threshold_value"
-        		  parent="procurement.menu_stock_procurement" />
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
     
     </data>
 </openerp>

@@ -177,8 +177,6 @@
   !record {model: stock.picking, id: stock_picking_int0}:
     company_id: base.main_company
     invoice_state: none
-    max_date: '2011-03-28 12:05:06'
-    min_date: '2011-03-28 12:05:06'
     move_type: direct
     name: INT/00001
     type: internal

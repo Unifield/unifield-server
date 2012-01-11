@@ -19,6 +19,7 @@
     fiscalyear_id: fiscalyear1
     name: PER-01
     special: 1
+    number: 1
 -
   I create the second period
 -
@@ -29,6 +30,7 @@
     fiscalyear_id: fiscalyear1
     name: PER-02
     special: 1
+    number: 2
 -
   I open all periods
 -
@@ -48,16 +50,6 @@
     default_credit_account_id: account_account_cheque0
     currency: base.EUR
     allow_date: 0
--
-  I create a cheque register in first period in EUR
--
-  !record {model: account.bank.statement, id: cheque_register_for_register_creation}:
-    date: !eval time.strftime('%Y-%m-04')
-    journal_id: register_creation_wiz_cheque_journal_0
-    name: cheque register created for register creation wizard
-    period_id: register_creation_wiz_period_01
-    user_id: base.user_root
-    balance_start: 637.0
 -
   I create a wizard "Register Creation" with the second period
 -

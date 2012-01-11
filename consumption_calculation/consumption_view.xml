@@ -27,25 +27,29 @@
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
-						<tree string="Products" editable="top">
-                            <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id)"
+						<tree string="Products" editable="top" colors="red:prodlot_id and consumed_qty>product_qty;blue: not prodlot_id and consumed_qty>product_qty">
+                            <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
+                                context="{'location': parent.cons_location_id, 'compute_child': False}"
                             	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
-                            <field name="uom_id" />
+                            <field name="uom_id" 
+                                on_change="uom_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"/>
                             <field name="product_qty" />
                             <field name="prodlot_id" 
-				   on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id)"
-				   domain="[('product_id', '=', product_id)]"
-				   attrs="{'required': [('batch_mandatory', '=', True)]}"/>
+                                on_change="change_prodlot(product_id, prodlot_id, expiry_date, parent.cons_location_id, uom_id)"
+                                domain="[('product_id', '=', product_id), ('stock_available', '>', 0)]"
+                                context="{'location_id': parent.cons_location_id, 'uom': uom_id, 'hidden_perishable_mandatory': date_mandatory}"
+                                attrs="{'required': [('batch_mandatory', '=', True)], 'readonly': [('batch_mandatory', '=', False)]}" />
                             <field name="expiry_date"
-				   on_change="change_expiry(expiry_date, product_id, parent.cons_location_id)"
-			 	   attrs="{'required': [('date_mandatory', '=', True)], 'readonly': [('batch_mandatory', '=', True)]}"/>
-                            <field name="consumed_qty" />
+                                on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id)"
+                                attrs="{'required': [('date_mandatory', '=', True)], 'readonly': [('date_mandatory', '=', False)]}"/>
+                            <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
                             <field name="remark" />
-			    <field name="batch_mandatory" invisible="1" />
-			    <field name="date_mandatory" invisible="1" />
+                            <field name="batch_mandatory" invisible="1" />
+                            <field name="date_mandatory" invisible="1" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
+                    <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <button name="save_and_process" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
                 </form>
             </field>
@@ -127,6 +131,7 @@
         <menuitem
              id="warehouse_consumption_menu"
              name="Consumption"
+             sequence="-20"
              parent="stock.next_id_61" />
              
         <menuitem
@@ -147,9 +152,9 @@
             <field name="arch" type="xml">
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
-                    <field name="period_from" />
+                    <field name="period_from" on_change="period_change(period_from, period_to)" />
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
-                    <field name="period_to" />
+                    <field name="period_to" on_change="period_change(period_from, period_to)" />
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />
@@ -255,7 +260,7 @@
             <field name="inherit_id" ref="stock.view_normal_stock_property_form" />
             <field name="arch" type="xml">
                 <field name="virtual_available" position="after">
-                    <field name="monthly_consumption" readonly="1" />
+                    <field name="product_amc" readonly="1" />
                     <field name="reviewed_consumption" />
                 </field>
             </field>

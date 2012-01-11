@@ -32,6 +32,7 @@
                     <field name="name"/>
                     <field name="note"/>
                     <field name="type"/>
+                    <field name="user_type"/>
                     <field name="activation_date"/>
                     <field name="inactivation_date"/>
                 </tree>

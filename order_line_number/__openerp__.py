@@ -31,11 +31,8 @@
     "description": """
     Add numbering to order lines
     """,
-    'test': [
-             #'test/sourcing.yml',
-             ],
+    'test': [],
     'update_xml': [
-        #'security/ir.model.access.csv',
         'order_line_number_view.xml',
     ],
     'installable': True,

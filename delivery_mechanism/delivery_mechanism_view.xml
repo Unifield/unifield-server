@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_picking_in_form" model="ir.ui.view">
+            <field name="name">stock.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="/form" position="attributes">
+            			<attribute name="string">Incoming Shipments</attribute>
+            		</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//button[@name='%(stock.move_scrap)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//button[@name='%(stock.track_line)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='tracking_id']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//button[@name='setlast_tracking']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//tree[@string='Stock Moves']//button[@name='%(stock.split_into)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.move_scrap)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.track_line)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//field[@name='tracking_id']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//button[@name='%(stock.split_into)d']" position="attributes">
+						<attribute name="invisible">True</attribute>
+					</xpath>
+					
+					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="after">
+						<field name="change_reason" colspan="4" />
+					</xpath>
+					
+					<xpath expr="/form/notebook/page/group/button[@name='button_cancel']" position="replace">
+						<button name="enter_reason" states="assigned,confirmed,draft" string="Cancel" type="object" icon="gtk-cancel" context="{'cancel_type': 'update_out'}" />
+						<button name="enter_reason" states="assigned,confirmed,draft" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" />
+					</xpath>
+					
+					<field name="backorder_id" position="after">
+						<field name="change_reason" />
+					</field>
+					
+				</data>
+			</field>
+		</record>
+		
+        <record id="view_picking_form" model="ir.ui.view">
+            <field name="name">stock.picking.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_form" />
+            <field eval="12" name="priority"/>
+            <field name="arch" type="xml">
+            	<data>
+					
+					<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+		</record>
+		
+		<record id="view_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+		</record>
+		
+		<record id="view_picking_ticket_form" model="ir.ui.view">
+            <field name="name">picking.ticket.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+        
+        <record id="view_ppl_form" model="ir.ui.view">
+            <field name="name">ppl.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//tree[@string='Stock Moves']//field[@name='product_id']" position="before">
+						<field name="line_number" />
+					</xpath>
+            	
+            	</data>
+            </field>
+        </record>
+            
+    </data>
+</openerp>

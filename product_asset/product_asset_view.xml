@@ -219,21 +219,9 @@
 
 		<!-- Assets in SALES>Products -->
 		<menuitem id="menu_asset_sales" name="Assets" parent="base.menu_product"
-			sequence="10" />
+			sequence="3" />
 		<menuitem action="asset_normal_action" id="menu_assets_sales"
 			parent="menu_asset_sales" sequence="1" />
-
-		<!-- Assets in PURCHASES>Products -->
-		<menuitem id="menu_asset_purchases" name="Assets"
-			parent="purchase.menu_procurement_management_product" sequence="10" />
-		<menuitem action="asset_normal_action" id="menu_assets_purchases"
-			parent="menu_asset_purchases" sequence="1" />
-
-		<!-- Assets in WAREHOUSE>Product -->
-		<menuitem id="menu_asset_warehouse" name="Assets"
-			parent="stock.menu_stock_product" sequence="10" />
-		<menuitem action="asset_normal_action" id="menu_assets_warehouse"
-			parent="menu_asset_warehouse" sequence="1" />
 
 		<act_window id="asset_2_events_normal_link" context="{}"
 			domain="[('asset_id', '=', active_id)]" name="Asset Follow Up" res_model="product.asset.event"
@@ -336,15 +324,6 @@
 		<menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
 			parent="menu_asset_sales" sequence="1" />
 
-		<!-- Asset Events in PURCHASES>Products>Assets -->
-		<menuitem action="asset_event_normal_action" id="menu_asset_event_purchases"
-			parent="menu_asset_purchases" sequence="1" />
-
-		<!-- Asset Events in WAREHOUSE>Products>Assets -->
-		<menuitem action="asset_event_normal_action" id="menu_asset_event_warehouse"
-			parent="menu_asset_warehouse" sequence="1" />
-
-
 		<record id="asset_type_normal_form_view" model="ir.ui.view">
 			<field name="name">asset.type.normal.form</field>
 			<field name="model">product.asset.type</field>
@@ -382,14 +361,6 @@
 		<!-- Asset Types in SALES>Products>Asssets -->
 		<menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
 			parent="menu_asset_sales" sequence="1" />
-
-		<!-- Asset Types in PURCHASES>Products>Asssets -->
-		<menuitem action="asset_type_normal_action" id="menu_asset_type_purchases"
-			parent="menu_asset_purchases" sequence="1" />
-
-		<!-- Asset Types in WAREHOUSE>Products>Asssets -->
-		<menuitem action="asset_type_normal_action" id="menu_asset_type_warehouse"
-			parent="menu_asset_warehouse" sequence="1" />
 
 	</data>
 </openerp>

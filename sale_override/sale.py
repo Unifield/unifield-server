@@ -27,6 +27,7 @@ from dateutil.relativedelta import relativedelta
 from mx.DateTime import *
 from tools.translate import _ 
 import logging
+from workflow.wkf_expr import _eval_expr
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -121,6 +122,7 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation (for help)'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -134,23 +136,55 @@ class sale_order(osv.osv):
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'company_id2': fields.many2one('res.company','Company',select=1),
     }
     
     _defaults = {
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
-        'categ': lambda *a: 'mixed',
+        'categ': lambda *a: 'other',
         'loan_duration': lambda *a: 2,
         'from_yml_test': lambda *a: False,
+        'company_id2': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+
+    def _check_own_company(self, cr, uid, company_id, context={}):
+        '''
+        Remove the possibility to make a SO to user's company
+        '''
+        user_company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        if company_id == user_company_id:
+            raise osv.except_osv(_('Error'), _('You cannot made a sale order to your own company !'))
+
+        return True
     
-    def create(self, cr, uid, vals, context={}):
-        if not context:
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
             context = {}
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
+
+        # Don't allow the possibility to make a SO to my owm company
+        if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
+            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
         return super(sale_order, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Remove the possibility to make a SO to user's company
+        '''
+        # Don't allow the possibility to make a SO to my owm company
+        if 'partner_id' in vals and not context.get('procurement_request'):
+            self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+    def wkf_validated(self, cr, uid, ids, context={}):
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
     
     def action_wait(self, cr, uid, ids, *args):
         '''
@@ -179,12 +213,14 @@ class sale_order(osv.osv):
             
         return super(sale_order, self).action_wait(cr, uid, ids, args)
 
-    def action_purchase_order_create(self, cr, uid, ids, context={}):
+    def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
         Create a purchase order as counterpart for the loan.
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
             
         purchase_obj = self.pool.get('purchase.order')
         purchase_line_obj = self.pool.get('purchase.order.line')
@@ -192,17 +228,21 @@ class sale_order(osv.osv):
             
         for order in self.browse(cr, uid, ids):
             two_months = today() + RelativeDateTime(months=+2)
-            order_id = purchase_obj.create(cr, uid, {'partner_id': order.partner_id.id,
-                                                 'partner_address_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
-                                                 'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
-                                                 'loan_id': order.id,
-                                                 'loan_duration': order.loan_duration,
-                                                 'origin': order.name,
-                                                 'order_type': 'loan',
-                                                 'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                 'categ': order.categ,
-                                                 'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
-                                                 'priority': order.priority,})
+            # from yml test is updated according to order value
+            values = {'partner_id': order.partner_id.id,
+                      'partner_address_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
+                      'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
+                      'loan_id': order.id,
+                      'loan_duration': order.loan_duration,
+                      'origin': order.name,
+                      'order_type': 'loan',
+                      'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
+                      'categ': order.categ,
+                      'location_id': order.shop_id.warehouse_id.lot_stock_id.id,
+                      'priority': order.priority,
+                      'from_yml_test': order.from_yml_test,
+                      }
+            order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
                 purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
                                                    'product_uom': line.product_uom.id,
@@ -315,10 +355,10 @@ class sale_order(osv.osv):
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
         wf_service = netsvc.LocalService("workflow")
-        order = kwargs['order']
-        proc_id = kwargs['proc_id']
-        if order.procurement_request and order.state == 'progress':
-            wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
+        #order = kwargs['order']
+        #proc_id = kwargs['proc_id']
+        #if order.procurement_request and order.state == 'progress':
+        #    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
         
         return True
     
@@ -333,6 +373,63 @@ class sale_order(osv.osv):
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         result = result and not line.order_id.procurement_request
         return result
+
+
+    def set_manually_done(self, cr, uid, ids, context={}):
+        '''
+        Set the sale order and all related documents to done state
+        '''
+        wf_service = netsvc.LocalService("workflow")
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        order_lines = []
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                order_lines.append(line.id)
+                if line.procurement_id:
+                    # Done procurement
+                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
+ 
+
+            # Done picking
+            for pick in order.picking_ids:
+                if pick.state not in ('cancel', 'done'):
+                    wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
+
+            # Done loan counterpart
+            if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
+                loan_context = context.copy()
+                loan_context.update({'loan_id': order.id})
+                self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
+
+            # Done invoices
+            invoice_error_ids = []
+            for invoice in order.invoice_ids:
+                if invoice.state == 'draft':
+                    wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
+                elif invoice.state not in ('cancel', 'done'):
+                    invoice_error_ids.append(invoice.id)
+
+            if invoice_error_ids:
+                invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
+                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
+                            'Invoices references : %s') % invoices_ref)            
+
+        # Done stock moves
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
+
+        # Detach the PO from his workflow and set the state to done
+        for order_id in ids:
+            wf_service.trg_delete(uid, 'sale.order', order_id, cr)
+            # Search the method called when the workflow enter in last activity
+            wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sale', 'act_done')[1]
+            activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
+            res = _eval_expr(cr, [uid, 'sale.order', order_id], False, activity.action)
+
+        return True
 
 sale_order()
 
