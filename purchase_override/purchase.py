@@ -507,6 +507,17 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
+        
+        order_id = self.pool.get('purchase.order').browse(cr, uid, vals['order_id'], context=context)
+        other_lines = self.search(cr, uid, [('order_id', '=', vals['order_id']), ('product_id', '=', vals['product_id']), ('product_uom', '=', vals['product_uom'])], context=context)
+        price = self.pool.get('product.pricelist').price_get(cr,uid,[order_id.pricelist_id.id], 
+                                                                vals['product_id'], vals['product_qty'], order_id.partner_id.id,
+                                                                {'uom': vals['product_uom'], 'date': order_id.date_order})[order_id.pricelist_id.id]
+        if other_lines and (price is False or price == 0.00):
+            price_unit = self.browse(cr, uid, other_lines[0], context=context).price_unit
+
+            if vals.get('price_unit', 0.00) != price_unit  and not vals.get('change_price_manually', False):
+                    raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
 
         vals = self._update_merged_line(cr, uid, False, vals, context=context)
 
@@ -521,6 +532,11 @@ class purchase_order_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if not context.get('update_merge', False):
+            for line in self.browse(cr, uid, ids, context=context):
+                if vals.get('price_unit', line.price_unit) != line.price_unit and line.other_line_pb and not vals.get('change_price_manually', line.change_price_manually):
+                    raise osv.except_osv(_('Error'), _('Please check the box \'Price change manually\' to confirm the change of price before saving line !'))
 
         if 'product_id' in vals or 'product_qty' in vals or 'product_uom' in vals or 'price_unit' in vals and not context.get('update_merge'):
             for line_id in ids:
@@ -543,14 +559,39 @@ class purchase_order_line(osv.osv):
 
         return super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
+    def _get_other_line(self, cr, uid, ids, field_name, args, context={}):
+        '''
+        If other lines exists with the same product/UoM and no price
+        '''
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            # Get price
+            price = self.pool.get('product.pricelist').price_get(cr,uid,[line.order_id.pricelist_id.id], 
+                                                                    line.product_id.id, line.product_qty, line.order_id.partner_id.id,
+                                                                    {'uom': line.product_uom.id, 'date': line.order_id.date_order})[line.order_id.pricelist_id.id]
+
+            lines = self.search(cr, uid, [('order_id', '=', line.order_id.id), ('product_id', '=', line.product_id.id), ('product_uom', '=', line.product_uom.id)])
+            if lines and (price is False or price == 0.00):
+                res[line.id] = True
+
+        return res
 
     _columns = {
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
+        'other_line_pb': fields.function(_get_other_line, method=True, type='boolean', string='Other lines'),
+        'change_price_manually': fields.boolean(string='Update price manually'),
     }
 
-    def price_unit_change(self, cr, uid, ids, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context={}):
+    _defaults = {
+        'change_price_manually': lambda *a: False,
+        'other_line_pb': lambda *a: False
+    }
+
+    def price_unit_change(self, cr, uid, ids, price_unit, product_id, product_uom, product_qty, pricelist, partner_id, date_order, context={}):
         '''
         Display a warning message on change price unit if there are other lines with the same product and the same uom
         '''
@@ -569,10 +610,12 @@ class purchase_order_line(osv.osv):
 
         lines = self.search(cr, uid, [('order_id', '=', order_id), ('product_id', '=', product_id), ('product_uom', '=', product_uom)])
         if lines and (price is False or price == 0.00):
-            warning = {
+            if price_unit != 0.00:
+                warning = {
                 'title': 'Other lines updated !',
-                'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be updated too !',}
-            res.update({'warning': warning})
+                'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be updated too ! \
+Please check the \'Update price manually\' box to confirm the modification of the price.',}
+            res.update({'warning': warning, 'value': {'other_line_pb': True, 'change_price_manually': False}})
 
         return res
 

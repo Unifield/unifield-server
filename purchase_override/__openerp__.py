@@ -41,6 +41,7 @@
         "purchase_report.xml",
         "wizard/split_order_line_view.xml",
         "report/purchase_report_view.xml",
+        "security/ir.model.access.csv",
     ],
     "demo_xml": [
     ],
