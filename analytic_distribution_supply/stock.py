@@ -50,4 +50,41 @@ class stock_picking(osv.osv):
         return super(stock_picking, self)._invoice_hook(cr, uid, picking, invoice_id)
 
 stock_picking()
+
+class stock_move(osv.osv):
+    _name = 'stock.move'
+    _inherit = 'stock.move'
+
+    def action_cancel(self, cr, uid, ids, context={}):
+        """
+        Update commitment voucher line for the given moves
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse all elements
+        for move in self.browse(cr, uid, ids, context=context):
+            # Fetch all necessary elements
+            qty = move.product_uos_qty or move.product_qty or 0.0
+            picking = move.picking_id or False
+            if not picking:
+                raise osv.except_osv(_('Error'), _('No picking found for this move: %s' % move.name))
+            # fetch invoice type in order to retrieve price unit
+            inv_type = self.pool.get('stock.picking')._get_invoice_type(picking) or 'out_invoice'
+            price_unit = self.pool.get('stock.picking')._get_price_unit_invoice(cr, uid, move, inv_type)
+            if not price_unit:
+                raise osv.except_osv(_('Error'), _('No price unit found for this move: %s!') % move.name)
+            # update all commitment voucher lines
+            if not move.purchase_line_id:
+                continue
+            for cl in move.purchase_line_id.commitment_line_ids:
+                new_amount = cl.amount - (qty * price_unit)
+                if new_amount < 0.0:
+                    new_amount = 0.0
+                self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': new_amount}, context=context)
+        return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+
+stock_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
