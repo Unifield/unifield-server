@@ -149,7 +149,12 @@ class financing_contract_contract(osv.osv):
         default = default.copy()
         default['code'] = (contract['code'] or '') + '(copy)'
         default['name'] = (contract['name'] or '') + '(copy)'
-        return super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        # Copy lines manually
+        default['actual_line_ids'] = []
+        copy_id = super(financing_contract_contract, self).copy(cr, uid, id, default, context=context)
+        copy = self.browse(cr, uid, copy_id, context=context)
+        self.pool.get('financing.contract.format').copy_format_lines(cr, uid, contract.format_id.id, copy.format_id.id, context=context)
+        return copy_id
     
     def onchange_donor_id(self, cr, uid, ids, donor_id, format_id, actual_line_ids, context={}):
         res = {}
