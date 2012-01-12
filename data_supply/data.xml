@@ -645,7 +645,7 @@
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="prodlot_id" ref="stock_production_lot_msfbn_000001_6"/>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
-            <field name="location_dest_id" ref="msf_profile.stock_location_medical"/>
+            <field name="location_dest_id" ref="msf_profile.stock_location_input"/>
             <field name="location_id" ref="stock.stock_location_suppliers"/>
             <field name="picking_id" ref="stock_picking_in_00001_1" />
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
