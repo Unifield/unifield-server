@@ -22,31 +22,31 @@
     </record>
 
     <record id="stock_location_input" model="stock.location">
-        <field name="name">Input</field>
+        <field name="name">INPUT</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="location_category">transition</field>
     </record>
 
     <record id="stock.stock_location_stock" model="stock.location">
-        <field name="name">Stock</field>
+        <field name="name">STOCK</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="location_category">transition</field>
     </record>
     
     <record id="stock_location_medical" model="stock.location">
-        <field name="name">Medical Stock</field>
+        <field name="name">MED</field>
         <field name="location_id" ref="stock.stock_location_stock"/>
         <field name="location_category">stock</field>
     </record>
 
     <record id="stock_location_logistic" model="stock.location">
-        <field name="name">Logistic Stock</field>
+        <field name="name">LOG</field>
         <field name="location_id" ref="stock.stock_location_stock"/>
         <field name="location_category">stock</field>
     </record>
 
     <record id="stock.stock_location_output" model="stock.location">
-        <field name="name">Output</field>
+        <field name="name">OUTPUT</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="usage">internal</field>
         <field name="location_category">transition</field>
@@ -171,7 +171,7 @@
     </record>
 
     <record id="stock.stock_location_customers" model="stock.location">
-        <field name="name">Customers</field>
+        <field name="name">Customer</field>
         <field name="location_id" ref="stock.stock_location_locations_partner"/>
         <field name="usage">customer</field>
         <field name="company_id"></field>
@@ -265,8 +265,8 @@
         <field name="location_category">other</field>
     </record>
 
-    <record id="location_procurement" model="stock.location">
-        <field name="name">Procurements</field>
+    <record id="stock.location_procurement" model="stock.location">
+        <field name="name">Procurement</field>
         <field name="location_id" ref="stock.stock_location_locations_virtual"/>
         <field name="usage">procurement</field>
         <field name="company_id"></field>

@@ -79,13 +79,11 @@ class financing_contract_format_line(osv.osv):
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
-        date_domain = "[(),()]"
-        if browse_format.eligibility_from_date and browse_format.eligibility_to_date:
-            date_domain = "[('date', '>=', '"
-            date_domain += browse_format.eligibility_from_date
-            date_domain += "'), ('date', '<=', '"
-            date_domain += browse_format.eligibility_to_date
-            date_domain += "')]"
+        date_domain = "[('date', '>=', '"
+        date_domain += browse_format.eligibility_from_date
+        date_domain += "'), ('date', '<=', '"
+        date_domain += browse_format.eligibility_to_date
+        date_domain += "')]"
         # list of expense accounts in the funding pools.
         # we take them all (funded and project), as for funded,
         # we are sure that no allocation will be done with
