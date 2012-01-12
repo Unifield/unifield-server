@@ -17,6 +17,7 @@
             <field name="pricelist_id" ref="purchase.list0"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
             <field name="transport_currency_id" ref="base.EUR"/>
+            <field name="display_intl_transport_ok" eval="1" />
         </record>
 
         <!--model: purchase.order, id: 3-->
