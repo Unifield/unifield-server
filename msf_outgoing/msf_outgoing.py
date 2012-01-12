@@ -45,7 +45,7 @@ class stock_warehouse(osv.osv):
                 }
     
     _defaults = {'lot_packing_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Packing'),], context=c)[0] or False,
-                 'lot_dispatch_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Shipment'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Shipment'),], context=c)[0] or False,
+                 'lot_dispatch_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Dispatch'),], context=c)[0] or False,
                  'lot_distribution_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Distribution'),], context=c)) and obj.pool.get('stock.location').search(cr, uid, [('name', '=', 'Distribution'),], context=c)[0] or False,
                 }
 

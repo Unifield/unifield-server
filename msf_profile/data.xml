@@ -64,7 +64,7 @@
     </record>
 
     <record id="msf_outgoing.stock_location_dispatch" model="stock.location">
-        <field name="name">Shipment</field>
+        <field name="name">Dispatch</field>
         <field name="location_id" ref="stock.stock_location_output"/>
         <field name="usage">internal</field>
         <field name="location_category">transition</field>

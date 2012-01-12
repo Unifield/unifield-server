@@ -10,7 +10,7 @@
             <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
         </record>
         <record id="stock_location_dispatch" model="stock.location">
-            <field name="name">Shipment</field>
+            <field name="name">Dispatch</field>
             <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
         </record>
         <record id="stock_location_distribution" model="stock.location">
