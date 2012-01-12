@@ -236,6 +236,7 @@
         <field name="name">Inventory (loss &amp; profit)</field>
         <field name="location_id" ref="stock.stock_location_locations_virtual"/>
         <field name="usage">inventory</field>
+        <field name="scrap_location" eval="True" />
         <field name="company_id"></field>
         <field name="location_category">other</field>
     </record>
