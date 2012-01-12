@@ -28,7 +28,7 @@
         			<field name="delivery_requested_date" readonly="1" />
         			<field name="delivery_confirmed_date" readonly="1" />
         			<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
-        				<tree string="Followup lines">
+        				<tree string="Followup lines" colors="orange:return_move==True">
         					<field name="line_name" />
         					<field name="line_product_id" />
         					<field name="line_product_qty" />
@@ -41,6 +41,7 @@
         					<field name="move_uom_id" />
         					<field name="move_delivery_date" />
         					<field name="move_state" />
+                            <field name="return_move" invisible="1" />
         				</tree>
         			</field>
         			<button name="close_view" type="object" string="Close" icon="gtk-cancel" colspan="2" />
@@ -48,6 +49,42 @@
         		</form>
         	</field>
         </record>
+
+        <record id="purchase_order_followup_from_menu" model="ir.ui.view">
+            <field name="name">purchase.order.followup.from.menu</field>
+            <field name="model">purchase.order.followup.from.menu</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Choose a Purchase Order">
+                    <separator colspan="4" string="Select Purchase Order" />
+                    <field name="order_id" 
+                           attrs="{'readonly': [('cust_order_id', '!=', False)], 'required': [('cust_order_id    ', '=', False)]}" 
+                           domain="[('rfq_ok', '=', False), ('state', 'in', ['approved', 'done', 'except_picking', 'except_invoice'])]"
+                           on_change="change_order_id(order_id, cust_order_id, 'order_id')"/>
+                    <field name="cust_order_id" 
+                           context="{'from_followup': True}" 
+                           attrs="{'readonly': [('order_id', '!=', False)], 'required': [('cust_order_id', '=    ', False)]}" 
+                           domain="[('rfq_ok', '=', False), ('state', 'in', ['approved', 'done', 'except_picking', 'except_invoice'])]"
+                           on_change="change_order_id(order_id, cust_order_id, 'cust_order_id')" />
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
+                    <button name="go_to_followup" string="Go to followup" icon="gtk-execute" colspan="2" type="object"/>
+                </form>
+            </field>
+        </record> 
+
+        <record id="action_purchase_order_followup_from_menu" model="ir.actions.act_window">
+            <field name="name">Purchase Order Follow-Up</field>
+            <field name="res_model">purchase.order.followup.from.menu</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menuitem_purchase_order_followup_from_menu"
+                  action="action_purchase_order_followup_from_menu"
+                  sequence="1"
+                  parent="base.next_id_73" />
 		
 	</data>
 </openerp>

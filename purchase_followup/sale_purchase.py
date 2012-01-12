@@ -40,8 +40,11 @@ class purchase_order(osv.osv):
                 amount_total += line.product_qty*line.price_unit
                 for move in line.move_ids:
                     if move.state == 'done':
-                        move_qty = uom_obj._compute_qty(self, cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        amount_received += move_qty*line.price_unit
+                        move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
+                        if move.type == 'out':
+                            amount_received -= move_qty*line.price_unit
+                        else:
+                            amount_received += move_qty*line.price_unit
                     
             if amount_total:
                 res[order.id] = (amount_received/amount_total)*100
@@ -51,6 +54,33 @@ class purchase_order(osv.osv):
     _columns = {
             'shipped_rate': fields.function(_shipped_rate, method=True, string='Received', type='float'),
     }
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context={}, limit=80):
+        '''
+        Search all PO by internal or customer reference
+        '''
+        if context.get('from_followup'):
+            ids = []
+            if name and len(name) > 1:
+                ids.extend(self.search(cr, uid, [('partner_ref', operator, name)], context=context))
+            return self.name_get(cr, uid, ids, context=context)
+        else:
+            return super(purchase_order, self).name_search(cr, uid, name, args, operator, context, limit)
+
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        If the method is called from followup wizard, set the supplier ref in brackets
+        '''
+        if context.get('from_followup'):
+            res = []
+            for r in self.browse(cr, uid, ids, context=context):
+                if r.partner_ref:
+                    res.append((r.id, '%s' % r.partner_ref))
+                else:
+                    res.append((r.id, '%s' % r.name))
+            return res
+        else:
+            return super(purchase_order, self).name_get(cr, uid, ids, context=context)
     
 purchase_order()
 
