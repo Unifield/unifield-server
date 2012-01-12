@@ -3,13 +3,14 @@
         <!--model: purchase.order, id: 4-->
         <record model="purchase.order" id="purchase_order_po00008_4">
             <field name="transport_mode">road</field>
+            <field name="transport_type" eval="False" />
             <field name="from_yml_test" eval="0"/>
             <field name="date_order">2012-01-10</field>
             <field name="transport_cost">60.0</field>
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
             <field name="categ">log</field>
-            <field name="delivery_requested_date">2012-01-10</field>
+            <field name="delivery_requested_date">2012-02-21</field>
             <field name="invoice_method">order</field>
             <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'ZEDCO RADIATOR LTD'), ('partner_id.ref', '=', 'ZRL')]"/>
             <field name="location_id" ref="msf_profile.stock_location_input"/>
