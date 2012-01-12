@@ -25,8 +25,12 @@
         		<form string="Purchase Order Followup">
         			<field name="order_id" readonly="1" />
         			<field name="supplier_ref" readonly="1" />
-        			<field name="delivery_requested_date" readonly="1" />
-        			<field name="delivery_confirmed_date" readonly="1" />
+                    <field name="partner_id" readonly="1" />
+                    <field name="order_type" readonly="1" />
+                    <field name="priority" readonly="1" />
+                    <field name="categ" readonly="1" />
+        			<!--<field name="delivery_requested_date" readonly="1" />
+        			<field name="delivery_confirmed_date" readonly="1" />-->
         			<field name="line_ids" mode="tree" readonly="1" colspan="4" nolabel="1">
         				<tree string="Followup lines" colors="orange:return_move==True">
         					<field name="line_name" />

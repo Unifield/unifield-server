@@ -24,6 +24,12 @@ from osv import fields
 
 from tools.translate import _
 
+from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+
+ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
+              ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+              ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
+              ('direct', 'Direct Purchase Order')]
 
 class purchase_order_followup(osv.osv_memory):
     _name = 'purchase.order.followup'
@@ -169,6 +175,11 @@ class purchase_order_followup(osv.osv_memory):
         'supplier_ref': fields.related('order_id', 'partner_ref', string='Supplier Reference', readonly=True, type='char'),
         'delivery_requested_date': fields.related('order_id', 'delivery_requested_date', string='Delivery requested date', type='date', readonly=True),
         'delivery_confirmed_date': fields.related('order_id', 'delivery_confirmed_date', string='Delivery confirmed date', type='date', readonly=True),
+        'partner_id': fields.related('order_id', 'partner_id', string='Supplier', type='many2one', relation='res.partner', readonly=True),
+        'partner_ref': fields.related('order_id', 'partner_ref', string='Supplier reference', type='char', readonly=True),
+        'order_type': fields.related('order_id', 'order_type', string='Order Type', type='selection', selection=ORDER_TYPE, readonly=True),
+        'priority': fields.related('order_id', 'priority', string='Priority', type='selection', selection=ORDER_PRIORITY, readonly=True),
+        'categ': fields.related('order_id', 'categ', string='Order Category', type='selection', selection=ORDER_CATEGORY, readonly=True),
         'line_ids': fields.one2many('purchase.order.followup.line', 'followup_id', readonly=True),
         
     }
