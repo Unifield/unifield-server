@@ -341,6 +341,11 @@ class product_likely_expire_report(osv.osv_memory):
                         item_obj.write(cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
                     else:
                         item_obj.write(cr, uid, [item_id], {'period_start': report.date_from}, context=context)
+                        # Uncomment the first line if you want products already expired in the first month
+                        # Uncomment the second line if you don't want products already expired
+                        #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
+                        #domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        
 
                     # Remove the token after the first month processing
                     start_month_flag = False
