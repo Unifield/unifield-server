@@ -58,14 +58,19 @@
                 <form string="Choose a Purchase Order">
                     <separator colspan="4" string="Select Purchase Order" />
                     <field name="order_id" 
-                           attrs="{'readonly': [('cust_order_id', '!=', False)], 'required': [('cust_order_id    ', '=', False)]}" 
+                           attrs="{'readonly': ['|', ('cust_order_id', '!=', False), ('incoming_id', '!=', False)], 'required': [('cust_order_id', '=', False), ('incoming_id', '=', False)]}" 
                            domain="[('rfq_ok', '=', False), ('state', 'in', ['approved', 'done', 'except_picking', 'except_invoice'])]"
-                           on_change="change_order_id(order_id, cust_order_id, 'order_id')"/>
+                           on_change="change_order_id(order_id, cust_order_id, incoming_id, 'order_id')"/>
                     <field name="cust_order_id" 
                            context="{'from_followup': True}" 
-                           attrs="{'readonly': [('order_id', '!=', False)], 'required': [('cust_order_id', '=    ', False)]}" 
+                           attrs="{'readonly': ['|', ('order_id', '!=', False), ('incoming_id', '!=', False)], 'required': [('order_id', '=', False), ('incoming_id', '=', False)]}" 
                            domain="[('rfq_ok', '=', False), ('state', 'in', ['approved', 'done', 'except_picking', 'except_invoice'])]"
-                           on_change="change_order_id(order_id, cust_order_id, 'cust_order_id')" />
+                           on_change="change_order_id(order_id, cust_order_id, incoming_id, 'cust_order_id')" />
+                    <field name="incoming_id" 
+                           context="{'from_followup': True}" 
+                           attrs="{'readonly': ['|', ('order_id', '!=', False), ('cust_order_id', '!=', False)], 'required': [('cust_order_id', '=', False), ('order_id', '=', False)]}" 
+                           domain="[('purchase_id', '!=', False)]"
+                           on_change="change_order_id(order_id, cust_order_id, incoming_id, 'incoming_id')" />
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
                     <button name="go_to_followup" string="Go to followup" icon="gtk-execute" colspan="2" type="object"/>

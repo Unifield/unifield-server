@@ -208,25 +208,33 @@ class purchase_order_followup_from_menu(osv.osv_memory):
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Internal reference', required=True),
         'cust_order_id': fields.many2one('purchase.order', string='Purchase reference', required=True),
+        'incoming_id': fields.many2one('stock.picking', string='Incoming shipment', required=True),
     }
 
     def go_to_followup(self, cr, uid, ids, context={}):
         new_context = context.copy()
         new_ids = []
         for menu in self.browse(cr, uid, ids, context=context):
-            new_ids.append(menu.order_id and menu.order_id.id or menu.cust_order_id.id)
+            if menu.order_id:
+                new_ids.append(menu.order_id.id)
+            elif menu.cust_order_id.id:
+                new_ids.append(menu.cust_order_id.id)
+            else:
+                new_ids.append(menu.incoming_id.purchase_id.id)
 
         new_context['active_ids'] = new_ids
 
         return self.pool.get('purchase.order.followup').start_order_followup(cr, uid, ids, context=new_context)
 
-    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, type='order_id'):
+    def change_order_id(self, cr, uid, ids, order_id, cust_order_id, incoming_id, type='order_id'):
         res = {}
 
         if type == 'cust_order_id' and cust_order_id:
-            res.update({'order_id': False})
-        elif order_id:
-            res.update({'cust_order_id': False})
+            res.update({'order_id': False, 'incoming_id': False})
+        elif type == 'order_id' and order_id:
+            res.update({'cust_order_id': False, 'incoming_id': False})
+        elif type == 'incoming_id' and incoming_id:
+            res.update({'cust_order_id': False, 'order_id': False})
         
         return {'value': res}
  
