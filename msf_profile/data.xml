@@ -243,7 +243,8 @@
     <record id="stock.stock_location_scrapped" model="stock.location">
         <field name="name">Destruction</field>
         <field name="location_id" ref="stock.location_inventory"/>
-        <field name="scrap_location">True</field>
+        <field name="scrap_location" eval="False" />
+        <field name="destruction_location" eval="True" />
         <field name="usage">inventory</field>
         <field name="company_id"></field>
         <field name="location_category">other</field>
