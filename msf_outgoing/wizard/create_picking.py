@@ -424,13 +424,13 @@ class create_picking(osv.osv_memory):
             for move_data in picking_data.values():
                 for list_data in move_data:
                     # quantity check
-                    if list_data.get('product_qty', False) < 0.0:
+                    if list_data['product_qty'] < 0.0:
                         # a negative value has been selected, update the memory line
                         # update the new value for integrity check with 'negative' value (selection field)
                         negative_value = True
                         memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
                     else:
-                        sum_qty += list_data.get('product_qty', False)
+                        sum_qty += list_data['product_qty']
             # if error, return False
             if not sum_qty or negative_value:
                 return False
@@ -463,8 +463,8 @@ class create_picking(osv.osv_memory):
                     prod_id = list_data['product_id']
                     prod = prod_obj.browse(cr, uid, prod_id, context=context)
                     # a production lot is defined, corresponding checks
-                    if list_data.get('prodlot_id', False):
-                        lot = lot_obj.browse(cr, uid, list_data.get('prodlot_id'), context=context)
+                    if list_data['prodlot_id']:
+                        lot = lot_obj.browse(cr, uid, list_data['prodlot_id'], context=context)
                         # a prod lot is defined, the product must be either perishable or batch_management
                         if not (prod.perishable or prod.batch_management):
                             # should not have production lot
@@ -737,10 +737,10 @@ class create_picking(osv.osv_memory):
             for from_data in picking_data.values():
                 for to_data in from_data.values():
                     for move_data in to_data.values():
-                        for data in move_data:
+                        for partial in move_data:
                             # we have to treat all partial (split) data for each move as many sequence can exists for the same move
                             # [0]: FROM PACK / [1]: TO PACK / [2]: MEMORY MOVE ID
-                            sequences.append((data['from_pack'], data['to_pack'], data['memory_move_id']))
+                            sequences.append((partial['from_pack'], partial['to_pack'], partial['memory_move_id']))
             # if no data, we return False
             if not sequences:
                 return False
@@ -839,13 +839,13 @@ class create_picking(osv.osv_memory):
             for from_data in picking_data.values():
                 for to_data in from_data.values():
                     for move_data in to_data.values():
-                        for data in move_data:
-                            if not data.get('weight', False):
-                                move = move_obj.browse(cr, uid, data.get('move_id'), context=context)
+                        for partial in move_data:
+                            if not partial['weight']:
+                                move = move_obj.browse(cr, uid, partial['move_id'], context=context)
                                 flow_type = move.picking_id.flow_type
                                 if flow_type != 'quick':
                                     missing_weight = True
-                                    memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'missing_weight',}, context=context)
+                                    memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'missing_weight',}, context=context)
         # return false if weight is missing
         if missing_weight:
             return False

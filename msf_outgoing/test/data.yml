@@ -1,0 +1,34 @@
+- 
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: outgoing_partner_A}:
+    name: outgoingA
+    supplier: true
+    customer: true
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: outgoing_address_A}:
+    partner_id: outgoing_partner_A
+    street: A
+-
+  Product A
+- 
+  !record {model: product.product, id: outgoing_product_A}:
+    name: ProdA
+    batch_management: true
+    perishable: true
+-
+  Product B
+-
+  !record {model: product.product, id: outgoing_product_B}:
+    name: ProdB
+    batch_management: false
+    perishable: true
+-
+  Product C
+-
+  !record {model: product.product, id: outgoing_product_C}:
+    name: ProdC
+    batch_management: false
+    perishable: false

@@ -298,7 +298,10 @@ class shipment_wizard(osv.osv_memory):
             for memory_move in pack_family_list:
                 # all returns True if applied on an empty list
                 # only take into account if packs have been selected
-                if all([getattr(memory_move, cond) for cond in conditions]):
+                if all([not getattr(memory_move, cond) for cond in conditions]):
+                    # all conditions are True, the data is not taken into account
+                    pass
+                else:
                     # retrieve fields from object
                     fields = memory_move_obj.fields_get(cr, uid, context=context)
                     values = {}
@@ -325,7 +328,7 @@ class shipment_wizard(osv.osv_memory):
                 
         return partial_datas_shipment
     
-    def integrity_check_packs(self, cr, uid, ids, data, context=None):
+    def integrity_check_packs(self, cr, uid, ids, data, model_name, context=None):
         '''
         integrity check on create shipment data
         - no negative values (<0)
@@ -336,7 +339,7 @@ class shipment_wizard(osv.osv_memory):
         
         return True/False
         '''
-        memory_move_obj = self.pool.get('stock.move.memory.shipment.create')
+        memory_move_obj = self.pool.get(model_name)
         # validate the data
         for shipment_data in data.values():
             # total sum not including negative values
@@ -348,19 +351,19 @@ class shipment_wizard(osv.osv_memory):
             for packing_data in shipment_data.values():
                 for from_data in packing_data.values():
                     for to_data in from_data.values():
-                        for data in to_data:
+                        for partial in to_data:
                             # quantity check
-                            if data['selected_number'] < 0.0:
+                            if partial['selected_number'] < 0.0:
                                 # a negative value has been selected, update the memory line
                                 # update the new value for integrity check with 'negative' value (selection field)
                                 negative_value = True
-                                memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'negative'}, context=context)
-                            elif data['selected_number'] > int(data['num_of_packs']):
+                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'negative'}, context=context)
+                            elif partial['selected_number'] > int(partial['num_of_packs']):
                                 # cannot return more products than available
                                 too_much = True
-                                memory_move_obj.write(cr, uid, [data['memory_move_id']], {'integrity_status': 'return_qty_too_much',}, context=context)
+                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'return_qty_too_much',}, context=context)
                             else:
-                                sum_qty += data['selected_number']
+                                sum_qty += partial['selected_number']
                             
             # if error, return False
             if not sum_qty or negative_value or too_much:
@@ -390,29 +393,16 @@ class shipment_wizard(osv.osv_memory):
         shipment_ids = context['active_ids']
         # generate data structure - selected_number must be non zero to be taken into account
         partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
+        
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
-        packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas_shipment, context=context)
+        packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas_shipment, model_name='stock.move.memory.shipment.create', context=context)
         if not packs_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
-    
-    def integrity_check_return_packs(self, cr, uid, ids, data, context=None):
-        '''
-        integrity check on shipment data
-        '''
-        for shipment_data in data.values():
-            for packing_data in shipment_data.values():
-                for from_pack_data in packing_data.values():
-                    for to_pack_data in from_pack_data.values():
-                        for partial in to_pack_data:
-                            if partial.get('selected_number', False):
-                                return True
-        
-        return False
     
     def do_return_packs(self, cr, uid, ids, context=None):
         '''
@@ -423,29 +413,90 @@ class shipment_wizard(osv.osv_memory):
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         
         ship_obj = self.pool.get('shipment')
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_shipment_returnpacks'
         # shipment ids
         shipment_ids = context['active_ids']
         # generate data structure - selected_number must be non zero to be taken into account
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
-        # integrity check on wizard data
-        if not self.integrity_check_return_packs(cr, uid, ids, partial_datas, context=context):
-            raise osv.except_osv(_('Warning !'), _('You must at least select one pack to return!'))
+        
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
+        packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas, model_name='stock.move.memory.shipment.returnpacks', context=context)
+        if not packs_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     
     def integrity_check_return_packs_from_shipment(self, cr, uid, ids, data, context=None):
         '''
         integrity check on shipment data
+        (sfrom = selected from, sto = selected to)
+        
+        - rule #1: sfrom <= sto // integrity of selected sequence
+        - rule #2: (sfrom >= from) and (sto <= to) // in the initial range
+        - rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
+        
+        {26: 
+            {240: {1: {1: [{'selected_weight': 33.0, 'memory_move_id': 39, 'return_from': 1, 'weight': 33.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 33.0, 'memory_move_id': 50, 'return_from': 1, 'weight': 33.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 61}]},
+                   2: {30: [{'selected_weight': 638.0, 'memory_move_id': 40, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 638.0, 'memory_move_id': 51, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 638.0, 'memory_move_id': 52, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}]},
+                   31: {32: [{'selected_weight': 22.0, 'memory_move_id': 41, 'return_from': 31, 'weight': 11.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 31, 'length': 0.0, 'to_pack': 32, 'integrity_status': 'empty', 'num_of_packs': 2, 'selected_number': 2, 'return_to': 32, 'width': 0.0, 'sale_order_id': 61}]}},
+             241: {8: {8: [{'selected_weight': 5.0, 'memory_move_id': 42, 'return_from': 8, 'weight': 5.0, 'pack_type': False, 'ppl_id': 225, 'draft_packing_id': 241, 'wizard_id': 5, 'height': 0.0, 'from_pack': 8, 'length': 0.0, 'to_pack': 8, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 8, 'width': 0.0, 'sale_order_id': 61}]}, 1: {1: [{'selected_weight': 3.0, 'memory_move_id': 43, 'return_from': 1, 'weight': 3.0, 'pack_type': False, 'ppl_id': 225, 'draft_packing_id': 241, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 61}]}, 2: {7: [{'selected_weight': 24.0, 'memory_move_id': 44, 'return_from': 2, 'weight': 4.0, 'pack_type': False, 'ppl_id': 225, 'draft_packing_id': 241, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 7, 'integrity_status': 'empty', 'num_of_packs': 6, 'selected_number': 6, 'return_to': 7, 'width': 0.0, 'sale_order_id': 61}]}},
+             238: {16: {16: [{'selected_weight': 22.0, 'memory_move_id': 45, 'return_from': 16, 'weight': 22.0, 'pack_type': False, 'ppl_id': 231, 'draft_packing_id': 238, 'wizard_id': 5, 'height': 0.0, 'from_pack': 16, 'length': 0.0, 'to_pack': 16, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 16, 'width': 0.0, 'sale_order_id': 62}]}, 1: {10: [{'selected_weight': 440.0, 'memory_move_id': 46, 'return_from': 1, 'weight': 44.0, 'pack_type': False, 'ppl_id': 231, 'draft_packing_id': 238, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 10, 'integrity_status': 'empty', 'num_of_packs': 10, 'selected_number': 10, 'return_to': 10, 'width': 0.0, 'sale_order_id': 62}]}, 11: {15: [{'selected_weight': 165.0, 'memory_move_id': 47, 'return_from': 11, 'weight': 33.0, 'pack_type': False, 'ppl_id': 231, 'draft_packing_id': 238, 'wizard_id': 5, 'height': 0.0, 'from_pack': 11, 'length': 0.0, 'to_pack': 15, 'integrity_status': 'empty', 'num_of_packs': 5, 'selected_number': 5, 'return_to': 15, 'width': 0.0, 'sale_order_id': 62}]}},
+             239: {1: {1: [{'selected_weight': 22.0, 'memory_move_id': 48, 'return_from': 1, 'weight': 22.0, 'pack_type': False, 'ppl_id': 230, 'draft_packing_id': 239, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 62}]}, 2: {2: [{'selected_weight': 33.0, 'memory_move_id': 49, 'return_from': 2, 'weight': 33.0, 'pack_type': False, 'ppl_id': 230, 'draft_packing_id': 239, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 2, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 2, 'width': 0.0, 'sale_order_id': 62}]}}}}
         '''
+        memory_move_obj = self.pool.get('stock.move.memory.shipment.returnpacksfromshipment')
         for shipment_data in data.values():
+            # counter for detecting empty return
+            number_of_sequences = 0
+            # flag for detecting to value smaller than from value
+            to_samller_than_from = False
+            # flag for detecting overlapping sequences
+            overlap = False
+            # flag for detecting out of range selection
+            out_of_range = False
             for packing_data in shipment_data.values():
+                # list of sequences for each picking - sequences must be treated separately for each packing
+                sequences = []
+                # gather the sequences for this packing - ppl (one packing corresponds to one ppl)
                 for from_pack_data in packing_data.values():
                     for to_pack_data in from_pack_data.values():
                         for partial in to_pack_data:
-                            if partial.get('return_from', False) and partial.get('return_to', False):
-                                return True
+                            # we have to treat all partial (split) data for each ppl as many sequence can exists for the same ppl
+                            # rule #1: sfrom <= sto // integrity of selected sequence
+                            if not (partial['return_from'] <= partial['return_to']):
+                                to_samller_than_from = True
+                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'to_smallaer_than_from',}, context=context)
+                            # rule #2: (sfrom >= from) and (sto <= to) // in the initial range
+                            elif not (partial['return_from'] >= partial['from_pack'] and partial['return_to'] <= partial['to_pack']):
+                                out_of_range = True
+                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'seq_out_of_range',}, context=context)
+                            else:
+                                # [0]: selected FROM PACK / [1]: selected TO PACK / [2]: MEMORY MOVE ID
+                                sequences.append((partial['return_from'], partial['return_to'], partial['memory_move_id']))
+                # increase the number of valid sequences
+                number_of_sequences += len(sequences)
+                # sort the sequences according to from value
+                sequences = sorted(sequences, key=lambda seq: seq[0])
+                # go through the list of sequences applying the rules
+                for i in range(len(sequences)):
+                    seq = sequences[i]
+                    # rules 3 applies from second element
+                    if i > 0:
+                        # previsous sequence
+                        seqb = sequences[i-1]
+                        # rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
+                        if not (seq[0] > seqb[1]):
+                            overlap = True
+                            memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'overlap',}, context=context)
+            
+            # if error, return False
+            if not number_of_sequences or to_samller_than_from or overlap or out_of_range:
+                return False
         
-        return False
+        return True
     
     def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
         '''
@@ -456,13 +507,24 @@ class shipment_wizard(osv.osv_memory):
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         
         ship_obj = self.pool.get('shipment')
+        # name of the wizard field for moves (one2many)
+        field_name = 'product_moves_shipment_returnpacksfromshipment'
         # shipment ids
         shipment_ids = context['active_ids']
         # generate data structure - return_from and return_to must be non zero
+        # TODO: there is a problem with (0,3) for example as it does not take part to data
+        # the list is therefore empty, and no error message is displayed by the integrity check
+        # to be modified along with delete lines policy implementation
+        # as a (temporary?) fix, all conditions must be true at the same time to be skipped (0,0) is skipped, (0,3) isn't
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['return_from', 'return_to'], context=context)
-        # integrity check on wizard data
-        if not self.integrity_check_return_packs_from_shipment(cr, uid, ids, partial_datas, context=context):
-            raise osv.except_osv(_('Warning !'), _('You must at least select one pack to return!'))
+        
+        # reset the integrity status of all lines
+        self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
+        # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
+        sequence_check = self.integrity_check_return_packs_from_shipment(cr, uid, ids, partial_datas, context=context)
+        if not sequence_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs_from_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
     

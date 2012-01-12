@@ -1,68 +1,7 @@
 - 
-  Creating a res.partner record
+  Creating a sale.order record A
 - 
-  !record {model: res.partner, id: res_partner_a0}:
-    credit_limit: 0.0
-    debit_limit: 0.0
-    name: A
-    supplier: true
-    
-- 
-  Creating a res.partner.address record
-- 
-  !record {model: res.partner.address, id: res_partner_address_0}:
-    partner_id: res_partner_a0
-    street: A
-    
-- 
-  Creating a res.partner record
-- 
-  !record {model: res.partner, id: res_partner_b0}:
-    credit_limit: 0.0
-    debit_limit: 0.0
-    name: B
-    supplier: true
-    
-    
-- 
-  Creating a res.partner.address record
-- 
-  !record {model: res.partner.address, id: res_partner_address_1}:
-    partner_id: res_partner_b0
-    street: B
-    
--
-  I create product template .
--
-  !record {model: product.template, id: product_template_p0}:
-    categ_id: product.cat0
-    cost_method: standard
-    mes_type: fixed
-    name: P
-    procure_method: make_to_stock
-    standard_price: 160.0
-    supply_method: buy
-    type: product
-    uom_id: product.product_uom_unit
-    uom_po_id: product.product_uom_unit
-    
-- 
-  Creating a product.product record
-- 
-  !record {model: product.product, id: product_product_p0}:
-    
-    standard_price: 1.0
-    valuation: manual_periodic
-    volume: 0.0
-    warranty: 0.0
-    weight: 0.0
-    weight_net: 0.0
-    product_tmpl_id: product_template_p0 
-    
-- 
-  Creating a sale.order record
-- 
-  !record {model: sale.order, id: sale_order_so0}:
+  !record {model: sale.order, id: outgoing_so_A}:
     amount_tax: 0.0
     amount_total: 1.0
     amount_untaxed: 1.0
@@ -70,44 +9,106 @@
     date_order: '2011-04-13'
     invoice_quantity: order
     order_policy: manual
-    partner_id: res_partner_a0
-    partner_invoice_id: res_partner_address_0
-    partner_order_id: res_partner_address_0
-    partner_shipping_id: res_partner_address_0
+    partner_id: outgoing_partner_A
+    partner_invoice_id: outgoing_address_A
+    partner_order_id: outgoing_address_A
+    partner_shipping_id: outgoing_address_A
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
     priority: normal
     categ: medical
-    
-    
 - 
-  Creating a sale.order.line record
+  Creating a sale.order.line record A1
 - 
-  !record {model: sale.order.line, id: sale_order_line_p0}:
+  !record {model: sale.order.line, id: outgoing_sol_A1}:
     company_id: base.main_company
     delay: 7.0
     name: P
-    order_id: sale_order_so0
-    order_partner_id: res_partner_a0
+    order_id: outgoing_so_A
     price_unit: 1.0
-    product_id: product_product_p0
+    product_id: outgoing_product_A
     product_uom: product.product_uom_unit
-    product_uom_qty: 1.0
+    product_uom_qty: 100
     salesman_id: base.user_admin
     state: draft
     th_weight: 0.0
     type: make_to_stock
-    
+- 
+  Creating a sale.order.line record A2
+- 
+  !record {model: sale.order.line, id: outgoing_sol_A2}:
+    company_id: base.main_company
+    delay: 7.0
+    name: P
+    order_id: outgoing_so_A
+    price_unit: 1.0
+    product_id: outgoing_product_B
+    product_uom: product.product_uom_unit
+    product_uom_qty: 200
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_stock
+- 
+  Creating a sale.order record B
+- 
+  !record {model: sale.order, id: outgoing_so_B}:
+    amount_tax: 0.0
+    amount_total: 1.0
+    amount_untaxed: 1.0
+    company_id: base.main_company
+    date_order: '2011-04-13'
+    invoice_quantity: order
+    order_policy: manual
+    partner_id: outgoing_partner_A
+    partner_invoice_id: outgoing_address_A
+    partner_order_id: outgoing_address_A
+    partner_shipping_id: outgoing_address_A
+    picking_policy: direct
+    pricelist_id: product.list0
+    shop_id: sale.shop
+    priority: normal
+    categ: medical
+- 
+  Creating a sale.order.line record A
+- 
+  !record {model: sale.order.line, id: outgoing_sol_B1}:
+    company_id: base.main_company
+    delay: 7.0
+    name: P
+    order_id: outgoing_so_B
+    price_unit: 1.0
+    product_id: outgoing_product_A
+    product_uom: product.product_uom_unit
+    product_uom_qty: 100
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_stock
+- 
+  Creating a sale.order.line record B
+- 
+  !record {model: sale.order.line, id: outgoing_sol_B2}:
+    company_id: base.main_company
+    delay: 7.0
+    name: P
+    order_id: outgoing_so_B
+    price_unit: 1.0
+    product_id: outgoing_product_B
+    product_uom: product.product_uom_unit
+    product_uom_qty: 200
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_stock
 -
-
   I validate the sale order
-
 -
   !python {model: sale.order}: |
     import netsvc
     wf_service = netsvc.LocalService("workflow")
-    wf_service.trg_validate(uid, 'sale.order', ref("sale_order_so0"), 'order_confirm', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("outgoing_so_A"), 'order_confirm', cr)
     
 -
 
@@ -115,7 +116,7 @@
 
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("sale_order_so0")), ('state', '=', 'draft')], context=context)
+    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")), ('state', '=', 'draft')], context=context)
     assert len(ids) == 1, 'number of created draft picking is wrong, 1 - %s'%len(ids)
     res = self.create_picking(cr, uid, ids, context=context)
     model = res['res_model']
@@ -129,7 +130,7 @@
 
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("sale_order_so0")), ('state', '=', 'assigned')], context=context)
+    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")), ('state', '=', 'assigned')], context=context)
     assert len(ids) == 1, 'number of created draft picking is wrong, 1 - %s'%len(ids)
     # update flow_type
     self.write(cr, uid, ids, {'flow_type': 'quick',}, context=context)
@@ -146,7 +147,7 @@
 
 -
   !python {model: shipment}: |
-    ids = self.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', ref("res_partner_address_0"))], context=context)
+    ids = self.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', ref("outgoing_address_A"))], context=context)
     assert len(ids) == 1, 'number of created draft shipment is wrong, 1 - %s'%len(ids)
     
     # create a new shipment
@@ -156,7 +157,7 @@
     # update the context
     self.pool.get(model).do_create_shipment(cr, uid, [id], context=res['context'])
     # ship it
-    ids = self.search(cr, uid, [('state', '=', 'packed'), ('address_id', '=', ref("res_partner_address_0"))], context=context)
+    ids = self.search(cr, uid, [('state', '=', 'packed'), ('address_id', '=', ref("outgoing_address_A"))], context=context)
     assert len(ids) == 1, 'number of created shipment is wrong, 1 - %s'%len(ids)
     self.ship(cr, uid, ids, context=context)
     # validate it
@@ -172,7 +173,7 @@
 
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("sale_order_so0")),], context=context)
+    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")),], context=context)
     # we must have 6 objects - draft picking - picking - ppl - draft packing - packing (packed) - packing (shipped)
     objects = ['draft_picking', 'picking', 'ppl', 'draft_packing', 'packing_packed', 'packing_shipped']
     assert len(ids) == len(objects), 'the number of picking objects is wrong - %s - %s'%(len(objects), len(ids))

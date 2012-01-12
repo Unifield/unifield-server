@@ -22,6 +22,7 @@
 INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('ok', 'Ok'),
                               ('negative', 'Negative Value'),
+                              # picking
                               ('missing_lot', 'Production Lot is Missing'),
                               ('missing_date', 'Expiry Date is Missing'),
                               ('no_lot_needed', 'No Production Lot/Expiry Date Needed'),
@@ -40,10 +41,12 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('missing_weight', 'Weight is Missing'),
                               # create shipment
                               ('too_many_packs', 'Too many packs selected'),
+                              # return from shipment
+                              ('seq_out_of_range', 'Selected Sequence is out of range'),
                               ]
 
 import msf_outgoing
 import wizard
 import report
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
