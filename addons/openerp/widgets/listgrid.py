@@ -41,7 +41,7 @@ class List(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
     params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
-              'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button']
+              'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button', 'notselectable']
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -57,6 +57,7 @@ class List(TinyWidget):
     columns = 0
     headers = None
     noteditable = None
+    notselectable = None
     model = None
     selectable = False
     editable = False
@@ -86,6 +87,7 @@ class List(TinyWidget):
         #this Condition is for Dashboard to avoid new, edit, delete operation
         self.dashboard = 0
         self.noteditable = []
+        self.notselectable = []
         self.selectable = kw.get('selectable', 0)
         self.editable = kw.get('editable', False)
         self.pageable = kw.get('pageable', True)
@@ -230,7 +232,15 @@ class List(TinyWidget):
            
         if self.editable and context.get('set_editable'):#Treeview editable by default or set_editable in context
             attrs['editable'] = "bottom"
-        
+       
+        if self.selectable and attrs.get('notselectable'):
+            for x in self.values:
+                try:
+                    if expr_eval(attrs.get('notselectable'), x):
+                        self.notselectable.append(x['id'])
+                except:
+                    pass 
+
         # make editors
         if self.editable and attrs.get('editable') in ('top', 'bottom'):
             if attrs.get('noteditable'):

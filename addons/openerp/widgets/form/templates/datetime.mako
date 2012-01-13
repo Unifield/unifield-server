@@ -18,7 +18,8 @@
                     showsTime: ${str(picker_shows_time).lower()},
                     onClose: function(cal){
                         cal.destroy();
-                    }
+                    },
+                    electric: false,
                 });
             });
         </script>
