@@ -9,6 +9,7 @@
             <field name="partner_id" search="[]" model="res.partner"/>
             <field name="partner_address_id" search="[]" model="res.partner.address"/>
             <field name="location_id" ref="stock.stock_location_stock"/>
+            <field name="invoice_method">order</field>
         </record>
         <record model="purchase.order.line" id="test_purchase_1_line_1">
             <field name="order_id" ref="test_purchase_1"/>
