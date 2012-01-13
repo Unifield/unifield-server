@@ -110,7 +110,6 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
         'from_yml_test': lambda *a: False,
-        'invoice_method': 'picking',
     }
 
     def _check_user_company(self, cr, uid, company_id, context={}):
