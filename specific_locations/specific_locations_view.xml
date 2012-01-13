@@ -16,8 +16,8 @@
 	                </xpath>
 	                
 	                <field name="scrap_location" position="after">
-	                	<field name="quarantine_location" attrs="{'readonly':[('usage', 'not in', ('internal',)),],}" />
-	                	<field name="destruction_location" attrs="{'readonly':[('usage', 'not in', ('inventory',)),],}" />
+	                	<field name="quarantine_location" attrs="{'readonly':[('usage', 'not in', ['internal'])]}" />
+	                	<field name="destruction_location" attrs="{'readonly':[('usage', 'not in', ['inventory'])]}" />
 	                </field>
 	                
 	                <field name="location_id" position="after">
@@ -92,7 +92,7 @@
             	<data>
             	
             		<field name="location_id" position="replace">
-            			<field name="location_id" domain="[('usage','&lt;&gt;','view'), ('quarantine_location', '=', False),]" />
+            			<field name="location_id" domain="[('usage','&lt;&gt;','view'), ('quarantine_location', '=', False)]" />
             		</field>
             	
             	</data>
@@ -110,7 +110,7 @@
            		<data>
             	
             		<xpath expr="//form[@string='Stock Moves']//field[@name='location_id']" position="replace">
-						<field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False),]" />
+						<field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]" />
             		</xpath>
             		
             	</data>
@@ -127,7 +127,7 @@
                 <data>
                 
                 	<field name="location_id" position="replace">
-                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False),]" />
+                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False)]" />
                 	</field>
                 
                 </data>
@@ -144,7 +144,7 @@
             	<data>
             	
             		<field name="location_id" position="replace">
-                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False),]" />
+                		<field name="location_id" context="{'full':True}" domain="[('quarantine_location', '=', False)]" />
                 	</field>
             	
             	</data>
@@ -161,7 +161,7 @@
             	<data>
             	
             		<field name="location_id" position="replace">
-                		<field name="location_id" domain="[('quarantine_location', '=', False),]" />
+                		<field name="location_id" domain="[('quarantine_location', '=', False)]" />
                 	</field>
             	
             	</data>
