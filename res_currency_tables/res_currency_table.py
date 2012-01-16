@@ -28,40 +28,28 @@ class res_currency_table(osv.osv):
     _columns = {
         'name': fields.char('Currency table name', size=64, required=True),
         'code': fields.char('Currency table code', size=16, required=True),
-        'currency_ids': fields.one2many('res.currency', 'currency_table_id', 'Currencies', domain=[('active', 'in', ['t','f'])]),
+        'currency_ids': fields.one2many('res.currency', 'currency_table_id', 'Currencies'),
+        'state': fields.selection([('draft','Draft'),
+                                   ('valid','Valid'),
+                                   ('closed', 'Closed')], 'State', required=True),
     }
     
-    def create(self, cr, uid, vals, context=None):
+    _defaults = {
+        'state': 'draft',
+    }
+
+    def _check_unicity(self, cr, uid, ids, context={}):
         if not context:
-            context = {}
-        table_id = super(res_currency_table, self).create(cr, uid, vals, context=context)
-        # Duplicate main currency list
-        currency_obj = self.pool.get('res.currency')
-        main_currency_ids = currency_obj.search(cr, uid, [('currency_table_id', '=', False)], context={'active_test': False})
-        for currency in currency_obj.browse(cr, uid, main_currency_ids, context=context):
-            currency_vals = {'name': currency.name,
-                             'currency_name': currency.currency_name,
-                             'symbol': currency.symbol,
-                             'accuracy': currency.accuracy,
-                             'rounding': currency.rounding,
-                             'company_id': currency.company_id.id,
-                             'date': currency.date,
-                             'base': currency.base,
-                             'currency_table_id': table_id,
-                             'reference_currency_id': currency.id,
-                             'active': False
-                            }
-            currency_id = currency_obj.create(cr, uid, currency_vals, context=context)
-            if currency.name in ['EUR', 'CHF']:
-                # EUR and CHF are default ones
-                # create default rate
-                date_rate = datetime.date(datetime.date.today().year, 1, 1)
-                self.pool.get('res.currency.rate').create(cr, uid, {'name': date_rate.strftime('%Y-%m-%d'),
-                                                                    'rate': 1,
-                                                                    'currency_id': currency_id}, context=context)
-                # Activate currency
-                currency_obj.write(cr, uid, [currency_id], {'active': True}, context=context)
-        return table_id
+            context={}
+        for table in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', table.name),('code', '=ilike', table.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between currency tables!', ['code', 'name']),
+    ]
     
 res_currency_table()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

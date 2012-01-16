@@ -10,6 +10,7 @@
                 <tree string="Currency Tables">
                     <field name="name"/>
                     <field name="code"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -22,7 +23,42 @@
                 <form string="Currency Table">
                     <field name="name"/>
                     <field name="code"/>
-                    <field colspan="4" name="currency_ids" nolabel="1" widget="one2many_list" context="{'search_default_active': False}"/>
+                    <field colspan="4" name="currency_ids" nolabel="1">
+	                    <tree string="Currencies">
+	                        <field name="name"/>
+	                        <field name="currency_name"/>
+	                        <field name="rate"/>
+	                        <field name="date"/>
+	                    </tree>
+                        <form string="Currency">
+		                    <group col="6" colspan="6">
+		                        <field name="name" select="1"/>
+		                        <field name="rate"/>
+		                        <field name="currency_name"/>
+		                        <field name="symbol"/>
+		                    </group>
+		                    <group col="2" colspan="2">
+		                        <separator string="Price Accuracy" colspan="2"/>
+		                        <field name="rounding"/>
+		                        <field name="accuracy"/>
+		                    </group>
+		                    <field colspan="4" mode="tree,form" name="rate_ids" nolabel="1" attrs="{'readonly':[('base','=',True)]}">
+		                        <form string="Rates">
+		                            <field name="name"/>
+		                            <field name="rate"/>
+		                        </form>
+		                        <tree string="Rates">
+		                            <field name="name"/>
+		                            <field name="rate"/>
+		                        </tree>
+		                    </field>
+		                </form>
+                    </field>
+                    <field name="state"/>
+                    <group col="4" colspan="2">
+                        <button string="Validate" name="valid" states="draft" type="workflow" icon="gtk-ok"/>
+                        <button string="Close" name="closed" states="valid" type="workflow" icon="gtk-jump-to" />
+                    </group>
                 </form>
             </field>
         </record>
