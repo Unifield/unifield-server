@@ -507,6 +507,15 @@ class sale_order(osv.osv):
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
         return super(sale_order, self).unlink(cr, uid, ids, context)
+
+    def _hook_ship_create_procurement_condition(self, cr, uid, ids, context={}, *args, **kwargs):
+        '''
+        If the line comes from an internal request and is make to stock, don't create a procurement order
+        '''
+        line = kwargs['line']
+        if line.order_id.procurement_request and line.type == 'make_to_stock':
+            return False
+        return True
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
