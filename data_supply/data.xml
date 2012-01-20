@@ -1,5 +1,5 @@
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
         <!--model: purchase.order, id: 4-->
         <record model="purchase.order" id="purchase_order_po00008_4">
             <field name="transport_mode">road</field>
@@ -204,7 +204,6 @@
         <!--model: tender, id: 1-->
         <record model="tender" id="tender_t_00001_1">
             <field name="categ">log</field>
-            <field name="name">T/00001</field>
             <field name="supplier_ids" search="['|', '&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA'), '&amp;', ('name', '=', 'BLUE CHIP TECHNOLOGIES LTD'), ('ref', '=', 'BCTL')]"/>
             <field name="warehouse_id" ref="stock.warehouse0"/>
             <field name="requested_date">2012-02-15</field>
