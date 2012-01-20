@@ -344,9 +344,9 @@
             		</field>
             		
             		
-<!--            		<field name="ref" position="after">
-            			<field name="type" />
-            		</field>-->
+            		<field name="ref" position="after">
+            			<field name="type" readonly="1" />
+            		</field>
             		
             		<field name="name" position="replace">
             			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
