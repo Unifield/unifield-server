@@ -393,22 +393,22 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
                 if line.procurement_id:
-                    # Done procurement
+                    # Closed procurement
                     wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
  
 
-            # Done picking
+            # Closed picking
             for pick in order.picking_ids:
                 if pick.state not in ('cancel', 'done'):
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'manually_done', cr)
 
-            # Done loan counterpart
+            # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
                 loan_context = context.copy()
                 loan_context.update({'loan_id': order.id})
                 self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, context=loan_context)
 
-            # Done invoices
+            # Closed invoices
             invoice_error_ids = []
             for invoice in order.invoice_ids:
                 if invoice.state == 'draft':
@@ -421,7 +421,7 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
                             'Invoices references : %s') % invoices_ref)            
 
-        # Done stock moves
+        # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, context=context)
 

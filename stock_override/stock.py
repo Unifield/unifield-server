@@ -339,7 +339,7 @@ class stock_move(osv.osv):
                          ('waiting', 'Waiting'),
                          ('confirmed', 'Not Available'),
                          ('assigned', 'Available'),
-                         ('done', 'Done'),
+                         ('done', 'Closed'),
                          ('cancel', 'Cancel'),]
 
     _columns = {
@@ -354,7 +354,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
-              help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Done\'.\
+              help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
     }
     

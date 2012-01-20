@@ -38,7 +38,7 @@ class procurement_list(osv.osv):
         'order_date': fields.date(string='Order date', required=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
         'origin': fields.char(size=64, string='Origin'),
-        'state': fields.selection([('draft', 'Draft'),('done', 'Done'), ('cancel', 'Cancel')], 
+        'state': fields.selection([('draft', 'Draft'),('done', 'Closed'), ('cancel', 'Cancel')], 
                                    string='State', readonly=True),
         'line_ids': fields.one2many('procurement.list.line', 'list_id', string='Lines', readonly=True,
                                     states={'draft': [('readonly', False)]}),
