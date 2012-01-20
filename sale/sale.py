@@ -699,6 +699,15 @@ class sale_order(osv.osv):
         '''
         pass
     
+    def _hook_ship_create_procurement_condition(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+        
+        - allow to customize the execution condition
+        '''
+        return True
+    
     def _hook_ship_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -774,7 +783,7 @@ class sale_order(osv.osv):
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
                     move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
 
-                if line.product_id:
+                if line.product_id and self._hook_ship_create_procurement_condition(cr, uid, ids, context=context, line=line, order=order):
                     proc_data = {'name': line.name,
                                  'origin': order.name,
                                  'date_planned': date_planned,
