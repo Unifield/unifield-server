@@ -841,7 +841,7 @@ class stock_production_lot(osv.osv):
         Check if the type of the batch is consistent with the product attributes
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.type == 'internal' and (obj.product_id.batch_management or not obl.product_id.perishable):
+            if obj.type == 'internal' and (obj.product_id.batch_management or not obj.product_id.perishable):
                 return False
 
         return True
