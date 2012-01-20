@@ -825,6 +825,26 @@ class stock_production_lot(osv.osv):
                 result[obj.id]['np_check'] = True
             
         return result
+
+    def _check_batch_type_integrity(self, cr, uid, ids, context={}):
+        '''
+        Check if the type of the batch is consistent with the product attributes
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'standard' and not obj.product_id.batch_management:
+                return False
+
+        return True
+
+    def _check_perishable_type_integrity(self, cr, uid, ids, context={}):
+        '''
+        Check if the type of the batch is consistent with the product attributes
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'internal' and (obj.product_id.batch_management or not obl.product_id.perishable):
+                return False
+
+        return True
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
@@ -853,7 +873,15 @@ class stock_production_lot(osv.osv):
     
     _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
                         ]
-    
+
+    _constraints = [(_check_batch_type_integrity,
+                    'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
+                    ['Type', 'Product']),
+                    (_check_perishable_type_integrity,
+                    'You can\'t create an internal Batch Number for a product which is batch managed or which is not perishable. If the product is batch managed, please create a standard batch number.',
+                    ['Type', 'Product']),
+                ]
+
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
