@@ -401,7 +401,7 @@ class purchase_order(osv.osv):
                         move_values.update({'reason_type_id': reason_type_id})
                     
                     move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
-                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line,):
+                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
                         self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
                     todo_moves.append(move)
             self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)

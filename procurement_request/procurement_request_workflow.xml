@@ -72,7 +72,9 @@
         <record id="trans_confirm_proc_done" model="workflow.transition">
             <field name="act_from" ref="act_proc_confirm"/>
             <field name="act_to" ref="act_proc_done"/>
-            <field name="signal">order_confirm</field>
+	    <field name="trigger_model">procurement.order</field>
+            <field name="trigger_expr_id">procurement_lines_get()</field>
+            <field name="condition">test_state('finished')</field>
         </record>
     
     </data>
