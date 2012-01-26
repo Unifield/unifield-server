@@ -97,6 +97,7 @@ class import_data(osv.osv_memory):
             ('account.analytic.account','Analytic Account'),
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
+            ('product.supplierinfo', 'Supplier Info'),
             ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
     }

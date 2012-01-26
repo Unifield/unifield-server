@@ -17,8 +17,8 @@
                         <field name="debit_currency" sum="Total Booking Debit" string="Booking Debit"/>
                         <field name="credit_currency" sum="Total Booking Credit" string="Booking Credit"/>
                         <field name="currency_id" string="Booking Currency"/>
-                        <field name="credit" sum="Total Functional Credit" string="Functional Credit" readonly="1"/>
                         <field name="debit" sum="Total Functional Debit" string="Functional Debit" readonly="1"/>
+                        <field name="credit" sum="Total Functional Credit" string="Functional Credit" readonly="1"/>
                         <field name="functional_currency_id" readonly="1"/>
                     </xpath>
                 </data>

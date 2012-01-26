@@ -102,12 +102,15 @@ class real_average_consumption(osv.osv):
         'period_from': fields.date(string='Period from', required=True),
         'period_to': fields.date(string='Period to', required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
-        'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
         'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -271,32 +274,33 @@ class real_average_consumption(osv.osv):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
+        self.write(cr, uid, ids, {'created_ok': True})    
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
-            
+
+            nom = False
             # Get all products for the defined nomenclature
-            if report.nomen_id:
-                nomen_id = report.nomen_id.id
-                nomen = self.pool.get('product.nomenclature').browse(cr, uid, nomen_id, context=context)
-                if nomen.type == 'mandatory':
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_0', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_1', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_2', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_manda_3', '=', nomen_id)], context=context))
-                else:
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_0', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_1', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_2', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_3', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_4', '=', nomen_id)], context=context))
-                    product_ids.extend(self.pool.get('product.product').search(cr, uid, [('nomen_sub_5', '=', nomen_id)], context=context))
-            
+            if report.nomen_manda_3:
+                nom = report.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif report.nomen_manda_2:
+                nom = report.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif report.nomen_manda_1:
+                nom = report.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif report.nomen_manda_0:
+                nom = report.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
             # Get all products for the defined list
             if report.sublist_id:
                 for line in report.sublist_id.product_ids:
                     product_ids.append(line.name.id)
-                    
+
             # Check if products in already existing lines are in domain
             products = []
             for line in report.line_ids:
@@ -304,15 +308,20 @@ class real_average_consumption(osv.osv):
                     products.append(line.product_id.id)
                 else:
                     self.pool.get('real.average.consumption.line').unlink(cr, uid, line.id, context=context)
-                    
+
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
+                    batch_mandatory = product.batch_management or product.perishable
+                    date_mandatory = not product.batch_management and product.perishable
                     self.pool.get('real.average.consumption.line').create(cr, uid, {'product_id': product.id,
                                                                                     'uom_id': product.uom_id.id,
                                                                                     'consumed_qty': 0.00,
+                                                                                    'batch_mandatory': batch_mandatory,
+                                                                                    'date_mandatory': date_mandatory,
                                                                                     'rac_id': report.id})
         
+        self.write(cr, uid, ids, {'created_ok': False})    
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
@@ -321,11 +330,12 @@ class real_average_consumption(osv.osv):
                 'target': 'dummy',
                 'context': context}
         
-    def nomen_change(self, cr, uid, ids, nomen_id, context={}):
-        context.update({'test_id': nomen_id})
-    
-        return {}
-    
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
 real_average_consumption()
 
 
@@ -640,7 +650,6 @@ class monthly_review_consumption(osv.osv):
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
-            
             # Get all products for the defined nomenclature
             if report.nomen_id:
                 nomen_id = report.nomen_id.id
@@ -1266,3 +1275,14 @@ class stock_picking(osv.osv):
             return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
 
 stock_picking()
+
+class stock_location(osv.osv):
+    _inherit = 'stock.location'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        if context.get('no3buttons') and view_type == 'search':
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'view_stock_location_without_buttons')
+        return super(stock_location, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+stock_location()

@@ -24,7 +24,8 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from osv import fields, osv
 
-class account_fiscalyear_closing_level(osv.osv):
+class account_fiscalyear(osv.osv):
+    _name = "account.fiscalyear"
     _inherit = "account.fiscalyear"
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
@@ -62,6 +63,6 @@ class account_fiscalyear_closing_level(osv.osv):
                 })
         return True
 
-account_fiscalyear_closing_level()
+account_fiscalyear()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

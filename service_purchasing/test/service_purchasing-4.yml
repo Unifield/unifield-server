@@ -37,6 +37,7 @@
     default_code: P0
     name: product 0 test
     type: service_recep
+    procure_method: make_to_order
     
 - 
   Creating a product.product record stockable

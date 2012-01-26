@@ -30,8 +30,8 @@
     				<field name="line_ids" colspan="4" nolabel="1" readonly="1" />
     				<separator colspan="4" />
     				<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-    				<button name="create_po" string="Create PO" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '!=', False),],}" colspan="1" />
-    				<button name="update_tender" string="Update Tender" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '=', False),],}" colspan="1" />  
+    				<button name="create_po" string="Create PO" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '!=', False)]}" colspan="1" />
+    				<button name="update_tender" string="Update Tender" icon="gtk-execute" type="object" attrs="{'invisible': [('tender_id', '=', False)]}" colspan="1" />  
     			</form>
     		</field>
     	</record>
