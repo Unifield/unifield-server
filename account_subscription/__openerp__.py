@@ -19,23 +19,22 @@
 #
 ##############################################################################
 {
-    "name": "Account Period for MSF",
+    "name": "Recurring Entries for MSF",
     "version": "1.0",
-    "depends": ["account_subscription"],
-    "author" : "MSF: Matthieu Dietrich",
+    "depends": ["analytic_distribution"],
+    "author" : "MSF",
     "category": "General/Standard",
     "description": """
-    This module adds states to the fiscal years and accounting periods,
-    with a new wizard to create tem automatically.
+    This module adds analytic distribution and period checks to
+    the standard behavior of recurring entries.
+    Period checks are done in account_period_closing_level module.
     
     """,
     "init_xml": [],
     'update_xml': [
-        'account_period_closing_level_view.xml',
-        'wizard/account_period_create_view.xml',
+        'account_model_view.xml'
     ],
     "test": [
-        'test/account_period_closing_level.yml',
     ],
     'demo_xml': [],
     'installable': True,

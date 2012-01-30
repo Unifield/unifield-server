@@ -18,28 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Account Period for MSF",
-    "version": "1.0",
-    "depends": ["account_subscription"],
-    "author" : "MSF: Matthieu Dietrich",
-    "category": "General/Standard",
-    "description": """
-    This module adds states to the fiscal years and accounting periods,
-    with a new wizard to create tem automatically.
-    
-    """,
-    "init_xml": [],
-    'update_xml': [
-        'account_period_closing_level_view.xml',
-        'wizard/account_period_create_view.xml',
-    ],
-    "test": [
-        'test/account_period_closing_level.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import account_model
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

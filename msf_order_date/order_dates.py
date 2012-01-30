@@ -948,7 +948,7 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
-        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created.", states={'draft': [('readonly', False)]}),
+        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created."),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True),

@@ -95,7 +95,7 @@ class tender(osv.osv):
                 'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft':[('readonly',False)]}),
+                'creation_date': fields.date(string="Creation Date", readonly=True),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
