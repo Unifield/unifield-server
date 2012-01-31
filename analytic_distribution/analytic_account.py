@@ -55,7 +55,10 @@ class analytic_account(osv.osv):
                 return False
         return True
 
-    def _check_gain_loss_account(self, cr, uid, ids, context={}):
+    def _check_gain_loss_account_unicity(self, cr, uid, ids, context={}):
+        """
+        Check that no more account is "for_fx_gain_loss" available.
+        """
         if not context:
             context = {}
         search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)])
@@ -63,9 +66,21 @@ class analytic_account(osv.osv):
             return False
         return True
 
+    def _check_gain_loss_account_type(self, cr, uid, ids, context={}):
+        """
+        Check account type for fx_gain_loss_account: should be Normal type and Cost Center category
+        """
+        if not context:
+            context = {}
+        for account in self.browse(cr, uid, ids, context=context):
+            if account.type != 'normal' or account.category != 'OC':
+                return False
+        return True
+
     _constraints = [
         (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
-        (_check_gain_loss_account, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
+        (_check_gain_loss_account_unicity, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
+        (_check_gain_loss_account_type, 'You have to use a Normal account type and Cost Center category for FX gain/loss!', ['for_fx_gain_loss']),
     ]
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
