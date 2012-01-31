@@ -152,6 +152,34 @@ class account_move_line(osv.osv):
             if not journal.default_debit_account_id:
                 raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
             addendum_line_account_id = journal.default_debit_account_id.id
+            # Create analytic distribution if this account is an expense account
+            distrib_id = False
+            if journal.default_debit_account_id.user_type.code == 'expense':
+                # verify that a fx gain/loss account exists
+                search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
+                if not search_ids:
+                    raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "Fox FX gain/loss" to permit reconciliation!'))
+                # create an analytic distribution
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
+                # add a cost center for analytic distribution
+                distrib_line_vals = {
+                    'distribution_id': distrib_id,
+                    'currency_id': currency_id, 
+                    'analytic_id': search_ids and search_ids[0] or False,
+                    'percentage': 100.0,
+                    'date': date,
+                    'source_date': date
+                }
+                cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+                # add a funding pool line for analytic distribution
+                try:
+                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
+                if not fp_id:
+                    raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
+                distrib_line_vals.update({'analytic_id': fp_id or False, 'cost_center_id': cc_id or False})
+                self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             # Search attached period
             period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
                 limit=1, order='date_start, name')
@@ -192,11 +220,18 @@ class account_move_line(osv.osv):
             partner_line_id = self.create(cr, uid, vals, context=context)
             # Create addendum_line
             vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
+            if distrib_id:
+                vals.update({'analytic_distribution_id': distrib_id})
             addendum_line_id = self.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
             # Add partner_line to do total reconciliation
             ids.append(partner_line_id)
+            # Update analytic line with right amount (instead of "0.0")
+            analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', addendum_line_id)], context=context)
+            addendum_line = self.pool.get('account.move.line').browse(cr, uid, addendum_line_id, context=context)
+            company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency, -1*abs(func_balance), context={'date': date}), 'amount_currency': -1*abs(func_balance)}, context=context)
         ############################################################
 
         r_id = move_rec_obj.create(cr, uid, {
