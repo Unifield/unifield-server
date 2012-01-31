@@ -55,8 +55,17 @@ class analytic_account(osv.osv):
                 return False
         return True
 
+    def _check_gain_loss_account(self, cr, uid, ids, context={}):
+        if not context:
+            context = {}
+        search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)])
+        if search_ids and len(search_ids) > 1:
+            return False
+        return True
+
     _constraints = [
         (_check_unicity, 'You cannot have the same code or name between analytic accounts in the same category!', ['code', 'name', 'category']),
+        (_check_gain_loss_account, 'You can only have one account used for FX gain/loss!', ['for_fx_gain_loss']),
     ]
 
     def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
@@ -76,7 +85,7 @@ class analytic_account(osv.osv):
             # for all accounts except the parent one
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
-    
+
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
@@ -85,13 +94,19 @@ class analytic_account(osv.osv):
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-    
+
     def create(self, cr, uid, vals, context=None):
+        """
+        Some verifications before analytic account creation
+        """
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
+        """
+        Some verifications before analytic account write
+        """
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         return super(analytic_account, self).write(cr, uid, ids, vals, context=context)
