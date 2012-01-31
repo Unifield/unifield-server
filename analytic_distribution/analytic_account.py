@@ -38,10 +38,12 @@ class analytic_account(osv.osv):
             ('FREE2','Free 2')], 'Category', select=1),
         'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers'),
         'account_ids': fields.many2many('account.account', 'funding_pool_associated_accounts', 'funding_pool_id', 'account_id', string='Accounts'),
+        'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
     }
     
     _defaults ={
-        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
+        'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        'for_fx_gain_loss': lambda *a: False,
     }
 
     def _check_unicity(self, cr, uid, ids, context={}):
