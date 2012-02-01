@@ -87,9 +87,10 @@
                         <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
                         <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state"/>
-                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state"/>
-                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state"/>
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state" name="validated"/>
+                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state" name="done"/>
+                        <filter icon="terp-emblem-important" string="Except Done" domain="[('state','!=','done')]" help="Commitment Voucher not in Done state" name="exceptdone"/>
                         <newline/>
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>
@@ -107,6 +108,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
+            <field name="context">{'search_default_exceptdone': 1}</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_engagement_line_tree">
