@@ -71,16 +71,31 @@ class mass_reallocation_search(osv.osv_memory):
         operator = 'in'
         if len(valid_ids) == 1:
             operator = '='
-        domain = [('id', 'in', valid_ids)]
+## OLD BEHAVIOUR ##
+#        domain = [('id', 'in', valid_ids)]
+#        return {
+#            'name': 'Mass reallocation search for' + ' ' + account.name,
+#            'type': 'ir.actions.act_window',
+#            'res_model': 'account.analytic.line',
+#            'view_type': 'form',
+#            'view_mode': 'tree,form',
+#            'context': context,
+#            'domain': domain,
+#            'target': 'current',
+#        }
+        wiz_id = self.pool.get('mass.reallocation.wizard').create(cr, uid, {'account_id': context.get('active_id'), 'line_ids': [(6, 0, valid_ids)]})
+        context.update({
+            'active_ids': valid_ids,
+        })
         return {
-            'name': 'Mass reallocation search for' + ' ' + account.name,
+            'name': 'Mass reallocation wizard',
             'type': 'ir.actions.act_window',
-            'res_model': 'account.analytic.line',
+            'res_model': 'mass.reallocation.wizard',
             'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_mode': 'form',
             'context': context,
-            'domain': domain,
-            'target': 'current',
+            'target': 'new',
+            'res_id': [wiz_id],
         }
 
 mass_reallocation_search()
