@@ -73,7 +73,7 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         for account in self.browse(cr, uid, ids, context=context):
-            if account.type != 'normal' or account.category != 'OC':
+            if account.for_fx_gain_loss == True and (account.type != 'normal' or account.category != 'OC'):
                 return False
         return True
 
