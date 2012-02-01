@@ -75,6 +75,7 @@ class stock_forecast_line(osv.osv_memory):
         'date' : fields.date(string="Date"),
         'doc' : fields.char('Doc', size=1024,),
         'order_type': fields.selection(_get_order_type, string='Order Type'),
+        'origin': fields.char('Origin', size=64),
         'reference': fields.reference('Reference', selection=[], size=128),
         'state' : fields.selection(_get_states, string='State'),
         'qty' : fields.float('Quantity', digits=(16,2)),
@@ -452,6 +453,7 @@ class stock_forecast(osv.osv_memory):
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
+                              'origin': sol.order_id.client_order_ref or sol.order_id.origin,
                               'reference': 'sale.order,%s'%sol.order_id.id,
                               'state': PREFIXES['sale.order'] + sol.order_id.state,
                               'qty': uom_obj._compute_qty_obj(cr, uid, sol.product_uom, -sol.product_uom_qty, uom_to_use, context=context),
@@ -472,6 +474,7 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append({'date': pol.confirmed_delivery_date or len(pol.date_planned.split(' ')) > 1 and pol.date_planned.split(' ')[0] or pol.date_planned,
                                            'doc': 'PO',
                                            'order_type': PREFIXES['purchase.order'] + pol.order_id.order_type,
+                                           'origin': pol.order_id.origin,
                                            'reference': 'purchase.order,%s'%pol.order_id.id,
                                            'state': PREFIXES['purchase.order'] + pol.order_id.state,
                                            'qty':  uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, uom_to_use, context=context),
@@ -483,10 +486,15 @@ class stock_forecast(osv.osv_memory):
                                                         ('product_id', '=', product.id)], order='date_planned', context=context)
                 
                 for obj in tenderl_obj.browse(cr, uid, ids_list, context=context):
-                    # create lines corresponding to po
+                    # Get the sale order as origin of the Tender if exists
+                    origin = False
+                    if obj.tender_id.sale_order_id:
+                        origin = obj.tender_id.sale_order_id.name
+                        
                     line_to_create.append({'date': len(obj.date_planned.split(' ')) > 1 and obj.date_planned.split(' ')[0] or obj.date_planned,
                                            'doc': 'TENDER',
                                            'order_type': False,
+                                           'origin': origin,
                                            'reference': 'tender,%s'%obj.tender_id.id,
                                            'state': PREFIXES['tender'] + obj.tender_id.state,
                                            'qty':  uom_obj._compute_qty_obj(cr, uid, obj.product_uom, obj.qty, uom_to_use, context=context),
@@ -503,6 +511,8 @@ class stock_forecast(osv.osv_memory):
                     line_to_create.append({'date': pro.date_planned.split(' ')[0],
                                            'doc': 'PR',
                                            'order_type': False,
+                                           'origin': pro.origin,
+                                           #'origin': 'procurement.order,%s'%pro.origin,
                                            'reference': 'procurement.order,%s'%pro.id,
                                            'state': PREFIXES['procurement.order'] + pro.state,
                                            'qty': uom_obj._compute_qty_obj(cr, uid, pro.product_uom, pro.product_qty, uom_to_use, context=context),
@@ -522,6 +532,7 @@ class stock_forecast(osv.osv_memory):
                                   'doc': 'IN',
                                   # to check - purchase order or sale order prefix ?
                                   'order_type': move.order_type and PREFIXES['purchase.order'] + move.order_type or False,
+                                  'origin': move.picking_id.origin,
                                   'reference': 'stock.picking,%s'%move.picking_id.id,
                                   'state': PREFIXES['stock.picking'] + move.picking_id.state,
                                   'qty': uom_obj._compute_qty_obj(cr, uid, move.product_uom, move.product_qty, uom_to_use, context=context),
@@ -539,6 +550,7 @@ class stock_forecast(osv.osv_memory):
             line_obj.create(cr, uid, {'date': today.split(' ')[0],
                                       'doc': False,
                                       'order_type': False,
+                                      'origin': False,
                                       'reference': False,
                                       'state': False,
                                       'qty': False,
@@ -714,15 +726,18 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     STATE_SELECTION = [
-        ('draft', 'Request for Quotation'),
-        ('wait', 'Waiting'),
-        ('confirmed', 'Waiting Approval'),
-        ('approved', 'Approved'),
-        ('except_picking', 'Shipping Exception'),
-        ('except_invoice', 'Invoice Exception'),
-        ('done', 'Done'),
-        ('cancel', 'Cancelled')
-    ]
+                       ('draft', 'Draft'),
+                       ('wait', 'Wait'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
+                       ('except_invoice', 'Invoice Exception'),
+                       ('done', 'Closed'),
+                       ('cancel', 'Cancelled'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
+                       #('rfq_done', 'RfQ Done'),
+                       ]
     _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
                 }
     

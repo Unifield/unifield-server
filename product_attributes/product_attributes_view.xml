@@ -160,8 +160,8 @@
                         <page string="Procurement &amp; Locations">
                             <group colspan="2" col="2" name="delay">
                                 <separator string="Delays" colspan="2"/>
-                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}"/>
-                                <field name="produce_delay"/>
+                                <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}" invisible="True" />
+                                <field name="produce_delay" invisible="True" />
                             </group>
                             <group colspan="2" col="2" name="store">
                                 <separator string="Storage Localisation" colspan="2"/>
@@ -226,9 +226,6 @@
             <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
             <field name="arch" type="xml">
                 <data>
-                    <field name="sequence" position="replace">
-                        <field name="sequence" string="Ranking"/>
-                     </field>
                     <field name="company_id" position="replace"/>
                 </data>
             </field>
@@ -344,6 +341,15 @@
                 </search>
             </field>
         </record>
+
+        <menuitem id="menu_main_product" name="Products" sequence="1" 
+                  web_icon_hover="images/products.png"
+                  web_icon="images/products-hover.png" 
+                  action="product.product_normal_action"
+                />
+        <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" />
+        <menuitem groups="base.group_extended" id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
+        <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
         
     </data>
 </openerp>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="action_budget_criteria_export_menu" model="ir.actions.act_window">
+            <field name="name">Budget vs. Actual</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.budget.criteria.export</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="action_budget_criteria_export_values">
+            <field name="model_id" ref="msf_budget.model_msf_budget" />
+            <field name="object" eval="1" />
+            <field name="name">Budget vs. Actual</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_budget_criteria_export_menu'))" />
+            <field name="key">action</field>
+            <field name="model">msf.budget</field>
+        </record>
+
+    </data>
+</openerp>

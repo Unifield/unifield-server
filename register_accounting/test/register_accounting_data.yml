@@ -285,25 +285,25 @@
     user_type : account_account_type_cash_0
     activation_date: !eval time.strftime('%Y-01-01')
 -
-  I create a X11003 US Cash Account.
+  I create a X11003-CHF Cash CHF Account.
 -
   !record {model: account.account, id: account_account_cash1}:
-    code: 'X11003-usd-test'
+    code: 'X11003-chf-test'
     company_id: base.main_company
     currency_mode: current
-    name: Cash in USD (test)
+    name: Cash in CHF (test)
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
     activation_date: !eval time.strftime('%Y-01-01')
 -
-  I create a X11003 CHF Cash Account.
+  I create a X11003-USD Cash USD Account.
 -
   !record {model: account.account, id: account_account_cash2}:
-    code: 'X11003-chf-test'
+    code: 'X11003-usd-test'
     company_id: base.main_company
     currency_mode: current
-    name: Cash in CHF (test)
+    name: Cash in USD (test)
     type: liquidity
     reconcile: False
     user_type : account_account_type_cash_0
@@ -421,25 +421,27 @@
     default_credit_account_id: account_account_cash0
     allow_date: 0
 -
-  I create a Cash Journal in USD
+  I create a Cash Journal in CHF
 -
-  !record {model: account.journal, id: account_journal_cash_1}:
-    code: csh_usd
+  !record {model: account.journal, id: account_journal_cash_chf}:
+    code: csh_chf
     company_id: base.main_company
-    name: Cash Journal in USD (test)
+    name: Cash journal in CHF (test)
     type: cash
+    currency: base.CHF
     view_id: account_journal_view0
     default_debit_account_id: account_account_cash1
     default_credit_account_id: account_account_cash1
     allow_date: 0
 -
-  I create a Cash Journal in CHF
+  I create a Cash Journal in USD
 -
-  !record {model: account.journal, id: account_journal_cash_2}:
-    code: csh_chf
+  !record {model: account.journal, id: account_journal_cash_usd}:
+    code: csh_usd
     company_id: base.main_company
-    name: Cash Journal in CHF (test)
+    name: Cash journal in USD (test)
     type: cash
+    currency: base.USD
     view_id: account_journal_view0
     default_debit_account_id: account_account_cash2
     default_credit_account_id: account_account_cash2
@@ -576,3 +578,50 @@
   !python {model: account.bank.statement}: |
     self.button_open_bank(cr, uid, [ref("bank_register_0")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
         "active_ids": [ref("bank_register_0")], "active_id": ref("bank_register_0"), })
+-
+  I create a Cash CHF Register
+-
+  !record {model: account.bank.statement, id: cash_register_0}:
+    date: !eval time.strftime('%Y-%m-%d')
+    journal_id: account_journal_cash_chf
+    name: REG-CSH-CHF-1
+    period_id: current_period
+    user_id: base.user_root
+    balance_start: 453.0
+    starting_details_ids:
+      -  pieces: 100.0
+         number: 4
+         subtotal: 400.0
+      -  pieces: 1.0
+         number: 53
+         subtotal: 53.0
+-
+  I click on 'Open CashBox' button to open the Cash Register
+-
+  !python {model: account.bank.statement}: |
+    self.button_open_cash(cr, uid, [ref("cash_register_0")], {"lang": "en_US", "tz": False, "active_model": "account.bank.statement", \
+        "active_ids": [ref("cash_register_0")], "active_id": ref("cash_register_0"), })
+-
+  I create a product to be used in some invoices
+-
+  !record {model: product.product, id: product_basic_finance_0}:
+    categ_id: product.cat0
+    cost_method: standard
+    mes_type: fixed
+    name: Basic product for finance tests
+    price_margin: 2.0
+    procure_method: make_to_stock
+    seller_delay: '1'
+    standard_price: 12.0
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+    volume : 0.0
+    warranty: 0.0
+    weight: 0.0
+    weight_net: 0.0
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: res_partner_supplier_wood_0

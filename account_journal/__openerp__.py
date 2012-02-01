@@ -27,7 +27,7 @@
         Journals view and datas
     ''',
     'init_xml': [],
-    "depends" : ["account", "analytic", "account_override", "funding_pool"],
+    "depends" : ["account", "analytic", "account_override", "analytic_distribution"],
     'update_xml': [
         'account_journal_view.xml',
         'project/project_view.xml',
@@ -36,7 +36,8 @@
         'account_journal_demo.xml'
     ],
     'test': [
-        'test/account_journal.yml'
+        'test/analytic_data.yml',
+        'test/account_journal.yml',
     ],
     'installable': True,
     'active': False,

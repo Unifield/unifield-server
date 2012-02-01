@@ -50,7 +50,9 @@ class account_period_create(osv.osv_memory):
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         
         ds = start_date
+        i = 0
         while ds < end_date:
+            i += 1
             de = ds + relativedelta(months=1, days=-1)
 
             if de > end_date:
@@ -71,6 +73,7 @@ class account_period_create(osv.osv_memory):
                     'date_start': ds.strftime('%Y-%m-%d'),
                     'date_stop': de.strftime('%Y-%m-%d'),
                     'fiscalyear_id': fiscalyear_id,
+                    'number': i,
                 })
             ds = ds + relativedelta(months=1)
             
@@ -83,7 +86,8 @@ class account_period_create(osv.osv_memory):
                     'date_start': '%d-12-01' % (start_date.year),
                     'date_stop': '%d-12-31' % (start_date.year),
                     'fiscalyear_id': fiscalyear_id,
-                    'special': True
+                    'special': True,
+                    'number': period_nb,
                 })
             
         return {'type': 'ir.actions.act_window_close'}

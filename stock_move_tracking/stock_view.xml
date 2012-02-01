@@ -27,7 +27,7 @@
                     <group expand="1" string="Group By...">
                         <filter name="group_product" string="Product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Lot" name="groupby_prodlot_id" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'prodlot_id'}"/>
+                        <filter string="Batch" name="groupby_prodlot_id" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'prodlot_id'}"/>
                         <filter string="Expired Date" name="groupby_expired" icon="terp-gnome-cpu-frequency-applet+" domain="[]" context="{'group_by': 'expired_date'}" />
                         <separator orientation="vertical" />
                         <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>

@@ -73,7 +73,7 @@
 	            <xpath expr="//separator[@string='Inventory Properties']" position="before">
                    	<group colspan="4" col="4" groups="base.group_extended">
 		            	<separator string="Default Lead Times (days)" colspan="4"/>
-		            	<field name="supplier_lt" attrs="{'required': [('supplier', '=', True),],}" /><newline/>
+		            	<field name="supplier_lt" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '=', True)]}" /><newline/>
 		            	<field name="transport_0" />
 		            	<field name="transport_0_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" />
 		            	<field name="transport_1" />
@@ -81,7 +81,7 @@
 		            	<field name="transport_2" />
 		            	<field name="transport_2_lt" />
 		            	<field name="procurement_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" /><newline/>
-		            	<field name="customer_lt" attrs="{'required': [('customer', '=', True),],}" />
+		            	<field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
 		          	</group>
 				</xpath>
 	            	

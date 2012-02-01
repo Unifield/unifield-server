@@ -47,13 +47,6 @@ class import_data(osv.osv_memory):
             if v['value']['level']:
                 data['level'] = v['value']['level']
 
-    def _set_nomen_code(self, cr, uid, data, row):
-        for n in ['manda_0', 'manda_1', 'manda_2', 'manda_3', 'sub_0', 'sub_1', 'sub_2', 'sub_3', 'sub_4', 'sub_5']:
-            if data.get('nomen_%s'%n) and not data.get('nomen_c_%s'%n):
-                if data.get('nomen_%s'%n) not in self._cache:
-                    self._cache[data.get('nomen_%s'%n)] = self.pool.get('product.nomenclature').read(cr, uid, data.get('nomen_%s'%n), ['code'])['code']
-                data['nomen_c_%s'%n] = self._cache[data.get('nomen_%s'%n)]
-
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
             self._cache = {}
@@ -76,7 +69,6 @@ class import_data(osv.osv_memory):
     post_hook = {
         'account.budget.post': _set_code_name,
         'product.nomenclature': _set_nomen_level,
-        'product.product': _set_nomen_code,
     }
 
     pre_hook = {
@@ -105,6 +97,7 @@ class import_data(osv.osv_memory):
             ('account.analytic.account','Analytic Account'),
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
+            ('product.supplierinfo', 'Supplier Info'),
             ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
     }

@@ -30,6 +30,7 @@ import pooler
 import time
 
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
+from sale_override import SALE_ORDER_STATE_SELECTION
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
@@ -118,7 +119,7 @@ class sourcing_line(osv.osv):
             # gather sale order line state
             result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
             # display confirm button - display if state == draft and not proc or state == progress and proc
-            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and not obj.procurement_request) or (obj.sale_order_state == 'progress' and obj.procurement_request)
+            result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
         
         return result
     
@@ -176,7 +177,22 @@ class sourcing_line(osv.osv):
         if args[0][1] != '=' or not args[0][2]:
             raise osv.except_osv(_('Error !'), _('Filter not implemented'))
 
-        return ['|', '&', ('state', '=', 'draft'), ('procurement_request', '=', False), '&', ('sale_order_state', '=', 'progress'), ('procurement_request', '=', True)]
+        return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
+
+    def _search_sale_order_state(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        newargs = []
+
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented'))
+
+            if arg[2] == 'progress':
+                newargs.append(('sale_order_state', 'in', ['progress', 'manual']))
+            else:
+                newargs.append(('sale_order_state', arg[1], arg[2]))
+        return newargs
 
     _columns = {
         # sequence number
@@ -191,11 +207,12 @@ class sourcing_line(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Category', readonly=True),
         'sale_order_state': fields.selection(_SELECTION_SALE_ORDER_STATE, string="Order State", readonly=True),
+        'sale_order_state_search': fields.function(_get_fake, string="Order State", type='selection', method=True, selection=[x for x in SALE_ORDER_STATE_SELECTION if x[0] != 'manual'], fnct_search=_search_sale_order_state),
         'line_number': fields.integer(string='Line', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        'rts': fields.related('sale_order_id', 'delivery_requested_date', type='date', string='RTS', readonly=True),
+        'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
@@ -371,6 +388,11 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
+            
+            if sl.type == 'make_to_order' and sl.po_cft == 'po' and not sl.supplier:
+                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before confirming the line"))
+            
             # set the corresponding sale order line to 'confirmed'
             result.append((sl.id, sl.sale_order_line_id.write({'state':'confirmed'}, context)))
             # check if all order lines have been confirmed
@@ -378,9 +400,14 @@ class sourcing_line(osv.osv):
             for ol in sl.sale_order_id.order_line:
                 if ol.state != 'confirmed':
                     linesConfirmed = False
+                    break
+                
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
-                wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                if sl.sale_order_id.procurement_request:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
+                else:
+                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
                 
         return result
     
@@ -482,11 +509,6 @@ class sale_order(osv.osv):
         return super(sale_order, self).unlink(cr, uid, ids, context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
-        
-        
-        return result
-    
-    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
@@ -502,14 +524,6 @@ class sale_order(osv.osv):
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
-        
-        date_planned = None
-        if line.sourcing_line_ids:
-            for sourcing_line in line.sourcing_line_ids:
-                if not date_planned or sourcing_line.estimated_delivery_date < date_planned:
-                    date_planned = sourcing_line.estimated_delivery_date
-            if date_planned:
-                result['date_planned'] = date_planned
         
         return result
 
@@ -767,11 +781,9 @@ class procurement_order(osv.osv):
         values = kwargs['values']
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
-        requested_date = (datetime.today() + relativedelta(days=partner.supplier_lt)).strftime('%Y-%m-%d')
 
         purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
-                                               ('delivery_requested_date', '=', requested_date)], context=context)
-
+                                               ('delivery_requested_date', '=', values.get('delivery_requested_date'))], context=context)
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})

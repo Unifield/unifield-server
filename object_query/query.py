@@ -449,7 +449,7 @@ class ir_fields(osv.osv):
         '''
         res = {}
         
-        for field in self.search(cr, uid, ids, context=context):
+        for field in self.browse(cr, uid, ids, context=context):
             res[field.id] = field.model_id.id
             
         return res
@@ -574,7 +574,10 @@ class ir_fields(osv.osv):
             context = {}
         if 'special_search_id' in context:
             # remove duplicate fields name and reference in product
-            ids_to_remove = self.search(cr, uid, [('name', 'in', ['code', 'name_template']), ('model_id', '=', 'product.product')])
+            exclude_prod = ['code', 'name_template', 'nomen_ids']
+            exclude_templ = ['nomen_manda_0_s', 'nomen_manda_1_s', 'nomen_manda_2_s', 'nomen_manda_3_s', 'nomen_sub_0_s', 'nomen_sub_1_s', 'nomen_sub_2_s', 'nomen_sub_3_s', 'nomen_sub_4_s', 'nomen_sub_5_s']
+            ids_to_remove = self.search(cr, uid, [('name', 'in', exclude_prod), ('model_id', '=', 'product.product')]) + \
+                self.search(cr, uid, [('name', 'in', exclude_templ), ('model_id', '=', 'product.template')])
             if ids_to_remove:
                 args.append(('id', 'not in', ids_to_remove))
         

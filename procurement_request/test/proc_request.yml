@@ -60,6 +60,10 @@
 -
   We validate this procurement request
 -
+  !workflow {model: sale.order, action: procurement_validate, ref: pr2}
+-
+  We confirm this procurement request
+-
   !workflow {model: sale.order, action: procurement_confirm, ref: pr2}
 -
   We check the state of the procurement request
@@ -165,7 +169,7 @@
     pr_id = self.copy(cr, uid, ref('pr4'), context=context)
     new_pr = self.browse(cr, uid, pr_id)
     assert len(new_pr.order_line) == 2, "Bad number of lines on copy"
-    assert new_pr.state == 'procurement', "Bad state on copy"
+    assert new_pr.state == 'draft', "Bad state on copy"
 -
   We check if it's no possible to unlink a confirmed purchase_order
 -

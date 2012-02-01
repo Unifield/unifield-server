@@ -65,10 +65,7 @@ class res_currency_functional(osv.osv):
     _constraints = [
         (_verify_rate, "No rate is set. Please set one before activating the currency. ", ['active', 'rate_ids']),
     ]
-
-    _sql_constraints = [
-        ('name_uniq', 'unique (name)', 'The currency name exists already in the system!')
-    ]
+    
     _defaults = {
         'active': lambda *a: 0,
         'accuracy': 4, 

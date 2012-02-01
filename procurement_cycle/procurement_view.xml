@@ -85,7 +85,8 @@
         
         <menuitem action="action_order_cycle_tree"
                   id="menu_order_cycle"
-                  parent="procurement.menu_stock_procurement" />
+                  sequence="3"
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
     
     </data>
 </openerp>
