@@ -899,7 +899,121 @@
   I open the return product to stock wizard
 -
   !python {model: shipment}: |
-    
+    ids = context['shipment']
+    res = self.return_packs(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check rules from "integrity_check_packs"
+  #1 no negative values (<0)
+-
+  !python {model: shipment.wizard}: |
+    rule = 'negative'
+    # return products to stock -> product_moves_shipment_returnpacks ('stock.move.memory.shipment.returnpacks')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        mem.write({'selected_number': -10}, context=c)
+    # return the products
+    self.do_return_packs(cr, uid, ids, context=c)
+    # negative value rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [95, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+    vals = [0, 0, 0]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['b'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I check rules from "integrity_check_packs"
+  #2 at least one positive one (>0)
+-
+  !python {model: shipment.wizard}: |
+    rule = 'empty'
+    # return products to stock -> product_moves_shipment_returnpacks ('stock.move.memory.shipment.returnpacks')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    # return the products
+    self.do_return_packs(cr, uid, ids, context=c)
+    # empty rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [95, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+    vals = [0, 0, 0]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['b'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I check rules from "integrity_check_packs"
+   #3 no more than available quantity #packs
+-
+  !python {model: shipment.wizard}: |
+    rule = 'return_qty_too_much'
+    # return products to stock -> product_moves_shipment_returnpacks ('stock.move.memory.shipment.returnpacks')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        mem.write({'selected_number': 9999}, context=c)
+    # return the products
+    self.do_return_packs(cr, uid, ids, context=c)
+    # too much rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [95, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+    vals = [0, 0, 0]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['b'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+    I return 1 pack for the sequence (4,5)
+-
+  !python {model: shipment.wizard}: |
+    # return products to stock -> product_moves_shipment_returnpacks ('stock.move.memory.shipment.returnpacks')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacks:
+        if mem.from_pack == 4:
+          mem.write({'selected_number': 1}, context=c)
+    # return the products
+    self.do_return_packs(cr, uid, ids, context=c)
+    # assert that nothing has been returned
+    vals = [95, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      print sm.product_qty
+    assert not vals, 'vals is not empty - %s'%vals
+    vals = [0, 0, 0]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['b'][0], context=context).move_lines:
+      print sm.product_qty
+    assert not vals, 'vals is not empty - %s'%vals
 -
   I check the ppl creation, shipment draft and create a new shipment, ship it, validate it, and check
   that draft shipment is done

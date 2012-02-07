@@ -333,9 +333,9 @@ class shipment_wizard(osv.osv_memory):
     def integrity_check_packs(self, cr, uid, ids, data, model_name, context=None):
         '''
         integrity check on create shipment data
-        - no negative values (<0)
-        - at least one positive one (>0)
-        - no more than available quantity #packs
+        - #1 no negative values (<0)
+        - #2 at least one positive one (>0)
+        - #3 no more than available quantity #packs
         
         {12: {176: {1: {1: [{'selected_weight': 0.0, 'weight': 0.0, 'pack_type': False, 'ppl_id': 175, 'draft_packing_id': 176, 'wizard_id': 1, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': '1', 'selected_number': 1, 'width': 0.0, 'sale_order_id': False}]}}}}
         
