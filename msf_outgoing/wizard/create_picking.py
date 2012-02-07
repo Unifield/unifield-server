@@ -228,7 +228,7 @@ class create_picking(osv.osv_memory):
                 <button name="back_ppl1" string="previous"
                     colspan="1" type="object" icon="gtk-go-back" />"""
                     
-        elif step == 'returnproducts':
+        elif step in ['create', 'validate', 'returnproducts']:
             _moves_arch_lst += """
                 <button name="select_all" string="Select All"
                     colspan="1" type="object" icon="terp_stock_symbol-selection" />
@@ -250,7 +250,24 @@ class create_picking(osv.osv_memory):
     def select_all(self, cr, uid, ids, context=None):
         '''
         select all buttons, write max qty in each line
+        
+        should be modified for more generic way, with something like:
+        
+        fields = self.fields_get(cr, uid, context=context)
+        # loop through fields, if one2many, we set the values for all lines
+        for key in fields.keys():
+            type = fields[key]['type']
+            if type in ['one2many']:
+                lines = getattr(wiz, key)
+                for line in lines:
+                    line.write({'quantity': line.initial_qty}, context=context)
+        
+        the problem is that in the different wizard we use different fields for
+        selected qty (quantity, qty_to_return, ...). This should be unified as well
+        to allow previous idea.
         '''
+        # picking ids
+        picking_ids = context['active_ids']
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.product_moves_picking:
                 # get the qty from the corresponding stock move
@@ -258,44 +275,22 @@ class create_picking(osv.osv_memory):
                 line.write({'quantity':original_qty,}, context=context)
             for line in wiz.product_moves_returnproducts:
                 line.write({'qty_to_return':line.quantity,}, context=context)
-        
-        return {
-                'name': context.get('wizard_name'),
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': context.get('model'),
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
+        # update the current wizard
+        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         
     def deselect_all(self, cr, uid, ids, context=None):
         '''
         deselect all buttons, write 0 qty in each line
         '''
+        # picking ids
+        picking_ids = context['active_ids']
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.product_moves_picking:
                 line.write({'quantity':0.0,}, context=context)
             for line in wiz.product_moves_returnproducts:
                 line.write({'qty_to_return':0.0,}, context=context)
-        
-        return {
-                'name': context.get('wizard_name'),
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': context.get('model'),
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
+        # update the current wizard
+        return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
     
     def generate_data_from_partial(self, cr, uid, ids, context=None):
         '''
@@ -409,8 +404,8 @@ class create_picking(osv.osv_memory):
     def integrity_check_create_picking(self, cr, uid, ids, data, context=None):
         '''
         integrity check on create picking data
-        - no negative values (<0)
-        - at least one positive one (>0)
+        - rule #1: no negative values (<0)
+        - rule #2: at least one positive value (>0)
         
         return True/False
         '''
@@ -423,13 +418,14 @@ class create_picking(osv.osv_memory):
             negative_value = False
             for move_data in picking_data.values():
                 for list_data in move_data:
-                    # quantity check
+                    # rule #1: quantity check
                     if list_data['product_qty'] < 0.0:
                         # a negative value has been selected, update the memory line
                         # update the new value for integrity check with 'negative' value (selection field)
                         negative_value = True
                         memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'negative',}, context=context)
                     else:
+                        # rule #2: no empty picking
                         sum_qty += list_data['product_qty']
             # if error, return False
             if not sum_qty or negative_value:
@@ -439,10 +435,11 @@ class create_picking(osv.osv_memory):
     def integrity_check_prodlot(self, cr, uid, ids, data, validate=True, context=None):
         '''
         check production lot
-        - product.perishable: a prodlot of type 'internal'
-          -> integrity_status is set to 'perishable'
-        - product.batch_management: a prodlot of type 'standard'
-          -> integrity_status is set to 'batch_management'
+        - rule #1 a batch management product needs a standard production lot ***ONLY AT PICKING VALIDATION STAGE
+        - rule #2 a expiry date product needs an internal production lot ***ONLY AT PICKING VALIDATION STAGE
+        - rule #3 a not lot managed product does not allow production lot
+        - rule #4 a batch management product does not allow internal production lot
+        - rule #5 a expiry date product does not allow standard production lot
           
         - the production lot is mandatory only if it is the validation stage
         '''
@@ -467,23 +464,25 @@ class create_picking(osv.osv_memory):
                         lot = lot_obj.browse(cr, uid, list_data['prodlot_id'], context=context)
                         # a prod lot is defined, the product must be either perishable or batch_management
                         if not (prod.perishable or prod.batch_management):
-                            # should not have production lot
+                            # rule #3: should not have production lot
                             lot_not_needed = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'no_lot_needed',}, context=context)
-                        # perishable -> the prod lot must be of type 'internal'
+                        # rule #5: perishable -> the prod lot must be of type 'internal'
                         if prod.perishable and not prod.batch_management and lot.type != 'internal':
                             wrong_lot_type = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_internal',}, context=context)
-                        # batch_management -> the prod lot must be of type 'standard'
+                        # rule #4: batch_management -> the prod lot must be of type 'standard'
                         if prod.batch_management and lot.type != 'standard':
                             wrong_lot_type = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_standard',}, context=context)
                     # only mandatory at validation stage
                     elif validate:
                         # no production lot defined, corresponding checks
+                        # rule #1 a batch management product needs a standard production lot
                         if prod.batch_management:
                             missing_lot = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_lot',}, context=context)
+                        # rule #2 a expiry date product needs an internal production lot
                         elif prod.perishable:
                             missing_lot = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_date',}, context=context)
@@ -625,9 +624,9 @@ class create_picking(osv.osv_memory):
     def integrity_check_return_products(self, cr, uid, ids, data, context=None):
         '''
         integrity check on create picking data
-        - no negative values (<0)
-        - at least one positive one (>0)
-        - no more than available quantity
+        - #1 no negative values (<0)
+        - #2 at least one positive one (>0)
+        - #3 no more than available quantity
         
         return True/Fals
         '''
@@ -708,10 +707,10 @@ class create_picking(osv.osv_memory):
     def integrity_check_sequences(self, cr, uid, ids, data, context=None):
         '''
         integrity check on ppl1 data for sequence validation
-        - first from value must be 1
-        - sequence can share the exact same from/to value
-        - the numbering  must be a monotonically increasing function
-        - the must be no gap within sequence
+        - #1 first from value must be 1
+        - #2 sequence can share the exact same from/to value
+        - #3 the numbering  must be a monotonically increasing function
+        - #4 there must be no gap within sequence
         
         return True/False
         
@@ -773,7 +772,7 @@ class create_picking(osv.osv_memory):
                 # rule #4: to[i] >= from[i]
                 if not (seq[1] >= seq[0]):
                     to_samller_than_from = True
-                    memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'to_smallaer_than_from',}, context=context)
+                    memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'to_smaller_than_from',}, context=context)
             # if error, return False
             if missing_1 or to_samller_than_from or overlap or gap:
                 return False
@@ -840,7 +839,7 @@ class create_picking(osv.osv_memory):
                 for to_data in from_data.values():
                     for move_data in to_data.values():
                         for partial in move_data:
-                            if not partial['weight']:
+                            if partial['weight'] <= 0:
                                 move = move_obj.browse(cr, uid, partial['move_id'], context=context)
                                 flow_type = move.picking_id.flow_type
                                 if flow_type != 'quick':

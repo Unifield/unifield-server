@@ -34,7 +34,7 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('return_qty_too_much', 'Too much quantity selected'),
                               # ppl1
                               ('missing_1', 'The first sequence must start with 1'),
-                              ('to_smallaer_than_from', 'To value must be greater or equal to From value'),
+                              ('to_smaller_than_from', 'To value must be greater or equal to From value'),
                               ('overlap', 'The sequence overlaps previous one'),
                               ('gap', 'A gap exist in the sequence'),
                               # ppl2

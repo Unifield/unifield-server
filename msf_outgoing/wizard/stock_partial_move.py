@@ -75,11 +75,21 @@ class stock_partial_move_memory_out(osv.osv_memory):
                                                                product_id=product_id,
                                                                uom_id=uom_id))
     
+#    update code to allow delete lines (or not but must be consistent in all wizards)
+#    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
+#    because then the user can always see the corresponding full list and change its mind
+#    if deleted, must cancel and redo
+#    
+#    would be nice a validator decorator !
     _columns={'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
               'force_complete' : fields.boolean(string='Force'),
               'line_number': fields.integer(string='Line'),
               'change_reason': fields.char(string='Change Reason', size=1024),
+              'initial_qty': fields.related('move_id', 'product_qty', string='Initial Qty', readonly=True),
+              # override to change the name
+              'quantity' : fields.float("Selected Qty", required=True),
               }
+    
     _defaults = {'integrity_status': 'empty',
                  'force_complete': False,
                  }
@@ -178,7 +188,10 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             # number of packs with from/to values
             num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
             values['num_of_packs'] = num_of_packs
-            qty_per_pack = memory_move.quantity / num_of_packs
+            if num_of_packs:
+                qty_per_pack = memory_move.quantity / num_of_packs
+            else:
+                qty_per_pack = 0
             values['qty_per_pack'] = qty_per_pack
                     
         return result

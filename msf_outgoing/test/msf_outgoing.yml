@@ -2,6 +2,7 @@
   Creating a sale.order record A
 - 
   !record {model: sale.order, id: outgoing_so_A}:
+    name: so a
     amount_tax: 0.0
     amount_total: 1.0
     amount_untaxed: 1.0
@@ -22,9 +23,9 @@
   Creating a sale.order.line record A1
 - 
   !record {model: sale.order.line, id: outgoing_sol_A1}:
+    name: sol a1
     company_id: base.main_company
     delay: 7.0
-    name: P
     order_id: outgoing_so_A
     price_unit: 1.0
     product_id: outgoing_product_A
@@ -38,9 +39,9 @@
   Creating a sale.order.line record A2
 - 
   !record {model: sale.order.line, id: outgoing_sol_A2}:
+    name: sol a2
     company_id: base.main_company
     delay: 7.0
-    name: P
     order_id: outgoing_so_A
     price_unit: 1.0
     product_id: outgoing_product_B
@@ -51,9 +52,26 @@
     th_weight: 0.0
     type: make_to_stock
 - 
+  Creating a sale.order.line record A3
+- 
+  !record {model: sale.order.line, id: outgoing_sol_A3}:
+    name: sol a3
+    company_id: base.main_company
+    delay: 7.0
+    order_id: outgoing_so_A
+    price_unit: 1.0
+    product_id: outgoing_product_C
+    product_uom: product.product_uom_unit
+    product_uom_qty: 300
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_stock
+- 
   Creating a sale.order record B
 - 
   !record {model: sale.order, id: outgoing_so_B}:
+    name: so b
     amount_tax: 0.0
     amount_total: 1.0
     amount_untaxed: 1.0
@@ -71,12 +89,12 @@
     priority: normal
     categ: medical
 - 
-  Creating a sale.order.line record A
+  Creating a sale.order.line record B1
 - 
   !record {model: sale.order.line, id: outgoing_sol_B1}:
+    name: sol b1
     company_id: base.main_company
     delay: 7.0
-    name: P
     order_id: outgoing_so_B
     price_unit: 1.0
     product_id: outgoing_product_A
@@ -87,12 +105,12 @@
     th_weight: 0.0
     type: make_to_stock
 - 
-  Creating a sale.order.line record B
+  Creating a sale.order.line record B2
 - 
   !record {model: sale.order.line, id: outgoing_sol_B2}:
+    name: sol b2
     company_id: base.main_company
     delay: 7.0
-    name: P
     order_id: outgoing_so_B
     price_unit: 1.0
     product_id: outgoing_product_B
@@ -102,46 +120,787 @@
     state: draft
     th_weight: 0.0
     type: make_to_stock
+- 
+  Creating a sale.order.line record B3
+- 
+  !record {model: sale.order.line, id: outgoing_sol_B3}:
+    name: sol b3
+    company_id: base.main_company
+    delay: 7.0
+    order_id: outgoing_so_B
+    price_unit: 1.0
+    product_id: outgoing_product_C
+    product_uom: product.product_uom_unit
+    product_uom_qty: 300
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_stock
 -
-  I validate the sale order
+  I load the sale order references into context
+-
+  !python {model: sale.order}: |
+    context['so'] = {'a': ref("outgoing_so_A"),
+                     'b': ref("outgoing_so_B")}
+-
+  I load the sale order lines references into context
+-
+  !python {model: sale.order}: |
+    context['sol'] = {'a1': ref("outgoing_sol_A1"),
+                      'a2': ref("outgoing_sol_A2"),
+                      'a3': ref("outgoing_sol_A3"),
+                      'b1': ref("outgoing_sol_B1"),
+                      'b2': ref("outgoing_sol_B2"),
+                      'b3': ref("outgoing_sol_B3")}
+-
+  I load the product references into context
+-
+  !python {model: sale.order}: |
+    context['product'] = {'a': ref("outgoing_product_A"),
+                          'b': ref("outgoing_product_B"),
+                          'c': ref("outgoing_product_C")}
+-
+  I load the lot references into context
+-
+  !python {model: sale.order}: |
+    context['lot'] = {'a': {'i': ref("outgoing_lot_Ai"),
+                            's': ref("outgoing_lot_As")},
+                      'b': {'i': ref("outgoing_lot_Bi"),
+                            's': ref("outgoing_lot_Bs")}}
+-
+  I load the address reference
+-
+  !python {model: sale.order}: |
+    context['address'] = ref("outgoing_address_A")
+-
+  I first validate both sale orders SOA and SOB
 -
   !python {model: sale.order}: |
     import netsvc
     wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'sale.order', ref("outgoing_so_A"), 'order_validated', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("outgoing_so_B"), 'order_validated', cr)
     wf_service.trg_validate(uid, 'sale.order', ref("outgoing_so_A"), 'order_confirm', cr)
-    
+    wf_service.trg_validate(uid, 'sale.order', ref("outgoing_so_B"), 'order_confirm', cr)
 -
-
-  I check the draft picking creation and create picking object
-
+  I check two draft picking objects have been created
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")), ('state', '=', 'draft')], context=context)
-    assert len(ids) == 1, 'number of created draft picking is wrong, 1 - %s'%len(ids)
-    res = self.create_picking(cr, uid, ids, context=context)
+    idsA = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")), ('state', '=', 'draft')], context=context)
+    idsB = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_B")), ('state', '=', 'draft')], context=context)
+    assert len(idsA) == 1, 'number of created draft picking for SO A is wrong, 1 - %s'%len(idsA)
+    assert len(idsB) == 1, 'number of created draft picking for SO B is wrong, 1 - %s'%len(idsB)
+    # set in the context
+    context.update({'out':{'a':idsA, 'b': idsB}})
+-
+  I check the product and quantities in OUT draft picking objects
+-
+  !python {model: stock.picking}: |
+    for obj in self.browse(cr, uid, context['out']['a']+context['out']['b'], context=context):
+      for move in obj.move_lines:
+        sol = move.sale_line_id
+        assert move.product_id.id == sol.product_id.id, 'product in out stock move for %s is wrong - %s - %s'%(sol.name, sol.product_id.name, move.product_id.name)
+        assert move.product_qty == sol.product_uom_qty, 'quantity in out stock move for %s is wrong - %s - %s'%(sol.name, sol.product_uom_qty, move.product_qty)
+-
+  I open the create picking wizard for A
+-
+  !python {model: stock.picking}: |
+    idsA = context['out']['a']
+    res = self.create_picking(cr, uid, idsA, context=context)
     model = res['res_model']
     id = res['res_id']
-    # update the context
-    self.pool.get(model).do_create_picking(cr, uid, [id], context=res['context'])
-    
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
-
-  I check the picking creation, change the flow_type to 'quick' and validate it
-
+  I check the quantity rule "integrity_check_create_picking" #1: no negative quantity
+-
+  !python {model: create.picking}: |
+    rule = 'negative'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        mem.write({'quantity': -6}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # we should get negative integrity status for each line
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    assert len(picking_ids) == 0, 'picking ticket should have not been created for %s rule - 0 - %s'%(rule, len(picking_ids))
+-
+  I check the quantity rule "integrity_check_create_picking" #2: empty picking
+-
+  !python {model: create.picking}: |
+    rule = 'empty'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        mem.write({'quantity': 0}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # empty picking
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    assert len(picking_ids) == 0, 'picking ticket should have not been created for %s rule - 0 - %s'%(rule, len(picking_ids))
+-
+  I check the production lot rule "integrity_check_prodlot" #3 a not lot managed product does not allow production lot
+-
+  !python {model: create.picking}: |
+    rule = 'no_lot_needed'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'prodlot_id': context['lot']['a']['i']}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # no lot needed rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['c']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    assert len(picking_ids) == 0, 'picking ticket should have not been created for %s rule - 0 - %s'%(rule, len(picking_ids))
+-
+  I check the production lot rule "integrity_check_prodlot" #4 a batch management product does not allow internal production lot. Product A is batch management, we set an internal production lot. It should fail.
+-
+  !python {model: create.picking}: |
+    rule = 'wrong_lot_type_need_standard'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'prodlot_id': context['lot']['a']['i']}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # no lot needed rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    assert len(picking_ids) == 0, 'picking ticket should have not been created for %s rule - 0 - %s'%(rule, len(picking_ids))
+-
+  I check the production lot rule "integrity_check_prodlot" #5 a expiry date product does not allow standard production lot. Product B is expiry date mandatory, we set a standard production lot. It should fail.
+-
+  !python {model: create.picking}: |
+    rule = 'wrong_lot_type_need_internal'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['b']:
+          mem.write({'prodlot_id': context['lot']['b']['s']}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # no lot needed rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['b']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    assert len(picking_ids) == 0, 'picking ticket should have not been created for %s rule - 0 - %s'%(rule, len(picking_ids))
+-
+  I create a partial picking ticket 10, 20, 30 without production lots
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'quantity': 10, 'prodlot_id': False}, context=c)
+        if mem.product_id.id == context['product']['b']:
+          mem.write({'quantity': 20, 'prodlot_id': False}, context=c)
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'quantity': 30, 'prodlot_id': False}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # there should be one picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    # add the picking ticket id to the context structure
+    context.update({'pick': {'a': picking_ids}})
+    assert len(picking_ids) == 1, 'picking ticket should have been created - 1 - %s'%(len(picking_ids))
+-
+  I open the validate picking wizard for A
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")), ('state', '=', 'assigned')], context=context)
-    assert len(ids) == 1, 'number of created draft picking is wrong, 1 - %s'%len(ids)
-    # update flow_type
+    idsA = context['pick']['a']
+    res = self.validate_picking(cr, uid, idsA, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check the production lot rule "integrity_check_prodlot" No production lot are selected, it should fail.
+  #1 a batch management product needs a standard production lot ***ONLY AT PICKING VALIDATION STAGE.
+-
+  !python {model: create.picking}: |
+    rule = 'missing_lot'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    # validate the creation
+    self.do_validate_picking(cr, uid, ids, context=c)
+    # lot needed rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no ppl created
+    ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
+    assert len(ppl_ids) == 0, 'ppl should have not been created for %s rule - 0 - %s'%(rule, len(ppl_ids))
+-
+  I check the production lot rule "integrity_check_prodlot" No production lot are selected, it should fail.
+  #2 a expiry date product needs an internal production lot ***ONLY AT PICKING VALIDATION STAGE
+-
+  !python {model: create.picking}: |
+    rule = 'missing_date'
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    # validate the creation
+    self.do_validate_picking(cr, uid, ids, context=c)
+    # date needed rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['b']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # there should be no ppl created
+    ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
+    assert len(ppl_ids) == 0, 'ppl should have not been created for %s rule - 0 - %s'%(rule, len(ppl_ids))
+-
+  I validate the picking
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'prodlot_id': context['lot']['a']['s']}, context=c)
+        if mem.product_id.id == context['product']['b']:
+          mem.write({'prodlot_id': context['lot']['b']['i']}, context=c)
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'prodlot_id': False}, context=c)
+    # validate the creation
+    self.do_validate_picking(cr, uid, ids, context=c)
+    # there should be one ppl created
+    ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
+    # add the ppl id to the context structure
+    context.update({'ppl': {'a': ppl_ids}})
+    assert len(ppl_ids) == 1, 'ppl should have been created - 1 - %s'%(len(ppl_ids))
+-
+  I open the return product wizard for A
+-
+  !python {model: stock.picking}: |
+    idsA = context['ppl']['a']
+    res = self.return_products(cr, uid, idsA, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check the production lot rule "integrity_check_return_products" set a negative value
+  #1 no negative values (<0)
+-
+  !python {model: create.picking}: |
+    rule = 'negative'
+    # return products -> product_moves_returnproducts ('stock.move.memory.returnproducts')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'qty_to_return': -10}, context=c)
+    # return the products
+    self.do_return_products(cr, uid, ids, context=c)
+    # negative value rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        if mem.product_id.id == context['product']['c']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [90, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I check the production lot rule "integrity_check_return_products" empty wizard
+  #2 at least one positive one (>0)
+-
+  !python {model: create.picking}: |
+    rule = 'empty'
+    # return products -> product_moves_returnproducts ('stock.move.memory.returnproducts')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    # return the products
+    self.do_return_products(cr, uid, ids, context=c)
+    # empty rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [90, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I check the production lot rule "integrity_check_return_products" try to return more than available
+  #3 no more than available quantity
+-
+  !python {model: create.picking}: |
+    rule = 'return_qty_too_much'
+    # return products -> product_moves_returnproducts ('stock.move.memory.returnproducts')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    # I set too much for the product c
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'qty_to_return': 5000}, context=c)
+    # return the products
+    self.do_return_products(cr, uid, ids, context=c)
+    # empty rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        if mem.product_id.id == context['product']['c']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+    # assert that nothing has been returned
+    vals = [90, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I return 5 product A
+-
+  !python {model: create.picking}: |
+    # return products -> product_moves_returnproducts ('stock.move.memory.returnproducts')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    # I set too much for the product c
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_returnproducts:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'qty_to_return': 5}, context=c)
+    # return the products
+    self.do_return_products(cr, uid, ids, context=c)
+    # assert that 5 have been returned
+    vals = [95, 180, 270]
+    for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
+      vals.remove(sm.product_qty)
+    assert not vals, 'vals is not empty - %s'%vals
+-
+  I open the pack ppl wizard for A
+-
+  !python {model: stock.picking}: |
+    idsA = context['ppl']['a']
+    res = self.ppl(cr, uid, idsA, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check the sequence rules "integrity_check_sequences" (0, 1)
+  # rule #1, the first from value must be equal to 1
+-
+  !python {model: create.picking}: |
+    rule = 'missing_1'
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'from_pack': 0, 'to_pack': 1}, context=c)
+    # validate first step
+    self.do_ppl1(cr, uid, ids, context=c)
+    # negative value rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          assert mem.integrity_status == rule, 'integrity status is wrong for line %s - %s - %s'%(mem.line_number, rule, mem.integrity_status)
+-
+  I open the split wizard for product C
+-
+  !python {model: create.picking}: |
+    rule = 'missing_1'
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          # split the line
+          res = mem.split(context=c)
+          model = res['res_model']
+          id = res['res_id']
+          c = res['context']
+          context['split'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I split the line with product C, should be 5 and I split it on 2 and 3.
+-
+  !python {model: split.memory.move}: |
+    rule = 'missing_1'
+    # split move -> split_memory_move ('split.memory.move')
+    ids = context['split']['ids']
+    c = context['split']['c']
+    self.write(cr, uid, ids, {'quantity': 2}, context=c)
+    self.split(cr, uid, ids, context=c)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+-
+  !python {model: create.picking}: |
+    rules = ['overlap']
+    # sequences
+    seqs = [(1,1),(1,2)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+-
+  !python {model: create.picking}: |
+    rules = ['overlap']
+    # sequences
+    seqs = [(1,2),(1,1)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+-
+  !python {model: create.picking}: |
+    rules = ['overlap']
+    # sequences
+    seqs = [(1,4),(2,4)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+-
+  !python {model: create.picking}: |
+    rules = ['overlap']
+    # sequences
+    seqs = [(1,4),(2,3)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+-
+  !python {model: create.picking}: |
+    rules = ['overlap']
+    # sequences
+    seqs = [(1,4),(2,6)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #4: to[i] >= from[i]
+-
+  !python {model: create.picking}: |
+    rules = ['overlap','to_smaller_than_from']
+    # sequences
+    seqs = [(2,1),(2,6)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I check the sequence rules "integrity_check_sequences"
+  # rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+-
+  !python {model: create.picking}: |
+    rules = ['gap']
+    # sequences
+    seqs = [(1,1),(3,3)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    self.do_ppl1(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          if mem.integrity_status in rules:
+            rules.remove(mem.integrity_status)
+    # assert all rules have been reached
+    assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
+-
+  I open ppl2 wizard
+-
+  !python {model: create.picking}: |
+    # sequences
+    seqs = [(2,3),(4,5)]
+    # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_ppl:
+        if mem.product_id.id == context['product']['c']:
+          seq = seqs.pop()
+          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+    # validate ppl1
+    res = self.do_ppl1(cr, uid, ids, context=c)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check the weight rules "integrity_check_weight"
+  # rule #1: weight must exist if not quick flow type
+-
+  !python {model: create.picking}: |
+    rule = 'missing_weight'
+    # ppl step2 -> product_moves_families ('stock.move.memory.families')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # validate ppl2
+    self.do_ppl2(cr, uid, ids, context=c)
+    # check the validation results
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_families:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  set weight and validate ppl2 step
+-
+  !python {model: create.picking}: |
+    # ppl step2 -> product_moves_families ('stock.move.memory.families')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_families:
+        mem.write({'weight': 10}, context=c)
+    # validate ppl2
+    self.do_ppl2(cr, uid, ids, context=c)
+-
+  I check a shipment has been created
+-
+  !python {model: shipment}: |
+    ids = self.search(cr, uid, [('address_id', '=', context['address']), ('state', '=', 'draft')], context=context)
+    assert len(ids) == 1, 'number of created shipment is wrong, 1 - %s'%len(ids)
+    # set in the context
+    context.update({'shipment': ids})
+-
+  I bring products from SO B in quick mode into the shipment. I open the create picking wizard for B
+-
+  !python {model: stock.picking}: |
+    idsA = context['out']['b']
+    res = self.create_picking(cr, uid, idsA, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I create a partial picking ticket containing all products and production lots
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    # set the production lots
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'prodlot_id': context['lot']['a']['s']}, context=c)
+        if mem.product_id.id == context['product']['b']:
+          mem.write({'prodlot_id': context['lot']['b']['i']}, context=c)
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'prodlot_id': False}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # there should be one picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['b'])], context=context)
+    # add the picking ticket id to the context structure
+    context.update({'pick': {'b': picking_ids}})
+    assert len(picking_ids) == 1, 'picking ticket should have been created - 1 - %s'%(len(picking_ids))
+-
+  I set quick mode
+-
+  !python {model: stock.picking}: |
+    ids = context['pick']['b']
     self.write(cr, uid, ids, {'flow_type': 'quick',}, context=context)
+-
+  I open the validate picking wizard for B
+-
+  !python {model: stock.picking}: |
+    ids = context['pick']['b']
     res = self.validate_picking(cr, uid, ids, context=context)
     model = res['res_model']
     id = res['res_id']
-    # update the context
-    self.pool.get(model).do_validate_picking(cr, uid, [id], context=res['context'])
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I validate the picking
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    # validate the creation
+    self.do_validate_picking(cr, uid, ids, context=c)
+    # there should be one ppl created
+    ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['b'])], context=context)
+    # add the ppl id to the context structure
+    context.update({'ppl': {'b': ppl_ids}})
+    assert len(ppl_ids) == 1, 'ppl should have been created - 1 - %s'%(len(ppl_ids))
+-
+  I open the return product to stock wizard
+-
+  !python {model: shipment}: |
     
 -
-
   I check the ppl creation, shipment draft and create a new shipment, ship it, validate it, and check
   that draft shipment is done
 

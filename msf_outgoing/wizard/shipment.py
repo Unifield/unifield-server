@@ -38,6 +38,8 @@ class shipment_wizard(osv.osv_memory):
         'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
      }
+#     todo
+#    generic select all deselcted all based on fields_get
     
     def select_all(self, cr, uid, ids, context=None):
         '''
@@ -264,7 +266,7 @@ class shipment_wizard(osv.osv_memory):
         'from_pack': {'selectable': True, 'type': 'integer', 'string': 'From p.'},
         'length': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Length [cm]'},
         'to_pack': {'selectable': True, 'type': 'integer', 'string': 'To p.'},
-        'integrity_status': {'selectable': True, 'readonly': True, 'selection': [('empty', ''), ('ok', u'Ok'), ('negative', u'Negative Value'), ('missing_lot', u'Production Lot is Missing'), ('missing_date', u'Expiry Date is Missing'), ('no_lot_needed', u'No Production Lot/Expiry Date Needed'), ('wrong_lot_type', u'Wrong Production Lot Type'), ('wrong_lot_type_need_internal', u'Need Expiry Date (Internal) not Production Lot (Standard)'), ('wrong_lot_type_need_standard', u'Need Production Lot (Standard) not Expiry Date (Internal)'), ('empty_picking', u'Empty Picking Ticket'), ('missing_1', u'The first sequence must start with 1'), ('to_smallaer_than_from', u'To value must be greater or equal to From value'), ('overlap', u'The sequence overlaps previous one'), ('gap', u'A gap exist in the sequence'), ('missing_weight', u'Weight is Missing')], 'type': 'selection', 'string': ' '},
+        'integrity_status': {'selectable': True, 'readonly': True, 'selection': [('empty', ''), ('ok', u'Ok'), ('negative', u'Negative Value'), ('missing_lot', u'Production Lot is Missing'), ('missing_date', u'Expiry Date is Missing'), ('no_lot_needed', u'No Production Lot/Expiry Date Needed'), ('wrong_lot_type', u'Wrong Production Lot Type'), ('wrong_lot_type_need_internal', u'Need Expiry Date (Internal) not Production Lot (Standard)'), ('wrong_lot_type_need_standard', u'Need Production Lot (Standard) not Expiry Date (Internal)'), ('empty_picking', u'Empty Picking Ticket'), ('missing_1', u'The first sequence must start with 1'), ('to_smaller_than_from', u'To value must be greater or equal to From value'), ('overlap', u'The sequence overlaps previous one'), ('gap', u'A gap exist in the sequence'), ('missing_weight', u'Weight is Missing')], 'type': 'selection', 'string': ' '},
         'num_of_packs': {'function': '_vals_get', 'digits': (16, 2), 'fnct_inv': False, 'string': '#Packs', 'fnct_inv_arg': False, 'readonly': 1, 'fnct_search': False, 'func_obj': False, 'type': 'integer', 'store': False, 'func_method': True},
         'selected_number': {'selectable': True, 'type': 'integer', 'string': 'Selected Number'},
         'width': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Width [cm]'},
@@ -468,7 +470,7 @@ class shipment_wizard(osv.osv_memory):
                             # rule #1: sfrom <= sto // integrity of selected sequence
                             if not (partial['return_from'] <= partial['return_to']):
                                 to_samller_than_from = True
-                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'to_smallaer_than_from',}, context=context)
+                                memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'to_smaller_than_from',}, context=context)
                             # rule #2: (sfrom >= from) and (sto <= to) // in the initial range
                             elif not (partial['return_from'] >= partial['from_pack'] and partial['return_to'] <= partial['to_pack']):
                                 out_of_range = True

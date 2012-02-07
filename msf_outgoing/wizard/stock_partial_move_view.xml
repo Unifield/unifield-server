@@ -11,6 +11,7 @@
 					<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
                     <field name="asset_id" />
+                    <field name="initial_qty" />
                     <field name="quantity" />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" string="Batch Number"

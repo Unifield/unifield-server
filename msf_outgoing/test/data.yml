@@ -32,3 +32,35 @@
     name: ProdC
     batch_management: false
     perishable: false
+-
+  Production Lot Ai (i stands for internal)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Ai}:
+    name: A internal
+    product_id: outgoing_product_A
+    type: internal
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot As (s stands for standard)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_As}:
+    name: A standard
+    product_id: outgoing_product_A
+    type: standard
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot Bi (i stands for internal)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Bi}:
+    name: B internal
+    product_id: outgoing_product_B
+    type: internal
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot Bs (s stands for standard)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Bs}:
+    name: B standard
+    product_id: outgoing_product_B
+    type: standard
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
