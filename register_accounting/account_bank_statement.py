@@ -162,8 +162,8 @@ class account_bank_statement(osv.osv):
         return journal_name
     
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance"),
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', \
+            help="Calculated balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
