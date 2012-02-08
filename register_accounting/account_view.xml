@@ -33,6 +33,7 @@
                                     Are you sure to freeze closing balance?"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
+                            <field name="balance_gap"/>
                             <field name="currency" invisible="1"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
