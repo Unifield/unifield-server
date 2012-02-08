@@ -96,7 +96,7 @@ class report_budget_criteria(report_sxw.report_sxw):
         writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
         for line in data:
             writer.writerow(line)
-        out = buffer.getvalue()    
+        out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')
     
