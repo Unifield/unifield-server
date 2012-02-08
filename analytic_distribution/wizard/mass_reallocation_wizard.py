@@ -95,6 +95,11 @@ class mass_reallocation_wizard(osv.osv_memory):
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
+        'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
+    }
+
+    _default = {
+        'state': lambda *a: 'normal',
     }
 
     def default_get(self, cr, uid, fields=[], context={}):

@@ -83,7 +83,8 @@ class mass_reallocation_search(osv.osv_memory):
 #            'domain': domain,
 #            'target': 'current',
 #        }
-        wiz_id = self.pool.get('mass.reallocation.wizard').create(cr, uid, {'account_id': context.get('active_id'), 'line_ids': [(6, 0, valid_ids)]})
+        wiz_id = self.pool.get('mass.reallocation.wizard').create(cr, uid, {'account_id': context.get('active_id'), 'line_ids': [(6, 0, valid_ids)], 
+            'state': 'blocked'})
         context.update({
             'active_ids': valid_ids,
         })
