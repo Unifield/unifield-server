@@ -547,7 +547,7 @@ class product_likely_expire_report_item_line(osv.osv_memory):
     
     _columns = {
             'item_id': fields.many2one('product.likely.expire.report.item', strig='Item', ondelete='cascade'),
-            'lot_id': fields.many2one('stock.production.lot', string='Lot'),
+            'lot_id': fields.many2one('stock.production.lot', string='Batch number'),
             'location_id': fields.many2one('stock.location', string='Location'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
