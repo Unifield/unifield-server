@@ -1641,7 +1641,7 @@
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
-    assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
+    assert len(shipment_ids) == 4, 'shipment should have been created - 4 - %s'%(len(shipment_ids))
     # save shipment id
     context.update({'shipment2': [max(shipment_ids)]})
 -
