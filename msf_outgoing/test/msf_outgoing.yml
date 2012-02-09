@@ -581,7 +581,7 @@
           c = res['context']
           context['split'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
-  I split the line with product C, should be 5 and I split it on 2 and 3.
+  I split the line with product C, should be 30 and I split it on 2 and 28.
 -
   !python {model: split.memory.move}: |
     rule = 'missing_1'
@@ -773,19 +773,20 @@
     # assert all rules have been reached
     assert not rules, 'all rules are not triggered - %s - %s'%([], rules)
 -
-  I open ppl2 wizard
+  I open ppl2 wizard - for prod C, put 2 in 2,3 and 28 in 4,5. the other products are put in 1,1
 -
   !python {model: create.picking}: |
     # sequences
-    seqs = [(2,3),(4,5)]
     # ppl step1 -> product_moves_ppl ('stock.move.memory.ppl')
     ids = context['wizard']['ids']
     c = context['wizard']['c']
     for obj in self.browse(cr, uid, ids, context=c):
       for mem in obj.product_moves_ppl:
         if mem.product_id.id == context['product']['c']:
-          seq = seqs.pop()
-          mem.write({'from_pack': seq[0], 'to_pack': seq[1]}, context=c)
+          if mem.quantity == 28:
+            mem.write({'from_pack': 4, 'to_pack': 5}, context=c)
+          elif mem.quantity == 2:
+            mem.write({'from_pack': 2, 'to_pack': 3}, context=c)
     # validate ppl1
     res = self.do_ppl1(cr, uid, ids, context=c)
     model = res['res_model']
@@ -820,13 +821,13 @@
     # validate ppl2
     self.do_ppl2(cr, uid, ids, context=c)
 -
-  I check a shipment has been created
+  I check a draft shipment has been created
 -
   !python {model: shipment}: |
     ids = self.search(cr, uid, [('address_id', '=', context['address']), ('state', '=', 'draft')], context=context)
     assert len(ids) == 1, 'number of created shipment is wrong, 1 - %s'%len(ids)
     # set in the context
-    context.update({'shipment': ids})
+    context.update({'draft_shipment': ids})
 -
   I bring products from SO B in quick mode into the shipment. I open the create picking wizard for B
 -
@@ -899,7 +900,7 @@
   I open the return product to stock wizard
 -
   !python {model: shipment}: |
-    ids = context['shipment']
+    ids = context['draft_shipment']
     res = self.return_packs(cr, uid, ids, context=context)
     model = res['res_model']
     id = res['res_id']
@@ -991,7 +992,7 @@
       vals.remove(sm.product_qty)
     assert not vals, 'vals is not empty - %s'%vals
 -
-    I return 1 pack for the sequence (4,5)
+    I return 1 pack for the sequence (4,5) - 1 pack 4,5 contains 14 prodC
 -
   !python {model: shipment.wizard}: |
     # return products to stock -> product_moves_shipment_returnpacks ('stock.move.memory.shipment.returnpacks')
@@ -1006,20 +1007,240 @@
     # return the products
     self.do_return_packs(cr, uid, ids, context=c)
     # assert that nothing has been returned
-    vals = [95, 180, 270]
+    vals = [95, 180, 284] # 284 because we returned 14
     for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['a'][0], context=context).move_lines:
-      print sm.product_qty
+      vals.remove(sm.product_qty)
     assert not vals, 'vals is not empty - %s'%vals
     vals = [0, 0, 0]
     for sm in self.pool.get('stock.picking').browse(cr, uid, context['out']['b'][0], context=context).move_lines:
-      print sm.product_qty
+      vals.remove(sm.product_qty)
     assert not vals, 'vals is not empty - %s'%vals
+-
+  I open the create shipment wizard
+-
+  !python {model: shipment}: |
+    ids = context['draft_shipment']
+    res = self.create_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check rules from "integrity_check_packs"
+  #1 no negative values (<0)
+-
+  !python {model: shipment.wizard}: |
+    rule = 'negative'
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        mem.write({'selected_number': -10}, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # negative value rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that no shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 0, 'shipment should have not been created for %s rule - 0 - %s'%(rule, len(shipment_ids))
+-
+  I check rules from "integrity_check_packs"
+  #2 at least one positive one (>0)
+-
+  !python {model: shipment.wizard}: |
+    rule = 'empty'
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # empty rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that no shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 0, 'shipment should have not been created for %s rule - 0 - %s'%(rule, len(shipment_ids))
+-
+  I check rules from "integrity_check_packs"
+   #3 no more than available quantity #packs
+-
+  !python {model: shipment.wizard}: |
+    rule = 'return_qty_too_much'
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        mem.write({'selected_number': 9999}, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # too much rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+    # assert that no shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 0, 'shipment should have not been created for %s rule - 0 - %s'%(rule, len(shipment_ids))
+-
+    I create a shipment with  1 pack so_a 1,1, 1 pack so_b 1,1 
+    # present configuration of packs
+    # so_a ppl_1 1,1
+    # so_a ppl_1 2,3
+    # so_a ppl_1 4,4
+    # so_b ppl_2 1,1
+-
+  !python {model: shipment.wizard}: |
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # deselect
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_create:
+        if mem.sale_order_id.id == context['so']['a'] and mem.from_pack == 1:
+          mem.write({'selected_number': 1}, context=c)
+        if mem.sale_order_id.id == context['so']['b']:
+          mem.write({'selected_number': 1}, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # assert a shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 1, 'shipment should have been created - 1 - %s'%(len(shipment_ids))
+    # save shipment id
+    context.update({'shipment1': shipment_ids})
+-
+  I ship the shipment1
+-
+  !python {model: shipment}: |
+    ids = context['shipment1']
+    self.ship(cr, uid, ids, context=context)
+-
+    I create a second shipment with the rest 
+    # present configuration of packs
+    # so_a ppl_1 2,3
+    # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # select all
+    self.select_all(cr, uid, ids, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # assert a shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 2, 'shipment should have been created - 2 - %s'%(len(shipment_ids))
+    # save shipment id - keep the max (last) id
+    context.update({'shipment2': [max(shipment_ids)]})
+-
+  I cancel the shipment2
+-
+  !python {model: shipment}: |
+    ids = context['shipment2']
+    self.action_cancel(cr, uid, ids, context=context)
+-
+  I recreate a second shipment with the rest 
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # select all
+    self.select_all(cr, uid, ids, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # assert a shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
+    # save shipment id
+    context.update({'shipment2': [max(shipment_ids)]})
+-
+  I ship the shipment2
+-
+  !python {model: shipment}: |
+    ids = context['shipment2']
+    self.ship(cr, uid, ids, context=context)
+-
+  I open the return from shipment wizard for shipment2
+-
+  !python {model: shipment}: |
+    ids = context['shipment2']
+    res = self.return_packs_from_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I check rules from "integrity_check_return_packs_from_shipment" (2,1)
+  #1: sfrom <= sto // integrity of selected sequence
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rule = 'to_smaller_than_from'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.write({'return_from': 3, 'return_to': 2}, context=c)
+    # validate first step
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # to smaller than from rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  I check nothing has been returned
+-
+  !python {model: shipment}: |
+    # assert that nothing has been returned - draft shipment should be empty
+    for obj in self.browse(cr, uid, context['draft_shipment'], context=context):
+      for mem in obj.pack_family_memory_ids:
+        print mem.sale_order_id.name
+        print mem.from_pack
+        print mem.to_pack
+      #assert len(obj.pack_family_memory_ids) == 0, 'the draft shipment is not empty, packs have been returned - 0 - %s'%len(obj.pack_family_memory_ids)
+-
+  I validate the first shipment1
+-
+  !python {model: shipment}: |
+    ids = context['shipment1']
+    self.validate(cr, uid, ids, context=context)
+-
+  I check the state of both OUT objects. A should be draft, B should be done (everything has been shipped)
+-
+  !python {model: stock.picking}: |
+    idsA = context['out']['a']
+    idsB = context['out']['b']
+    a_data = self.read(cr, uid, idsA, ['state'], context=context)
+    assert a_data[0]['state'] == 'draft', 'the state of draft outgoing A is wrong - draft - %s'%a_data[0]['state']
+    b_data = self.read(cr, uid, idsB, ['state'], context=context)
+    assert b_data[0]['state'] == 'done', 'the state of draft outgoing B is wrong - done - %s'%b_data[0]['state']
 -
   I check the ppl creation, shipment draft and create a new shipment, ship it, validate it, and check
   that draft shipment is done
-
 -
   !python {model: shipment}: |
+    print 'OK'
     ids = self.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', ref("outgoing_address_A"))], context=context)
     assert len(ids) == 1, 'number of created draft shipment is wrong, 1 - %s'%len(ids)
     

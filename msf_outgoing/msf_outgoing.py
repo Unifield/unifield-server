@@ -228,6 +228,7 @@ class shipment(osv.osv):
                                                                                               ('cancel', 'Cancelled')], string='State', multi='get_vals',
                                          store= {'stock.picking': (_get_shipment_ids, ['state', 'shipment_id',], 10),}),
                 'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
+                # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 }
     _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
