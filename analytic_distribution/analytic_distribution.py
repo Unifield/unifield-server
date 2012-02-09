@@ -254,7 +254,7 @@ class analytic_distribution(osv.osv):
 #                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
                     vals = {
-                        'analytic_id': pf_id[0],
+                        'analytic_id': pf_id,
                         'amount': line.amount or 0.0,
                         'percentage': line.percentage or 0.0,
                         'currency_id': line.currency_id and line.currency_id.id or False,
