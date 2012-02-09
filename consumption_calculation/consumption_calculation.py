@@ -928,23 +928,19 @@ class product_product(osv.osv):
         fmc_line_obj = self.pool.get('monthly.review.consumption.line')
             
         # Search all Review report for locations
-        fmc_ids = fmc_obj.search(cr, uid, [], order='period_to desc', limit=1, context=context)
+        #fmc_ids = fmc_obj.search(cr, uid, [], order='period_to desc, creation_date desc', limit=1, context=context)
         
         for product in ids:
             res[product] = 0.00
             last_date = False
             
             # Search all validated lines with the product
-            line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True), ('mrc_id', 'in', fmc_ids)], context=context)
+            #line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True), ('mrc_id', 'in', fmc_ids)], context=context)
+            line_ids = fmc_line_obj.search(cr, uid, [('name', '=', product), ('valid_ok', '=', True)], order='last_reviewed desc, mrc_id desc', limit=1, context=context)
             
             # Get the last created line
             for line in fmc_line_obj.browse(cr, uid, line_ids, context=context):
-                if not last_date:
-                    last_date = line.mrc_id.period_to
-                    res[product] = line.fmc
-                elif line.mrc_id.period_to > last_date:
-                    last_date = line.mrc_id.period_to
-                    res[product] = line.fmc
+                res[product] = line.fmc
         
         return res
     
@@ -1189,14 +1185,17 @@ class product_product(osv.osv):
 
     def _compute_product_amc(self, cr, uid, ids, field_name, args, context={}):
         res = {}
+        from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+        to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
 
         if context.get('from_date', False):
             from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
-            context.update({'from_date': from_date})
                                                
         if context.get('to_date', False):
             to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
-            context.update({'to_date': to_date})
+
+        context.update({'from_date': from_date})
+        context.update({'to_date': to_date})
 
         for product in ids:
             res[product] = self.compute_amc(cr, uid, product, context=context)

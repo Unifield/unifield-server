@@ -223,7 +223,6 @@ class product_likely_expire_report(osv.osv_memory):
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
         
         return res
-        
             
     def process_lines(self, cr, uid, ids, context={}):
         '''
@@ -322,7 +321,8 @@ class product_likely_expire_report(osv.osv_memory):
                 start_month_flag = True
                 last_expiry_date = False
                 for month in dates:
-                    if not last_expiry_date: last_expiry_date = month
+                    # Remove one day to include the expiry date as possible consumable day
+                    if not last_expiry_date: last_expiry_date = month - RelativeDateTime(days=1)
                     
                     item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
@@ -335,12 +335,16 @@ class product_likely_expire_report(osv.osv_memory):
                              ('stock_available', '>', 0.00),
                              ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
 
-                    # If we are not in the first month of the period, displayed all products already expired
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
                         item_obj.write(cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
                     else:
                         item_obj.write(cr, uid, [item_id], {'period_start': report.date_from}, context=context)
+                        # Uncomment the first line if you want products already expired in the first month
+                        #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
+                        # Comment line if you want all products already expired
+                        domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        
 
                     # Remove the token after the first month processing
                     start_month_flag = False
