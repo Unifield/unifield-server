@@ -1126,6 +1126,16 @@
     ids = context['shipment1']
     self.ship(cr, uid, ids, context=context)
 -
+  I open the create shipment wizard
+-
+  !python {model: shipment}: |
+    ids = context['draft_shipment']
+    res = self.create_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
     I create a second shipment with the rest 
     # present configuration of packs
     # so_a ppl_1 2,3
@@ -1150,6 +1160,16 @@
   !python {model: shipment}: |
     ids = context['shipment2']
     self.action_cancel(cr, uid, ids, context=context)
+-
+  I open the create shipment wizard
+-
+  !python {model: shipment}: |
+    ids = context['draft_shipment']
+    res = self.create_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
   I recreate a second shipment with the rest 
   # present configuration of packs
@@ -1186,7 +1206,7 @@
     c = res['context']
     context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
 -
-  I check rules from "integrity_check_return_packs_from_shipment" (2,1)
+  I check rules from "integrity_check_return_packs_from_shipment" (3,2)
   #1: sfrom <= sto // integrity of selected sequence
   # present configuration of packs
   # so_a ppl_1 2,3
@@ -1197,28 +1217,439 @@
     # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
     ids = context['wizard']['ids']
     c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
     for obj in self.browse(cr, uid, ids, context=c):
       for mem in obj.product_moves_shipment_returnpacksfromshipment:
         if mem.from_pack == 2:
           mem.write({'return_from': 3, 'return_to': 2}, context=c)
-    # validate first step
+    # validate
     self.do_return_packs_from_shipment(cr, uid, ids, context=c)
-    # to smaller than from rule
+    # rule
     for obj in self.browse(cr, uid, ids, context=c):
       for mem in obj.product_moves_shipment_returnpacksfromshipment:
         if mem.from_pack == 2:
           assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
 -
-  I check nothing has been returned
+  I check rules from "integrity_check_return_packs_from_shipment" (1,2)
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rule = 'seq_out_of_range'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.write({'return_from': 1, 'return_to': 2}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment" (0,1)
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rule = 'seq_out_of_range'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.write({'return_from': 0, 'return_to': 1}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment" (3,4)
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rule = 'seq_out_of_range'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.write({'return_from': 3, 'return_to': 4}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment" (5,6)
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rule = 'seq_out_of_range'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.write({'return_from': 5, 'return_to': 6}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status == rule, 'integrity status is wrong - %s - %s'%(rule, mem.integrity_status)
+-
+  I split the line so_a 2,3
+-
+  !python {model: shipment.wizard}: |
+    rule = 'to_smaller_than_from'
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          mem.split(context=c)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','empty']
+    sequences = [(1,2),(3,3)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','empty']
+    sequences = [(0,1),(3,3)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','empty']
+    sequences = [(2,2),(3,4)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','empty']
+    sequences = [(2,2),(5,6)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','seq_out_of_range']
+    sequences = [(1,2),(3,4)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['seq_out_of_range','seq_out_of_range']
+    sequences = [(0,1),(5,6)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['overlap','empty']
+    sequences = [(2,2),(2,3)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['overlap','empty']
+    sequences = [(2,3),(2,2)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I check rules from "integrity_check_return_packs_from_shipment"
+  #2: (sfrom >= from) and (sto <= to) // in the initial range
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 2,3 (split)
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    rules = ['overlap','empty']
+    sequences = [(2,3),(3,3)]
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.deselect_all(cr, uid, ids, context=c)
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          seq = sequences.pop()
+          mem.write({'return_from': seq[0], 'return_to': seq[1]}, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+    # rule
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_shipment_returnpacksfromshipment:
+        if mem.from_pack == 2:
+          assert mem.integrity_status in rules, 'integrity status is wrong - %s - %s'%(rules, mem.integrity_status)
+-
+  I open the return from shipment wizard for shipment2
 -
   !python {model: shipment}: |
-    # assert that nothing has been returned - draft shipment should be empty
-    for obj in self.browse(cr, uid, context['draft_shipment'], context=context):
-      for mem in obj.pack_family_memory_ids:
-        print mem.sale_order_id.name
-        print mem.from_pack
-        print mem.to_pack
-      #assert len(obj.pack_family_memory_ids) == 0, 'the draft shipment is not empty, packs have been returned - 0 - %s'%len(obj.pack_family_memory_ids)
+    ids = context['shipment2']
+    res = self.return_packs_from_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I return everything
+-
+  !python {model: shipment.wizard}: |
+    # return from shipment -> product_moves_shipment_returnpacksfromshipment ('stock.move.memory.shipment.returnpacksfromshipment')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset
+    self.select_all(cr, uid, ids, context=c)
+    # validate
+    self.do_return_packs_from_shipment(cr, uid, ids, context=c)
+-
+  I open the create shipment wizard
+-
+  !python {model: shipment}: |
+    ids = context['draft_shipment']
+    res = self.create_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I recreate a second shipment with the rest 
+  # present configuration of packs
+  # so_a ppl_1 2,3
+  # so_a ppl_1 4,4
+-
+  !python {model: shipment.wizard}: |
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # select all
+    self.select_all(cr, uid, ids, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # assert a shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
+    # save shipment id
+    context.update({'shipment2': [max(shipment_ids)]})
+-
+  I ship the shipment2
+-
+  !python {model: shipment}: |
+    ids = context['shipment2']
+    self.ship(cr, uid, ids, context=context)
 -
   I validate the first shipment1
 -
@@ -1226,7 +1657,7 @@
     ids = context['shipment1']
     self.validate(cr, uid, ids, context=context)
 -
-  I check the state of both OUT objects. A should be draft, B should be done (everything has been shipped)
+  I check the state of both OUT objects. A should be draft, B should be done (everything has been shipped).
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
@@ -1236,39 +1667,27 @@
     b_data = self.read(cr, uid, idsB, ['state'], context=context)
     assert b_data[0]['state'] == 'done', 'the state of draft outgoing B is wrong - done - %s'%b_data[0]['state']
 -
-  I check the ppl creation, shipment draft and create a new shipment, ship it, validate it, and check
-  that draft shipment is done
+  I check the draft shipment state, should still be draft. Shipment2 is still running.
 -
   !python {model: shipment}: |
-    print 'OK'
-    ids = self.search(cr, uid, [('state', '=', 'draft'), ('address_id', '=', ref("outgoing_address_A"))], context=context)
-    assert len(ids) == 1, 'number of created draft shipment is wrong, 1 - %s'%len(ids)
-    
-    # create a new shipment
-    res = self.create_shipment(cr, uid, ids, context=context)
-    model = res['res_model']
-    id = res['res_id']
-    # update the context
-    self.pool.get(model).do_create_shipment(cr, uid, [id], context=res['context'])
-    # ship it
-    ids = self.search(cr, uid, [('state', '=', 'packed'), ('address_id', '=', ref("outgoing_address_A"))], context=context)
-    assert len(ids) == 1, 'number of created shipment is wrong, 1 - %s'%len(ids)
-    self.ship(cr, uid, ids, context=context)
-    # validate it
-    self.validate(cr, uid, ids, context=context)
-    # shipment done
-    assert self.browse(cr, uid, ids[0], context=context).state == 'done', 'state is wrong for validated shipment - done - %s'%self.browse(cr, uid, ids[0], context=context).state
-    assert self.browse(cr, uid, ids[0], context=context).backshipment_id.state == 'done', 'state is wrong for draft shipment - done - %s'%self.browse(cr, uid, ids[0], context=context).backshipment_id.state
-    
+    data = self.read(cr, uid, context['draft_shipment'], ['state'], context=context)
+    assert data[0]['state'] == 'draft', 'the shipment is not in the good state anymore - draft - %s'%data[0]['state']
 -
-
-  I check the ppl creation, shipment draft and create a new shipment, ship it, validate it, and check
-  that draft shipment is done
-
+  I validate the shipment2
+-
+  !python {model: shipment}: |
+    ids = context['shipment2']
+    self.validate(cr, uid, ids, context=context)
+-
+  I check the state of both OUT objects. A should be done now.
 -
   !python {model: stock.picking}: |
-    ids = self.search(cr, uid, [('sale_id', '=', ref("outgoing_so_A")),], context=context)
-    # we must have 6 objects - draft picking - picking - ppl - draft packing - packing (packed) - packing (shipped)
-    objects = ['draft_picking', 'picking', 'ppl', 'draft_packing', 'packing_packed', 'packing_shipped']
-    assert len(ids) == len(objects), 'the number of picking objects is wrong - %s - %s'%(len(objects), len(ids))
-    assert all([p.state == 'done' for p in self.browse(cr, uid, ids, context=context)]), 'all corresponding picking objects are not done - %s'%[p.state == 'done' for p in self.browse(cr, uid, ids, context=context)]
+    idsA = context['out']['a']
+    a_data = self.read(cr, uid, idsA, ['state'], context=context)
+    assert a_data[0]['state'] == 'done', 'the state of draft outgoing A is wrong - done - %s'%a_data[0]['state']
+-
+  I check the draft shipment state, should be done now. Shipment2 is over.
+-
+  !python {model: shipment}: |
+    data = self.read(cr, uid, context['draft_shipment'], ['state'], context=context)
+    assert data[0]['state'] == 'done', 'the shipment is not in the good state anymore - done - %s'%data[0]['state']
