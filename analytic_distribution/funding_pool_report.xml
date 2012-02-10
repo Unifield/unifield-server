@@ -6,9 +6,10 @@
         string="Funding Pool"
         model="account.analytic.account"
         name="funding.pool"
-        rml="funding_pool/report/funding_pool.rml"
+        rml="analytic_distribution/report/funding_pool.rml"
         auto="False"
-        menu="True"/>
+        menu="True"
+        header="False"/>
 
     </data>
 </openerp>

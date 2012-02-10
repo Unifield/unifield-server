@@ -58,6 +58,13 @@ class account_period(osv.osv):
         
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
+            # UF-550: A period now can only be opened if all previous periods (of the same fiscal year) have been already opened
+            if period.state == 'created':
+                previous_period_ids = self.search(cr, uid, [('date_start', '<', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id)], context=context,)
+                for pp in self.browse(cr, uid, previous_period_ids, context=context):
+                    if pp.state == 'created':
+                        raise osv.except_osv(_('Warning'), _("Cannot open this period. All previous periods must be opened before opening this one."))
+            
             if period.state == 'draft':
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
