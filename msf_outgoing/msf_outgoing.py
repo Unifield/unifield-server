@@ -306,7 +306,8 @@ class shipment(osv.osv):
                 
             # log creation message
             self.log(cr, uid, shipment_id, _('The new Shipment %s has been created.'%shipment_name))
-                
+            # the shipment is automatically shipped, no more pack states in between.
+            self.ship(cr, uid, [shipment_id], context=context)
         # TODO which behavior
         return {'type': 'ir.actions.act_window_close'}
     
@@ -665,6 +666,8 @@ class shipment(osv.osv):
         db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
         
         for shipment in self.browse(cr, uid, ids, context=context):
+            # shipment state should be 'packed'
+            assert shipment.state == 'packed', 'cannot ship a shipment which is not in correct state - packed - %s'%shipment.state
             # the state does not need to be updated - function
             # update actual ship date (shipment_actual_date) to today + time
             today = time.strftime(db_datetime_format)

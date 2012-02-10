@@ -1120,12 +1120,6 @@
     # save shipment id
     context.update({'shipment1': shipment_ids})
 -
-  I ship the shipment1
--
-  !python {model: shipment}: |
-    ids = context['shipment1']
-    self.ship(cr, uid, ids, context=context)
--
   I open the create shipment wizard
 -
   !python {model: shipment}: |
@@ -1189,12 +1183,6 @@
     assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
     # save shipment id
     context.update({'shipment2': [max(shipment_ids)]})
--
-  I ship the shipment2
--
-  !python {model: shipment}: |
-    ids = context['shipment2']
-    self.ship(cr, uid, ids, context=context)
 -
   I open the return from shipment wizard for shipment2
 -
@@ -1645,12 +1633,6 @@
     # save shipment id
     context.update({'shipment2': [max(shipment_ids)]})
 -
-  I ship the shipment2
--
-  !python {model: shipment}: |
-    ids = context['shipment2']
-    self.ship(cr, uid, ids, context=context)
--
   I validate the first shipment1
 -
   !python {model: shipment}: |
@@ -1802,12 +1784,6 @@
     assert len(shipment_ids) == 1, 'shipment should have been created - 1 - %s'%(len(shipment_ids))
     # save shipment id
     context.update({'shipment3': [max(shipment_ids)]})
--
-  I ship the shipment3
--
-  !python {model: shipment}: |
-    ids = context['shipment3']
-    self.ship(cr, uid, ids, context=context)
 -
   I validate the shipment3
 -
