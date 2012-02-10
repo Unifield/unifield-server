@@ -70,12 +70,14 @@ class stock_move(osv.osv):
             qty = move.product_uos_qty or move.product_qty or 0.0
             picking = move.picking_id or False
             if not picking:
-                raise osv.except_osv(_('Error'), _('No picking found for this move: %s' % move.name))
+                # If no picking then no PO have generated this stock move
+                continue
             # fetch invoice type in order to retrieve price unit
             inv_type = self.pool.get('stock.picking')._get_invoice_type(picking) or 'out_invoice'
             price_unit = self.pool.get('stock.picking')._get_price_unit_invoice(cr, uid, move, inv_type)
             if not price_unit:
-                raise osv.except_osv(_('Error'), _('No price unit found for this move: %s!') % move.name)
+                # If no price_unit, so no impact on commitments because no price unit have been taken for commitment calculation
+                continue
             # update all commitment voucher lines
             if not move.purchase_line_id:
                 continue
