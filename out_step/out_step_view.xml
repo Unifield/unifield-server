@@ -15,7 +15,7 @@
             			<field name="subtype" invisible="True" />
             			<field name="delivered" invisible="True" />
            				<field name="state_hidden" />
-           				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True),]}" />
+           				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}" />
 					</xpath>
             	
             	</data>

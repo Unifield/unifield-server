@@ -38,12 +38,12 @@
     line_ids = self.search(cr, uid, [('product_id', '=', ref('product5')), ('report_id', '=', ref('pler1'))], context=context)
     for line in self.browse(cr, uid, line_ids, context=context):
       assert line.in_stock == 600.00, "In stock is not correct for the product P5"
-      assert line.total_expired == 121.00, "Expired quantity is not correct for product P5 %s"%(line.total_expired,)
+      assert line.total_expired == 114.00, "Expired quantity is not correct for product P5 %s"%(line.total_expired,)
       assert line.consumption == 200.00, "Consumption is not correct for product P5"
       item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('line_id', '=', line.id)])
         
       item1 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[0])
-      assert item1.expired_qty == 60.00, "1, %s"%(item1.expired_qty, )
+      assert item1.expired_qty == 53.00, "1, %s"%(item1.expired_qty, )
 
       item2 = self.pool.get('product.likely.expire.report.item').browse(cr, uid, item_ids[1])
       assert item2.expired_qty == 0.00, "2 , %s"%(item2.expired_qty, )
