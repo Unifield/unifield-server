@@ -253,6 +253,8 @@ class analytic_distribution(osv.osv):
                     pf_id = 0
 #                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
+                    if isinstance(pf_id, (int, long)):
+                        pf_id = [pf_id]
                     vals = {
                         'analytic_id': pf_id[0],
                         'amount': line.amount or 0.0,
