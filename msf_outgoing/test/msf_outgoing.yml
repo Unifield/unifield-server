@@ -1679,14 +1679,150 @@
     ids = context['shipment2']
     self.validate(cr, uid, ids, context=context)
 -
-  I check the state of both OUT objects. A should be done now.
+  I check the state of OUT object. A should still be draft.
+  # A 95
+  # B 180
+  # C 284
+-
+  !python {model: stock.picking}: |
+    quantities = [95,180,284]
+    idsA = context['out']['a']
+    a_data = self.read(cr, uid, idsA, ['state'], context=context)
+    for obj in self.browse(cr, uid, idsA, context=context):
+      for m in obj.move_lines:
+        quantities.remove(m.product_qty)
+    assert a_data[0]['state'] == 'draft', 'the state of draft outgoing A is wrong - draft - %s'%a_data[0]['state']
+    assert not quantities, 'quantities from OUT A are wrong - [] - %s'%quantities
+-
+  I check the draft shipment state, should be done. Shipment2 is over. Some products stays \
+  in the corresponding out, but the shipment is for now over.
+-
+  !python {model: shipment}: |
+    data = self.read(cr, uid, context['draft_shipment'], ['state'], context=context)
+    assert data[0]['state'] == 'done', 'the shipment is not in the good state anymore - done - %s'%data[0]['state']
+-
+  I bring products from SO A in quick mode into a new shipment. I open the create picking wizard for A
+-
+  !python {model: stock.picking}: |
+    idsA = context['out']['a']
+    res = self.create_picking(cr, uid, idsA, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I create a partial picking ticket containing all products and production lots
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.select_all(cr, uid, ids, context=c)
+    # set the production lots
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        if mem.product_id.id == context['product']['a']:
+          mem.write({'prodlot_id': context['lot']['a']['s']}, context=c)
+        if mem.product_id.id == context['product']['b']:
+          mem.write({'prodlot_id': context['lot']['b']['i']}, context=c)
+        if mem.product_id.id == context['product']['c']:
+          mem.write({'prodlot_id': False}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # there should be one picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out']['a'])], context=context)
+    # add the picking ticket id to the context structure
+    context.update({'pick': {'a': picking_ids}})
+    assert len(picking_ids) == 2, 'picking ticket should have been created - 2 - %s'%(len(picking_ids))
+-
+  I set quick mode
+-
+  !python {model: stock.picking}: |
+    ids = context['pick']['a']
+    self.write(cr, uid, ids, {'flow_type': 'quick',}, context=context)
+-
+  I open the validate picking wizard for A
+-
+  !python {model: stock.picking}: |
+    ids = context['pick']['a']
+    res = self.validate_picking(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I validate the picking
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # reset the qty
+    self.deselect_all(cr, uid, ids, context=c)
+    self.select_all(cr, uid, ids, context=c)
+    # validate the creation
+    self.do_validate_picking(cr, uid, ids, context=c)
+    # there should be one ppl created
+    ppl_ids = self.pool.get('stock.picking').search(cr, uid, [('previous_step_id', 'in', context['pick']['a'])], context=context)
+    # add the ppl id to the context structure
+    context.update({'ppl': {'a': ppl_ids}})
+    assert len(ppl_ids) == 3, 'ppl should have been created - 3 - %s'%(len(ppl_ids))
+-
+  I check a draft shipment has been created
+-
+  !python {model: shipment}: |
+    ids = self.search(cr, uid, [('address_id', '=', context['address']), ('state', '=', 'draft')], context=context)
+    assert len(ids) == 1, 'number of created shipment is wrong, 1 - %s'%len(ids)
+    # set in the context
+    context.update({'draft_shipment': ids})
+-
+  I open the create shipment wizard
+-
+  !python {model: shipment}: |
+    ids = context['draft_shipment']
+    res = self.create_shipment(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I create shipment3 with the rest
+-
+  !python {model: shipment.wizard}: |
+    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    # select all
+    self.select_all(cr, uid, ids, context=c)
+    # create shipment
+    self.do_create_shipment(cr, uid, ids, context=c)
+    # assert a shipment has been created
+    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
+    assert len(shipment_ids) == 1, 'shipment should have been created - 1 - %s'%(len(shipment_ids))
+    # save shipment id
+    context.update({'shipment3': [max(shipment_ids)]})
+-
+  I ship the shipment3
+-
+  !python {model: shipment}: |
+    ids = context['shipment3']
+    self.ship(cr, uid, ids, context=context)
+-
+  I validate the shipment3
+-
+  !python {model: shipment}: |
+    ids = context['shipment3']
+    self.validate(cr, uid, ids, context=context)
+-
+  I check the state of OUT object. A should be done.
 -
   !python {model: stock.picking}: |
     idsA = context['out']['a']
     a_data = self.read(cr, uid, idsA, ['state'], context=context)
     assert a_data[0]['state'] == 'done', 'the state of draft outgoing A is wrong - done - %s'%a_data[0]['state']
 -
-  I check the draft shipment state, should be done now. Shipment2 is over.
+  I check the draft shipment state, should be done. Shipment3 is over.
 -
   !python {model: shipment}: |
     data = self.read(cr, uid, context['draft_shipment'], ['state'], context=context)
