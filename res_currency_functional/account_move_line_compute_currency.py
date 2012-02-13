@@ -102,7 +102,6 @@ class account_move_line_compute_currency(osv.osv):
                         cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
                         # Update analytic lines
                         analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                        print analytic_line_ids
                         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                         self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': self.pool.get('res.currency').compute(cr, uid, al.currency_id.id, company_currency, -1*abs(total), context={'date': al.source_date}), 'amount_currency': -1*abs(total)}, context=context)
         return True

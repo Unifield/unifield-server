@@ -178,7 +178,7 @@ class account_move_line(osv.osv):
                     fp_id = 0
                 if not fp_id:
                     raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
-                distrib_line_vals.update({'analytic_id': fp_id or False, 'cost_center_id': cc_id or False})
+                distrib_line_vals.update({'analytic_id': fp_id or False, 'cost_center_id': search_ids and search_ids[0] or False})
                 self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             # Search attached period
             period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
@@ -231,7 +231,10 @@ class account_move_line(osv.osv):
             analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', addendum_line_id)], context=context)
             addendum_line = self.pool.get('account.move.line').browse(cr, uid, addendum_line_id, context=context)
             company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency, -1*abs(func_balance), context={'date': date}), 'amount_currency': -1*abs(func_balance)}, context=context)
+            addendum_line_amount = self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency, -1*abs(func_balance), context={'date': date}) or 0.0
+            addendum_line_amount_curr = -1*abs(func_balance) or 0.0
+            for ali in analytic_line_ids:
+                self.pool.get('account.analytic.line').write(cr, uid, [ali], {'amount': addendum_line_amount, 'amount_currency': addendum_line_amount_curr})
         ############################################################
 
         r_id = move_rec_obj.create(cr, uid, {
