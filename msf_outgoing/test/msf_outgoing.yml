@@ -1148,41 +1148,6 @@
     assert len(shipment_ids) == 2, 'shipment should have been created - 2 - %s'%(len(shipment_ids))
     # save shipment id - keep the max (last) id
     context.update({'shipment2': [max(shipment_ids)]})
-#-
-#  I cancel the shipment2 - cannot be canceled anymore, packed stage is now skipped
-#-
-#  !python {model: shipment}: |
-#    ids = context['shipment2']
-#    self.action_cancel(cr, uid, ids, context=context)
--
-  I open the create shipment wizard
--
-  !python {model: shipment}: |
-    ids = context['draft_shipment']
-    res = self.create_shipment(cr, uid, ids, context=context)
-    model = res['res_model']
-    id = res['res_id']
-    c = res['context']
-    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
--
-  I recreate a second shipment with the rest 
-  # present configuration of packs
-  # so_a ppl_1 2,3
-  # so_a ppl_1 4,4
--
-  !python {model: shipment.wizard}: |
-    # create shipment -> product_moves_shipment_create ('stock.move.memory.shipment.create')
-    ids = context['wizard']['ids']
-    c = context['wizard']['c']
-    # select all
-    self.select_all(cr, uid, ids, context=c)
-    # create shipment
-    self.do_create_shipment(cr, uid, ids, context=c)
-    # assert a shipment has been created
-    shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
-    assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
-    # save shipment id
-    context.update({'shipment2': [max(shipment_ids)]})
 -
   I open the return from shipment wizard for shipment2
 -
@@ -1629,7 +1594,7 @@
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
-    assert len(shipment_ids) == 4, 'shipment should have been created - 4 - %s'%(len(shipment_ids))
+    assert len(shipment_ids) == 3, 'shipment should have been created - 3 - %s'%(len(shipment_ids))
     # save shipment id
     context.update({'shipment2': [max(shipment_ids)]})
 -

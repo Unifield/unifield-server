@@ -70,7 +70,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Partner']" position="before">
-                        <filter string="Sale Order" name="sale_id" icon="terp-partner" domain="[]" context="{'group_by':'sale_id'}"/>
+                        <filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
                     </xpath>
                 </data>
             </field>
@@ -97,7 +97,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'),]</field>
-            <field name="context">{'contact_display': 'partner_address', 'search_default_sale_id': 1}</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
             <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
         </record>
@@ -161,7 +161,7 @@
                     <field name="sale_id" invisible="True" />
 		    		<field name="reason_type_id" />
                     <field name="origin"/>
-                    <field name="overall_qty" invisible="False" />
+                    <field name="overall_qty" invisible="True" />
                     <field name="date"/>
                     <field name="min_date" string="Expected Pick Date" />
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -346,13 +346,12 @@
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
-			<field name="reason_type_id" widget="selection" />
-                        <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+						<field name="reason_type_id" widget="selection" />
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
-                    	<filter string="Sale Order" name="sale_id" icon="terp-partner" domain="[]" context="{'group_by':'sale_id'}"/>
+                    	<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
@@ -376,7 +375,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
-            <field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'sale_id'}</field>
+            <field name="context">{'contact_display':'partner_address', 'search_default_sale_id':1, 'group_by_no_leaf':0, 'group_by':'origin'}</field>
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of draft picking tickets.</field>
         </record>
@@ -407,7 +406,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
-            <field name="context">{'picking_screen':True, 'test':True}</field>
+            <field name="context">{'picking_screen':True, 'test':True, 'search_default_not_empty':1}</field>
+            <!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
             <field name="search_view_id" ref="view_picking_ticket_search"/>
             <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
@@ -437,7 +437,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Pre-Packing Lists">
+                <tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
@@ -613,32 +613,25 @@
                 <search string="Pre-Packing List">
                     <group col="8" colspan="4">
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
                         <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
-			<field name="reason_type_id" widget="selection" />
                         <field name="origin"/>
-                        <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
+                        <field name="reason_type_id" widget="selection" />
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8">
+                    	<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
                         <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <separator orientation="vertical" />
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
                         <separator orientation="vertical" />
-                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
-                        <separator orientation="vertical" />
                         <filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
                         <filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
                         <separator orientation="vertical" />
-                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}"  groups="base.group_extended"/>
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                     </group>
                 </search>
             </field>
@@ -652,7 +645,8 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
-            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True}</field>
+            <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'search_default_available':1}</field>
+            <!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
             <field name="search_view_id" ref="view_ppl_search"/>
             <field name="help">This is the list of all ppl that have been picked.</field>
         </record>
@@ -685,7 +679,7 @@
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="origin"/>
-		    <field name="reason_type_id" />
+		    		<field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
