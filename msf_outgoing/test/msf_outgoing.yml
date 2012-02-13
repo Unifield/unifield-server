@@ -1148,12 +1148,12 @@
     assert len(shipment_ids) == 2, 'shipment should have been created - 2 - %s'%(len(shipment_ids))
     # save shipment id - keep the max (last) id
     context.update({'shipment2': [max(shipment_ids)]})
--
-  I cancel the shipment2
--
-  !python {model: shipment}: |
-    ids = context['shipment2']
-    self.action_cancel(cr, uid, ids, context=context)
+#-
+#  I cancel the shipment2 - cannot be canceled anymore, packed stage is now skipped
+#-
+#  !python {model: shipment}: |
+#    ids = context['shipment2']
+#    self.action_cancel(cr, uid, ids, context=context)
 -
   I open the create shipment wizard
 -
