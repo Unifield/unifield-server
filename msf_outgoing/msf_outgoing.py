@@ -189,7 +189,27 @@ class shipment(osv.osv):
         for packing in pack_obj.browse(cr, uid, ids, context=context):
             if packing.shipment_id and packing.shipment_id.id not in result:
                 result.append(packing.shipment_id.id)
-        return result 
+        return result
+    
+    def _packs_search(self, cr, uid, obj, name, args, context=None):
+        """ 
+        Searches Ids of shipment
+        """
+        if context is None:
+            context = {}
+            
+        shipments = self.pool.get('shipment').search(cr, uid, [], context=context)
+        # result dic
+        result = {}
+        for shipment in self.browse(cr, uid, shipments, context=context):
+            result[shipment.id] = shipment.num_of_packs
+        # construct the request
+        # adapt the operator
+        op = args[0][1]
+        if op == '=':
+            op = '=='
+        ids = [('id', 'in', [x for x in result.keys() if eval("%s %s %s"%(result[x], op, args[0][2]))])]
+        return ids
 
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.datetime(string='Creation Date'),
@@ -234,7 +254,7 @@ class shipment(osv.osv):
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
+                'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',), # old_multi ship_vals
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                               ('packed', 'Packed'),

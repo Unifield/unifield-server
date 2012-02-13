@@ -1074,6 +1074,9 @@
                         <filter icon="terp-dialog-close" name="closed" string="Closed" domain="[('state','=','done')]" />
                         <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state','=','delivered')]" />
                         <separator orientation="vertical"/>
+                        <filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
+                        <filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />
+                        <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="partner_id" />
                    </group>
@@ -1095,7 +1098,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[]</field>
-            <field name="context">{}</field>
+            <field name="context">{'search_default_not_empty':1}</field>
             <field name="search_view_id" ref="view_shipment_search"/>
             <field name="help">This is the list of all packing lists that have been picked. The packing lists are regrouped by address.</field>
         </record>
