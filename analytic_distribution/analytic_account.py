@@ -28,7 +28,7 @@ from lxml import etree
 class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
-    
+
     _columns = {
         'date_start': fields.date('Active from', required=True),
         'date': fields.date('Inactive from', select=True),
@@ -74,7 +74,7 @@ class analytic_account(osv.osv):
             # for all accounts except the parent one
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
-    
+
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
@@ -83,7 +83,7 @@ class analytic_account(osv.osv):
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-    
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
@@ -129,7 +129,6 @@ class analytic_account(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
-    
     def on_change_category(self, cr, uid, id, category):
         if not category:
             return {}
@@ -138,6 +137,31 @@ class analytic_account(osv.osv):
         res['value']['parent_id'] = parent
         res['domain']['parent_id'] = [('category', '=', category)]
         return res
-analytic_account()
 
+    def name_get(self, cr, uid, ids, context={}):
+        """
+        Get name for analytic account with analytic account code.
+        Example: For an account OC/Project/Mission, we have something like this:
+          MIS-001 (OC-015/PROJ-859)
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some value
+        res = []
+        # Browse all accounts
+        for account in self.browse(cr, uid, ids, context=context):
+            data = []
+            acc = account
+            while acc:
+                data.insert(0, acc.code)
+                acc = acc.parent_id
+            data = ' / '.join(data)
+            display = "%s (%s)" % (account.code, data)
+            res.append((account.id, display))
+        return res
+
+analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
