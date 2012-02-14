@@ -22,6 +22,7 @@ from report import report_sxw
 import csv
 import StringIO
 import pooler
+import locale
 
 class report_budget_criteria(report_sxw.report_sxw):
     _name = 'report.budget.criteria'
@@ -78,10 +79,16 @@ class report_budget_criteria(report_sxw.report_sxw):
         # Update context
         context.update(parameters)
         # Retrieve lines
-        result += pool.get('msf.budget.line')._get_monthly_amounts(cr,
-                                                                   uid,
-                                                                   budget_line_ids,
-                                                                   context=context)
+        formatted_monthly_amounts = []
+        monthly_amounts = pool.get('msf.budget.line')._get_monthly_amounts(cr,
+                                                                           uid,
+                                                                           budget_line_ids,
+                                                                           context=context)
+        for amount_line in monthly_amounts:
+            formatted_amount_line = [amount_line[0]]
+            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:-1]]
+            formatted_monthly_amounts.append(formatted_amount_line)
+        result += formatted_monthly_amounts
         return result
     
     def create(self, cr, uid, ids, data, context=None):
