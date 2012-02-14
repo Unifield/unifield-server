@@ -33,7 +33,7 @@ class client_entity_group(osv.osv_memory):
     _columns = {
         'name':fields.char('Group Name', size=64, required=True, readonly=True),
         'type':fields.char('Group Type', size=64, readonly=True),
-        'entity_ids':fields.many2many('sync_client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Entities"),         
+        'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Entities"),         
     }
     
     def set_group(self, cr, uid, data_list, context=None):
