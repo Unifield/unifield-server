@@ -87,7 +87,8 @@ class account_move_line(osv.osv):
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
         credit = debit = func_debit = func_credit = currency = 0.0
-        currency_id = account_id = partner_id = employee_id = register_id = functional_currency_id = False
+        account_id = partner_id = employee_id = register_id = functional_currency_id = False
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         if context is None:
             context = {}
         company_list = []
@@ -104,8 +105,8 @@ class account_move_line(osv.osv):
             func_debit += line['debit']
             func_credit += line['credit']
             currency += line['amount_currency'] or 0.0
-            currency_id = line['currency_id']['id']
-            functional_currency_id = line['functional_currency_id']['id']
+#            currency_id = line['currency_id']['id']
+            functional_currency_id = line['currency_id']['id']
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
             employee_id = (line['employee_id'] and line['employee_id']['id']) or False
@@ -175,8 +176,8 @@ class account_move_line(osv.osv):
                 'debit': 0.0,
                 'name': 'Realised loss/gain',
                 'is_addendum_line': True,
-                'currency_id': currency_id,
-                'functional_currency_id': functional_currency_id,
+                'currency_id': functional_currency_id,
+#                'functional_currency_id': functional_currency_id,
             }
             # Note that if func_balance == 0.0 we are not in this loop (normal reconciliation)
             # If func_balance inferior to 0, some amount is missing @debit for partner
