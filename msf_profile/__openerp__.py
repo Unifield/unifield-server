@@ -85,6 +85,7 @@
         "transport_mgmt",
         "documents_done",
         "msf_budget",
+        "account_subscription",
     ],
     "update_xml": [
         "report.xml",
