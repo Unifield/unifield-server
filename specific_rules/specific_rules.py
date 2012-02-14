@@ -1324,3 +1324,24 @@ CREATE OR REPLACE view report_stock_inventory AS (
         context['with_expiry'] = 1
         return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 report_stock_inventory()
+
+class product_product(osv.osv):
+    _inherit = 'product.product'
+    def open_stock_by_location(self, cr, uid, ids, context={}):
+        name = 'Stock by Location'
+        if context is None:
+            context = {}
+        if ids:
+            prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
+            name = "%s: %s (%s)"%(name, prod['name'], prod['code'])
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.location',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': {'product_id': context.get('active_id') , 'compute_child': False},
+            'target': 'current',
+        }
+
+product_product()
