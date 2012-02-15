@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,27 +21,30 @@
 #
 ##############################################################################
 
-{
-    "name" : "Accounting for MSF",
-    "version" : "1.0",
-    "description" : """
-        This module aims to add some elements in accounting for MSF.
-    """,
-    "author" : "TeMPO Consulting",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", "purchase_msf"],
-    "init_xml" : [],
-    "update_xml" : [
-        'board_account_view.xml',
-        'res_company_view.xml',
-        'debit_note_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [
-    ],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
 
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+
+    _columns = {
+        'is_debit_note': fields.boolean(string="Is a Debit Note?"),
+    }
+
+    _defaults = {
+        'is_debit_note': lambda *a: False,
+    }
+
+account_invoice()
+
+class debit_note(osv.osv):
+    _name = 'debit.note'
+    _inherit = 'account.invoice'
+
+    _defaults = {
+        'is_debit_note': lambda *a: True,
+    }
+
+debit_note()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
