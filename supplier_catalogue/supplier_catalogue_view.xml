@@ -13,6 +13,7 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Supplier catalogues">
+					<filter name="active" domain="[('current', '=', True)]" string="Active" icon="" />
 					<field name="partner_id" />
 					<field name="name" />
 					<field name="period_from" />
@@ -35,6 +36,7 @@
 					<field name="currency_id" />
 					<field name="comment" />
 					<field name="partner_id" />
+					<field name="current" />
 				</form>
 			</field>
 		</record>
@@ -51,6 +53,7 @@
 					<field name="period_to" />
 					<field name="currency_id" />
 					<field name="partner_id" />
+					<field name="current" />
 				</tree>
 			</field>
 		</record>

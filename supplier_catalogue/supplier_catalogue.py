@@ -22,10 +22,44 @@
 from osv import osv
 from osv import fields
 
+from mx.DateTime import *
+from datetime import date
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
+    
+    def _get_active(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Return True if today is into the period of the catalogue
+        '''
+        res = {}
+        
+        for catalogue in self.browse(cr, uid, ids, context=context):
+            date_from = DateFrom(catalogue.period_from)
+            date_to = DateFrom(catalogue.period_to)
+            res[catalogue.id] = date_from < now() < date_to 
+        
+        return res
+    
+    def _search_active(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns all active catalogue
+        '''
+        ids = []
+        
+        for arg in args:
+            print args
+            if arg[0] == 'current' and arg[1] == '=':
+                ids = self.search(cr, uid, [('period_from', '<', date.today()), 
+                                            ('period_to', '>', date.today())], context=context)
+                return [('id', 'in', ids)]
+            elif arg[0] == 'current' and arg[1] == '!=':
+                ids = self.search(cr, uid, ['|', ('period_from', '>', date.today()), 
+                                                 ('period_to', '<', date.today())], context=context)
+                return [('id', 'in', ids)]
+        
+        return ids
     
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
@@ -39,6 +73,8 @@ class supplier_catalogue(osv.osv):
                                        help='Currency used in this catalogue.'),
         'comment': fields.text(string='Comment'),
         'line_ids': fields.one2many('supplier.catalogue.line', 'catalogue_id', string='Lines'),
+        'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
+                                   readonly=True, help='Indicate if the catalogue is currently active.'),
     }
     
     _defaults = {
