@@ -24,8 +24,10 @@
                    	<field name="expiry_date_check" invisible="True" />
                    	<field name="type_check" invisible="True" />
 					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
+                   	<field name="lot_check" />
+                   	<field name="exp_check" />
                    	<field name="kc_check" />
-           			<field name="ssl_check" />
+           			<field name="ssl_check" invisible="True" />
            			<field name="dg_check" />
            			<field name="np_check" />
                 </tree>
@@ -44,8 +46,10 @@
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
                     <field name="qty_to_return" />
-                    <field name="kc_check" />
-           			<field name="ssl_check" />
+                    <field name="lot_check" />
+                   	<field name="exp_check" />
+                   	<field name="kc_check" />
+           			<field name="ssl_check" invisible="True" />
            			<field name="dg_check" />
            			<field name="np_check" />
                 </tree>
@@ -67,8 +71,10 @@
 					<field name="from_pack" />
 					<field name="to_pack" />
 					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
-					<field name="kc_check" />
-           			<field name="ssl_check" />
+					<field name="lot_check" />
+                   	<field name="exp_check" />
+                   	<field name="kc_check" />
+           			<field name="ssl_check" invisible="True" />
            			<field name="dg_check" />
            			<field name="np_check" />
                 </tree>
