@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<!--
+			SUPPLIER CATALOGUE VIEWS
+		-->
+		
+		<!-- Default supplier catalogue search view -->
+		<record id="supplier_catalogue_search_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.search.view</field>
+			<field name="model">supplier.catalogue</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Supplier catalogues">
+					<field name="partner_id" />
+					<field name="name" />
+					<field name="period_from" />
+					<field name="period_to" />
+					<field name="currency_id" widget="selection" />
+				</search>
+			</field>
+		</record>
+		
+		<!-- Default supplier catalogue form view -->
+		<record id="supplier_catalogue_form_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.form.view</field>
+			<field name="model">supplier.catalogue</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Supplier catalogue">
+					<field name="name" />
+					<field name="period_from" />
+					<field name="period_to" />
+					<field name="currency_id" />
+					<field name="comment" />
+					<field name="partner_id" />
+				</form>
+			</field>
+		</record>
+		
+		<!-- Default supplier catalogue tree view -->
+		<record id="supplier_catalogue_tree_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.tree.view</field>
+			<field name="model">supplier.catalogue</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Supplier catalogues">
+					<field name="name" />
+					<field name="period_from" />
+					<field name="period_to" />
+					<field name="currency_id" />
+					<field name="partner_id" />
+				</tree>
+			</field>
+		</record>
+		
+		<!--
+			SUPPLIER CATALOGUE LINES VIEWS
+		-->
+		
+		<!-- Supplier catalogue line search view -->
+		<record id="supplier_catalogue_line_search_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.line.search.view</field>
+			<field name="model">supplier.catalogue.line</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Supplier catalogue lines">
+					<field name="catalogue_id" />
+					<field name="product_id" />
+					<field name="min_qty" />
+					<field name="uom_id" />
+					<field name="price_unit" />
+					<field name="rounding" />
+				</search>
+			</field>
+		</record>
+		
+		<!-- Supplier catalogue line form view -->
+		<record id="supplier_catalogue_line_form_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.line.form.view</field>
+			<field name="model">supplier.catalogue.line</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Supplier catalogue line">
+					<field name="catalogue_id" />
+					<field name="product_id" />
+					<field name="min_qty" />
+					<field name="uom_id" />
+					<field name="price_unit" />
+					<field name="rounding" />
+					<field name="comment" />
+				</form>
+			</field>
+		</record>
+		
+		<!-- Supplier catalogue line tree view -->
+		<record id="supplier_catalogue_line_tree_view" model="ir.ui.view">
+			<field name="name">supplier.catalogue.line.tree.view</field>
+			<field name="model">supplier.catalogue.line</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Supplier catalogue lines">
+					<field name="catalogue_id" />
+					<field name="product_id" />
+					<field name="min_qty" />
+					<field name="uom_id" />
+					<field name="price_unit" />
+					<field name="rounding" />
+					<field name="comment" />
+				</tree>
+			</field>
+		</record>
+		
+		<!--
+			SUPPLIER CATALOGUE ACTIONS
+		-->
+		
+		<!-- Open the list of all supplier catalogues -->
+		<record id="action_supplier_catalogue_list" model="ir.actions.act_window">
+			<field name="name">Supplier catalogues</field>
+			<field name="res_model">supplier.catalogue</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		
+		<!--
+			SUPPLIER CATALOGUE MENU ENTRIES
+		-->
+		
+		<!-- Menu in Purchases / Configuration -->
+		<menuitem id="menu_supplier_catalogue"
+				  action="action_supplier_catalogue_list"
+				  parent="purchase.menu_purchase_config_purchase" />
+		
+	</data>
+</openerp>
