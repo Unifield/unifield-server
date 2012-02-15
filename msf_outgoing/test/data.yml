@@ -1,0 +1,66 @@
+- 
+  Creating a res.partner record
+- 
+  !record {model: res.partner, id: outgoing_partner_A}:
+    name: outgoingA
+    supplier: true
+    customer: true
+- 
+  Creating a res.partner.address record
+- 
+  !record {model: res.partner.address, id: outgoing_address_A}:
+    partner_id: outgoing_partner_A
+    street: A
+-
+  Product A
+- 
+  !record {model: product.product, id: outgoing_product_A}:
+    name: ProdA
+    batch_management: true
+    perishable: true
+-
+  Product B
+-
+  !record {model: product.product, id: outgoing_product_B}:
+    name: ProdB
+    batch_management: false
+    perishable: true
+-
+  Product C
+-
+  !record {model: product.product, id: outgoing_product_C}:
+    name: ProdC
+    batch_management: false
+    perishable: false
+-
+  Production Lot Ai (i stands for internal)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Ai}:
+    name: A internal
+    product_id: outgoing_product_A
+    type: internal
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot As (s stands for standard)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_As}:
+    name: A standard
+    product_id: outgoing_product_A
+    type: standard
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot Bi (i stands for internal)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Bi}:
+    name: B internal
+    product_id: outgoing_product_B
+    type: internal
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot Bs (s stands for standard)
+-
+  !record {model: stock.production.lot, id: outgoing_lot_Bs}:
+    name: B standard
+    product_id: outgoing_product_B
+    type: standard
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')

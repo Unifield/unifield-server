@@ -158,36 +158,8 @@ class stock_picking(osv.osv):
                                                                                step='default'))
         return res
     
-    def create_sequence(self, cr, uid, vals, context=None):
-        """
-        Create new entry sequence for every new order
-        @param cr: cursor to database
-        @param user: id of current user
-        @param ids: list of record ids to be process
-        @param context: context arguments, like lang, time zone
-        @return: return a result
-        """
-        seq_pool = self.pool.get('ir.sequence')
-        seq_typ_pool = self.pool.get('ir.sequence.type')
-
-        name = 'Stock Picking'
-        code = 'stock.picking'
-
-        types = {'name': name,
-                 'code': code
-                 }
-        seq_typ_pool.create(cr, uid, types)
-
-        seq = {'name': name,
-               'code': code,
-               'prefix': '',
-               'padding': 0,
-               }
-        return seq_pool.create(cr, uid, seq)
-    
     def create(self, cr, uid, vals, context=None):
         '''
-        create from sale_order
         create the sequence for the numbering of the lines
         '''
         # object

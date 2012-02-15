@@ -161,6 +161,10 @@
 				<xpath expr="/tree/field[@name='product_uom']" position="after">
 					<field name="reason_type_id" />
 				</xpath>
+				
+				<button name="action_done" position="attributes">
+           			<attribute name="invisible">1</attribute>
+           		</button>
 			</data>
 		</field>
 	</record>
