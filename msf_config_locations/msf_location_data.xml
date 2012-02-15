@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="0">
+    <data noupdate="1">
+
+    <record model="product.nomenclature" id="nomen_med">
+        <field name="code">01</field>
+        <field name="name">MED</field>
+        <field name="type">mandatory</field>
+        <field name="level">0</field>
+    </record>
+    
+    <record model="product.nomenclature" id="nomen_log">
+        <field name="code">02</field>
+        <field name="name">LOG</field>
+        <field name="type">mandatory</field>
+        <field name="level">0</field>
+    </record>
+
     
     <record id="stock.stock_location_locations" model="stock.location">
         <field name="name">Instance Full View</field>
@@ -85,13 +100,13 @@
 
     <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
         <field name="location_id" ref="stock.stock_location_stock" />
-        <field name="nomen_id" ref="product_nomenclature.nomen_med" />
+        <field name="nomen_id" ref="nomen_med" />
         <field name="dest_location_id" ref="stock_location_medical" />
     </record>
 
     <record id="stock_location_stock_chained_option_log" model="stock.location.chained.options">
         <field name="location_id" ref="stock.stock_location_stock" />
-        <field name="nomen_id" ref="product_nomenclature.nomen_log" />
+        <field name="nomen_id" ref="nomen_log" />
         <field name="dest_location_id" ref="stock_location_logistic" />
     </record>
 
