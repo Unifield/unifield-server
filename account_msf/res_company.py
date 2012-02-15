@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,17 @@
 #
 ##############################################################################
 
-import res_company
+from osv import osv
+from osv import fields
 
+class res_company(osv.osv):
+    _name = 'res.company'
+    _inherit = 'res.company'
+
+    _columns = {
+        'import_invoice_default_account': fields.many2one('account.account', string="Import invoice default account for Debit note", 
+            help="Default account for an import invoice on a Debit note"),
+    }
+
+res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

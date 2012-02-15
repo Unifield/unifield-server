@@ -34,6 +34,7 @@
     "init_xml" : [],
     "update_xml" : [
         'board_account_view.xml',
+        'res_company_view.xml',
     ],
     "demo_xml" : [],
     "test": [
