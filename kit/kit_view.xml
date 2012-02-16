@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_kit_composition_theoretical_form" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.form</field>
+            <field name="model">composition.kit</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Theoretical Kit Composition">
+            		<group col="6" colspan="4">
+                        <field name="composition_type" />
+                    </group>
+                    <notebook colspan="4">
+                    	<page string="Composition Items">
+                    		<!-- <field name="composition_items" /> -->
+                    	</page>
+                    	<page string="Notes">
+                    		<field name="composition_description" nolabel="True" />
+                    	</page>
+                    </notebook>
+            	</form>
+            </field>
+		</record>
+		
+		<record id="view_kit_composition_theoretical_tree" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.form</field>
+            <field name="model">composition.kit</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Theoretical Kit Composition">
+            		<field name="composition_type" />
+            		<field name="composition_description" />
+            	</tree>
+            </field>
+		</record>
+		
+		<record id="kit_normal_action" model="ir.actions.act_window">
+			<field name="name">Theoretical Kit Composition</field>
+			<field name="res_model">composition.kit</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+
+		<!-- Assets in SALES>Products -->
+		<menuitem id="kit_management" name="Kit Management" parent="product_attributes.menu_main_product" sequence="10" />
+		<menuitem action="kit_normal_action" id="menu_kit_theoretical" parent="kit_management" sequence="1" />
+    
+    </data>
+</openerp>

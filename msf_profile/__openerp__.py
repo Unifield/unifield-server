@@ -86,6 +86,7 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "kit",
     ],
     "update_xml": [
         "report.xml",

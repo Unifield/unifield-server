@@ -1,0 +1,13 @@
+- 
+  I create an empty theoretical composition list
+- 
+  !record {model: composition.kit, id: kit_compo_01}:
+    composition_description: 'this is a test theoretical composition list'
+    composition_type: 'theoretical'
+
+    
+-
+  END OF FILE
+-
+  !python {model: stock.picking}: |
+    print 'EOF'

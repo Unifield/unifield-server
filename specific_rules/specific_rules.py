@@ -827,7 +827,8 @@ class stock_production_lot(osv.osv):
         return result
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
-                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
+                # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
+                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
                 #'expiry_date': fields.date('Expiry Date'),
                 'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
                 'date': fields.datetime('Auto Creation Date', required=True),
