@@ -41,6 +41,7 @@ account_invoice()
 class debit_note(osv.osv):
     _name = 'debit.note'
     _inherit = 'account.invoice'
+    _table = 'account_invoice'
 
     _defaults = {
         'is_debit_note': lambda *a: True,
