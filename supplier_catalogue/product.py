@@ -31,11 +31,6 @@ class product_supplierinfo(osv.osv):
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
     }
     
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, menu=False):
-        res = super(product_supplierinfo, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, menu)
-        print res['arch']
-        return res
-    
 product_supplierinfo()
 
 

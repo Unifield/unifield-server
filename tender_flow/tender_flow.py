@@ -302,8 +302,8 @@ class tender(osv.osv):
                               'product_name': False,
                               'product_code': False,
                               'sequence' : -99,
-                              'product_uom': line.product_uom.id,
-                              'min_qty': 0.0,
+                              #'product_uom': line.product_uom.id,
+                              #'min_qty': 0.0,
                               #'qty': function
                               'product_id' : product.product_tmpl_id.id,
                               'delay' : int(line.supplier_id.default_delay),
@@ -316,6 +316,7 @@ class tender(osv.osv):
                     values = {'suppinfo_id': new_info_id,
                               'min_quantity': line.qty,
                               'price': line.price_unit,
+                              'uom_id': line.product_uom.id,
                               'currency_id': line.purchase_order_line_id.currency_id.id,
                               'valid_till': line.purchase_order_id.valid_till,
                               'purchase_order_line_id': line.purchase_order_line_id.id,
