@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,8 +21,24 @@
 #
 ##############################################################################
 
-import res_company
-import debit_note
-import wizard
+from osv import osv
+from osv import fields
 
+class debit_note_import_invoice(osv.osv_memory):
+    _name = 'debit.note.import.invoice'
+    _description = 'Debit Note Import Invoice'
+
+    _columns = {
+        'invoice_id': fields.many2one('account.invoice', string='', required=True, readonly=True),
+        'line_ids': fields.many2many('account.invoice', 'debit_note_import_invoice', 'wizard_id', 'invoice_id', string="Invoices"),
+        'currency_id': fields.many2one('res.currency', required=True, readonly=True),
+    }
+
+    def button_validate(self, cr, uid, ids, context={}):
+        """
+        Check elements and write them to the given invoice (invoice_id field)
+        """
+        return {'type': 'ir.actions.act_window_close', }
+
+debit_note_import_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

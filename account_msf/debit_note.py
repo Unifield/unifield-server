@@ -23,18 +23,71 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Fake method for 'ready_for_import_in_debit_note' field
+        """
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_ready_for_import_in_debit_note(self, cr, uid, obj, name, args, context={}):
+        if not args:
+            return []
+        account_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.import_invoice_default_account and \
+            self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.import_invoice_default_account.id or False
+        if not account_id:
+            raise osv.except_osv(_('Error'), _('No default account for import invoice on Debit Note!'))
+        dom1 = [
+            ('account_id','=',account_id),
+            ('reconciled','=',False), 
+            ('state', '=', 'open'), 
+            ('type', '=', 'out_invoice'), 
+            ('journal_id.type', 'in', ['sale']) 
+        ]
+        return dom1+[('is_debit_note', '=', False)]
+
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
+        'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
+            method=True, string="Can be imported as invoice in a debit note?",),
     }
 
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
     }
+
+    def button_debit_note_import_invoice(self, cr, uid, ids, context={}):
+        """
+        Launch wizard that permits to import invoice on a debit note
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse all given invoices
+        for inv in self.browse(cr, uid, ids):
+            if inv.type != 'out_invoice' or inv.is_debit_note == False:
+                raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
+            w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id})
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'debit.note.import.invoice',
+                'name': 'Import invoice',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': w_id,
+                'context': context,
+                'target': 'new',
+            }
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -15,7 +15,7 @@
                 <page string="Configuration" position="inside">
                   <group col="2" colspan="2">
                       <separator string="Import invoice default account for Debit Note" colspan="2"/>
-                      <field name="import_invoice_default_account" colspan="2"/>
+                      <field name="import_invoice_default_account" domain="[('type', '!=', 'view')]" colspan="2"/>
                   </group>
                 </page>
             </field>

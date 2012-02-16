@@ -723,11 +723,11 @@
         <record model="account.account" id="msf_chart_of_account.4500">
             <field name="code">4500</field>
             <field name="type_for_register">none</field>
-            <field name="type">payable</field>
+            <field name="type">receivable</field>
             <field name="name">Re-billing to other sections</field>
             <field name="parent_id" ref="msf_chart_of_account.45" />
             <field name="reconcile" eval="True" />
-            <field name="user_type" ref="account.account_type_payable" />
+            <field name="user_type" ref="account.account_type_receivable" />
         </record>
 
         <record model="account.account" id="msf_chart_of_account.451">

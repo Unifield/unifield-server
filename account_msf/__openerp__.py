@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution    
@@ -36,6 +36,7 @@
         'board_account_view.xml',
         'res_company_view.xml',
         'debit_note_view.xml',
+        'wizard_view.xml',
     ],
     "demo_xml" : [],
     "test": [
