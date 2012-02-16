@@ -33,19 +33,8 @@ class account_invoice(osv.osv):
     }
 
     _defaults = {
-        'is_debit_note': lambda *a: False,
+        'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
     }
 
 account_invoice()
-
-class debit_note(osv.osv):
-    _name = 'debit.note'
-    _inherit = 'account.invoice'
-    _table = 'account_invoice'
-
-    _defaults = {
-        'is_debit_note': lambda *a: True,
-    }
-
-debit_note()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

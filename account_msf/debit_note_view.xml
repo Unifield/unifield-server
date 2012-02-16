@@ -9,7 +9,7 @@
         <!-- Debit note list -->
         <record id="view_debit_note_tree" model="ir.ui.view">
             <field name="name">Debit Note</field>
-            <field name="model">debit.note</field>
+            <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Note" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
@@ -31,7 +31,7 @@
         <!-- Debit Note form -->
         <record id="view_debit_note_form" model="ir.ui.view">
             <field name="name">debit.note.form</field>
-            <field name="model">debit.note</field>
+            <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Debit Note">
@@ -142,6 +142,7 @@
                             <label string="" colspan="3"/>
                             <field name="state"/>
                             <field name="residual"/>
+                            <field name="is_debit_note" invisible="1"/>
                         </group>
                         <group col="8" colspan="4" groups="base.group_user">
                             <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
@@ -166,12 +167,12 @@
         <!-- Display debit note list (only invoice that have 'is_debit_note' to True)-->
         <record id="action_debit_note" model="ir.actions.act_window">
             <field name="name">Debit Note</field>
-            <field name="res_model">debit.note</field>
+            <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '!=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
