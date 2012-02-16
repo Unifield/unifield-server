@@ -22,12 +22,14 @@
 from osv import osv
 from osv import fields
 
-from mx.DateTime import *
+from tools.translate import _
+
+from mx.DateTime import DateFrom, now
 from datetime import date
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
-    _description = 'Supplier catalogue'
+    _description = 'Supplier catalogue'        
     
     def _get_active(self, cr, uid, ids, field_name, arg, context={}):
         '''
@@ -49,7 +51,6 @@ class supplier_catalogue(osv.osv):
         ids = []
         
         for arg in args:
-            print args
             if arg[0] == 'current' and arg[1] == '=':
                 ids = self.search(cr, uid, [('period_from', '<', date.today()), 
                                             ('period_to', '>', date.today())], context=context)
@@ -100,19 +101,78 @@ class supplier_catalogue_line(osv.osv):
     _description = 'Supplier catalogue line'
     _rec_name = 'product_id'
     
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Create a pricelist line on product supplier information tab
+        '''
+        return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Update the pricelist line on product supplier information tab
+        '''
+        return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})
+    
+    def unlink(self, cr, uid, id, context={}):
+        '''
+        Remove the pricelist line on product supplier information tab
+        If the product supplier information has no line, remove it
+        '''
+        return super(supplier_catalogue_line, self).unlink(cr, uid, id, context=context)
+    
     _columns = {
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'min_qty': fields.integer(string='Min. Qty', required=True,
+        'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
                                   help='Minimal order quantity to get this unit price.'),
         'uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
-        'rounding': fields.integer(string='Rounding', 
+        'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
-        'comment': fields.char(size=256, string='Comment'),
+        'comment': fields.char(size=64, string='Comment'),
+        'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
+        'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
     }
     
+    def product_change(self, cr, uid, ids, product_id, context={}):
+        '''
+        When the product change, fill automatically the uom_id field of the
+        catalogue line.
+        @param product_id: ID of the selected product or False
+        '''
+        v = {'uom_id': False}
+        
+        if product_id:
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            v.update({'uom_id': product.uom_id.id})
+        
+        return {'value': v}
+    
 supplier_catalogue_line()
+
+
+class product_supplierinfo(osv.osv):
+    _name = 'product.supplierinfo'
+    _inherit = 'product.supplierinfo'
+    
+    _columns = {
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+    }
+    
+product_supplierinfo()
+
+
+class pricelist_partnerinfo(osv.osv):
+    _name = 'pricelist.partnerinfo'
+    _inherit = 'pricelist.partnerinfo'
+    
+    _columns = {
+        'uom_id': fields.many2one('product.uom', string='UoM', required=True),
+        'rounding': fields.float(digits=(16,2), string='Rounding', 
+                                 help='The ordered quantity must be a multiple of this rounding value.'),
+    }
+    
+pricelist_partnerinfo()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
