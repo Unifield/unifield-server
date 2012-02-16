@@ -166,7 +166,7 @@ class account_bank_statement(osv.osv):
         """
         res = {}
         for statement in self.browse(cr, uid, ids):
-            res[statement.id] = ((statement.balance_end or 0.0) - (statement.balance_end_cash or 0.0)) or 0.0
+            res[statement.id] = ((statement.balance_end_real or 0.0) - (statement.balance_end or 0.0)) or 0.0
         return res
 
     _columns = {
