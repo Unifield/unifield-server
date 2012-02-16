@@ -27,7 +27,8 @@
     Add management of supplier catalogue
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["product", "purchase",],
+    "depends" : ["product", "purchase", 
+                 "product_nomenclature"],
     "category" : "Generic Modules/Supplier Catalogue",
     "init_xml" : [],
     "demo_xml" : [],
@@ -35,7 +36,9 @@
         "supplier_catalogue_view.xml",
         "security/ir.model.access.csv",
     ],
-    'test': [],
+    'test': [
+#        "test/data.yml",
+    ],
     'installable': True,
     'active': False,
 }

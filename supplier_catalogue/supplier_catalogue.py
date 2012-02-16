@@ -29,7 +29,44 @@ from datetime import date
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
-    _description = 'Supplier catalogue'        
+    _description = 'Supplier catalogue'
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Update the supplierinfo and pricelist line according to the
+        new values
+        '''
+        supinfo_obj = self.pool.get('product.supplierinfo')
+        price_obj = self.pool.get('pricelist.partnerinfo')
+        
+        supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
+        
+        for catalogue in self.browse(cr, uid, ids, context=context):
+            pricelist_ids = []
+            for line in catalogue.line_ids:
+                pricelist_ids.append(line.partner_info_id.id)
+        
+            # TODO: To validate with Magali
+            # Remove the possibility to change the from date
+            if 'period_from' in vals and vals['period_from'] != catalogue.period_from:
+                raise osv.except_osv(_('Error'), _('You cannot change the from date of a catalogue !'))
+        
+            new_supinfo_vals = {}            
+            # Change the partner of all supplier info instances
+            if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
+                delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
+                new_supinfo_vals.update({'name': vals['partner_id'],
+                                         'delay': delay})
+            
+            new_price_vals = {'valid_till': vals.get('period_to', catalogue.period_to),
+                              'currency_id': vals.get('currency_id', catalogue.currency_id.id),
+                              'name': vals.get('name', catalogue.name),}
+                
+            # Update the supplier info and price lines
+            supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+            price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+        
+        return super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
     
     def _get_active(self, cr, uid, ids, field_name, arg, context={}):
         '''
@@ -74,6 +111,7 @@ class supplier_catalogue(osv.osv):
                                        help='Currency used in this catalogue.'),
         'comment': fields.text(string='Comment'),
         'line_ids': fields.one2many('supplier.catalogue.line', 'catalogue_id', string='Lines'),
+        'supplierinfo_ids': fields.one2many('product.supplierinfo', 'catalogue_id', string='Supplier Info.'),
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
     }
@@ -105,20 +143,74 @@ class supplier_catalogue_line(osv.osv):
         '''
         Create a pricelist line on product supplier information tab
         '''
+        supinfo_obj = self.pool.get('product.supplierinfo')
+        cat_obj = self.pool.get('supplier.catalogue')
+        price_obj = self.pool.get('pricelist.partnerinfo')
+        prod_obj = self.pool.get('product.product')
+        
+        tmpl_id = prod_obj.browse(cr, uid, vals['product_id'], context=context).product_tmpl_id.id
+        catalogue = cat_obj.browse(cr, uid, vals['catalogue_id'], context=context)
+        
+        # Search if a product_supplierinfo exists for the catalogue, if not, create it !
+        sup_ids = supinfo_obj.search(cr, uid, [('product_id', '=', tmpl_id), 
+                                               ('catalogue_id', '=', vals['catalogue_id'])],
+                                               context=context)
+        sup_id = sup_ids and sup_ids[0] or False
+        if not sup_id:
+            sup_id = supinfo_obj.create(cr, uid, {'name': catalogue.partner_id.id,
+                                                  'sequence': 0,
+                                                  'delay': catalogue.partner_id.default_delay,
+                                                  'product_id': vals['product_id'],
+                                                  'catalogue_id': vals['catalogue_id'],
+                                                  },
+                                                  context=context)
+            
+        price_id = price_obj.create(cr, uid, {'name': catalogue.name,
+                                              'suppinfo_id': sup_id,
+                                              'min_quantity': vals['min_qty'],
+                                              'uom_id': vals['uom_id'],
+                                              'price': vals['unit_price'],
+                                              'currency_id': catalogue.currency_id.id,
+                                              'valid_till': catalogue.period_to,}, 
+                                              context=context)
+        
+        vals.update({'supplier_info_id': sup_id,
+                     'partner_info_id': price_id})
+        
+        
         return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
     
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Update the pricelist line on product supplier information tab
         '''
+        for line in self.browse(cr, uid, ids, context=context):
+            pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
+                          'price': vals.get('unit_price', line.unit_price),
+                          'rounding': vals.get('rounding', line.rounding),
+                          }
+            
+            # Update the pricelist line on product supplier information tab
+            self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
+                                                         pinfo_data, context=context) 
+        
         return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})
     
-    def unlink(self, cr, uid, id, context={}):
+    def unlink(self, cr, uid, line_id, context={}):
         '''
         Remove the pricelist line on product supplier information tab
         If the product supplier information has no line, remove it
         '''
-        return super(supplier_catalogue_line, self).unlink(cr, uid, id, context=context)
+        line = self.browse(cr, uid, line_id, context=context)
+        # Remove the pricelist line in product tab
+        self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=context)
+        
+        # Check if the removed line wasn't the last line of the supplierinfo
+        if len(line.supplier_info_id.pricelist_ids) == 0:
+            # Remove the supplier info
+            self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=context)
+        
+        return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
@@ -158,6 +250,7 @@ class product_supplierinfo(osv.osv):
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
     }
     
 product_supplierinfo()
