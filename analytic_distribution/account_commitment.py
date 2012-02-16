@@ -240,7 +240,7 @@ class account_commitment(osv.osv):
             'view_mode': 'tree,form',
             'context': context,
             'domain': domain,
-            'target': 'new',
+            'target': 'current',
         }
 
     def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
