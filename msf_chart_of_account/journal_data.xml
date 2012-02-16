@@ -131,11 +131,18 @@
             <field name="type">engagement</field>
         </record>
         
+        <record id="account_journal.miscellaneous_transactions" model="account.analytic.journal">
+            <field name="name">Miscellaneous Transactions Journal</field>
+            <field name="code">MTJ</field>
+            <field name="type">general</field>
+        </record>
+        
         <record id="miscellaneous_transactions" model="account.journal">
             <field name="name">Miscellaneous Transactions</field>
             <field name="code">MT</field>
             <field name="type">cur_adj</field>
             <field name="default_debit_account_id" ref="msf_chart_of_account.6308" />
+            <field name="analytic_journal_id" ref="account_journal.miscellaneous_transactions"/>
         </record>
     </data>
 </openerp>
