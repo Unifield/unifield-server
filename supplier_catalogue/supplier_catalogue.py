@@ -243,29 +243,4 @@ class supplier_catalogue_line(osv.osv):
     
 supplier_catalogue_line()
 
-
-class product_supplierinfo(osv.osv):
-    _name = 'product.supplierinfo'
-    _inherit = 'product.supplierinfo'
-    
-    _columns = {
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
-        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
-    }
-    
-product_supplierinfo()
-
-
-class pricelist_partnerinfo(osv.osv):
-    _name = 'pricelist.partnerinfo'
-    _inherit = 'pricelist.partnerinfo'
-    
-    _columns = {
-        'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'rounding': fields.float(digits=(16,2), string='Rounding', 
-                                 help='The ordered quantity must be a multiple of this rounding value.'),
-    }
-    
-pricelist_partnerinfo()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

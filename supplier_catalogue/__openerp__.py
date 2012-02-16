@@ -28,12 +28,15 @@
     """,
     "website": "http://unifield.msf.org",
     "depends" : ["product", "purchase", 
-                 "product_nomenclature"],
+                 "product_nomenclature",
+                 "partner_modification",
+                 "msf_partner",],
     "category" : "Generic Modules/Supplier Catalogue",
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
         "supplier_catalogue_view.xml",
+        "product_view.xml",
         "security/ir.model.access.csv",
     ],
     'test': [
