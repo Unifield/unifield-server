@@ -77,6 +77,16 @@ class supplier_catalogue(osv.osv):
         
         return super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
     
+    def _search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False, access_rights_uid=None):
+        '''
+        If the search is called from the catalogue line list view, returns only list of the
+        partner defined in the context
+        '''
+        if context.get('search_default_partner_id', False):
+            args.append(('partner_id', '=', context.get('search_default_partner_id', False)))
+            
+        return super(supplier_catalogue, self)._search(cr, uid, args, offset, limit, order, context, count, access_rights_uid)
+    
     def _get_active(self, cr, uid, ids, field_name, arg, context={}):
         '''
         Return True if today is into the period of the catalogue
@@ -221,6 +231,32 @@ class supplier_catalogue_line(osv.osv):
         
         return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
+    def _get_partner(self, cr, uid, ids, field_name, arg, context={}):
+        '''
+        Returns the partner linked to the associated catalogue
+        '''
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.catalogue_id and line.catalogue_id.partner_id and line.catalogue_id.partner_id.id or False
+        
+        return res
+    
+    def _search_partner(self, cr, uid, obj, name, args, context={}):
+        '''
+        Returns all active catalogue
+        '''
+        cat_obj = self.pool.get('supplier.catalogue')
+        ids = []
+        
+        for arg in args:
+            if arg[0] == 'partner_id':
+                operator = arg[1]            
+                catalogue_ids = cat_obj.search(cr, uid, [('partner_id.name', operator, arg[2])], context=context)
+                ids = self.search(cr, uid, [('catalogue_id', 'in', catalogue_ids)], context=context)
+        
+        return ids and [('id', 'in', ids)] or []
+    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
@@ -232,6 +268,8 @@ class supplier_catalogue_line(osv.osv):
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'comment': fields.char(size=64, string='Comment'),
+#        'partner_id': fields.function(_get_partner, fnct_search=_search_partner, method=True, string='Partner',
+#                                      type='many2one', relation='res.partner', store=False),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
     }

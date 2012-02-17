@@ -91,7 +91,7 @@
                     <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
                     <newline /> 
                     <group>
-					<field name="catalogue_id" widget="selection" />
+					<field name="catalogue_id" widget="selection"/>
 					<field name="min_qty" />
 					<field name="line_uom_id" />
 					<field name="unit_price" />
