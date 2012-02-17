@@ -109,9 +109,11 @@ class stock_warehouse_automatic_supply(osv.osv):
                 frequence_id = proc.frequence_id.id
                 res_ok = True
             else:
-                frequence_data = {'name': 'daily',
-                                  'daily_frequency_ok': True,
-                                  'daily_frequency': 1,
+                frequence_data = {'name': 'monthly',
+                                  'monthly_choose_freq': 1,
+                                  'monthly_choose_day': 'monday',
+                                  'monthly_frequency': 1,
+                                  'monthly_one_day': True,
                                   'no_end_date': True,
                                   'start_date': time.strftime('%Y-%m-%d'),}
                 frequence_id = self.pool.get('stock.frequence').create(cr, uid, frequence_data, context=context)
