@@ -138,6 +138,7 @@ class supplier_catalogue(osv.osv):
     _defaults = {
         # By default, use the currency of the user
         'currency_id': lambda obj, cr, uid, ctx: obj.pool.get('res.users').browse(cr, uid, uid, context=ctx).company_id.currency_id.id,
+        'partner_id': lambda obj, cr, uid, ctx: ctx.get('partner_id', False),
     }
     
     def _check_period(self, cr, uid, ids):
@@ -148,6 +149,30 @@ class supplier_catalogue(osv.osv):
             if catalogue.period_to < catalogue.period_from:
                 return False
         return True
+    
+    # TODO : Option 1
+    def open_lines(self, cr, uid, ids, context={}):
+        '''
+        Opens all lines of this catalogue 
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        cat = self.browse(cr, uid, ids[0], context=context)
+        name = cat.name
+        
+        context.update({'search_default_partner_id': cat.partner_id.id,})
+        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
+        
+        return {'type': 'ir.actions.act_window',
+                'name': name,
+                'res_model': 'supplier.catalogue.line',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
+                'domain': [('catalogue_id', '=', ids[0])],
+                'context': context}
     
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
     
@@ -289,11 +314,45 @@ class supplier_catalogue_line(osv.osv):
         return {'value': v}
     
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
-        product_ids = []
-        for line in self.browse(cr, uid, line_id, context=context):
-            product_ids.append(line.product_id.id)
-        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, product_ids, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, [], position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
 supplier_catalogue_line()
+
+# TODO: Option 3
+class from_supplier_choose_catalogue(osv.osv_memory):
+    _name = 'from.supplier.choose.catalogue'
+    
+    _columns = {
+        'partner_id': fields.many2one('res.partner', string='Supplier', required=True),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
+    }
+     
+    def default_get(self, cr, uid, fields, context={}):
+        '''
+        Fill partner_id from context
+        '''
+        if not context.get('active_id', False):
+            raise osv.except_osv(_('Error'), _('No catalogue found !'))
+        
+        partner_id = context.get('active_id')
+        
+        if not self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id', '=', partner_id)], context=context):
+            raise osv.except_osv(_('Error'), _('No catalogue found !'))
+        
+        res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context)
+        
+        res.update({'partner_id': partner_id})
+        
+        return res
+    
+    def open_catalogue(self, cr, uid, ids, context={}):
+        '''
+        Open catalogue lines
+        '''
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        
+        return self.pool.get('supplier.catalogue').open_lines(cr, uid, wiz.catalogue_id.id, context=context)
+    
+from_supplier_choose_catalogue()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
