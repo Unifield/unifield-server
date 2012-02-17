@@ -49,7 +49,7 @@ class debit_note_import_invoice(osv.osv_memory):
             # add lines to given invoice
             for line in w.line_ids:
                 self.pool.get('account.invoice.line').create(cr, uid, {
-                    'name': line.name,
+                    'name': line.name or '',
                     'quantity': 1.0,
                     'account_id': line.account_id and line.account_id.id,
                     'price_unit': line.amount_total,

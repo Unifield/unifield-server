@@ -42,7 +42,9 @@ class account_invoice_line(osv.osv):
         if not context:
             context = {}
         # update default dict with invoice line ID
-        return super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context).update({'invoice_line_id': line.id})
+        res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
+        res.update({'invoice_line_id': line.id})
+        return res
 
 account_invoice_line()
 
@@ -142,6 +144,52 @@ class account_invoice(osv.osv):
                 new_line.append(el)
         res = super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, new_line)
         return res
+
+    def line_get_convert(self, cr, uid, x, part, date, context={}):
+        """
+        Add these field into invoice line:
+        - invoice_line_id
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context)
+        res.update({'invoice_line_id': x.get('invoice_line_id', False)})
+        return res
+
+    def action_reconcile_imported_invoice(self, cr, uid, ids, context={}):
+        """
+        Reconcile each imported invoice with its attached invoice line
+        """
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # browse all given invoices
+        for inv in self.browse(cr, uid, ids):
+            for invl in inv.invoice_line:
+                if not invl.import_invoice_id:
+                    continue
+                imported_invoice = invl.import_invoice_id
+                # reconcile partner line from import invoice with this invoice line attached move line
+                import_invoice_partner_move_lines = self.pool.get('account.move.line').search(cr, uid, [('invoice_partner_link', '=', imported_invoice.id)])
+                invl_move_lines = [x.id or None for x in invl.move_lines]
+                rec = self.pool.get('account.move.line').reconcile_partial(cr, uid, [import_invoice_partner_move_lines[0], invl_move_lines[0]], 'auto', context=context)
+                if not rec:
+                    return False
+        return True
+
+    def action_open_invoice(self, cr, uid, ids, context={}, *args):
+        """
+        Launch reconciliation of imported invoice lines from a debit note invoice
+        """
+        # some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
+        if res and self.action_reconcile_imported_invoice(cr, uid, ids, context):
+            return True
+        return False
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
