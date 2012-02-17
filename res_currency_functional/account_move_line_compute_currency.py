@@ -226,7 +226,7 @@ class account_move_line_compute_currency(osv.osv):
         # Prepare some values
         cur_obj = self.pool.get('res.currency')
         analytic_obj = self.pool.get('account.analytic.line')
-        reconciled_move = []
+        reconciled_move = {}
         for move_line in self.browse(cr, uid, ids):
             if move_line.is_addendum_line:
                 # addendum line will be reevaluated after the reevaluation of the reconlied lines
@@ -288,10 +288,10 @@ class account_move_line_compute_currency(osv.osv):
                 analytic_obj.update_amounts(cr, uid, analytic_line_ids)
             # Reconciliation verification
             if move_line.reconcile_id:
-                reconciled_move.append(move_line.reconcile_id.id)
+                reconciled_move[move_line.reconcile_id.id] = True
 #                self.reconciliation_update(cr, uid, [move_line.id])
         if reconciled_move:
-            self.reconciliation_update(cr, uid, reconciled_move)
+            self.reconciliation_update(cr, uid, reconciled_move.keys())
         return True
 
     def check_date(self, cr, uid, vals):
@@ -390,6 +390,7 @@ class account_move_line_compute_currency(osv.osv):
         self.check_date(cr, uid, vals)
         # Prepare some values
         res = True
+        reconciled_move = {}
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
@@ -401,7 +402,9 @@ class account_move_line_compute_currency(osv.osv):
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
             if line.reconcile_id:
-                self.reconciliation_update(cr, uid, [line.id], context=context)
+                reconciled_move[line.reconcile_id.id] = True
+        if reconciled_move:
+            self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
         return res
 
     def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
