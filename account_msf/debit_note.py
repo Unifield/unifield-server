@@ -25,6 +25,16 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+
+    _columns = {
+        'import_invoice_id': fields.many2one('account.invoice', string="From an import invoice", readonly=True),
+    }
+
+account_invoice_line()
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
@@ -58,6 +68,7 @@ class account_invoice(osv.osv):
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
+        'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
     }
 
     _defaults = {

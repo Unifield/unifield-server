@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class debit_note_import_invoice(osv.osv_memory):
     _name = 'debit.note.import.invoice'
@@ -38,6 +39,25 @@ class debit_note_import_invoice(osv.osv_memory):
         """
         Check elements and write them to the given invoice (invoice_id field)
         """
+        # some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # browse all wizard
+        for w in self.browse(cr, uid, ids):
+            if not w.line_ids:
+                raise osv.except_osv(_('Warning'), _('Please add some invoices!'))
+            # add lines to given invoice
+            for line in w.line_ids:
+                self.pool.get('account.invoice.line').create(cr, uid, {
+                    'name': line.name,
+                    'quantity': 1.0,
+                    'account_id': line.account_id and line.account_id.id,
+                    'price_unit': line.amount_total,
+                    'invoice_id': w.invoice_id and w.invoice_id.id,
+                    'partner_id': line.partner_id and line.partner_id.id,
+                    'company_id': line.company_id and line.company_id.id or False,
+                    'import_invoice_id': line.id,
+                })
         return {'type': 'ir.actions.act_window_close', }
 
 debit_note_import_invoice()
