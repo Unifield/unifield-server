@@ -186,29 +186,28 @@ class account_move_line_compute_currency(osv.osv):
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', line.reconcile_id.id), ('is_addendum_line', '=', False)], context=context)
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 # update addendum line if needed
-                if total != 0.0:
-                    partner_db = partner_cr = addendum_db = addendum_cr = None
-                    if total < 0.0:
-                        partner_cr = addendum_db = abs(total)
-                    else:
-                        partner_db = addendum_cr = abs(total)
-                    for al in self.browse(cr, uid, addendum_line_ids, context=context):
-                        # search other line from same move in order to update its amount
-                        other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
-                        # Update addendum line
-                        sql = """
-                            UPDATE account_move_line
-                            SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
-                            WHERE id=%s
-                        """
-                        cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
-                        # Update partner line
-                        if isinstance(other_line_ids, (int, long)):
-                            other_line_ids = [other_line_ids]
-                        cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
-                        # Update analytic lines
-                        analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                        self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total}, context=context)
+                partner_db = partner_cr = addendum_db = addendum_cr = None
+                if total < 0.0:
+                    partner_cr = addendum_db = abs(total)
+                else:
+                    partner_db = addendum_cr = abs(total)
+                for al in self.browse(cr, uid, addendum_line_ids, context=context):
+                    # search other line from same move in order to update its amount
+                    other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
+                    # Update addendum line
+                    sql = """
+                        UPDATE account_move_line
+                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
+                        WHERE id=%s
+                    """
+                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
+                    # Update partner line
+                    if isinstance(other_line_ids, (int, long)):
+                        other_line_ids = [other_line_ids]
+                    cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
+                    # Update analytic lines
+                    analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
+                    self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total}, context=context)
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', line.reconcile_id.id)], context=context)
