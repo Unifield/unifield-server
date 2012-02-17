@@ -31,6 +31,8 @@ class account_move_line(osv.osv):
     _columns = {
         'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True, 
             help="This link implies this line come from the total of an invoice, directly from partner account."),
+        'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True, 
+            help="Invoice line which have produced this line."),
     }
 
 account_move_line()

@@ -31,7 +31,18 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'import_invoice_id': fields.many2one('account.invoice', string="From an import invoice", readonly=True),
+        'move_lines': fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
     }
+
+    def move_line_get_item(self, cr, uid, line, context={}):
+        """
+        Add a link between move line and its invoice line
+        """
+        # some verification
+        if not context:
+            context = {}
+        # update default dict with invoice line ID
+        return super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context).update({'invoice_line_id': line.id})
 
 account_invoice_line()
 
