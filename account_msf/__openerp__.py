@@ -30,7 +30,7 @@
     "author" : "TeMPO Consulting",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
-    "depends" : ["base", "account", "purchase_msf"],
+    "depends" : ["base", "account", "purchase_msf", "register_accounting"],
     "init_xml" : [],
     "update_xml" : [
         'board_account_view.xml',

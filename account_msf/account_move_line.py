@@ -28,11 +28,35 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     _inherit = 'account.move.line'
 
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Fake method for 'ready_for_import_in_register' field
+        """
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context={}):
+        """
+        Add debit note default account filter for search (if this account have been selected)
+        """
+        if not args:
+            return []
+        res = super(account_move_line, self)._search_ready_for_import_in_register(cr, uid, obj, name, args, context)
+        # verify debit note default account configuration
+        default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account
+        if default_account:
+            res.append(('account_id', '!=', default_account.id))
+        return res
+
     _columns = {
         'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True, 
             help="This link implies this line come from the total of an invoice, directly from partner account."),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True, 
             help="Invoice line which have produced this line."),
+        'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
+            method=True, string="Can be imported as invoice in register?",),
     }
 
 account_move_line()
