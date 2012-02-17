@@ -515,6 +515,12 @@ class stock_move(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -543,6 +549,8 @@ class stock_move(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
@@ -823,6 +831,12 @@ class stock_production_lot(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -843,6 +857,8 @@ class stock_production_lot(osv.osv):
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+                'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+                'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 }
     
     _defaults = {'type': 'standard',
@@ -1186,6 +1202,12 @@ class stock_inventory_line(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -1229,6 +1251,8 @@ class stock_inventory_line(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
     }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist

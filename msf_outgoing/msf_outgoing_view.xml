@@ -237,10 +237,12 @@
                                     <field name="virtual_available" />
                                     <field name="date" string="Actual Pick Date" />
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -281,10 +283,12 @@
 	                    				<field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -520,10 +524,12 @@
                                     <field name="to_pack" />
                                     <field name="date" string="Actual Pack Date" />
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -564,10 +570,12 @@
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
@@ -758,10 +766,12 @@
                                     <field name="currency_id" />
                                     <field name="date"/>
                                     <field name="state"/>
-                                    <field name="kc_check" />
-			            			<field name="ssl_check" />
-			            			<field name="dg_check" />
-			            			<field name="np_check" />
+                                    <field name="lot_check" />
+				                   	<field name="exp_check" />
+				                   	<field name="kc_check" />
+				           			<field name="ssl_check" invisible="True" />
+				           			<field name="dg_check" />
+				           			<field name="np_check" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -802,10 +812,12 @@
 					                    <field name="hidden_batch_management_mandatory" invisible="True" />
 					                    <field name="hidden_perishable_mandatory" invisible="True" />
 										<field name="expired_date" />
-										<field name="kc_check" />
-				            			<field name="ssl_check" />
-				            			<field name="dg_check" />
-				            			<field name="np_check" />
+										<field name="lot_check" />
+					                   	<field name="exp_check" />
+					                   	<field name="kc_check" />
+					           			<field name="ssl_check" invisible="True" />
+					           			<field name="dg_check" />
+					           			<field name="np_check" />
                                     </group>
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
