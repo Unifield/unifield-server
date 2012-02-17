@@ -22,7 +22,8 @@
     'name': 'MSF Product Attributes',
     'version': '1.0',
     'category': 'Generic Modules',
-    'author': 'MSF: Matthieu Dietrich',
+    'author': 'MSF, TeMPO consulting',
+    'developer': 'Matthieu Dietrich',
     'description': """
         This module displays more fields for future sprints in the Products form view.
     """,

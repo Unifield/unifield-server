@@ -32,7 +32,7 @@
     Administrator can subscribe rules for read,write and
     delete on objects and can check logs.
     """,
-    'author': 'OpenERP SA − TeMPO Consulting − MSF',
+    'author': 'OpenERP SA, TeMPO Consulting, MSF',
     'website': 'http://www.unifield.org',
     'depends': ['base', 'purchase'],
     'init_xml': [],

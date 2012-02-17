@@ -22,7 +22,8 @@
     "name": "Chart of Accounts for MSF",
     "version": "1.0",
     "depends": ["account", "account_chart"],
-    "author" : "MSF: Matthieu Dietrich",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
     "category": "General/Standard",
     "description": """
     This module changes the view and adds a searchable "Active" attribute.

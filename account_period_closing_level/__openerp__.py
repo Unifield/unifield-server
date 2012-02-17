@@ -22,7 +22,8 @@
     "name": "Account Period for MSF",
     "version": "1.0",
     "depends": ["account_subscription"],
-    "author" : "MSF: Matthieu Dietrich",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
     "category": "General/Standard",
     "description": """
     This module adds states to the fiscal years and accounting periods,
