@@ -214,7 +214,7 @@ class account_move_line_compute_currency(osv.osv):
                 if total != 0.0:
                     partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
                     # Add it to reconciliation (same that other lines)
-                    self.write(cr, uid, [partner_line_id], {'reconcile_id': reconciled.id})
+                    cr.execute('update account_move_line set reconcile_id=%s where id=%s',(reconciled.id, partner_line_id))
         return True
 
     def update_amounts(self, cr, uid, ids):
