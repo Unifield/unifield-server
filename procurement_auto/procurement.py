@@ -108,6 +108,15 @@ class stock_warehouse_automatic_supply(osv.osv):
             if proc.frequence_id and proc.frequence_id.id:
                 frequence_id = proc.frequence_id.id
                 res_ok = True
+            else:
+                frequence_data = {'name': 'daily',
+                                  'daily_frequency_ok': True,
+                                  'daily_frequency': 1,
+                                  'no_end_date': True,
+                                  'start_date': time.strftime('%Y-%m-%d'),}
+                frequence_id = self.pool.get('stock.frequence').create(cr, uid, frequence_data, context=context)
+                self.write(cr, uid, proc.id, {'frequence_id': frequence_id}, context=context)
+                res_ok = True
             
         context.update({'active_id': res_id, 
                         'active_model': 'stock.warehouse.automatic.supply',
