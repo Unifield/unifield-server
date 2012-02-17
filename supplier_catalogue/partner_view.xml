@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	 <data>
+	 	
+	 	<record id="catalogue_partner_form" model="ir.ui.view">
+            <field name="name">leadtime.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
+	                    <page string="Catalogues" attrs="{'invisible': [('supplier', '=', False)]}">
+	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree">
+	                    		<tree string="Catalogues">
+	                    			<field name="name" />
+	                    			<field name="period_from" />
+	                    			<field name="period_to" />
+	                    			<field name="currency_id" />
+	                    		</tree>
+	                    	</field>
+	                    </page>
+	                </xpath>
+                </data>
+            </field>
+        </record>
+	 	
+	 </data>
+</openerp>

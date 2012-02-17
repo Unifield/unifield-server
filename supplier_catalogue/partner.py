@@ -19,32 +19,20 @@
 #
 ##############################################################################
 
-{
-    "name" : "Supplier Catalogue",
-    "version" : "1.0",
-    "author" : "TeMPO Consulting,MSF",
-    "description" : """
-    Add management of supplier catalogue
-    """,
-    "website": "http://unifield.msf.org",
-    "depends" : ["product", "purchase", 
-                 "product_nomenclature",
-                 "partner_modification",
-                 "msf_partner",],
-    "category" : "Generic Modules/Supplier Catalogue",
-    "init_xml" : [],
-    "demo_xml" : [],
-    "update_xml" : [
-        "supplier_catalogue_view.xml",
-        "product_view.xml",
-        "partner_view.xml",
-        "security/ir.model.access.csv",
-    ],
-    'test': [
-#        "test/data.yml",
-    ],
-    'installable': True,
-    'active': False,
-}
+from osv import osv
+from osv import fields
+
+from tools.translate import _
+
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    
+    _columns = {
+        'catalogue_ids': fields.one2many('supplier.catalogue', 'partner_id', string='Catalogues', readonly=True),
+    }
+    
+res_partner()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
