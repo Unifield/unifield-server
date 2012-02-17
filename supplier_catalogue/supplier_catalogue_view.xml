@@ -76,12 +76,62 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Supplier catalogue lines">
-					<field name="catalogue_id" />
-					<field name="product_id" />
+					<filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
+                    <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
+                    <filter string="Service" icon="terp-accessories-archiver" domain="[('type','=','service')]"/>
+                    <filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]"/>
+                    <separator orientation="vertical"/>
+                    <field name="default_code"/>
+                    <field name="old_code" />
+                    <field name="name"/>
+                    <field name="categ_id" widget="selection" operator="child_of" groups="base.group_extended"/>
+                    <newline/>
+                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
+                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
+                    <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                    <newline /> 
+                    <group>
+					<field name="catalogue_id" widget="selection" />
 					<field name="min_qty" />
-					<field name="uom_id" />
+					<field name="line_uom_id" />
 					<field name="unit_price" />
 					<field name="rounding" />
+					<field name="default_code" />
+					</group>
+					<newline />
+					<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+					</group>
+					<newline />
+					<group expand="0" string="Optional Nomenclature Filters...">
+						<field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						<field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						<field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						<field name="nomen_sub_3_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						<field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+						<field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+					</group>
+					<!--
+					<newline />
+					<group expand="0" string="Group By...">
+						<filter string='Product' icon="terp-accessories-archiver" domain="[]" context="{'group_by' : 'product_id'}" />
+						<filter string='Category' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}" />
+					</group>-->
 				</search>
 			</field>
 		</record>
@@ -94,7 +144,7 @@
 			<field name="arch" type="xml">
 				<form string="Supplier catalogue line">
 					<field name="product_id" on_change="product_change(product_id)" />
-					<field name="uom_id" />
+					<field name="line_uom_id" />
 					<field name="min_qty" />
 					<field name="unit_price" />
 					<field name="rounding" />
@@ -111,7 +161,26 @@
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" editable="top">
 					<field name="product_id" on_change="product_change(product_id)" />
-					<field name="uom_id" />
+					<field name="line_uom_id" />
+					<field name="min_qty" />
+					<field name="unit_price" />
+					<field name="rounding" />
+					<field name="comment" />
+				</tree>
+			</field>
+		</record>
+		
+		<!-- Non-editable supplier catalogue line tree view -->
+		<record id="non_edit_supplier_catalogue_line_tree_view" model="ir.ui.view">
+			<field name="name">non.edit.supplier.catalogue.line.tree.view</field>
+			<field name="model">supplier.catalogue.line</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Supplier catalogue lines" min_rows="20" 
+					editable="top" noteditable="1" notselectable="0"
+					hide_new_button="1" hide_delete_button="1">
+					<field name="product_id" on_change="product_change(product_id)" />
+					<field name="line_uom_id" />
 					<field name="min_qty" />
 					<field name="unit_price" />
 					<field name="rounding" />
@@ -139,6 +208,13 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 		</record>
+		
+		<record id="action_supplier_catalogue_line_non_edit" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="non_edit_supplier_catalogue_line_tree_view"/>
+            <field name="act_window_id" ref="action_supplier_catalogue_line_list"/>
+        </record>
 		
 		<!--
 			SUPPLIER CATALOGUE MENU ENTRIES
