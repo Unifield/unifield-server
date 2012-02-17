@@ -31,6 +31,15 @@ class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
     
+    def copy(self, cr, uid, catalogue_id, default={}, context={}):
+        '''
+        Disallow the possibility to duplicate a catalogue
+        '''
+        raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have ' \
+                               'overlapped catalogue !'))
+        
+        return False
+    
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Update the supplierinfo and pricelist line according to the
@@ -137,7 +146,8 @@ supplier_catalogue()
 class supplier_catalogue_line(osv.osv):
     _name = 'supplier.catalogue.line'
     _description = 'Supplier catalogue line'
-    _rec_name = 'product_id'
+    _table = 'supplier_catalogue_line'
+    _inherits = {'product.product': 'product_id'}
     
     def create(self, cr, uid, vals, context={}):
         '''
@@ -168,7 +178,7 @@ class supplier_catalogue_line(osv.osv):
         price_id = price_obj.create(cr, uid, {'name': catalogue.name,
                                               'suppinfo_id': sup_id,
                                               'min_quantity': vals['min_qty'],
-                                              'uom_id': vals['uom_id'],
+                                              'uom_id': vals['line_uom_id'],
                                               'price': vals['unit_price'],
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_till': catalogue.period_to,}, 
@@ -176,7 +186,6 @@ class supplier_catalogue_line(osv.osv):
         
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
-        
         
         return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
     
@@ -217,7 +226,7 @@ class supplier_catalogue_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
                                   help='Minimal order quantity to get this unit price.'),
-        'uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
+        'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
@@ -229,17 +238,23 @@ class supplier_catalogue_line(osv.osv):
     
     def product_change(self, cr, uid, ids, product_id, context={}):
         '''
-        When the product change, fill automatically the uom_id field of the
+        When the product change, fill automatically the line_uom_id field of the
         catalogue line.
         @param product_id: ID of the selected product or False
         '''
-        v = {'uom_id': False}
+        v = {'line_uom_id': False}
         
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v.update({'uom_id': product.uom_id.id})
+            v.update({'line_uom_id': product.uom_id.id})
         
         return {'value': v}
+    
+    def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        product_ids = []
+        for line in self.browse(cr, uid, line_id, context=context):
+            product_ids.append(line.product_id.id)
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, product_ids, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
 supplier_catalogue_line()
 
