@@ -214,7 +214,7 @@ class supplier_catalogue_line(osv.osv):
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
-        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
                                   help='Minimal order quantity to get this unit price.'),
         'uom_id': fields.many2one('product.uom', string='Product UoM', required=True,

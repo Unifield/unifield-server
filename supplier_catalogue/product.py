@@ -22,9 +22,24 @@
 from osv import osv
 from osv import fields
 
+from tools.translate import _
+
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
+    
+    def unlink(self, cr, uid, info_id, context={}):
+        '''
+        Disallow the possibility to remove a supplier info if 
+        it's linked to a catalogue
+        '''
+        info = self.browse(cr, uid, info_id, context=context)
+        if info.catalogue_id:
+            raise osv.except_osv(_('Error'), _('You cannot remove a supplier information which is linked' \
+                                               'to a supplier catalogue line ! Please remove the corresponding' \
+                                               'supplier catalogue line to remove this supplier information.'))
+        
+        return super(product_supplierinfo, self).unlink(cr, uid, info_id, context=context)
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
@@ -37,6 +52,19 @@ product_supplierinfo()
 class pricelist_partnerinfo(osv.osv):
     _name = 'pricelist.partnerinfo'
     _inherit = 'pricelist.partnerinfo'
+    
+    def unlink(self, cr, uid, info_id, context={}):
+        '''
+        Disallow the possibility to remove a supplier pricelist 
+        if it's linked to a catalogue line
+        '''
+        info = self.browse(cr, uid, info_id, context=context)
+        if info.catalogue_id:
+            raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked' \
+                                               'to a supplier catalogue line ! Please remove the corresponding' \
+                                               'supplier catalogue line to remove this supplier information.'))
+        
+        return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)
     
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),

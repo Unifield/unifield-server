@@ -132,6 +132,14 @@
 			<field name="view_mode">tree,form</field>
 		</record>
 		
+		<!-- Open the list of all supplier catalogue lines -->
+		<record id="action_supplier_catalogue_line_list" model="ir.actions.act_window">
+			<field name="name">Supplier catalogue lines</field>
+			<field name="res_model">supplier.catalogue.line</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		
 		<!--
 			SUPPLIER CATALOGUE MENU ENTRIES
 		-->
@@ -140,6 +148,11 @@
 		<menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
 				  parent="purchase.menu_purchase_config_purchase" />
+		
+		<!-- Menu in Purchases / Configuration -->		  
+		<menuitem id="menu_supplier_catalogue_line"
+				  action="action_supplier_catalogue_line_list"
+				  parent="menu_supplier_catalogue" />
 		
 	</data>
 </openerp>
