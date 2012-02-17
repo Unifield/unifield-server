@@ -74,4 +74,39 @@ class pricelist_partnerinfo(osv.osv):
     
 pricelist_partnerinfo()
 
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    
+    def _get_partner_price(self, cr, uid, product_ids, partner_id, product_qty, currency_id,
+                                          order_date, product_uom_id, context={}):
+        '''
+        Search the good partner price line for products
+        '''
+        res = {}
+        one_product = False
+        partner_price = self.pool.get('pricelist.partnerinfo')
+        
+        if not context:
+            context = {}
+            
+        if isinstance(product_ids, (int, long)):
+            one_product = True
+            product_ids = [product_ids]
+            
+        for product_id in product_ids:
+            # Search the good line for the price
+            res[product_id] = partner_price.search(cr, uid, [('suppinfo_id.partner_id', '=', partner_id),
+                                                             ('suppinfo_id.product_id', '=', product_id),
+                                                             ('min_quantity', '<=', product_qty),
+                                                             ('uom_id', '=', product_uom_id),
+                                                             ('currency_id', '=', currency_id),
+                                                             ('valid_till', '>', order_date)],
+                                                   order='min_quantity desc', limit=1, context=context)[0]
+            
+        return one_product and res[0] or res
+    
+product_product()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

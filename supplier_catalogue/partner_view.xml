@@ -12,13 +12,12 @@
                 <data>
 	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
 	                    <page string="Catalogues" attrs="{'invisible': [('supplier', '=', False)]}">
-	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree">
+	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree,form" readonly="1">
 	                    		<tree string="Catalogues">
 	                    			<field name="name" />
 	                    			<field name="period_from" />
 	                    			<field name="period_to" />
 	                    			<field name="currency_id" />
-	                    			<!-- TODO: Option 1 -->
 	                    			<button name="open_lines" type="object" string="Open catalogue" icon="terp-stock_zoom" /> 
 	                    		</tree>
 	                    	</field>
@@ -51,7 +50,6 @@
         	context="{'partner_id': active_id}"
         	id="action_new_catalogue_supplier" />
         	
-        <!-- TODO: Option 3 -->
         <!-- Choose catalogue from supplier (osv_memory) form view -->
         <record id="from_supplier_choose_catalogue_form_view" model="ir.ui.view">
         	<field name="name">from.supplier.choose.catalogue.form.view</field>
@@ -78,7 +76,6 @@
         	domain="[]"
         	context="{}"
         	id="action_choose_catalogue" />
-        <!-- End Option 3 -->
 	 	
 	 </data>
 </openerp>
