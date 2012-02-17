@@ -69,6 +69,7 @@ class account_invoice(osv.osv):
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean", 
             method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
+        'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
     }
 
     _defaults = {
@@ -99,6 +100,37 @@ class account_invoice(osv.osv):
                 'context': context,
                 'target': 'new',
             }
+
+    def copy(self, cr, uid, id, default={}, context={}):
+        """
+        Copy global distribution and give it to new invoice
+        """
+        if not context:
+            context = {}
+        default.update({'partner_move_line': False})
+        return super(account_invoice, self).copy(cr, uid, id, default, context)
+
+    def finalize_invoice_move_lines(self, cr, uid, inv, line):
+        """
+        Hook that changes move line data before write them.
+        Add a link between partner move line and invoice.
+        """
+        def is_partner_line(dico):
+            if isinstance(dico, dict):
+                if dico:
+                    amount = dico.get('debit', 0.0) - dico.get('credit', 0.0)
+                    if amount == inv.amount_total and dico.get('partner_id', False) == inv.partner_id.id:
+                        return True
+            return False
+        new_line = []
+        for el in line:
+            if el[2] and is_partner_line(el[2]):
+                el[2].update({'invoice_partner_link': inv.id})
+                new_line.append((el[0], el[1], el[2]))
+            else:
+                new_line.append(el)
+        res = super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, new_line)
+        return res
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
