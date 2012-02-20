@@ -24,6 +24,8 @@ from osv import fields
 
 from tools.translate import _
 
+import time
+
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
@@ -45,6 +47,27 @@ class product_supplierinfo(osv.osv):
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
     }
+    
+    # Override the original method
+    def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
+        """
+        Calculate price from supplier pricelist.
+        @param supplier_ids: Ids of res.partner object.
+        @param product_id: Id of product.
+        @param product_qty: specify quantity to purchase.
+        """
+        if type(supplier_ids) in (int,long,):
+            supplier_ids = [supplier_ids]
+        res = {}
+        product_pool = self.pool.get('product.product')
+        partner_pool = self.pool.get('res.partner')
+        currency_id = context.get('currency_id', False) or self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        date = context.get('date', False) or time.strftime('%Y-%m-%d')
+        uom_id = context.get('uom', False) or product_pool.browse(cr, uid, product_id, context=context).uom_id.id
+        for supplier in partner_pool.browse(cr, uid, supplier_ids, context=context):
+            res[supplier.id] = product_pool._get_partner_price(cr, uid, product_id, supplier.id, product_qty,
+                                                                        currency_id, date, uom_id, context=context)
+        return res
     
 product_supplierinfo()
 
