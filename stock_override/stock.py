@@ -99,6 +99,16 @@ procurement_order()
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _description = "Picking List"
+    
+    def _hook_state_list(self, cr, uid, *args, **kwargs):
+        '''
+        Change terms into states list
+        '''
+        state_list = kwargs['state_list']
+        
+        state_list['done'] = _('is closed.')
+        
+        return state_list
 
     _columns = {
         'state': fields.selection([
