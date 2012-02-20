@@ -77,6 +77,23 @@ class date_tools(osv.osv):
         '''
         return self.get_db_date_format(cr, uid, context=context) + ' ' + self.get_db_time_format(cr, uid, context=context)
     
+    def get_date_formatted(self, cr, uid, d_type='date', datetime=time.strftime('%Y-%m-%d'), context={}):
+        '''
+        Return the datetime in the format of the user
+        @param d_type: 'date' or 'datetime' : determines which is the out format
+        @param datetime: date to format 
+        '''
+        assert d_type in ('date', 'datetime'), 'Give only \'date\' or \'datetime\' as type parameter'
+        
+        if d_type == 'date':
+            d_format = self.get_date_format(cr, uid)
+            date = time.strptime(datetime, '%Y-%m-%d')
+            return time.strftime(d_format, date)
+        elif d_type == 'datetime':
+            d_format = self.get_datetime_format(cr, uid)
+            date = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
+            return time.strftime(d_format, date)
+    
 date_tools()
 
 
