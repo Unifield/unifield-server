@@ -30,15 +30,23 @@ import cherrypy
 import actions
 
 from openobject.i18n.format import format_datetime
+from openobject.i18n.format import format_decimal
 from openobject.tools import url, expose
 
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, cache, icons, common, TinyDict, expr_eval
 from openerp.widgets import tree_view
 
+def decimal_formatter(value, info):
+    digits = info.get('digits', (16,2))
+    if isinstance(digits, basestring):
+        digits = eval(digits)
+    integer, digit = digits
+    return format_decimal(value, digit)
+
 FORMATTERS = {
     'integer': lambda value, _i: '%s' % int(value),
-    'float': lambda value, _i: '%.02f' % (value),
+    'float': decimal_formatter,
     'date': lambda value, _i: format_datetime(value, 'date'),
     'datetime': lambda value, _i: format_datetime(value, 'datetime'),
     'one2one': lambda value, _i: value[1],
