@@ -19,8 +19,9 @@
 #
 ##############################################################################
 
-import res_currency_table
-import res_currency
-import wizard
+import import_currencies
+import warning_import_currencies
+import confirm_import_currencies
+import import_table_currencies
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
