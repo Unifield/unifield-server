@@ -2,18 +2,53 @@
 <openerp>
     <data>
     
-    	<record id="view_kit_composition_theoretical_form" model="ir.ui.view">
-            <field name="name">composition.kit.theoretical.form</field>
+    	<record id="view_composition_kit_form" model="ir.ui.view">
+            <field name="name">composition.kit.form</field>
             <field name="model">composition.kit</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
             	<form string="Theoretical Kit Composition">
             		<group col="6" colspan="4">
-                        <field name="composition_type" />
+                        <field name="composition_type" invisible="True" />
+                        <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" colspan="4" on_change="on_change_product_id(composition_product_id)" />
+                        <group col="6" colspan="2">
+                        	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="2" />
+                        	<field name="composition_version_id" domain="[('composition_type', '=', 'theoretical')]" attrs="{'invisible': [('composition_type', '!=', 'real')]}" colspan="2" />
+	                        <field name="composition_creation_date" colspan="2" />
+	                        <field name="composition_batch_check" invisible="True" colspan="2" />
+	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
+	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_batch_check', '=', False)], 'invisible': ['|', ('composition_batch_check', '=', True), ('composition_type', '!=', 'real')]}" />
+	                        <field name="composition_lot_id" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_batch_check', '=', True)], 'invisible': ['|', ('composition_batch_check', '=', False), ('composition_type', '!=', 'real')]}" />
+	                        <field name="composition_exp" colspan="2" readonly="True" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
+                        </group>
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<!-- <field name="composition_items" /> -->
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list">
+                    			<form string="Theoretical Kit Item">
+				                    <group col="6" colspan="4">
+				            			<notebook colspan="4">
+				            				<page string="Composition Item">
+				           						<field name="item_module" />
+				           						<field name="item_product_id" />
+						                        <field name="item_qty" />
+						                        <field name="item_uom_id" />
+					                        </page>
+					                        <page string="Notes">
+					                        	<field name="item_description" nolabel="True" />
+					                        </page>
+				            			</notebook>
+				                    </group>
+				            	</form>
+                    			<tree string="Theoretical Kit Item" editable="top">
+				            		<field name="item_module" />
+				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
+				            		<field name="item_qty" />
+				            		<field name="item_uom_id" />
+				            		<field name="item_lot" />
+				            		<field name="item_exp" />
+				            	</tree>
+                    		</field>
                     	</page>
                     	<page string="Notes">
                     		<field name="composition_description" nolabel="True" />
@@ -23,28 +58,109 @@
             </field>
 		</record>
 		
-		<record id="view_kit_composition_theoretical_tree" model="ir.ui.view">
-            <field name="name">composition.kit.theoretical.form</field>
+		<record id="view_composition_kit_tree" model="ir.ui.view">
+            <field name="name">composition.kit.tree</field>
             <field name="model">composition.kit</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Theoretical Kit Composition">
-            		<field name="composition_type" />
-            		<field name="composition_description" />
+            		<field name="composition_type" invisible="True" />
+            		<field name="composition_product_id" />
+            		<field name="composition_version_txt" />
+            		<field name="composition_creation_date" />
+            		<field name="composition_reference" />
+            		<field name="composition_lot_id" />
+            		<field name="composition_exp" />
             	</tree>
             </field>
 		</record>
 		
-		<record id="kit_normal_action" model="ir.actions.act_window">
+		<record id="view_composition_kit_theoretical_item_form" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.item.form</field>
+            <field name="model">composition.item</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Theoretical Kit Item" hide_new_button="True" hide_delete_button="True" hide_duplicate_button="True">
+                    <group col="6" colspan="4">
+            			<notebook colspan="4">
+            				<page string="Composition Item">
+            					<field name="item_kit_type" invisible="True" />
+           						<field name="item_module" />
+           						<field name="item_product_id" />
+		                        <field name="item_qty" />
+		                        <field name="item_uom_id" />
+		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" />
+            					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" />
+	                        </page>
+	                        <page string="Notes">
+	                        	<field name="item_description" nolabel="True" />
+	                        </page>
+            			</notebook>
+                    </group>
+            	</form>
+            </field>
+		</record>
+		
+		<record id="view_composition_kit_theoretical_item_tree" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.item.tree</field>
+            <field name="model">composition.item</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Theoretical Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            		<field name="item_kit_id" />
+            		<field name="item_module" />
+            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
+            		<field name="item_qty" />
+            		<field name="item_uom_id" />
+            		<field name="item_lot" />
+            		<field name="item_exp" />
+            	</tree>
+            </field>
+		</record>
+		
+		<record id="kit_composition_theoretical_action" model="ir.actions.act_window">
 			<field name="name">Theoretical Kit Composition</field>
 			<field name="res_model">composition.kit</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="domain">[('composition_type', '=', 'theoretical')]</field>
+			<field name="context">{'composition_type':'theoretical'}</field>
+		</record>
+		
+		<record id="kit_composition_theoretical_item_action" model="ir.actions.act_window">
+			<field name="name">Theoretical Kit Item</field>
+			<field name="res_model">composition.item</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('item_kit_type', '=', 'theoretical')]</field>
+			<field name="context">{'item_kit_type':'theoretical'}</field>
+		</record>
+		
+		<record id="kit_composition_real_action" model="ir.actions.act_window">
+			<field name="name">Kit Composition List</field>
+			<field name="res_model">composition.kit</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('composition_type', '=', 'real')]</field>
+			<field name="context">{'composition_type':'real'}</field>
+		</record>
+		
+		<record id="kit_composition_real_item_action" model="ir.actions.act_window">
+			<field name="name">Kit Composition Item</field>
+			<field name="res_model">composition.item</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('item_kit_type', '=', 'real')]</field>
+			<field name="context">{'item_kit_type':'real'}</field>
 		</record>
 
-		<!-- Assets in SALES>Products -->
 		<menuitem id="kit_management" name="Kit Management" parent="product_attributes.menu_main_product" sequence="10" />
-		<menuitem action="kit_normal_action" id="menu_kit_theoretical" parent="kit_management" sequence="1" />
+		<menuitem id="kit_theoretical" name="Theoretical Kit" parent="kit_management" sequence="1" />
+		<menuitem action="kit_composition_theoretical_action" id="kit_composition_theoretical_menu" parent="kit_theoretical" sequence="1" />
+		<menuitem action="kit_composition_theoretical_item_action" id="kit_composition_theoretical_item_menu" parent="kit_theoretical" sequence="10" />
+		<menuitem id="kit_real" name="Composition List" parent="kit_management" sequence="2" />
+		<menuitem action="kit_composition_real_action" id="kit_composition_real_menu" parent="kit_real" sequence="1" />
+		<menuitem action="kit_composition_real_item_action" id="kit_composition_real_item_menu" parent="kit_real" sequence="10" />
     
     </data>
 </openerp>

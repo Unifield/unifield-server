@@ -4,7 +4,11 @@
   !record {model: composition.kit, id: kit_compo_01}:
     composition_description: 'this is a test theoretical composition list'
     composition_type: 'theoretical'
-
+    composition_product_id: kit_product_A
+    composition_version_txt: 'ITC'
+-
+  I create a corresponding composition item
+-
     
 -
   END OF FILE

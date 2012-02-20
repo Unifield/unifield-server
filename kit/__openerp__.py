@@ -33,9 +33,8 @@
         'kit_view.xml',
     ],
     "demo_xml": [],
-    'test': [
-        'test/kit.yml',
-        'test/kit_data.yml',
-    ],
+    'test': ['test/kit_data.yml',
+             'test/kit.yml',
+             ],
     'installable': True,
 }
