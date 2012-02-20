@@ -370,6 +370,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify commitment line state
             if el.commitment_line_id and el.commitment_line_id.commit_id and el.commitment_line_id.commit_id.state in ['done']:
                 res[el.id] = False
+            # verify sale order state
+            if el.sale_order_id and el.sale_order_id.state in ['done']:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context={}):
@@ -425,6 +428,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
+        'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
     }
 
     _defaults = {
@@ -553,6 +557,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             if wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.state in ['done']:
+                raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
+            # Verify that sale order is in good state if necessary
+            if wiz.sale_order_id and wiz.sale_order_id.state in ['done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id):
@@ -735,7 +742,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'), 
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
-                    ('commitment_line_id', 'account.commitment.line'), ('model_line_id', 'account.model.line')]:
+                    ('commitment_line_id', 'account.commitment.line'), ('model_line_id', 'account.model.line'), ('sale_order_id', 'sale.order')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
