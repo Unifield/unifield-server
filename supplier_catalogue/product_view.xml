@@ -38,16 +38,6 @@
             	<xpath expr="//field[@name='pricelist_ids']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
-            	
-            	<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="before">
-            			<field name="uom_id" />
-            			<field name="rounding" />
-            		</xpath>
-            		
-            		<xpath expr="//form/field[@name='price']" position="before">
-            			<field name="uom_id" />
-            			<field name="rounding" />
-            		</xpath>
             </field>
 		</record>
 		
@@ -66,6 +56,18 @@
 				<xpath expr="//field[@name='delay']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
+            	
+            	<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="before">
+        			<field name="uom_id" />
+        		</xpath>
+        		
+        		<xpath expr="//tree[@string='Pricelist']/field[@name='currency_id']" position="after">
+        			<field name="rounding" />
+        			<field name="min_order_qty" />
+        		</xpath>
+            	
+            	<xpath expr="//field[@name='min_qty']" position="replace" />
+            	
             </field>
         </record>
 		

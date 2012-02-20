@@ -24,7 +24,7 @@ from osv import fields
 
 from tools.translate import _
 
-from mx.DateTime import DateFrom, now
+from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date
 
 import time
@@ -42,7 +42,7 @@ class supplier_catalogue(osv.osv):
         
         return False
     
-    def _update_other_catalogue(self, cr, uid, cat_id, period_from, period_to=False, context={}):
+    def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context={}):
         '''
         Check if other catalogues need to be updated according to the new dates of cat_id
         '''
@@ -57,31 +57,46 @@ class supplier_catalogue(osv.osv):
             
         if period_to:
             to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from), 
-                                                                                         ('period_from', '<', period_to)],
+                                                                                         ('period_from', '<', period_to),
+                                                                                         ('currency_id', '=', currency_id),
+                                                                                         ('partner_id', '=', partner_id)],
                                                                                          order='period_from asc',
                                                                                          limit=1,
                                                                                          context=context)
-            if to_ids:
-                over_cat = self.browse(cr, uid, to_ids[0], context=context)
-                over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
-                over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
-                raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
-                                                  'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
-                                                  'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
+        else:
+            to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
+                                                                                         ('currency_id', '=', currency_id),
+                                                                                         ('partner_id', '=', partner_id)],
+                                                                                         order='period_from asc',
+                                                                                         limit=1,
+                                                                                         context=context)
+        if to_ids:
+            over_cat = self.browse(cr, uid, to_ids[0], context=context)
+            over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
+            over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
+            raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
+                                               'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
+                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
             
-        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), '|', ('period_to', '>', period_from), 
-                                                                                                   ('period_to', '=', False)], context=context)
+        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
+                                                                                              ('partner_id', '=', partner_id),
+                                                                                              '|', 
+                                                                                              ('period_to', '>', period_from), 
+                                                                                              ('period_to', '=', False),], context=context)
             
-        self.write(cr, uid, from_update_ids, {'period_to': period_from}, context=context)
+        period_from = DateFrom(period_from) + RelativeDate(days=-1)
+        self.write(cr, uid, from_update_ids, {'period_to': period_from.strftime('%Y-%m-%d')}, context=context)
         
-        return
+        return True
     
     def create(self, cr, uid, vals, context={}):
         '''
         Check if the new values override a catalogue
         '''
         self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
-                                                            vals.get('period_to', False), context=context)
+                                                    vals.get('currency_id', False),
+                                                    vals.get('partner_id', context.get('partner_id', False)),
+                                                    vals.get('period_to', False), context=context)
         return super(supplier_catalogue, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context={}):
@@ -100,6 +115,8 @@ class supplier_catalogue(osv.osv):
                 pricelist_ids.append(line.partner_info_id.id)
                 
             self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
+                                                                vals.get('currency_id', False),
+                                                                vals.get('partner_id', False),
                                                                 vals.get('period_to', catalogue.period_to), context=context)
         
             new_supinfo_vals = {}            
@@ -193,7 +210,6 @@ class supplier_catalogue(osv.osv):
                 return False
         return True
     
-    # TODO : Option 1
     def open_lines(self, cr, uid, ids, context={}):
         '''
         Opens all lines of this catalogue 
@@ -258,6 +274,8 @@ class supplier_catalogue_line(osv.osv):
                                               'min_quantity': vals['min_qty'],
                                               'uom_id': vals['line_uom_id'],
                                               'price': vals['unit_price'],
+                                              'rounding': vals['rounding'],
+                                              'min_order_qty': vals['min_order_qty'],
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_till': catalogue.period_to,}, 
                                               context=context)
@@ -275,6 +293,7 @@ class supplier_catalogue_line(osv.osv):
             pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
                           'price': vals.get('unit_price', line.unit_price),
                           'rounding': vals.get('rounding', line.rounding),
+                          'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
                           }
             
             # Update the pricelist line on product supplier information tab
@@ -335,6 +354,7 @@ class supplier_catalogue_line(osv.osv):
         'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
+        'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
         'comment': fields.char(size=64, string='Comment'),
 #        'partner_id': fields.function(_get_partner, fnct_search=_search_partner, method=True, string='Partner',
 #                                      type='many2one', relation='res.partner', store=False),
@@ -361,7 +381,7 @@ class supplier_catalogue_line(osv.osv):
     
 supplier_catalogue_line()
 
-# TODO: Option 3
+
 class from_supplier_choose_catalogue(osv.osv_memory):
     _name = 'from.supplier.choose.catalogue'
     

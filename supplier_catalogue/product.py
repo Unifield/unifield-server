@@ -93,6 +93,7 @@ class pricelist_partnerinfo(osv.osv):
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                  help='The ordered quantity must be a multiple of this rounding value.'),
+        'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
     }
     
 pricelist_partnerinfo()
@@ -131,9 +132,10 @@ class product_product(osv.osv):
                                                    order='valid_till asc, min_quantity desc', limit=1, context=context)
             
             if info_price:
-                res[product.id] = partner_price.browse(cr, uid, info_price, context=context)[0].price
+                info = partner_price.browse(cr, uid, info_price, context=context)[0]
+                res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
-                res[product.id] = False
+                res[product.id] = (False, 1.0, 1.0)
                         
         return not one_product and res or res[one_product]
     
@@ -157,8 +159,8 @@ class product_pricelist(osv.osv):
         context = kwargs['context']
         uom_price_already_computed = kwargs['uom_price_already_computed']
         
-        price = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
-                                                                    date, uom, context=context)
+        price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
+                                                                                       date, uom, context=context)
         
         return price, uom_price_already_computed
     

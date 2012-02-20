@@ -92,6 +92,7 @@
                     <group>
 					<!--<field name="catalogue_id" widget="selection" />-->
 					<field name="min_qty" />
+					<field name="min_order_qty" />
 					<field name="line_uom_id" />
 					<field name="unit_price" />
 					<field name="rounding" />
@@ -147,6 +148,7 @@
 					<field name="min_qty" />
 					<field name="unit_price" />
 					<field name="rounding" />
+					<field name="min_order_qty" />
 					<field name="comment" />
 				</form>
 			</field>
@@ -164,6 +166,7 @@
 					<field name="min_qty" />
 					<field name="unit_price" />
 					<field name="rounding" />
+					<field name="min_order_qty" />
 					<field name="comment" />
 				</tree>
 			</field>
@@ -184,6 +187,7 @@
 					<field name="min_qty" />
 					<field name="unit_price" />
 					<field name="rounding" />
+					<field name="min_order_qty" />
 					<field name="comment" />
 				</tree>
 			</field>
