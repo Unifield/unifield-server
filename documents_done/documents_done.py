@@ -215,6 +215,7 @@ class documents_done_wizard(osv.osv):
         'state': fields.char(size=64, string='State', readonly=True),
         'display_state': fields.function(_get_state, fnct_search=_search_state, type='selection', selection=_get_selection,
                                          method=True, store=False, readonly=True, string='State'),
+        'requestor': fields.many2one('res.users', string='Creator', readonly=True),
     }
 
     def _add_stock_move_pb(self, cr, uid, problem_id, moves, context={}):
@@ -361,7 +362,8 @@ class documents_done_wizard(osv.osv):
                     dnd.state,
                     dnd.creation_date,
                     dnd.expected_date,
-                    dnd.partner_id
+                    dnd.partner_id,
+                    dnd.requestor
                 FROM
                     ((SELECT
                         so.name AS name,
@@ -371,7 +373,8 @@ class documents_done_wizard(osv.osv):
                         so.state AS state,
                         so.date_order AS creation_date,
                         so.delivery_requested_date AS expected_date,
-                        so.partner_id 
+                        so.partner_id,
+                        so.create_uid AS requestor
                     FROM
                         sale_order so
                     WHERE
@@ -387,7 +390,8 @@ class documents_done_wizard(osv.osv):
                         ir.state AS state,
                         ir.date_order AS creation_date,
                         ir.delivery_requested_date AS expected_date,
-                        NULL AS partner_id
+                        NULL AS partner_id,
+                        ir.create_uid AS requestor
                     FROM
                         sale_order ir
                     WHERE
@@ -403,7 +407,8 @@ class documents_done_wizard(osv.osv):
                         po.state AS state,
                         po.date_order AS creation_date,
                         po.delivery_requested_date AS expected_date,
-                        po.partner_id AS partner_id
+                        po.partner_id AS partner_id,
+                        po.create_uid AS requestor
                     FROM
                         purchase_order po
                     WHERE
@@ -419,7 +424,8 @@ class documents_done_wizard(osv.osv):
                         rfq.state AS state,
                         rfq.date_order AS creation_date,
                         rfq.delivery_requested_date AS expected_date,
-                        rfq.partner_id AS partner_id
+                        rfq.partner_id AS partner_id,
+                        rfq.create_uid AS requestor
                     FROM
                         purchase_order rfq
                     WHERE
@@ -435,7 +441,8 @@ class documents_done_wizard(osv.osv):
                         t.state AS state,
                         t.creation_date AS creation_date,
                         t.requested_date AS expected_date,
-                        NULL AS partner_id
+                        NULL AS partner_id,
+                        t.create_uid AS requestor
                     FROM
                         tender t
                     WHERE
