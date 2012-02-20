@@ -60,6 +60,14 @@ class analytic_distribution(osv.osv):
         return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
     def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
+        """
+        Return distribution state
+        """
+        # Have an analytic distribution on another account than expense account make no sense. So their analaytic distribution is valid
+        if account_id:
+            account =  self.pool.get('account.account').browse(cr, uid, account_id)
+            if account and account.user_type and account.user_type.code != 'expense':
+                return 'valid'
         if not id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
