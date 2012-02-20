@@ -93,20 +93,25 @@ class product_product(osv.osv):
             context = {}
             
         if isinstance(product_ids, (int, long)):
-            one_product = True
+            one_product = product_ids
             product_ids = [product_ids]
             
-        for product_id in prod_obj.browse(cr, uid, product_ids, context=context):
+        for product in prod_obj.browse(cr, uid, product_ids, context=context):
             # Search the good line for the price
-            res[product_id] = partner_price.search(cr, uid, [('suppinfo_id.partner_id', '=', partner_id),
-                                                             ('suppinfo_id.product_id', '=', product_id.product_tmpl_id.id),
-                                                             ('min_quantity', '<=', product_qty),
-                                                             ('uom_id', '=', product_uom_id),
-                                                             ('currency_id', '=', currency_id),
-                                                             ('valid_till', '>', order_date)],
-                                                   order='min_quantity desc', limit=1, context=context)[0]
+            info_price = partner_price.search(cr, uid, [('suppinfo_id.name', '=', partner_id),
+                                                        ('suppinfo_id.product_id', '=', product.product_tmpl_id.id),
+                                                        ('min_quantity', '<=', product_qty),
+                                                        ('uom_id', '=', product_uom_id),
+                                                        ('currency_id', '=', currency_id),
+                                                        ('valid_till', '>', order_date)],
+                                                   order='valid_till asc, min_quantity desc', limit=1, context=context)
             
-        return one_product and res[0] or res
+            if info_price:
+                res[product.id] = partner_price.browse(cr, uid, info_price, context=context)[0].price
+            else:
+                res[product.id] = False
+                        
+        return not one_product and res or res[one_product]
     
 product_product()
 
@@ -114,6 +119,24 @@ product_product()
 class product_pricelist(osv.osv):
     _name = 'product.pricelist'
     _inherit = 'product.pricelist'
+    
+    def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
+        '''
+        Rework the computation of price from partner section in product form
+        '''
+        product_id = kwargs['product_id']
+        partner = kwargs['partner']
+        qty = kwargs['qty']
+        currency_id = kwargs['currency_id']
+        date = kwargs['date']
+        uom = kwargs['uom']
+        context = kwargs['context']
+        uom_price_already_computed = kwargs['uom_price_already_computed']
+        
+        price = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
+                                                                    date, uom, context=context)
+        
+        return price, uom_price_already_computed
     
 product_pricelist()
 
