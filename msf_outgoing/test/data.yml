@@ -33,12 +33,12 @@
     batch_management: false
     perishable: false
 -
-  Production Lot Ai (i stands for internal)
+  Production Lot Ai (i stands for internal ** replaced by standard **)
 -
   !record {model: stock.production.lot, id: outgoing_lot_Ai}:
-    name: A internal
+    name: standard ai
     product_id: outgoing_product_A
-    type: internal
+    type: standard
     life_date: !eval datetime.today().strftime('%Y-%m-%d')
 -
   Production Lot As (s stands for standard)
@@ -57,10 +57,10 @@
     type: internal
     life_date: !eval datetime.today().strftime('%Y-%m-%d')
 -
-  Production Lot Bs (s stands for standard)
+  Production Lot Bs (s stands for standard ** replaced by internal **)
 -
   !record {model: stock.production.lot, id: outgoing_lot_Bs}:
-    name: B standard
+    name: B internal2
     product_id: outgoing_product_B
-    type: standard
+    type: internal
     life_date: !eval datetime.today().strftime('%Y-%m-%d')
