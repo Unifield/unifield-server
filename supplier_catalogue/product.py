@@ -87,6 +87,7 @@ class product_product(osv.osv):
         res = {}
         one_product = False
         partner_price = self.pool.get('pricelist.partnerinfo')
+        prod_obj = self.pool.get('product.product')
         
         if not context:
             context = {}
@@ -95,10 +96,10 @@ class product_product(osv.osv):
             one_product = True
             product_ids = [product_ids]
             
-        for product_id in product_ids:
+        for product_id in prod_obj.browse(cr, uid, product_ids, context=context):
             # Search the good line for the price
             res[product_id] = partner_price.search(cr, uid, [('suppinfo_id.partner_id', '=', partner_id),
-                                                             ('suppinfo_id.product_id', '=', product_id),
+                                                             ('suppinfo_id.product_id', '=', product_id.product_tmpl_id.id),
                                                              ('min_quantity', '<=', product_qty),
                                                              ('uom_id', '=', product_uom_id),
                                                              ('currency_id', '=', currency_id),
@@ -108,5 +109,12 @@ class product_product(osv.osv):
         return one_product and res[0] or res
     
 product_product()
+
+
+class product_pricelist(osv.osv):
+    _name = 'product.pricelist'
+    _inherit = 'product.pricelist'
+    
+product_pricelist()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
