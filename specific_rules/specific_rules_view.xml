@@ -356,6 +356,10 @@
             <field name="arch" type="xml">
             	<data>
 
+                    <xpath expr="/form//field[@name='product_id']" position="replace">
+                        <field name="product_id" colspan="4" domain="[('batch_management', '=', True)]" />
+                    </xpath>
+
                     <xpath expr="/form/group/separator" position="replace">
                         <separator string="Batch Number Identification" colspan="4"/>
                     </xpath>
@@ -366,11 +370,11 @@
             		
             		
             		<field name="ref" position="after">
-            			<field name="type" />
+            			<field name="type" readonly="1" />
             		</field>
             		
             		<field name="name" position="replace">
-            			<field name="name" colspan="4" />
+            			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
             		</field>
             		
             		<field name="date" position="replace">
