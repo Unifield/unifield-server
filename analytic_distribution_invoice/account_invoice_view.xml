@@ -17,9 +17,11 @@
                         <group colspan="3"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='account_analytic_id']" position="replace">
-                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
-                        <field name="have_analytic_distribution_from_header"/>
-                        <field name="analytic_distribution_state" />
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                        <field name="analytic_distribution_state_recap"/>
+                        <field name="have_analytic_distribution_from_header" invisible="1"/>
+                        <field name="analytic_distribution_state" invisible="1"/>
+                        <field name="is_allocatable" invisible="1"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']" position="attributes">
                         <attribute name="colors">blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')</attribute>
@@ -56,9 +58,11 @@
                         <tree string="Invoice Line" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
                             <field name="name"/>
                             <field name="account_id" groups="account.group_account_user"/>
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
-                            <field name="have_analytic_distribution_from_header"/>
-                            <field name="analytic_distribution_state" />
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                            <field name="analytic_distribution_state_recap"/>
+                            <field name="have_analytic_distribution_from_header" invisible="1"/>
+                            <field name="analytic_distribution_state" invisible="1"/>
+                            <field name="is_allocatable" invisible="1"/>
                             <field name="quantity"/>
                             <field name="uos_id" string="UoM"/>
                             <field name="price_unit"/>
@@ -79,12 +83,14 @@
                 <field name="account_analytic_id" position="replace">
                     <group colspan="6">
                         <group colspan="2" col="4">
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': ['|',('newline', '=', True),('analytic_distribution_state', '!=', 'valid')]}" />
-                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': ['|',('newline', '=', True), ('analytic_distribution_state', '=', 'valid')]}" />
-                            <field name="have_analytic_distribution_from_header"/>
+                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True),('analytic_distribution_state', '!=', 'valid'), ('is_allocatable', '=', False)]}" />
+                            <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True), ('analytic_distribution_state', '=', 'valid'), ('is_allocatable', '=', False)]}" />
+                            <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                            <field name="have_analytic_distribution_from_header" invisible="1"/>
                         </group>
                         <field name="analytic_distribution_state" invisible="1"/>
                         <field name="newline" invisible="1" />
+                        <field name="is_allocatable" invisible="1"/>
                     </group>
                 </field>
             </field>
