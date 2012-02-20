@@ -41,6 +41,12 @@ KIT_COMPOSITION_TYPE = [('theoretical', 'Theoretical'),
                         ('real', 'Real'),
                         ]
 
+KIT_STATE = [('draft', 'Draft'),
+             ('completed', 'Completed'),
+             ('shipped', 'Shipped'),
+             ('archived', 'Archived'),
+             ]
+
 class composition_kit(osv.osv):
     '''
     kit composition class, representing both theoretical composition and actual ones
@@ -67,6 +73,11 @@ class composition_kit(osv.osv):
             # name - ex: ITC - 01/01/2012
             date = datetime.strptime(obj.composition_creation_date, db_date_format)
             result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
+            # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
+            if obj.composition_batch_check:
+                result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
+            else:
+                result[obj.id].update({'composition_combined_ref_lot': obj.composition_reference})
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -108,7 +119,7 @@ class composition_kit(osv.osv):
             replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
             result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
         
-        list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>']
+        list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>', '<field name="composition_reference"/>', '<field name="composition_combined_ref_lot"/>']
         # columns from kit composition tree
         if view_type == 'tree' and context.get('composition_type', False) == 'theoretical':
             replace_text = result['arch']
@@ -146,7 +157,10 @@ class composition_kit(osv.osv):
         '''
         # product object
         prod_obj = self.pool.get('product.product')
-        res = {'value': {'composition_batch_check': False, 'composition_expiry_check': False}}
+        res = {'value': {'composition_batch_check': False,
+                         'composition_expiry_check': False,
+                         'composition_lot_id': False,
+                         'composition_reference': False}}
         if not product_id:
             return res
         
@@ -165,6 +179,7 @@ class composition_kit(osv.osv):
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
                 'composition_exp': fields.date(string='Expiry Date'),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
+                'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
@@ -172,6 +187,8 @@ class composition_kit(osv.osv):
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
                 'composition_batch_check': fields.related('composition_product_id', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 'composition_expiry_check': fields.related('composition_product_id', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
+                'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Num', multi='get_vals',
+                                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
                 }
     
     def _get_default_type(self, cr, uid, context=None):
@@ -186,6 +203,7 @@ class composition_kit(osv.osv):
     
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'composition_type': _get_default_type,
+                 'state': 'draft',
                  }
     
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
@@ -298,6 +316,7 @@ class composition_item(osv.osv):
                 'item_exp': fields.date(string='Expiry Date'),
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
+                'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
@@ -308,5 +327,8 @@ class composition_item(osv.osv):
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                                 'composition.kit': (_get_composition_item_ids, ['composition_type'], 10)}),
                 }
+    
+    _defaults = {'state': 'draft',
+                 }
     
 composition_item()

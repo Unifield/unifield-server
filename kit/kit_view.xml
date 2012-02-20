@@ -54,6 +54,12 @@
                     		<field name="composition_description" nolabel="True" />
                     	</page>
                     </notebook>
+                    <field name="state"/>
+                    <group col="4" colspan="2">
+                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
+                        <button name="de_kitting" string="De-Kitting" type="object" icon="terp-stock_symbol-selection"  attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
+                        <button name="change_state" string="Change State" type="object" icon="gtk-go-forward" />
+                    </group>
             	</form>
             </field>
 		</record>
@@ -68,15 +74,16 @@
             		<field name="composition_product_id" />
             		<field name="composition_version_txt" />
             		<field name="composition_creation_date" />
-            		<field name="composition_reference" />
-            		<field name="composition_lot_id" />
+            		<field name="composition_reference" invisible="True" />
+            		<field name="composition_combined_ref_lot" />
+            		<field name="composition_lot_id" invisible="True" />
             		<field name="composition_exp" />
             	</tree>
             </field>
 		</record>
 		
-		<record id="view_composition_kit_theoretical_item_form" model="ir.ui.view">
-            <field name="name">composition.kit.theoretical.item.form</field>
+		<record id="view_composition_kit_item_form" model="ir.ui.view">
+            <field name="name">composition.kit.item.form</field>
             <field name="model">composition.item</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
@@ -101,8 +108,8 @@
             </field>
 		</record>
 		
-		<record id="view_composition_kit_theoretical_item_tree" model="ir.ui.view">
-            <field name="name">composition.kit.theoretical.item.tree</field>
+		<record id="view_composition_kit_item_tree" model="ir.ui.view">
+            <field name="name">composition.kit.item.tree</field>
             <field name="model">composition.item</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
@@ -114,6 +121,7 @@
             		<field name="item_uom_id" />
             		<field name="item_lot" />
             		<field name="item_exp" />
+            		<button name="substitute_item" type="object" string="Substitute Item" icon="terp-stock_effects-object-colorize" />
             	</tree>
             </field>
 		</record>
