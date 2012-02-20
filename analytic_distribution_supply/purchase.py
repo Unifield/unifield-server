@@ -374,7 +374,7 @@ class purchase_order_line(osv.osv):
     }
     def button_analytic_distribution(self, cr, uid, ids, context={}):
         """
-        Launch analytic distribution wizard on a purchase order
+        Launch analytic distribution wizard on a purchase order line.
         """
         # Some verifications
         if not context:
