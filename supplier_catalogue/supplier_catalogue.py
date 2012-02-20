@@ -27,6 +27,8 @@ from tools.translate import _
 from mx.DateTime import DateFrom, now
 from datetime import date
 
+import time
+
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
@@ -39,6 +41,48 @@ class supplier_catalogue(osv.osv):
                                'overlapped catalogue !'))
         
         return False
+    
+    def _update_other_catalogue(self, cr, uid, cat_id, period_from, period_to=False, context={}):
+        '''
+        Check if other catalogues need to be updated according to the new dates of cat_id
+        '''
+        if not context:
+            context = {}
+            
+        if not context.get('cat_ids', False):
+            context.update({'cat_ids': []})
+        
+        if cat_id:
+            context['cat_ids'].append(cat_id)
+            
+        if period_to:
+            to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from), 
+                                                                                         ('period_from', '<', period_to)],
+                                                                                         order='period_from asc',
+                                                                                         limit=1,
+                                                                                         context=context)
+            if to_ids:
+                over_cat = self.browse(cr, uid, to_ids[0], context=context)
+                over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
+                over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
+                raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
+                                                  'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
+                                                  'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
+            
+        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), '|', ('period_to', '>', period_from), 
+                                                                                                   ('period_to', '=', False)], context=context)
+            
+        self.write(cr, uid, from_update_ids, {'period_to': period_from}, context=context)
+        
+        return
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Check if the new values override a catalogue
+        '''
+        self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
+                                                            vals.get('period_to', False), context=context)
+        return super(supplier_catalogue, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context={}):
         '''
@@ -54,11 +98,9 @@ class supplier_catalogue(osv.osv):
             pricelist_ids = []
             for line in catalogue.line_ids:
                 pricelist_ids.append(line.partner_info_id.id)
-        
-            # TODO: To validate with Magali
-            # Remove the possibility to change the from date
-            if 'period_from' in vals and vals['period_from'] != catalogue.period_from:
-                raise osv.except_osv(_('Error'), _('You cannot change the from date of a catalogue !'))
+                
+            self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
+                                                                vals.get('period_to', catalogue.period_to), context=context)
         
             new_supinfo_vals = {}            
             # Change the partner of all supplier info instances
@@ -67,7 +109,7 @@ class supplier_catalogue(osv.osv):
                 new_supinfo_vals.update({'name': vals['partner_id'],
                                          'delay': delay})
             
-            new_price_vals = {'valid_till': vals.get('period_to', catalogue.period_to),
+            new_price_vals = {'valid_till': vals.get('period_to', None),
                               'currency_id': vals.get('currency_id', catalogue.currency_id.id),
                               'name': vals.get('name', catalogue.name),}
                 
@@ -124,7 +166,7 @@ class supplier_catalogue(osv.osv):
                                       domain=[('supplier', '=', True)]),
         'period_from': fields.date(string='From', required=True,
                                    help='Starting date of the catalogue.'),
-        'period_to': fields.date(string='To', required=True,
+        'period_to': fields.date(string='To', required=False,
                                  help='End date of the catalogue'),
         'currency_id': fields.many2one('res.currency', string='Currency', required=True,
                                        help='Currency used in this catalogue.'),
@@ -139,6 +181,7 @@ class supplier_catalogue(osv.osv):
         # By default, use the currency of the user
         'currency_id': lambda obj, cr, uid, ctx: obj.pool.get('res.users').browse(cr, uid, uid, context=ctx).company_id.currency_id.id,
         'partner_id': lambda obj, cr, uid, ctx: ctx.get('partner_id', False),
+        'period_from': lambda *a: time.strftime('%Y-%m-%d'),
     }
     
     def _check_period(self, cr, uid, ids):
@@ -146,7 +189,7 @@ class supplier_catalogue(osv.osv):
         Check if the To date is older than the From date
         '''
         for catalogue in self.browse(cr, uid, ids):
-            if catalogue.period_to < catalogue.period_from:
+            if catalogue.period_to and catalogue.period_to < catalogue.period_from:
                 return False
         return True
     

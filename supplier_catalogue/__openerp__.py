@@ -38,6 +38,7 @@
         "supplier_catalogue_view.xml",
         "product_view.xml",
         "partner_view.xml",
+        "supplier_catalogue_data.xml",
         "security/ir.model.access.csv",
     ],
     'test': [
