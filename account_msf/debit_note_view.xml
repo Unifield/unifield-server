@@ -51,10 +51,13 @@
                             <label align="0.0" string="(keep empty to use the current period)"/>
                         </group>
                     </group>
-                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                    <field name="analytic_distribution_id" invisible="1"/>
-                    <group colspan="3"/>
+                    <group colspan="4" col="8">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <button name="button_debit_note_import_invoice" string="Import invoice" states="draft" type="object" icon="gtk-save-as" colspan="1" 
+                            help="Import invoice that come from the default account given in Company configuration ('Import invoice default account for Debit Note')"/>
+                    </group>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
@@ -85,8 +88,6 @@
                             <group col="8" colspan="4" groups="base.group_user">
                                 <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
                                 <button name="action_cancel_draft" states="cancel" string="Reset to Draft" type="object" icon="terp-stock_effects-object-colorize"/>
-                                <button name="button_debit_note_import_invoice" string="Import invoice" states="draft" type="object" icon="gtk-save-as" 
-                                    help="Import invoice that come from the default account given in Company configuration ('Import invoice default account for Debit Note')"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                                 <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
