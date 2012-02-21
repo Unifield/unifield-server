@@ -23,15 +23,17 @@
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
                             <field name="rev_journal_ids" colspan="2"/>
                             <field name="rev_period_ids" colspan="2"/>
+                            <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
+                            <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
                             <field name="journal_ids" colspan="2" nolabel="1">
-                                <tree string="Journal">
+                                <tree string="Journals">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
                                 </tree>
                             </field>
                             <field name="period_ids" colspan="2" nolabel="1">
-                                <tree string="Period">
+                                <tree string="Periods">
                                     <field name="name" string="Name"/>
                                     <field name="date_start" string="Start"/>
                                     <field name="date_stop" string="Stop"/>
@@ -42,8 +44,10 @@
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
                             <field name="rev_analytic_journal_ids" colspan="2"/>
                             <label string="" colspan="2"/>
+                            <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
+                            <newline/>
                             <field name="analytic_journal_ids" colspan="2" nolabel="1">
-                                <tree string="Analytic Journal">
+                                <tree string="Analytic Journals">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
@@ -54,41 +58,45 @@
                     </group>
                     <separator string="Account"/>
                     <group col="4" colspan="6">
-                        <field name="rev_account_ids" colspan="2"/>
-                        <field name="rev_account_type_ids" colspan="2"/>
-                        <field name="account_ids" colspan="2" nolabel="1">
-                            <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
-                                <field name="code"/>
-                                <field name="name"/>
-                                <field name="type" string="Type"/>
-                            </tree>
-                        </field>
-                        <field name="account_type_ids" colspan="2" nolabel="1">
-                            <tree string="Account type">
-                                <field name="code"/>
-                                <field name="name"/>
-                            </tree>
-                        </field>
-                    </group>
-                    <group col="4" colspan="6">
-                        <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}" colspan="2"/>
-                        <label string="" colspan="2"/>
-                        <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                            <tree string="Analytic Accounts">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
-                        <label string="" colspan="2"/>
-                    </group>
-                    <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
-                        <separator string="Reconciliation"/>
-                        <field name="reconciled"/><field name="reconcile_id"/>
-                    </group>
-                    <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
-                        <separator string="Reallocation"/>
-                        <field name="reallocated"/><field name="reversed"/>
+                        <field name="rev_account_ids"/>
+                        <newline/>
+                        <group col="4" colspan="6">
+                            <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="2"/>
+                            <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
+                            <field name="account_ids" colspan="2" nolabel="1">
+                                <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="type" string="Type"/>
+                                </tree>
+                            </field>
+                            <field name="account_type_ids" colspan="2" nolabel="1">
+                                <tree string="Account types">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                            <newline/>
+                            <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <newline/>
+                            <button name="button_analytic_account_clear" type="object" string="Remove all Analytic Accounts" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <newline/>
+                            <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                                <tree string="Analytic Accounts">
+                                    <field name="code" string="Ana. Code"/>
+                                    <field name="name" string="Ana. Name"/>
+                                    <field name="type" string="Ana. Type"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <separator string="Reconciliation"/>
+                            <field name="reconciled"/><field name="reconcile_id"/>
+                        </group>
+                        <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <separator string="Reallocation"/>
+                            <field name="reallocated"/><field name="reversed"/>
+                        </group>
                     </group>
                     <separator string="Amount &amp; Currency"/>
                     <group col="8" colspan="6">
@@ -122,7 +130,7 @@
                     <separator string=" "/>
                     <group col="4" colspan="6">
                         <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
-                        <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
+                        <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>
                     </group>
                     <field name="model" invisible="1"/>
                 </form>
