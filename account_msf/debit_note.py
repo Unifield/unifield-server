@@ -105,6 +105,10 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
             w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id, 
                 'partner_id': inv.partner_id.id})
+            context.update({
+                'active_id': inv.id,
+                'active_ids': ids,
+            })
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'debit.note.import.invoice',
