@@ -363,7 +363,7 @@ class documents_done_wizard(osv.osv):
                 if all_doc:
                     self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)), context=context)
                 
-        if not context.get('direct_cancel', False):
+        if not context.get('direct_cancel', False) or not all_doc:
             return {'type': 'ir.actions.act_window_close'}
         else:
             context.update({'search_default_requestor': uid})

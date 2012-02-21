@@ -13,7 +13,7 @@
                     <field name="partner_id" />
                     <field name="model" />
                     <field name="display_state" />
-                    <button type="object" name="go_to_problems" string="Close" icon="terp-gtk-stop" confirm="Are you sure to delete this document ?" />
+                    <button type="object" name="go_to_problems" string="Close" icon="terp-gtk-stop" />
                     <field name="problem" string="Associated Doc." />
                 </tree>
             </field>
@@ -77,7 +77,7 @@
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
                     <group colspan="3" col="3">
-                        <button name="cancel_document" string="Close document and cancel associated documents" type="object" colspan="3" icon="terp-check" />
+                        <button name="cancel_document" string="Cancel associated documents" type="object" colspan="3" icon="terp-check" />
                     </group>
                 </form>
             </field>
