@@ -21,6 +21,7 @@
 
 import datetime
 from osv import fields, osv
+from tools.translate import _
 
 class res_currency_table(osv.osv):
     _name = 'res.currency.table'
@@ -37,6 +38,19 @@ class res_currency_table(osv.osv):
     _defaults = {
         'state': 'draft',
     }
+    
+    def validate(self, cr, uid, ids, context={}):
+        if not context:
+            context = {}
+        # just get one table
+        if not isinstance(ids, (int, long)):
+            ids = ids[0]
+        table = self.browse(cr, uid, ids, context=context)
+        for currency in table.currency_ids:
+            if currency.rate == 0.0:
+                raise osv.except_osv(_('Error'), _('A currency has an invalid rate! Please set a rate before validation.'))
+        
+        return self.write(cr, uid, ids, {'state': 'valid'}, context=context)
 
     def _check_unicity(self, cr, uid, ids, context={}):
         if not context:

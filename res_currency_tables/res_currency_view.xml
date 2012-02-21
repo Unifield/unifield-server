@@ -21,10 +21,10 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Currency Table">
-                    <field name="name"/>
-                    <field name="code"/>
-                    <field colspan="4" name="currency_ids" nolabel="1">
-	                    <tree string="Currencies">
+                    <field name="name" attrs="{'readonly':[('state','=','closed')]}"/>
+                    <field name="code" attrs="{'readonly':[('state','=','closed')]}"/>
+                    <field colspan="4" name="currency_ids" nolabel="1" attrs="{'readonly':[('state','=','closed')]}">
+	                    <tree string="Currencies" colors="red:rate==0.0">
 	                        <field name="name"/>
 	                        <field name="currency_name"/>
 	                        <field name="rate"/>
@@ -54,7 +54,7 @@
 		                    </field>
 		                </form>
                     </field>
-                    <field name="state"/>
+                    <field name="state" readonly="1"/>
                     <group col="4" colspan="2">
                         <button string="Validate" name="valid" states="draft" type="workflow" icon="gtk-ok"/>
                         <button string="Close" name="closed" states="valid" type="workflow" icon="gtk-jump-to" />

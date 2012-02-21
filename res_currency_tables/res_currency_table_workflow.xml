@@ -20,7 +20,7 @@
         <field name="wkf_id" ref="wkf_res_currency_table" />
         <field name="name">valid</field>
         <field name="kind">function</field>
-        <field name="action">write({'state':'valid'})</field>
+        <field name="action">validate()</field>
     </record>
 
     <record model="workflow.activity" id="act_closed">
