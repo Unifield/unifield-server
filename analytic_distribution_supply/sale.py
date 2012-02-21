@@ -202,7 +202,7 @@ class sale_order_line(osv.osv):
         # Copy analytic distribution
         sol = self.browse(cr, uid, [id], context=context)[0]
         if sol.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy_data(cr, uid, sol.analytic_distribution_id.id, {}, context=context)
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, sol.analytic_distribution_id.id, {}, context=context)
             if new_distrib_id:
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context)
