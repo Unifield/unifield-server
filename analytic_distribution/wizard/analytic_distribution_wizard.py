@@ -371,10 +371,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.commitment_line_id and el.commitment_line_id.commit_id and el.commitment_line_id.commit_id.state in ['done']:
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'validated', 'shipping_except', 'invoice_except']:
+            if el.sale_order_id and el.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'validated', 'shipping_except', 'invoice_except']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
                 res[el.id] = False
         return res
 
@@ -563,10 +563,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.commitment_line_id and wiz.commitment_line_id.commit_id and wiz.commitment_line_id.commit_id.state in ['done']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that sale order is in good state if necessary
-            if wiz.sale_order_id and wiz.sale_order_id.state in ['done', 'manual', 'progress', 'validated', 'shipping_except', 'invoice_except']:
+            if wiz.sale_order_id and wiz.sale_order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that sale order from sale order line is in good state if we come from a purchase order
-            if wiz.sale_order_line_id and wiz.sale_order_line_id.order_id and wiz.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'validated', 'shipping_except', 'invoice_except']:
+            if wiz.sale_order_line_id and wiz.sale_order_line_id.order_id and wiz.sale_order_line_id.order_id.state in ['done', 'manual', 'progress', 'shipping_except', 'invoice_except']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that Cost Center are done if we come from a purchase order
             if not wiz.line_ids and (wiz.purchase_id or wiz.purchase_line_id):
