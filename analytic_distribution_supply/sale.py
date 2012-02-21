@@ -107,7 +107,7 @@ class sale_order(osv.osv):
         # Analytic distribution verification if partner_type is 'internal'
         ana_obj = self.pool.get('analytic.distribution')
         for so in self.browse(cr, uid, ids, context=context):
-            if so.partner_id.partner_type == 'internal' and not so.analytic_distribution_id:
+            if so.partner_id.partner_type == 'section' and not so.analytic_distribution_id:
                 for line in so.order_line:
                     if not line.analytic_distribution_id:
                         dummy_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
