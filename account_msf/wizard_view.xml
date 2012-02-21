@@ -13,7 +13,7 @@
             <field name="arch" type="xml">
                 <form string="Debit Note Import Invoice Wizard">
                     <field name="line_ids" nolabel="1" colspan="4" 
-                        domain="[('ready_for_import_in_debit_note','=',True), ('currency_id', '=', currency_id)]">
+                        domain="[('ready_for_import_in_debit_note','=',True), ('currency_id', '=', currency_id), ('partner_id', '=', partner_id)]">
                         <tree string="Invoices">
                             <field name="date_invoice"/>
                             <field name="number"/>
@@ -37,6 +37,7 @@
                     </group>
                     <field name="invoice_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
                 </form>
             </field>
         </record>

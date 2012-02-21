@@ -33,6 +33,7 @@ class debit_note_import_invoice(osv.osv_memory):
         'invoice_id': fields.many2one('account.invoice', string='', required=True, readonly=True),
         'line_ids': fields.many2many('account.invoice', 'debit_note_import_invoice', 'wizard_id', 'invoice_id', string="Invoices"),
         'currency_id': fields.many2one('res.currency', required=True, readonly=True),
+        'partner_id': fields.many2one('res.partner', required=True, readonly=True),
     }
 
     def button_validate(self, cr, uid, ids, context={}):

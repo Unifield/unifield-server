@@ -73,7 +73,8 @@ class account_invoice(osv.osv):
             ('reconciled','=',False), 
             ('state', '=', 'open'), 
             ('type', '=', 'out_invoice'), 
-            ('journal_id.type', 'in', ['sale']) 
+            ('journal_id.type', 'in', ['sale']),
+            ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
 
@@ -102,7 +103,8 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             if inv.type != 'out_invoice' or inv.is_debit_note == False:
                 raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
-            w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id})
+            w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id, 
+                'partner_id': inv.partner_id.id})
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'debit.note.import.invoice',
