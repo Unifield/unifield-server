@@ -1,0 +1,16 @@
+- 
+  I create empty theoretical composition list 01
+- 
+  !record {model: composition.kit, id: kit_compo_01}:
+    composition_type: 'theoretical'
+    composition_product_id: kit_product_A
+    composition_version_txt: 'ITC'
+    composition_creation_date: '2010-01-20'
+- 
+  I create empty theoretical composition list 02
+- 
+  !record {model: composition.kit, id: kit_compo_02}:
+    composition_type: 'theoretical'
+    composition_product_id: kit_product_B
+    composition_version_txt: 'OCG'
+    composition_creation_date: '2010-02-20'

@@ -61,7 +61,7 @@
       pass
     else:
       #print 'exception missing'
-      raise Exception('Exception is Missing for theoretical kit with reference')
+      raise Exception('Exception is Missing for theoretical kit with lot id')
 -
   I try to set an expiry date in the theoretical kit
 -
@@ -73,7 +73,7 @@
       pass
     else:
       #print 'exception missing'
-      raise Exception('Exception is Missing for theoretical kit with reference')
+      raise Exception('Exception is Missing for theoretical kit with expiry date')
 -
   I try to set a version object in the theoretical kit
 -
@@ -85,16 +85,12 @@
       pass
     else:
       #print 'exception missing'
-      raise Exception('Exception is Missing for theoretical kit with reference')
+      raise Exception('Exception is Missing for theoretical kit with version id')
 -
   I try now the unique constraints on theoretical kit. Set the same product. Set the same Version. Set the same date, fails.
 -
   !python {model: composition.kit}: |
-    kit = self.browse(cr, uid, ref("kit_compo_01"), context=context)
-    print kit.composition_reference
-    print kit.composition_exp
     self.write(cr, uid, ref("kit_compo_01"), {'composition_product_id': ref("kit_product_B")}, context=context)
-    print 'OK'
     self.write(cr, uid, ref("kit_compo_01"), {'composition_version_txt': 'OCG'}, context=context)
     try:
       self.write(cr, uid, ref("kit_compo_01"), {'composition_creation_date': ref("kit_lot_As")}, context=context)
@@ -103,7 +99,7 @@
       pass
     else:
       #print 'exception missing'
-      raise Exception('Exception is Missing for theoretical kit with reference')
+      raise Exception('Exception is Missing for theoretical kit with same (product - version - date) values')
 -
   END OF FILE
 -

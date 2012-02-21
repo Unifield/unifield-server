@@ -1,0 +1,12 @@
+-
+  I first check the integrity constraint on the product. Kit cannot be perishable.
+-
+  !python {model: product.product}: |
+    try:
+      self.write(cr, uid, ref("kit_product_A"), {'batch_management': False}, context=context)
+    except:
+      #print 'exception ok'
+      cr.rollback()
+    else:
+      #print 'exception missing'
+      raise Exception('Exception is Missing for kit product set to perishable')

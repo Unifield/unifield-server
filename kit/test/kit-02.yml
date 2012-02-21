@@ -1,0 +1,12 @@
+-
+  I try to set a product which is not a kit
+-
+  !python {model: composition.kit}: |
+    try:
+      self.write(cr, uid, ref("kit_compo_01"), {'composition_product_id': ref("kit_product_C")}, context=context)
+    except:
+      #print 'exception ok'
+      cr.rollback()
+    else:
+      #print 'exception missing'
+      raise Exception('Exception is Missing for kit with a not kit product')
