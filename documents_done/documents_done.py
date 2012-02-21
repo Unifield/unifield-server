@@ -366,15 +366,17 @@ class documents_done_wizard(osv.osv):
         if not context.get('direct_cancel', False) or not all_doc:
             return {'type': 'ir.actions.act_window_close'}
         else:
-            context.update({'search_default_requestor': uid})
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'documents.done.wizard',
-                    'name': 'Documents \'In Progress\'',
-                    'view_type': 'form',
-                    'view_mode': 'tree',
-                    'target': 'crush',
-                    'context': context,
-                    }
+            return True
+#            FIX displaying of res.log : Replace the returned view by True
+#            context.update({'search_default_requestor': uid})
+#            return {'type': 'ir.actions.act_window',
+#                    'res_model': 'documents.done.wizard',
+#                    'name': 'Documents \'In Progress\'',
+#                    'view_type': 'form',
+#                    'view_mode': 'tree',
+#                    'target': 'crush',
+#                    'context': context,
+#                    }
     
     def init(self, cr):
         '''
