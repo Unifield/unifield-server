@@ -284,6 +284,9 @@ class account_mcdb(osv.osv_memory):
                 mnt_from = getattr(wiz, curr[0]) or False
                 mnt_to = getattr(wiz, curr[1]) or False
                 field = curr[2]
+                # specific behaviour for functional in analytic MCDB
+                if field == 'balance' and res_model == 'account.analytic.line':
+                    field = 'amount'
                 abs_from = abs(mnt_from)
                 min_from = -1 * abs_from
                 abs_to = abs(mnt_to)
