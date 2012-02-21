@@ -232,6 +232,25 @@ class supplier_catalogue(osv.osv):
                 'view_id': [view_id],
                 'domain': [('catalogue_id', '=', ids[0])],
                 'context': context}
+        
+    def catalogue_import_lines(self, cr, uid, ids, context={}):
+        '''
+        Open the wizard to import lines
+        '''
+        if not context:
+            context = {}
+        
+        raise osv.except_osv(_('Error'), _('Not implemented !'))    
+        
+        res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
+            
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'catalogue.import.lines',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                'res_id': res_id,
+                'context': context}
     
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
     

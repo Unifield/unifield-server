@@ -12,8 +12,8 @@
                 <data>
 	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
 	                    <page string="Catalogues" attrs="{'invisible': [('supplier', '=', False)]}">
-	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree,form" readonly="1">
-	                    		<tree string="Catalogues">
+	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree,form" readonly="0">
+	                    		<tree string="Catalogues" hide_new_button="1">
 	                    			<field name="name" />
 	                    			<field name="period_from" />
 	                    			<field name="period_to" />
@@ -26,17 +26,6 @@
                 </data>
             </field>
         </record>
-        
-        <!-- Links to the catalogues list of this supplier -->
-        <act_window
-        	name="Catalogues"
-        	res_model="supplier.catalogue.line"
-        	src_model="res.partner"
-        	view_mode="tree,form"
-        	view_type="form"
-        	domain="[]"
-        	context="{'search_default_partner_id': active_id}"
-        	id="action_catalogue_supplier_list" />
         	
         <!-- Action to create a new catalogue for this supplier -->
         <act_window
@@ -71,7 +60,7 @@
         	src_model="res.partner"
         	view_mode="form"
         	view_type="form"
-        	key2="tree_but_open"
+        	key2="client_action_multi"
         	target="new"
         	domain="[]"
         	context="{}"
