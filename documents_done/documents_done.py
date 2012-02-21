@@ -359,8 +359,9 @@ class documents_done_wizard(osv.osv):
         
         for doc in self.browse(cr, uid, ids, context=context):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
-                self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)))
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
+                if all_doc:
+                    self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)), context=context)
                 
         if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
