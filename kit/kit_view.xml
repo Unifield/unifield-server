@@ -54,7 +54,7 @@
                     		<field name="composition_description" nolabel="True" />
                     	</page>
                     </notebook>
-                    <field name="state"/>
+                    <field name="state" />
                     <group col="4" colspan="2">
                     	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="terp-stock_symbol-selection"  attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
@@ -78,6 +78,7 @@
             		<field name="composition_combined_ref_lot" />
             		<field name="composition_lot_id" invisible="True" />
             		<field name="composition_exp" />
+            		<field name="state" />
             	</tree>
             </field>
 		</record>
@@ -104,6 +105,7 @@
 	                        </page>
             			</notebook>
                     </group>
+                    <field name="state" invisible="True" />
             	</form>
             </field>
 		</record>
@@ -121,6 +123,7 @@
             		<field name="item_uom_id" />
             		<field name="item_lot" />
             		<field name="item_exp" />
+            		<field name="state" invisible="True" />
             		<button name="substitute_item" type="object" string="Substitute Item" icon="terp-stock_effects-object-colorize" />
             	</tree>
             </field>

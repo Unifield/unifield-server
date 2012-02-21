@@ -279,6 +279,8 @@ class composition_item(osv.osv):
             result[obj.id].update({'item_kit_version': obj.item_kit_id.composition_version})
             # type
             result[obj.id].update({'item_kit_type': obj.item_kit_id.composition_type})
+            # state
+            result[obj.id].update({'state': obj.item_kit_id.state})
         return result
     
     def name_get(self, cr, uid, ids, context=None):
@@ -316,7 +318,6 @@ class composition_item(osv.osv):
                 'item_exp': fields.date(string='Expiry Date'),
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
-                'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
@@ -326,9 +327,21 @@ class composition_item(osv.osv):
                 'item_kit_type': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Type', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                                 'composition.kit': (_get_composition_item_ids, ['composition_type'], 10)}),
+                'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_STATE, size=1024, string='State', required=True, readonly=True, multi='get_vals',
+                                store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
+                                        'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
                 }
     
-    _defaults = {'state': 'draft',
-                 }
     
 composition_item()
+
+
+class stock_move(osv.osv):
+    '''
+    add a constraint - when batch management or perishable, only one product by stock move line
+    '''
+    _inherit = 'stock.move'
+    
+    
+
+stock_move()
