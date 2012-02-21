@@ -32,7 +32,7 @@
                 "product_asset", # because of asset_id
                 "msf_outgoing",
                 ],
-    "author": "MSF",
+    "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
     "description": """

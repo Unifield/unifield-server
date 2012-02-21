@@ -27,6 +27,7 @@ from tools.translate import _
 from time import strftime
 import decimal_precision as dp
 from account_tools import get_period_from_date
+from tools.misc import flatten
 
 class account_commitment(osv.osv):
     _name = 'account.commitment'
@@ -210,6 +211,37 @@ class account_commitment(osv.osv):
         """
         # trick to refresh view and update total amount
         return self.write(cr, uid, ids, [], context=context)
+
+    def get_engagement_lines(self, cr, uid, ids, context={}):
+        """
+        Return all engagement lines from given commitments
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        valid_ids = []
+        # Search valid ids
+        for co in self.browse(cr, uid, ids):
+            for line in co.line_ids:
+                if line.analytic_lines:
+                    valid_ids.append([x.id for x in line.analytic_lines])
+        valid_ids = flatten(valid_ids)
+        domain = [('id', 'in', valid_ids)]
+        # Permit to only display engagement lines
+        context.update({'search_default_engagements': 1})
+        return {
+            'name': 'Analytic Entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
 
     def onchange_date(self, cr, uid, ids, date, period_id=False, context={}):
         """

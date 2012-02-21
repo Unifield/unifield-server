@@ -22,7 +22,7 @@
     "name": "Recurring Entries for MSF",
     "version": "1.0",
     "depends": ["analytic_distribution"],
-    "author" : "MSF",
+    "author" : "MSF, TeMPO Consulting",
     "category": "General/Standard",
     "description": """
     This module adds analytic distribution and period checks to

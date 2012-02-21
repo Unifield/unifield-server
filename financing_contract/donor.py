@@ -50,14 +50,19 @@ class financing_contract_donor(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between donors!', ['code', 'name']),
     ]
 
-    def copy(self, cr, uid, id, default={}, context=None, done_list=[], local=False):
+    def copy(self, cr, uid, id, default={}, context=None):
         donor = self.browse(cr, uid, id, context=context)
         if not default:
             default = {}
         default = default.copy()
         default['code'] = (donor['code'] or '') + '(copy)'
         default['name'] = (donor['name'] or '') + '(copy)'
-        return super(financing_contract_donor, self).copy(cr, uid, id, default, context=context)
+        # Copy lines manually
+        default['actual_line_ids'] = []
+        copy_id = super(financing_contract_donor, self).copy(cr, uid, id, default, context=context)
+        copy = self.browse(cr, uid, copy_id, context=context)
+        self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, copy.format_id.id, context=context)
+        return copy_id
     
     
 financing_contract_donor()

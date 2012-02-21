@@ -15,11 +15,11 @@
                         <field name="code" select="1" required="1"/>
                         <field name="category" select="1" required="1" on_change="on_change_category(category)" />
                     </field>
-	                <page string="Account Data" position="replace">
-	                    <page string="Activation period">
-	                        <field name="date_start"/>
-	                        <field name="date" select="2"/>
-	                    </page>
+                    <page string="Account Data" position="replace">
+                        <page string="Activation period">
+                            <field name="date_start"/>
+                            <field name="date" select="2"/>
+                        </page>
                         <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
                                 <tree string="Cost Centers" >
@@ -81,15 +81,15 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_list"/>
             <field name="arch" type="xml">
                 <tree string="Analytic Accounts" position="replace">
-	                <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
-	                    <field name="name"/>
-	                    <field name="code"/>
-	                    <field name="description"/>
+                    <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
                         <field name="category"/>
-	                    <field name="type"/>
-	                    <field name="date_start"/>
-	                    <field name="date"/>
-	                </tree>
+                        <field name="type"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
+                    </tree>
                 </tree>
             </field>
         </record>

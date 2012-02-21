@@ -115,10 +115,12 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+						<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
@@ -126,10 +128,12 @@
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
-	           			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+	           			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<!-- MERGED FROM REASON_TYPES_MOVES "usage in" -->
@@ -164,10 +168,12 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+						<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
@@ -175,10 +181,12 @@
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
-	           			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+	           			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
@@ -241,10 +249,12 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" />
-						<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+						<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='prodlot_id']" position="after">
@@ -252,10 +262,12 @@
 					</xpath>
 					
 					<xpath expr="//tree[@string='Stock Moves']//field[@name='state']" position="after">
-	           			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+	           			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 					</xpath>
 					
 					<!-- MERGED FROM SPECIFIC_LOCATIONS (quarantine domain) -->
@@ -344,6 +356,10 @@
             <field name="arch" type="xml">
             	<data>
 
+                    <xpath expr="/form//field[@name='product_id']" position="replace">
+                        <field name="product_id" colspan="4" domain="[('batch_management', '=', True)]" />
+                    </xpath>
+
                     <xpath expr="/form/group/separator" position="replace">
                         <separator string="Batch Number Identification" colspan="4"/>
                     </xpath>
@@ -354,11 +370,11 @@
             		
             		
             		<field name="ref" position="after">
-            			<field name="type" />
+            			<field name="type" readonly="1" />
             		</field>
             		
             		<field name="name" position="replace">
-            			<field name="name" colspan="4" />
+            			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
             		</field>
             		
             		<field name="date" position="replace">
@@ -406,10 +422,13 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	                  	<field name="kc_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="ssl_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="dg_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="np_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+	                  	<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
+	          			
 	                </field>
 	                
 	                <button name="action_done" position="attributes">
@@ -446,10 +465,12 @@
 	                    <field name="hidden_batch_management_mandatory" invisible="True" />
 	                    <field name="hidden_perishable_mandatory" invisible="True" />
 						<field name="expired_date" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	                  	<field name="kc_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="ssl_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="dg_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-	          			<field name="np_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+	                  	<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 	                </field>
 	                
 	                <button name="action_confirm" position="attributes">
@@ -478,10 +499,12 @@
             	<data>
             	
             		<button name="action_done" position="after">
-            			<field name="kc_check" />
-	          			<field name="ssl_check" />
-	          			<field name="dg_check" />
-	          			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
             		</button>
             		
             		<button name="action_done" position="attributes">
@@ -502,10 +525,12 @@
             	<data>
             	
             		<field name="state" position="after">
-            			<field name="kc_check" />
-	          			<field name="ssl_check" />
-	          			<field name="dg_check" />
-	          			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
             		</field>
             	
             	</data>
@@ -522,10 +547,12 @@
             	<data>
             	
             		<button name="action_done" position="after">
-            			<field name="kc_check" />
-	          			<field name="ssl_check" />
-	          			<field name="dg_check" />
-	          			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
             		</button>
             		
             		<button name="action_done" position="attributes">
@@ -546,10 +573,12 @@
             	<data>
             	
             		<button name="%(stock.action_partial_move_server)d" position="after">
-            			<field name="kc_check" />
-	          			<field name="ssl_check" />
-	          			<field name="dg_check" />
-	          			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
             		</button>
             		
             		<button name="action_assign" position="attributes">
@@ -590,10 +619,12 @@
 	           			<field name="hidden_perishable_mandatory" invisible="True" />
 	           			<field name="hidden_batch_management_mandatory" invisible="True" />
 	           			<field name="type_check" invisible="True" />
-	           			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+	           			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
 	           		</field>
             	</data>
             </field>
@@ -621,10 +652,12 @@
 	           			<field name="hidden_perishable_mandatory" invisible="True" />
 	           			<field name="hidden_batch_management_mandatory" invisible="True" />
 	           			<field name="type_check" invisible="True" />
-	           			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+	           			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
            			</field>
             	
             	</data>
@@ -663,10 +696,12 @@
             			<field name="hidden_perishable_mandatory" invisible="True" />
             			<field name="hidden_batch_management_mandatory" invisible="True" />
             			<field name="type_check" invisible="True" />
-            			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
                     </xpath>
                     
                     <xpath expr="//form[@string='Products ']//field[@name='prod_lot_id']" position="replace">
@@ -683,10 +718,12 @@
             			<field name="hidden_perishable_mandatory" invisible="True" />
             			<field name="hidden_batch_management_mandatory" invisible="True" />
             			<field name="type_check" invisible="True" />
-            			<field name="kc_check" />
-            			<field name="ssl_check" />
-            			<field name="dg_check" />
-            			<field name="np_check" />
+            			<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
                     
                     </xpath>
                     

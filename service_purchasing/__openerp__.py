@@ -21,7 +21,8 @@
 {
     "name" : "Service Purchasing",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
         Add the capability for a product to be a service with reception in %UOM
