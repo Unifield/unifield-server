@@ -781,7 +781,7 @@ MochiKit.Base.update(ListView.prototype, {
 
                 self.current_record = edit_inline;
                 if(obj.logs) {
-                    jQuery('div#server_logs').replaceWith(obj.logs)
+                    jQuery('div#server_logs').append(obj.logs)
                 }
 
                 var $list = jQuery(idSelector(self.name));
