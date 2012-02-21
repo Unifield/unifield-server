@@ -141,6 +141,9 @@ class supplier_catalogue(osv.osv):
         If the search is called from the catalogue line list view, returns only list of the
         partner defined in the context
         '''
+        if not context:
+            context = {}
+        
         if context.get('search_default_partner_id', False):
             args.append(('partner_id', '=', context.get('search_default_partner_id', False)))
             
@@ -398,6 +401,93 @@ class supplier_catalogue_line(osv.osv):
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, [], position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
+    def display_historical_lines(self, cr, uid, ids, context={}):
+        context.update({'from_date': '2012-01-01', 'to_date': '2012-03-31', 'partner_id': 4, 'historical_data': True})
+        
+        return {'type': 'ir.actions.act_window',
+                'name': 'Historical prices - from %s to %s' % (context.get('from_date'), context.get('to_date')),
+                'res_model': 'supplier.catalogue.line',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'context': context}
+        
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
+        
+        res = super(supplier_catalogue_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context.get('historical_data', False) and view_type == 'tree':
+            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
+                                                                           ('period_from', '<=', context.get('to_date')),
+                                                                           '|', ('period_to', '=', False),
+                                                                           ('period_to', '>=', context.get('from_date'))])
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context=context)
+            context.update({'catalogues': catalogues})
+            line_view = """<tree string="Historical prices">
+                   <field name="product_id"/>
+                   <field name="line_uom_id" />
+                   <field name="min_qty" />"""
+                   
+            for cat in catalogues:
+                line_view += """<field name="%s" />""" % cat.period_from
+
+            line_view += "</tree>"
+
+            if res['type'] == 'tree':
+                res['arch'] = line_view
+        
+        return res
+    
+    def fields_get(self, cr, uid, fields=[], context={}):
+        res = super(supplier_catalogue_line, self).fields_get(cr, uid, fields, context)
+        
+        if context.get('historical_data', False):
+            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
+                                                                           ('period_from', '<=', context.get('to_date')),
+                                                                           '|', ('period_to', '=', False),
+                                                                           ('period_to', '>=', context.get('from_date'))])
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context=context)
+            for cat in catalogues:
+                cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=cat.period_from, context=context)
+                cat_to = ''
+                if cat.period_to:
+                    cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=cat.period_to, context=context)
+                res.update({cat.period_from: {'size': 64,
+                                              'string': '%s-%s' % (cat_from, cat_to),
+                                              'type': 'char',}})
+            
+        return res
+    
+    def read(self, cr, uid, ids, fields=[], context={}, load="_classic_write"):
+        if context.get('historical_data', False):
+            line_dict = {}
+            line_ids = []
+            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
+                                                                           ('period_from', '<=', context.get('to_date')),
+                                                                           '|', ('period_to', '=', False),
+                                                                           ('period_to', '>=', context.get('from_date'))])
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context={})
+            for cat in catalogues:
+                period_name = '%s' % cat.period_from
+                for line in cat.line_ids:
+                    line_name = '%s_%s' % (line.product_id.id, line.min_qty)
+                    if line_name not in line_dict:
+                        line_dict.update({line_name: {}})
+                        line_ids.append(line.id)
+                    
+                    line_dict[line_name].update({period_name: '%s' % line.unit_price})
+            
+            res = super(supplier_catalogue_line, self).read(cr, uid, line_ids, fields, context=context)
+            
+            for r in res:
+                line_name = '%s_%s' % (r['product_id'][0], r['min_qty'])
+                for period in line_dict[line_name]:
+                    r.update({period: line_dict[line_name][period]})
+            
+        else:
+            res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
+        
+        return res
+        
+    
 supplier_catalogue_line()
 
 
@@ -435,6 +525,6 @@ class from_supplier_choose_catalogue(osv.osv_memory):
         
         return self.pool.get('supplier.catalogue').open_lines(cr, uid, wiz.catalogue_id.id, context=context)
     
-from_supplier_choose_catalogue()
+from_supplier_choose_catalogue() 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

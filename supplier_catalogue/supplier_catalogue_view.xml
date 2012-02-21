@@ -163,6 +163,7 @@
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" editable="top">
 					<field name="product_id" on_change="product_change(product_id)" />
+					<button type="object" name="display_historical_lines" string="test" icon="gtk-execute" />
 					<field name="line_uom_id" />
 					<field name="min_qty" />
 					<field name="unit_price" />
