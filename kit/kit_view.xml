@@ -10,21 +10,22 @@
             	<form string="Theoretical Kit Composition">
             		<group col="6" colspan="4">
                         <field name="composition_type" invisible="True" />
-                        <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" colspan="4" on_change="on_change_product_id(composition_product_id)" />
+                        <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" colspan="4" on_change="on_change_product_id(composition_product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <group col="6" colspan="2">
-                        	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="2" />
-                        	<field name="composition_version_id" domain="[('composition_type', '=', 'theoretical')]" attrs="{'invisible': [('composition_type', '!=', 'real')]}" colspan="2" />
-	                        <field name="composition_creation_date" colspan="2" />
+                        	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
+                        	<field name="composition_version_id" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
+	                        <field name="composition_creation_date" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
-	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_batch_check', '=', False)], 'invisible': ['|', ('composition_batch_check', '=', True), ('composition_type', '!=', 'real')]}" />
-	                        <field name="composition_lot_id" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_batch_check', '=', True)], 'invisible': ['|', ('composition_batch_check', '=', False), ('composition_type', '!=', 'real')]}" />
-	                        <field name="composition_exp" colspan="2" readonly="True" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
+	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', False)], 'invisible': ['|', ('composition_expiry_check', '=', True), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_lot_id" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
                         </group>
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list">
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
                     			<form string="Theoretical Kit Item">
 				                    <group col="6" colspan="4">
 				            			<notebook colspan="4">
@@ -54,11 +55,16 @@
                     		<field name="composition_description" nolabel="True" />
                     	</page>
                     </notebook>
-                    <field name="state" />
-                    <group col="4" colspan="2">
-                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
-                        <button name="de_kitting" string="De-Kitting" type="object" icon="terp-stock_symbol-selection"  attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
-                        <button name="change_state" string="Change State" type="object" icon="gtk-go-forward" />
+                    <group col="5" colspan="2">
+                    	<field name="state" colspan="3" />
+                    </group>
+                    <group col="5" colspan="2">
+                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
+                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
+                        <button name="de_kitting" string="De-Kitting" type="object" icon="terp-stock_symbol-selection"  attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="terp-gtk-media-pause" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
+                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
                     </group>
             	</form>
             </field>

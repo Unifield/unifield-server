@@ -31,12 +31,6 @@ import tools
 import time
 from os import path
 
-
-KIT_COMPOSITION_STATE = [('draft', 'Draft'),
-                         ('completed', 'Completed'),
-                         ('explosed', 'Explosed'),
-                         ]
-
 KIT_COMPOSITION_TYPE = [('theoretical', 'Theoretical'),
                         ('real', 'Real'),
                         ]
@@ -45,6 +39,7 @@ KIT_STATE = [('draft', 'Draft'),
              ('completed', 'Completed'),
              ('shipped', 'Shipped'),
              ('archived', 'Archived'),
+             ('done', 'Closed'),
              ]
 
 class composition_kit(osv.osv):
@@ -52,6 +47,41 @@ class composition_kit(osv.osv):
     kit composition class, representing both theoretical composition and actual ones
     '''
     _name = 'composition.kit'
+    
+    def mark_as_completed(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the state to 'completed'
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not len(obj.composition_item_ids):
+                raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
+        self.write(cr, uid, ids, {'state': 'completed'}, context=context)
+        return True
+    
+    def mark_as_inactive(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the active flag to False
+        '''
+        self.write(cr, uid, ids, {'active': False}, context=context)
+        return True
+    
+    def mark_as_active(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the active flag to False
+        '''
+        self.write(cr, uid, ids, {'active': True}, context=context)
+        return True
+    
+    def close_kit(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the state to 'done'
+        '''
+        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        return True
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -74,7 +104,7 @@ class composition_kit(osv.osv):
             date = datetime.strptime(obj.composition_creation_date, db_date_format)
             result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
             # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
-            if obj.composition_batch_check:
+            if obj.composition_expiry_check:
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
             else:
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_reference})
@@ -90,6 +120,8 @@ class composition_kit(osv.osv):
         '''
         if default is None:
             default = {}
+        # state
+        default.update(state='draft')
         # original reference
         data = self.read(cr, uid, id, ['composition_version_txt', 'composition_type', 'composition_reference', 'composition_lot_id'], context=context)
         if data['composition_type'] == 'theoretical':
@@ -102,6 +134,15 @@ class composition_kit(osv.osv):
             raise osv.except_osv(_('Warning !'), _('Kit Composition List with Batch Number cannot be copied!'))
             
         return super(composition_kit, self).copy(cr, uid, id, default, context=context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        cannot delete composition kit not draft
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'draft':
+                raise osv.except_osv(_('Warning !'), _("Cannot delete Kits not in 'draft' state."))
+        return super(composition_kit, self).unlink(cr, uid, ids, context=context)
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -143,7 +184,7 @@ class composition_kit(osv.osv):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
                 name = obj.composition_version + ' - ' + date.strftime(date_format)
-            elif obj.composition_batch_check:
+            elif obj.composition_expiry_check: # do we need to treat expiry and batch differently ?
                 name = obj.composition_lot_id.name
             else:
                 name = obj.composition_reference
@@ -179,14 +220,17 @@ class composition_kit(osv.osv):
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
                 'composition_exp': fields.date(string='Expiry Date'),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
+                'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
+                # related
+                'composition_batch_check': fields.related('composition_product_id', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
+                # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
+                'composition_expiry_check': fields.related('composition_product_id', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
                 'composition_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Version', multi='get_vals',
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
-                'composition_batch_check': fields.related('composition_product_id', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
-                'composition_expiry_check': fields.related('composition_product_id', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Num', multi='get_vals',
                                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
                 }
@@ -203,7 +247,9 @@ class composition_kit(osv.osv):
     
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'composition_type': _get_default_type,
+                 'active': True,
                  'state': 'draft',
+                 'composition_exp': False,
                  }
     
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
@@ -211,6 +257,10 @@ class composition_kit(osv.osv):
         constraint on kit composition - two kits 
         '''
         for obj in self.browse(cr, uid, ids, context=context):
+            # global
+            if obj.composition_product_id.type != 'product' or obj.composition_product_id.subtype != 'kit':
+                raise osv.except_osv(_('Warning !'), _('Only Kit products can be used for kits.'))
+            # theoretical constraints
             if obj.composition_type == 'theoretical':
                 search_ids = self.search(cr, uid, [('id', '!=', obj.id),
                                                    ('composition_product_id', '=', obj.composition_product_id.id),
@@ -218,14 +268,37 @@ class composition_kit(osv.osv):
                                                    ('composition_creation_date', '=', obj.composition_creation_date)], context=context)
                 if search_ids:
                     #print self.read(cr, uid, ids, ['composition_product_id', 'composition_version_txt', 'composition_creation_date'], context=context)
-                    raise osv.except_osv(_('Warning !'), _('The dataset (Product - Version - Creation Date) must be unique!'))
+                    raise osv.except_osv(_('Warning !'), _('The dataset (Product - Version - Creation Date) must be unique.'))
+                # constraint on lot_id/reference/expiry date - forbidden for theoretical
+                if obj.composition_reference or obj.composition_lot_id or obj.composition_exp:
+                    raise osv.except_osv(_('Warning !'), _('Composition Reference / Batch Number / Expiry date is not available for Theoretical Kit.'))
+                # constraint on version_id - forbidden for theoretical
+                if obj.composition_version_id:
+                    raise osv.except_osv(_('Warning !'), _('Composition Version Object is not available for Theoretical Kit.'))
+                
+            # real constraints
+            if obj.composition_type == 'real':
+                # constraint on lot_id/reference - mandatory for real kit
+                if obj.composition_batch_check or obj.composition_expiry_check:
+                    if obj.composition_reference:
+                        raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product does not allow Reference.'))
+                    if not obj.composition_lot_id:
+                        raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product needs Batch Number.'))
+                else:
+                    if not obj.composition_reference:
+                        raise osv.except_osv(_('Warning !'), _('Composition List without Batch Management Product needs Reference.'))
+                    if obj.composition_lot_id:
+                        raise osv.except_osv(_('Warning !'), _('Composition List without Batch Management Product does not allow Batch Number.'))
+                # real composition must always be active
+                if not obj.active:
+                    raise osv.except_osv(_('Warning !'), _('Composition List cannot be inactive.'))
             
         return True
     
-    _constraints = [(_composition_kit_constraint, 'The joint data Product - Version and Creation Date must be unique!', []),
+    _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
                     ]
-    _sql_constraints = [('unique_composition_kit_real', "unique(composition_reference)", 'Kit Composition List Reference must be unique.'),
-                        ('unique_composition_kit_theoretical', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
+    _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_reference)", 'Kit Composition List Reference must be unique.'),
+                        ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
                         ]
 
 composition_kit()
@@ -336,12 +409,27 @@ class composition_item(osv.osv):
 composition_item()
 
 
-class stock_move(osv.osv):
+class product_product(osv.osv):
     '''
-    add a constraint - when batch management or perishable, only one product by stock move line
+    add a constraint - a product of subtype 'kit' cannot be perishable only, should be batch management or nothing
     '''
-    _inherit = 'stock.move'
+    _inherit = 'product.product'
     
+    def _kit_product_constraints(self, cr, uid, ids, context=None):
+        '''
+        constraint on product
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            # kit
+            if obj.type == 'product' and obj.subtype == 'kit':
+                if obj.perishable and not obj.batch_management:
+                    raise osv.except_osv(_('Warning !'), _('The Kit product cannot be Expiry Date Mandatory only.'))
+            
+        return True
     
+    _constraints = [(_kit_product_constraints, 'Constraint error on Kit Product.', []),
+                    ]
+    
+product_product()
 
-stock_move()
+
