@@ -28,7 +28,7 @@
         This module aims to add some registers into accounting menu and change the method to do accounting by using
         all registers.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line

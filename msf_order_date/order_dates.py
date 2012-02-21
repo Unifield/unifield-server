@@ -460,8 +460,8 @@ def common_create(self, cr, uid, data, type, context=None):
     if context is None:
         context = {}
     # if comes from automatic data - fill confirmed date
-    if context.get('update_mode') in ['init', 'update'] or data.get('from_yml_test'):
-        data['delivery_confirmed_date'] = '2011-12-06'
+    if (context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in data) or data.get('from_yml_test'):
+        data['delivery_confirmed_date'] = '2012-01-17'
         
     # fill partner_type data
     if data.get('partner_id', False):
@@ -948,7 +948,7 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
-        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created."),
+        'date_order':fields.date(string='Creation Date', required=True, select=True, readonly=True, help="Date on which this document has been created.", states={'draft': [('readonly', False)]}),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date', required=True),

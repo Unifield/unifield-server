@@ -2,6 +2,7 @@
 <openerp>
     <data noupdate="1">
     
+    <!-- WARNING: These IDs are used in analytic_distribution module, in analytic_account.py in order to disallow there deletion. -->
         <record id="analytic_account_project" model="account.analytic.account">
             <field name="name">OC</field>
             <field name="code">OC</field>
@@ -51,6 +52,7 @@
             <field name="category">FUNDING</field>
             <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
         </record>
-        
+    <!-- END OF WARNING -->
+
     </data>
 </openerp>

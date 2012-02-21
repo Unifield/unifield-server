@@ -95,7 +95,7 @@ class tender(osv.osv):
                 'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
                 'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft':[('readonly',False)],}, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True),
+                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft':[('readonly',False)]}),
                 'details': fields.char(size=30, string="Details", states={'draft':[('readonly',False)],}, readonly=True),
                 'requested_date': fields.date(string="Requested Date", required=True, states={'draft':[('readonly',False)],}, readonly=True),
                 'notes': fields.text('Notes'),
@@ -399,7 +399,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, po_data, context=context)
                 po = po_obj.browse(cr, uid, po_id, context=context)
                 po_obj.log(cr, uid, po_id, 'The Purchase order %s for supplier %s has been created.'%(po.name, po.partner_id.name))
-                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                #UF-802: the PO created must be in draft state, and not validated!
+                #wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 
             # when the po is generated, the tender is done - no more modification or comparison
             self.done(cr, uid, [tender.id], context=context)

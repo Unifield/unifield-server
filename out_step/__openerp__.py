@@ -21,7 +21,8 @@
 {
     "name" : "Delivered Out Step",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
         Add a last step for out picking object corresponding to a confirmed Delivered status

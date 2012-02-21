@@ -15,7 +15,7 @@
             			<field name="subtype" invisible="True" />
             			<field name="delivered" invisible="True" />
            				<field name="state_hidden" />
-           				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True),]}" />
+           				<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}" />
 					</xpath>
             	
             	</data>
@@ -31,9 +31,11 @@
             <field name="arch" type="xml">
             	<data>
             	
+            		<!-- 
             		<tree position="attributes">
                        <attribute name="colors">green:delivered==True;blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date</attribute>
                     </tree>
+                     -->
             	
                     <field name="state" position="replace">
                     	<field name="state" invisible="True" />
@@ -54,10 +56,11 @@
             <field name="arch" type="xml">
             	<data>
 
-                    <filter name="done" position="after">
-                        <separator orientation="vertical"/>
+                    <filter name="done" position="replace">
+                        <!-- <separator orientation="vertical"/> -->
+                        <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done'), ('delivered', '=', False)]" help="Delivery orders already processed"/>
                         <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state', '=', 'done'), ('delivered', '=', True)]" help="Delivered Delivery Orders" />
-                        <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('state', '=', 'done'), ('delivered', '=', False)]" help="Not Delivered Delivery Orders" />
+                        <!-- <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('state', '=', 'done'), ('delivered', '=', False)]" help="Not Delivered Delivery Orders" /> -->
                         <separator orientation="vertical"/>
 					</filter>
 					

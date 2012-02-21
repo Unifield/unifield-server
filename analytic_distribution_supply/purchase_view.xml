@@ -12,12 +12,9 @@
                 <data>
                     <xpath expr="/form/group/field[@name='company_id']" position="after">
                         <newline />
-                        <group colspan="6" col="4">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                            <field name="analytic_distribution_id" invisible="1"/>
-                            <label string=" " />
-                        </group>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
                     </xpath>
                     <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='currency_id']" position="after">
                         <button name="button_analytic_distribution" string="Analytical distribution" type="object" 

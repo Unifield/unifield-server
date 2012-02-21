@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_model_line_distrib_tree" model="ir.ui.view">
+            <field name="name">account.model.line.distrib.tree</field>
+            <field name="model">account.model.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_model_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="analytic_account_id" position="replace">
+                    <field name="account_user_type_code" invisible="1"/>
+                    <button name="button_analytic_distribution" type="object" icon="terp-stock_symbol-selection" string="Analytic Distribution" attrs="{'invisible': [('account_user_type_code', '!=', 'expense')]}"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</openerp>
