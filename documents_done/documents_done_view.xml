@@ -13,7 +13,7 @@
                     <field name="partner_id" />
                     <field name="model" />
                     <field name="display_state" />
-                    <button type="object" name="go_to_problems" string="Close" icon="terp-gtk-stop" />
+                    <button type="object" name="go_to_problems" string="Close" icon="terp-gtk-stop" confirm="Are you sure to delete this document ?" />
                     <field name="problem" string="Associated Doc." />
                 </tree>
             </field>

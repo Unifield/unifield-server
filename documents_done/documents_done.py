@@ -26,6 +26,13 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+REAL_MODEL_LIST = [('sale.order', 'Sale Order'),
+                   ('purchase.order', 'Purchase Order'),
+                   ('internal.request', 'Internal Request'),
+                   ('rfq', 'Request for Quotation'),
+                   ('tender', 'Tender')]
+
+
 class documents_done_wizard(osv.osv):
     _name = 'documents.done.wizard'
     _description = 'Documents not \'Done\''
@@ -202,11 +209,7 @@ class documents_done_wizard(osv.osv):
         'name': fields.char(size=256, string='Name', readonly=True),
         'res_id': fields.integer(string='Res. Id'),
         'real_model': fields.char(size=64, string='Real model'),
-        'model': fields.selection([('sale.order', 'Sale Order'),
-                                   ('purchase.order', 'Purchase Order'),
-                                   ('internal.request', 'Internal Request'),
-                                   ('rfq', 'Request for Quotation'),
-                                   ('tender', 'Tender')], string='Doc. Type', readonly=True),
+        'model': fields.selection(REAL_MODEL_LIST, string='Doc. Type', readonly=True),
         'creation_date': fields.date(string='Creation date', readonly=True),
         'expected_date': fields.date(string='Expected date', readonly=True),
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
@@ -217,6 +220,16 @@ class documents_done_wizard(osv.osv):
                                          method=True, store=False, readonly=True, string='State'),
         'requestor': fields.many2one('res.users', string='Creator', readonly=True),
     }
+    
+    def _get_model_name(self, model):
+        '''
+        Returns the readable model name
+        '''
+        for model_name in REAL_MODEL_LIST:
+            if model_name[0] == model:
+                return model_name[1]
+            
+        return 'Undefined'
 
     def _add_stock_move_pb(self, cr, uid, problem_id, moves, context={}):
         '''
@@ -273,7 +286,8 @@ class documents_done_wizard(osv.osv):
         for wiz in self.browse(cr, uid, ids, context=context):
 
             if not wiz.problem:
-                return self.cancel_line(cr, uid, [wiz.id], context=context)
+                context.update({'direct_cancel': True})
+                return self.cancel_line(cr, uid, [wiz.id], all_doc=True, context=context)
 
             pick_ids = []
             order = False
@@ -336,16 +350,30 @@ class documents_done_wizard(osv.osv):
                 'target': 'popup'}
                         
 
-    def cancel_line(self, cr, uid, ids, context={}):
+    def cancel_line(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the document to done state
         '''
-        wf_service = netsvc.LocalService("workflow")
+        if not context:
+            context = {}
+        
         for doc in self.browse(cr, uid, ids, context=context):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
-                self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, context=context)
-
-        return {'type': 'ir.actions.act_window_close'}
+                self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)))
+                self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
+                
+        if not context.get('direct_cancel', False):
+            return {'type': 'ir.actions.act_window_close'}
+        else:
+            context.update({'search_default_requestor': uid})
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'documents.done.wizard',
+                    'name': 'Documents \'In Progress\'',
+                    'view_type': 'form',
+                    'view_mode': 'tree',
+                    'target': 'crush',
+                    'context': context,
+                    }
     
     def init(self, cr):
         '''
@@ -474,7 +502,7 @@ class documents_done_problem(osv.osv_memory):
         'pb_lines': fields.one2many('documents.done.problem.line', 'problem_id', string='Lines'),
     }
 
-    def done_all_documents(self, cr, uid, ids, context={}):
+    def done_all_documents(self, cr, uid, ids, all_doc=True, context={}):
         '''
         For all documents, check the state of the doc and send the signal
         of 'manually_done' if needed
@@ -486,12 +514,12 @@ class documents_done_problem(osv.osv_memory):
                     invoice_state = self.pool.get('account.invoice').browse(cr, uid, line.doc_id, context=context).state
                     if invoice_state == 'draft':
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
-                    elif invoice_state not in ('cancel', 'paid'):
-                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
+#                    elif invoice_state not in ('cancel', 'paid'):
+#                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Done\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
                 elif line.doc_model == 'tender':
                     wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
-                    self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, context=context)
+                    self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, all_doc=all_doc, context=context)
 
             return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
 
@@ -506,7 +534,7 @@ class documents_done_problem(osv.osv_memory):
         Cancel the document
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
-            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], context=context)
+            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=False, context=context)
 
         return True
 

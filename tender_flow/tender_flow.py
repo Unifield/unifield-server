@@ -422,7 +422,7 @@ class tender(osv.osv):
                 
         return True
 
-    def set_manually_done(self, cr, uid, ids, context={}):
+    def set_manually_done(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the tender and all related documents to done state
         '''
@@ -448,12 +448,13 @@ class tender(osv.osv):
                                 self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'valid_till': time.strftime('%Y-%m-%d')}, context=context)
                             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-                if tender.state == 'draft' or not tender.tender_line_ids or not line_updated:
-                    # Call the cancel method of the tender
-                    wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
-                else:
-                    # Call the cancel method of the tender
-                    wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
+                if all_doc:
+                    if tender.state == 'draft' or not tender.tender_line_ids or not line_updated:
+                        # Call the cancel method of the tender
+                        wf_service.trg_validate(uid, 'tender', tender.id, 'tender_cancel', cr)
+                    else:
+                        # Call the cancel method of the tender
+                        wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
 
         return True
 
