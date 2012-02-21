@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+import re
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -89,6 +90,19 @@ class account_invoice(osv.osv):
     _defaults = {
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
     }
+
+    def log(self, cr, uid, id, message, secondary=False, context={}):
+        """
+        Change first "Invoice" word from message into "Debit Note" if this invoice is a debit note
+        """
+        if not context:
+            context = {}
+        if self.read(cr, uid, id, ['is_debit_note']).get('is_debit_note', False) is True:
+            pattern = re.compile('^(Invoice)')
+            m = re.match(pattern, message)
+            if m and m.groups():
+                message = re.sub(pattern, 'Debit Note', message, 1)
+        return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def button_debit_note_import_invoice(self, cr, uid, ids, context={}):
         """
