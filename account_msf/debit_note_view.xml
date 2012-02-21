@@ -59,7 +59,21 @@
                         <page string="Invoice">
                             <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
                             <field name="name"/>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list"/>
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
+                                <tree editable="top" string="Invoice Line" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')" noteditable="1" hide_new_button="1">
+                                    <field name="name"/>
+                                    <field name="account_id" groups="account.group_account_user"/>
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state_recap"/>
+                                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+                                    <field name="quantity"/>
+                                    <field name="uos_id" string="UoM"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
                             <group col="8" colspan="4">
                                 <label string="" colspan="3"/>
                                 <field name="reconciled"/>
