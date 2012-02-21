@@ -28,8 +28,22 @@ class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
+    def _get_analytic_distribution_available(self, cr, uid, ids, name, arg, context={}):
+        """
+        Return true if analytic distribution must be available (which means partner is inter-section)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for so in self.browse(cr, uid, ids):
+            res[so.id] = False
+            if so.partner_id and so.partner_id.partner_type == 'section':
+                res[so.id] = True
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
+        'analytic_distribution_available': fields.function(_get_analytic_distribution_available, string='Is analytic distribution available?', method=True, type='boolean'),
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context={}):
@@ -136,10 +150,24 @@ class sale_order_line(osv.osv):
                 res[line['id']] = True
         return res
 
+    def _get_analytic_distribution_available(self, cr, uid, ids, name, arg, context={}):
+        """
+        Return true if analytic distribution must be available (which means partner is inter-section)
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sol in self.browse(cr, uid, ids):
+            res[sol.id] = False
+            if sol.order_id and sol.order_id.partner_id and sol.order_id.partner_id.partner_type == 'section':
+                res[sol.id] = True
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
             string='Header Distrib.?'),
+        'analytic_distribution_available': fields.function(_get_analytic_distribution_available, string='Is analytic distribution available?', method=True, type='boolean'),
     }
 
     _defaults = {
