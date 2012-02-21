@@ -65,7 +65,7 @@ class update(osv.osv):
             ids = self.search(cr, uid, [('version', '=', data['version']), 
                                   ('session_id', '=', data['session_id']),
                                   ('values', '=', data['values'])], context=context)
-            if ids: #append the server ids
+            if ids: #Avoid add two time the same update.
                 server_ids.append(ids[0])
                 continue
             self.create(cr, uid, data ,context=context)

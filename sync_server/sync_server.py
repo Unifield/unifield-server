@@ -423,30 +423,115 @@ class sync_manager(osv.osv):
     """
         Data synchronization
     """
+    def _generate_session_id(self):
+        return uuid.uuid4().hex
     
     @check_validated
     def get_model_to_sync(self, cr, uid, entity, context=None):
+        """
+            Initialize a Push session, send the session id and the list of rule
+            @param entity: string : uuid of the synchronizing entity
+            @return tuple : (a, b, c):
+                    a is True is if the call is succesfull, False otherwise
+                    b : if a is False, b is the error message
+                        if a is True b is the synchronization session_id
+                    c : is a list of dictionaries that contains all the rule 
+                        that apply for the synchronizing instance.
+                        The format of the dict that contains a single rule definition
+                        {
+                            'server_id' : integer : id of the rule server side,
+                            'name' : string : Name of the rule,
+                            'model' : string : Name of the model on which the rule applies,
+                            'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
+                            'sequence' : integer : Sequence number of the rule,
+                            'included_fields' : string : list of fields to include, same format as the one needed for export data
+                        }
+                    
+        """
         res = self.pool.get('sync_server.sync_rule')._get_rule(cr, uid, entity, context=context)
         return (True, self._generate_session_id(), res[1])
         
     @check_validated
     def receive_package(self, cr, uid, entity, packet, context=None):
+        """
+            Synchronizing entity sending it's packet to the sync server.
+            @param entity : string : uuid of the synchronizing entity
+            @param packet : list of dictionaries : List of update to send to the server, a pakcet contains at max all the update generate by the same rule
+                            format :
+                            {
+                                'session_id': string : id of the push session, given by get_model_to_sync,
+                                'model': string : model's name of the update,
+                                'rule_id': integer : server_side rule's id given,
+                                'fields': string : list of fields to include, format : a list of string, same format as the one needed for export data
+                                'load' : list of dictionaries : content of the packet, it the list of values and version
+                                        format [{
+                                                    'version' : integer : version of the update
+                                                    'values' : string : list of values in the matching order of fields
+                                                             format "['value1', 'value2']"
+                                                }, ...]
+                            
+                            }
+            @return: tuple : (a,b)
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : string : is an error message if a is False
+        """
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
             
-    def _generate_session_id(self):
-        return uuid.uuid4().hex
-
     @check_validated
     def confirm_update(self, cr, uid, entity, session_id, context=None):
+        """
+            Synchronizing entity confirm that all the packet of this session are sent
+            @param entity: string : uuid of the synchronizing entity
+            @param session_id: string : the synchronization session_id given at the begining of the session by get_model_sync.
+            @return tuple : (a, b) 
+                a : boolean : is True is if the call is succesfull, False otherwise
+                b : string : an infromative message
+        """
         return self.pool.get("sync.server.update").confirm_updates(cr, 1, entity, session_id, context=context)
+
     
     @check_validated
     def get_max_sequence(self, cr, uid, entity, context=None):
+        """
+            Give to the synchronizing client the sequence of the last complete push, the pull session will pull until this sequence.
+            @param entity: string : uuid of the synchronizing entity
+            @return a tuple (a, b)
+                a : boolean :is True is if the call is succesfull, False otherwise
+                b : integer : is the sequence number of the last successfull push session by any entity
+        
+        """
         return (True, self.pool.get('sync.server.update').get_last_sequence(cr, uid, context=context))
     
     @check_validated
     def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param last_seq: integer : Last sequence of update receive succefully in the previous pull session. 
+            @param offset: integer : Number of record receive after the last_seq
+            @param max_size: integer : The number of record max per packet. 
+            @param max_seq: interger : The sequence max that the update the sync server send to the client in get_max_sequence, to tell the server don't send me
+                            newer update then the one already their when the pull session start.
+            @return tuple :(a,b,c) 
+                a : boolean : True if the call is successfull, False otherwise
+                b : list of dictionaries : Package if there is some update to send remaining, False otherwise
+                c : boolean : False if there is some update to send remaining, True otherwise
+                              Package format : 
+                              {
+                                    'model': string : model's name of the update
+                                    'source_name' : string : source entity's name
+                                    'fields' : string : list of fields to include, format : a list of string, same format as the one needed for export data
+                                    'sequence' : update's sequence number, a integer
+                                    'fallback_values' : update_master.rule_id.fallback_values
+                                    'load' : a list of dict that contain record's values and record's version
+                                            [{
+                                                'version' : int version of the update
+                                                'values' : string : list of values in the matching order of fields
+                                                             format "['value1', 'value2']"
+                                            }, ..]
+                              }
+                              
+        """
         package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, context)
         if not package:
             return (True, False, True)
@@ -458,20 +543,77 @@ class sync_manager(osv.osv):
     
     @check_validated
     def get_message_rule(self, cr, uid, entity, context=None):
+        """
+            Initialize a Push message session, send the list of rule
+            @param entity: string : uuid of the synchronizing entity
+            @return a Tuple (a, b):
+                    a : boolean : is True is if the call is succesfull, False otherwise
+                    b : list of dictionaries : if a is True, is a list of dictionaries that contains all the rule 
+                        that apply for the synchronizing instance.
+                        The format of the dict that contains a single rule definition
+                        {
+                            'name' : string : rule's name,
+                            'server_id' : integer : server side rule's id ,
+                            'model' : string : Name of the model on which the rule applies,
+                            'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
+                            'sequence' : integer : Sequence number of the rule,
+                            'remote_call' : string  : name of the method to call when the receiver will execute the message,
+                            'arguments' : string : list of fields use in argument for the remote_call, see fields in receive_package
+                            'destination_name' : string : Name of the field that will give the destination name,
+                        }
+                        
+        """
         res = self.pool.get('sync_server.message_rule')._get_message_rule(cr, uid, entity, context=context)
         return (True, res)
     
     @check_validated
     def send_message(self, cr, uid, entity, packet, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param packet: list of dictionaries : a list of message, each message is a dictionnary define like this:
+                            {
+                                'id' : string : message unique id : ensure that we are not creating or executing 2 times the same message
+                                'call' : string : name of the method to call when the receiver will execute the message
+                                'dest' : string : name of the destination (generaly a partner Name)
+                                'args' : string : Arguments of the call, the format is a a dictionnary that represent is object that generate the message serialiaze in json
+                                        see export_data_jso in ir_model_data.py 
+                            }
+            @return: tuple : (a, b):
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : string : is an informative message
+        """
         return self.pool.get('sync.server.message').unfold_package(cr, 1, entity, packet, context=context)
 
     @check_validated
     def get_message(self, cr, uid, entity, max_packet_size, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param max_packet_size: The number of message max per request.
+            @return: a tuple (a, b)
+                a : boolean : is True is if the call is succesfull, False otherwise
+                b : list of dictionaries : is a list of message serialize into a dictionnary if a is True
+                [{
+                    'id' : string : message unique id : ensure that we are not creating or executing 2 times the same message
+                    'call' : string : name of the method to call when the receiver will execute the message
+                    'source' : string : name of the entity that generated the message
+                    'args' : string : Arguments of the call, the format is a a dictionnary that represent is object that generate the message serialiaze in json
+                                         see export_data_jso in ir_model_data.py 
+                },..]
+        """
+        
         res = self.pool.get('sync.server.message').get_message_packet(cr, uid, entity, max_packet_size, context=context)
         return (True, res)
         
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param message_ids: list of string : The list of message identifier : ['message_uuid1', 'message_uuid2', ....]
+            @return: tuple : (a,b)
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : message : is an error message if a is False
+              
+        """
         return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
 
 sync_manager()
