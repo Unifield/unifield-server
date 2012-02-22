@@ -77,7 +77,7 @@
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
                     <group colspan="3" col="3">
-                        <button name="cancel_document" string="Cancel associated documents" type="object" colspan="3" icon="terp-check" />
+                        <button name="cancel_document" string="Cancel associated documents and close the document" type="object" colspan="3" icon="terp-check" />
                     </group>
                 </form>
             </field>

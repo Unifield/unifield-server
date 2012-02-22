@@ -363,20 +363,10 @@ class documents_done_wizard(osv.osv):
                 if all_doc:
                     self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)), context=context)
                 
-        if not context.get('direct_cancel', False) or not all_doc:
+        if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
         else:
             return True
-#            FIX displaying of res.log : Replace the returned view by True
-#            context.update({'search_default_requestor': uid})
-#            return {'type': 'ir.actions.act_window',
-#                    'res_model': 'documents.done.wizard',
-#                    'name': 'Documents \'In Progress\'',
-#                    'view_type': 'form',
-#                    'view_mode': 'tree',
-#                    'target': 'crush',
-#                    'context': context,
-#                    }
     
     def init(self, cr):
         '''
@@ -537,7 +527,7 @@ class documents_done_problem(osv.osv_memory):
         Cancel the document
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
-            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=False, context=context)
+            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=True, context=context)
 
         return True
 
