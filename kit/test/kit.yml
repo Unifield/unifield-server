@@ -89,6 +89,56 @@
     
     for item in kit.composition_item_ids:
       assert item.state == 'completed', 'kit_compo_01: the field state of corresponding item is wrong, should be completed - %s'%item.state
+- 
+  I create sale order kit_so_A
+- 
+  !record {model: sale.order, id: kit_so_A}:
+    name: so a
+    amount_tax: 0.0
+    amount_total: 1.0
+    amount_untaxed: 1.0
+    company_id: base.main_company
+    date_order: '2011-04-13'
+    invoice_quantity: order
+    order_policy: manual
+    partner_id: kit_partner_A
+    partner_invoice_id: kit_address_A
+    partner_order_id: kit_address_A
+    partner_shipping_id: kit_address_A
+    picking_policy: direct
+    pricelist_id: product.list0
+    shop_id: sale.shop
+    priority: normal
+    categ: medical
+- 
+  I create a corresponding sale order line, with a batch management kit in it - prodA
+- 
+  !record {model: sale.order.line, id: kit_sol_A1}:
+    name: sol a1
+    company_id: base.main_company
+    delay: 7.0
+    order_id: kit_so_A
+    price_unit: 1.0
+    product_id: kit_product_A
+    product_uom: product.product_uom_unit
+    product_uom_qty: 10
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_order
+-
+  I validate kit_sol_A1
+-
+  !python {model: sale.order}: |
+    import netsvc
+    wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'sale.order', ref("kit_so_A"), 'order_validated', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("kit_so_A"), 'order_confirm', cr)
+-
+  I run the scheduler
+-
+  !python {model: procurement.order}: |
+    self.run_scheduler(cr, uid, context=context)
 -
   END OF FILE
 -
