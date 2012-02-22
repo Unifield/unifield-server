@@ -44,7 +44,8 @@
         "security/ir.model.access.csv",
     ],
     'test': [
-#        "test/data.yml",
+        "test/data.yml",
+        "test/catalogue.yml",
     ],
     'installable': True,
     'active': False,

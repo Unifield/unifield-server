@@ -10,6 +10,9 @@
     supplier: True
     partner_type: external
     supplier_lt: 10
+    procurement_lt: 0
+    transport_0: 'sea'
+    transport_0_lt: 10
 -
   I create a product category Categ1
 -

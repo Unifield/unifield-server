@@ -96,6 +96,8 @@ class supplier_catalogue(osv.osv):
         
         # Update these catalogues with an end date which is the start date - 1 day of
         # the new catalogue
+        if isinstance(period_from, date):
+            period_from = period_from.strftime('%Y-%m-%d')
         period_from = DateFrom(period_from) + RelativeDate(days=-1)
         self.write(cr, uid, from_update_ids, {'period_to': period_from.strftime('%Y-%m-%d')}, context=context)
         
@@ -307,18 +309,18 @@ class supplier_catalogue_line(osv.osv):
             sup_id = supinfo_obj.create(cr, uid, {'name': catalogue.partner_id.id,
                                                   'sequence': 0,
                                                   'delay': catalogue.partner_id.default_delay,
-                                                  'product_id': vals['product_id'],
+                                                  'product_id': tmpl_id,
                                                   'catalogue_id': vals['catalogue_id'],
                                                   },
                                                   context=context)
             
         price_id = price_obj.create(cr, uid, {'name': catalogue.name,
                                               'suppinfo_id': sup_id,
-                                              'min_quantity': vals['min_qty'],
+                                              'min_quantity': vals.get('min_qty', 0.00),
                                               'uom_id': vals['line_uom_id'],
                                               'price': vals['unit_price'],
-                                              'rounding': vals['rounding'],
-                                              'min_order_qty': vals['min_order_qty'],
+                                              'rounding': vals.get('rounding', 1.00),
+                                              'min_order_qty': vals.get('min_order_qty', 0.00),
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_till': catalogue.period_to,}, 
                                               context=context)
