@@ -174,7 +174,8 @@
 			<field name="priority" eval="99" />
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" 
-					editable="top" notselectable="0" >
+					editable="top" noteditable="1" notselectable="0"
+					hide_new_button="1" hide_delete_button="1">
 					<field name="product_id" on_change="product_change(product_id)" />
 					<field name="line_uom_id" />
 					<field name="min_qty" />

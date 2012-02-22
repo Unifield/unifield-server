@@ -244,7 +244,7 @@ class supplier_catalogue(osv.osv):
         
         context.update({'search_default_partner_id': cat.partner_id.id,})
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'supplier_catalogue_line_tree_view')[1]
         
         return {'type': 'ir.actions.act_window',
                 'name': name,
@@ -409,7 +409,8 @@ class supplier_catalogue_line(osv.osv):
             catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, context.get('catalogue_ids'), context=context)
             
             # Modify the tree view to add one column by pricelist
-            line_view = """<tree string="Historical prices">
+            line_view = """<tree string="Historical prices" editable="top" noteditable="1" notselectable="0"
+                    hide_new_button="1" hide_delete_button="1">
                    <field name="product_id"/>
                    <field name="line_uom_id" />
                    <field name="min_qty" />"""
@@ -447,7 +448,6 @@ class supplier_catalogue_line(osv.osv):
     def read(self, cr, uid, ids, fields=[], context={}, load="_classic_write"):
         if context.get('catalogue_ids', False):
             line_dict = {}
-            line_ids = []
             new_context = context.copy()
             new_context.pop('catalogue_ids')
             catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, context.get('catalogue_ids'), context=new_context)
@@ -457,11 +457,10 @@ class supplier_catalogue_line(osv.osv):
                     line_name = '%s_%s' % (line.product_id.id, line.min_qty)
                     if line_name not in line_dict:
                         line_dict.update({line_name: {}})
-                        line_ids.append(line.id)
                     
                     line_dict[line_name].update({period_name: '%s' % line.unit_price})
             
-            res = super(supplier_catalogue_line, self).read(cr, uid, line_ids, fields, context=context)
+            res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
             
             for r in res:
                 line_name = '%s_%s' % (r['product_id'][0], r['min_qty'])
@@ -509,6 +508,16 @@ class supplier_historical_catalogue(osv.osv_memory):
             if not catalogue_ids:
                 raise osv.except_osv(_('Error'), _('No catalogues found for this supplier and this currency in the period !'))
             
+            line_dict = {}
+            line_ids = []
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, catalogue_ids, context=context)
+            for cat in catalogues:
+                for line in cat.line_ids:
+                    line_name = '%s_%s' % (line.product_id.id, line.min_qty)
+                    if line_name not in line_dict:
+                        line_dict.update({line_name: {}})
+                        line_ids.append(line.id)
+                    
             context.update({'from_date': hist.from_date,
                             'to_date': hist.to_date,
                             'partner_id': hist.partner_id.id,
@@ -521,10 +530,11 @@ class supplier_historical_catalogue(osv.osv_memory):
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
         
         return {'type': 'ir.actions.act_window',
-                'name': 'Historical prices (%s) - from %s to %s' % (hist.currency_id.name, from_str, to_str),
+                'name': '%s - Historical prices (%s) - from %s to %s' % (hist.partner_id.name, hist.currency_id.name, from_str, to_str),
                 'res_model': 'supplier.catalogue.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
+                'domain': [('id', 'in', line_ids)],
                 'view_id': [view_id],
                 'context': context}
     

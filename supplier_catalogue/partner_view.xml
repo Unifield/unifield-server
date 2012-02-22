@@ -76,7 +76,7 @@
         	key2="client_action_multi"
         	target="new"
         	domain="[]"
-        	id="action_choose_catalogue" />
+        	id="action_historical_catalogue" />
 	 	
 	 </data>
 </openerp>
