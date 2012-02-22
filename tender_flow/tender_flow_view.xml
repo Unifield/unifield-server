@@ -55,6 +55,10 @@
                         	<field colspan="4" mode="tree,form,graph" name="rfq_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
                                 <tree string="RfQs">
                                     <field name="name" />
+                                    <field name="partner_id" />
+                                    <field name="notes" />
+                                    <field name="amount_total" />
+                                    <field name="currency_id" />
                                     <field name="state" />
                                 </tree>
                             </field>
