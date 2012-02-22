@@ -44,21 +44,6 @@ class analytic_distribution(osv.osv):
         'global_distribution': lambda *a: False,
     }
 
-    def copy(self, cr, uid, id, defaults={}, context={}):
-        """
-        Copy an analytic distribution without the one2many links
-        """
-        defaults.update({
-            'analytic_lines': False,
-            'invoice_ids': False,
-            'invoice_line_ids': False,
-            'register_line_ids': False,
-            'move_line_ids': False,
-            'commitment_ids': False,
-            'commitment_line_ids': False,
-        })
-        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
-
     def _get_distribution_state(self, cr, uid, id, parent_id, account_id, context={}):
         """
         Return distribution state
@@ -178,6 +163,21 @@ class analytic_distribution(osv.osv):
         'lines_count': fields.function(_get_lines_count, method=True, type='char', size=256,
             string="Analytic distribution count", readonly=True, store=False),
     }
+
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy an analytic distribution without the one2many links
+        """
+        defaults.update({
+            'analytic_lines': False,
+            'invoice_ids': False,
+            'invoice_line_ids': False,
+            'register_line_ids': False,
+            'move_line_ids': False,
+            'commitment_ids': False,
+            'commitment_line_ids': False,
+        })
+        return super(osv.osv, self).copy(cr, uid, id, defaults, context=context)
 
     def update_distribution_line_amount(self, cr, uid, ids, amount=False, context={}):
         """
