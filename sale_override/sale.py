@@ -221,8 +221,9 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [order.id], {'order_policy': 'manual'})
                 for line in order.order_line:
                     lines.append(line.id)
-            elif not order.from_yml_test:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+# COMMENTED because of SP4 WM 12: Invoice Control
+#            elif not order.from_yml_test:
+#                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
     
         if lines:
             line_obj.write(cr, uid, lines, {'invoiced': 1})

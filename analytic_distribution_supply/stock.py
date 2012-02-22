@@ -49,5 +49,23 @@ class stock_picking(osv.osv):
             self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [invoice_id])
         return super(stock_picking, self)._invoice_hook(cr, uid, picking, invoice_id)
 
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context={}):
+        """
+        Add analytic distribution from SO to invoice
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        print res
+        for pi in self.browse(cr, uid, [x for x in res]):
+            print pi
+            if pi.sale_id and pi.sale_id.analytic_distribution_id:
+                distrib_id = pi.sale_id.analytic_distribution_id.id or False
+                if distrib_id:
+                    new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {})
+                    # create default funding pool lines
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id])
+                    if new_distrib_id:
+                        self.pool.get('account.invoice').write(cr, uid, res[pi.id], {'analytic_distribution_id': new_distrib_id})
+        return res
+
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
