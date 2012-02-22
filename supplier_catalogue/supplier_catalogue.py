@@ -397,16 +397,18 @@ class supplier_catalogue_line(osv.osv):
         '''
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, [], position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
         
+    
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
-        
+        '''
+        Override the tree view to display historical prices according to context
+        '''
         res = super(supplier_catalogue_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if context.get('historical_data', False) and view_type == 'tree':
-            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
-                                                                           ('period_from', '<=', context.get('to_date')),
-                                                                           '|', ('period_to', '=', False),
-                                                                           ('period_to', '>=', context.get('from_date'))])
-            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context=context)
-            context.update({'catalogues': catalogues})
+        
+        # If the context is set to open historical view
+        if context.get('catalogue_ids', False) and view_type == 'tree':
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, context.get('catalogue_ids'), context=context)
+            
+            # Modify the tree view to add one column by pricelist
             line_view = """<tree string="Historical prices">
                    <field name="product_id"/>
                    <field name="line_uom_id" />
@@ -423,34 +425,32 @@ class supplier_catalogue_line(osv.osv):
         return res
     
     def fields_get(self, cr, uid, fields=[], context={}):
+        '''
+        Override the fields to display historical prices according to context
+        '''
         res = super(supplier_catalogue_line, self).fields_get(cr, uid, fields, context)
         
-        if context.get('historical_data', False):
-            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
-                                                                           ('period_from', '<=', context.get('to_date')),
-                                                                           '|', ('period_to', '=', False),
-                                                                           ('period_to', '>=', context.get('from_date'))])
-            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context=context)
+        if context.get('catalogue_ids', False):
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, context.get('catalogue_ids'), context=context)
             for cat in catalogues:
                 cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=cat.period_from, context=context)
                 cat_to = ''
                 if cat.period_to:
                     cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=cat.period_to, context=context)
                 res.update({cat.period_from: {'size': 64,
+                                              'selectable': True,
                                               'string': '%s-%s' % (cat_from, cat_to),
                                               'type': 'char',}})
             
         return res
     
     def read(self, cr, uid, ids, fields=[], context={}, load="_classic_write"):
-        if context.get('historical_data', False):
+        if context.get('catalogue_ids', False):
             line_dict = {}
             line_ids = []
-            cat_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id','=',context.get('partner_id')),
-                                                                           ('period_from', '<=', context.get('to_date')),
-                                                                           '|', ('period_to', '=', False),
-                                                                           ('period_to', '>=', context.get('from_date'))])
-            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, cat_ids, context={})
+            new_context = context.copy()
+            new_context.pop('catalogue_ids')
+            catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, context.get('catalogue_ids'), context=new_context)
             for cat in catalogues:
                 period_name = '%s' % cat.period_from
                 for line in cat.line_ids:
@@ -500,20 +500,32 @@ class supplier_historical_catalogue(osv.osv_memory):
             context = {}
             
         for hist in self.browse(cr, uid, ids, context=context):
+            catalogue_ids = self.pool.get('supplier.catalogue').search(cr, uid, [('partner_id', '=', hist.partner_id.id),
+                                                                                 ('currency_id', '=', hist.currency_id.id),
+                                                                                 ('period_from', '<=', hist.to_date),
+                                                                                 '|', ('period_to', '=', False),
+                                                                                 ('period_to', '>=', hist.from_date)])
+            
+            if not catalogue_ids:
+                raise osv.except_osv(_('Error'), _('No catalogues found for this supplier and this currency in the period !'))
+            
             context.update({'from_date': hist.from_date,
                             'to_date': hist.to_date,
                             'partner_id': hist.partner_id.id,
                             'currency_id': hist.currency_id.id,
-                            'historical_data': True})
+                            'catalogue_ids': catalogue_ids})
         
         from_str = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=context.get('from_date'), context=context)
         to_str = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=context.get('to_date'), context=context)
         
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'supplier_catalogue', 'non_edit_supplier_catalogue_line_tree_view')[1]
+        
         return {'type': 'ir.actions.act_window',
-                'name': 'Historical prices - from %s to %s' % (from_str, to_str),
+                'name': 'Historical prices (%s) - from %s to %s' % (hist.currency_id.name, from_str, to_str),
                 'res_model': 'supplier.catalogue.line',
                 'view_type': 'form',
-                'view_mode': 'tree',
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
                 'context': context}
     
 supplier_historical_catalogue()

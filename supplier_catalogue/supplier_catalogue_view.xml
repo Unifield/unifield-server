@@ -91,7 +91,6 @@
                     <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
                     <newline /> 
                     <group>
-					<!--<field name="catalogue_id" widget="selection" />-->
 					<field name="min_qty" />
 					<field name="min_order_qty" />
 					<field name="line_uom_id" />
@@ -127,12 +126,6 @@
 						<field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 						<field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
 					</group>
-					<!--
-					<newline />
-					<group expand="0" string="Group By...">
-						<filter string='Product' icon="terp-accessories-archiver" domain="[]" context="{'group_by' : 'product_id'}" />
-						<filter string='Category' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'categ_id'}" />
-					</group>-->
 				</search>
 			</field>
 		</record>
