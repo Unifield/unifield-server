@@ -35,7 +35,7 @@ class supplier_catalogue(osv.osv):
     
     def copy(self, cr, uid, catalogue_id, default={}, context={}):
         '''
-        Disallow the possibility to duplicate a catalogue
+        Disallow the possibility to duplicate a catalogue.
         '''
         raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have ' \
                                'overlapped catalogue !'))
@@ -44,7 +44,9 @@ class supplier_catalogue(osv.osv):
     
     def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context={}):
         '''
-        Check if other catalogues need to be updated according to the new dates of cat_id
+        Check if other catalogues with the same partner/currency exist and are defined in the period of the
+        new catalogue. If yes, update the period_to of the old catalogue with the period_from - 1 day of
+        the new catalogue.
         '''
         if not context:
             context = {}
@@ -52,9 +54,13 @@ class supplier_catalogue(osv.osv):
         if not context.get('cat_ids', False):
             context.update({'cat_ids': []})
         
+        # Add catalogues already written to avoid
+        # loops in the same product
         if cat_id:
             context['cat_ids'].append(cat_id)
             
+        # Search other catalogues for the same partner/currency
+        # which are overrided by the new catalogue
         if period_to:
             to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from), 
                                                                                          ('period_from', '<', period_to),
@@ -70,6 +76,8 @@ class supplier_catalogue(osv.osv):
                                                                                          order='period_from asc',
                                                                                          limit=1,
                                                                                          context=context)
+        
+        # If overrided catalogues exist, display an error message
         if to_ids:
             over_cat = self.browse(cr, uid, to_ids[0], context=context)
             over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
@@ -77,13 +85,17 @@ class supplier_catalogue(osv.osv):
             raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
                                                'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
                                                'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
-            
+        
+        # Search all catalogues with the same partner/currency which are done
+        # after the beginning of the new catalogue
         from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
                                                                                               ('partner_id', '=', partner_id),
                                                                                               '|', 
                                                                                               ('period_to', '>', period_from), 
                                                                                               ('period_to', '=', False),], context=context)
-            
+        
+        # Update these catalogues with an end date which is the start date - 1 day of
+        # the new catalogue
         period_from = DateFrom(period_from) + RelativeDate(days=-1)
         self.write(cr, uid, from_update_ids, {'period_to': period_from.strftime('%Y-%m-%d')}, context=context)
         
@@ -93,6 +105,8 @@ class supplier_catalogue(osv.osv):
         '''
         Check if the new values override a catalogue
         '''
+        # Check if other catalogues need to be updated because they finished
+        # after the starting date of the new catalogue.
         self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
                                                     vals.get('currency_id', False),
                                                     vals.get('partner_id', context.get('partner_id', False)),
@@ -113,7 +127,9 @@ class supplier_catalogue(osv.osv):
             pricelist_ids = []
             for line in catalogue.line_ids:
                 pricelist_ids.append(line.partner_info_id.id)
-                
+            
+            # Check if other catalogues need to be updated because they finished
+            # after the starting date of the updated catalogue.
             self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
                                                                 vals.get('currency_id', False),
                                                                 vals.get('partner_id', False),
@@ -126,6 +142,7 @@ class supplier_catalogue(osv.osv):
                 new_supinfo_vals.update({'name': vals['partner_id'],
                                          'delay': delay})
             
+            # Change pricelist data according to new data
             new_price_vals = {'valid_till': vals.get('period_to', None),
                               'currency_id': vals.get('currency_id', catalogue.currency_id.id),
                               'name': vals.get('name', catalogue.name),}
@@ -138,7 +155,7 @@ class supplier_catalogue(osv.osv):
     
     def _search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False, access_rights_uid=None):
         '''
-        If the search is called from the catalogue line list view, returns only list of the
+        If the search is called from the catalogue line list view, returns only catalogues of the
         partner defined in the context
         '''
         if not context:
@@ -164,7 +181,7 @@ class supplier_catalogue(osv.osv):
     
     def _search_active(self, cr, uid, obj, name, args, context={}):
         '''
-        Returns all active catalogue
+        Returns all active catalogues
         '''
         ids = []
         
@@ -213,6 +230,8 @@ class supplier_catalogue(osv.osv):
                 return False
         return True
     
+    _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
+    
     def open_lines(self, cr, uid, ids, context={}):
         '''
         Opens all lines of this catalogue 
@@ -243,6 +262,7 @@ class supplier_catalogue(osv.osv):
         if not context:
             context = {}
         
+        # TODO: To implement
         raise osv.except_osv(_('Error'), _('Not implemented !'))    
         
         res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
@@ -255,14 +275,15 @@ class supplier_catalogue(osv.osv):
                 'res_id': res_id,
                 'context': context}
     
-    _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
-    
 supplier_catalogue()
+
 
 class supplier_catalogue_line(osv.osv):
     _name = 'supplier.catalogue.line'
     _description = 'Supplier catalogue line'
     _table = 'supplier_catalogue_line'
+    # Inherits of product.product to an easier search of lines
+    # with product attributes
     _inherits = {'product.product': 'product_id'}
     
     def create(self, cr, uid, vals, context={}):
@@ -340,32 +361,6 @@ class supplier_catalogue_line(osv.osv):
         
         return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
     
-    def _get_partner(self, cr, uid, ids, field_name, arg, context={}):
-        '''
-        Returns the partner linked to the associated catalogue
-        '''
-        res = {}
-        
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.catalogue_id and line.catalogue_id.partner_id and line.catalogue_id.partner_id.id or False
-        
-        return res
-    
-    def _search_partner(self, cr, uid, obj, name, args, context={}):
-        '''
-        Returns all active catalogue
-        '''
-        cat_obj = self.pool.get('supplier.catalogue')
-        ids = []
-        
-        for arg in args:
-            if arg[0] == 'partner_id':
-                operator = arg[1]            
-                catalogue_ids = cat_obj.search(cr, uid, [('partner_id.name', operator, arg[2])], context=context)
-                ids = self.search(cr, uid, [('catalogue_id', 'in', catalogue_ids)], context=context)
-        
-        return ids and [('id', 'in', ids)] or []
-    
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
@@ -378,8 +373,6 @@ class supplier_catalogue_line(osv.osv):
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
         'comment': fields.char(size=64, string='Comment'),
-#        'partner_id': fields.function(_get_partner, fnct_search=_search_partner, method=True, string='Partner',
-#                                      type='many2one', relation='res.partner', store=False),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
     }
@@ -399,6 +392,9 @@ class supplier_catalogue_line(osv.osv):
         return {'value': v}
     
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        '''
+        Method to fill nomenclature fields in search view
+        '''
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, [], position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):

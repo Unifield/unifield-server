@@ -30,18 +30,21 @@ class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
     
-    def unlink(self, cr, uid, info_id, context={}):
+    def unlink(self, cr, uid, info_ids, context={}):
         '''
         Disallow the possibility to remove a supplier info if 
         it's linked to a catalogue
         '''
-        info = self.browse(cr, uid, info_id, context=context)
-        if info.catalogue_id:
-            raise osv.except_osv(_('Error'), _('You cannot remove a supplier information which is linked' \
-                                               'to a supplier catalogue line ! Please remove the corresponding' \
-                                               'supplier catalogue line to remove this supplier information.'))
+        if isinstance(info_ids, (int, long)):
+            info_ids = [info_ids]
+            
+        for info in self.browse(cr, uid, info_ids, context=context):
+            if info.catalogue_id:
+                raise osv.except_osv(_('Error'), _('You cannot remove a supplier information which is linked ' \
+                                                   'to a supplier catalogue line ! Please remove the corresponding ' \
+                                                   'supplier catalogue line to remove this supplier information.'))
         
-        return super(product_supplierinfo, self).unlink(cr, uid, info_id, context=context)
+        return super(product_supplierinfo, self).unlink(cr, uid, info_ids, context=context)
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),

@@ -35,9 +35,6 @@
             	<xpath expr="//field[@name='product_code']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
-            	<xpath expr="//field[@name='pricelist_ids']" position="attributes">
-            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
-            	</xpath>
             </field>
 		</record>
 		
@@ -54,6 +51,9 @@
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
 				<xpath expr="//field[@name='delay']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='pricelist_ids']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
             	
