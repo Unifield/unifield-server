@@ -129,11 +129,11 @@ class import_analytic_lines(osv.osv_memory):
 
         creation_obj = self.pool.get('wizard.register.creation')
 
-        date_period = DateTime.now()+DateTime.RelativeDateTime(months=1, day=1)
         creation_obj = self.pool.get('wizard.register.creation')
 
-        while date_period <= max_date:
-            period = period_obj.search(cr, uid, [('date_start', '=', date_period.strftime('%Y-%m-%d'))])
+        jan = DateTime.now()+DateTime.RelativeDateTime(month=1, day=1)
+        while jan <= max_date:
+            period = period_obj.search(cr, uid, [('date_start', '=', jan.strftime('%Y-%m-%d'))])
             if period_obj.read(cr, uid, period[0], ['state'])['state'] == 'created':
                 period_obj.action_set_state(cr, uid, period, context={'state': 'draft'})
             try:
@@ -144,7 +144,7 @@ class import_analytic_lines(osv.osv_memory):
             else:
                 creation_obj.button_create_registers(cr, uid, [creation_id])
 
-            date_period += DateTime.RelativeDateTime(months=1)
+            jan += DateTime.RelativeDateTime(months=1)
 
         fileobj.seek(0)
         reader = csv.reader(fileobj, quotechar='"', delimiter=',')
