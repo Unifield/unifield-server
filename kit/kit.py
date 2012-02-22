@@ -53,9 +53,17 @@ class composition_kit(osv.osv):
         button function
         set the state to 'completed'
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.composition_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
+            if not obj.active:
+                raise osv.except_osv(_('Warning !'), _('Cannot complete inactive kit.'))
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
     
@@ -64,6 +72,15 @@ class composition_kit(osv.osv):
         button function
         set the active flag to False
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.composition_type != 'theoretical':
+                raise osv.except_osv(_('Warning !'), _('Only theoretical kit can manipulate "active" field.'))
         self.write(cr, uid, ids, {'active': False}, context=context)
         return True
     
@@ -72,6 +89,15 @@ class composition_kit(osv.osv):
         button function
         set the active flag to False
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.composition_type != 'theoretical':
+                raise osv.except_osv(_('Warning !'), _('Only theoretical kit can manipulate "active" field.'))
         self.write(cr, uid, ids, {'active': True}, context=context)
         return True
     
@@ -80,6 +106,12 @@ class composition_kit(osv.osv):
         button function
         set the state to 'done'
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
@@ -87,6 +119,12 @@ class composition_kit(osv.osv):
         '''
         multi fields function method
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         result = {}
         # date tools object
         date_obj = self.pool.get('date.tools')
@@ -139,6 +177,12 @@ class composition_kit(osv.osv):
         '''
         cannot delete composition kit not draft
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _("Cannot delete Kits not in 'draft' state."))
@@ -173,6 +217,12 @@ class composition_kit(osv.osv):
         '''
         override displayed name
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         # date tools object
         date_obj = self.pool.get('date.tools')
         db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
@@ -256,6 +306,12 @@ class composition_kit(osv.osv):
         '''
         constraint on kit composition - two kits 
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for obj in self.browse(cr, uid, ids, context=context):
             # global
             if obj.composition_product_id.type != 'product' or obj.composition_product_id.subtype != 'kit':
@@ -343,6 +399,12 @@ class composition_item(osv.osv):
         '''
         multi fields function method
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -360,6 +422,12 @@ class composition_item(osv.osv):
         '''
         override displayed name
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         # date tools object
         date_obj = self.pool.get('date.tools')
         date_format = date_obj.get_date_format(cr, uid, context=context)
@@ -379,6 +447,12 @@ class composition_item(osv.osv):
         
         self is an composition.kit object
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         item_obj = self.pool.get('composition.item')
         result = item_obj.search(cr, uid, [('item_kit_id', 'in', ids)], context=context)
         return result
@@ -419,6 +493,12 @@ class product_product(osv.osv):
         '''
         constraint on product
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         for obj in self.browse(cr, uid, ids, context=context):
             # kit
             if obj.type == 'product' and obj.subtype == 'kit':
