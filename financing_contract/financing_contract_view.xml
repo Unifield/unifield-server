@@ -287,13 +287,12 @@
                     <tree string="Interactive Report" colors="blue:line_type in ('view')">
                         <field name="code"/>
                         <field name="name"/>
-                        <field name="line_type"/>
+                         <field name="line_type"/>
                         <field name="allocated_budget" digits="(24,0)" widget="float"/>
                         <field name="allocated_real" digits="(24,0)" widget="float"/>
                         <field name="project_budget" digits="(24,0)" widget="float"/>
                         <field name="project_real" digits="(24,0)" widget="float"/>
                         <field name="parent_id" invisible="1"/>
-                        <field name="line_type"/>
                     </tree>
                 </field>
             </record>
