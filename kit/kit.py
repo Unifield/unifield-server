@@ -295,11 +295,45 @@ class composition_kit(osv.osv):
             return context.get('composition_type')
         return False
     
+    def _get_default_product_id(self, cr, uid, context=None):
+        '''
+        default value for type
+        '''
+        if context is None:
+            context= {}
+        if context.get('composition_product_id', False):
+            return context.get('composition_product_id')
+        return False
+    
+    def _get_default_lot_id(self, cr, uid, context=None):
+        '''
+        default value for type
+        '''
+        if context is None:
+            context= {}
+        if context.get('composition_lot_id', False):
+            return context.get('composition_lot_id')
+        return False
+    
+    def _get_default_exp(self, cr, uid, context=None):
+        '''
+        default value for type
+        '''
+        if context is None:
+            context= {}
+        if context.get('composition_exp', False):
+            return context.get('composition_exp')
+        return False
+    
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-                 'composition_type': _get_default_type,
+                 'composition_type': lambda s, cr, uid, c: c.get('composition_type', False),
+                 'composition_product_id': lambda s, cr, uid, c: c.get('composition_product_id', False),
+                 'composition_lot_id': lambda s, cr, uid, c: c.get('composition_lot_id', False),
+                 'composition_exp': lambda s, cr, uid, c: c.get('composition_exp', False),
+                 'composition_batch_check': lambda s, cr, uid, c: c.get('composition_batch_check', False),
+                 'composition_expiry_check': lambda s, cr, uid, c: c.get('composition_expiry_check', False),
                  'active': True,
                  'state': 'draft',
-                 'composition_exp': False,
                  }
     
     def _composition_kit_constraint(self, cr, uid, ids, context=None):
@@ -511,5 +545,47 @@ class product_product(osv.osv):
                     ]
     
 product_product()
+
+
+class stock_move(osv.osv):
+    '''
+    add the new method self.create_composition_list
+    '''
+    _inherit= 'stock.move'
+    
+    def create_composition_list(self, cr, uid, ids, context=None):
+        '''
+        return the form view of composition_list (real) with corresponding values from the context
+        '''
+        obj = self.browse(cr, uid, ids[0], context=context)
+        composition_type = 'real'
+        composition_product_id = obj.product_id.id
+        composition_lot_id = obj.prodlot_id and obj.prodlot_id.id or False
+        composition_exp = obj.expired_date
+        composition_batch_check = obj.product_id.batch_management
+        composition_expiry_check = obj.product_id.perishable
+        
+        return {'name': 'Kit Composition List',
+                'view_id': False,
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_model': 'composition.kit',
+                'res_id': False,
+                'type': 'ir.actions.act_window',
+                'nodestroy': False,
+                'target': False,
+                'domain': "[('composition_type', '=', 'real')]",
+                'context': dict(context,
+                                composition_type=composition_type,
+                                composition_product_id=composition_product_id,
+                                composition_lot_id=composition_lot_id,
+                                composition_exp=composition_exp,
+                                composition_batch_check=composition_batch_check,
+                                composition_expiry_check=composition_expiry_check,
+                                )
+                }
+        
+    
+stock_move()
 
 

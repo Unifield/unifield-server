@@ -198,7 +198,6 @@
   !python {model: stock.move}: |
     in_id = context['yml_kit']['in']
     ids = self.search(cr, uid, [('picking_id', '=', in_id), ('product_id', '=', ref("kit_product_A"))], context=context)
-    print ids
     self.create_composition_list(cr, uid, ids, context=context)
 -
   END OF FILE

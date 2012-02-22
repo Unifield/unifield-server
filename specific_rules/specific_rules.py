@@ -521,6 +521,9 @@ class stock_move(osv.osv):
             # expiry date management
             if obj.product_id.perishable:
                 result[obj.id]['exp_check'] = True
+            # contains a kit
+            if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
+                result[obj.id]['kit_check'] = True
             
         return result
     
@@ -551,6 +554,7 @@ class stock_move(osv.osv):
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
         'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+        'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
