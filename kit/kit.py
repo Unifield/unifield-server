@@ -37,8 +37,6 @@ KIT_COMPOSITION_TYPE = [('theoretical', 'Theoretical'),
 
 KIT_STATE = [('draft', 'Draft'),
              ('completed', 'Completed'),
-             ('shipped', 'Shipped'),
-             ('archived', 'Archived'),
              ('done', 'Closed'),
              ]
 
