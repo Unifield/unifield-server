@@ -20,6 +20,10 @@
     subtype: kit
     batch_management: true
     perishable: true
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: kit_partner_A
 -
   Product B
 -
@@ -29,6 +33,10 @@
     subtype: kit
     batch_management: false
     perishable: false
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: kit_partner_A
 -
   Product C
 -
@@ -38,6 +46,10 @@
     subtype: single
     batch_management: false
     perishable: false
+    seller_ids:
+      - sequence: 10
+        min_qty: 0.00
+        name: kit_partner_A
 -
   Production Lot As (s stands for standard)
 -

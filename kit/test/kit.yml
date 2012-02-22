@@ -84,7 +84,6 @@
   !python {model: composition.kit}: |
     self.mark_as_completed(cr, uid, [ref("kit_compo_01")], context=context)
     kit = self.browse(cr, uid, ref("kit_compo_01"), context=context)
-    print kit.state
     assert kit.state == 'completed', 'kit_compo_01: the field state is wrong, should be completed - %s'%kit.state
     
     for item in kit.composition_item_ids:
@@ -139,6 +138,68 @@
 -
   !python {model: procurement.order}: |
     self.run_scheduler(cr, uid, context=context)
+-
+  I check the corresponding purchase order has been created and store the corresponding id in the context
+-
+  !python {model: purchase.order}: |
+    ids = self.search(cr, uid, [('origin', '=', 'so a')], context=context)
+    assert len(ids) == 1, 'the number of created purchase order is wrong - 1 - %s'%len(ids)
+    context.setdefault('yml_kit', {}).update(po=ids[0])
+-
+  I validate the purchase order (2 steps)
+-
+  !python {model: purchase.order}: |
+    import netsvc
+    po_id = context['yml_kit']['po']
+    wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+    wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
+-
+  I check the corresponding incoming shipment has been created and store the corresponding id in the context
+-
+  !python {model: stock.picking}: |
+    po_id = context['yml_kit']['po']
+    ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
+    assert len(ids) == 1, 'the number of created incoming shipment is wrong - 1 - %s'%len(ids)
+    context.setdefault('yml_kit', {}).update({'in':ids[0]})
+-
+  I open the process wizard of incoming shipment
+-
+  !python {model: stock.picking}: |
+    in_id = context['yml_kit']['in']
+    data = self.action_process(cr, uid, [in_id], context=context)
+    context.setdefault('yml_kit', {}).setdefault('wiz', {}).update({'id': data['res_id'], 'model': data['res_model']})
+    context['c'] = data['context']
+    # check the picking type
+    pick = self.browse(cr, uid, in_id, context=context)
+    type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    context.update({'type': type})
+-
+  I complete the batch number in processing wizard and validate the wizard using wizard's context
+-
+  !python {model: stock.partial.picking}: |
+    wiz_id = context['yml_kit']['wiz']['id']
+    c = context['c']
+    in_id = context['yml_kit']['in']
+    type = context['type']
+    for mem in getattr(self.browse(cr, uid, wiz_id, context=c), 'product_moves_%s'%type):
+      mem.write({'prodlot_id': ref("kit_lot_As")}, context=c)
+    self.do_incoming_shipment(cr, uid, [wiz_id], context=c)
+-
+  Check that the incoming shipment is done
+-
+  !python {model: stock.picking}: |
+    in_id = context['yml_kit']['in']
+    pick = self.browse(cr, uid, in_id, context=context)
+    assert pick.state == 'done', 'incoming shipment the state is wrong, should be done - %s'%pick.state
+-
+  I click on the create composition list button of the stock move which contains the kit
+-
+  !python {model: stock.move}: |
+    in_id = context['yml_kit']['in']
+    ids = self.search(cr, uid, [('picking_id', '=', in_id), ('product_id', '=', ref("kit_product_A"))], context=context)
+    print ids
+    self.create_composition_list(cr, uid, ids, context=context)
 -
   END OF FILE
 -
