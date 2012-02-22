@@ -32,8 +32,13 @@ class stock_picking(osv.osv):
         Create a link between invoice_line and purchase_order_line. This piece of information is available on move_line.order_line_id
         """
         if invoice_line_id and move_line:
-            self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], 
-                {'order_line_id': move_line.purchase_line_id and move_line.purchase_line_id.id or False})
+            vals = {}
+            if move_line.purchase_line_id:
+                vals.update({'order_line_id': move_line.purchase_line_id.id})
+            if move_line.sale_line_id:
+                vals.update({'sale_order_line_id': move_line.sale_line_id.id})
+            if vals:
+                self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], vals)
         return super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
 
     def _invoice_hook(self, cr, uid, picking, invoice_id):
