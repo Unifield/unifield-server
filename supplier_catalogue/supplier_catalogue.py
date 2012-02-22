@@ -400,16 +400,6 @@ class supplier_catalogue_line(osv.osv):
     
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, [], position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
-    
-    def display_historical_lines(self, cr, uid, ids, context={}):
-        context.update({'from_date': '2012-01-01', 'to_date': '2012-03-31', 'partner_id': 4, 'historical_data': True})
-        
-        return {'type': 'ir.actions.act_window',
-                'name': 'Historical prices - from %s to %s' % (context.get('from_date'), context.get('to_date')),
-                'res_model': 'supplier.catalogue.line',
-                'view_type': 'form',
-                'view_mode': 'tree',
-                'context': context}
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context={}, toolbar=False, submenu=False):
         
@@ -489,6 +479,48 @@ class supplier_catalogue_line(osv.osv):
         
     
 supplier_catalogue_line()
+
+
+class supplier_historical_catalogue(osv.osv_memory):
+    _name = 'supplier.historical.catalogue'
+    
+    _columns = {
+        'partner_id': fields.many2one('res.partner', string='Supplier'),
+        'currency_id': fields.many2one('res.currency', string='Currency', required=True),
+        'from_date': fields.date(string='From', required=True),
+        'to_date': fields.date(string='To', required=True),
+    }
+    
+    _defaults = {
+        'partner_id': lambda obj, uid, ids, ctx: ctx.get('active_id'),
+        'to_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+    
+    def open_historical_prices(self, cr, uid, ids, context={}):
+        '''
+        Open the historical prices view
+        '''
+        if not context:
+            context = {}
+            
+        for hist in self.browse(cr, uid, ids, context=context):
+            context.update({'from_date': hist.from_date,
+                            'to_date': hist.to_date,
+                            'partner_id': hist.partner_id.id,
+                            'currency_id': hist.currency_id.id,
+                            'historical_data': True})
+        
+        from_str = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=context.get('from_date'), context=context)
+        to_str = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=context.get('to_date'), context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'name': 'Historical prices - from %s to %s' % (from_str, to_str),
+                'res_model': 'supplier.catalogue.line',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'context': context}
+    
+supplier_historical_catalogue()
 
 
 class from_supplier_choose_catalogue(osv.osv_memory):

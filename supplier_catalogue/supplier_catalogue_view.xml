@@ -163,7 +163,6 @@
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" editable="top">
 					<field name="product_id" on_change="product_change(product_id)" />
-					<button type="object" name="display_historical_lines" string="test" icon="gtk-execute" />
 					<field name="line_uom_id" />
 					<field name="min_qty" />
 					<field name="unit_price" />
@@ -234,6 +233,33 @@
 		<menuitem id="menu_supplier_catalogue_line"
 				  action="action_supplier_catalogue_line_list"
 				  parent="menu_supplier_catalogue" />
+				  
+		<!-- 
+			SUPPLIER HISTORICAL CATALOGUES 
+		-->
+		
+		<!-- Supplier historical catalogues form view -->
+		<record id="supplier_historical_catalogue_form_view" model="ir.ui.view">
+			<field name="name">supplier.historical.catalogue.form.view</field>
+			<field name="model">supplier.historical.catalogue</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Historical prices parameters">
+					<group colspan="4" col="4">
+						<separator colspan="4" string="Parameters" />
+						<field name="currency_id" widget="selection" />
+						<field name="partner_id" readonly="1" />
+						<field name="from_date" />
+						<field name="to_date" />
+					</group>
+					<group colspan="4" col="4">
+						<separator colspan="4" string="Actions" />
+						<button special="cancel" string="Cancel" icon="gtk-cancel" />
+						<button name="open_historical_prices" type="object" string="Open historical prices" icon="terp-gtk-jump-to-ltr" colspan="3" />
+					</group>
+				</form>
+			</field>
+		</record>
 				  
 	</data>
 </openerp>

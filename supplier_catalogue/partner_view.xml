@@ -54,6 +54,7 @@
         	</field>
         </record>
         
+        <!-- Supplier catalogues action on supplier form -->
         <act_window
         	name="Catalogues"
         	res_model="from.supplier.choose.catalogue"
@@ -63,7 +64,18 @@
         	key2="client_action_multi"
         	target="new"
         	domain="[]"
-        	context="{}"
+        	id="action_choose_catalogue" />
+        	
+        <!-- Supplier historical catalogues action on supplier form -->
+		<act_window
+        	name="Historical prices"
+        	res_model="supplier.historical.catalogue"
+        	src_model="res.partner"
+        	view_mode="form"
+        	view_type="form"
+        	key2="client_action_multi"
+        	target="new"
+        	domain="[]"
         	id="action_choose_catalogue" />
 	 	
 	 </data>
