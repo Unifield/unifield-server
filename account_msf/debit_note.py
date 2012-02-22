@@ -35,6 +35,13 @@ class account_invoice_line(osv.osv):
         'move_lines': fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
     }
 
+    def copy_data(self, cr, uid, id, defaults={}, context={}):
+        """
+        Copy an invoice line without its move lines
+        """
+        defaults.update({'move_lines': False,})
+        return super(account_invoice_line, self).copy_data(cr, uid, id, defaults, context)
+
     def move_line_get_item(self, cr, uid, line, context={}):
         """
         Add a link between move line and its invoice line
@@ -140,7 +147,7 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
-        default.update({'partner_move_line': False})
+        default.update({'partner_move_line': False, 'imported_invoices': False})
         return super(account_invoice, self).copy(cr, uid, id, default, context)
 
     def finalize_invoice_move_lines(self, cr, uid, inv, line):
