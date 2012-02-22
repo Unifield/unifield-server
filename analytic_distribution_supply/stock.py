@@ -54,9 +54,7 @@ class stock_picking(osv.osv):
         Add analytic distribution from SO to invoice
         """
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
-        print res
         for pi in self.browse(cr, uid, [x for x in res]):
-            print pi
             if pi.sale_id and pi.sale_id.analytic_distribution_id:
                 distrib_id = pi.sale_id.analytic_distribution_id.id or False
                 if distrib_id:
