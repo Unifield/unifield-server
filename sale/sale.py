@@ -592,6 +592,12 @@ class sale_order(osv.osv):
             self.log(cr, uid, sale.id, message)
         self.write(cr, uid, ids, {'state': 'cancel'})
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return kwargs['message']
 
     def action_wait(self, cr, uid, ids, *args):
         for o in self.browse(cr, uid, ids):
@@ -601,6 +607,7 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [o.id], {'state': 'progress', 'date_confirm': time.strftime('%Y-%m-%d')})
             self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line])
             message = _("The quotation '%s' has been converted to a sales order.") % (o.name,)
+            message = self._hook_message_action_wait(cr, uid, order=o, message=message)
             self.log(cr, uid, o.id, message)
         return True
 
