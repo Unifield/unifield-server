@@ -24,10 +24,7 @@
                         <field name="noinvoice" invisible="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
-                        <field name="order_policy" on_change="shipping_policy_change(order_policy)" invisible="1"/>
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='invoice_quantity']" position="replace">
-                        <field name="invoice_quantity"  invisible="1"/>
+                        <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>
                     </xpath>
                     <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
                         <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
