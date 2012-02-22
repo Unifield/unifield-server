@@ -27,7 +27,7 @@
     "description" : """
         This module add a "split invoice button" that permits to split an invoice into 2 invoices.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     "depends" : ["register_accounting", "account"],

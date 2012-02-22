@@ -515,6 +515,12 @@ class stock_move(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -543,6 +549,8 @@ class stock_move(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
@@ -823,8 +831,34 @@ class stock_production_lot(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
+
+    def _check_batch_type_integrity(self, cr, uid, ids, context={}):
+        '''
+        Check if the type of the batch is consistent with the product attributes
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'standard' and not obj.product_id.batch_management:
+                return False
+
+        return True
+
+    def _check_perishable_type_integrity(self, cr, uid, ids, context={}):
+        '''
+        Check if the type of the batch is consistent with the product attributes
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'internal' and (obj.product_id.batch_management or not obj.product_id.perishable):
+                return False
+
+        return True
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type"),
@@ -843,6 +877,8 @@ class stock_production_lot(osv.osv):
                 'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
                 'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+                'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+                'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
                 }
     
     _defaults = {'type': 'standard',
@@ -853,7 +889,15 @@ class stock_production_lot(osv.osv):
     
     _sql_constraints = [('name_uniq', 'unique (name)', 'The Batch Number must be unique !'),
                         ]
-    
+
+    _constraints = [(_check_batch_type_integrity,
+                    'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
+                    ['Type', 'Product']),
+                    (_check_perishable_type_integrity,
+                    'You can\'t create an internal Batch Number for a product which is batch managed or which is not perishable. If the product is batch managed, please create a standard batch number.',
+                    ['Type', 'Product']),
+                ]
+
     def search(self, cr, uid, args=[], offset=0, limit=None, order=None, context=None, count=False):
         '''
         search function of production lot
@@ -1186,6 +1230,12 @@ class stock_inventory_line(osv.osv):
             # narcotic
             if obj.product_id.narcotic:
                 result[obj.id]['np_check'] = True
+            # lot management
+            if obj.product_id.batch_management:
+                result[obj.id]['lot_check'] = True
+            # expiry date management
+            if obj.product_id.perishable:
+                result[obj.id]['exp_check'] = True
             
         return result
     
@@ -1229,6 +1279,8 @@ class stock_inventory_line(osv.osv):
         'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
         'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
+        'lot_check': fields.function(_get_checks_all, method=True, string='Lot', type='boolean', readonly=True, multi="m"),
+        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
     }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist

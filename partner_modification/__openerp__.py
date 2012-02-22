@@ -23,7 +23,8 @@
 {
     "name" : "Partner Modification",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "msf_partner"],
     "init_xml" : [],

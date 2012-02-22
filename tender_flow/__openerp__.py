@@ -23,7 +23,8 @@
 {
     "name" : "Tender and Request for quotation flow",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "stock", 
                  "partner_modification", "sourcing", 
