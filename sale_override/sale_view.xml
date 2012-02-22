@@ -9,10 +9,10 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
-                	<xpath expr="/form//field[@name='partner_id']" position="replace">
-                		<field name="company_id2" invisible="1" />
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
-                	</xpath>
+                    <xpath expr="/form//field[@name='partner_id']" position="replace">
+                        <field name="company_id2" invisible="1" />
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" domain="[('customer','=',True), ('id', '!=', company_id2)]" context="{'search_default_customer':1}" required="1"/>
+                    </xpath>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
                         <field name="order_type" />
@@ -99,11 +99,11 @@
                     <xpath expr="/search//filter[@string='Quotations']" position="after">
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Sales Order validated"/>
                     </xpath>
-		    <xpath expr="/search/field[@name='name']" position="after">
-			<field name="client_order_ref" />
-		    </xpath>
+            <xpath expr="/search/field[@name='name']" position="after">
+            <field name="client_order_ref" />
+            </xpath>
                     <xpath expr="/search/field[@name='user_id']" position="after">
-                    	<newline />
+                        <newline />
                         <group string="Type" expand="0">
                             <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
                             <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
@@ -112,9 +112,9 @@
                         </group>
                         <newline />
                         <group string="Priority" expand="0">
-	                        <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
-	                        <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
-	                        <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
+                            <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                            <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                            <filter icon="gtk-info" string="Medium" domain="[('priority','=','priority')]"/>
                         </group>
                         <newline />
                         <group string="Category" expand="0">

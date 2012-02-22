@@ -33,6 +33,7 @@ class account_invoice_line(osv.osv):
     _columns = {
         'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, 
             help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
+        'sale_order_lines': fields.many2many('sale.order.line', 'sale_order_line_invoice_rel', 'invoice_id', 'order_line_id', 'Sale Order Lines', readonly=True),
     }
 
 account_invoice_line()

@@ -133,6 +133,40 @@ class sale_order(osv.osv):
         res = super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
         return res
 
+    def action_invoice_create(self, cr, uid, ids, *args):
+        """
+        Add analytic distribution from SO to invoice
+        """
+        # Retrieve some data
+        res = super(sale_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+        # Set analytic distribution from sale order to invoice
+        ana_obj = self.pool.get('analytic.distribution')
+        for so in self.browse(cr, uid, ids):
+            # Copy analytic distribution from sale order to invoices
+            if so.analytic_distribution_id and so.invoice_ids:
+                for inv in so.invoice_ids:
+                    distrib_id = so.analytic_distribution_id and so.analytic_distribution_id.id or False
+                    if distrib_id:
+                        new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
+                        if not new_distrib_id:
+                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                        # create default funding pool lines
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+            # Copy analytic distribution from sale order line to invoice lines
+            for sol in so.order_line:
+                if sol.analytic_distribution_id and sol.invoice_lines:
+                    sol_distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id or False
+                    if sol_distrib_id:
+                        for invl in sol.invoice_lines:
+                            new_sol_distrib_id = ana_obj.copy(cr, uid, sol_distrib_id, {})
+                            if not new_sol_distrib_id:
+                                raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice line.'))
+                            # create default funding pool lines
+                            ana_obj.create_funding_pool_lines(cr, uid, [new_sol_distrib_id])
+                            self.pool.get('account.invoice.line').write(cr, uid, [invl.id], {'analytic_distribution_id': new_sol_distrib_id,})
+        return res
+
 sale_order()
 
 class sale_order_line(osv.osv):
