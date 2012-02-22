@@ -187,8 +187,16 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context={}):
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            self.log(cr, uid, order.id, 'The sale order \'%s\' has been validated.' % order.name, context=context)
 
         return True
+    
+    def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
+        '''
+        Hook the message displayed on sale order confirmation
+        '''
+        return _('The sale order \'%s\' has been confirmed.' % kwargs['order'].name)
     
     def action_wait(self, cr, uid, ids, *args):
         '''
