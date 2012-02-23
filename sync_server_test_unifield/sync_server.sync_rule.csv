@@ -1,4 +1,4 @@
-"id","name","model_id","sequence","direction","applies_to_type","group_id/id","type_id/id","domain","included_fields","fallback_values","forced_values"
+"id","name","model_id","sequence_number","direction","applies_to_type","group_id/id","type_id/id","domain","included_fields","fallback_values","forced_values"
 "sync_server_test_unifield.nom1_rule_id","Nom","product.nomenclature",600,"Bidirectional","False","sync_server_test.i_id",,,"['name', 'code']",,
 "sync_server_test_unifield.nom2_rule_id","Nom1","product.nomenclature","610","Bidirectional","False","sync_server_test.i_id",,,"['parent_id/id']",,
 "sync_server_test.demo_product_rule_m2","MSF_product_rule_m2","product.product","1020","Bidirectional","False","sync_server_test.m2_id",,"[('name', 'ilike', 'm2_')]","['name','type','categ_id/id','standard_price', 'sale_ok', 'purchase_ok', 'nomen_manda_0/id', 'nomen_manda_1/id', 'nomen_manda_2/id', 'nomen_manda_3/id']","{'categ_id/id' : 'product.cat0' }",
