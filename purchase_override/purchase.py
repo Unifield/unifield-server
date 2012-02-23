@@ -25,23 +25,11 @@ from tools.translate import _
 import netsvc
 
 from workflow.wkf_expr import _eval_expr
-from mx.DateTime import *
 import logging
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
-    def create(self, cr, uid, vals, context=None):
-        '''
-        create method for filling flag from yml tests
-        '''
-        if context is None:
-            context = {}
-        if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
-            logging.getLogger('init').info('PO: set from yml test to True')
-            vals['from_yml_test'] = True
-        return super(purchase_order, self).create(cr, uid, vals, context=context)
 
     def copy(self, cr, uid, id, default, context={}):
         '''
@@ -121,15 +109,6 @@ class purchase_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a purchase order to your own company !'))
 
         return True
-
-    def create(self, cr, uid, vals, context={}):
-        '''
-        Check if the partner is correct
-        '''
-        if 'partner_id' in vals:
-            self._check_user_company(cr, uid, vals['partner_id'], context=context)
-    
-        return super(purchase_order, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context={}):
         '''
@@ -420,6 +399,12 @@ class purchase_order(osv.osv):
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True
+            
+        if 'partner_id' in vals:
+            self._check_user_company(cr, uid, vals['partner_id'], context=context)
+    
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
+            
         return super(purchase_order, self).create(cr, uid, vals, context)
 
     def action_cancel(self, cr, uid, ids, context={}):
@@ -503,7 +488,7 @@ class purchase_order(osv.osv):
                 # Search the method called when the workflow enter in last activity
                 wkf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'act_done')[1]
                 activity = self.pool.get('workflow.activity').browse(cr, uid, wkf_id, context=context)
-                res = _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
+                _eval_expr(cr, [uid, 'purchase.order', order_id.id], False, activity.action)
 
         return True
     
