@@ -813,6 +813,8 @@ class procurement_order(osv.osv):
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
+            purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
+            po_obj.write(cr, uid, [purchase_ids[0]], {'origin': '%s/%s' % (purchase.origin, procurement.origin)}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
