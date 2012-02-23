@@ -320,7 +320,7 @@ class composition_kit(osv.osv):
                                         store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
                 'composition_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Version', multi='get_vals',
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
-                'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Num', multi='get_vals',
+                'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Nb', multi='get_vals',
                                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
                 # nomenclature
                 'nomen_manda_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Main Type', multi='get_vals', readonly=True, select=True,

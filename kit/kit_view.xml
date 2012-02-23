@@ -18,7 +18,7 @@
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
 	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', False)], 'invisible': ['|', ('composition_expiry_check', '=', True), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
-	                        <field name="composition_lot_id" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_lot_id" colspan="2" domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
                         </group>
@@ -101,7 +101,7 @@
                     <separator orientation="vertical" />
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     <separator orientation="vertical" />
-                    <field name="composition_product_id" select="1" />
+                    <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_txt" select="1" />
                     <newline />
 					<group expand="1" string="Nomenclature Filters...">
@@ -124,9 +124,9 @@
 					</group>
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
-	                    <filter string="Product" icon="terp-partner" domain="[]" context="{'group_by':'composition_product_id'}" />
-	                    <filter string="Version" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'composition_version_txt'}" />
-	                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
+	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version_txt'}" />
+	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
                 	</group>
@@ -135,18 +135,18 @@
         </record>
         
         <record id="view_composition_kit_real_filter" model="ir.ui.view">
-            <field name="name">composition.kit.theoretical.filter</field>
+            <field name="name">composition.kit.real.filter</field>
             <field name="model">composition.kit</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Search Theoretical Kit Composition">
+                <search string="Search Real Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <separator orientation="vertical" />
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     <separator orientation="vertical" />
-                    <field name="composition_product_id" select="1" />
+                    <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_id" select="1" context="{'from_filter': True}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="composition_combined_ref_lot" select="1" />
                     <field name="composition_exp" select="1" />
@@ -171,11 +171,14 @@
 					</group>
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
-	                    <filter string="Product" icon="terp-partner" domain="[]" context="{'group_by':'composition_product_id'}" />
-	                    <filter string="Version" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'composition_version_id'}" />
-	                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
+	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version_id'}" />
+	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
+	                    <separator orientation="vertical"/>
+	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'composition_combined_ref_lot'}"/>
+	                    <filter string="Expiry Date" icon="terp-go-today" domain="[]" context="{'group_by':'composition_exp'}"/>
                 	</group>
               	</search>
             </field>
@@ -227,6 +230,51 @@
             </field>
 		</record>
 		
+		<record id="view_composition_kit_theoretical_item_filter" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.item.filter</field>
+            <field name="model">composition.item</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Theoretical Kit Composition Item">
+                    <field name="item_kit_id" domain="[('composition_type', '=', 'theoretical')]" select="1" />
+                    <field name="item_module" select="1" />
+                    <field name="item_product_id" select="1" />
+					<newline />
+                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
+                  		<separator orientation="vertical"/>
+                  		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
+	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'item_product_id'}" />
+                	</group>
+              	</search>
+            </field>
+        </record>
+		
+		<record id="view_composition_kit_real_item_filter" model="ir.ui.view">
+            <field name="name">composition.kit.real.item.filter</field>
+            <field name="model">composition.item</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Real Kit Composition Item">
+                    <field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" />
+                    <field name="item_module" select="1" />
+                    <field name="item_product_id" select="1" />
+                    <field name="item_lot" select="1" />
+                    <field name="item_exp" select="1" />
+					<newline />
+                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
+                  		<separator orientation="vertical"/>
+                  		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
+	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'item_product_id'}" />
+	                    <separator orientation="vertical"/>
+	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'item_lot'}" />
+	                    <filter string="Expiry Date" icon="terp-go-today" domain="[]" context="{'group_by':'item_exp'}" />
+                	</group>
+              	</search>
+            </field>
+        </record>
+		
 		<record id="kit_composition_theoretical_action" model="ir.actions.act_window">
 			<field name="name">Theoretical Kit Composition</field>
 			<field name="res_model">composition.kit</field>
@@ -244,7 +292,7 @@
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('item_kit_type', '=', 'theoretical')]</field>
 			<field name="context">{'item_kit_type':'theoretical'}</field>
-			<field name="search_view_id" ref="view_composition_kit_real_filter" />
+			<field name="search_view_id" ref="view_composition_kit_theoretical_item_filter" />
 		</record>
 		
 		<record id="kit_composition_real_action" model="ir.actions.act_window">
@@ -254,6 +302,7 @@
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('composition_type', '=', 'real')]</field>
 			<field name="context">{'composition_type':'real'}</field>
+			<field name="search_view_id" ref="view_composition_kit_real_filter" />
 		</record>
 		
 		<record id="kit_composition_real_item_action" model="ir.actions.act_window">
@@ -263,6 +312,7 @@
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('item_kit_type', '=', 'real')]</field>
 			<field name="context">{'item_kit_type':'real'}</field>
+			<field name="search_view_id" ref="view_composition_kit_real_item_filter" />
 		</record>
 
 		<menuitem id="kit_management" name="Kit Management" parent="product_attributes.menu_main_product" sequence="10" />
