@@ -56,7 +56,9 @@ class procurement_order(osv.osv):
         
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
             # Set location_id in context for tre AMC calculation
-            context.update({'location_id': threshold.location_id and threshold.location_id.id or False})
+            context.update({'location_id': threshold.location_id and threshold.location_id.id or False,
+                            'from_date': threshold.consumption_from,
+                            'to_date': threshold.consumption_to})
             
             # Set the product list according to the category or product defined in the rule
             products = []

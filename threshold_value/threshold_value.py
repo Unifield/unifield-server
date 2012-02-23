@@ -22,10 +22,64 @@
 
 from osv import osv, fields
 
+from mx.DateTime import *
 
 class threshold_value(osv.osv):
     _name = 'threshold.value'
     _description = 'Threshold value'
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Get or compute threshold value and qty to order
+        '''
+        if not vals.get('threshold_manual_ok') or not vals.get('qty_order_manual_ok') \
+            or not vals.get('theshold_value') or not vals.get('qty_to_order'):
+            res = self.compute_threshold_qty_order(cr, uid, 1, vals['category_id'], 
+                                                               vals['product_id'], 
+                                                               vals['location_id'], 
+                                                               vals['frequency'], 
+                                                               vals['lead_time'],
+                                                               vals['supplier_lt'], 
+                                                               vals['safety_month'],
+                                                               vals['threshold_manual_ok'],
+                                                               vals['qty_order_manual_ok'],
+                                                               vals['consumption_from'], 
+                                                               vals['consumption_to'], context=context)
+            
+        if not vals.get('threshold_manual_ok') or not vals.get('threshold_value'):
+            vals['threshold_value'] = res['value']['threshold_value']
+            
+        if not vals.get('qty_order_manual_ok') or not vals.get('qty_to_order'):
+            vals['qty_to_order'] = res['value']['qty_to_order']
+            
+        return super(threshold_value, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context={}):
+        '''
+        Get or compute threshold value and qty to order
+        '''
+        for th_value in self.browse(cr, uid, ids, context=context):
+            if (not vals.get('threshold_value') and not vals.get('threshold_manual_ok')) \
+                or (not vals.get('qty_order_manual_ok') and not vals.get('qty_to_order')):
+                res = self.compute_threshold_qty_order(cr, uid, 1, vals.get('category_id', th_value.category_id.id), 
+                                                                   vals.get('product_id',th_value.product_id.id), 
+                                                                   vals.get('location_id',th_value.location_id.id), 
+                                                                   vals.get('frequency',th_value.frequency), 
+                                                                   vals.get('lead_time',th_value.lead_time),
+                                                                   vals.get('supplier_lt',th_value.supplier_lt), 
+                                                                   vals.get('safety_month',th_value.safety_month),
+                                                                   vals.get('threshold_manual_ok',th_value.threshold_manual_ok),
+                                                                   vals.get('qty_order_manual_ok',th_value.qty_order_manual_ok),
+                                                                   vals.get('consumption_from',th_value.consumption_from), 
+                                                                   vals.get('consumption_to',th_value.consumption_to), context=context)
+            
+        if not vals.get('threshold_value') and not vals.get('threshold_manual_ok'):
+            vals['threshold_value'] = res['value']['threshold_value']
+            
+        if not vals.get('qty_to_order') and not vals.get('qty_order_manual_ok'):
+            vals['qty_to_order'] = res['value']['qty_to_order']
+            
+        return super(threshold_value, self).write(cr, uid, ids, vals, context=context)    
     
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
@@ -39,6 +93,8 @@ class threshold_value(osv.osv):
         'threshold_manual_ok': fields.boolean(string='Manual threshold value'),
         'qty_to_order': fields.float(digits=(16,2), string='Quantity to Order (in UoM)', required=True),
         'qty_order_manual_ok': fields.boolean(string='Manual quantity to order'),
+        'consumption_from': fields.date(string='Period from'),
+        'consumption_to': fields.date(string='Period to'),
         'frequency': fields.float(digits=(16,2), string='Order frequency'),
         'safety_month': fields.float(digits=(16,2), string='Safety Stock in months'),
         'lead_time': fields.float(digits=(16,2), string='Fixed Lead Time in months'),
@@ -52,7 +108,9 @@ class threshold_value(osv.osv):
         'qty_order_manual_ok': lambda *a: False,
     }
     
-    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, context={}):
+    def compute_threshold_qty_order(self, cr, uid, ids, category_id, product_id, location_id, frequency, lead_time, 
+                                    supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, 
+                                    consumption_from, consumption_to, context={}):
         '''
         Computes the threshold value and quantity to order according to parameters
         
@@ -79,6 +137,15 @@ class threshold_value(osv.osv):
         
         if location_id:
             context.update({'location_id': location_id})
+            
+        if consumption_from:
+            consumption_from = (DateFrom(consumption_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            context.update({'from_date': consumption_from})
+            v.update({'consumption_from': consumption_from})
+        if consumption_to:
+            consumption_to = (DateFrom(consumption_to) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            context.update({'to_date': consumption_to})
+            v.update({'consumption_to': consumption_to})
         
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)

@@ -22,22 +22,28 @@
         			<group colspan="2" col="2">
         				<separator colspan="2" string="Quantity rules" />
         				<field name="threshold_manual_ok" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="threshold_value"  attrs="{'readonly': [('threshold_manual_ok', '=', False)]}" />
         				<field name="qty_order_manual_ok" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="qty_to_order" attrs="{'readonly': [('qty_order_manual_ok', '=', False)]}" />
         			</group>
         			<group colspan="2" col="2">
         				<separator colspan="2" string="Calculation parameters" />
+        				<field name="consumption_from" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)], 
+        													   'required': ['|', ('threshold_manual_ok', '=', False), ('qty_order_manual_ok', '=', False)]}"
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
+        				<field name="consumption_to" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)],
+        													 'required': ['|', ('threshold_manual_ok', '=', False), ('qty_order_manual_ok', '=', False)]}"
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="frequency" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="safety_month" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="lead_time" attrs="{'readonly': [('supplier_lt', '=', True)], 'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}" 
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         				<field name="supplier_lt" attrs="{'readonly': [('threshold_manual_ok', '=', True), ('qty_order_manual_ok', '=', True)]}"
-        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok)" />
+        					on_change="compute_threshold_qty_order(category_id, product_id, location_id, frequency, lead_time, supplier_lt, safety_month, threshold_manual_ok, qty_order_manual_ok, consumption_from, consumption_to)" />
         			</group>
         		</form>
         	</field>
