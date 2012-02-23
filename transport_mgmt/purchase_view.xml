@@ -88,7 +88,7 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='location_id']" position="after">
-                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)]}" widget="selection" />
+                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" widget="selection" />
                     </xpath>
 
                 </data>

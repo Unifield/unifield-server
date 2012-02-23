@@ -90,6 +90,7 @@ class purchase_order(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+        'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
     }
     
     _defaults = {
@@ -127,6 +128,8 @@ class purchase_order(osv.osv):
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
+        d = {'partner_id': []}
+        w = {}
         local_market = None
         
         # Search the local market partner id
@@ -137,11 +140,18 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']:
             v['invoice_method'] = 'manual'
+        elif order_type == 'direct':
+            v['invoice_method'] = 'order'
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
             if partner.partner_type == 'internal' and order_type == 'regular':
                 v['invoice_method'] = 'manual'
+            elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
+                v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False})
+                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+                w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
+                          'title': 'An error has occured !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
             v['dest_address_id'] = None
@@ -158,7 +168,7 @@ class purchase_order(osv.osv):
                 if partner.property_product_pricelist_purchase:
                     v['pricelist_id'] = partner.property_product_pricelist_purchase.id
         
-        return {'value': v}
+        return {'value': v, 'domain': d, 'warning': w}
     
     def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
         '''
@@ -176,6 +186,27 @@ class purchase_order(osv.osv):
                 res['value']['invoice_method'] = 'manual'
         
         return res
+    
+    def on_change_dest_partner_id(self, cr, uid, ids, dest_partner_id, context={}):
+        '''
+        Fill automatically the destination address according to the destination partner
+        '''
+        v = {}
+        d = {}
+        
+        if not context:
+            context = {}
+        
+        if not dest_partner_id:
+            v.update({'dest_address_id': False})
+            d.update({'dest_address_id': []})
+        
+        d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+        
+        delivery_addr = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])
+        v.update({'dest_address_id': delivery_addr['delivery']})
+        
+        return {'value': v, 'domain': d}
 
     def _hook_confirm_order_message(self, cr, uid, context={}, *args, **kwargs):
         '''
