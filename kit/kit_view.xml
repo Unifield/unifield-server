@@ -78,7 +78,7 @@
             	<tree string="Kit Composition">
             		<field name="composition_type" invisible="True" />
             		<field name="composition_product_id" />
-            		<field name="composition_version_txt" />
+            		<field name="composition_version" />
             		<field name="composition_creation_date" />
             		<field name="composition_reference" invisible="True" />
             		<field name="composition_combined_ref_lot" />
@@ -104,14 +104,78 @@
                     <field name="composition_product_id" select="1" />
                     <field name="composition_version_txt" select="1" />
                     <newline />
+					<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+					</group>
+					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
 	                    <filter string="Product" icon="terp-partner" domain="[]" context="{'group_by':'composition_product_id'}" />
 	                    <filter string="Version" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'composition_version_txt'}" />
 	                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
+                	</group>
+              	</search>
+            </field>
+        </record>
+        
+        <record id="view_composition_kit_real_filter" model="ir.ui.view">
+            <field name="name">composition.kit.theoretical.filter</field>
+            <field name="model">composition.kit</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Theoretical Kit Composition">
+                    <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
+                    <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
+                    <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <separator orientation="vertical" />
+                    <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
+                    <separator orientation="vertical" />
+                    <field name="composition_product_id" select="1" />
+                    <field name="composition_version_id" select="1" context="{'from_filter': True}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
+                    <field name="composition_combined_ref_lot" select="1" />
+                    <field name="composition_exp" select="1" />
+                    <newline />
+					<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
+					</group>
+					<newline />
+                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+	                    <filter string="Product" icon="terp-partner" domain="[]" context="{'group_by':'composition_product_id'}" />
+	                    <filter string="Version" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'composition_version_id'}" />
+	                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
 	                    <separator orientation="vertical"/>
-	                    <filter string="State" icon="terp-go-month" domain="[]" context="{'group_by':'state'}"/>
+	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'composition_creation_date'}"/>
                 	</group>
               	</search>
             </field>
@@ -180,6 +244,7 @@
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('item_kit_type', '=', 'theoretical')]</field>
 			<field name="context">{'item_kit_type':'theoretical'}</field>
+			<field name="search_view_id" ref="view_composition_kit_real_filter" />
 		</record>
 		
 		<record id="kit_composition_real_action" model="ir.actions.act_window">

@@ -144,6 +144,17 @@ class composition_kit(osv.osv):
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
             else:
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_reference})
+            # mandatory nomenclature levels
+            result[obj.id].update({'nomen_manda_0': obj.composition_product_id.nomen_manda_0.id})
+            result[obj.id].update({'nomen_manda_1': obj.composition_product_id.nomen_manda_1.id})
+            result[obj.id].update({'nomen_manda_2': obj.composition_product_id.nomen_manda_2.id})
+            result[obj.id].update({'nomen_manda_3': obj.composition_product_id.nomen_manda_3.id})
+            result[obj.id].update({'nomen_sub_0': obj.composition_product_id.nomen_sub_0.id})
+            result[obj.id].update({'nomen_sub_1': obj.composition_product_id.nomen_sub_1.id})
+            result[obj.id].update({'nomen_sub_2': obj.composition_product_id.nomen_sub_2.id})
+            result[obj.id].update({'nomen_sub_3': obj.composition_product_id.nomen_sub_3.id})
+            result[obj.id].update({'nomen_sub_4': obj.composition_product_id.nomen_sub_4.id})
+            result[obj.id].update({'nomen_sub_5': obj.composition_product_id.nomen_sub_5.id})
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -204,7 +215,7 @@ class composition_kit(osv.osv):
         
         list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>', '<field name="composition_reference"/>', '<field name="composition_combined_ref_lot"/>']
         # columns from kit composition tree
-        if view_type == 'tree' and context.get('composition_type', False) == 'theoretical':
+        if view_type == 'tree' and (context.get('composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'real' and context.get('from_filter', False))):
             replace_text = result['arch']
             replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
             result['arch'] = replace_text
@@ -257,6 +268,36 @@ class composition_kit(osv.osv):
         res['value']['composition_batch_check'] = data['batch_management']
         res['value']['composition_expiry_check'] = data['perishable']
         return res
+    
+    def _get_composition_kit_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of product.product objects for which values have changed
+        
+        return the list of ids of composition.kit objects which need to get their fields updated
+        
+        self is product.product object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        kit_obj = self.pool.get('composition.kit')
+        result = kit_obj.search(cr, uid, [('composition_product_id', 'in', ids)], context=context)
+        return result
+    
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        prod_obj = self.pool.get('product.product')
+        return prod_obj.onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+    
+    def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
+        prod_obj = self.pool.get('product.template')
+        return prod_obj._get_nomen_s(cr, uid, ids, fields, *a, **b)
+    
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
+        prod_obj = self.pool.get('product.template')
+        return prod_obj._search_nomen_s(cr, uid, obj, name, args, context=context)
 
     _columns = {'composition_type': fields.selection(KIT_COMPOSITION_TYPE, string='Composition Type', readonly=True, required=True),
                 'composition_description': fields.text(string='Composition Description'),
@@ -281,6 +322,47 @@ class composition_kit(osv.osv):
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Num', multi='get_vals',
                                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
+                # nomenclature
+                'nomen_manda_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Main Type', multi='get_vals', readonly=True, select=True,
+                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                'nomen_manda_1': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Group', multi='get_vals', readonly=True, select=True,
+                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                'nomen_manda_2': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Family', multi='get_vals', readonly=True, select=True,
+                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                'nomen_manda_3': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Root', multi='get_vals', readonly=True, select=True,
+                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_1': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_2': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_3': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_4': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_5': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', multi='get_vals', readonly=True, select=True,
+                                               store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
+                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
+                'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
                 }
     
     def _get_default_type(self, cr, uid, context=None):
@@ -545,6 +627,48 @@ class product_product(osv.osv):
 product_product()
 
 
+class product_nomenclature(osv.osv):
+    '''
+    decorator over
+    
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
+    '''
+    _inherit = 'product.nomenclature'
+    
+    def _getNumberOfProducts(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        check if we are concerned with composition kit, if we do, we return the number of concerned kit, not product
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        if context.get('composition_type', False):
+            composition_type = context.get('composition_type')
+            res = {}
+            for nomen in self.browse(cr, uid, ids, context=context):
+                name = ''
+                if nomen.type == 'mandatory':
+                    name = 'nomen_manda_%s'%nomen.level
+                if nomen.type == 'optional':
+                    name = 'nomen_sub_%s'%nomen.sub_level
+                kit_ids = self.pool.get('composition.kit').search(cr, uid, [('composition_type', '=', composition_type), (name, '=', nomen.id)], context=context)
+                if not kit_ids:
+                    res[nomen.id] = 0
+                else:
+                    res[nomen.id] = len(kit_ids)
+            return res
+        else:
+            return super(product_nomenclature, self)._getNumberOfProducts(cr, uid, ids, field_name, arg, context=context)
+        
+    _columns = {'number_of_products': fields.function(_getNumberOfProducts, type='integer', method=True, store=False, string='Number of Products', readonly=True),
+                }
+        
+product_nomenclature()
+
+
 class stock_move(osv.osv):
     '''
     add the new method self.create_composition_list
@@ -555,6 +679,12 @@ class stock_move(osv.osv):
         '''
         return the form view of composition_list (real) with corresponding values from the context
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         obj = self.browse(cr, uid, ids[0], context=context)
         composition_type = 'real'
         composition_product_id = obj.product_id.id
