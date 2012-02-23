@@ -80,7 +80,7 @@ class local_rule(osv.osv):
         'name' : fields.char('Rule name', size=64, readonly=True),
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'domain' : fields.text('Domain', required = False, readonly=True),
-        'sequence' : fields.integer('Sequence', readonly=True),
+        'sequence_number' : fields.integer('Sequence', readonly=True),
         'included_fields' : fields.text('Included Fields', readonly=True),
     }
     
@@ -100,7 +100,7 @@ class local_rule(osv.osv):
         ids_to_unlink = self.search(cr, uid, [], context=context)
         self.unlink(cr, uid, ids_to_unlink, context=context)
         
-    _order = 'sequence asc'
+    _order = 'sequence_number asc'
 local_rule()
 
 class update_to_send(osv.osv):

@@ -1,4 +1,4 @@
-"id","name","model_id","sequence","direction","applies_to_type","group_id/id","type_id/id","domain","included_fields","fallback_values","forced_values"
+"id","name","model_id","sequence_number","direction","applies_to_type","group_id/id","type_id/id","domain","included_fields","fallback_values","forced_values"
 "sync_server_test.demo_partner_rule_id","MSF_partner","res.partner",1000,"Bidirectional","False","sync_server_test.i_id",,"[('name', 'ilike', 'msf')]","['name']",,
 "sync_server_test.demo_address_rule_id","MSF_address","res.partner.address",1010,"Bidirectional","False","sync_server_test.i_id",,"[('partner_id', 'in', ('res.partner', 'id',   [('name', 'ilike', 'msf')] )) ]","['name', 'partner_id/id']",,
 "sync_server_test.demo_product_rule_m2","MSF_product_rule_m2","product.product","1020","Bidirectional","False","sync_server_test.m2_id",,"[('name', 'ilike', 'm2_')]","['name','type','categ_id/id','standard_price', 'sale_ok', 'purchase_ok']","{'categ_id/id' : 'product.cat0' }",

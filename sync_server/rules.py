@@ -38,13 +38,13 @@ class sync_rule(osv.osv):
                     ('bidirectional', 'Bidirectional'),],
                     'Directionality',required = True,),
         'domain':fields.text('Domain', required = False),
-        'sequence': fields.integer('Sequence', required = True),
+        'sequence_number': fields.integer('Sequence', required = True),
         'included_fields':fields.text('Fields to include', required = True),
         'forced_values':fields.text('Values to force', required = False),
         'fallback_values':fields.text('Fallback values', required = False),
     }
         
-    _order = 'sequence asc,model_id asc'
+    _order = 'sequence_number asc,model_id asc'
     
     #TODO add a last update to send only rule that were updated before => problem of dates
     def _get_rule(self, cr, uid, entity, context=None):
@@ -128,7 +128,7 @@ class sync_rule(osv.osv):
                     'name' : rule.name,
                     'model' : rule.model_id,
                     'domain' : rule.domain,
-                    'sequence' : rule.sequence,
+                    'sequence_number' : rule.sequence_number,
                     'included_fields' : rule.included_fields,
             }
             rules_data.append(data)
@@ -149,7 +149,7 @@ class message_rule(osv.osv):
         'group_id': fields.many2one('sync.server.entity_group','Group'),
         'type_id': fields.many2one('sync.server.group_type','Group Type'),
         'domain': fields.text('Domain', required = False),
-        'sequence': fields.integer('Sequence', required = True),
+        'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination_name': fields.char('Fields to extract destination', size=256, required = True),
@@ -180,7 +180,7 @@ class message_rule(osv.osv):
                     'server_id' : rule.id,
                     'model' : rule.model_id,
                     'domain' : rule.domain,
-                    'sequence' : rule.sequence,
+                    'sequence_number' : rule.sequence_number,
                     'remote_call' : rule.remote_call,
                     'arguments' : rule.arguments,
                     'destination_name' : rule.destination_name,
@@ -188,7 +188,7 @@ class message_rule(osv.osv):
             rules_data.append(data)
         return rules_data
         
-    _order = 'sequence asc,model_id asc'
+    _order = 'sequence_number asc,model_id asc'
 
 message_rule()
 

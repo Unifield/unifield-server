@@ -7,7 +7,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Sync Rules Tree">
-                    <field name="sequence"/>
+                    <field name="sequence_number"/>
                     <field name="name"/>
                     <field name="model_id"/>
                     <field name="direction"/>
@@ -29,7 +29,7 @@
 		                
 	                    <field name="name"/>
 	                    <field name="model_id" />
-	                    <field name="sequence"/>
+	                    <field name="sequence_number"/>
 	                    
 	                    <field name="direction" />
 	                    <field name="applies_to_type"/>
@@ -60,7 +60,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Sync Rules Tree">
-                    <field name="sequence"/>
+                    <field name="sequence_number"/>
                     <field name="name"/>
                     <field name="model_id"/>
                     <field name="applies_to_type"/>
@@ -82,7 +82,7 @@
 		                
 	                    <field name="name"/>
 	                    <field name="model_id" />
-	                    <field name="sequence"/>
+	                    <field name="sequence_number"/>
 	                    <field name="destination_name"/>
 	                    
 	                    <field name="applies_to_type"/>

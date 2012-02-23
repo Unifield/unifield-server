@@ -443,7 +443,7 @@ class sync_manager(osv.osv):
                             'name' : string : Name of the rule,
                             'model' : string : Name of the model on which the rule applies,
                             'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
-                            'sequence' : integer : Sequence number of the rule,
+                            'sequence_number' : integer : Sequence number of the rule,
                             'included_fields' : string : list of fields to include, same format as the one needed for export data
                         }
                     
@@ -556,7 +556,7 @@ class sync_manager(osv.osv):
                             'server_id' : integer : server side rule's id ,
                             'model' : string : Name of the model on which the rule applies,
                             'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
-                            'sequence' : integer : Sequence number of the rule,
+                            'sequence_number' : integer : Sequence number of the rule,
                             'remote_call' : string  : name of the method to call when the receiver will execute the message,
                             'arguments' : string : list of fields use in argument for the remote_call, see fields in receive_package
                             'destination_name' : string : Name of the field that will give the destination name,

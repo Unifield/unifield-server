@@ -43,7 +43,7 @@ class local_message_rule(osv.osv):
         'server_id' : fields.integer('Server ID'),
         'model' : fields.many2one('ir.model','Model', readonly=True),
         'domain' : fields.text('Domain', required=False, readonly=True),
-        'sequence' : fields.integer('Sequence', readonly=True),
+        'sequence_number' : fields.integer('Sequence', readonly=True),
         'remote_call': fields.text('Method to call', required=True),
         'arguments': fields.text('Arguments of the method', required=True),
         'destination_name': fields.char('Fields to extract destination', size=256, required=True), 
@@ -65,7 +65,7 @@ class local_message_rule(osv.osv):
         ids_to_unlink = self.search(cr, uid, [], context=context)
         self.unlink(cr, uid, ids_to_unlink, context=context)
         
-    _order = 'sequence asc'
+    _order = 'sequence_number asc'
 local_message_rule()
 
 
