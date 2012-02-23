@@ -1353,6 +1353,12 @@ class stock_picking(osv.osv):
         '''
         message = kwargs['message']
         return message
+    
+    def _hook_state_list(self, cr, uid, *args, **kwargs):
+        '''
+        Change terms into states list
+        '''
+        return kwargs['state_list']
 
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
@@ -1388,6 +1394,7 @@ class stock_picking(osv.osv):
                 'done': _('is done.'),
                 'draft':_('is in draft state.'),
             }
+            state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
             res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
