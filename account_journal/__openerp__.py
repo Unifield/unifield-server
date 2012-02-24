@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011-2012 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 {
     "name" : "Accounting Journal for MSF",
     "version" : "1.0",
-    "author" : "MSF - TeMPO Consulting",
+    "author" : "MSF, TeMPO Consulting",
     "category": 'Generic Modules/Accounting',
     "description": '''
         Journals view and datas
@@ -36,7 +36,8 @@
         'account_journal_demo.xml'
     ],
     'test': [
-        'test/account_journal.yml'
+        'test/analytic_data.yml',
+        'test/account_journal.yml',
     ],
     'installable': True,
     'active': False,

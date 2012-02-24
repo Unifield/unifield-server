@@ -1,0 +1,113 @@
+-
+  I create a supplier invoice in CHF for the supplier wood0
+-
+  !record {model: account.invoice, id: account_invoice_for_import_in_cash0}:
+    account_id: account_account_payable_supplier0
+    address_contact_id: res_partner_address_tempo
+    address_invoice_id: res_partner_address_tempo
+    check_total: 60.0
+    company_id: base.main_company
+    currency_id: base.CHF
+    invoice_line:
+      - account_id: account_account_expense0
+        name: 'Basic product'
+        price_unit: 12.0
+        product_id: product_basic_finance_0
+        quantity: 5.0
+        uos_id: product.product_uom_unit
+    journal_id: account_journal_expenses_0
+    partner_id: res_partner_supplier_wood_0
+    reference_type: none
+    type: in_invoice
+-
+  I create another supplier invoice in CHF for the same supplier (supplier_wood_0)
+-
+  !record {model: account.invoice, id: account_invoice_for_import_in_cash1}:
+    account_id: account_account_payable_supplier0
+    address_contact_id: res_partner_address_tempo
+    address_invoice_id: res_partner_address_tempo
+    check_total: 36.0
+    company_id: base.main_company
+    currency_id: base.CHF
+    invoice_line:
+      - account_id: account_account_expense0
+        name: 'Basic product'
+        price_unit: 12.0
+        product_id: product_basic_finance_0
+        quantity: 3.0
+        uos_id: product.product_uom_unit
+    journal_id: account_journal_expenses_0
+    partner_id: res_partner_supplier_wood_0
+    reference_type: none
+    type: in_invoice
+-
+  I validate first invoice
+-
+  !workflow {model: account.invoice, action: invoice_open, ref: account_invoice_for_import_in_cash0}
+-
+  I validate second invoice
+-
+  !workflow {model: account.invoice, action: invoice_open, ref: account_invoice_for_import_in_cash1}
+-
+  I use the import invoice button on the cash register in CHF in order to check it could be opened
+-
+  !python {model: account.bank.statement}: |
+    wizard = self.button_wiz_import_invoices(cr, uid, [ref("cash_register_0")], {"lang": "en_US", "tz": False, \
+        "active_model": "account.bank.statement", "active_ids": [ref("cash_register_0")], \
+        "active_id": ref("cash_register_0"), })
+    assert wizard.get('res_model') == 'wizard.import.invoice', "This is not the right wizard!"
+    assert wizard.get('context') != False, "Context is missing!"
+    wizard_context = wizard.get('context')
+    assert wizard_context.get('active_id') == ref("cash_register_0"), "Come from bad register line!"
+    # Delete wizard in order to simplify next tests
+    self.pool.get('wizard.import.invoice').unlink(cr, uid, wizard.get('res_id'))
+-
+  I create a wizard with the 25th of the current month (because of the fact that the register is in this current period)
+-
+  !record {model: wizard.import.invoice, id: wizard_import_invoice_0}:
+    currency_id: base.CHF
+    statement_id: cash_register_0
+    date: !eval time.strftime('%Y-%m-25')
+-
+  I add the 2 invoices in this wizard
+-
+  !python {model: wizard.import.invoice}: |
+    move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('invoice', 'in', [ref('account_invoice_for_import_in_cash0'), ref('account_invoice_for_import_in_cash1')]), ('ready_for_import_in_register','=',True)])
+    self.write(cr, uid, [ref('wizard_import_invoice_0')], {'line_ids': [(6, 0, move_line_ids)]})
+-
+  I test the group import button
+-
+  !python {model: wizard.import.invoice}: |
+    self.group_import(cr, uid, [ref('wizard_import_invoice_0')])
+-
+  I validate the wizard
+-
+  !python {model: wizard.import.invoice}: |
+    self.action_confirm(cr, uid, [ref('wizard_import_invoice_0')])
+-
+  I check that a line exists incash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 - 36 = 96).
+-
+  !python {model: account.bank.statement.line}: |
+    search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_0'))])
+    assert len(search_ids) == 1, "More than one line found: an error occured with Import Invoice Wizard."
+    line = self.browse(cr, uid, search_ids)[0]
+    assert line.state == 'temp', "Register line is not Temp posted"
+    assert line.amount == -96.0, "Wrong amount"
+    assert ref('account_invoice_for_import_in_cash0') in [x.invoice and x.invoice.id for x in line.imported_invoice_line_ids] != False, "First invoice not in results!"
+    assert ref('account_invoice_for_import_in_cash1') in [x.invoice and x.invoice.id for x in line.imported_invoice_line_ids] != False, "Second invoice not in results!"
+-
+  I hard post register line
+-
+  !python {model: account.bank.statement.line}: |
+    search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_0'))])
+    self.posting(cr, uid, search_ids, 'hard')
+-
+  I check that first invoice is paid
+-
+  !assert {model: account.invoice, id: account_invoice_for_import_in_cash0}:
+    - state == 'paid'
+-
+  I check that second invoice is paid
+-
+  !assert {model: account.invoice, id: account_invoice_for_import_in_cash1}:
+    - state == 'paid'

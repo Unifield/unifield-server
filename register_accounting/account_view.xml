@@ -28,12 +28,14 @@
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
-                                <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}"/>
+                                <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank register balance"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
                                     confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance.\n
                                     Are you sure to freeze closing balance?"/>
                             </group>
+                            <field name="balance_end" readonly="1"/>
+                            <field name="balance_gap"/>
                             <field name="currency" invisible="1"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
@@ -136,7 +138,6 @@
                         </notebook>
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
-                            <field name="balance_end" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
                             <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
                             <button name="button_confirm_bank" states="open" string="Confirm" type="object" icon="terp-camera_test"/>
@@ -501,7 +502,7 @@
         <act_window
            id="act_account_journal_2_account_bank_statement"
            name="Bank registers"
-           context="{'search_default_journal_id':active_id,}"
+           context="{'search_default_journal_id':active_id}"
            res_model="account.bank.statement"
            src_model="account.journal"/>
 

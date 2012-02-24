@@ -22,5 +22,6 @@
 import list_export
 import list_import
 import product_to_list
+import add_products
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

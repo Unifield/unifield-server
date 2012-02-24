@@ -10,13 +10,13 @@
         </record>
 
     
-        <menuitem id="main_menu_preferences" name="Preferences" 
+        <menuitem id="main_menu_preferences" name="Tools" 
                   web_icon="images/prefs.png"
                   web_icon_hover="images/prefs-hover.png" 
                   action="action_object_query"
                   />
         
-        <menuitem id="menu_preferences" name="Preferences" parent="main_menu_preferences" />
+        <menuitem id="menu_preferences" name="Tools" parent="main_menu_preferences" />
         <menuitem id="menu_preferences_conf" name="Configuration" parent="main_menu_preferences" />
     
         <record id="object_query_object_form_view" model="ir.ui.view">

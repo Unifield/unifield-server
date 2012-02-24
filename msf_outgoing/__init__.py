@@ -19,8 +19,34 @@
 #
 ##############################################################################
 
+INTEGRITY_STATUS_SELECTION = [('empty', ''),
+                              ('ok', 'Ok'),
+                              ('negative', 'Negative Value'),
+                              # picking
+                              ('missing_lot', 'Production Lot is Missing'),
+                              ('missing_date', 'Expiry Date is Missing'),
+                              ('no_lot_needed', 'No Production Lot/Expiry Date Needed'),
+                              ('wrong_lot_type', 'Wrong Production Lot Type'),
+                              ('wrong_lot_type_need_internal', 'Need Expiry Date (Internal) not Production Lot (Standard)'),
+                              ('wrong_lot_type_need_standard', 'Need Production Lot (Standard) not Expiry Date (Internal)'),
+                              ('empty_picking', 'Empty Picking Ticket'),
+                              # return ppl
+                              ('return_qty_too_much', 'Too much quantity selected'),
+                              # ppl1
+                              ('missing_1', 'The first sequence must start with 1'),
+                              ('to_smaller_than_from', 'To value must be greater or equal to From value'),
+                              ('overlap', 'The sequence overlaps previous one'),
+                              ('gap', 'A gap exist in the sequence'),
+                              # ppl2
+                              ('missing_weight', 'Weight is Missing'),
+                              # create shipment
+                              ('too_many_packs', 'Too many packs selected'),
+                              # return from shipment
+                              ('seq_out_of_range', 'Selected Sequence is out of range'),
+                              ]
+
 import msf_outgoing
 import wizard
 import report
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+

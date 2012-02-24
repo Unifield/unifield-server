@@ -453,7 +453,7 @@ class stock_forecast(osv.osv_memory):
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
                               'doc': 'SO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
-                              'origin': sol.order_id.client_order_ref,
+                              'origin': sol.order_id.client_order_ref or sol.order_id.origin,
                               'reference': 'sale.order,%s'%sol.order_id.id,
                               'state': PREFIXES['sale.order'] + sol.order_id.state,
                               'qty': uom_obj._compute_qty_obj(cr, uid, sol.product_uom, -sol.product_uom_qty, uom_to_use, context=context),
@@ -726,15 +726,18 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     STATE_SELECTION = [
-        ('draft', 'Request for Quotation'),
-        ('wait', 'Waiting'),
-        ('confirmed', 'Waiting Approval'),
-        ('approved', 'Approved'),
-        ('except_picking', 'Shipping Exception'),
-        ('except_invoice', 'Invoice Exception'),
-        ('done', 'Done'),
-        ('cancel', 'Cancelled')
-    ]
+                       ('draft', 'Draft'),
+                       ('wait', 'Wait'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
+                       ('except_invoice', 'Invoice Exception'),
+                       ('done', 'Closed'),
+                       ('cancel', 'Cancelled'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
+                       #('rfq_done', 'RfQ Done'),
+                       ]
     _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
                 }
     

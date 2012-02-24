@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+import tools
 from tools.translate import _
 
 class account_analytic_line(osv.osv):
@@ -33,29 +34,14 @@ class account_analytic_line(osv.osv):
         if context is None:
             context = {}
         if 'search_financing_contract' in context and context['search_financing_contract']:
-            if 'active_id' in context and \
-               'reporting_type' in context:
+            if 'active_id' in context:
                 donor_line = donor_line_obj.browse(cr, uid, context['active_id'], context=context)
-                # project domain
-                if donor_line.computation_type not in ('children_sum', 'analytic_sum'):
-                    raise osv.except_osv(_('Warning !'), _("The line selected has no analytic lines associated."))
-                    return
+                if donor_line.analytic_domain:
+                    args += donor_line.analytic_domain
                 else:
-                    # common domain part
-                    date_domain = eval(donor_line.date_domain)
-                    args += [date_domain[0],
-                             date_domain[1],
-                             donor_line_obj._get_account_domain(donor_line)]
-                    if context['reporting_type'] == 'allocated':
-                        # funding pool lines
-                        args += [eval(donor_line.funding_pool_domain)]
-                    else:
-                        # total project lines
-                        private_funds_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF')], context=context)
-                        if private_funds_id:
-                            args += [('account_id', '!=', private_funds_id),
-                                     eval(donor_line.cost_center_domain)]
-        
+                    # Line without domain (consumption, overhead)
+                    raise osv.except_osv(_('No Analytic Domain !'),_("This line does not have an analytic domain!"))
+                    
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
 account_analytic_line()

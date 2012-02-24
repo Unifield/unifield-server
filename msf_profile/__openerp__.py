@@ -40,7 +40,6 @@
         "account_activable",
         "msf_order_date",
         "purchase_compare_rfq",
-        "account_budget_definition",
         "purchase_msf",
         "product_asset",
         "order_nomenclature",
@@ -59,7 +58,6 @@
         "procurement_report",
         "msf_printed_documents",
         "procurement_request",
-        "msf_outgoing",
         "import_data",
         "sales_followup",
         "financing_contract",
@@ -71,6 +69,7 @@
         "specific_locations",
         "reason_types_moves",
         "specific_rules",
+        "msf_outgoing", # doit être installé après specific_rules
         "tender_flow",
         "consumption_calculation",
         "threshold_value",
@@ -81,6 +80,12 @@
         "analytic_distribution_supply",
         "account_mcdb",
         "out_step",
+        "delivery_mechanism",
+        "msf_tools",
+        "transport_mgmt",
+        "documents_done",
+        "msf_budget",
+        "account_subscription",
     ],
     "update_xml": [
         "report.xml",
@@ -89,6 +94,7 @@
     "demo_xml": [
     ],
     "test": [
+        'test/unique_fields_views.yml',
         'test/inherited_views.yml',
     ],
     "installable": True,

@@ -157,12 +157,20 @@ class account_bank_statement(osv.osv):
         journal_name = False
         if journal_id:
             journal_name = self.pool.get('account.journal').read(cr, uid, journal_id, ['name'], context=context)['name']
-        
         return journal_name
-    
+
+    def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
+        """
+        Calculate Gap between bank register balance (balance_end_real) and calculated balance (balance_end)
+        """
+        res = {}
+        for statement in self.browse(cr, uid, ids):
+            res[statement.id] = ((statement.balance_end_real or 0.0) - (statement.balance_end or 0.0)) or 0.0
+        return res
+
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', \
-            help="Closing balance"),
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', \
+            help="Calculated balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
@@ -174,6 +182,7 @@ class account_bank_statement(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_name': fields.function(_get_journal_name, string="Journal Name", type = 'char', size=32, readonly="1", method=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
+        'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
     }
 
     _defaults = {
@@ -1089,6 +1098,7 @@ class account_bank_statement_line(osv.osv):
                         'statement_id': st_line.statement_id.id,
                         'currency_id': st_line.statement_id.currency.id,
                         'from_import_invoice_ml_id': invoice_move_line.id, # FIXME: add this ONLY IF total amount was paid
+                        'date': st_line.date,
                     }
                     process_invoice_move_line_ids.append(invoice_move_line.id)
                     move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context)

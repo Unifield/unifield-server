@@ -21,9 +21,10 @@
 {
     "name" : "Financing Contracts for MSF",
     "version": "1.1",
-    "author" : "MSF: Matthieu Dietrich",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["res_currency_tables", "analytic_distribution"],
+    "depends" : ["res_currency_tables"],
     "description": """Module for defining financing contract and donor objects.
     """,
     "init_xml" : [],
@@ -31,6 +32,7 @@
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
         'financing_contract_workflow.xml',
+        'financing_contract_report.xml'
     ],
     'test': [
         'test/financing_contract.yml'

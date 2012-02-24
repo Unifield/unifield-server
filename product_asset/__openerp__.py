@@ -22,7 +22,8 @@
 {
     "name" : "Products & Pricelists modified by MSF",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
     This is the base module for managing products and pricelists in OpenERP.

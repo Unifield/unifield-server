@@ -21,9 +21,9 @@
 {
     "name" : "Analytic Account for MSF",
     "version": "1.1",
-    "author" : "MSF - TeMPO Consulting",
+    "author" : "MSF, TeMPO Consulting",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["analytic", "account", "account_override", "account_budget"],
+    "depends" : ["analytic", "account", "account_override"],
     "description": """Module for defining analytic accounting object and commitment voucher.
     """,
     "init_xml" : [
@@ -38,9 +38,11 @@
         'account_commitment_workflow.xml',
         'account_commitment_sequence.xml',
         'account_commitment_view.xml',
+        'funding_pool_report.xml',
     ],
     'test': [
         'test/analytic_account_activable.yml',
+        'test/analytic_data.yml',
     ],
     'demo_xml': [
     ],

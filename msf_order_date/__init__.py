@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,7 +19,8 @@
 #
 ##############################################################################
 
-import order_dates
-import stock
+TRANSPORT_TYPE = [('',''), ('sea', 'Sea'), ('air', 'Air'), ('road', 'Road'),] #[('flight', 'By Flight'), ('road', 'By Road'), ('boat', 'By Boat')]
+ZONE_SELECTION = [('national','National'),('international','International')]
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+import order_dates
+import wizard

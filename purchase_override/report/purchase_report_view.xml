@@ -92,6 +92,7 @@
                 <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
                 <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
                 <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
                 <filter icon="gtk-network" string="Other" domain="[('categ','=','other')]"/>
             </group>
             <newline />

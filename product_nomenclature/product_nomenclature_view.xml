@@ -40,10 +40,6 @@
 						</group>
 
 					</group>
-					<field name="pricelist_id" position="before">
-						<field name="location_id" context="{'location': self}" />
-						<separator orientation="vertical" />
-					</field>
 				</data>
 			</field>
 		</record>
@@ -217,7 +213,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="context">{}</field>
-			<field name="domain">['|', ('nomen_manda_0', '=', active_id), '|', ('nomen_manda_1', '=', active_id), '|', ('nomen_manda_2', '=', active_id), '|', ('nomen_manda_3', '=', active_id), '|', ('nomen_sub_0', '=', active_id), '|', ('nomen_sub_1', '=', active_id), '|', ('nomen_sub_2', '=', active_id),	'|', ('nomen_sub_3', '=', active_id), '|', ('nomen_sub_4', '=', active_id),	('nomen_sub_5', '=', active_id),]</field>
+			<field name="domain">['|', ('nomen_manda_0', '=', active_id), '|', ('nomen_manda_1', '=', active_id), '|', ('nomen_manda_2', '=', active_id), '|', ('nomen_manda_3', '=', active_id), '|', ('nomen_sub_0', '=', active_id), '|', ('nomen_sub_1', '=', active_id), '|', ('nomen_sub_2', '=', active_id),	'|', ('nomen_sub_3', '=', active_id), '|', ('nomen_sub_4', '=', active_id),	('nomen_sub_5', '=', active_id)]</field>
 			<!-- <field name="context"></field> -->
 			<field name ="help">This is the nomenclature tree view</field>
 		</record>

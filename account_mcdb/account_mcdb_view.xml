@@ -21,15 +21,19 @@
                     <group col="4" colspan="6">
                         <field name="abs_id" colspan="2" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '!=', 'account.move.line')]}">
+                            <field name="rev_journal_ids" colspan="2"/>
+                            <field name="rev_period_ids" colspan="2"/>
+                            <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="2"/>
+                            <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="2"/>
                             <field name="journal_ids" colspan="2" nolabel="1">
-                                <tree string="Journal">
+                                <tree string="Journals">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
                                 </tree>
                             </field>
                             <field name="period_ids" colspan="2" nolabel="1">
-                                <tree string="Period">
+                                <tree string="Periods">
                                     <field name="name" string="Name"/>
                                     <field name="date_start" string="Start"/>
                                     <field name="date_stop" string="Stop"/>
@@ -38,8 +42,12 @@
                             </field>
                         </group>
                         <group col="4" colspan="6" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
+                            <field name="rev_analytic_journal_ids" colspan="2"/>
+                            <label string="" colspan="2"/>
+                            <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="2"/>
+                            <newline/>
                             <field name="analytic_journal_ids" colspan="2" nolabel="1">
-                                <tree string="Analytic Journal">
+                                <tree string="Analytic Journals">
                                     <field name="code"/>
                                     <field name="name" string="Name"/>
                                     <field name="type"/>
@@ -53,6 +61,8 @@
                         <field name="rev_account_ids"/>
                         <newline/>
                         <group col="4" colspan="6">
+                            <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="2"/>
+                            <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="2"/>
                             <field name="account_ids" colspan="2" nolabel="1">
                                 <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')">
                                     <field name="code"/>
@@ -61,13 +71,15 @@
                                 </tree>
                             </field>
                             <field name="account_type_ids" colspan="2" nolabel="1">
-                                <tree string="Account type">
+                                <tree string="Account types">
                                     <field name="code"/>
                                     <field name="name"/>
                                 </tree>
                             </field>
                             <newline/>
                             <field name="rev_analytic_account_ids" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
+                            <newline/>
+                            <button name="button_analytic_account_clear" type="object" string="Remove all Analytic Accounts" icon="gtk-clear" colspan="2" attrs="{'invisible': [('model', '=', 'account.move.line')]}"/>
                             <newline/>
                             <field name="analytic_account_ids" colspan="2" nolabel="1" attrs="{'invisible': [('model', '=', 'account.move.line')]}">
                                 <tree string="Analytic Accounts">
@@ -90,11 +102,11 @@
                     <group col="8" colspan="6">
                         <field name="currency_choice" colspan="2" on_change="onchange_currency_choice(currency_choice, functional_currency_id, amount_from, amount_to)"/>
                         <field name="currency_id" attrs="{'readonly': [('currency_choice', '=', 'functional')]}" widget="selection" colspan="2" on_change="onchange_currency(currency_choice, currency_id)" domain="[('currency_table_id', '=', False)]"/>
-                        <field name="amount_from" string="Amount" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
-                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
-                        <newline/>
                         <field name="fx_table_id" colspan="2" on_change="onchange_fx_table(fx_table_id)"/>
                         <field name="display_in_output_currency" colspan="2" domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"/>
+                        <newline/>
+                        <field name="amount_from" string="Amount from" colspan="2" on_change="onchange_amount(currency_choice, amount_from, 'from')"/>
+                        <field name="amount_to" string="to" colspan="2" on_change="onchange_amount(currency_choice, amount_to, 'to')"/>
                     </group>
                     <group col="6" colspan="6">
                         <field name="functional_currency_id" colspan="2" invisible="1"/>
@@ -118,7 +130,7 @@
                     <separator string=" "/>
                     <group col="4" colspan="6">
                         <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
-                        <button name="button_validate" type="object" string="Search" icon="gtk-ok" colspan="2"/>
+                        <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>
                     </group>
                     <field name="model" invisible="1"/>
                 </form>

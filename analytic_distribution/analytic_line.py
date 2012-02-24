@@ -101,7 +101,7 @@ class analytic_line(osv.osv):
                 # Period verification
                 period = aline.move_id and aline.move_id.period_id or False
                 # if period not 'Draft' (created) or 'Open' (draft), so reverse line before recreating them with right values
-                if period and period.state not in ['created', 'draft']:
+                if period and period.state not in ['created', 'draft', 'field-closed']:
                     # First reverse lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, fp_line_ids, context=context) # for Funding Pool Lines
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], context=context) # for given Cost Center Line
@@ -197,7 +197,12 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 # Verify that:
                 # - the line doesn't have any draft/open contract
-                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
+                link_ids = self.pool.get('financing.contract.funding.pool.line').search(cr, uid, [('funding_pool_id', '=', aline.account_id.id)], context=context)
+                format_ids = []
+                for link in self.pool.get('financing.contract.funding.pool.line').browse(cr, uid, link_ids):
+                    if link.contract_id:
+                        format_ids.append(link.contract_id.id)
+                contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', 'in', format_ids)])
                 valid = True
                 for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
                     if contract.state in ['soft_closed', 'hard_closed']:

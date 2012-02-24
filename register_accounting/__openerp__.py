@@ -28,7 +28,7 @@
         This module aims to add some registers into accounting menu and change the method to do accounting by using
         all registers.
     """,
-    "author" : "TeMPO Consulting",
+    "author" : "TeMPO Consulting, MSF",
     'website': 'http://tempo-consulting.fr',
     "category" : "Tools",
     # WARNING : account_analytic_plans has been added in order to cut modification done in account_analytic_plans by fields_view_get on account_move_line
@@ -75,7 +75,8 @@
         'test/direct_invoice.yml',
         'test/import_cheque_from_bank.yml',
         'test/wizard_register_creation.yml',
-        'test/bug_closing_balance_on_cashbox.yml'
+        'test/bug_closing_balance_on_cashbox.yml',
+        'test/import_invoice.yml',
     ],
     "installable": True,
     "active": False

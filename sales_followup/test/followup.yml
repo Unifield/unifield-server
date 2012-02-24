@@ -74,7 +74,7 @@
     wiz_ids = self.search(cr, uid, [])
     for wiz in self.browse(cr, uid, wiz_ids):
         assert wiz.order_id.id == ref('sales_followup.so1'), "The created wizard is not linked to the Sale Order (1)"
-        assert wiz.state == 'Quotation', "The state on the wizard is different than the state of the Sale Order (1)"
+        assert wiz.state == 'Draft', "The state on the wizard is different than the state of the Sale Order (1)"
         assert len(wiz.line_ids) == 4, "Number of lines in the follow-up not corresponding to the number of lines in the sale order (1)"
         for line in wiz.line_ids:
             if line.product_id.id == ref('product1'):
@@ -207,8 +207,8 @@
 -
   I run the scheduler.
 -
-  !python {model: procurement.order}: |
-    self.run_scheduler(cr, uid)
+  !python  {model: procurement.order}: |
+    self.run_scheduler(cr, uid , context={'update_mode':'init'})
 -
   I create again a wizard
 -
@@ -321,13 +321,6 @@
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P1)"
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (4/P1)"
               
-              # write on PO in order to avoid analytic distribution error
-              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
-              
-              for quotation in line.purchase_ids:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
-            
             if line.product_id.id == ref('product2'):
               assert line.sourced_ok == 'Done', "Sourced is not equal to 'Done' (4/P2)"
               assert len(line.tender_ids) == 0, "Number of calls for tender is different than 0 (4/P2)"
@@ -369,10 +362,9 @@
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (4/P4)"
               assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (4/P4)"
               
-              # write on PO in order to avoid analytic distribution error
-              self.pool.get('purchase.order').write(cr, uid, [x.id for x in line.purchase_ids], {'from_yml_test': True})
-              
               for quotation in line.purchase_ids:
+                # Delivery confirmed date is mandatory at confirmed state (unifield naming) (== 'approved' state openERP naming)
+                quotation.write({'delivery_confirmed_date': '2012-03-03'}, context=context)
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_validate(uid, 'purchase.order', quotation.id, 'purchase_approve', cr)
         

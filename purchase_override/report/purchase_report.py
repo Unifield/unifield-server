@@ -41,18 +41,24 @@ class purchase_report(osv.osv):
             res[purchase.id] = invoiced
         return res
 
+    STATE_SELECTION = [
+                       ('draft', 'Draft'),
+                       ('wait', 'Wait'),
+                       ('confirmed', 'Validated'),
+                       ('approved', 'Confirmed'),
+                       ('except_picking', 'Receipt Exception'),
+                       ('except_invoice', 'Invoice Exception'),
+                       ('done', 'Closed'),
+                       ('cancel', 'Cancelled'),
+                       ('rfq_sent', 'Sent'),
+                       ('rfq_updated', 'Updated'),
+                       ('rfq_done', 'Closed'),]
+
     _columns = {
         'date': fields.date('Order Date', readonly=True, help="Date on which this document has been created"),
         'name': fields.char('Year',size=64,required=False, readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
-        'state': fields.selection([('draft', 'Request for Quotation'),
-                                    ('wait', 'Waiting'),
-                                     ('confirmed', 'Waiting Supplier Ack'),
-                                      ('approved', 'Approved'),
-                                      ('except_picking', 'Shipping Exception'),
-                                      ('except_invoice', 'Invoice Exception'),
-                                      ('done', 'Done'),
-                                      ('cancel', 'Cancelled')],'Order State', readonly=True),
+        'state': fields.selection(STATE_SELECTION, 'Order State', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', readonly=True),
         'location_id': fields.many2one('stock.location', 'Destination', readonly=True),

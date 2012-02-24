@@ -211,6 +211,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Verification
         if not context:
             context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Retrieve some values
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
         # Create wizard
@@ -488,7 +490,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not date:
-            date = strftime('%Y-%d-%m')
+            date = strftime('%Y-%m-%d')
         if not new_account_id:
             raise osv.except_osv(_('Error'), _('No new account_id given!'))
         # Prepare some values
