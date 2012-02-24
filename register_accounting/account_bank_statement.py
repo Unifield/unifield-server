@@ -325,8 +325,12 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
 #            done.append(st.id)
         # Display the bank confirmation wizard
+        title = "Bank"
+        if context.get('confirm_from', False) and context.get('confirm_from') == 'cheque':
+            title = "Cheque"
+        title += " confirmation wizard"
         return {
-            'name': "Bank confirmation wizard",
+            'name': title,
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.confirm.bank',
             'target': 'new',

@@ -83,6 +83,7 @@ class account_cheque_register(osv.osv):
         When you press "Confirm" on a Cheque Register.
         You have to verify that all lines are in hard posting.
         """
+        context.update({'confirm_from': 'cheque'})
         return self.button_confirm_bank(cr, uid, ids, context=context)
 
     def button_display_type(self, cr, uid, ids, context={}):
