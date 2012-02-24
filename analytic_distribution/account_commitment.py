@@ -118,6 +118,8 @@ class account_commitment(osv.osv):
         # Browse elements if 'date' in vals
         if vals.get('date', False):
             date = vals.get('date')
+            period_ids = get_period_from_date(self, cr, uid, date, context=context)
+            vals.update({'period_id': period_ids and period_ids[0]})
             for c in self.browse(cr, uid, ids, context=context):
                 if c.state == 'open':
                     for cl in c.line_ids:
