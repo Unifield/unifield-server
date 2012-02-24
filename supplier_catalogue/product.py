@@ -128,6 +128,7 @@ class product_product(osv.osv):
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
             # Search the good line for the price
             info_price = partner_price.search(cr, uid, [('suppinfo_id.name', '=', partner_id),
+                                                        ('suppinfo_id.catalogue_id.period_from', '<', order_date),
                                                         ('suppinfo_id.product_id', '=', product.product_tmpl_id.id),
                                                         ('min_quantity', '<=', product_qty),
                                                         ('uom_id', '=', product_uom_id),
