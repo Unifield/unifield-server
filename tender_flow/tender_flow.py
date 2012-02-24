@@ -399,7 +399,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, po_data, context=context)
                 po = po_obj.browse(cr, uid, po_id, context=context)
                 po_obj.log(cr, uid, po_id, 'The Purchase order %s for supplier %s has been created.'%(po.name, po.partner_id.name))
-                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                #UF-802: the PO created must be in draft state, and not validated!
+                #wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
                 
             # when the po is generated, the tender is done - no more modification or comparison
             self.done(cr, uid, [tender.id], context=context)

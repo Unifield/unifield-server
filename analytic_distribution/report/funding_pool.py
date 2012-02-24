@@ -27,7 +27,7 @@ class funding(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(funding, self).__init__(cr, uid, name, context=context)
 
-report_sxw.report_sxw('report.funding.pool', 'account.analytic.account', 'addons/funding_pool/report/funding_pool.rml', parser=funding, header="external")
+report_sxw.report_sxw('report.funding.pool', 'account.analytic.account', 'addons/analytic_distribution/report/funding_pool.rml', parser=funding)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

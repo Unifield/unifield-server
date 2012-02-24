@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 MSF, TeMPO consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,35 +19,6 @@
 #
 ##############################################################################
 
-{
-    "name": "Internal Request",
-    "version": "1.0",
-    "depends": ["base", "sale", "sale_override", "stock_override", "msf_order_date", "stock"],
-    "author": "TeMPO Consulting, MSF",
-    "website": "",
-    "category": "Sales & Purchases",
-    "description": """
-    This modules aims to create a new document called Internal Request to 
-    identify the needs of all and source from stock or from order
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'procurement_request_view.xml',
-        'procurement_request_sequence.xml',
-        'procurement_request_workflow.xml',
-        'procurement_request_wizard.xml',
-        'wizard/wizard_import_list_view.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [
-        'test/data.yml',
-        'test/proc_request.yml',
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+import account_model
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

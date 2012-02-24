@@ -69,8 +69,9 @@
                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
                     <field name="analytic_distribution_state"/>
                     <field name="have_analytic_distribution_from_header"/>
-                    <field name="initial_amount"/>
-                    <field name="amount"/>
+                    <field name="first" invisible="1"/>
+                    <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"/>
+                    <field name="amount" attrs="{'readonly': [('first', '=', True)]}"/>
                 </tree>
             </field>
         </record>

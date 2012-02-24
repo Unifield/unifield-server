@@ -2,7 +2,7 @@
 <openerp>
     <data noupdate="1">
     <record id="base.lang_en" model="res.lang">
-        <field name="date_format">%d/%m/%Y</field>
+        <field name="date_format">%d/%b/%y</field>
         <field name="time_format">%H:%M</field>
     </record>
 

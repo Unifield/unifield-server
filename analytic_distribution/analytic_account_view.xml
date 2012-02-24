@@ -1,5 +1,12 @@
 <openerp>
     <data>
+       <act_window
+            domain="[('move_id', 'in', active_ids)]"
+            id="act_from_account_ml_to_analytic_ml"
+            name="Analytic lines"
+            src_model="account.move.line"
+            res_model="account.analytic.line"
+            />
 
         <record id="view_analytic_account_form" model="ir.ui.view">
             <field name="name">analytic.account.form</field>
@@ -15,11 +22,15 @@
                         <field name="code" select="1" required="1"/>
                         <field name="category" select="1" required="1" on_change="on_change_category(category)" />
                     </field>
-	                <page string="Account Data" position="replace">
-	                    <page string="Activation period">
-	                        <field name="date_start"/>
-	                        <field name="date" select="2"/>
-	                    </page>
+                    <field name="type" position="after">
+                        <newline/>
+                        <field name="for_fx_gain_loss"/>
+                    </field>
+                    <page string="Account Data" position="replace">
+                        <page string="Activation period">
+                            <field name="date_start"/>
+                            <field name="date" select="2"/>
+                        </page>
                         <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="cost_center_ids" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
                                 <tree string="Cost Centers" >
@@ -81,15 +92,15 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_list"/>
             <field name="arch" type="xml">
                 <tree string="Analytic Accounts" position="replace">
-	                <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
-	                    <field name="name"/>
-	                    <field name="code"/>
-	                    <field name="description"/>
+                    <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
                         <field name="category"/>
-	                    <field name="type"/>
-	                    <field name="date_start"/>
-	                    <field name="date"/>
-	                </tree>
+                        <field name="type"/>
+                        <field name="date_start"/>
+                        <field name="date"/>
+                    </tree>
                 </tree>
             </field>
         </record>

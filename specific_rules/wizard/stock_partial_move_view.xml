@@ -26,6 +26,7 @@
             			<field name="ssl_check" />
             			<field name="dg_check" />
             			<field name="np_check" />
+            			<field name="integrity_status" invisible="False" />
                     </field>
                     
 				</data>
@@ -56,6 +57,7 @@
             			<field name="ssl_check" />
             			<field name="dg_check" />
             			<field name="np_check" />
+            			<field name="integrity_status" invisible="False" />
                     </field>
                     
 				</data>

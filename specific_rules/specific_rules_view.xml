@@ -2,14 +2,23 @@
 <openerp>
 	<data>
 	
-		<act_window
-            context="{'product_id': active_id, 'compute_child': False}"
-            id="act_stock_product_location_open"
-            name="Stock by Location"
-            res_model="stock.location"
-            src_model="product.product"
-            groups="base.group_extended"/>
-	
+        <record id="action_server_stock_by_location" model="ir.actions.server">
+            <field name="name">Stock by Location</field>
+            <field name="model_id" ref="model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_stock_by_location(context=context)</field>
+        </record>
+
+        <record id="act_stock_product_location_open2" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Stock by Location</field>
+            <field eval="'ir.actions.server,%d'%action_server_stock_by_location" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <delete model="ir.model.data" id="stock.act_stock_product_location_open" />
+
 		<record id="view_location_tree2" model="ir.ui.view">
             <field name="name">stock.location.tree</field>
             <field name="model">stock.location</field>
@@ -177,6 +186,10 @@
 						<field name="location_id" domain="[('usage','=','internal'), ('quarantine_location', '=', False)]"
 								context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
             		</xpath>
+            		
+            		<button name="%(stock.action_partial_move_server)d" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
             	
             	</data>
             </field>
@@ -398,6 +411,18 @@
 	          			<field name="dg_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 	          			<field name="np_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 	                </field>
+	                
+	                <button name="action_done" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
+            		
+            		<button name="force_assign" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
+            		
+            		<button name="action_confirm" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
             	
             	</data>
             </field>
@@ -426,6 +451,18 @@
 	          			<field name="dg_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 	          			<field name="np_check" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 	                </field>
+	                
+	                <button name="action_confirm" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
+            		
+            		<button name="force_assign" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
+            		
+            		<button name="%(stock.action_partial_move_server)d" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
             	
             	</data>
             </field>
@@ -445,6 +482,10 @@
 	          			<field name="ssl_check" />
 	          			<field name="dg_check" />
 	          			<field name="np_check" />
+            		</button>
+            		
+            		<button name="action_done" position="attributes">
+            			<attribute name="invisible">1</attribute>
             		</button>
             	
             	</data>
@@ -486,6 +527,10 @@
 	          			<field name="dg_check" />
 	          			<field name="np_check" />
             		</button>
+            		
+            		<button name="action_done" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
             	
             	</data>
            	</field>
@@ -505,6 +550,14 @@
 	          			<field name="ssl_check" />
 	          			<field name="dg_check" />
 	          			<field name="np_check" />
+            		</button>
+            		
+            		<button name="action_assign" position="attributes">
+            			<attribute name="invisible">1</attribute>
+            		</button>
+            		
+            		<button name="%(stock.action_partial_move_server)d" position="attributes">
+            			<attribute name="invisible">1</attribute>
             		</button>
             	
             	</data>

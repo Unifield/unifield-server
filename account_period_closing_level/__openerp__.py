@@ -21,7 +21,7 @@
 {
     "name": "Account Period for MSF",
     "version": "1.0",
-    "depends": ["account"],
+    "depends": ["account_subscription"],
     "author" : "MSF: Matthieu Dietrich",
     "category": "General/Standard",
     "description": """

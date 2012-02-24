@@ -244,10 +244,15 @@ class analytic_distribution(osv.osv):
             # Browse cost center lines
             for line in distrib.cost_center_lines:
                 # Search MSF Private Fund
-                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
+                try:
+                    pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                    'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    pf_id = 0
+#                pf_id = self.pool.get('account.analytic.account').search(cr, uid, [('code', '=', 'PF'), ('category', '=', 'FUNDING')], context=context, limit=1)
                 if pf_id:
                     vals = {
-                        'analytic_id': pf_id[0],
+                        'analytic_id': pf_id,
                         'amount': line.amount or 0.0,
                         'percentage': line.percentage or 0.0,
                         'currency_id': line.currency_id and line.currency_id.id or False,
