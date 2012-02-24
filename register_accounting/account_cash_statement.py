@@ -167,13 +167,12 @@ class account_cash_statement(osv.osv):
         res = {}
         statements = self.browse(cursor, user, ids, context=context)
         for statement in statements:
-            diff_amount = statement.balance_end - statement.balance_end_cash 
-            res[statement.id] = diff_amount 
-        
+            diff_amount = statement.balance_end - statement.balance_end_cash
+            res[statement.id] = diff_amount
         return res
 
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', help="Closing balance"),
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True),
@@ -181,7 +180,7 @@ class account_cash_statement(osv.osv):
             'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines', 
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
             'open_advance_amount': fields.float('Open Advances Amount'),
-            'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
+            'closing_gap': fields.function(_gap_compute, method=True, string='Gap', readonly=True),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 

@@ -27,6 +27,10 @@ class financing_contract_donor_reporting_line(osv.osv_memory):
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
+        'line_type': fields.selection([('view','View'),
+                                       ('actual','Actual'),
+                                       ('consumption','Consumption'),
+                                       ('overhead','Overhead')], 'Line type', required=True),
         'allocated_budget': fields.integer("Funded amount - Budget"),
         'project_budget': fields.integer("Total project amount - Budget"),
         'allocated_real': fields.integer("Funded amount - Actuals"),

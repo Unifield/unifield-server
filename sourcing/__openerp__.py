@@ -23,7 +23,8 @@
 {
     "name" : "Sourcing Tool",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["sale", "purchase", "sale_override","order_types","order_line_number", "msf_order_date", "partner_modification", "procurement_request"],
     "init_xml" : [],

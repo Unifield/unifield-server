@@ -21,7 +21,8 @@
 {
     "name" : "MSF Outgoing Management",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
     "description": """
         MSF module covering business needs for outgoing movement from

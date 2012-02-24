@@ -176,12 +176,14 @@ class account_mcdb(osv.osv_memory):
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
-            m2m_fields = [('account_type_ids', 'account_id.user_type'), ('period_ids', 'period_id'), ('journal_ids', 'journal_id'), 
-                ('analytic_journal_ids', 'journal_id'), ('analytic_account_ids', 'account_id')]
+            m2m_fields = [('period_ids', 'period_id'), ('journal_ids', 'journal_id'), ('analytic_journal_ids', 'journal_id'), 
+                ('analytic_account_ids', 'account_id')]
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
+                m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
             else:
                 m2m_fields.append(('account_ids', 'account_id'))
+                m2m_fields.append(('account_type_ids', 'account_id.user_type'))
             for m2m in m2m_fields:
                 if getattr(wiz, m2m[0]):
                     operator = 'in'
@@ -284,6 +286,9 @@ class account_mcdb(osv.osv_memory):
                 mnt_from = getattr(wiz, curr[0]) or False
                 mnt_to = getattr(wiz, curr[1]) or False
                 field = curr[2]
+                # specific behaviour for functional in analytic MCDB
+                if field == 'balance' and res_model == 'account.analytic.line':
+                    field = 'amount'
                 abs_from = abs(mnt_from)
                 min_from = -1 * abs_from
                 abs_to = abs(mnt_to)
@@ -330,24 +335,28 @@ class account_mcdb(osv.osv_memory):
             }
         return False
 
-    def button_clear(self, cr, uid, ids, context={}):
+    def button_clear(self, cr, uid, ids, field=False, context={}):
         """
         Delete all fields from this object
         """
-        # Some verification
+        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Search all fields
+        # Prepare some value
+        res_id = ids[0]
+        all_fields = True
         vals = {}
-        for el in self._columns:
-            # exceptions (m2m or fields that shouldn't be deleted)
-            if el.__str__() not in ['functional_currency_id', 'account_ids', 'account_type_ids']:
-                vals.update({el.__str__(): False,})
-        # Delete m2m links
-        vals.update({'account_ids': [(6,0,[])], 'account_type_ids': [(6,0,[])]})
-        self.write(cr, uid, ids, vals, context=context)
+        if field and field in (self._columns and self._columns.keys()):
+            if self._columns[field]._type == 'many2many':
+                # Don't clear all other fields
+                all_fields = False
+                # Clear this many2many field
+                self.write(cr, uid, ids, {field: [(6,0,[])]}, context=context)
+        # Clear all fields if necessary
+        if all_fields:
+            res_id = self.create(cr, uid, {}, context=context)
         # Update context
         context.update({
             'active_id': ids[0],
@@ -360,12 +369,85 @@ class account_mcdb(osv.osv_memory):
             'name': _('Multi-Criteria Data Browser'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.mcdb',
+            'res_id': res_id,
             'view_type': 'form',
             'view_mode': 'form',
             'view_id': [view_id],
             'context': context,
             'target': 'crush',
         }
+
+    def button_journal_clear(self, cr, uid, ids, context={}):
+        """
+        Delete journal_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='journal_ids', context=context)
+
+    def button_period_clear(self, cr, uid, ids, context={}):
+        """
+        Delete period_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='period_ids', context=context)
+
+    def button_analytic_journal_clear(self, cr, uid, ids, context={}):
+        """
+        Delete analytic_journal_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='analytic_journal_ids', context=context)
+
+    def button_account_clear(self, cr, uid, ids, context={}):
+        """
+        Delete account_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='account_ids', context=context)
+
+    def button_account_type_clear(self, cr, uid, ids, context={}):
+        """
+        Delete account_type_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='account_type_ids', context=context)
+
+    def button_analytic_account_clear(self, cr, uid, ids, context={}):
+        """
+        Delete analytic_account_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'journal_ids' field
+        return self.button_clear(cr, uid, ids, field='analytic_account_ids', context=context)
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

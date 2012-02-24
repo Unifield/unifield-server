@@ -25,7 +25,7 @@
     "depends": ["base",
                 "msf_order_date",
                 ],
-    "author": "MSF",
+    "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
     "description": """
