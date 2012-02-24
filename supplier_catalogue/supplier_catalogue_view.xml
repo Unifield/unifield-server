@@ -153,6 +153,7 @@
 			<field name="name">supplier.catalogue.line.tree.view</field>
 			<field name="model">supplier.catalogue.line</field>
 			<field name="type">tree</field>
+			<field name="priority" eval="16" />
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" editable="top">
 					<field name="product_id" on_change="product_change(product_id)" />

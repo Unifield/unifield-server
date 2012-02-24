@@ -155,6 +155,17 @@ class supplier_catalogue(osv.osv):
         
         return super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
     
+    def name_get(self, cr, uid, ids, context={}):
+        '''
+        Add currency to the name of the catalogue
+        '''
+        res = []
+        
+        for r in self.browse(cr, uid, ids, context=context):
+            res.append((r.id, '%s (%s)' % (r.name, r.currency_id.name)))
+            
+        return res
+    
     def _search(self, cr, uid, args, offset=0, limit=None, order=None, context={}, count=False, access_rights_uid=None):
         '''
         If the search is called from the catalogue line list view, returns only catalogues of the
@@ -242,7 +253,7 @@ class supplier_catalogue(osv.osv):
             ids = [ids]
         
         cat = self.browse(cr, uid, ids[0], context=context)
-        name = cat.name
+        name = '%s - %s' % (cat.partner_id.name, cat.name)
         
         context.update({'search_default_partner_id': cat.partner_id.id,})
         
@@ -287,6 +298,7 @@ class supplier_catalogue_line(osv.osv):
     # Inherits of product.product to an easier search of lines
     # with product attributes
     _inherits = {'product.product': 'product_id'}
+    _order = 'product_id, line_uom_id, min_qty'
     
     def create(self, cr, uid, vals, context={}):
         '''
@@ -337,6 +349,7 @@ class supplier_catalogue_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
                           'price': vals.get('unit_price', line.unit_price),
+                          'uom_id': vals.get('line_uom_id', line.line_uom_id.id),
                           'rounding': vals.get('rounding', line.rounding),
                           'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
                           }
@@ -456,7 +469,7 @@ class supplier_catalogue_line(osv.osv):
             for cat in catalogues:
                 period_name = '%s' % cat.period_from
                 for line in cat.line_ids:
-                    line_name = '%s_%s' % (line.product_id.id, line.min_qty)
+                    line_name = '%s_%s_%s' % (line.product_id.id, line.min_qty, line.line_uom_id.id)
                     if line_name not in line_dict:
                         line_dict.update({line_name: {}})
                     
@@ -465,7 +478,7 @@ class supplier_catalogue_line(osv.osv):
             res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
             
             for r in res:
-                line_name = '%s_%s' % (r['product_id'][0], r['min_qty'])
+                line_name = '%s_%s_%s' % (r['product_id'][0], r['min_qty'], r['line_uom_id'][0])
                 for period in line_dict[line_name]:
                     r.update({period: line_dict[line_name][period]})
             
@@ -515,7 +528,7 @@ class supplier_historical_catalogue(osv.osv_memory):
             catalogues = self.pool.get('supplier.catalogue').browse(cr, uid, catalogue_ids, context=context)
             for cat in catalogues:
                 for line in cat.line_ids:
-                    line_name = '%s_%s' % (line.product_id.id, line.min_qty)
+                    line_name = '%s_%s_%s' % (line.product_id.id, line.min_qty, line.line_uom_id.id)
                     if line_name not in line_dict:
                         line_dict.update({line_name: {}})
                         line_ids.append(line.id)

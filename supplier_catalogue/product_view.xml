@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
 	<data>
+		
+		<record id="product_supplierinfo_tree_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.tree.view</field>
+			<field name="model">product.supplierinfo</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='min_qty']" position="replace">
+					<field name="catalogue_id" />
+				</xpath>
+			</field>
+		</record>
         
 		<record id="manufacturer_supplierinfo_form_view" model="ir.ui.view">
 			<field name="name">product.supplierinfo.form.view</field>
@@ -44,9 +56,6 @@
             <field name="type">form</field>
             <field name="inherit_id" ref="partner_modification.product_supplierinfo_form_view" />
             <field name="arch" type="xml">
-            	<xpath expr="/form/field[@name='name']" position="before">
-            		<field name="catalogue_id" invisible="1" />
-            	</xpath>
             	<xpath expr="/form/field[@name='name']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
             	</xpath>
@@ -66,7 +75,9 @@
         			<field name="min_order_qty" />
         		</xpath>
             	
-            	<xpath expr="//field[@name='min_qty']" position="replace" />
+            	<xpath expr="//field[@name='min_qty']" position="replace">
+            		<field name="catalogue_id" readonly="1" invisible="0" />
+            	</xpath>
             	
             </field>
         </record>

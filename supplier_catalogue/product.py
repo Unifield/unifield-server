@@ -49,6 +49,8 @@ class product_supplierinfo(osv.osv):
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
+        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
+                                      help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
     }
     
     # Override the original method
@@ -164,6 +166,7 @@ class product_pricelist(osv.osv):
         
         price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
                                                                                        date, uom, context=context)
+        uom_price_already_computed = 1
         
         return price, uom_price_already_computed
     

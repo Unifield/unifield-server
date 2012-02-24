@@ -65,6 +65,9 @@ class purchase_order_line(osv.osv):
                                                                             'quantity set to %s, you cannot purchase less.') % product_qty}})
                 
             if info.rounding and product_qty%info.rounding != 0:
+                if not res.get('warning', {}).get('message', False):
+                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a packaging ' \
+                                                                                'which is a multiple of %s.') % info.rounding}})
                 product_qty = product_qty + (info.rounding - product_qty%info.rounding)
                     
         return res, product_qty, product_qty, seller_delay
