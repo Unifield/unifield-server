@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
@@ -61,7 +62,10 @@ class account_move_line_compute_currency(osv.osv):
     }
 
     def create_addendum_line(self, cr, uid, lines, total, context={}):
-        date = time.strftime('%Y-%m-%d')
+        """
+        Create an addendum line
+        """
+        current_date = time.strftime('%Y-%m-%d')
         j_obj = self.pool.get('account.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         # Search Miscellaneous Transactions journal
@@ -74,14 +78,30 @@ class account_move_line_compute_currency(osv.osv):
         if not journal.default_debit_account_id:
             raise osv.except_osv(_('Error'), _('Default debit/credit for journal %s is not set correctly.') % journal.name)
         addendum_line_account_id = journal.default_debit_account_id.id
-        # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, limit=1, order='date_start, name')
-        if not period_ids:
-            raise osv.except_osv(_('Error'), _('No attached period found or current period not open!'))
-        period_id = period_ids[0]
         # Create analytic distribution if this account is an expense account
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
+            ## Browse all lines to fetch some values
+            partner_id = employee_id = register_id = False
+            oldiest_date = False
+            for rline in self.browse(cr, uid, lines):
+                account_id = (rline.account_id and rline.account_id.id) or False
+                partner_id = (rline.partner_id and rline.partner_id.id) or False
+                employee_id = (rline.employee_id and rline.employee_id.id) or False
+                register_id = (rline.register_id and rline.register_id.id) or False
+                currency_id = (rline.currency_id and rline.currency_id.id) or False
+                if not oldiest_date:
+                    oldiest_date = rline.date or False
+                if rline.date > oldiest_date:
+                    oldiest_date = rline.date
+#                break
+            
+            # Search attached period
+            period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', oldiest_date), ('date_stop', '>=', oldiest_date)], context=context, limit=1, order='date_start, name')
+            if not period_ids:
+                raise osv.except_osv(_('Error'), _('No attached period found!'))
+            period_id = period_ids[0]
+            
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
@@ -94,8 +114,8 @@ class account_move_line_compute_currency(osv.osv):
                 'currency_id': company_currency_id,
                 'analytic_id': search_ids[0],
                 'percentage': 100.0,
-                'date': date,
-                'source_date': date
+                'date': oldiest_date or current_date,
+                'source_date': oldiest_date or current_date,
             }
             cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             # add a funding pool line for analytic distribution
@@ -107,24 +127,13 @@ class account_move_line_compute_currency(osv.osv):
                 raise osv.except_osv(_('Error'), _('No "MSF Private Fund" found!'))
             distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
             self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
-
-            ## Browse all lines to fetch some values
-            partner_id = employee_id = register_id = False
-            for rline in self.browse(cr, uid, lines):
-                account_id = (rline.account_id and rline.account_id.id) or False
-                partner_id = (rline.partner_id and rline.partner_id.id) or False
-                employee_id = (rline.employee_id and rline.employee_id.id) or False
-                register_id = (rline.register_id and rline.register_id.id) or False
-                currency_id = (rline.currency_id and rline.currency_id.id) or False
-                break
-
-
-            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': date}, context=context)
+            
+            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': current_date}, context=context)
             # Create default vals for the new two move lines
             vals = {
                 'move_id': move_id,
-                'date': date,
-                'source_date': date,
+                'date': oldiest_date or current_date,
+                'source_date': oldiest_date or current_date,
                 'journal_id': journal_id,
                 'period_id': period_id,
                 'partner_id': partner_id,
@@ -154,16 +163,13 @@ class account_move_line_compute_currency(osv.osv):
             addendum_line_id = self.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)
-
+            
             # Update analytic line with right amount (instead of "0.0")
             analytic_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', '=', addendum_line_id)], context=context)
             addendum_line_amount_curr = -1*total or 0.0
             self.pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'currency_id': company_currency_id, 'amount': addendum_line_amount_curr, 'amount_currency': addendum_line_amount_curr})
-
+            
             return partner_line_id
-
-
-
 
     def reconciliation_update(self, cr, uid, ids, context={}):
         """
@@ -444,7 +450,6 @@ class account_move_line_compute_currency(osv.osv):
 
     def _store_journal_account_type(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
-
 
     _columns = {
         'debit_currency': fields.float('Booking Debit', digits_compute=dp.get_precision('Account')),
