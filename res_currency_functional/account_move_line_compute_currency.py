@@ -97,10 +97,17 @@ class account_move_line_compute_currency(osv.osv):
 #                break
             
             # Search attached period
-            period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', oldiest_date), ('date_stop', '>=', oldiest_date)], context=context, limit=1, order='date_start, name')
-            if not period_ids:
-                raise osv.except_osv(_('Error'), _('No attached period found!'))
-            period_id = period_ids[0]
+            period_id = None
+            for tested_date in [oldiest_date, current_date]:
+                period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', tested_date), ('date_stop', '>=', tested_date)], context=context, limit=1, order='date_start, name')
+                if not period_ids:
+                    raise osv.except_osv(_('Error'), _('No attached period found!'))
+                if self.pool.get('account.period').browse(cr, uid, period_ids[0]).state != 'done':
+                    period_id = period_ids[0]
+                    break
+            
+            if not period_id:
+                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s' % current_date))
             
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
