@@ -113,6 +113,21 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
+    def substitute_items(self, cr, uid, ids, context=None):
+        '''
+        substitute lines from the composition kit with created new lines
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        # data
+        name = _("Substitute Kit Items")
+        model = 'substitute'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -301,9 +316,9 @@ class composition_kit(osv.osv):
 
     _columns = {'composition_type': fields.selection(KIT_COMPOSITION_TYPE, string='Composition Type', readonly=True, required=True),
                 'composition_description': fields.text(string='Composition Description'),
-                'composition_product_id': fields.many2one('product.product', string='Product', required=True),
+                'composition_product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
                 'composition_version_txt': fields.char(string='Version', size=1024),
-                'composition_version_id': fields.many2one('composition.kit', string='Version'),
+                'composition_version_id': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]),
                 'composition_creation_date': fields.date(string='Creation Date', required=True),
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
@@ -364,46 +379,6 @@ class composition_kit(osv.osv):
                 'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
                 }
-    
-    def _get_default_type(self, cr, uid, context=None):
-        '''
-        default value for type
-        '''
-        if context is None:
-            context= {}
-        if context.get('composition_type', False):
-            return context.get('composition_type')
-        return False
-    
-    def _get_default_product_id(self, cr, uid, context=None):
-        '''
-        default value for type
-        '''
-        if context is None:
-            context= {}
-        if context.get('composition_product_id', False):
-            return context.get('composition_product_id')
-        return False
-    
-    def _get_default_lot_id(self, cr, uid, context=None):
-        '''
-        default value for type
-        '''
-        if context is None:
-            context= {}
-        if context.get('composition_lot_id', False):
-            return context.get('composition_lot_id')
-        return False
-    
-    def _get_default_exp(self, cr, uid, context=None):
-        '''
-        default value for type
-        '''
-        if context is None:
-            context= {}
-        if context.get('composition_exp', False):
-            return context.get('composition_exp')
-        return False
     
     _defaults = {'composition_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'composition_type': lambda s, cr, uid, c: c.get('composition_type', False),
@@ -717,3 +692,122 @@ class stock_move(osv.osv):
 stock_move()
 
 
+class stock_location(osv.osv):
+    '''
+    add a new reservation method, taking production lot into account
+    '''
+    _inherit = 'stock.location'
+    
+    def _product_reserve_lot(self, cr, uid, ids, product_id, uom_id, context=None, lock=False):
+        """
+        refactoring of original reserver method, taking production lot into account
+        
+        returning the original list-tuple structure + the total qty in each location
+        """
+        result = []
+        amount = 0.0
+        if context is None:
+            context = {}
+        # objects
+        pool_uom = self.pool.get('product.uom')
+        # location ids depends on the compute_child parameter from the context
+        if context.get('compute_child', True):
+            location_ids = self.search(cr, uid, [('location_id', 'child_of', ids)], context=context)
+        else:
+            location_ids = ids
+        # fefo list of lot
+        fefo_list = []
+        # data structure
+        data = {'fefo': fefo_list}
+            
+        for id in location_ids:
+            if lock:
+                try:
+                    # Must lock with a separate select query because FOR UPDATE can't be used with
+                    # aggregation/group by's (when individual rows aren't identifiable).
+                    # We use a SAVEPOINT to be able to rollback this part of the transaction without
+                    # failing the whole transaction in case the LOCK cannot be acquired.
+                    cr.execute("SAVEPOINT stock_location_product_reserve")
+                    cr.execute("""SELECT id FROM stock_move
+                                  WHERE product_id=%s AND
+                                          (
+                                            (location_dest_id=%s AND
+                                             location_id<>%s AND
+                                             state='done')
+                                            OR
+                                            (location_id=%s AND
+                                             location_dest_id<>%s AND
+                                             state in ('done', 'assigned'))
+                                          )
+                                  FOR UPDATE of stock_move NOWAIT""", (product_id, id, id, id, id), log_exceptions=False)
+                except Exception:
+                    # Here it's likely that the FOR UPDATE NOWAIT failed to get the LOCK,
+                    # so we ROLLBACK to the SAVEPOINT to restore the transaction to its earlier
+                    # state, we return False as if the products were not available, and log it:
+                    cr.execute("ROLLBACK TO stock_location_product_reserve_lot")
+                    logger = logging.getLogger('stock.location')
+                    logger.warn("Failed attempt to reserve %s x product %s, likely due to another transaction already in progress. Next attempt is likely to work. Detailed error available at DEBUG level.", product_qty, product_id)
+                    logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
+                    return False
+
+            # SQL request is FEFO by default
+            cr.execute("""
+                        SELECT subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
+                            (SELECT product_uom, prodlot_id, expired_date, sum(product_qty) AS product_qty
+                                FROM stock_move
+                                WHERE location_dest_id=%s AND
+                                location_id<>%s AND
+                                product_id=%s AND
+                                state='done'
+                                GROUP BY product_uom, prodlot_id, expired_date
+                            
+                                UNION
+                            
+                                SELECT product_uom, prodlot_id, expired_date, -sum(product_qty) AS product_qty
+                                FROM stock_move
+                                WHERE location_id=%s AND
+                                location_dest_id<>%s AND
+                                product_id=%s AND
+                                state in ('done', 'assigned')
+                                GROUP BY product_uom, prodlot_id, expired_date) as subs
+                        GROUP BY product_uom, prodlot_id, expired_date
+                        ORDER BY prodlot_id asc, expired_date asc
+                       """,
+                       (id, id, product_id, id, id, product_id))
+            results = cr.dictfetchall()
+            # merge results according to uom if needed
+            for r in results:
+                # consolidates the uom
+                amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], uom_id)
+                # total for all locations
+                total = data.setdefault('total', 0.0)
+                data.update({'total': total})
+                # fill the data structure, total value for location
+                loc_tot = data.setdefault(id, {}).setdefault('total', 0.0)
+                loc_tot += amount
+                data.setdefault(id, {}).update({'total': loc_tot})
+                # production lot
+                lot_tot = data.setdefault(id, {}).setdefault(r['prodlot_id'], {}).setdefault('total', 0.0)
+                lot_tot += amount
+                data.setdefault(id, {}).setdefault(r['prodlot_id'], {}).update({'total': lot_tot, 'date': r['expired_date']})
+                # update the fefo list - will be sorted when all location has been treated - we can test only the last one, thanks to ORDER BY sql request
+                # only positive amount are taken into account
+                if fefo_list and fefo_list[-1]['location_id'] == id and fefo_list[-1]['prodlot_id'] == r['prodlot_id']:
+                    # simply update the qty
+                    if lot_tot > 0:
+                        fefo_list[-1].update({'qty': lot_tot})
+                    else:
+                        fefo_list.pop(-1)
+                elif lot_tot > 0:
+                    # append a new dic
+                    fefo_list.append({'location_id': id,
+                                      'uom_id': uom_id,
+                                      'expired_date': r['expired_date'],
+                                      'prodlot_id': r['prodlot_id'],
+                                      'product_id': product_id,
+                                      'qty': lot_tot})
+        # global FEFO sorting
+        sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')))
+        return data
+    
+stock_location()

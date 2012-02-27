@@ -27,6 +27,44 @@ from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
+class lang(osv.osv):
+    '''
+    define getter for date / time / datetime formats
+    '''
+    _inherit = 'res.lang'
+    
+    def _get_format(self, cr, uid, type, context=None):
+        '''
+        generic function
+        '''
+        if context is None:
+            context = {}
+        type = type + '_format'
+        assert type in self._columns, 'Specified format field does not exist'
+        user_obj = self.pool.get('res.users')
+        # get user context lang
+        user_lang = user_obj.read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+        # get coresponding id
+        lang_id = self.search(cr, uid, [('code','=',user_lang)])
+        # return format value or from default function if not exists
+        format = lang_id and self.read(cr, uid, lang_id[0], [type], context=context)[type] or getattr(self, '_get_default_%s'%type)(cr, uid, context=context)
+        return format
+    
+    def _get_db_format(self, cr, uid, type, context=None):
+        '''
+        generic function - for now constant values
+        '''
+        if context is None:
+            context = {}
+        if type == 'date':
+            return '%Y-%m-%d'
+        if type == 'time':
+            return '%H:%M:%S'
+        # default value
+        return '%Y-%m-%d'
+lang()
+
+
 class date_tools(osv.osv):
     '''
     date related tools for msf project
@@ -102,4 +140,3 @@ class fields_tools(osv.osv):
         return res
     
 fields_tools()
-    

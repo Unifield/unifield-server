@@ -28,9 +28,10 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "sale", "purchase", "msf_tools", "product_nomenclature"],
+    "depends" : ["stock", "sale", "purchase", "product_nomenclature", "msf_outgoing"],
     'update_xml': [
         'kit_view.xml',
+        'wizard/substitute_view.xml',
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',

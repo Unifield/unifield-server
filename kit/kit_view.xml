@@ -10,10 +10,10 @@
             	<form string="Kit Composition">
             		<group col="6" colspan="4">
                         <field name="composition_type" invisible="True" />
-                        <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" colspan="4" on_change="on_change_product_id(composition_product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="composition_product_id" colspan="4" on_change="on_change_product_id(composition_product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <group col="6" colspan="2">
                         	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="composition_version_id" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
+                        	<field name="composition_version_id" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
 	                        <field name="composition_creation_date" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
@@ -65,6 +65,7 @@
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
                         <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
+                        <button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" />
                     </group>
             	</form>
             </field>
@@ -194,12 +195,12 @@
             			<notebook colspan="4">
             				<page string="Composition Item">
             					<field name="item_kit_type" invisible="True" />
-           						<field name="item_module" />
-           						<field name="item_product_id" />
-		                        <field name="item_qty" />
-		                        <field name="item_uom_id" />
-		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" />
-            					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" />
+           						<field name="item_module" readonly="True" />
+           						<field name="item_product_id" readonly="True" />
+		                        <field name="item_qty" readonly="True" />
+		                        <field name="item_uom_id" readonly="True" />
+		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
+            					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 	                        </page>
 	                        <page string="Notes">
 	                        	<field name="item_description" nolabel="True" />
@@ -225,7 +226,6 @@
             		<field name="item_lot" />
             		<field name="item_exp" />
             		<field name="state" invisible="True" />
-            		<button name="substitute_item" type="object" string="Substitute Item" icon="terp-stock_effects-object-colorize" />
             	</tree>
             </field>
 		</record>

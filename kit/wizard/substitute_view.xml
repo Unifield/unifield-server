@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_substitute_form" model="ir.ui.view">
+            <field name="name">substitute.form</field>
+            <field name="model">substitute</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Substitute Items">
+            		<group col="4" colspan="4">
+            			<field name="kit_id" />
+                        <field name="destination_location_id" />
+                    </group>
+                    <group col="4" colspan="4">
+                        <field name="composition_item_ids" nolabel="True" domain="[('item_kit_id', '=', kit_id)]">
+                        	<tree string="Items to replace">
+	                			<field name="item_module" />
+			            		<field name="item_product_id" />
+			            		<field name="item_qty" />
+			            		<field name="item_uom_id" />
+			            		<field name="item_lot" />
+			            		<field name="item_exp" />
+                        	</tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="4">
+                        <field name="replacement_item_ids" nolabel="True">
+                        	<tree string="Replacement Items" editable="top">
+                        		<field name="location_id_substitute_item" on_change="on_change_location_id(location_id_substitute_item,product_id_substitute_item,lot_substitute_item,uom_id_substitute_item,context)" />
+	                			<field name="module_substitute_item" />
+                				<field name="product_id_substitute_item" on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_substitute_item,uom_id_substitute_item, context)" />
+                				<field name="qty_substitute_item" />
+                				<field name="uom_id_substitute_item" />
+               					<field name="lot_substitute_item" on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_substitute_item,uom_id_substitute_item,context)" />
+                				<field name="exp_substitute_item" on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_substitute_item,uom_id_substitute_item,context)" />
+                				<field name="type_check" invisible="True" />
+                        	</tree>
+                        </field>
+                    </group>
+            	</form>
+            </field>
+		</record>
+    
+    </data>
+</openerp>
