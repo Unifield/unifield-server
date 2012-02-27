@@ -293,7 +293,6 @@
                         <field name="project_budget" digits="(24,0)" widget="float"/>
                         <field name="project_real" digits="(24,0)" widget="float"/>
                         <field name="parent_id" invisible="1"/>
-                        <field name="line_type"/>
                     </tree>
                 </field>
             </record>
