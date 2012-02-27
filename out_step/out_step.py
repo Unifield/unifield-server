@@ -41,7 +41,7 @@ class stock_picking(osv.osv):
         ('auto', 'Waiting'),
         ('confirmed', 'Confirmed'),
         ('assigned', 'Available'),
-        ('done', 'Done'),
+        ('done', 'Closed'),
         ('delivered', 'Delivered'),
         ('cancel', 'Cancelled'),
     ]
