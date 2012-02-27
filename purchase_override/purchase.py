@@ -91,6 +91,8 @@ class purchase_order(osv.osv):
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
             states={'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
+        'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True, 
+                                              help="The address where the invoice will be sent."),
     }
     
     _defaults = {
@@ -99,6 +101,7 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
         'from_yml_test': lambda *a: False,
+        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice']
     }
 
     def _check_user_company(self, cr, uid, company_id, context={}):

@@ -32,6 +32,10 @@
                     <xpath expr="/form/notebook//field[@name='location_id']" position="attributes">
                     	<attribute name="attrs">{'invisible': [('order_type', '=', 'direct')]}</attribute>
                     </xpath>
+                    <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
+                    	<field name="invoice_address_id" domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
+                    		attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
+                    </xpath>
                 </data>
             </field>
         </record>
