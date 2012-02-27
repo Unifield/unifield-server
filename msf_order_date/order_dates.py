@@ -891,6 +891,12 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        for order in self.browse(cr, uid, ids, context=context):
+            # Fill partner type
+            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id', order.partner_id.id), context=context)
+            # partner type - always set
+            data.update({'partner_type': partner.partner_type,})
         
         if not 'date_order' in data:
             data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
