@@ -111,6 +111,16 @@ class account_invoice(osv.osv):
                 message = re.sub(pattern, 'Debit Note', message, 1)
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
+    def _refund_cleanup_lines(self, cr, uid, lines):
+        """
+        Remove useless fields
+        """
+        for line in lines:
+            del line['move_lines']
+            del line['import_invoice_id']
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
+        return res
+
     def button_debit_note_import_invoice(self, cr, uid, ids, context={}):
         """
         Launch wizard that permits to import invoice on a debit note
