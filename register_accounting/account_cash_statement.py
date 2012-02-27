@@ -181,7 +181,6 @@ class account_cash_statement(osv.osv):
                 states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
             'open_advance_amount': fields.float('Open Advances Amount'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap', readonly=True),
-            'comments': fields.char('Comments', size=64, required=False, readonly=False),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context={}):

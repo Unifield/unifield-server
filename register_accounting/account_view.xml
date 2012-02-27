@@ -132,6 +132,9 @@
                                 </field>
                             </page>
                         </notebook>
+                        <separator string="Comments"/>
+                        <field name="notes" nolabel="1"/>
+                        <separator string="State" />
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
@@ -309,9 +312,10 @@
                                 <field name="balance_end" string="Calculated Balance" readonly="1"/>
                                 <field name="balance_end_cash" readonly="1" string="CashBox Balance"/>
                                 <field name="closing_gap" readonly="1"/>
-                                <field name="comments" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
                             </group>
                         </group>
+                        <separator string="Comments"/>
+                        <field name="notes" nolabel="1"/>
                         <separator string="State" />
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>

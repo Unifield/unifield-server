@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <report id="cash_inventory"
+        string="Cash Inventory"
+        model="account.bank.statement"
+        name="cash.inventory"
+        rml="register_accounting/report/cash_inventory.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+        
+        <report id="bank_reconciliation"
+        string="Bank Reconciliation"
+        model="account.bank.statement"
+        name="bank.reconciliation"
+        rml="register_accounting/report/bank_reconciliation.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+        
+        <report id="cheque_inventory"
+        string="Cheque Inventory"
+        model="account.bank.statement"
+        name="cheque.inventory"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
+
+    </data>
+</openerp>
+

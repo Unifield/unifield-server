@@ -50,6 +50,7 @@
         'wizard/register_creation.xml',
         'wizard/wizard_confirm_bank.xml',
         'wizard/invoice_date.xml',
+        'register_accounting_report.xml',
     ],
     "demo_xml" : [],
     "test": [
