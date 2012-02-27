@@ -40,6 +40,8 @@
     ],
     "demo_xml" : [],
     "test": [
+        'test/accounting_data.yml',
+        'test/intersection_flow.yml',
     ],
     "installable": True,
     "active": False
