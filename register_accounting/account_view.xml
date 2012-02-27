@@ -29,8 +29,7 @@
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank register balance"/>
                                 <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance.\n
-                                    Are you sure to freeze closing balance?"/>
+                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
                             <field name="balance_gap"/>
@@ -287,8 +286,7 @@
                                     </field>
                                     <button name="button_confirm_closing_balance" type="object" string="Confirm Closing Balance" icon="gtk-apply" 
                                         colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance.\n
-                                    Are you sure to freeze closing balance?"/>
+                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
                                 </group>
                             </page>
                         </notebook>
