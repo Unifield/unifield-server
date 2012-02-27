@@ -142,6 +142,7 @@ class purchase_order(osv.osv):
             v['invoice_method'] = 'manual'
         elif order_type == 'direct':
             v['invoice_method'] = 'order'
+            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
