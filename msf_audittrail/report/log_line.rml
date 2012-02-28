@@ -55,7 +55,7 @@
       <tr>
         <td>
           <para style="P3">
-            <font face="Helvetica">Modifications on [[ order_id(o.id).name ]]</font>
+            <font face="Helvetica">Modifications[[ (order_name(o.id) and " on %s" % order_name(o.id)) ]]</font>
           </para>
         </td>
       </tr>
