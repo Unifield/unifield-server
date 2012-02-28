@@ -23,6 +23,7 @@ from osv import fields, osv
 
 class msf_budget(osv.osv):
     _name = "msf.budget"
+    _description = 'MSF Budget'
     
     _columns={
         'name': fields.char('Name', size=64, required=True),

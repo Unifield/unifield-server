@@ -58,6 +58,41 @@ class account_invoice(osv.osv):
 
 account_invoice()
 
+class account_bank_statement(osv.osv):
+    _name = 'account.bank.statement'
+    _inherit = 'account.bank.statement'
+    _trace = True
+
+account_bank_statement()
+
+class msf_budget(osv.osv):
+    _name = 'msf.budget'
+    _inherit = 'msf.budget'
+    _trace = True
+
+msf_budget()
+
+class financing_contract_contract(osv.osv):
+    _name = 'financing.contract.contract'
+    _inherit = 'financing.contract.contract'
+    _trace = True
+
+financing_contract_contract()
+
+class account_analytic_account(osv.osv):
+    _name = 'account.analytic.account'
+    _inherit = 'account.analytic.account'
+    _trace = True
+
+account_analytic_account()
+
+class account_period(osv.osv):
+    _name = 'account.period'
+    _inherit = 'account.period'
+    _trace = True
+
+account_period()
+
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'
