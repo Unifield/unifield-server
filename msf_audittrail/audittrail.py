@@ -582,7 +582,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
         # Add the name of the created sub-object
         if parent_field_id:
-            vals.update({'sub_obj_name': resource[name_get_field],
+            vals.update({'sub_obj_name': resource[name_get_field or 'name'],
                          'rule_id': rule_id,
                          'fct_object_id': model.id,
                          'fct_res_id': res_id})
