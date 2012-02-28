@@ -221,5 +221,20 @@
         <!-- Debit Note Menu in "Customer Invoices" -->
         <menuitem action="action_debit_note" id="menu_action_debit_note" parent="account.menu_finance_receivables" sequence="10"/>
 
+        <!--
+            Account invoice report redefinition
+        -->
+
+        <report
+            auto="False"
+            id="account.account_invoices"
+            model="account.invoice"
+            name="account.invoice2"
+            rml="account_msf/report/account_print_invoice.rml"
+            string="Print report"
+            attachment="(object.state in ('open','paid')) and ('INV'+(object.number or '').replace('/',''))"
+            attachment_use="1"
+            multi="True"/>
+
     </data>
 </openerp>
