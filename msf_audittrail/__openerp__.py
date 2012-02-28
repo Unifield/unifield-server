@@ -34,7 +34,7 @@
     """,
     'author': 'OpenERP SA, TeMPO Consulting, MSF',
     'website': 'http://www.unifield.org',
-    'depends': ['base', 'purchase', 'account', 'register_accounting', 'msf_budget', 'financing_contract'],
+    'depends': ['base', 'purchase', 'account_override', 'register_accounting', 'msf_budget', 'financing_contract'],
     'init_xml': [],
     'update_xml': [
         'wizard/audittrail_view_log_view.xml',

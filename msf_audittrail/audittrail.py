@@ -58,6 +58,13 @@ class account_invoice(osv.osv):
 
 account_invoice()
 
+class account_invoice_line(osv.osv):
+    _name = 'account.invoice.line'
+    _inherit = 'account.invoice.line'
+    _trace = True
+
+account_invoice_line()
+
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
     _inherit = 'account.bank.statement'
@@ -529,9 +536,9 @@ def create_log_line(self, cr, uid, model, lines=[]):
 def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=False, parent_field_id=False, name_get_field='name', *args, **kwargs):
     """
     Logging function: This function is performs logging oprations according to method
-    @param db: the current database
+    @param cr: the current database
     @param uid: the current user’s ID for security checks,
-    @param object: Object who's values are being changed
+    @param model: Object who's values are being changed
     @param method: method to log: create, read, write, unlink
     @param fct_src: execute method of Object proxy
 

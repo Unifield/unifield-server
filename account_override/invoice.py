@@ -34,11 +34,37 @@ class account_invoice(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade',
+            help="This field contains the in formation related to the numbering of the lines of this order."),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
     }
+
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every new invoice
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = 'Invoice L' # For Invoice Lines
+        code = 'account.invoice'
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        }
+        return seq_pool.create(cr, uid, seq)
 
     def create(self, cr, uid, vals, context={}):
         """
@@ -49,6 +75,8 @@ class account_invoice(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
+        # Create a sequence for this new invoice
+        vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def action_open_invoice(self, cr, uid, ids, context={}, *args):
@@ -88,11 +116,14 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
+        'line_number': fields.integer(string='Line', required=True),
     }
 
     _defaults = {
         'from_yml_test': lambda *a: False,
     }
+
+    _order = 'line_number'
 
     def create(self, cr, uid, vals, context={}):
         """
@@ -103,6 +134,11 @@ class account_invoice_line(osv.osv):
         if context.get('update_mode') in ['init', 'update']:
             logging.getLogger('init').info('INV: set from yml test to True')
             vals['from_yml_test'] = True
+        # Create new number with invoice sequence
+        invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], context)
+        sequence = invoice.sequence_id
+        line = sequence.get_id(test='id', context=context)
+        vals.update({'line_number': line})
         return super(account_invoice_line, self).create(cr, uid, vals, context)
 
 account_invoice_line()

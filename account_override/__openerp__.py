@@ -33,6 +33,7 @@
     "demo_xml" : [],
     "update_xml" : [
         'account_invoice_workflow.xml',
+        'account_view.xml',
     ],
     'test': [],
     'installable': True,
