@@ -51,6 +51,13 @@ class purchase_order_line(osv.osv):
 
 purchase_order_line()
 
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = 'account.invoice'
+    _trace = True
+
+account_invoice()
+
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'

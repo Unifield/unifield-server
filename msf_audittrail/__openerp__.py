@@ -43,6 +43,7 @@
         'security/audittrail_security.xml',
         'audittrail_data.yml',
         'audittrail_report.xml',
+        'audittrail_invoice_data.yml',
     ],
     'demo_xml': [],
     'installable': True,
