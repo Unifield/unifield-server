@@ -718,9 +718,12 @@ class stock_location(osv.osv):
         # fefo list of lot
         fefo_list = []
         # data structure
-        data = {'fefo': fefo_list}
+        data = {'fefo': fefo_list, 'total': 0.0}
             
         for id in location_ids:
+            # set up default value
+            data.setdefault(id, {}).setdefault('total', 0.0)
+            # lock the database if needed
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -781,6 +784,7 @@ class stock_location(osv.osv):
                 amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], uom_id)
                 # total for all locations
                 total = data.setdefault('total', 0.0)
+                total += amount
                 data.update({'total': total})
                 # fill the data structure, total value for location
                 loc_tot = data.setdefault(id, {}).setdefault('total', 0.0)
@@ -792,20 +796,22 @@ class stock_location(osv.osv):
                 data.setdefault(id, {}).setdefault(r['prodlot_id'], {}).update({'total': lot_tot, 'date': r['expired_date']})
                 # update the fefo list - will be sorted when all location has been treated - we can test only the last one, thanks to ORDER BY sql request
                 # only positive amount are taken into account
-                if fefo_list and fefo_list[-1]['location_id'] == id and fefo_list[-1]['prodlot_id'] == r['prodlot_id']:
-                    # simply update the qty
-                    if lot_tot > 0:
-                        fefo_list[-1].update({'qty': lot_tot})
-                    else:
-                        fefo_list.pop(-1)
-                elif lot_tot > 0:
-                    # append a new dic
-                    fefo_list.append({'location_id': id,
-                                      'uom_id': uom_id,
-                                      'expired_date': r['expired_date'],
-                                      'prodlot_id': r['prodlot_id'],
-                                      'product_id': product_id,
-                                      'qty': lot_tot})
+                if r['prodlot_id']:
+                    # FEFO logic is only meaningful if a production lot is associated
+                    if fefo_list and fefo_list[-1]['location_id'] == id and fefo_list[-1]['prodlot_id'] == r['prodlot_id']:
+                        # simply update the qty
+                        if lot_tot > 0:
+                            fefo_list[-1].update({'qty': lot_tot})
+                        else:
+                            fefo_list.pop(-1)
+                    elif lot_tot > 0:
+                        # append a new dic
+                        fefo_list.append({'location_id': id,
+                                          'uom_id': uom_id,
+                                          'expired_date': r['expired_date'],
+                                          'prodlot_id': r['prodlot_id'],
+                                          'product_id': product_id,
+                                          'qty': lot_tot})
         # global FEFO sorting
         sorted(fefo_list, cmp=lambda x, y: cmp(x.get('expired_date'), y.get('expired_date')))
         return data

@@ -57,7 +57,7 @@ class substitute_item(osv.osv_memory):
         if result is None:
             result = {}
         if not product_id or not location_id:
-            result.update({'qty_substitute_item': 0.0})
+            result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
             return result
         
         # objects
@@ -73,15 +73,15 @@ class substitute_item(osv.osv_memory):
         res = loc_obj._product_reserve_lot(cr, uid, [location_id], product_id, uom_id, context=stock_context, lock=True)
         if res:
             if prodlot_id:
-                # if a lot is specified, we take this specific qty info
-                qty = res[location_id][prodlot_id]['total']
+                # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
+                qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
             else:
                 # otherwise we take total according to the location
                 qty = res[location_id]['total']
             # update the result
             result.setdefault('value', {}).update({'qty_substitute_item': qty, 'uom_id_substitute_item': uom_id})
         else:
-            result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
+            result.setdefault('value', {}).update({'qty_substitute_item': 0.0, 'uom_id_substitute_item': uom_id})
         return result
     
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
