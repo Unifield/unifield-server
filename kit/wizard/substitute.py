@@ -25,19 +25,129 @@ import time
 import netsvc
 import decimal_precision as dp
 
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
+
 class substitute(osv.osv_memory):
     '''
     substitute wizard
     '''
     _name = "substitute"
     
+    def do_substitute(self, cr, uid, ids, context=None):
+        '''
+        substitute method, no check on products availability is performed
+        '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        obj_data = self.pool.get('ir.model.data')
+        comp_obj = self.pool.get('res.company')
+        kit_obj = self.pool.get('composition.kit')
+        lot_obj = self.pool.get('stock.production.lot')
+        # date is today
+        date = time.strftime('%Y-%m-%d')
+        # for each item to replace, we create a stock move from kitting to destination location
+        # and delete the corresponding kit item
+        for obj in self.browse(cr, uid, ids, context=context):
+            items_to_delete = []
+            for item in obj.composition_item_ids:
+                # add to "to delete" list
+                items_to_delete.append(item.id)
+                # data for stock move creation
+                move_values = {}
+                # need to create a production lot if needed
+                prodlot_id = False
+                if item.item_product_id.batch_management:
+                    # we create a new lot
+                    name = item.item_lot or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
+                    vals = {'product_id': item.item_product_id.id,
+                            'life_date': item.item_exp or date,
+                            'name': name,
+                            'type': 'standard',
+                            }
+                    prodlot_id = lot_obj.create(cr, uid, vals, context=context)
+                elif item.item_product_id.perishable:
+                    # we search for existing internal lot, if does not exist, we create a new one
+                    prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.item_exp),
+                                                           ('type', '=', 'internal'),
+                                                           ('product_id', '=', item.item_product_id.id)], context=context)
+                # location is kitting
+                location_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
+                # reason type
+                reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+                # first company
+                company_id = comp_obj.search(cr, uid, [], context=context)[0]
+                move_values.update({'name': item.item_product_id.name[:64],
+                                    'picking_id': False,
+                                    'product_id': item.item_product_id.id,
+                                    'date': date,
+                                    'date_expected': date,
+                                    'product_qty': item.item_qty,
+                                    'product_uom': item.item_uom_id.id,
+                                    'product_uos_qty': item.item_qty,
+                                    'product_uos': item.item_uom_id.id,
+                                    'product_packaging': False,
+                                    'address_id': False,
+                                    'location_id': location_id,
+                                    'location_dest_id': obj.destination_location_id.id,
+                                    'sale_line_id': False,
+                                    'tracking_id': False,
+                                    'state': 'done',
+                                    'note': 'Kit Substitution - Back to Stock',
+                                    'company_id': company_id,
+                                    'reason_type_id': reason_type_id,
+                                    'prodlot_id': prodlot_id,
+                                    })
+                move_obj.create(cr, uid, move_values, context=context)
+        
+        # for each replacement item, we create a stock move from source location to kitting location
+        # and create a kit item
+        
+        
+        return {'type': 'ir.actions.act_window_close'}
+        
+    def check_availability(self, cr, uid, ids, context=None):
+        '''
+        check the availability of the replacement items
+        
+        - feedback in the integrity_status column
+        '''
+        # objects
+        item_obj = self.pool.get('substitute.item')
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.replacement_item_ids:
+                # reset the integrity status
+                item.write({'integrity_status': 'empty'}, context=context)
+                # call common_on_change
+                result = item_obj.common_on_change(cr, uid, [item.id], item.location_id_substitute_item.id, item.product_id_substitute_item.id, item.lot_id_substitute_item.id, item.uom_id_substitute_item.id, result=None, context=context)
+                # update the available qty
+                item.write({'hidden_stock_available': result['value']['qty_substitute_item']}, context=context)
+                # check that selected qty is smaller or equal to available one (from on_change function)
+                if result['value']['qty_substitute_item'] < item.qty_substitute_item:
+                    item.write({'integrity_status': 'not_available'}, context=context)
+                    
+        return True
+        
     _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'destination_location_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'internal')], required=True),
                 'composition_item_ids': fields.many2many('composition.item', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
                 }
     
-    _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),}
+    def _get_default_location(self, cr, uid, context=None):
+        '''
+        get the default location (stock of first warehouse)
+        '''
+        # objects
+        wh_obj = self.pool.get('stock.warehouse')
+        ids = wh_obj.search(cr, uid, [], context=context)
+        if ids:
+            return wh_obj.browse(cr, uid, ids[0], context=context).lot_stock_id.id
+        return False
+    
+    _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
+                 'integrity_status': 'empty',
+                 'destination_location_id': _get_default_location,
+                 }
 
 substitute()
 
@@ -57,7 +167,7 @@ class substitute_item(osv.osv_memory):
         if result is None:
             result = {}
         if not product_id or not location_id:
-            result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
+            result.setdefault('value', {}).update({'qty_substitute_item': 0.0, 'hidden_stock_available': 0.0})
             return result
         
         # objects
@@ -71,17 +181,17 @@ class substitute_item(osv.osv_memory):
         stock_context = dict(context, compute_child=False)
         # we check for the available qty (in:done, out: assigned, done)
         res = loc_obj._product_reserve_lot(cr, uid, [location_id], product_id, uom_id, context=stock_context, lock=True)
-        if res:
-            if prodlot_id:
-                # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
-                qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
-            else:
-                # otherwise we take total according to the location
-                qty = res[location_id]['total']
-            # update the result
-            result.setdefault('value', {}).update({'qty_substitute_item': qty, 'uom_id_substitute_item': uom_id})
+        if prodlot_id:
+            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
+            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
         else:
-            result.setdefault('value', {}).update({'qty_substitute_item': 0.0, 'uom_id_substitute_item': uom_id})
+            # otherwise we take total according to the location
+            qty = res[location_id]['total']
+        # update the result
+        result.setdefault('value', {}).update({'qty_substitute_item': qty,
+                                               'uom_id_substitute_item': uom_id,
+                                               'hidden_stock_available': qty,
+                                               })
         return result
     
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
@@ -116,20 +226,20 @@ class substitute_item(osv.osv_memory):
                     result['warning'] = {'title': _('Info'),
                                      'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
                     # clear prod lot
-                    result['value'].update(lot_substitute_item=False)
+                    result['value'].update(lot_id_substitute_item=False)
                 else:
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('The selected Expiry Date does not exist in the system.')}
                     # clear date
-                    result['value'].update(exp_substitute_item=False, lot_substitute_item=False)
+                    result['value'].update(exp_substitute_item=False, lot_id_substitute_item=False)
             else:
                 # return first prodlot
                 prodlot_id = prod_ids[0]
-                result['value'].update(lot_substitute_item=prodlot_id)
+                result['value'].update(lot_id_substitute_item=prodlot_id)
         else:
             # clear expiry date, we clear production lot
-            result['value'].update(lot_substitute_item=False,
+            result['value'].update(lot_id_substitute_item=False,
                                    exp_substitute_item=False,
                                    )
         # compute qty
@@ -151,7 +261,7 @@ class substitute_item(osv.osv_memory):
         '''
         result = {}
         # product changes, prodlot is always cleared
-        result.setdefault('value', {})['lot_substitute_item'] = False
+        result.setdefault('value', {})['lot_id_substitute_item'] = False
         result.setdefault('value', {})['exp_substitute_item'] = False
         # clear uom
         result.setdefault('value', {})['uom_id_substitute_item'] = False
@@ -171,23 +281,26 @@ class substitute_item(osv.osv_memory):
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
     
-    _columns = {'wizard_id': fields.many2one('substitute', string='Substitute wizard'),
+    _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+                'wizard_id': fields.many2one('substitute', string='Substitute wizard'),
                 'location_id_substitute_item': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'module_substitute_item': fields.char(string='Module', size=1024),
                 'product_id_substitute_item': fields.many2one('product.product', string='Product', required=True),
                 'qty_substitute_item': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
                 'uom_id_substitute_item': fields.many2one('product.uom', string='UoM', required=True),
-                'lot_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
+                'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
                 'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
                 'type_check': fields.char(string='Type Check', size=1024,),
                 'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
                 'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+                'hidden_stock_available': fields.float(string='Available Stock', digits_compute=dp.get_precision('Product UoM'), invisible=True),
                 }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'out',
+                 'hidden_stock_available': 0.0,
                  }
     
 substitute_item()

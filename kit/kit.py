@@ -754,6 +754,9 @@ class stock_location(osv.osv):
                     return False
 
             # SQL request is FEFO by default
+            # TODO merge different UOM directly in SQL statement
+            # example in class stock_report_prodlots_virtual(osv.osv): in report_stock_virtual.py
+            # class report_stock_inventory(osv.osv): in specific_rules.py
             cr.execute("""
                         SELECT subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
                             (SELECT product_uom, prodlot_id, expired_date, sum(product_qty) AS product_qty

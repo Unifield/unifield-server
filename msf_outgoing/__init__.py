@@ -43,6 +43,8 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('too_many_packs', 'Too many packs selected'),
                               # return from shipment
                               ('seq_out_of_range', 'Selected Sequence is out of range'),
+                              # substitute kit
+                              ('not_available', 'Not Available'),
                               ]
 
 import msf_outgoing

@@ -31,6 +31,7 @@
     "depends" : ["stock", "sale", "purchase", "product_nomenclature", "msf_outgoing"],
     'update_xml': [
         'kit_view.xml',
+        'kit_sequence.xml',
         'wizard/substitute_view.xml',
     ],
     "demo_xml": [],
