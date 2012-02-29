@@ -58,7 +58,7 @@
                 domain="[('date','&lt;=',(datetime.date.today()+relativedelta(day=31)).strftime('%%Y-%%m-%%d')),('date','&gt;=',(datetime.date.today()-relativedelta(day=1)).strftime('%%Y-%%m-%%d'))]"
                 help="Current month"/>
                 <separator orientation="vertical"/>
-                <filter string="Done"
+                <filter string="Closed"
                     name="done"
                     icon="terp-dialog-close"
                     domain="[('state','=','done')]"
