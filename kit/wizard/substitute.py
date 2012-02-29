@@ -164,6 +164,7 @@ class substitute(osv.osv_memory):
                     prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.item_exp),
                                                            ('type', '=', 'internal'),
                                                            ('product_id', '=', item.item_product_id.id)], context=context)
+                    raise osv.except_osv(_('Warning !'), _('Not Implemented'))
                 # create corresponding stock move
                 move_values = {'name': item.item_product_id.name[:64],
                                'picking_id': pick_id,
