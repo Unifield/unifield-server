@@ -102,7 +102,8 @@ class account_move_line_reconcile(osv.osv_memory):
                         else:
                             raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between initial and converted amount fails."))
         if transfer_with_change:
-            state = 'partial_change'
+            # For transfer with change, we need to do a total reconciliation!
+            state = 'total_change'
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
             account_id = line.account_id.id
