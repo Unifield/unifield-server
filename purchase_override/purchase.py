@@ -550,7 +550,7 @@ class purchase_order(osv.osv):
             if order_id.rfq_ok and order_id.state == 'draft':
                 wf_service.trg_validate(uid, 'purchase.order', order_id.id, 'purchase_cancel', cr)
             elif order_id.tender_id:
-                raise osv.except_osv(_('Error'), _('You cannot \'Done\' a Request for Quotation attached to a tender. Please make the tender %s to \'Done\' before !') % order_id.tender_id.name)
+                raise osv.except_osv(_('Error'), _('You cannot \'Close\' a Request for Quotation attached to a tender. Please make the tender %s to \'Closed\' before !') % order_id.tender_id.name)
             else:
                 wf_service.trg_delete(uid, 'purchase.order', order_id.id, cr)
                 # Search the method called when the workflow enter in last activity

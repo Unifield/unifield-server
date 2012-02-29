@@ -99,6 +99,16 @@ procurement_order()
 class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _description = "Picking List"
+    
+    def _hook_state_list(self, cr, uid, *args, **kwargs):
+        '''
+        Change terms into states list
+        '''
+        state_list = kwargs['state_list']
+        
+        state_list['done'] = _('is closed.')
+        
+        return state_list
 
     _columns = {
         'state': fields.selection([
@@ -400,6 +410,17 @@ class stock_move(osv.osv):
     _inherit = "stock.move"
     _description = "Stock Move with hook"
 
+    _STOCK_MOVE_STATE = [('draft', 'Draft'),
+                         ('waiting', 'Waiting'),
+                         ('confirmed', 'Not Available'),
+                         ('assigned', 'Available'),
+                         ('done', 'Closed'),
+                         ('cancel', 'Cancel'),]
+
+    _columns = {
+        'state': fields.selection(_STOCK_MOVE_STATE, string='State', readonly=True, select=True),
+    }
+
     def set_manually_done(self, cr, uid, ids, context={}):
         '''
         Set the stock move to manually done
@@ -408,7 +429,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
-              help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Done\'.\
+              help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=True, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),

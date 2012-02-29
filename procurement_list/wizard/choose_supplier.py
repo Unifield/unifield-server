@@ -53,7 +53,7 @@ class procurement_list_line_split(osv.osv_memory):
         
         line = line_obj.browse(cr, uid, line_id, context=context)
         if state == 'done':
-            raise osv.except_osv(_('Error'), _('You cannot split a line in a Done Internal Request'))
+            raise osv.except_osv(_('Error'), _('You cannot split a line in a Closed Internal Request'))
         
         res['line_id'] = line_id
         
@@ -120,7 +120,7 @@ class procurement_list_line_merge(osv.osv_memory):
         
         line = line_obj.browse(cr, uid, line_id, context=context)
         if state == 'done':
-            raise osv.except_osv(_('Error'), _('You cannot merge a line in a Done Internal Request'))
+            raise osv.except_osv(_('Error'), _('You cannot merge a line in a Closed Internal Request'))
         product_id = line.product_id.id
         product_uom = line.product_uom_id.id
         wizard_id = line.list_id.id

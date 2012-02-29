@@ -76,7 +76,7 @@
                 <search string="Search Procurement List">
                     <group col="10" colspan="4">
                         <filter icon="terp-document-new" string="Draft" domain="[('state', '=', 'draft')]" help="Draft Procurement list" />
-                        <filter icon="terp-dialog-close" string="Done" domain="[('state', '=', 'done')]" help="Done Procurement list" />
+                        <filter icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'done')]" help="Closed Procurement list" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="order_date" />
