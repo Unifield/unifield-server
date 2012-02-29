@@ -222,6 +222,38 @@ class purchase_order(osv.osv):
         else:
             return super(purchase_order, self)._hook_confirm_order_message(cr, uid, context, args, kwargs)
     
+    def wkf_confirm_order(self, cr, uid, ids, context=None):
+        '''
+        If the PO is a DPO, set all related OUT stock move to 'done' state
+        '''
+        move_obj = self.pool.get('stock.move')
+        wf_service = netsvc.LocalService("workflow")
+                
+        res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
+        
+        todo = []
+        todo2 = []
+        todo3 = []
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'direct':
+                for line in order.order_line:
+                    if line.procurement_id: todo.append(line.procurement_id.id)
+                    
+        if todo:
+            todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
+        
+        if todo2:
+            sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
+            move_obj.write(cr, uid, sm_ids, {'state': 'done'}, context=context)
+            for move in move_obj.browse(cr, uid, sm_ids, context=context):
+                if move.picking_id: todo3.append(move.picking_id.id)
+                
+        if todo3:
+            for pick_id in todo3:
+                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+        
+        return res
+    
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         Checks if the invoice should be create from the purchase order

@@ -1220,7 +1220,7 @@ class stock_picking(osv.osv):
             #check the qty of all stock moves
             treat_draft = True
             for move in draft_picking.move_lines:
-                if move.product_qty:
+                if move.product_qty != 0.0 and move.state != 'done':
                     treat_draft = False
             
             if treat_draft:
