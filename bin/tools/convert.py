@@ -39,6 +39,7 @@ except:
 
 
 from datetime import datetime, timedelta
+from dateutil import relativedelta
 from lxml import etree
 import misc
 import netsvc
@@ -77,6 +78,7 @@ def _get_idref(self, cr, uid, model_str, context, idref):
                   time=time,
                   DateTime=datetime,
                   timedelta=timedelta,
+                  relativedelta=relativedelta,
                   version=release.major_version,
                   ref=_ref(self, cr),
                   pytz=pytz)
