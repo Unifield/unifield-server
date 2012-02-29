@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <record id="inherit_view_employee_form" model="ir.ui.view">
+        <field name="name">inherit.view.employee.form</field>
+        <field name="model">hr.employee</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="/form/notebook" position="before">
+                    <group colspan="4" col="8">
+                        <field name="cost_center_id"/>
+                        <field name="funding_pool_id"/>
+                        <field name="free1_id"/>
+                        <field name="free2_id"/>
+                    </group>
+                </xpath>
+                <xpath expr="/form/group[1]/group[1]/field[@name='active']" position="after">
+                    <field name="date_from"/>
+                    <field name="employee_type"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    </data>
+</openerp>

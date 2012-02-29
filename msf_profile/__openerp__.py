@@ -34,8 +34,8 @@
         "msf_audittrail",
         "base_report_designer",
         "msf_partner",
-        "register_accounting",
         "analytic_distribution",
+        "register_accounting",
         "account_period_closing_level",
         "account_activable",
         "msf_order_date",
@@ -86,6 +86,7 @@
         "documents_done",
         "msf_budget",
         "account_subscription",
+        "msf_homere_interface",
     ],
     "update_xml": [
         "report.xml",
