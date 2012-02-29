@@ -100,7 +100,7 @@ class account_move_line_reconcile(osv.osv_memory):
                         if abs(first_line.transfer_amount) == abs(second_line.amount_currency) and abs(first_line.amount_currency) == abs(second_line.transfer_amount):
                             transfer_with_change = True
                         else:
-                            raise osv.except_osv(_('Warning'), _("Transfer amounts and transfer currencies doesn't match."))
+                            raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between initial and converted amount fails."))
         if transfer_with_change:
             state = 'partial_change'
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
@@ -125,7 +125,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
-                    raise osv.except_osv(_('Error'), _('A third party is different from others: %s' % line.partner_txt))
+                    raise osv.except_osv(_('Error'), _('Cannot reconcile entries : Cross check between Journal Code and Third Party failed.'))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
