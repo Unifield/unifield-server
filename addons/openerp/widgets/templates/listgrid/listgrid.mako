@@ -10,7 +10,7 @@
 <%def name="make_editors(data=None)">
     % if editable and editors:
         <tr class="grid-row editors" record="${(data and data['id']) or -1}">
-            % if selector and not hide_delete_button:
+            % if selector:
                 <td class="grid-cell selector">&nbsp;</td>
             % endif
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
@@ -62,7 +62,7 @@
         % endif 
         >
     % endif
-    % if selector and not hide_delete_button:
+    % if selector:
         <td class="grid-cell selector">
         % if not data['id'] or data['id'] not in notselectable:
             % if not m2m:
@@ -222,7 +222,7 @@
                     <table id="${name}_grid" class="grid" width="100%" cellspacing="0" cellpadding="0" style="background: none;">
                         <thead>
                             <tr class="grid-header">
-                                % if selector and not hide_delete_button:
+                                % if selector:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox' and not m2m:
                                             <input type="checkbox" class="checkbox grid-record-selector" onclick="new ListView('${name}').checkAll(!this.checked)"/>
@@ -269,7 +269,7 @@
                                 % else:
                                     <tr class="grid-row">
                                 % endif
-                                % if selector and not hide_delete_button:
+                                % if selector:
                                     <td width="1%" class="grid-cell selector">&nbsp;</td>
                                 % endif
                                 % if editable:
