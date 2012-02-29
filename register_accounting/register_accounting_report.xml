@@ -28,6 +28,14 @@
         auto="True"
         menu="True"/>
         
+        <report id="liquidity_position"
+        string="Liquidity Position"
+        model="account.bank.statement"
+        name="liquidity.position"
+        report_type="txt"
+        auto="True"
+        menu="True"/>
+        
 
     </data>
 </openerp>

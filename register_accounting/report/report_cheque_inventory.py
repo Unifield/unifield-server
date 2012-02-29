@@ -73,5 +73,4 @@ class report_cheque_inventory(report_sxw.report_sxw):
         return (out, 'csv')
 
 report_cheque_inventory('report.cheque.inventory', 'account.bank.statement', False, parser=False)
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
