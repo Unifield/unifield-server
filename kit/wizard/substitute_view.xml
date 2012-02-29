@@ -26,7 +26,7 @@
                     </group>
                     <group col="4" colspan="4">
                         <field name="replacement_item_ids" nolabel="True">
-                        	<tree string="Replacement Items" editable="top" colors="red:hidden_stock_available&lt;qty_substitute_item">
+                        	<tree string="Replacement Items" editable="top" colors="red:hidden_stock_available&lt;qty_substitute_item or qty_substitute_item&lt;=0.0">
                         		<field name="location_id_substitute_item"
                         			on_change="on_change_location_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
                         			context="{'product_id':product_id_substitute_item, 'prodlot_id':lot_id_substitute_item, 'specific_rules_tree_view':True, 'compute_child':False}" />

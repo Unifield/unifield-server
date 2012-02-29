@@ -151,9 +151,9 @@ class composition_kit(osv.osv):
                 result[obj.id].update({'composition_version': obj.composition_version_txt})
             elif obj.composition_type == 'real':
                 result[obj.id].update({'composition_version': obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''})
-            # name - ex: ITC - 01/01/2012
-            date = datetime.strptime(obj.composition_creation_date, db_date_format)
-            result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
+#            # name - ex: ITC - 01/01/2012
+#            date = datetime.strptime(obj.composition_creation_date, db_date_format)
+#            result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
             # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
             if obj.composition_expiry_check:
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
@@ -258,10 +258,8 @@ class composition_kit(osv.osv):
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
                 name = obj.composition_version + ' - ' + date.strftime(date_format)
-            elif obj.composition_expiry_check: # do we need to treat expiry and batch differently ?
-                name = obj.composition_lot_id.name
             else:
-                name = obj.composition_reference
+                name = obj.composition_combined_ref_lot
                 
             res += [(obj.id, name)]
         return res
@@ -331,8 +329,8 @@ class composition_kit(osv.osv):
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
                 'composition_expiry_check': fields.related('composition_product_id', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
                 # functions
-                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
-                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
+#                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
+#                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
                 'composition_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Version', multi='get_vals',
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Nb', multi='get_vals',
