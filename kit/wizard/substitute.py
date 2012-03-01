@@ -34,6 +34,39 @@ class substitute(osv.osv_memory):
     '''
     _name = "substitute"
     
+    def _validate_item_mirror(self, cr, uid, ids, context=None):
+        '''
+        validate the mirror objects for lot and expiry date
+        
+        - lot AND expiry date are mandatory for batch management products
+        - expiry date is mandatory for perishable products
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        # errors
+        errors = {'missing_lot': False,
+                  'missing_date': False,
+                  'no_lot_needed': False,
+                  'wrong_lot_type_need_standard': False,
+                  }
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.composition_item_ids:
+                # reset the integrity status
+                item.write({'integrity_status': 'empty'}, context=context)
+                # product management type
+                data = prod_obj.read(cr, uid, [item.product_id_substitute_item], ['batch_management', 'perishable'], context=context)[0]
+                management = data['batch_management']
+                perishable = data['perishable']
+                if management:
+                    # both fields are mandatory
+                    if not item.lot_mirror:
+                        pass
+                elif perishable:
+                    pass
+                else:
+                    pass
+        return
+    
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         substitute method, no check on products availability is performed
@@ -261,7 +294,6 @@ class substitute(osv.osv_memory):
         return False
     
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
-                 'integrity_status': 'empty',
                  'destination_location_id': _get_default_location,
                  }
 
@@ -445,6 +477,7 @@ class substitute_item(osv.osv_memory):
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'out',
                  'hidden_stock_available': 0.0,
+                 'integrity_status': 'empty',
                  }
     
 substitute_item()
@@ -468,7 +501,12 @@ class substitute_item_mirror(osv.osv_memory):
         result = {'value':{}}
         # reset expiry date or fill it
         if prodlot_id:
-            result['value'].update(exp_substitute_item=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+            prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
+                                                    ('type', '=', 'standard'),
+                                                    ('product_id', '=', product_id)], context=context)
+            if prod_ids:
+                prodlot_id = prod_ids[0]
+                result['value'].update(exp_substitute_item=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
         else:
             result['value'].update(exp_substitute_item=False)
         return result
@@ -479,31 +517,52 @@ class substitute_item_mirror(osv.osv_memory):
         
         only available for perishable products
         '''
+        # objects
         prodlot_obj = self.pool.get('stock.production.lot')
+        prod_obj = self.pool.get('product.product')
         result = {'value':{}}
         
-        if expiry_date and product_id:
-            prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
-                                                    ('type', '=', 'internal'),
-                                                    ('product_id', '=', product_id)], context=context)
-            if not prod_ids:
-                if type_check == 'in':
-                    # the corresponding production lot will be created afterwards
-                    result['warning'] = {'title': _('Info'),
-                                     'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
-                    # clear prod lot
-                    result['value'].update(lot_mirror=False)
-                else:
-                    # display warning
-                    result['warning'] = {'title': _('Error'),
-                                         'message': _('The selected Expiry Date does not exist in the system.')}
-                    # clear date
-                    result['value'].update(exp_substitute_item=False, lot_mirror=False)
-            else:
-                # return first prodlot
-                prodlot_id = prod_ids[0]
-                # the lot is not displayed here, internal useless internal name for the user, lot is read only anyway for perishable products
-                #result['value'].update(lot_mirror=prodlot_id)
+        if product_id:
+            if expiry_date:
+                # product management type
+                data = prod_obj.read(cr, uid, [product_id], ['batch_management', 'perishable'], context=context)[0]
+                management = data['batch_management']
+                perishable = data['perishable']
+                # if the product is batch management
+                if management and prodlot_id:
+                    # prodlot_id is here the name of the prodlot
+                    # we check if we have a production lot, if yes, we check if it exists (the name is unique for a given product)
+                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
+                                                            ('type', '=', 'standard'),
+                                                            ('product_id', '=', product_id)], context=context)
+                    # if it exists, we set the date
+                    if prod_ids:
+                        prodlot_id = prod_ids[0]
+                        result['value'].update(exp_substitute_item=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+                        
+                elif perishable:
+                    # if the product is perishable
+                    prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
+                                                            ('type', '=', 'internal'),
+                                                            ('product_id', '=', product_id)], context=context)
+                    if not prod_ids:
+                        if type_check == 'in':
+                            # the corresponding production lot will be created afterwards
+                            result['warning'] = {'title': _('Info'),
+                                             'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                            # clear prod lot
+                            result['value'].update(lot_mirror=False)
+                        else:
+                            # display warning
+                            result['warning'] = {'title': _('Error'),
+                                                 'message': _('The selected Expiry Date does not exist in the system.')}
+                            # clear date
+                            result['value'].update(exp_substitute_item=False, lot_mirror=False)
+                    else:
+                        # return first prodlot
+                        prodlot_id = prod_ids[0]
+                        # the lot is not displayed here, internal useless internal name for the user, lot is read only anyway for perishable products
+                        #result['value'].update(lot_mirror=prodlot_id)
         else:
             # clear expiry date, we clear production lot
             result['value'].update(lot_mirror=False,
