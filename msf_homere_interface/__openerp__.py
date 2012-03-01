@@ -27,10 +27,12 @@
     "description" : "Homere interface with OpenERP",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Human Resources",
-    "depends" : ["base", "hr", "analytic_distribution"],
+    "depends" : ["base", "account_override", "hr", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
         'hr_view.xml',
+        'hr_payroll_view.xml',
+        'payroll_demo.yml', # Demo Data for some tests
     ],
     "demo_xml" : [],
     "test": [],

@@ -39,6 +39,7 @@ class hr_employee(osv.osv):
     }
 
     _defaults = {
+        'cost_center_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1] or False,
         'employee_type': lambda *a: 'ex',
     }
 
