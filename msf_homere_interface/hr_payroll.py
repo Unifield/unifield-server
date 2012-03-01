@@ -31,6 +31,40 @@ class hr_payroll(osv.osv):
     _name = 'hr.payroll.msf'
     _description = 'Payroll'
 
+    def _get_analytic_state(self, cr, uid, ids, name, args, context={}):
+        """
+        Get state of distribution:
+         - if compatible with the line, then "valid"
+         - if no distribution on the line, then "none"
+         - all other case are "invalid"
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Search MSF Private Fund element, because it's valid with all accounts
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = 'invalid'
+            if line.cost_center_id and line.funding_pool_id:
+                if line.funding_pool_id.id == fp_id:
+                    res[line.id] = 'valid'
+                    continue
+                if line.account_id.id in [x.id for x in line.funding_pool_id.account_ids] and line.cost_center_id.id in [x.id for x in line.funding_pool_id.cost_center_ids]:
+                    res[line.id] = 'valid'
+                    continue
+            elif line.cost_center_id and not line.funding_pool_id:
+                res[line.id] = 'valid'
+                continue
+            else:
+                res[line.id] = 'none'
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True),
         'account_id': fields.many2one('account.account', string="Account", required=True),
@@ -48,6 +82,8 @@ class hr_payroll(osv.osv):
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
     }
 
     _order = 'employee_id, date desc'
