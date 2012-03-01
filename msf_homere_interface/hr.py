@@ -39,7 +39,7 @@ class hr_employee(osv.osv):
     }
 
     _defaults = {
-        'cost_center_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1] or False,
+        'cost_center_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False,
         'employee_type': lambda *a: 'ex',
     }
 
@@ -54,7 +54,7 @@ class hr_employee(osv.osv):
             form = etree.fromstring(view['arch'])
             data_obj = self.pool.get('ir.model.data')
             try:
-                oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+                oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
             except ValueError:
                 oc_id = 0
             # Change OC field
