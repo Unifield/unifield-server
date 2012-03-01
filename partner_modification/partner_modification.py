@@ -133,6 +133,9 @@ class res_partner(osv.osv):
                 'transport_2_lt': fields.integer('3rd Transport Lead Time'),
                 'transport_2': fields.selection(selection=TRANSPORT_TYPE, string='3nd Mode of Transport'),
                 'default_delay': fields.function(_calc_dellay, method=True, type='integer', string='Supplier Lead Time (computed)', multi="seller_delay"),
+                'po_by_project': fields.selection([('all', 'All requirements'), ('project', 'Requirements by Project')], string='PO Creation',
+                                          help='''This field allows users to choose if for this supplier, a Purchase Order should be 
+                                          generated for all requirements or one Purchase Order for each project's requirement.'''),
                 }
     
     _defaults = {'zone': 'national',
@@ -145,6 +148,7 @@ class res_partner(osv.osv):
                  'transport_1_lt': 0,
                  'transport_2': TRANSPORT_TYPE[0][0], # empty
                  'transport_2_lt': 0,
+                 'po_by_project': lambda *a: 'all',
                  }
 
 res_partner()
