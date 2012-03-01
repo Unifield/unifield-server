@@ -64,6 +64,7 @@
     supplier: true
     customer: false
     customer_lt: 1
+    po_by_project: project
 -
   Create an address for this first supplier
 -
@@ -80,6 +81,7 @@
     supplier: true
     customer: false
     customer_lt: 1
+    po_by_project: all
 -
   Create an address for this second supplier
 -
