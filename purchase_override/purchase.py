@@ -94,6 +94,12 @@ class purchase_order(osv.osv):
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True, 
                                               help="The address where the invoice will be sent."),
+        'invoice_method': fields.selection([('manual','Manual'),('order','From Order'),('picking','From Picking')], 'Invoicing Control', required=True, readonly=True,
+            help="From Order: a draft invoice will be pre-generated based on the purchase order. The accountant " \
+                "will just have to validate this invoice for control.\n" \
+                "From Picking: a draft invoice will be pre-generated based on validated receptions.\n" \
+                "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
+        ),
     }
     
     _defaults = {
@@ -102,7 +108,8 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
         'from_yml_test': lambda *a: False,
-        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice']
+        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
+        'invoice_method': lambda *a: 'picking',
     }
 
     def _check_user_company(self, cr, uid, company_id, context={}):
