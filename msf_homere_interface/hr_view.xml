@@ -69,5 +69,25 @@
         </field>
     </record>
 
+    <!--
+        Editable Employee Tree
+    -->
+    <record id="editable_view_employee_tree" model="ir.ui.view">
+        <field name="name">editable.view.employee.tree</field>
+        <field name="model">hr.employee</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Employees" editable="top">
+                <field name="name"/>
+                <field name="identification_id"/>
+                <field name="job_id"/>
+                <field name="cost_center_id"/>
+                <field name="funding_pool_id"/>
+                <field name="free1_id"/>
+                <field name="free2_id"/>
+            </tree>
+        </field>
+    </record>
+
     </data>
 </openerp>

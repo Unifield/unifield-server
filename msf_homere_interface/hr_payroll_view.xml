@@ -6,42 +6,42 @@
         Payroll Search
     -->
 
-    <record id="view_hr_payroll_msf_filter" model="ir.ui.view">
-        <field name="name">Payroll Entries</field>
-        <field name="model">hr.payroll.msf</field>
-        <field name="type">search</field>
-        <field name="arch" type="xml">
-            <search string="Search Journal Items">
-                <field name="employee_id" select="1"/>
-                <field name="account_id" select="1"/>
-            </search>
-        </field>
-    </record>
+        <record id="view_hr_payroll_msf_filter" model="ir.ui.view">
+            <field name="name">Payroll Entries</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Journal Items">
+                    <field name="employee_id" select="1"/>
+                    <field name="account_id" select="1"/>
+                </search>
+            </field>
+        </record>
 
     <!--
         Payroll Tree
     -->
-    <record id="view_hr_payroll_msf_tree" model="ir.ui.view">
-        <field name="name">hr.payroll.msf.tree</field>
-        <field name="model">hr.payroll.msf</field>
-        <field name="type">tree</field>
-        <field name="arch" type="xml">
-            <tree string="Payroll List" editable="bottom">
-                <field name="date"/>
-                <field name="period_id"/>
-                <field name="employee_id_number"/>
-                <field name="name"/>
-                <field name="ref"/>
-                <field name="account_id"/>
-                <field name="amount"/>
-                <field name="currency_id"/>
-                <field name="state"/>
-                <field name="employee_id" invisible="1"/>
-                <field name="partner_id" invisible="1"/>
-                <field name="journal_id" invisible="1"/>
-            </tree>
-        </field>
-    </record>
+        <record id="view_hr_payroll_msf_tree" model="ir.ui.view">
+            <field name="name">hr.payroll.msf.tree</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payroll List" editable="bottom">
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="employee_id_number"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="account_id"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="journal_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
 
     <!--
         Actions
@@ -56,10 +56,19 @@
             <field name="domain">[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]</field>
         </record>
 
+        <record id="action_employee_allocation_tree" model="ir.actions.act_window">
+            <field name="name">Employee Allocation</field>
+            <field name="res_model">hr.employee</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="editable_view_employee_tree"/>
+        </record>
+
     <!--
         Menu
     -->
         <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="13"/>
+        <menuitem string="Employee Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="3"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
 
     </data>
