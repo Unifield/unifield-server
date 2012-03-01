@@ -21,24 +21,6 @@
 #
 ##############################################################################
 
-{
-    "name" : "Homere Interface",
-    "version" : "0.1",
-    "description" : "Homere interface with OpenERP",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Human Resources",
-    "depends" : ["base", "account_override", "hr", "analytic_distribution"],
-    "init_xml" : [],
-    "update_xml" : [
-        'hr_view.xml',
-        'hr_payroll_view.xml',
-        'payroll_demo.yml', # Demo Data for some tests
-        'hr_payroll_wizard.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+import hr_payroll_analytic_reallocation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

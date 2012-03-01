@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Wizard form
+    -->
+
+    <record id="payroll_analytic_reallocation_wizard" model="ir.ui.view">
+        <field name="name">payroll.analytic.reallocation.wizard</field>
+        <field name="model">hr.payroll.analytic.reallocation</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Payroll Analytic Reallocation">
+                <field name="cost_center_id"/>
+                <field name="funding_pool_id"/>
+                <newline/>
+                <field name="free1_id"/>
+                <field name="free2_id"/>
+                <group colspan="6" col="4">
+                    <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <!--
+        Actions
+    -->
+
+    <!-- Mass reallocation wizard -->
+        <act_window id="action_payroll_analytic_reallocation"
+            name="Analytic reallocation"
+            res_model="hr.payroll.analytic.reallocation"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payroll_analytic_reallocation_wizard"/>
+
+    </data>
+</openerp>
