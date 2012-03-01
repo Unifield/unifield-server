@@ -123,7 +123,7 @@
 			id="menu_sourcing_line" parent="base.menu_sales" />
 			
 		<act_window name="Auto Pos creation"
-		    res_model="procurement.supply.compute.all"
+		    res_model="procurement.order.compute.all"
 		    src_model="sourcing.line"
 		    view_mode="form"
 		    target="new"
