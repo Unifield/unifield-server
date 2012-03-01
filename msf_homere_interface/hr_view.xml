@@ -2,6 +2,10 @@
 <openerp>
     <data>
 
+    <!--
+        Employee Form
+    -->
+
     <record id="inherit_view_employee_form" model="ir.ui.view">
         <field name="name">inherit.view.employee.form</field>
         <field name="model">hr.employee</field>
@@ -21,6 +25,46 @@
                     <field name="date_from"/>
                     <field name="employee_type"/>
                 </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!--
+        Employee Tree
+    -->
+
+    <!-- Change some elements:
+          * delete work phone column
+          * delete work e-mail column
+          * delete department column
+          * delete manager column (parent_id)
+          * add employee ID (identification_id) after description (name)
+          * add analytic distribution elements:
+            * cost center
+            * funding pool
+            * free 1
+            * free 2
+    -->
+    <record id="inherit_view_employee_tree" model="ir.ui.view">
+        <field name="name">inherit.view.employee.tree</field>
+        <field name="model">hr.employee</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <field name="work_phone" position="replace"/>
+                <field name="work_email" position="replace"/>
+                <field name="department_id" position="replace"/>
+                <field name="parent_id" position="replace"/>
+                <field name="name" position="after">
+                    <field name="identification_id"/>
+                </field>
+                <field name="job_id" position="after">
+                    <field name="cost_center_id"/>
+                    <field name="funding_pool_id"/>
+                    <field name="free1_id"/>
+                    <field name="free2_id"/>
+                </field>
             </data>
         </field>
     </record>
