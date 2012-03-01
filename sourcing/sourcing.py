@@ -807,15 +807,26 @@ class procurement_order(osv.osv):
         values = kwargs['values']
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
-
-        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
-                                               ('delivery_requested_date', '=', values.get('delivery_requested_date'))], context=context)
+        
+        purchase_domain = [('partner_id', '=', partner.id),
+                           ('state', '=', 'draft'),
+                           ('delivery_requested_date', '=', values.get('delivery_requested_date'))]
+        
+        if partner.po_by_project == 'project':
+            sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+            customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
+            values.update({'customer_id': customer_id})
+            purchase_domain.append(('customer_id', '=', customer_id))
+            
+        purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+            
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
             purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
             if not purchase.origin_tender_id or not purchase.origin_tender_id.sale_order_id or purchase.origin_tender_id.sale_order_id.name != procurement.origin:
-                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': '%s/%s' % (purchase.origin, procurement.origin)}, context=context)
+                origin = procurement.origin in purchase.origin and purchase.origin or '%s/%s' % (purchase.origin, procurement.origin)
+                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': origin}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
@@ -940,6 +951,10 @@ class purchase_order(osv.osv):
     '''
     _inherit = "purchase.order"
     _description = "Purchase Order"
+    
+    _columns = {
+        'customer_id': fields.many2one('res.partner', string='Customer', domain=[('customer', '=', True)]),
+    }
     
     def create(self, cr, uid, vals, context=None):
         '''
