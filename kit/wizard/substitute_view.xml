@@ -25,7 +25,12 @@
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
 			            		<field name="exp_substitute_item"
                 					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+                					attrs="{'required': [('hidden_perishable_mandatory', '=', True), ('hidden_batch_management_mandatory', '=', False)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
+                				<field name="type_check" invisible="True" />
+                				<field name="hidden_perishable_mandatory" invisible="True" />
+            					<field name="hidden_batch_management_mandatory" invisible="True" />
+            					<field name="hidden_stock_available" invisible="True" />
+            					<field name="integrity_status" invisible="True" />
                         	</tree>
                         </field>
                     </group>

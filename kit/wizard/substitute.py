@@ -80,57 +80,73 @@ class substitute(osv.osv_memory):
             # for each item to replace, we create a stock move from kitting to destination location
             for item in obj.composition_item_ids:
                 # add to "to delete" list
-                if item.id in items_to_delete:
+                if item.item_id_mirror in items_to_delete:
                     raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
-                items_to_delete.append(item.id)
+                items_to_delete.append(item.item_id_mirror)
                 # need to create a production lot if needed
                 prodlot_id = False
-                if item.item_product_id.batch_management:
+                if item.product_id_substitute_item.batch_management:
+                    # lot number must have been filled in
+                    if not item.lot_mirror or not item.exp_substitute_item:
+                        raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
                     # we search for existing standard lot, if does not exist, we create a new one
-                    prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.item_lot),
+                    prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
                                                            ('type', '=', 'standard'),
-                                                           ('product_id', '=', item.item_product_id.id)], context=context)
+                                                           ('product_id', '=', item.product_id_substitute_item.id)], context=context)
                     if prodlot_ids:
                         # we must check the expiry date match
                         data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name'], context=context)
                         lot_name = data[0]['name']
                         expired_date = data[0]['life_date']
-                        if expired_date != item.item_exp:
+                        if expired_date != item.exp_substitute_item:
                             # we display a log message - we do not raise an error because the kit is presently completed
                             # and cannot therefore be modified. So if we entered a date for a given batch number which
                             # was correct at the time of kit completion, but no more at time of substitution, we
                             # do not want to be blocked.
                             exp_obj = datetime.strptime(expired_date, db_date_format)
-                            exp_item = datetime.strptime(item.item_exp, db_date_format)
-                            lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.item_product_id.name,exp_obj.strftime(date_format),exp_item.strftime(date_format))))
-                            #raise osv.except_osv(_('Warning !'), _('Expiry Date of Kit item does not match expiry date of existing Batch Number - %s - %s.'%(expired_date,item.item_exp)))
+                            exp_item = datetime.strptime(item.exp_substitute_item, db_date_format)
+                            lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item.strftime(date_format))))
                         # select production lot
                         prodlot_id = prodlot_ids[0]
                     else:
-                        # either the batch does not exist in the system or no batch have been filled, we create a new production lot with specified name or default one
-                        name = item.item_lot or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
-                        lot_values = {'product_id': item.item_product_id.id,
-                                'life_date': item.item_exp or date,
-                                'name': name,
-                                'type': 'standard',
-                                }
+                        # the batch does not exist, we create a new one
+                        name = item.lot_mirror# or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
+                        lot_values = {'product_id': item.product_id_substitute_item.id,
+                                      'life_date': item.exp_substitute_item,
+                                      'name': name,
+                                      'type': 'standard',
+                                      }
                         prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
-                elif item.item_product_id.perishable:
+                elif item.product_id_substitute_item.perishable:
+                    # expiry date must have been filled in
+                    if not item.exp_substitute_item:
+                        raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
                     # we search for existing internal lot, if does not exist, we create a new one
-                    prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.item_exp),
+                    prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),
                                                            ('type', '=', 'internal'),
-                                                           ('product_id', '=', item.item_product_id.id)], context=context)
-                    raise osv.except_osv(_('Warning !'), _('Not Implemented'))
+                                                           ('product_id', '=', item.product_id_substitute_item.id)], context=context)
+                    if prodlot_ids:
+                        # select production lot
+                        prodlot_id = prodlot_ids[0]
+                    else:
+                        # no internal lot for the specified date, create a new one
+                        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
+                        lot_values = {'product_id': item.product_id_substitute_item.id,
+                                      'life_date': item.exp_substitute_item,
+                                      'name': name,
+                                      'type': 'internal',
+                                      }
+                        prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
                 # create corresponding stock move
-                move_values = {'name': item.item_product_id.name[:64],
+                move_values = {'name': item.product_id_substitute_item.name[:64],
                                'picking_id': pick_id,
-                               'product_id': item.item_product_id.id,
+                               'product_id': item.product_id_substitute_item.id,
                                'date': date,
                                'date_expected': date,
-                               'product_qty': item.item_qty,
-                               'product_uom': item.item_uom_id.id,
-                               'product_uos_qty': item.item_qty,
-                               'product_uos': item.item_uom_id.id,
+                               'product_qty': item.qty_substitute_item,
+                               'product_uom': item.uom_id_substitute_item.id,
+                               'product_uos_qty': item.qty_substitute_item,
+                               'product_uos': item.uom_id_substitute_item.id,
                                'product_packaging': False,
                                'address_id': False,
                                'location_id': kitting_id,
@@ -442,12 +458,66 @@ class substitute_item_mirror(osv.osv_memory):
     _name = 'substitute.item.mirror'
     _inherit = 'substitute.item'
     
+    def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+        '''
+        prod lot changes, update the expiry date
+        
+        only available for batch management products
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        # reset expiry date or fill it
+        if prodlot_id:
+            result['value'].update(exp_substitute_item=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+        else:
+            result['value'].update(exp_substitute_item=False)
+        return result
+    
+    def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, context=None):
+        '''
+        expiry date changes, find the corresponding internal prod lot
+        
+        only available for perishable products
+        '''
+        prodlot_obj = self.pool.get('stock.production.lot')
+        result = {'value':{}}
+        
+        if expiry_date and product_id:
+            prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', product_id)], context=context)
+            if not prod_ids:
+                if type_check == 'in':
+                    # the corresponding production lot will be created afterwards
+                    result['warning'] = {'title': _('Info'),
+                                     'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                    # clear prod lot
+                    result['value'].update(lot_mirror=False)
+                else:
+                    # display warning
+                    result['warning'] = {'title': _('Error'),
+                                         'message': _('The selected Expiry Date does not exist in the system.')}
+                    # clear date
+                    result['value'].update(exp_substitute_item=False, lot_mirror=False)
+            else:
+                # return first prodlot
+                prodlot_id = prod_ids[0]
+                # the lot is not displayed here, internal useless internal name for the user, lot is read only anyway for perishable products
+                #result['value'].update(lot_mirror=prodlot_id)
+        else:
+            # clear expiry date, we clear production lot
+            result['value'].update(lot_mirror=False,
+                                   exp_substitute_item=False,
+                                   )
+        return result
+    
     _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
                 'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
                 'lot_mirror': fields.char(string='Batch Nb', size=1024),
                 }
     
     _defaults = {'item_id_mirror': False,
+                 'type_check': 'in',
                  }
 
 substitute_item_mirror()
