@@ -53,11 +53,11 @@ class hr_employee(osv.osv):
         form = etree.fromstring(view['arch'])
         data_obj = self.pool.get('ir.model.data')
         try:
-            oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
+            oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
         except ValueError:
             oc_id = 0
         # Change OC field
-        fields = form.xpath('/' + 'view_type' + '//field[@name="cost_center_id"]')
+        fields = form.xpath('/' + view_type + '//field[@name="cost_center_id"]')
         for field in fields:
             field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
         # Change FP field
