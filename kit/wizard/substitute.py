@@ -34,52 +34,6 @@ class substitute(osv.osv_memory):
     '''
     _name = "substitute"
     
-    def default_get(self, cr, uid, fields, context=None):
-        """
-        Generate memory objects as mirror for kit items, which can be modified.
-        """
-        if context is None:
-            context = {}
-        
-        
-        kit_obj = self.pool.get('composition.kit')
-        res = super(substitute, self).default_get(cr, uid, fields, context=context)
-        kit_ids = context.get('active_ids', [])
-        if not kit_ids:
-            return res
-        
-        for obj in kit_obj.browse(cr, uid, kit_ids, context=context):
-            for item in obj.composition_item_ids:
-                
-        result = []
-        if step in ('create', 'validate', 'ppl1', 'returnproducts'):
-            # memory moves wizards
-            # data generated from stock.moves
-            for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-                result.extend(self.__create_partial_picking_memory(pick, context=context))
-        elif step in ('ppl2'):
-            # pack families wizard
-            # data generated from previous wizard data
-            for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-                result.extend(self.__create_pack_families_memory(pick, context=context))
-                
-        if 'product_moves_picking' in fields and step in ('create', 'validate'):
-            res.update({'product_moves_picking': result})
-            
-        if 'product_moves_ppl' in fields and step in ('ppl1'):
-            res.update({'product_moves_ppl': result})
-            
-        if 'product_moves_returnproducts' in fields and step in ('returnproducts'):
-            res.update({'product_moves_returnproducts': result})
-            
-        if 'product_moves_families' in fields and step in ('ppl2'):
-            res.update({'product_moves_families': result})
-            
-        if 'date' in fields:
-            res.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
-            
-        return res
-    
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         substitute method, no check on products availability is performed
@@ -126,6 +80,8 @@ class substitute(osv.osv_memory):
             # for each item to replace, we create a stock move from kitting to destination location
             for item in obj.composition_item_ids:
                 # add to "to delete" list
+                if item.id in items_to_delete:
+                    raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
                 items_to_delete.append(item.id)
                 # need to create a production lot if needed
                 prodlot_id = False
@@ -271,8 +227,9 @@ class substitute(osv.osv_memory):
         return True
         
     _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
+                'wizard_id': fields.integer(string='Wizard Id', readonly=True),
                 'destination_location_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'internal')], required=True),
-                'composition_item_ids': fields.many2many('composition.item', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
+                'composition_item_ids': fields.many2many('substitute.item.mirror', 'substitute_items_rel', 'wizard_id', 'item_id', string='Items to replace'),
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
                 }
     
@@ -477,11 +434,20 @@ class substitute_item(osv.osv_memory):
 substitute_item()
 
 
-class substitute_item_to_replace(osv.osv_memory):
+class substitute_item_mirror(osv.osv_memory):
     '''
     substitute items
+    memory trick to get modifiable mirror objects for kit item
     '''
-    _name = 'substitute.item.to.replace'
+    _name = 'substitute.item.mirror'
     _inherit = 'substitute.item'
+    
+    _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
+                'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
+                'lot_mirror': fields.char(string='Batch Nb', size=1024),
+                }
+    
+    _defaults = {'item_id_mirror': False,
+                 }
 
-substitute_item_to_replace()
+substitute_item_mirror()

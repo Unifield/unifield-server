@@ -113,6 +113,36 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
+    def _generate_item_mirror_objects(self, cr, uid, ids, wizard_data, context=None):
+        """
+        Generate memory objects as mirror for kit items, which can be modified (batch number policy needs modification,
+        we therefore cannot link items directly).
+        """
+        if context is None:
+            context = {}
+        # objects
+        mirror_obj = self.pool.get('substitute.item.mirror')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in obj.composition_item_ids:
+                # create a mirror object which can be later selected and modified in the many2many field
+                batch_management = item.item_product_id.batch_management
+                perishable = item.item_product_id.perishable
+                values = {'wizard_id': wizard_data['res_id'],
+                          'item_id_mirror': item.id,
+                          'kit_id_mirror': item.item_kit_id.id,
+                          'module_substitute_item': item.item_module,
+                          'product_id_substitute_item': item.item_product_id.id,
+                          'qty_substitute_item': item.item_qty,
+                          'uom_id_substitute_item': item.item_uom_id.id,
+                          'lot_mirror': item.item_lot,
+                          'exp_substitute_item': item.item_exp,
+                          'hidden_batch_management_mandatory': batch_management,
+                          'hidden_perishable_mandatory': perishable,
+                          }
+                mirror_obj.create(cr, uid, values, context=context)
+        return True
+    
     def substitute_items(self, cr, uid, ids, context=None):
         '''
         substitute lines from the composition kit with created new lines
@@ -126,7 +156,12 @@ class composition_kit(osv.osv):
         step = 'default'
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+        # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=context)
+        # generate mirrors item objects
+        self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=context)
+        return res
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
@@ -496,7 +531,7 @@ class composition_item(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             # name
-            result[obj.id].update({'name': obj.item_product_id.name})
+#            result[obj.id].update({'name': obj.item_product_id.name})
             # version
             result[obj.id].update({'item_kit_version': obj.item_kit_id.composition_version})
             # type
@@ -553,8 +588,8 @@ class composition_item(osv.osv):
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
                 # functions
-                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
-                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
+#                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
+#                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
                 'item_kit_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Version', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                                 'composition.kit': (_get_composition_item_ids, ['composition_version_txt', 'composition_version_id'], 10)}),
