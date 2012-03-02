@@ -122,5 +122,16 @@ class hr_payroll(osv.osv):
             view['arch'] = etree.tostring(form)
         return view
 
+    def create(self, cr, uid, vals, context={}):
+        """
+        Add 'salary' + period name for payroll entry description
+        """
+        if not context:
+            context = {}
+        if vals.get('period_id', False) and vals.get('account_id', False):
+            if self.pool.get('account.account').browse(cr, uid, vals.get('account_id')).user_type.code == 'expense':
+                vals.update({'name': 'Salary' + ' ' + self.pool.get('account.period').browse(cr, uid, vals.get('period_id')).name})
+        return super(osv.osv, self).create(cr, uid, vals, context)
+
 hr_payroll()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
