@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from lxml import etree
 
 class hr_payroll_analytic_reallocation(osv.osv_memory):
     _name = 'hr.payroll.analytic.reallocation'
@@ -34,6 +35,35 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change funding pool domain in order to include MSF Private fund
+        """
+        if not context:
+            context = {}
+        view = super(hr_payroll_analytic_reallocation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'form':
+            form = etree.fromstring(view['arch'])
+            data_obj = self.pool.get('ir.model.data')
+            try:
+                oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
+            except ValueError:
+                oc_id = 0
+            # Change OC field
+            fields = form.xpath('/form/field[@name="cost_center_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change FP field
+            try:
+                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                fp_id = 0
+            fp_fields = form.xpath('/form/field[@name="funding_pool_id"]')
+            for field in fp_fields:
+                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            view['arch'] = etree.tostring(form)
+        return view
 
     def button_validate(self, cr, uid ,ids, context={}):
         """
