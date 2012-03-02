@@ -163,6 +163,12 @@ class composition_kit(osv.osv):
         self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=context)
         return res
     
+    def do_substitute(self, cr, uid, ids, context=None):
+        '''
+        actual function called from wizard
+        '''
+        wizard_ids = context['wizard_ids']
+    
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
