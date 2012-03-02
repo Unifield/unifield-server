@@ -21,7 +21,7 @@
 		</record>
 		
 		<record id="action_procurement_batch_form" model="ir.actions.act_window">
-			<field name="name">Scheduler batch</field>
+			<field name="name">POs Creation (Batch configuration)</field>
 			<field name="res_model">procurement.batch.cron</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">form</field>
@@ -33,5 +33,6 @@
 				  action="action_procurement_batch_form"
 				  sequence="99"
 				  parent="procurement.menu_stock_sched" />
+				  
 	</data>
 </openerp>
