@@ -66,6 +66,7 @@
 						context="{'product_id': product_id, 'choose_supplier': True}"
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
 						on_change="onChangeSupplier(supplier)" />
+					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Confirm line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
 					<!-- does not work. openerp bug ? <button name="unconfirmLine" string="Unconfirm Line" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('state', '!=', 'confirmed'), ('sale_order_state', '!=', 'draft')]}" />--> 
@@ -104,6 +105,10 @@
 							domain="[]" context="{'group_by':'sale_order_state'}" />
 						<filter string="Product" icon="terp-product"
 							domain="[]" context="{'group_by':'product_id'}" />
+						<filter string="Supplier" icon="terp-personal+"
+							domain="[]" context="{'group_by':'supplier'}" />
+						<filter string="Customer" icon="terp-personal-"
+							domain="[]" context="{'group_by':'customer'}" />
 					</group>
 				</search>
 			</field>

@@ -199,6 +199,7 @@ class sourcing_line(osv.osv):
         'name': fields.char('Name', size=128),
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
+        'customer': fields.many2one('res.partner', 'Customer', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
 #        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False),
         'state': fields.function(_get_sourcing_vals, method=True, type='selection', selection=_SELECTION_SALE_ORDER_LINE_STATE, string='State', multi='get_vals_sourcing',
@@ -467,6 +468,8 @@ class sale_order(osv.osv):
                 # update the sourcing line
                 for sl in sol.sourcing_line_ids:
                     self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
+                    if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
+                        self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
         
         return super(sale_order, self).write(cr, uid, ids, vals, context)
         
@@ -579,7 +582,8 @@ class sale_order_line(osv.osv):
         'tax_id': [(6, 0, [])], 
         'type': 'make_to_stock', 
         'price_unit': 450.0, 
-        'address_allotment_id': False
+        'address_allotment_id': False,
+        'customer': partner_id,
         }
         '''
         if not context:
@@ -632,10 +636,12 @@ class sale_order_line(osv.osv):
         orderState = order.state
         orderPriority = order.priority
         orderCategory = order.categ
+        customer_id = order.partner_id.id
         
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
+                  'customer_id': customer_id,
                   'supplier': sellerId,
                   'po_cft': pocft,
                   'estimated_delivery_date': estDeliveryDate,
