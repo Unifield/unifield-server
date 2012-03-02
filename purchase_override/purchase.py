@@ -23,9 +23,9 @@ from osv import osv, fields
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
+from mx.DateTime import *
 
 from workflow.wkf_expr import _eval_expr
-from mx.DateTime import *
 import logging
 
 class purchase_order(osv.osv):
