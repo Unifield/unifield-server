@@ -135,7 +135,7 @@ class account_move_line_compute_currency(osv.osv):
             distrib_line_vals.update({'analytic_id': fp_id, 'cost_center_id': search_ids[0]})
             self.pool.get('funding.pool.distribution.line').create(cr, uid, distrib_line_vals, context=context)
             
-            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': current_date}, context=context)
+            move_id = self.pool.get('account.move').create(cr, uid,{'journal_id': journal_id, 'period_id': period_id, 'date': oldiest_date or current_date}, context=context)
             # Create default vals for the new two move lines
             vals = {
                 'move_id': move_id,
