@@ -30,6 +30,7 @@
     "depends" : ["base", "account_override", "hr", "analytic_distribution"],
     "init_xml" : [],
     "update_xml" : [
+        'security/ir.model.access.csv',
         'hr_view.xml',
         'hr_payroll_view.xml',
         'payroll_demo.yml', # Demo Data for some tests

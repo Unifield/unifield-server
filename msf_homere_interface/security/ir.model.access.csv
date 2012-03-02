@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_hr_payroll_msf","hr.payroll.msf","model_hr_payroll_msf",,1,1,1,1
+"access_hr_payroll_validation","hr.payroll.validation","model_hr_payroll_validation",,1,1,1,1
