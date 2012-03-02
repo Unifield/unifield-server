@@ -225,7 +225,7 @@
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='location_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'invisible': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']//field[@name='invoice_method']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
