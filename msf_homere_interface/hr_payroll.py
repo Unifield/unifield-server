@@ -26,6 +26,7 @@ from osv import fields
 from decimal_precision import get_precision
 from time import strftime
 from lxml import etree
+from tools.translate import _
 
 class hr_payroll(osv.osv):
     _name = 'hr.payroll.msf'
@@ -128,6 +129,8 @@ class hr_payroll(osv.osv):
         """
         if not context:
             context = {}
+        if not context.get('from', False) and not context.get('from') in ['yaml', 'csv_import']:
+            raise osv.except_osv(_('Error'), _('You are not able to create payroll entries.'))
         if vals.get('period_id', False) and vals.get('account_id', False):
             if self.pool.get('account.account').browse(cr, uid, vals.get('account_id')).user_type.code == 'expense':
                 vals.update({'name': 'Salary' + ' ' + self.pool.get('account.period').browse(cr, uid, vals.get('period_id')).name})
