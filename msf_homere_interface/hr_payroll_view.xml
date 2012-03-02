@@ -75,6 +75,10 @@
                 <tree string="Payroll List" editable="bottom" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" hide_delete_button="1" hide_new_button="1">
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="journal_id" invisible="1"/>
+                    <field name="partner_type"/>
                     <field name="employee_id_number"/>
                     <field name="name"/>
                     <field name="ref"/>
@@ -87,9 +91,6 @@
                     <field name="free1_id"/>
                     <field name="free2_id"/>
                     <field name="analytic_state"/>
-                    <field name="employee_id" invisible="1"/>
-                    <field name="partner_id" invisible="1"/>
-                    <field name="journal_id" invisible="1"/>
                 </tree>
             </field>
         </record>

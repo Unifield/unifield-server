@@ -66,6 +66,23 @@ class hr_payroll(osv.osv):
                 res[line.id] = 'none'
         return res
 
+    def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Get "Third Parties" following other fields
+        """
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.employee_id:
+                res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
+                res[line.id] = 'hr.employee,%s' % line.employee_id.id
+            elif line.journal_id:
+                res[line.id] = 'account.journal,%s' % line.transfer_journal_id.id
+            elif line.partner_id:
+                res[line.id] = 'res.partner,%s' % line.partner_id.id
+            else:
+                res[line.id] = False
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
@@ -85,12 +102,14 @@ class hr_payroll(osv.osv):
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
+        'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
+            selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')]),
     }
 
     _order = 'employee_id, date desc'
 
     _defaults = {
-        'date': lambda *a: strftime('%Y-%d-%m'),
+        'date': lambda *a: strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
 
