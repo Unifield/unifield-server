@@ -71,7 +71,7 @@ class hr_payroll(osv.osv):
         Get "Third Parties" following other fields
         """
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids):
             if line.employee_id:
                 res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
                 res[line.id] = 'hr.employee,%s' % line.employee_id.id
@@ -83,6 +83,17 @@ class hr_payroll(osv.osv):
                 res[line.id] = False
         return res
 
+    def _get_employee_identification_id(self, cr, uid, ids, field_name=None, arg=None, context={}):
+        """
+        Get employee identification number if employee id is given
+        """
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            res[line.id] = ''
+            if line.employee_id:
+                res[line.id] = line.employee_id.identification_id
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
@@ -90,7 +101,7 @@ class hr_payroll(osv.osv):
         'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
         'partner_id': fields.many2one('res.partner', string="Partner", readonly=True),
         'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
-        'employee_id_number': fields.char(string='Employee ID', size=255, readonly=True),
+        'employee_id_number': fields.function(_get_employee_identification_id, method=True, type='char', size=255, string='Employee ID', readonly=True),
         'name': fields.char(string='Description', size=255, readonly=True),
         'ref': fields.char(string='Reference', size=255, readonly=True),
         'amount': fields.float(string='Amount', digits_compute=get_precision('Account'), readonly=True),
