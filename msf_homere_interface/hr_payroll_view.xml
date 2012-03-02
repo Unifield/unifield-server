@@ -26,7 +26,7 @@
             <field name="model">hr.payroll.msf</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Payroll List" editable="bottom" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')">
+                <tree string="Payroll List" editable="bottom" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" hide_delete_button="1">
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="employee_id_number"/>
