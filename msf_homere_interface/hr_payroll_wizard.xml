@@ -25,6 +25,21 @@
         </field>
     </record>
 
+    <record id="payroll_validation_wizard" model="ir.ui.view">
+        <field name="name">payroll.validation.wizard</field>
+        <field name="model">hr.payroll.validation</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Payroll Validation">
+                <label string="This will be validate all Payroll entries and create accounting entries." colspan="4"/>
+                <group colspan="4" col="2">
+                    <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
     <!--
         Actions
     -->
@@ -39,6 +54,17 @@
             view_type="form"
             target="new"
             view_id="payroll_analytic_reallocation_wizard"/>
+
+    <!-- Payroll entries validation wizard -->
+        <act_window id="action_payroll_validation"
+            name="Validate"
+            res_model="hr.payroll.validation"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payroll_validation_wizard"/>
 
     </data>
 </openerp>

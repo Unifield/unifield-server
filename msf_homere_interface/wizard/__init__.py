@@ -22,5 +22,6 @@
 ##############################################################################
 
 import hr_payroll_analytic_reallocation
+import hr_payroll_validation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
