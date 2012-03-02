@@ -36,6 +36,7 @@
     "update_xml": [
         "sale_view.xml",
         "sale_workflow.xml",
+        "sale_sequence.xml",
         "report/sale_report_view.xml",
     ],
     "demo_xml": [
