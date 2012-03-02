@@ -122,7 +122,7 @@
     p3_s1_id = self.search(cr, uid, [('product_id', '=', ref('product3')), ('location_id', '=', ref('cycle_sloc1'))])
     assert p3_s1_id, "The scheduler hasn't created the procurement order for P3 in Sloc1"
     for proc in self.browse(cr, uid, p3_s1_id):
-      assert proc.product_qty == 1260.00, "Bad quantity on procurement order for P3 in Sloc1 %s != 1260"%(proc.product_qty, )
+      assert proc.product_qty == 1250.00, "Bad quantity on procurement order for P3 in Sloc1 %s != 1250"%(proc.product_qty, )
 -
   Check if the procurement for P3 in Sloc2 has good values
 -
@@ -131,17 +131,6 @@
     import datetime
     p3_s2_id = self.search(cr, uid, [('product_id', '=', ref('product3')), ('location_id', '=', ref('cycle_sloc2'))])
     assert p3_s2_id, "The scheduler hasn't created the procurement order for P3 in Sloc2"
-#    for proc in self.browse(cr, uid, p3_s2_id):
-#      if calendar.mdays[datetime.date.today().month] == 29 or (calendar.mdays[datetime.date.today().month] == 28 and datetime.date.today().year%4 == 0):
-#        assert proc.product_qty == 355.00, "Bad quantity on procurement order for P3 in Sloc2 %s!=355"%proc.product_qty
-#      elif calendar.mdays[datetime.date.today().month] == 28:
-#        assert proc.product_qty == 350.00, "Bad quantity on procurement order for P3 in Sloc2 %s!=350"%proc.product_qty
-#      elif calendar.mdays[datetime.date.today().month] == 30:
-#        assert proc.product_qty == 366.00, "Bad quantity on procurement order for P3 in Sloc2 %s!=366"%proc.product_qty
-#      elif calendar.mdays[datetime.date.today().month] == 31:
-#        assert proc.product_qty == 365.00, "Bad quantity on procurement order for P3 in Sloc2 %s!=365"%proc.product_qty
-#      else:
-#        assert proc.product_qty == 366.00, "Bad quantity on procurement order for P3 in SLoc2 %s!=366"%proc.product_qty
 -
   Check if the procurement for P4 in Sloc2 has good values
 -
