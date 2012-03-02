@@ -45,6 +45,7 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('seq_out_of_range', 'Selected Sequence is out of range'),
                               # substitute kit
                               ('not_available', 'Not Available'),
+                              ('must_be_greater_than_0', 'Quantity must be greater than 0.0.'),
                               ]
 
 import msf_outgoing

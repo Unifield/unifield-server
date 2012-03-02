@@ -22,13 +22,13 @@
 			            		<field name="uom_id_substitute_item" readonly="True" />
 			            		<field name="lot_mirror"
                						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
-                        			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
+                        			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 			            		<field name="exp_substitute_item"
                 					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_mirror,uom_id_substitute_item,context)"
                 					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
                 				<field name="type_check" invisible="True" />
-                				<field name="hidden_perishable_mandatory" invisible="True" />
-            					<field name="hidden_batch_management_mandatory" invisible="True" />
+                				<field name="hidden_batch_management_mandatory" string="Lot" />
+                				<field name="hidden_perishable_mandatory" string="Exp" />
             					<field name="hidden_stock_available" invisible="True" />
             					<field name="integrity_status" />
                         	</tree>
@@ -53,10 +53,10 @@
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                 				<field name="exp_substitute_item"
                 					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
-                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+                					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
                 				<field name="type_check" invisible="True" />
-                				<field name="hidden_perishable_mandatory" invisible="True" />
-            					<field name="hidden_batch_management_mandatory" invisible="True" />
+                				<field name="hidden_batch_management_mandatory" string="Lot" />
+                				<field name="hidden_perishable_mandatory" string="Exp" />
             					<field name="hidden_stock_available" invisible="True" />
             					<field name="integrity_status" />
                         	</tree>
@@ -84,6 +84,8 @@
             		<field name="uom_id_substitute_item" readonly="True" />
             		<field name="lot_mirror" />
             		<field name="exp_substitute_item" />
+            		<field name="hidden_batch_management_mandatory" />
+            		<field name="hidden_perishable_mandatory" />
             	</tree>
             </field>
 		</record>

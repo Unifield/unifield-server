@@ -494,15 +494,123 @@ class composition_item(osv.osv):
     '''
     _name = 'composition.item'
     
+    def create(self, cr, uid, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if 'item_product_id' in vals:
+            if vals['item_product_id']:
+                product_id = vals['item_product_id']
+                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+                management = data['batch_management']
+                perishable = data['perishable']
+                # if management and we have a lot_id, we fill the expiry date
+                if management and vals.get('item_lot'):
+                    prodlot_id = vals.get('item_lot')
+                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
+                                                            ('type', '=', 'standard'),
+                                                            ('product_id', '=', product_id)], context=context)
+                    # if it exists, we set the date
+                    if prod_ids:
+                        prodlot_id = prod_ids[0]
+                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
+                        expired_date = data[0]['life_date']
+                        vals.update({'item_exp': expired_date})
+                elif perishable:
+                    # nothing special here
+                    pass
+                else:
+                    # not perishable nor management, exp and lot are False
+                    vals.update(item_lot=False, item_exp=False)
+            else:
+                # product is False, exp and lot are set to False
+                vals.update(item_lot=False, item_exp=False)
+        return super(composition_item, self).create(cr, uid, vals, context=context)
+        
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        if 'item_product_id' in vals:
+            if vals['item_product_id']:
+                product_id = vals['item_product_id']
+                data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+                management = data['batch_management']
+                perishable = data['perishable']
+                # if management and we have a lot_id, we fill the expiry date
+                if management and vals.get('item_lot'):
+                    prodlot_id = vals.get('item_lot')
+                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
+                                                            ('type', '=', 'standard'),
+                                                            ('product_id', '=', product_id)], context=context)
+                    # if it exists, we set the date
+                    if prod_ids:
+                        prodlot_id = prod_ids[0]
+                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
+                        expired_date = data[0]['life_date']
+                        vals.update({'item_exp': expired_date})
+                elif perishable:
+                    # nothing special here
+                    pass
+                else:
+                    # not perishable nor management, exp and lot are False
+                    vals.update(item_lot=False, item_exp=False)
+            else:
+                # product is False, exp and lot are set to False
+                vals.update(item_lot=False, item_exp=False)
+        return super(composition_item, self).write(cr, uid, ids, vals, context=context)
+    
     def on_product_change(self, cr, uid, id, product_id, context=None):
         '''
         product is changed, we update the UoM
         '''
+        # objects
         prod_obj = self.pool.get('product.product')
-        result = {'value': {'item_uom_id': False, 'item_qty': 0.0}}
+        result = {'value': {'item_uom_id': False,
+                            'item_qty': 0.0,
+                            'hidden_perishable_mandatory': False,
+                            'hidden_batch_management_mandatory': False,
+                            'item_exp': False,
+                            'item_lot': False,
+                            }}
         if product_id:
-            result['value']['item_uom_id'] = prod_obj.browse(cr, uid, product_id, context=context).uom_po_id.id
+            product = prod_obj.browse(cr, uid, product_id, context=context)
+            result['value']['item_uom_id'] = product.uom_po_id.id
+            result['value']['hidden_perishable_mandatory'] = product.perishable
+            result['value']['hidden_batch_management_mandatory'] = product.batch_management
             
+        return result
+    
+    def on_lot_change(self, cr, uid, id, product_id, prodlot_id, context=None):
+        '''
+        if lot exists in the system the date is filled in
+        
+        prodlot_id is the NAME of the production lot
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        # result
+        result = {'value': {}}
+        if product_id:
+            data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
+            management = data['batch_management']
+            perishable = data['perishable']
+            if management and prodlot_id:
+                prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
+                                                        ('type', '=', 'standard'),
+                                                        ('product_id', '=', product_id)], context=context)
+                # if it exists, we set the date
+                if prod_ids:
+                    prodlot_id = prod_ids[0]
+                    result['value'].update(item_exp=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+                    
         return result
     
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -544,6 +652,10 @@ class composition_item(osv.osv):
             result[obj.id].update({'item_kit_type': obj.item_kit_id.composition_type})
             # state
             result[obj.id].update({'state': obj.item_kit_id.state})
+            # batch management
+            result[obj.id].update({'hidden_batch_management_mandatory': obj.item_product_id.batch_management})
+            # perishable
+            result[obj.id].update({'hidden_perishable_mandatory': obj.item_product_id.perishable})
         return result
     
     def name_get(self, cr, uid, ids, context=None):
@@ -605,7 +717,13 @@ class composition_item(osv.osv):
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_STATE, size=1024, string='State', readonly=True, multi='get_vals',
                                 store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                         'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
+                'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
+                'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Lot', multi='get_vals', store=False, readonly=True),
                 }
+    
+    _defaults = {'hidden_batch_management_mandatory': False,
+                 'hidden_perishable_mandatory': False,
+                 }
     
     
 composition_item()
