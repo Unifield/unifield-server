@@ -40,7 +40,7 @@ class hr_payroll_validation(osv.osv):
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
         for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
             if line.account_id and line.account_id.user_type.code == 'expense' and line.analytic_state != 'valid':
-                raise osv.except_osv(_('Warning'), _('Some lines have no analytic distribution!'))
+                raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
         return res
 
     def button_validate(self, cr, uid, ids, context={}):
