@@ -197,9 +197,6 @@
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="readonly">True</attribute>
-                    </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
                     </xpath>
