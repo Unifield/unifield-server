@@ -66,15 +66,15 @@ class hr_payroll(osv.osv):
         return res
 
     _columns = {
-        'date': fields.date(string='Date', required=True),
-        'account_id': fields.many2one('account.account', string="Account", required=True),
-        'period_id': fields.many2one('account.period', string="Period", required=True),
-        'employee_id': fields.many2one('hr.employee', string="Employee"),
-        'partner_id': fields.many2one('res.partner', string="Partner"),
-        'journal_id': fields.many2one('account.journal', string="Journal"),
+        'date': fields.date(string='Date', required=True, readonly=True),
+        'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
+        'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
+        'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
+        'partner_id': fields.many2one('res.partner', string="Partner", readonly=True),
+        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
         'employee_id_number': fields.char(string='Employee ID', size=255, readonly=True),
-        'name': fields.char(string='Description', size=255),
-        'ref': fields.char(string='Reference', size=255),
+        'name': fields.char(string='Description', size=255, readonly=True),
+        'ref': fields.char(string='Reference', size=255, readonly=True),
         'amount': fields.float(string='Amount', digits_compute=get_precision('Account'), readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('valid', 'Validated')], string="State", required=True, readonly=True),
