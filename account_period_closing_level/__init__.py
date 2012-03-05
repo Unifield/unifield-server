@@ -20,8 +20,8 @@
 ##############################################################################
 
 import account
-import account_period_closing_level
-import account_fiscalyear_closing_level
+import account_period
+import account_fiscalyear
 import account_journal_period
 import wizard
 

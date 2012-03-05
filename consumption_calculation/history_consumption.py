@@ -282,7 +282,8 @@ class product_product(osv.osv):
         '''
         Set value for each month
         '''
-
+        if context is None:
+            context = {}
         if context.get('history_cons', False):
             res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 

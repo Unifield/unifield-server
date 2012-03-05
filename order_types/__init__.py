@@ -24,8 +24,9 @@ ORDER_PRIORITY = [('emergency', 'Emergency'),
                   ('priority', 'Priority'),]
 
 ORDER_CATEGORY = [('medical', 'Medical'), 
-                  ('log', 'Logistic'), 
-                  ('service', 'Service'), 
+                  ('log', 'Logistic'),
+                  ('service', 'Service'),
+                  ('transport', 'Transport'),
                   ('other', 'Other')]
 
 import stock

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="0">
+
+        <!-- INCOTERM -->
+        <delete model="stock.incoterms" id="stock.incoterm_FCA" />
+        <delete model="stock.incoterms" id="stock.incoterm_DAS" />
+        <delete model="stock.incoterms" id="stock.incoterm_DAF" />
+        <delete model="stock.incoterms" id="stock.incoterm_FAS" />
+        <delete model="stock.incoterms" id="stock.incoterm_DES" />
+        <delete model="stock.incoterms" id="stock.incoterm_DEQ" />
+
+        <record id="stock.incoterm_EXW" model="stock.incoterms">
+          <field name="name">Ex Works (named place of delivery)</field>
+          <field name="code">EXW</field>
+        </record>
+
+        <record id="stock.incoterm_FCA" model="stock.incoterms">
+          <field name="name">Free Carrier (named place of delivery)</field>
+          <field name="code">FCA</field>
+        </record>
+
+        <record id="stock.incoterm_CPT" model="stock.incoterms">
+          <field name="name">Carriage Paid To (named place of destination)</field>
+          <field name="code">CPT</field>
+        </record>
+
+        <record id="stock.incoterm_CIP" model="stock.incoterms">
+          <field name="name">Carriage and Insurance Paid to (named place of destination)</field>
+          <field name="code">CIP</field>
+        </record>
+
+        <record id="stock.incoterm_DAT" model="stock.incoterms">
+          <field name="name">Delivered at Terminal (named terminal at port or place of destination)</field>
+          <field name="code">DAT</field>
+        </record>
+
+        <record id="stock.incoterm_DAP" model="stock.incoterms">
+          <field name="name">Delivered at Place (named place of destination)</field>
+          <field name="code">DAP</field>
+        </record>
+
+        <record id="stock.incoterm_DDU" model="stock.incoterms">
+          <field name="name">Delivered Duty Paid (named place of destination)</field>
+          <field name="code">DDP</field>
+        </record>
+
+        <record id="stock.incoterm_FOB" model="stock.incoterms">
+          <field name="name">Free On Board (named place of destination)</field>
+          <field name="code">FOB</field>
+        </record>
+
+        <record id="stock.incoterm_CFR" model="stock.incoterms">
+          <field name="name">Cost And Freight (named place of destination)</field>
+          <field name="code">CFR</field>
+        </record>
+
+        <record id="stock.incoterm_CIF" model="stock.incoterms">
+          <field name="name">Cost, Insurance and Freight (named place of destination)</field>
+          <field name="code">CIF</field>
+        </record>
+
+    </data>
+</openerp>

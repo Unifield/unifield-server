@@ -30,7 +30,7 @@ class cashbox_write_off(osv.osv_memory):
     _name = 'cashbox.write.off'
 
     _columns = {
-        'choice' : fields.selection( [('writeoff', 'Accept write-off and close cashbox'), ('reopen', 'Re-open CashBox')], \
+        'choice' : fields.selection( [('writeoff', 'Accept write-off and close register'), ('reopen', 'Re-open Register')], \
             string="Decision about CashBox", required=True),
         'account_id': fields.many2one('account.account', string="Write-off Account"),
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
@@ -63,26 +63,7 @@ class cashbox_write_off(osv.osv_memory):
             cashbox_id = context.get('active_id')
             cashbox = self.pool.get('account.bank.statement').browse(cr, uid, cashbox_id)
             if cashbox.state not in ['partial_close', 'confirm']:
-                # Retrieve view id
-                irmd_obj = self.pool.get('ir.model.data')
-                view_ids = irmd_obj.search(cr, uid, [('name', '=', 'wizard_write_off_form1'), ('model', '=', 'ir.ui.view')])
-                # Prepare element that permit to display the view
-                if view_ids:
-                    view = irmd_obj.read(cr, uid, view_ids[0])
-                    view_id = (view.get('res_id'), view.get('name'))
-                    res.update({
-                        'name': u'wizard.write.off.form1', 
-                        'view_id': view_id, 
-                        'fields': {},
-                        'model': 'cashbox.write.off', 
-                        'arch': """
-                            <form string="Write-off - Error">
-                                <label string="Please use 'Close CashBox' button before." />
-                                <newline />
-                                <button string='Close' special='cancel' icon='gtk-cancel' />
-                            </form>
-                        """, 
-                    })
+                raise osv.except_osv(_('Warning'), _("Please use 'Close CashBox' button before."))
         return res
 
     def action_confirm_choice(self, cr, uid, ids, context={}):
@@ -104,6 +85,8 @@ class cashbox_write_off(osv.osv_memory):
             # look at user choice
             choice = self.browse(cr,uid,ids)[0].choice
             if choice == 'reopen':
+                if cstate not in ['partial_close']:
+                    raise osv.except_osv(_('Warning'), _('You cannot re-open a Closed Register.'))
                 # re-open case
                 cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': id}

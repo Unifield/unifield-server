@@ -146,14 +146,14 @@ class expiry_quantity_report_line(osv.osv_memory):
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'product_code': fields.related('product_id', 'default_code', string='Reference', type='char'),
+        'product_code': fields.related('product_id', 'default_code', string='Ref.', type='char'),
         'product_name': fields.related('product_id', 'name', string='Name', type='char'),
         'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
-        'real_stock': fields.float(digits=(16, 2), string='Total product real stock in location'),
-        'expired_qty': fields.float(digits=(16, 2), string='Batch expired quantity in location'),
-        'batch_number': fields.many2one('production.lot', string='Batch number'),
-        'expiry_date': fields.date(string='Expiry date'),
-        'location_id': fields.many2one('stock.location', string='Location'),
+        'real_stock': fields.float(digits=(16, 2), string='Real stock'),
+        'expired_qty': fields.float(digits=(16, 2), string='Batch exp.'),
+        'batch_number': fields.many2one('production.lot', string='Batch'),
+        'expiry_date': fields.date(string='Exp. date'),
+        'location_id': fields.many2one('stock.location', string='Loc.'),
     }
     
 expiry_quantity_report_line()
@@ -223,7 +223,6 @@ class product_likely_expire_report(osv.osv_memory):
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
         
         return res
-        
             
     def process_lines(self, cr, uid, ids, context={}):
         '''
@@ -322,7 +321,8 @@ class product_likely_expire_report(osv.osv_memory):
                 start_month_flag = True
                 last_expiry_date = False
                 for month in dates:
-                    if not last_expiry_date: last_expiry_date = month
+                    # Remove one day to include the expiry date as possible consumable day
+                    if not last_expiry_date: last_expiry_date = month - RelativeDateTime(days=1)
                     
                     item_id = item_obj.create(cr, uid, {'name': month.strftime('%m/%y'), 
                                                         'line_id': products[lot.product_id.id]['line_id']}, context=context)
@@ -335,12 +335,16 @@ class product_likely_expire_report(osv.osv_memory):
                              ('stock_available', '>', 0.00),
                              ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
 
-                    # If we are not in the first month of the period, displayed all products already expired
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
                         item_obj.write(cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
                     else:
                         item_obj.write(cr, uid, [item_id], {'period_start': report.date_from}, context=context)
+                        # Uncomment the first line if you want products already expired in the first month
+                        #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
+                        # Comment line if you want all products already expired
+                        domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        
 
                     # Remove the token after the first month processing
                     start_month_flag = False
@@ -547,7 +551,7 @@ class product_likely_expire_report_item_line(osv.osv_memory):
     
     _columns = {
             'item_id': fields.many2one('product.likely.expire.report.item', strig='Item', ondelete='cascade'),
-            'lot_id': fields.many2one('stock.production.lot', string='Lot'),
+            'lot_id': fields.many2one('stock.production.lot', string='Batch number'),
             'location_id': fields.many2one('stock.location', string='Location'),
             'available_qty': fields.float(digits=(16,2), string='Available Qty.'),
             'expired_qty': fields.float(digits=(16,2), string='Expired Qty.'),
@@ -594,17 +598,21 @@ class product_product(osv.osv):
         # Get all lots for the product product_id
         lot_ids = lot_obj.search(cr, uid, [('product_id', '=', product_id), ('stock_available', '>', 0.00), ('id', 'in', lots)], \
                                 order='life_date', context=context)
+
+
         
         # Sum of months before expiry
         sum_ni = 0.00      
         expired_qty = 0.00
         last_date = now()
-        last_qty = 0.00
+        last_qty = False
         
         for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
             life_date = strptime(lot.life_date, '%Y-%m-%d')
             rel_time = RelativeDateDiff(life_date, now())
             ni = round((rel_time.months*30 + rel_time.days)/30.0, 2)
+            if last_qty == False:
+                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
             if last_date > life_date:
                 expired_qty = lot.stock_available                
             elif ni - sum_ni > 0.00:

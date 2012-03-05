@@ -25,6 +25,8 @@ import logging
 from os import path
 import tools
 
+from tools.translate import _
+
 class account_journal(osv.osv):
     _inherit = "account.journal"
 
@@ -52,23 +54,25 @@ class account_journal(osv.osv):
 
 
     def get_journal_type(self, cursor, user_id, context=None):
-        return [('bank', 'Bank'), \
-                ('cash','Cash'), \
-                ('purchase', 'Purchase'), \
-                ('correction','Correction'), \
-                ('cheque', 'Cheque'), \
-                ('hq', 'HQ'), \
-                ('hr', 'HR'), \
-                ('accrual', 'Accrual'), \
-                ('stock', 'Stock'), \
-                ('depreciation', 'Depreciation'), \
+        return [('bank', 'Bank'),
+                ('cash','Cash'),
+                ('purchase', 'Purchase'),
+                ('correction','Correction'),
+                ('cheque', 'Cheque'),
+                ('hq', 'HQ'),
+                ('hr', 'HR'),
+                ('accrual', 'Accrual'),
+                ('stock', 'Stock'),
+                ('depreciation', 'Depreciation'), 
                 # Old journal types: not used, but kept to
                 # not break OpenERP's demo/install data
-                ('sale', 'Sale'), \
-                ('sale_refund','Sale Refund'), \
-                ('purchase_refund','Purchase Refund'), \
-                ('general', 'General'), \
-                ('situation', 'Opening/Closing Situation')]
+                ('sale', 'Sale'), 
+                ('sale_refund','Sale Refund'), 
+                ('purchase_refund','Purchase Refund'), 
+                ('general', 'General'), 
+                ('situation', 'Opening/Closing Situation'),
+                ('cur_adj', 'Currency Adjustement'),
+        ]
     
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True),
@@ -101,10 +105,10 @@ class account_journal(osv.osv):
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
         analytic_journal_obj = self.pool.get('account.analytic.journal')
-        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
+#        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
         value =  {'value': {}, 'domain': {}}
-        if type in ('cash', 'bank', 'cheque'):
+        if type in ('cash', 'bank', 'cheque', 'cur_adj'):
             default_dom += [('code', '=like', '5%' )]
         value['domain']['default_debit_account_id'] = default_dom
         value['domain']['default_crebit_account_id'] = default_dom
@@ -119,7 +123,6 @@ class account_journal(osv.osv):
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK')], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         return value
-
 
     def create(self, cr, uid, vals, context=None):
         
@@ -159,6 +162,11 @@ class account_journal(osv.osv):
         # create journal
         journal_obj = super(account_journal, self).create(cr, uid, vals, context)
         
+        # Some verification for cash, bank, cheque and cur_adj type
+        if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
+            if not vals.get('default_debit_account_id'):
+                raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
+        
         # if the journal can be linked to a register, the register is also created
         if vals['type'] in ('cash','bank','cheque'):
             # 'from_journal_creation' in context permits to pass register creation that have a
@@ -170,9 +178,7 @@ class account_journal(osv.osv):
                                   'period_id': self.get_current_period(cr, uid, context),
                                   'currency': vals.get('currency')}, \
                                   context=context)
-                
         return journal_obj
-    
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

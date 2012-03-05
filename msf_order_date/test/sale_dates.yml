@@ -69,7 +69,7 @@
     import time
     from datetime import datetime
     from dateutil.relativedelta import relativedelta
-    res = self.onchange_partner_id(cr, uid, [ref('so1')], ref('supplier3'))
+    res = self.onchange_partner_id(cr, uid, [ref('so1')], ref('supplier3'), '2007-12-01', context=context)
     req_date = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=30)).strftime('%Y-%m-%d')
     # See UF-215
     #assert res['value']['delivery_requested_date'] == req_date, "Error on partner selection for the Delivery Requested Date"
@@ -88,7 +88,7 @@
       self.write(cr, uid, ref('so1'), {'delivery_requested_date': '2007-01-01'})
       #assert False, "Error on writing Delivery Requested Date in past" 
     except osv.except_osv, e:
-        res = self.requested_date_change(cr, uid, [ref('so1')], '2007-01-01', two_days, time.strftime('%Y-%m-%d'))
+        res = self.onchange_requested_date(cr, uid, [ref('so1')], ref('supplier3'), '2007-01-01', '2007-01-01', 2, context=context)
         assert res.get('warning', False), "Error on selecting Delivery Requested Date in past" 
 -
   Overwrite the Delivery Requested Date with a date in future ( < today + 24 months)
@@ -99,7 +99,7 @@
     from datetime import datetime
     from dateutil.relativedelta import relativedelta
     two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
-    res = self.requested_date_change(cr, uid, [ref('so1')], two_days, two_days, time.strftime('%Y-%m-%d'))
+    res = self.onchange_requested_date(cr, uid, [ref('so1')], ref('supplier3'), '2007-01-01', two_days, 2, context=context)
     assert not res.get('warning', False), "Error on selecting Delivery Requested Date in future ( < today + 24 months)"
     try:
       self.write(cr, uid, ref('so1'), {'delivery_requested_date': two_days})
@@ -120,7 +120,7 @@
       self.write(cr, uid, ref('so1'), {'delivery_requested_date': three_years})
       #assert False, "Error on writing Delivery Requested Date in future ( > today + 24 months)" 
     except osv.except_osv, e:
-        res = self.requested_date_change(cr, uid, [ref('so1')], three_years, two_days, time.strftime('%Y-%m-%d'))
+        res = self.onchange_requested_date(cr, uid, [ref('so1')], ref('supplier3'), '2007-01-01', three_years, 2, context=context)
         assert res.get('warning', False), "Error on selecting Delivery Requested Date in future ( > today + 24 months)"
 -
   Overwrite the Delivery Confirmed Date with a date in past
@@ -135,7 +135,7 @@
       self.write(cr, uid, ref('so1'), {'delivery_confirmed_date': '2007-01-01'})
       #assert False, "Error on writing Delivery Confirmed Date in past" 
     except osv.except_osv, e:
-        res = self.requested_date_change(cr, uid, [ref('so1')], two_days, '2007-01-01', time.strftime('%Y-%m-%d'))
+        res = self.onchange_requested_date(cr, uid, [ref('so1')], ref('supplier3'), '2007-01-01', two_days, 3, context=context)
 #        assert res.get('warning', False), "Error on selecting Delivery Confirmed Date in past" 
 -
   Overwrite the Delivery Confirmed Date with a date in future
@@ -147,7 +147,7 @@
     from dateutil.relativedelta import relativedelta
     two_days = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(days=2)).strftime('%Y-%m-%d')
     three_years = (datetime.strptime(time.strftime('%Y-%m-%d'), '%Y-%m-%d') + relativedelta(years=3)).strftime('%Y-%m-%d')
-    res = self.requested_date_change(cr, uid, [ref('so1')], two_days, three_years, time.strftime('%Y-%m-%d'))
+    res = self.onchange_requested_date(cr, uid, [ref('so1')], ref('supplier3'), '2007-01-01', two_days, 3, context=context)
     assert not res.get('warning', False), "Error on selecting Delivery Confirmed Date in future"
     try:
       self.write(cr, uid, ref('so1'), {'delivery_confirmed_date': three_years})
@@ -172,7 +172,7 @@
       self.write(cr, uid, ref('so1'), {'ready_to_ship_date': '2007-01-01'})
       #assert False, "Error on writing Ready To Ship Date in past"
     except osv.except_osv, e:
-      res = self.onchange_transport_leadtime(cr, uid, [ref('so1')], two_days, '30')
+      res = self.onchange_transport_lt(cr, uid, [ref('so1')], two_days, 3, context=context)
       assert res.get('value', False) and res['value'].get('ready_to_ship_date', False) == ship_date, "Wrong value for Ready To Ship Date when select Est. transport Lead Time"
       try:
         self.write(cr, uid, ref('so1'), {'ready_to_ship_date': two_days})

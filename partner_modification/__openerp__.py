@@ -23,9 +23,10 @@
 {
     "name" : "Partner Modification",
     "version" : "0.1",
-    "author" : "MSF pam",
+    "author" : "MSF, TeMPO Consulting",
+    "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase"],
+    "depends" : ["sale", "purchase", "msf_partner"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
@@ -33,7 +34,6 @@
     """,
     'test': ['test/partner_modification.yml'],
     'update_xml': [
-        'security/ir.model.access.csv',
         'partner_modification_view.xml',
     ],
     'installable': True,

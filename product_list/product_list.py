@@ -55,8 +55,11 @@ class product_list(osv.osv):
         '''
         if not context:
             context = {}
+
+        name = self.browse(cr, uid, id, context=context).name + ' (copy)'
             
         return super(product_list, self).copy(cr, uid, id, {'last_update_date': False,
+                                                            'name': name,
                                                             'reviewer_id': False}, context=context)
     
     _columns = {
@@ -82,6 +85,10 @@ class product_list(osv.osv):
         'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
+    _sql_constraints = [
+        ('name_uniq', 'unique (name)', 'A list or sublist with the same name already exists in the system!')
+    ]
+
     def change_product_line(self, cr, uid, ids, context={}):
         '''
         Refresh the old product list
@@ -95,7 +102,29 @@ class product_list(osv.osv):
             res.update({'old_product_ids': old_products})
 
         return {'value': res}
-    
+
+    def call_add_products(self, cr, uid, ids, context={}):
+        '''
+        Call the add multiple products wizard
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for list in self.browse(cr, uid, ids, context=context):
+            wiz_id = self.pool.get('product.list.add.products').create(cr, uid, {'list_id': list.id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.list.add.products',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
+
+
 product_list()
 
 

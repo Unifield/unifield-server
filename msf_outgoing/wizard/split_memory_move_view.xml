@@ -7,7 +7,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Split Memory Move">
-                <separator string="Quantity to leave in the selected move" colspan="4"/>
+                <separator string="Quantity for the new move" colspan="4"/>
                 <field name="quantity"/>
                 <button name="cancel" string="_Cancel"
                 	type="object" icon='gtk-cancel' />

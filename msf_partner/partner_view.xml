@@ -53,7 +53,9 @@
                         <filter string="Internal" name="internal" icon="gtk-leave-fullscreen" domain="[('partner_type','=','internal')]" help="Internal Partners"/>
                         <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
                         <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
+                        <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
                         <separator orientation="vertical" />
+                        <newline />
                     </xpath>
                 </data>
             </field>

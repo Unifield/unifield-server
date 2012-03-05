@@ -48,8 +48,8 @@
             <field name="inherit_id" ref="stock.view_move_form" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='tracking_id']" position="before">
-        	    	<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
-                    <field name="comment" />
+        	    	<field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
+                    <field name="comment" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                 </xpath>
             </field>
         </record>
@@ -62,7 +62,7 @@
             <field name="arch" type="xml">
             	<data>
                 	<xpath expr="/form//field[@name='tracking_id']" position="before">
-                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
+                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
                     </xpath>
                 </data>
             </field>
@@ -161,6 +161,10 @@
 				<xpath expr="/tree/field[@name='product_uom']" position="after">
 					<field name="reason_type_id" />
 				</xpath>
+				
+				<button name="action_done" position="attributes">
+           			<attribute name="invisible">1</attribute>
+           		</button>
 			</data>
 		</field>
 	</record>

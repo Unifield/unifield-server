@@ -9,13 +9,13 @@
             <field name="arch" type="xml">
                 <form string="Real consumption reporting">
                     <separator colspan="4" string="General information" />
-		    <field name="name" readonly="1" />
+                    <field name="name" readonly="1" />
                     <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="cons_location_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-		    <group colspan="2" col="2">
-		    <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                    <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
-		    </group>
+                    <field name="cons_location_id" attrs="{'readonly': [('created_ok', '=', True)]}" context="{'no3buttons': True}"/>
+                    <group colspan="2" col="2">
+                        <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
+                        <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
+                    </group>
                     <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <button name="export_rac" colspan="2" string="Export lines" icon="terp-mail-forward" type="object" />
                     <separator colspan="4" string="Period of consumption" />
@@ -23,14 +23,40 @@
                     <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <separator colspan="4" string="Product filters" />
                     <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="nomen_id" on_change="nomen_change(nomen_id)" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+
+                    <group colspan="2" col="4">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <separator colspan="4" string="Products" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
-						<tree string="Products" editable="top" colors="red:prodlot_id and consumed_qty>product_qty;blue: not prodlot_id and consumed_qty>product_qty">
+                        <tree string="Products" editable="top" colors="red:prodlot_id and consumed_qty>product_qty or not prodlot_id and batch_mandatory;blue: not prodlot_id and consumed_qty>product_qty">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False}"
-                            	domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
+                                domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]" />
                             <field name="uom_id" 
                                 on_change="uom_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"/>
                             <field name="product_qty" />
@@ -118,6 +144,7 @@
             <field name="res_model">real.average.consumption</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
         </record>
         
         <record id="action_new_real_consumption_report" model="ir.actions.act_window">
@@ -131,6 +158,7 @@
         <menuitem
              id="warehouse_consumption_menu"
              name="Consumption"
+             sequence="-20"
              parent="stock.next_id_61" />
              
         <menuitem
@@ -264,6 +292,17 @@
                 </field>
             </field>
         </record>
-    
+
+        <record id="view_stock_location_search_without_buttons" model="ir.ui.view">
+            <field name="name">stock.location.search.without_buttons</field>
+            <field name="model">stock.location</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Stock Locations">
+                    <field name="name" />
+                    <field name="location_category" />
+                </search>
+            </field>
+        </record>
     </data>
 </openerp>
