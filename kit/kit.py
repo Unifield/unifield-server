@@ -160,9 +160,9 @@ class composition_kit(osv.osv):
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
         # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
-        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=context)
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=res['context'])
         # generate mirrors item objects
-        self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=context)
+        self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=res['context'])
         return res
     
     def do_substitute(self, cr, uid, ids, context=None):
@@ -218,9 +218,9 @@ class composition_kit(osv.osv):
                 result[obj.id].update({'composition_version': obj.composition_version_txt})
             elif obj.composition_type == 'real':
                 result[obj.id].update({'composition_version': obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''})
-#            # name - ex: ITC - 01/01/2012
-#            date = datetime.strptime(obj.composition_creation_date, db_date_format)
-#            result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
+            # name - ex: ITC - 01/01/2012
+            date = datetime.strptime(obj.composition_creation_date, db_date_format)
+            result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
             # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
             if obj.composition_expiry_check:
                 result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
@@ -396,8 +396,8 @@ class composition_kit(osv.osv):
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
                 'composition_expiry_check': fields.related('composition_product_id', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
                 # functions
-#                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
-#                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
+                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
+                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
                 'composition_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Version', multi='get_vals',
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Nb', multi='get_vals',
@@ -502,6 +502,9 @@ class composition_kit(osv.osv):
                 # real composition must always be active
                 if not obj.active:
                     raise osv.except_osv(_('Warning !'), _('Composition List cannot be inactive.'))
+                # check that the selected version corresponds to the selected product
+                if obj.composition_version_id and obj.composition_version_id.composition_product_id.id != obj.composition_product_id.id:
+                    raise osv.except_osv(_('Warning !'), _('Selected Version is for a different product.'))
             
         return True
     
@@ -671,7 +674,7 @@ class composition_item(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             # name
-#            result[obj.id].update({'name': obj.item_product_id.name})
+            result[obj.id].update({'name': obj.item_product_id.name})
             # version
             result[obj.id].update({'item_kit_version': obj.item_kit_id.composition_version})
             # type
@@ -732,8 +735,8 @@ class composition_item(osv.osv):
                 'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
                 # functions
-#                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
-#                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
+                'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
+                                        store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
                 'item_kit_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Kit Version', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                                 'composition.kit': (_get_composition_item_ids, ['composition_version_txt', 'composition_version_id'], 10)}),

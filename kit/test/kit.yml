@@ -200,6 +200,88 @@
     ids = self.search(cr, uid, [('picking_id', '=', in_id), ('product_id', '=', ref("kit_product_A"))], context=context)
     self.create_composition_list(cr, uid, ids, context=context)
 -
+  I create empty composition composition list 04, productA, kit_lot_As, 2010-01-20
+- 
+  !record {model: composition.kit, id: kit_compo_04}:
+    composition_type: 'real'
+    composition_product_id: kit_product_A
+    composition_lot_id: kit_lot_As
+    composition_creation_date: '2010-01-20'
+    composition_version_id: kit_compo_02
+-
+  I add a product item to the composition list kit_product_C, lot and date will be filled in in the wizard
+-
+  !record {model: composition.item, id: item_04_01}:
+    item_kit_id: kit_compo_04
+    item_product_id: kit_product_C
+    item_qty: 20
+    item_uom_id: product.product_uom_unit
+-
+  Mark the composition as completed
+-
+  !python {model: composition.kit}: |
+    self.mark_as_completed(cr, uid, [ref("kit_compo_04")], context=context)
+-
+  I open the substitute wizard
+-
+  !python {model: composition.kit}: |
+    res = self.substitute_items(cr, uid, [ref("kit_compo_04")], context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I complete the lot name for the product C
+-
+  !python {model: substitute.item.mirror}: |
+    item_ids = self.search(cr, uid, [('wizard_id', '=', context['wizard']['id'])], context=context)
+    assert len(item_ids) == 1, 'number of items is wrong - 1 - %s'%len(item_ids)
+    self.write(cr, uid, item_ids, {'lot_mirror': 'C standard', 'exp_substitute_item': '2012-06-20'}, context=context)
+    context['wizard']['item_ids'] = item_ids
+-
+  I test the on_change functions
+-
+  !python {model: substitute.item.mirror}: |
+    self.change_lot(cr, uid, context['wizard']['item_ids'], ref("stock.stock_location_stock"), ref("kit_product_C"), 'C standard', ref("product.product_uom_unit"), context=context)
+    self.change_expiry(cr, uid, context['wizard']['item_ids'], '2012-06-20', ref("kit_product_C"), 'in', ref("stock.stock_location_stock"), 'C standard', ref("product.product_uom_unit"), context=context)
+-
+  I select the item to be replaced
+-
+  !python {model: substitute}: |
+    self.write(cr, uid, context['wizard']['ids'], {'composition_item_ids': [(6,0,context['wizard']['item_ids'])]}, context=context)
+-
+  I select the item for the kit from the stock
+-
+  !python {model: substitute.item}: |
+    values = {'wizard_id': context['wizard']['id'],
+              'location_id_substitute_item': ref("stock.stock_location_stock"),
+              'module_substitute_item': 'module substitute',
+              'product_id_substitute_item': ref("kit_product_C"),
+              'qty_substitute_item': 60,
+              'uom_id_substitute_item': ref("product.product_uom_unit"),
+              'lot_id_substitute_item': ref("kit_lot_Cs"),
+              }
+    self.create(cr, uid, values, context=context)
+-
+  I process the subtitute function
+-
+  !python {model: substitute}: |
+    self.do_substitute(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I open the de-kitting wizard
+-
+  !python {model: composition.kit}: |
+    res = self.de_kitting(cr, uid, [ref("kit_compo_04")], context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I process the de-kitting - we do not need to complete lot or date because it is automaticly completed from the substitute function !
+-
+  !python {model: substitute}: |
+    self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
   END OF FILE
 -
   !python {model: stock.picking}: |

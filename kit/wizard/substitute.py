@@ -163,6 +163,10 @@ class substitute(osv.osv_memory):
         if context is None:
             context = {}
         context.setdefault('common', {})
+        # objects
+        date_tools = self.pool.get('date.tools')
+        obj_data = self.pool.get('ir.model.data')
+        comp_obj = self.pool.get('res.company')
         # date format
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         context['common']['db_date_format'] = db_date_format
@@ -191,6 +195,8 @@ class substitute(osv.osv_memory):
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
+        pick_obj = self.pool.get('stock.picking')
+        # different behavior depending on step
         if context.get('step', False) == 'substitute':
             text = 'Kit Substitution'
         elif context.get('step', False) == 'de_kitting':
@@ -210,10 +216,24 @@ class substitute(osv.osv_memory):
         pick_id = pick_obj.create(cr, uid, pick_values, context=context)
         return pick_id
     
-    def _handle_compo_item(self, cr, uid, ids, item, items_to_stock_ids, context=None):
+    def _handle_compo_item(self, cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=None):
         '''
         handle compo item, creating movement and integrity checks
         '''
+        # objects
+        lot_obj = self.pool.get('stock.production.lot')
+        move_obj = self.pool.get('stock.move')
+        # date format
+        db_date_format = context['common']['db_date_format']
+        date_format = context['common']['date_format']
+        # date is today
+        date = context['common']['date']
+        # default company id
+        company_id = context['common']['company_id']
+        # reason type
+        reason_type_id = context['common']['reason_type_id']
+        # kitting location
+        kitting_id = context['common']['kitting_id']
         # add to "to delete" list
         if item.item_id_mirror in items_to_stock_ids:
             raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
@@ -295,25 +315,33 @@ class substitute(osv.osv_memory):
                        'prodlot_id': prodlot_id,
                        }
         move_obj.create(cr, uid, move_values, context=context)
+        return True
+    
+    def _validate_internal_picking(self, cr, uid, ids, pick_id, context=None):
+        '''
+        confirm and validate the internal picking
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
+        # simulate check assign button, as stock move must be available
+        pick_obj.force_assign(cr, uid, [pick_id])
+        # trigger standard workflow
+        pick_obj.action_move(cr, uid, [pick_id])
+        wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
+        return True
     
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         substitute method, no check on products availability is performed
         '''
         # objects
-        pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        obj_data = self.pool.get('ir.model.data')
-        comp_obj = self.pool.get('res.company')
-        kit_obj = self.pool.get('composition.kit')
         item_obj = self.pool.get('composition.item')
-        lot_obj = self.pool.get('stock.production.lot')
-        date_tools = self.pool.get('date.tools')
         # load default data
         self._load_common_data(cr, uid, ids, context=context)
-        # date format
-        db_date_format = context['common']['db_date_format']
-        date_format = context['common']['date_format']
+        
         # date is today
         date = context['common']['date']
         # default company id
@@ -339,87 +367,8 @@ class substitute(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'), _('Items to replace cannot be empty.'))
             # for each item to replace, we create a stock move from kitting to destination location
             for item in obj.composition_item_ids:
-                # add to "to delete" list
-                if item.item_id_mirror in items_to_stock_ids:
-                    raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
-                items_to_stock_ids.append(item.item_id_mirror)
-                # need to create a production lot if needed
-                prodlot_id = False
-                if item.product_id_substitute_item.batch_management:
-                    # lot number must have been filled in
-                    if not item.lot_mirror or not item.exp_substitute_item:
-                        raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
-                    # we search for existing standard lot, if does not exist, we create a new one
-                    prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
-                                                           ('type', '=', 'standard'),
-                                                           ('product_id', '=', item.product_id_substitute_item.id)], context=context)
-                    if prodlot_ids:
-                        # we must check the expiry date match
-                        data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name'], context=context)
-                        lot_name = data[0]['name']
-                        expired_date = data[0]['life_date']
-                        if expired_date != item.exp_substitute_item:
-                            # we display a log message - we do not raise an error because the kit is presently completed
-                            # and cannot therefore be modified. So if we entered a date for a given batch number which
-                            # was correct at the time of kit completion, but no more at time of substitution, we
-                            # do not want to be blocked.
-                            exp_obj = datetime.strptime(expired_date, db_date_format)
-                            exp_item = datetime.strptime(item.exp_substitute_item, db_date_format)
-                            lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item.strftime(date_format))))
-                        # select production lot
-                        prodlot_id = prodlot_ids[0]
-                    else:
-                        # the batch does not exist, we create a new one
-                        name = item.lot_mirror# or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
-                        lot_values = {'product_id': item.product_id_substitute_item.id,
-                                      'life_date': item.exp_substitute_item,
-                                      'name': name,
-                                      'type': 'standard',
-                                      }
-                        prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
-                elif item.product_id_substitute_item.perishable:
-                    # expiry date must have been filled in
-                    if not item.exp_substitute_item:
-                        raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
-                    # we search for existing internal lot, if does not exist, we create a new one
-                    prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),
-                                                           ('type', '=', 'internal'),
-                                                           ('product_id', '=', item.product_id_substitute_item.id)], context=context)
-                    if prodlot_ids:
-                        # select production lot
-                        prodlot_id = prodlot_ids[0]
-                    else:
-                        # no internal lot for the specified date, create a new one
-                        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
-                        lot_values = {'product_id': item.product_id_substitute_item.id,
-                                      'life_date': item.exp_substitute_item,
-                                      'name': name,
-                                      'type': 'internal',
-                                      }
-                        prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
-                # create corresponding stock move
-                move_values = {'name': item.product_id_substitute_item.name[:64],
-                               'picking_id': pick_id,
-                               'product_id': item.product_id_substitute_item.id,
-                               'date': date,
-                               'date_expected': date,
-                               'product_qty': item.qty_substitute_item,
-                               'product_uom': item.uom_id_substitute_item.id,
-                               'product_uos_qty': item.qty_substitute_item,
-                               'product_uos': item.uom_id_substitute_item.id,
-                               'product_packaging': False,
-                               'address_id': False,
-                               'location_id': kitting_id,
-                               'location_dest_id': obj.destination_location_id.id,
-                               'sale_line_id': False,
-                               'tracking_id': False,
-                               'state': 'draft',
-                               'note': 'Kit Substitution - Back to Stock',
-                               'company_id': company_id,
-                               'reason_type_id': reason_type_id,
-                               'prodlot_id': prodlot_id,
-                               }
-                move_obj.create(cr, uid, move_values, context=context)
+                # analyze each item
+                self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
             # we delete the corresponding items from the kit
             item_obj.unlink(cr, uid, items_to_stock_ids, context=context)
             # items to replace cannot be empty
@@ -470,14 +419,77 @@ class substitute(osv.osv_memory):
                                }
                 item_obj.create(cr, uid, item_values, context=context)
             # confirm - force availability and validate the internal picking
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
-            # simulate check assign button, as stock move must be available
-            pick_obj.force_assign(cr, uid, [pick_id])
-            # trigger standard workflow
-            pick_obj.action_move(cr, uid, [pick_id])
-            wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
+            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
 
+        return {'type': 'ir.actions.act_window_close'}
+    
+    def do_de_kitting(self, cr, uid, ids, context=None):
+        '''
+        de-kitting method
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.kit')
+        # load default data
+        self._load_common_data(cr, uid, ids, context=context)
+        
+        # date is today
+        date = context['common']['date']
+        # default company id
+        company_id = context['common']['company_id']
+        # reason type
+        reason_type_id = context['common']['reason_type_id']
+        # kitting location
+        kitting_id = context['common']['kitting_id']
+        # kit ids
+        kit_ids = context['active_ids']
+        # integrity constraint
+        integrity_check = self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
+        if not integrity_check:
+            # the windows must be updated to trigger tree colors
+            return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # we create the internal picking object
+            pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
+            # list of items to be deleted (replaced ones)
+            items_to_stock_ids = []
+            # items to replace cannot be empty
+            if not len(obj.composition_item_ids):
+                raise osv.except_osv(_('Warning !'), _('Items to replace cannot be empty.'))
+            # for each item to replace, we create a stock move from kitting to destination location
+            for item in obj.composition_item_ids:
+                # analyze each item
+                self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
+            # the corresponding kit is set to done
+            kit_obj.write(cr, uid, kit_ids, {'state': 'done'}, context=context)
+            # a move with a kit from kitting location is created
+            move_values =  {'name': obj.kit_id.composition_product_id.name[:64],
+                            'picking_id': pick_id,
+                            'product_id': obj.kit_id.composition_product_id.id,
+                            'date': date,
+                            'date_expected': date,
+                            'product_qty': 1.0,
+                            'product_uom': obj.kit_id.composition_product_id.uom_id.id,
+                            'product_uos_qty': 1.0,
+                            'product_uos': obj.kit_id.composition_product_id.uom_id.id,
+                            'product_packaging': False,
+                            'address_id': False,
+                            'location_id': kitting_id,
+                            'location_dest_id': obj.destination_location_id.id,
+                            'sale_line_id': False,
+                            'tracking_id': False,
+                            'state': 'draft',
+                            'note': 'De-Kitting - Go to Stock',
+                            'company_id': company_id,
+                            'reason_type_id': reason_type_id,
+                            'prodlot_id': obj.kit_id.composition_lot_id and obj.kit_id.composition_lot_id.id or False,
+                            }
+            move_obj.create(cr, uid, move_values, context=context)
+            # confirm - force availability and validate the internal picking
+            self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
+        
         return {'type': 'ir.actions.act_window_close'}
         
     def check_availability(self, cr, uid, ids, context=None):

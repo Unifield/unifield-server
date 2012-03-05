@@ -44,8 +44,8 @@
     name: ProdC
     type: product
     subtype: single
-    batch_management: false
-    perishable: false
+    batch_management: true
+    perishable: true
     seller_ids:
       - sequence: 10
         min_qty: 0.00
@@ -56,5 +56,13 @@
   !record {model: stock.production.lot, id: kit_lot_As}:
     name: A standard
     product_id: kit_product_A
+    type: standard
+    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+-
+  Production Lot Cs (s stands for standard)
+-
+  !record {model: stock.production.lot, id: kit_lot_Cs}:
+    name: C standard
+    product_id: kit_product_C
     type: standard
     life_date: !eval datetime.today().strftime('%Y-%m-%d')
