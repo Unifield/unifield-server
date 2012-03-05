@@ -544,3 +544,57 @@ class stock_move(osv.osv):
         return result
 
 stock_move()
+
+
+#-----------------------------------------
+#   Stock location
+#-----------------------------------------
+class stock_location(osv.osv):
+    _name = 'stock.location'
+    _inherit = 'stock.location'
+    
+    def _product_value(self, cr, uid, ids, field_names, arg, context=None):
+        """Computes stock value (real and virtual) for a product, as well as stock qty (real and virtual).
+        @param field_names: Name of field
+        @return: Dictionary of values
+        """
+        result = super(stock_location, self)._product_value(cr, uid, ids, field_names, arg, context=context)
+        
+        product_product_obj = self.pool.get('product.product')
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        currency_obj = self.pool.get('res.currency')
+        currency = currency_obj.browse(cr, uid, currency_id, context=context)
+        if context.get('product_id'):
+            view_ids = self.search(cr, uid, [('usage', '=', 'view')], context=context)
+            result.update(dict([(i, {}.fromkeys(field_names, 0.0)) for i in list(set([aaa for aaa in view_ids]))]))
+            for loc_id in view_ids:
+                c = (context or {}).copy()
+                c['location'] = loc_id
+                c['compute_child'] = True
+                for prod in product_product_obj.browse(cr, uid, [context.get('product_id')], context=c):
+                    for f in field_names:
+                        if f == 'stock_real':
+                            if loc_id not in result:
+                                result[loc_id] = {}
+                            result[loc_id][f] += prod.qty_available
+                        elif f == 'stock_virtual':
+                            result[loc_id][f] += prod.virtual_available
+                        elif f == 'stock_real_value':
+                            amount = prod.qty_available * prod.standard_price
+                            amount = currency_obj.round(cr, uid, currency, amount)
+                            result[loc_id][f] += amount
+                        elif f == 'stock_virtual_value':
+                            amount = prod.virtual_available * prod.standard_price
+                            amount = currency_obj.round(cr, uid, currency, amount)
+                            result[loc_id][f] += amount
+        
+        return result
+    
+    _columns = {
+        'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),
+        'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
+        'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
+        'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
+    }
+    
+stock_location()

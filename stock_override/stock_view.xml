@@ -317,6 +317,21 @@
                 </xpath>
             </field>
         </record>
+        
+        <record id="view_location_tree_tree" model="ir.ui.view">
+            <field name="name">stock.location.tree.tree</field>
+            <field name="model">stock.location</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
+                    <field name="complete_name"/>
+                    <field name="usage"/>
+                    <field name="stock_real" />
+                    <field name="stock_virtual" />
+                </tree>
+            </field>
+        </record>
 
     </data>
 </openerp>
