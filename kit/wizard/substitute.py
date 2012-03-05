@@ -151,6 +151,113 @@ class substitute(osv.osv_memory):
         '''
         return self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
     
+    def _create_picking(self, cr, uid, ids, context=None):
+        '''
+        create internal picking object
+        
+        name of picking according to actual step
+        '''
+        # we create the internal picking object
+        pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
+                       'origin': 'Kit Substitution: ' + obj.kit_id.composition_product_id.name + ' - ' + kit_obj.name_get(cr, uid, [obj.kit_id.id], context=context)[0][1],
+                       'type': 'internal',
+                       'state': 'draft',
+                       'sale_id': False,
+                       'address_id': False,
+                       'note': 'Kit substitution',
+                       'date': date,
+                       'company_id': company_id,
+                       'reason_type_id': reason_type_id,
+                       }
+        pick_id = pick_obj.create(cr, uid, pick_values, context=context)
+        return pick_id
+    
+    def _handle_compo_item(self, cr, uid, ids, item, items_to_stock_ids, context=None):
+        '''
+        handle compo item, creating movement and integrity checks
+        '''
+        # add to "to delete" list
+        if item.item_id_mirror in items_to_stock_ids:
+            raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
+        items_to_stock_ids.append(item.item_id_mirror)
+        # need to create a production lot if needed
+        prodlot_id = False
+        if item.product_id_substitute_item.batch_management:
+            # lot number must have been filled in
+            if not item.lot_mirror or not item.exp_substitute_item:
+                raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
+            # we search for existing standard lot, if does not exist, we create a new one
+            prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
+                                                   ('type', '=', 'standard'),
+                                                   ('product_id', '=', item.product_id_substitute_item.id)], context=context)
+            if prodlot_ids:
+                # we must check the expiry date match
+                data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name'], context=context)
+                lot_name = data[0]['name']
+                expired_date = data[0]['life_date']
+                if expired_date != item.exp_substitute_item:
+                    # we display a log message - we do not raise an error because the kit is presently completed
+                    # and cannot therefore be modified. So if we entered a date for a given batch number which
+                    # was correct at the time of kit completion, but no more at time of substitution, we
+                    # do not want to be blocked.
+                    exp_obj = datetime.strptime(expired_date, db_date_format)
+                    exp_item = datetime.strptime(item.exp_substitute_item, db_date_format)
+                    lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item.strftime(date_format))))
+                # select production lot
+                prodlot_id = prodlot_ids[0]
+            else:
+                # the batch does not exist, we create a new one
+                name = item.lot_mirror# or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
+                lot_values = {'product_id': item.product_id_substitute_item.id,
+                              'life_date': item.exp_substitute_item,
+                              'name': name,
+                              'type': 'standard',
+                              }
+                prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
+        elif item.product_id_substitute_item.perishable:
+            # expiry date must have been filled in
+            if not item.exp_substitute_item:
+                raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
+            # we search for existing internal lot, if does not exist, we create a new one
+            prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),
+                                                   ('type', '=', 'internal'),
+                                                   ('product_id', '=', item.product_id_substitute_item.id)], context=context)
+            if prodlot_ids:
+                # select production lot
+                prodlot_id = prodlot_ids[0]
+            else:
+                # no internal lot for the specified date, create a new one
+                name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
+                lot_values = {'product_id': item.product_id_substitute_item.id,
+                              'life_date': item.exp_substitute_item,
+                              'name': name,
+                              'type': 'internal',
+                              }
+                prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
+        # create corresponding stock move
+        move_values = {'name': item.product_id_substitute_item.name[:64],
+                       'picking_id': pick_id,
+                       'product_id': item.product_id_substitute_item.id,
+                       'date': date,
+                       'date_expected': date,
+                       'product_qty': item.qty_substitute_item,
+                       'product_uom': item.uom_id_substitute_item.id,
+                       'product_uos_qty': item.qty_substitute_item,
+                       'product_uos': item.uom_id_substitute_item.id,
+                       'product_packaging': False,
+                       'address_id': False,
+                       'location_id': kitting_id,
+                       'location_dest_id': obj.destination_location_id.id,
+                       'sale_line_id': False,
+                       'tracking_id': False,
+                       'state': 'draft',
+                       'note': 'Kit Substitution - Back to Stock',
+                       'company_id': company_id,
+                       'reason_type_id': reason_type_id,
+                       'prodlot_id': prodlot_id,
+                       }
+        move_obj.create(cr, uid, move_values, context=context)
+    
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         substitute method, no check on products availability is performed
@@ -197,16 +304,16 @@ class substitute(osv.osv_memory):
                            }
             pick_id = pick_obj.create(cr, uid, pick_values, context=context)
             # list of items to be deleted (replaced ones)
-            items_to_delete = []
+            items_to_stock_ids = []
             # items to replace cannot be empty
             if not len(obj.composition_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Items to replace cannot be empty.'))
             # for each item to replace, we create a stock move from kitting to destination location
             for item in obj.composition_item_ids:
                 # add to "to delete" list
-                if item.item_id_mirror in items_to_delete:
+                if item.item_id_mirror in items_to_stock_ids:
                     raise osv.except_osv(_('Warning !'), _('Duplicated lines in Items from Kit to Stock.'))
-                items_to_delete.append(item.item_id_mirror)
+                items_to_stock_ids.append(item.item_id_mirror)
                 # need to create a production lot if needed
                 prodlot_id = False
                 if item.product_id_substitute_item.batch_management:
@@ -254,7 +361,7 @@ class substitute(osv.osv_memory):
                         prodlot_id = prodlot_ids[0]
                     else:
                         # no internal lot for the specified date, create a new one
-                        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial'),
+                        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
                         lot_values = {'product_id': item.product_id_substitute_item.id,
                                       'life_date': item.exp_substitute_item,
                                       'name': name,
@@ -285,7 +392,7 @@ class substitute(osv.osv_memory):
                                }
                 move_obj.create(cr, uid, move_values, context=context)
             # we delete the corresponding items from the kit
-            item_obj.unlink(cr, uid, items_to_delete, context=context)
+            item_obj.unlink(cr, uid, items_to_stock_ids, context=context)
             # items to replace cannot be empty
             if not len(obj.replacement_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items cannot be empty.'))
@@ -367,6 +474,30 @@ class substitute(osv.osv_memory):
                     item.write({'integrity_status': 'not_available'}, context=context)
                     
         return True
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        remove items from stock for de-kitting
+        """
+        if context is None:
+            context = {}
+        # call super
+        result = super(substitute, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        # display depends on step
+        if view_type == 'form' and context.get('step', False) == 'substitute':
+            # fields to be modified
+            list = ['<button name="do_de_kitting"']
+            replace_text = result['arch']
+            replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
+            result['arch'] = replace_text
+        if view_type == 'form' and context.get('step', False) == 'de_kitting':
+            # fields to be modified
+            list = ['<field name="replacement_item_ids"', '<button name="check_availability"', '<button name="do_substitute"']
+            replace_text = result['arch']
+            replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
+            result['arch'] = replace_text
+        
+        return result
         
     _columns = {'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'wizard_id': fields.integer(string='Wizard Id', readonly=True),

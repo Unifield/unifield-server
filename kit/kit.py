@@ -122,7 +122,8 @@ class composition_kit(osv.osv):
             context = {}
         # objects
         mirror_obj = self.pool.get('substitute.item.mirror')
-        
+        # returned list, list of created ids
+        result = []
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # create a mirror object which can be later selected and modified in the many2many field
@@ -140,8 +141,9 @@ class composition_kit(osv.osv):
                           'hidden_batch_management_mandatory': batch_management,
                           'hidden_perishable_mandatory': perishable,
                           }
-                mirror_obj.create(cr, uid, values, context=context)
-        return True
+                id = mirror_obj.create(cr, uid, values, context=context)
+                result.append(id)
+        return result
     
     def substitute_items(self, cr, uid, ids, context=None):
         '''
@@ -153,7 +155,7 @@ class composition_kit(osv.osv):
         # data
         name = _("Substitute Kit Items")
         model = 'substitute'
-        step = 'default'
+        step = 'substitute'
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
@@ -166,8 +168,32 @@ class composition_kit(osv.osv):
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         actual function called from wizard
+        
+        // possible refactoring to move logic here, but not necessary for now
         '''
         wizard_ids = context['wizard_ids']
+        
+    def de_kitting(self, cr, uid, ids, context=None):
+        '''
+        explode the kit, preselecting all mirror items
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        # data
+        name = _("De-Kitting")
+        model = 'substitute'
+        step = 'de_kitting'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, kit_id=ids[0]))
+        # write wizard id back in the wizard object, cannot use ID in the wizard form... openERP bug ?
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'wizard_id': res['res_id']}, context=context)
+        # generate mirrors item objects
+        data = self._generate_item_mirror_objects(cr, uid, ids, wizard_data=res, context=context)
+        # fill all elements into the many2many field
+        self.pool.get(model).write(cr, uid, [res['res_id']], {'composition_item_ids': [(6,0,data)]}, context=context)
+        return res
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
