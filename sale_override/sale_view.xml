@@ -72,7 +72,6 @@
                     <xpath expr="//field[@name='create_date']" position="replace" />
                     <xpath expr="//field[@name='date_confirm']" position="replace" />
                     <xpath expr="//page[2]//separator[@string='Dates']" position="replace" />
->>>>>>> MERGE-SOURCE
                 </data>
             </field>
         </record>
