@@ -388,7 +388,7 @@ class ImpEx(SecuredController):
             return False
         result = result.get('datas',[])
 
-        if import_compat:
+        if import_compat == 1:
             params.fields2 = flds
 
         if import_compat == '2':
