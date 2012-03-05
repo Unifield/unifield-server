@@ -102,7 +102,7 @@
             	<data>
 					
 					<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -155,7 +155,7 @@
             	<data>
             	
             		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -237,7 +237,7 @@
             	<data>
             	
             		<xpath expr="//form[@string='Stock Moves']//field[@name='product_id']" position="replace">
-            			<field name="product_id" context="{'location': location_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+            			<field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
             		</xpath>
             		
 					<xpath expr="//form[@string='Stock Moves']//field[@name='prodlot_id']" position="replace">
@@ -395,6 +395,10 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
             		<field name="use_date" position="replace" />
             		<field name="removal_date" position="replace" />
@@ -455,6 +459,10 @@
             <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
 	                <field name="prodlot_id" position="replace">
 	                	<field name="prodlot_id" groups="base.group_extended"
@@ -497,6 +505,10 @@
             <field name="inherit_id" ref="stock.stock_move_tree" />
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
             		<button name="action_done" position="after">
             			<field name="lot_check" />
@@ -523,6 +535,10 @@
             <field name="inherit_id" ref="stock.stock_move_tree2" />
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
             		<field name="state" position="after">
             			<field name="lot_check" />
@@ -545,6 +561,10 @@
             <field name="inherit_id" ref="stock.view_move_tree" />
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
             		<button name="action_done" position="after">
             			<field name="lot_check" />
@@ -571,6 +591,10 @@
             <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
             <field name="arch" type="xml">
             	<data>
+
+			<xpath expr="//field[@name='product_id']" position="attributes">
+				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id}</attribute>
+			</xpath>
             	
             		<button name="%(stock.action_partial_move_server)d" position="after">
             			<field name="lot_check" />
