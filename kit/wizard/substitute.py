@@ -151,23 +151,61 @@ class substitute(osv.osv_memory):
         '''
         return self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
     
-    def _create_picking(self, cr, uid, ids, context=None):
+    def _load_common_data(self, cr, uid, ids, context=None):
+        '''
+        load common data into context
+        - date
+        - reason_type
+        - location ids
+        - company id
+        - ...
+        '''
+        if context is None:
+            context = {}
+        context.setdefault('common', {})
+        # date format
+        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
+        context['common']['db_date_format'] = db_date_format
+        date_format = date_tools.get_date_format(cr, uid, context=context)
+        context['common']['date_format'] = date_format
+        # date is today
+        date = time.strftime('%Y-%m-%d')
+        context['common']['date'] = date
+        # default company id
+        company_id = comp_obj._company_default_get(cr, uid, 'stock.picking', context=context)
+        context['common']['company_id'] = company_id
+        # reason type
+        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+        context['common']['reason_type_id'] = reason_type_id
+        # kitting location
+        kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
+        context['common']['kitting_id'] = kitting_id
+        
+        return True
+    
+    def _create_picking(self, cr, uid, ids, obj, date, context=None):
         '''
         create internal picking object
         
         name of picking according to actual step
         '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
+        if context.get('step', False) == 'substitute':
+            text = 'Kit Substitution'
+        elif context.get('step', False) == 'de_kitting':
+            text = 'De-Kitting'
         # we create the internal picking object
         pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
-                       'origin': 'Kit Substitution: ' + obj.kit_id.composition_product_id.name + ' - ' + kit_obj.name_get(cr, uid, [obj.kit_id.id], context=context)[0][1],
+                       'origin': text + ': ' + obj.kit_id.composition_product_id.name + ' - ' + kit_obj.name_get(cr, uid, [obj.kit_id.id], context=context)[0][1],
                        'type': 'internal',
                        'state': 'draft',
                        'sale_id': False,
                        'address_id': False,
-                       'note': 'Kit substitution',
-                       'date': date,
-                       'company_id': company_id,
-                       'reason_type_id': reason_type_id,
+                       'note': text,
+                       'date': context['common']['date'],
+                       'company_id': context['common']['company_id'],
+                       'reason_type_id': context['common']['reason_type_id'],
                        }
         pick_id = pick_obj.create(cr, uid, pick_values, context=context)
         return pick_id
@@ -271,17 +309,19 @@ class substitute(osv.osv_memory):
         item_obj = self.pool.get('composition.item')
         lot_obj = self.pool.get('stock.production.lot')
         date_tools = self.pool.get('date.tools')
+        # load default data
+        self._load_common_data(cr, uid, ids, context=context)
         # date format
-        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        date_format = date_tools.get_date_format(cr, uid, context=context)
+        db_date_format = context['common']['db_date_format']
+        date_format = context['common']['date_format']
         # date is today
-        date = time.strftime('%Y-%m-%d')
+        date = context['common']['date']
         # default company id
-        company_id = comp_obj._company_default_get(cr, uid, 'stock.picking', context=context)
+        company_id = context['common']['company_id']
         # reason type
-        reason_type_id = obj_data.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_kit')[1]
+        reason_type_id = context['common']['reason_type_id']
         # kitting location
-        kitting_id = obj_data.get_object_reference(cr, uid, 'stock', 'location_production')[1]
+        kitting_id = context['common']['kitting_id']
         # kit ids
         kit_ids = context['active_ids']
         # integrity constraint
@@ -291,18 +331,7 @@ class substitute(osv.osv_memory):
             return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, type='update', context=context)
         for obj in self.browse(cr, uid, ids, context=context):
             # we create the internal picking object
-            pick_values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal'),
-                           'origin': 'Kit Substitution: ' + obj.kit_id.composition_product_id.name + ' - ' + kit_obj.name_get(cr, uid, [obj.kit_id.id], context=context)[0][1],
-                           'type': 'internal',
-                           'state': 'draft',
-                           'sale_id': False,
-                           'address_id': False,
-                           'note': 'Kit substitution',
-                           'date': date,
-                           'company_id': company_id,
-                           'reason_type_id': reason_type_id,
-                           }
-            pick_id = pick_obj.create(cr, uid, pick_values, context=context)
+            pick_id = self._create_picking(cr, uid, ids, obj, date, context=context)
             # list of items to be deleted (replaced ones)
             items_to_stock_ids = []
             # items to replace cannot be empty
