@@ -29,8 +29,7 @@ from openerp.widgets import treegrid
 
 from openobject import tools
 from openobject.tools import expose, redirect, ast
-
-
+import simplejson
 
 
 def datas_read(ids, model, flds, context=None):
@@ -136,9 +135,12 @@ class ImpEx(SecuredController):
             exports.search([('resource', '=', params.model)], context=ctx),
             [], ctx)
 
+        default = ""
+        if params._terp_listheaders:
+            default = simplejson.dumps([x.split(',',1) for x in params._terp_listheaders])
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
-                    tree=tree, import_compat=import_compat)
+                    tree=tree, import_compat=import_compat, default=default)
 
     @expose()
     def save_exp(self, **kw):
@@ -351,6 +353,11 @@ class ImpEx(SecuredController):
             return _fields
 
         return rec(fields)
+    
+    @expose(template="/openerp/controllers/templates/exphtml.mako")
+    def export_html(self, fields, result):
+        return {'fields': fields, 'result': result}
+
 
     @expose(content_type="application/octet-stream")
     def export_data(self, fname, fields, import_compat=False, **kw):
@@ -384,6 +391,8 @@ class ImpEx(SecuredController):
         if import_compat:
             params.fields2 = flds
 
+        if import_compat == '2':
+            return self.export_html(params.fields2, result)
         return export_csv(params.fields2, result)
 
     @expose(template="/openerp/controllers/templates/imp.mako")

@@ -119,9 +119,15 @@
                 fields2 = fields2.concat('"' + o.text + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
+            if (jQuery('#import_compat').val() == 2) {
+                file_name = "data.xls";
+            } else {
+                file_name = "data.csv";
+            }
             jQuery(idSelector(form)).attr('action', openobject.http.getURL(
-                '/openerp/impex/export_data/data.csv')
+                '/openerp/impex/export_data/'+file_name)
             ).submit();
+
         }
 
         jQuery(document).ready(function () {
@@ -130,6 +136,9 @@
             window.frameElement.set_title(
                 $header.text());
             $header.closest('.side_spacing').parent().remove();
+            % if default:
+            reload(${default|n});
+            % endif
         });
     </script>
 </%def>
@@ -166,6 +175,7 @@
                         <td class="label"><label for="import_compat">${_("Export Type:")}</label></td>
                         <td>
                             <select id="import_compat" name="import_compat" onchange="do_import_cmp();">
+                                <option value="2">${_("Import Compatible Excel")}</option>
                                 <option value="1">${_("Import Compatible Export")}</option>
                                 <option value="0"
                                     ${'selected=selected' if import_compat == "0" else ''}
