@@ -176,7 +176,9 @@
                         <td>
                             <select id="import_compat" name="import_compat" onchange="do_import_cmp();">
                                 <option value="2">${_("Import Compatible Excel")}</option>
-                                <option value="1">${_("Import Compatible Export")}</option>
+                                <option value="1"
+                                    ${'selected=selected' if import_compat == "1" else ''}
+                                >${_("Import Compatible Export")}</option>
                                 <option value="0"
                                     ${'selected=selected' if import_compat == "0" else ''}
                                     >${_("Export all Data")}</option>

@@ -106,7 +106,7 @@ class ImpEx(SecuredController):
     _cp_path = "/openerp/impex"
 
     @expose(template="/openerp/controllers/templates/exp.mako")
-    def exp(self, import_compat="1", **kw):
+    def exp(self, import_compat="2", **kw):
 
         params, data = TinyDict.split(kw)
         ctx = dict((params.context or {}), **rpc.session.context)
@@ -388,10 +388,9 @@ class ImpEx(SecuredController):
             return False
         result = result.get('datas',[])
 
-        if import_compat == 1:
+        if import_compat == "1":
             params.fields2 = flds
-
-        if import_compat == '2':
+        if import_compat == "2":
             return self.export_html(params.fields2, result)
         return export_csv(params.fields2, result)
 
