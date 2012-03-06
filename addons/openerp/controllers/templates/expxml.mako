@@ -26,27 +26,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
-<NumberFormat ss:Format="General Date" />
-</Style>
-<Style ss:ID="ssBorderShort">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat ss:Format="Short Date" />
-</Style>
-<Style ss:ID="ssBorderInt">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat/>
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
@@ -62,24 +41,10 @@ x:FullRows="1">
 </Row>
 % for row in result:
 <Row>
-  % for i,d in enumerate(row):
-  % if d and kind[i] == 'datetime':
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="DateTime">${d and d.replace(' ','T') or ''}</Data>
-</Cell>
-  % elif d and kind[i] == 'date':
-<Cell ss:StyleID="ssBorderShort">
-        <Data ss:Type="DateTime">${d and '%sT00:00:00'%(d,) or ''}</Data>
-</Cell>
-  % elif d and kind[i] in ('float', 'integer'):
-<Cell ss:StyleID="ssBorderInt">
-        <Data ss:Type="Number">${d}</Data>
-</Cell>
-  % else:
+  % for d in row:
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${d or ''}</Data>
 </Cell>
-  % endif
   % endfor
 </Row>
 % endfor
