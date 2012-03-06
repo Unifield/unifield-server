@@ -943,7 +943,7 @@ class pack_family_memory(osv.osv_memory):
                                                                                               ('stock_return', 'Returned to Stock'),
                                                                                               ('ship_return', 'Returned from Shipment'),
                                                                                               ('cancel', 'Cancelled'),
-                                                                                              ('done', 'Done'),], string='State', multi='get_vals',),
+                                                                                              ('done', 'Closed'),], string='State', multi='get_vals',),
                 'location_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Src Loc.', multi='get_vals',),
                 'location_dest_id': fields.function(_vals_get, method=True, type='many2one', relation='stock.location', string='Dest. Loc.', multi='get_vals',),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),

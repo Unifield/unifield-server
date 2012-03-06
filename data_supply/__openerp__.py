@@ -30,7 +30,7 @@
     "init_xml": [
     ],
     "depends" : [
-        "purchase_override", "sale_override",
+        "msf_profile"
     ],
     "update_xml": [
         "data.xml",
