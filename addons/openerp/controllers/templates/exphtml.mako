@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Export Data</title>
+<title>${title}</title>
 </head>
 <body>
 <table border="1">

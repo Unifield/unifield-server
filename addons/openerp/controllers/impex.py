@@ -30,6 +30,8 @@ from openerp.widgets import treegrid
 from openobject import tools
 from openobject.tools import expose, redirect, ast
 import simplejson
+import time
+from openobject.i18n import format
 
 
 def datas_read(ids, model, flds, context=None):
@@ -360,9 +362,10 @@ class ImpEx(SecuredController):
 
         return rec(fields)
     
-    @expose(template="/openerp/controllers/templates/exphtml.mako")
-    def export_html(self, fields, result):
-        return {'fields': fields, 'result': result}
+    @expose(template="/openerp/controllers/templates/expxml.mako")
+    def export_html(self, fields, result, view_name):
+        cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
+        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
 
 
     @expose(content_type="application/octet-stream")
@@ -384,6 +387,7 @@ class ImpEx(SecuredController):
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
 
+        view_name = ctx.get('_terp_view_name', '')
         domain = params.seach_domain or []
 
         ids = params.ids or proxy.search(domain, 0, 0, 0, ctx)
@@ -397,7 +401,7 @@ class ImpEx(SecuredController):
         if import_compat == "1":
             params.fields2 = flds
         if export_format == "excel":
-            return self.export_html(params.fields2, result)
+            return self.export_html(params.fields2, result, view_name)
         return export_csv(params.fields2, result)
 
     @expose(template="/openerp/controllers/templates/imp.mako")
