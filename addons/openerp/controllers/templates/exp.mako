@@ -79,6 +79,7 @@
         }
 
         function do_import_cmp(){
+            do_pre_submit()
             jQuery('#view_form').attr({
                 'action': openobject.http.getURL('/openerp/impex/exp', {
                     'import_compat': jQuery('#import_compat').val()
@@ -103,7 +104,7 @@
             });
         }
 
-        function do_export(form){
+        function do_pre_submit(){
 
             var options = openobject.dom.get('fields').options;
 
@@ -119,6 +120,10 @@
                 fields2 = fields2.concat('"' + o.text + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
+        }
+
+        function do_export(form){
+            do_pre_submit();
             if (jQuery('#export_format').val() == 'excel') {
                 file_name = "data.xls";
             } else {
