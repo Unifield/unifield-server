@@ -66,6 +66,10 @@
             var id = jQuery('#saved_fields').val();
             if(!id) { reload([]); return; }
 
+            if (id == "default") {
+                reload_default();
+                return;
+            }
             var req = jQuery.get('/openerp/impex/namelist', {
                 '_terp_id': id,
                 '_terp_model': jQuery('#_terp_model').val()
@@ -142,9 +146,13 @@
                 $header.text());
             $header.closest('.side_spacing').parent().remove();
             % if default:
-            reload(${default|n});
+            reload_default();
             % endif
         });
+
+        function reload_default(){
+            reload(${default|n});
+        }
     </script>
 </%def>
 
@@ -217,6 +225,9 @@
                                 <select id="saved_fields" name="saved_exports" onchange="do_select();"
                                         style="width: 60%;">
                                     <option></option>
+                                    % if default:
+                                        <option value="default">${_('Default view fields')}</option>
+                                    % endif
                                     % for export in existing_exports:
                                         <option value="${export['id']}">${export['name']}</option>
                                     % endfor

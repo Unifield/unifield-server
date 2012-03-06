@@ -134,7 +134,7 @@ class ImpEx(SecuredController):
             exports.search([('resource', '=', params.model)], context=ctx),
             [], ctx)
 
-        default = ""
+        default = []
         if params._terp_listheaders:
             default = [x.split(',',1) for x in params._terp_listheaders]
         elif kw.get('_terp_fields2') and kw.get('fields'):
@@ -143,8 +143,7 @@ class ImpEx(SecuredController):
                 if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
                     continue
                 default.append([kw['fields'][i], params.fields2[i]])
-        if default:
-            default = simplejson.dumps(default)
+        default = simplejson.dumps(default)
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
                     tree=tree, import_compat=import_compat, default=default, export_format=export_format)
