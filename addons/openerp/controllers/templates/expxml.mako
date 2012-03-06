@@ -43,11 +43,17 @@ x:FullRows="1">
 <Row>
   % for d in row:
 <Cell ss:StyleID="ssBorder">
+     % if d in ('True', 'False'):
+        <Data ss:Type="Boolean">${d=='True' and '1' or '0'}</Data>
+     % else:
         <Data ss:Type="String">${d or ''}</Data>
+    % endif
 </Cell>
   % endfor
 </Row>
 % endfor
 </Table>
+<AutoFilter x:Range="R1C1:R1C${len(fields)}" xmlns="urn:schemas-microsoft-com:office:excel">
+</AutoFilter>
 </Worksheet>
 </Workbook>
