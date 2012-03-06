@@ -119,7 +119,7 @@
                 fields2 = fields2.concat('"' + o.text + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
-            if (jQuery('#import_compat').val() == 2) {
+            if (jQuery('#export_format').val() == 'excel') {
                 file_name = "data.xls";
             } else {
                 file_name = "data.csv";
@@ -175,13 +175,17 @@
                         <td class="label"><label for="import_compat">${_("Export Type:")}</label></td>
                         <td>
                             <select id="import_compat" name="import_compat" onchange="do_import_cmp();">
-                                <option value="2">${_("Import Compatible Excel")}</option>
-                                <option value="1"
-                                    ${'selected=selected' if import_compat == "1" else ''}
-                                >${_("Import Compatible Export")}</option>
+                                <option value="1">${_("Import Compatible Export")}</option>
                                 <option value="0"
                                     ${'selected=selected' if import_compat == "0" else ''}
                                     >${_("Export all Data")}</option>
+                            </select>
+                        </td>
+                        <td class="label"><label for="export_format">${_("Format:")}</label></td>
+                        <td>
+                            <select id="export_format" name="export_format">
+                                <option value="excel" style="padding-right: 15px;">${_("Excel")}</option>
+                                <option value="csv" ${'selected=selected' if export_format == "csv" else ''}>${_("CSV")}</option>
                             </select>
                         </td>
                     </tr>

@@ -106,17 +106,16 @@ class ImpEx(SecuredController):
     _cp_path = "/openerp/impex"
 
     @expose(template="/openerp/controllers/templates/exp.mako")
-    def exp(self, import_compat="2", **kw):
+    def exp(self, import_compat="0", **kw):
 
         params, data = TinyDict.split(kw)
         ctx = dict((params.context or {}), **rpc.session.context)
-
         views = {}
         if params.view_mode and params.view_ids:
             for i, view in enumerate(params.view_mode):
                 views[view] = params.view_ids[i]
 
-
+        export_format = data.get('export_format', 'excel')
         exports = rpc.RPCProxy('ir.exports')
 
         headers = [{'string' : 'Name', 'name' : 'name', 'type' : 'char'}]
@@ -140,7 +139,7 @@ class ImpEx(SecuredController):
             default = simplejson.dumps([x.split(',',1) for x in params._terp_listheaders])
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
-                    tree=tree, import_compat=import_compat, default=default)
+                    tree=tree, import_compat=import_compat, default=default, export_format=export_format)
 
     @expose()
     def save_exp(self, **kw):
@@ -360,7 +359,7 @@ class ImpEx(SecuredController):
 
 
     @expose(content_type="application/octet-stream")
-    def export_data(self, fname, fields, import_compat=False, **kw):
+    def export_data(self, fname, fields, import_compat=False, export_format='csv', **kw):
 
         params, data_index = TinyDict.split(kw)
         proxy = rpc.RPCProxy(params.model)
@@ -390,7 +389,7 @@ class ImpEx(SecuredController):
 
         if import_compat == "1":
             params.fields2 = flds
-        if import_compat == "2":
+        if export_format == "excel":
             return self.export_html(params.fields2, result)
         return export_csv(params.fields2, result)
 
