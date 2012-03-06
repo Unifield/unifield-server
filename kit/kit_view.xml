@@ -97,6 +97,7 @@
 		<record id="view_composition_kit_theoretical_filter" model="ir.ui.view">
             <field name="name">composition.kit.theoretical.filter</field>
             <field name="model">composition.kit</field>
+            <field name="priority">1</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition">
@@ -143,6 +144,7 @@
             <field name="name">composition.kit.real.filter</field>
             <field name="model">composition.kit</field>
             <field name="type">search</field>
+            <field name="priority">2</field>
             <field name="arch" type="xml">
                 <search string="Search Real Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />

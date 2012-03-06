@@ -10,7 +10,12 @@
                 <tree editable="bottom" hide_new_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
 					<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
-                    <field name="asset_id" />
+                    <field name="asset_id" domain="[('product_id', '=', product_id)]"
+							attrs="{'readonly': [('asset_check', '=', False)]}" />
+					<field name="asset_check" invisible="True" />
+					<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
+							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
+					<field name="kit_mem_check" invisible="True" />
                     <field name="initial_qty" />
                     <field name="quantity" />
                     <field name="product_uom" readonly="True" string="UOM" />

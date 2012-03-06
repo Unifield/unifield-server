@@ -27,23 +27,30 @@ import time
 class stock_partial_move_memory_out(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     
-    def _get_checks_asset(self, cr, uid, ids, name, arg, context=None):
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
-        complete asset boolean
+        multi fields function method
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         result = {}
-        for id in ids:
-            result[id] = False
-            
-        for out in self.browse(cr, uid, ids, context=context):
-            result[out.id] = out.product_id.subtype == 'asset'
-            
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {'kit_mem_check': False}
+            # we want the possibility to link a composition list if
+            # - the product is a kit AND
+            # - the product is not perishable nor batch management
+            product = obj.product_id
+            if product.type == 'product' and product.subtype == 'kit' and not product.perishable:
+                result[obj.id].update({'kit_mem_check': True})
         return result
     
-    _columns = {
-        'asset_id' : fields.many2one('product.asset', string="Asset"),
-        'asset_check' : fields.function(_get_checks_asset, method=True, string='Asset Check', type='boolean', readonly=True),
-    }
+    _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit'),
+                'kit_mem_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals'),
+                }
     
 stock_partial_move_memory_out()
     
@@ -59,12 +66,12 @@ class stock_partial_move(osv.osv_memory):
     
     def __create_partial_move_memory(self, move):
         '''
-        add the asset_id
+        add the composition_list_id
         '''
         move_memory = super(stock_partial_move, self).__create_partial_move_memory(move)
         assert move_memory is not None
         
-        move_memory.update({'asset_id' : move.asset_id.id})
+        move_memory.update({'composition_list_id' : move.composition_list_id.id})
         
         return move_memory
     
@@ -81,8 +88,8 @@ class stock_partial_move(osv.osv_memory):
         p_moves = kwargs.get('p_moves')
         assert p_moves, 'p_moves is missing'
         
-        # update asset_id
-        partial_datas['move%s' % (move.id)].update({'asset_id': p_moves[move.id].asset_id.id,})
+        # update composition_list_id
+        partial_datas['move%s' % (move.id)].update({'composition_list_id': p_moves[move.id].composition_list_id.id,})
         
         return partial_datas
 

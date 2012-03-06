@@ -105,6 +105,7 @@ class create_picking(osv.osv_memory):
                 'line_number': move.line_number,
                 'product_id' : move.product_id.id,
                 'asset_id': move.asset_id.id, 
+                'composition_list_id': move.composition_list_id.id,
                 'quantity' : move.product_qty,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
@@ -335,6 +336,7 @@ class create_picking(osv.osv_memory):
                                                              'product_uom': move.product_uom.id,
                                                              'prodlot_id': move.prodlot_id.id,
                                                              'asset_id': move.asset_id.id,
+                                                             'composition_list_id': move.composition_list_id.id,
                                                              'move_id': move.move_id.id,
                                                              'qty_per_pack': move.qty_per_pack,
                                                              'from_pack': move.from_pack,
@@ -529,6 +531,7 @@ class create_picking(osv.osv_memory):
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
                                                                                    'asset_id': move.asset_id.id,
+                                                                                   'composition_list_id': move.composition_list_id.id,
                                                                                    })
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
@@ -608,6 +611,7 @@ class create_picking(osv.osv_memory):
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
                                                                                'asset_id': move.asset_id.id,
+                                                                               'composition_list_id': move.composition_list_id.id,
                                                                                })
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
@@ -692,6 +696,7 @@ class create_picking(osv.osv_memory):
                                                                'product_uom': move.product_uom.id,
                                                                'prodlot_id': move.prodlot_id.id,
                                                                'asset_id': move.asset_id.id,
+                                                               'composition_list_id': move.composition_list_id.id,
                                                                'qty_to_return': move.qty_to_return,
                                                                }
                     

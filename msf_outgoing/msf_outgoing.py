@@ -1970,6 +1970,7 @@ class stock_picking(osv.osv):
                                                                 'product_qty': partial['product_qty'],
                                                                 'prodlot_id': partial['prodlot_id'],
                                                                 'asset_id': partial['asset_id'],
+                                                                'composition_list_id': partial['composition_list_id'],
                                                                 'backmove_id': move.id}, context=context)
                 # decrement the initial move, cannot be less than zero
                 initial_qty = max(initial_qty - count, 0)
@@ -2055,14 +2056,16 @@ class stock_picking(osv.osv):
                         # update existing move
                         move_obj.write(cr, uid, [move.id], {'product_qty': partial['product_qty'],
                                                             'prodlot_id': partial['prodlot_id'],
-                                                            'asset_id': partial['asset_id']}, context=context)
+                                                            'asset_id': partial['asset_id'],
+                                                            'composition_list_id': partial['composition_list_id']}, context=context)
                     else:
                         # split happend during the validation
                         # copy the stock move and set the quantity
                         new_move = move_obj.copy(cr, uid, move.id, {'state': 'assigned',
                                                                     'product_qty': partial['product_qty'],
                                                                     'prodlot_id': partial['prodlot_id'],
-                                                                    'asset_id': partial['asset_id']}, context=context)
+                                                                    'asset_id': partial['asset_id'],
+                                                                    'composition_list_id': partial['composition_list_id']}, context=context)
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the validation does not correspond to the picking ticket quantity
@@ -2200,10 +2203,11 @@ class stock_picking(osv.osv):
                         for partial in partial_datas_ppl[pick.id][from_pack][to_pack][move]:
                             # {'asset_id': False, 'weight': False, 'product_id': 77, 'product_uom': 1, 'pack_type': False, 'length': False, 'to_pack': 1, 'height': False, 'from_pack': 1, 'prodlot_id': False, 'qty_per_pack': 18.0, 'product_qty': 18.0, 'width': False, 'move_id': 179}
                             # integrity check
-                            partial['product_id'] == moves[move].product_id.id
-                            partial['asset_id'] == moves[move].asset_id.id
-                            partial['product_uom'] == moves[move].product_uom.id
-                            partial['prodlot_id'] == moves[move].prodlot_id.id
+                            assert partial['product_id'] == moves[move].product_id.id
+                            assert partial['asset_id'] == moves[move].asset_id.id
+                            assert partial['composition_list_id'] == moves[move].composition_list_id.id
+                            assert partial['product_uom'] == moves[move].product_uom.id
+                            assert partial['prodlot_id'] == moves[move].prodlot_id.id
                             # dictionary of new values, used for creation or update
                             # - qty_per_pack is a function at stock move level
                             fields = ['product_qty', 'from_pack', 'to_pack', 'pack_type', 'length', 'width', 'height', 'weight']

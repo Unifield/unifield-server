@@ -285,10 +285,16 @@ class composition_kit(osv.osv):
         """
         if context is None:
             context = {}
-        # fields to be modified
-        list = ['<field name="item_lot"/>', '<field name="item_exp"/>']
+        # the search view depends on the type we want to display
+        if view_type == 'search' and not context.get('composition_type', False):
+            # view search not from a menu -> picking process wizard, we are looking for composition list - by default the theoretical search view is displayed
+            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_filter')
+            if view:
+                view_id = view[1]
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        # fields to be modified
+        list = ['<field name="item_lot"/>', '<field name="item_exp"/>']
         # columns depending on type - fields from one2many field
         if view_type == 'form' and context.get('composition_type', False) == 'theoretical':
             replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
@@ -296,7 +302,7 @@ class composition_kit(osv.osv):
             result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
         
         list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>', '<field name="composition_reference"/>', '<field name="composition_combined_ref_lot"/>']
-        # columns from kit composition tree
+        # columns from kit composition tree - if we display from theoretical menu or diplay the search view of version_id from real_filter
         if view_type == 'tree' and (context.get('composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'real' and context.get('from_filter', False))):
             replace_text = result['arch']
             replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
@@ -873,6 +879,26 @@ class stock_move(osv.osv):
                                 composition_expiry_check=composition_expiry_check,
                                 )
                 }
+        
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_move, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        assert defaults is not None
+        
+        kit_id = partial_datas.get('move%s'%(move.id), False).get('composition_list_id')
+        if kit_id:
+            defaults.update({'composition_list_id': kit_id})
+        
+        return defaults
     
     _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit', readonly=True)}
 
@@ -1007,3 +1033,30 @@ class stock_location(osv.osv):
         return data
     
 stock_location()
+
+
+class stock_picking(osv.osv):
+    '''
+    treat the composition list
+    '''
+    _inherit = 'stock.picking'
+
+    def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
+        '''
+        hook to update defaults data
+        '''
+        # variable parameters
+        move = kwargs.get('move')
+        assert move, 'missing move'
+        partial_datas = kwargs.get('partial_datas')
+        assert partial_datas, 'missing partial_datas'
+        
+        # calling super method
+        defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
+        kit_id = partial_datas.get('move%s'%(move.id), False).get('composition_list_id')
+        if kit_id:
+            defaults.update({'composition_list_id': kit_id})
+        
+        return defaults
+
+stock_picking()

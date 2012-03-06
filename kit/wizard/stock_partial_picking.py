@@ -29,13 +29,13 @@ class stock_partial_picking(osv.osv_memory):
     
     def __create_partial_picking_memory(self, picking, pick_type):
         '''
-        add the asset_id
+        add the composition_list_id
         NOTE: the name used here : picking is WRONG. it is in fact a stock.move object
         '''
         move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(picking, pick_type)
         assert move_memory is not None
         
-        move_memory.update({'asset_id' : picking.asset_id.id})
+        move_memory.update({'composition_list_id' : picking.composition_list_id.id})
         
         return move_memory
     
@@ -50,11 +50,9 @@ class stock_partial_picking(osv.osv_memory):
         move = kwargs.get('move')
         assert move, 'move is missing'
         
-        # update asset_id
-        partial_datas['move%s' % (move.move_id.id)].update({'asset_id': move.asset_id.id,})
+        # update composition_list_id
+        partial_datas['move%s' % (move.move_id.id)].update({'composition_list_id': move.composition_list_id.id,})
         
         return partial_datas
 
 stock_partial_picking()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
