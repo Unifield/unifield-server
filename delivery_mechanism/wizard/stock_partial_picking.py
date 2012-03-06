@@ -143,7 +143,7 @@ class stock_partial_picking(osv.osv_memory):
         '''
         change the function name to do_incoming_shipment
         '''
-        res = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
+        res = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         picking_obj = self.pool.get('stock.picking')
         picking_id = context.get('active_ids')
         if picking_id:
