@@ -592,7 +592,8 @@ TreeNode.prototype = {
         }
 
         MochiKit.Signal.signal(self.tree, 'onNodeSelect', evt, this);
-        if (evt) {
+
+        if (evt && ctr) {
             return evt.stop();
         }
     },
