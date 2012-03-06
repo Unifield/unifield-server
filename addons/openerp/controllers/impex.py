@@ -234,7 +234,7 @@ class ImpEx(SecuredController):
             if is_importing and (value.get('type') not in ('reference',)) and (not value.get('readonly') \
                         or not dict(value.get('states', {}).get('draft', [('readonly', True)])).get('readonly', True)):
 
-                record.update(id=id, items={'name': nm},
+                record.update(id=id, items={'name': nm, 'kind': value.get('type', '')},
                               action='javascript: void(0)', target=None,
                               icon=None, children=[],
                               required=value.get('required', False))
@@ -243,7 +243,7 @@ class ImpEx(SecuredController):
 
             elif not is_importing:
 
-                record.update(id=id, items={'name': nm},
+                record.update(id=id, items={'name': nm, 'kind': value.get('type', '')},
                               action='javascript: void(0)', target=None,
                               icon=None, children=[])
                 records.append(record)
@@ -363,13 +363,13 @@ class ImpEx(SecuredController):
         return rec(fields)
     
     @expose(template="/openerp/controllers/templates/expxml.mako")
-    def export_html(self, fields, result, view_name):
+    def export_html(self, fields, kind, result, view_name):
         cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
-        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
+        return {'fields': fields, 'kind': kind, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
 
 
     @expose(content_type="application/octet-stream")
-    def export_data(self, fname, fields, import_compat=False, export_format='csv', **kw):
+    def export_data(self, fname, fields, import_compat=False, export_format='csv', kind=[], **kw):
 
         params, data_index = TinyDict.split(kw)
         proxy = rpc.RPCProxy(params.model)
@@ -401,7 +401,7 @@ class ImpEx(SecuredController):
         if import_compat == "1":
             params.fields2 = flds
         if export_format == "excel":
-            return self.export_html(params.fields2, result, view_name)
+            return self.export_html(params.fields2, params.kind, result, view_name)
         return export_csv(params.fields2, result)
 
     @expose(template="/openerp/controllers/templates/imp.mako")
