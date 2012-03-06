@@ -368,6 +368,12 @@ class stock_move(osv.osv):
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
     }
     
+    def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
+        '''
+        Change the state of the chained move
+        '''
+        return {'state': 'cancel'}, 'context' in kwargs and kwargs['context'].update({'call_unlink': True}) or {}
+    
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
