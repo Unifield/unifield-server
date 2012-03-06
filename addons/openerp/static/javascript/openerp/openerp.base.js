@@ -155,7 +155,8 @@ function doLoadingSuccess(app, url) {
         // Only auto-call form onchanges if we're on a new object, existing
         // objects should not get their onchange callbacks called
         // automatically on edition
-        if (jQuery('#_terp_id').val() == 'False') {
+        val = jQuery('#_terp_id').val();
+        if (val == 'False' || val == '') {
             initial_onchange_triggers();
         }
     };

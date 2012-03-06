@@ -40,7 +40,7 @@
 
 .grid-cell.selector {
     width: 1%;
-    max-width: 8px;
+    max-width: 12px;
     min-width: 8px;
     text-align: center;
     vertical-align: middle;

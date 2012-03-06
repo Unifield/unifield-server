@@ -158,53 +158,6 @@
                                         </ul>
                                     </div>
                                 </td>
-                                <td class="tertiary">
-                                    % if len(welcome_messages):
-                                        <div class="sideheader-a">
-                                            <h2>${_("System Logs")}</h2>
-                                        </div>
-                                        <div class="box-a" id="system-logs">
-                                            <table width="100%">
-                                            % for welcome_message in welcome_messages:
-                                                <tr>
-                                                    <td colspan="${ '1' if show_close_btn else '2'}">
-                                                        ${welcome_message[1]|n}
-                                                    </td>
-                                                    % if show_close_btn:
-                                                    <td>
-                                                        <a id="system-log-${welcome_message[0]}" href="${py.url('/openerp/remove_log')}" class="close-system-log">
-                                                            <img id="closeServerLog" style="cursor: pointer;" align="right"
-                                                             src="/openerp/static/images/attachments-a-close.png" title="Close">
-                                                        </a>
-                                                    </td>
-                                                    % endif
-                                                </tr>
-                                            % endfor
-                                            </table>
-                                        </div>
-                                    % endif
-                                    <div class="sideheader-a">
-                                        <a href="${py.url('/openerp/widgets/add')}"
-                                           id="add_user_widget" class="button-a"
-                                                style="right: 1px;">${_("More")}</a>
-                                        <h2>${_("Widgets")}</h2>
-                                    </div>
-                                    <div class="box-a" id="user_widgets">
-                                        % for widget in widgets:
-                                            <div class="sideheader-a" style="padding: 0">
-                                                % if widget['removable']:
-                                                    <a id="${widget['user_widget_id']}"
-                                                       href="${py.url('/openerp/widgets/remove')}"
-                                                       class="close">${_("Close")}</a>
-                                                % endif
-                                                <h3>${widget['title']}</h3>
-                                            </div>
-                                            <div class="clean-a">
-                                                ${widget['content']|n}
-                                            </div>
-                                        % endfor
-                                    </div>
-                                </td>
                             </tr>
                         </table>
                     </td>

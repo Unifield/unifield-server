@@ -10,7 +10,7 @@
 <%def name="make_editors(data=None)">
     % if editable and editors:
         <tr class="grid-row editors" record="${(data and data['id']) or -1}">
-            % if selector and not hide_delete_button:
+            % if selector:
                 <td class="grid-cell selector">&nbsp;</td>
             % endif
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
@@ -19,9 +19,6 @@
                     ${editors[field].display()}
                 % endfor
                 <!-- end of hidden fields -->
-                <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
-                    class="listImage editors" border="0" title="${_('Update')}"
-                    onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
             % for i, (field, field_attrs) in enumerate(headers):
                 % if field == 'button':
@@ -37,9 +34,9 @@
                 % endif
             % endfor
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
-                <img alt="delete record" src="/openerp/static/images/iconset-b-remove.gif"
-                    class="listImage editors" border="0" title="${_('Cancel')}"
-                    onclick="new ListView('${name}').reload()"/>
+                <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
+                    class="listImage editors" border="0" title="${_('Update')}"
+                    onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
         </tr>
     % endif
@@ -53,23 +50,33 @@
             row_class = 'grid-row-odd'
     %>
     % if editors:
-        <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}">
+        <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}"
+        % if data['id'] in notselectable: 
+            notselectable=1 
+        % endif 
+        >
     % else:
-        <tr class="grid-row ${row_class}" record="${data['id']}">
+        <tr class="grid-row ${row_class}" record="${data['id']}" 
+        % if data['id'] in notselectable: 
+            notselectable=1 
+        % endif 
+        >
     % endif
-    % if selector and not hide_delete_button:
+    % if selector:
         <td class="grid-cell selector">
+        % if not data['id'] or data['id'] not in notselectable:
             % if not m2m:
-            <%
-                selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
-                if selector == "radio":
-                    selector_click += " do_select();"
-            %>
-            <input type="${selector}" class="${selector} grid-record-selector"
-                id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
-                value="${data['id']}"
-                onclick="${selector_click}"/>
+                <%
+                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
+                    if selector == "radio":
+                        selector_click += " do_select();"
+                %>
+                <input type="${selector}" class="${selector} grid-record-selector"
+                    id="${name}/${data['id']}" name="${(checkbox_name or None) and name}"
+                    value="${data['id']}"
+                    onclick="${selector_click}"/>
             % endif
+        % endif
         </td>
     % endif
     % for field, field_attrs in hiddens:
@@ -215,7 +222,7 @@
                     <table id="${name}_grid" class="grid" width="100%" cellspacing="0" cellpadding="0" style="background: none;">
                         <thead>
                             <tr class="grid-header">
-                                % if selector and not hide_delete_button:
+                                % if selector:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox' and not m2m:
                                             <input type="checkbox" class="checkbox grid-record-selector" onclick="new ListView('${name}').checkAll(!this.checked)"/>
@@ -262,7 +269,7 @@
                                 % else:
                                     <tr class="grid-row">
                                 % endif
-                                % if selector and not hide_delete_button:
+                                % if selector:
                                     <td width="1%" class="grid-cell selector">&nbsp;</td>
                                 % endif
                                 % if editable:
@@ -281,7 +288,7 @@
                                 </tr>
                             % endfor
                         </tbody>
-                        % if field_total:
+                        % if field_total or field_real_total:
                             <tfoot>
                                 <tr class="field_sum">
                                     % if selector:
@@ -297,6 +304,12 @@
                                             <td class="grid-cell" id="total_sum_value" nowrap="nowrap">
                                                 % if 'sum' in field_attrs:
                                                     % for key, val in field_total.items():
+                                                        % if field == key:
+                                                            <span class="sum_value_field" id="${field}">${val[1]}</span>
+                                                        % endif
+                                                    % endfor
+                                                % elif 'real_sum' in field_attrs:
+                                                    % for key, val in field_real_total.items():
                                                         % if field == key:
                                                             <span class="sum_value_field" id="${field}">${val[1]}</span>
                                                         % endif
@@ -365,7 +378,8 @@
                                     var $this = jQuery(this);
                                     if(jQuery(event.target).is('img, input, a.listImage-container')
                                      || view_type != 'tree'
-                                     || !$this.attr('record')) {
+                                     || !$this.attr('record')
+                                     || $this.attr('notselectable') ) {
                                         return;
                                     }
                                     do_select($this.attr('record'), '${name}');
