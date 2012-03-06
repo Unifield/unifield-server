@@ -592,6 +592,9 @@ TreeNode.prototype = {
         }
 
         MochiKit.Signal.signal(self.tree, 'onNodeSelect', evt, this);
+        if (evt) {
+            return evt.stop();
+        }
     },
 
     onButtonClick : function() {
