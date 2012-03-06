@@ -113,6 +113,61 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
     
+    def reset_to_version(self, cr, uid, ids, context=None):
+        '''
+        open confirmation wizard
+        '''
+        # data
+        name = _("Reset Items to Version Reference. Are you sure?")
+        model = 'confirm'
+        step = 'default'
+        question = 'The item list of current composition list will be reset to reference list from the selected Version. Are you sure ?'
+        clazz = 'composition.kit'
+        func = 'do_reset_to_version'
+        args = [ids]
+        kwargs = {}
+        # to reset to version
+        for obj in self.browse(cr, uid, ids, context=context):
+            # must be a real kit
+            if obj.composition_type != 'real':
+                raise osv.except_osv(_('Warning !'), _('Only composition lists can be reset to a version.'))
+            # a version must have been selected
+            if not obj.composition_version_id:
+                raise osv.except_osv(_('Warning !'), _('The composition list is not linked to any version.'))
+        
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                callback={'clazz': clazz,
+                                                                                                          'func': func,
+                                                                                                          'args': args,
+                                                                                                          'kwargs': kwargs}))
+        return res
+    
+    def do_reset_to_version(self, cr, uid, ids, context=None):
+        '''
+        remove all items and create one item for each item from the referenced version
+        '''
+        # objects
+        item_obj = self.pool.get('composition.item')
+        # unlink all composition items corresponding to selected kits
+        item_ids = item_obj.search(cr, uid, [('item_kit_id', 'in', ids)], context=context)
+        item_obj.unlink(cr, uid, item_ids, context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            # copy all items from the version
+            for item_v in obj.composition_version_id.composition_item_ids:
+                values = {'item_module': item_v.item_module,
+                          'item_product_id': item_v.item_product_id.id,
+                          'item_qty': item_v.item_qty,
+                          'item_uom_id': item_v.item_uom_id.id,
+                          'item_lot': item_v.item_lot,
+                          'item_exp': item_v.item_exp,
+                          'item_kit_id': obj.id,
+                          'item_description': item_v.item_description,
+                          }
+                item_obj.create(cr, uid, values, context=context)
+        return True
+    
     def _generate_item_mirror_objects(self, cr, uid, ids, wizard_data, context=None):
         """
         Generate memory objects as mirror for kit items, which can be modified (batch number policy needs modification,
