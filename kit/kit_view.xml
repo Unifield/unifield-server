@@ -363,7 +363,8 @@
 			<field name="arch" type="xml">
 				<data>
 					<field name="price_subtotal" position="after">
-						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" />
+						<field name="kit_pol_check" invisible="True" />
+						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible':[('kit_pol_check', '=', False)]}" />
 					</field>
 				</data>
 			</field>
@@ -378,7 +379,7 @@
             <field name="arch" type="xml">
             	<data>
 	                <field name="company_id" position="after">
-						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" colspan="2" />
+						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" colspan="2" invisible="True" />
 					</field>
                 </data>
             </field>

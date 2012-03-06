@@ -35,6 +35,7 @@
         'wizard/substitute_view.xml',
         'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
+        'wizard/kit_selection_view.xml',
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',

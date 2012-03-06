@@ -1115,3 +1115,56 @@ class stock_picking(osv.osv):
         return defaults
 
 stock_picking()
+
+
+class purchase_order_line(osv.osv):
+    '''
+    add theoretical de-kitting capabilities
+    '''
+    _inherit = 'purchase.order.line'
+    
+    def de_kitting(self, cr, uid, ids, context=None):
+        '''
+        open theoretical kit selection
+        '''
+        if context is None:
+            context = {}
+        # data
+        name = _("Theoretical Kit Selection")
+        model = 'kit.selection'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
+        product_id = data['product_id'][0]
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, product_id=product_id))
+        return res
+
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        kit_obj = self.pool.get('composition.kit')
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {'kit_pol_check': False}
+            # we want the possibility to explose the kit within the purchase order
+            # - the product is a kit AND
+            # - at least one theoretical kit exists for this product
+            product = obj.product_id
+            if product.type == 'product' and product.subtype == 'kit':
+                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
+                if kit_ids:
+                    result[obj.id].update({'kit_pol_check': True})
+        return result
+    
+    _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals'),
+                }
+
+purchase_order_line()
