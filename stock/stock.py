@@ -2052,6 +2052,12 @@ class stock_move(osv.osv):
                 last_track = last_track[-1]
             self.write(cr, uid, ids, {'tracking_id': last_track})
         return True
+    
+    def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
+        '''
+        Change the state of the chained move
+        '''
+        return {'state': 'confirmed'}, kwargs['context']
 
     #
     # Cancel move => cancel others move and pickings
@@ -2071,7 +2077,9 @@ class stock_move(osv.osv):
                 if move.picking_id:
                     pickings[move.picking_id.id] = True
             if move.move_dest_id and move.move_dest_id.state == 'waiting':
-                self.write(cr, uid, [move.move_dest_id.id], {'state': 'confirmed'})
+                state, c = self._hook_move_cancel_state(cr, uid, context=context)
+                context.update(c)
+                self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
