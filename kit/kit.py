@@ -873,8 +873,9 @@ class stock_move(osv.osv):
                                 composition_expiry_check=composition_expiry_check,
                                 )
                 }
-        
     
+    _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit', readonly=True)}
+
 stock_move()
 
 

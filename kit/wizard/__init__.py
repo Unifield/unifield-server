@@ -20,3 +20,5 @@
 ##############################################################################
 
 import substitute
+import stock_partial_move
+import stock_partial_picking

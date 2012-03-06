@@ -1947,7 +1947,7 @@ class stock_picking(osv.osv):
             # a sequence for each draft picking ticket is used for the picking ticket
             sequence = pick.sequence_id
             ticket_number = sequence.get_id(test='id', context=context)
-            new_pick_id = self.copy(cr, uid, pick.id, {'name': pick.name + '-' + ticket_number,
+            new_pick_id = self.copy(cr, uid, pick.id, {'name': pick.name or 'NoName/000' + '-' + ticket_number,
                                                        'backorder_id': pick.id,
                                                        'move_lines': []}, context=dict(context, allow_copy=True,))
             # create stock moves corresponding to partial datas

@@ -367,8 +367,8 @@
 			</field>
 		</record>
 		
-		<record id="analytic_purchase_order_line_form_view" model="ir.ui.view">
-            <field name="name">analytic.purchase.order.line.form.view</field>
+		<record id="purchase_order_line_form_view" model="ir.ui.view">
+            <field name="name">purchase.order.line.form.view</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
@@ -381,6 +381,40 @@
                 </data>
             </field>
         </record>
+        
+        <!-- internal moves -->
+		<record id="view_picking_form" model="ir.ui.view">
+			<field name="name">stock.picking.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="stock.view_picking_form" />
+			<field name="priority">1</field>
+			<field name="arch" type="xml">
+				<data>
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
+						position="after">
+						<field name="composition_list_id" />
+					</xpath>
+				</data>
+			</field>
+		</record>
+
+		<!-- delivery orders -->
+		<record id="view_picking_out_form" model="ir.ui.view">
+			<field name="name">stock.picking.out.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="stock.view_picking_out_form" />
+			<field name="priority">1</field>
+			<field name="arch" type="xml">
+				<data>
+					<xpath expr="//tree[@string='Stock Moves']/field[@name='product_id']"
+						position="after">
+						<field name="composition_list_id" />
+					</xpath>
+				</data>
+			</field>
+		</record>
     	
     </data>
 </openerp>
