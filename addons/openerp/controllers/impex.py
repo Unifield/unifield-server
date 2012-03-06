@@ -29,9 +29,8 @@ from openerp.widgets import treegrid
 
 from openobject import tools
 from openobject.tools import expose, redirect, ast
-import simplejson
-import time
-from openobject.i18n import format
+
+
 
 
 def datas_read(ids, model, flds, context=None):
@@ -108,16 +107,17 @@ class ImpEx(SecuredController):
     _cp_path = "/openerp/impex"
 
     @expose(template="/openerp/controllers/templates/exp.mako")
-    def exp(self, import_compat="0", **kw):
+    def exp(self, import_compat="1", **kw):
 
         params, data = TinyDict.split(kw)
         ctx = dict((params.context or {}), **rpc.session.context)
+
         views = {}
         if params.view_mode and params.view_ids:
             for i, view in enumerate(params.view_mode):
                 views[view] = params.view_ids[i]
 
-        export_format = data.get('export_format', 'excel')
+
         exports = rpc.RPCProxy('ir.exports')
 
         headers = [{'string' : 'Name', 'name' : 'name', 'type' : 'char'}]
@@ -136,19 +136,9 @@ class ImpEx(SecuredController):
             exports.search([('resource', '=', params.model)], context=ctx),
             [], ctx)
 
-        default = []
-        if params._terp_listheaders:
-            default = [x.split(',',1) for x in params._terp_listheaders]
-        elif kw.get('_terp_fields2') and kw.get('fields'):
-            default = []
-            for i in range(0, len(kw.get('fields'))):
-                if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
-                    continue
-                default.append([kw['fields'][i], params.fields2[i]])
-        default = simplejson.dumps(default)
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
-                    tree=tree, import_compat=import_compat, default=default, export_format=export_format)
+                    tree=tree, import_compat=import_compat)
 
     @expose()
     def save_exp(self, **kw):
@@ -361,16 +351,9 @@ class ImpEx(SecuredController):
             return _fields
 
         return rec(fields)
-    
-    @expose(template="/openerp/controllers/templates/expxml.mako")
-    def export_html(self, fields, result, view_name):
-        cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
-        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
-
 
     @expose(content_type="application/octet-stream")
-    def export_data(self, fname, fields, import_compat=False, export_format='csv', **kw):
+    def export_data(self, fname, fields, import_compat=False, **kw):
 
         params, data_index = TinyDict.split(kw)
         proxy = rpc.RPCProxy(params.model)
@@ -388,7 +371,6 @@ class ImpEx(SecuredController):
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
 
-        view_name = ctx.get('_terp_view_name', '')
         domain = params.seach_domain or []
 
         ids = params.ids or proxy.search(domain, 0, 0, 0, ctx)
@@ -399,10 +381,9 @@ class ImpEx(SecuredController):
             return False
         result = result.get('datas',[])
 
-        if import_compat == "1":
+        if import_compat:
             params.fields2 = flds
-        if export_format == "excel":
-            return self.export_html(params.fields2, result, view_name)
+
         return export_csv(params.fields2, result)
 
     @expose(template="/openerp/controllers/templates/imp.mako")

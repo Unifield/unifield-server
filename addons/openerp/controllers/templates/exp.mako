@@ -66,10 +66,6 @@
             var id = jQuery('#saved_fields').val();
             if(!id) { reload([]); return; }
 
-            if (id == "default") {
-                reload_default();
-                return;
-            }
             var req = jQuery.get('/openerp/impex/namelist', {
                 '_terp_id': id,
                 '_terp_model': jQuery('#_terp_model').val()
@@ -83,7 +79,6 @@
         }
 
         function do_import_cmp(){
-            do_pre_submit()
             jQuery('#view_form').attr({
                 'action': openobject.http.getURL('/openerp/impex/exp', {
                     'import_compat': jQuery('#import_compat').val()
@@ -108,7 +103,7 @@
             });
         }
 
-        function do_pre_submit(){
+        function do_export(form){
 
             var options = openobject.dom.get('fields').options;
 
@@ -124,19 +119,9 @@
                 fields2 = fields2.concat('"' + o.text + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
-        }
-
-        function do_export(form){
-            do_pre_submit();
-            if (jQuery('#export_format').val() == 'excel') {
-                file_name = "data.xls";
-            } else {
-                file_name = "data.csv";
-            }
             jQuery(idSelector(form)).attr('action', openobject.http.getURL(
-                '/openerp/impex/export_data/'+file_name)
+                '/openerp/impex/export_data/data.csv')
             ).submit();
-
         }
 
         jQuery(document).ready(function () {
@@ -145,14 +130,7 @@
             window.frameElement.set_title(
                 $header.text());
             $header.closest('.side_spacing').parent().remove();
-            % if default:
-            reload_default();
-            % endif
         });
-
-        function reload_default(){
-            reload(${default|n});
-        }
     </script>
 </%def>
 
@@ -194,13 +172,6 @@
                                     >${_("Export all Data")}</option>
                             </select>
                         </td>
-                        <td class="label"><label for="export_format">${_("Format:")}</label></td>
-                        <td>
-                            <select id="export_format" name="export_format">
-                                <option value="excel" style="padding-right: 15px;">${_("Excel")}</option>
-                                <option value="csv" ${'selected=selected' if export_format == "csv" else ''}>${_("CSV")}</option>
-                            </select>
-                        </td>
                     </tr>
                 </table>
             </td>
@@ -225,9 +196,6 @@
                                 <select id="saved_fields" name="saved_exports" onchange="do_select();"
                                         style="width: 60%;">
                                     <option></option>
-                                    % if default:
-                                        <option value="default">${_('Default view fields')}</option>
-                                    % endif
                                     % for export in existing_exports:
                                         <option value="${export['id']}">${export['name']}</option>
                                     % endfor
