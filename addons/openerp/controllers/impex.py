@@ -365,6 +365,7 @@ class ImpEx(SecuredController):
     @expose(template="/openerp/controllers/templates/expxml.mako")
     def export_html(self, fields, result, view_name):
         cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
+        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
         return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
 
 
