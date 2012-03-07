@@ -114,6 +114,7 @@
             key2="client_action_multi"
             view_mode="form"
             view_type="form"
+            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
             target="new"/>
 
     <!-- Mass reallocation wizard -->

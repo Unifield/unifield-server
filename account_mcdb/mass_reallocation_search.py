@@ -73,6 +73,7 @@ class mass_reallocation_search(osv.osv_memory):
         #if len(valid_ids) == 1:
         #    operator = '='
         #domain = [('id', 'in', valid_ids)]
+        context['analytic_account_from'] = ids[0]
         return {
             'name': 'Mass reallocation search for' + ' ' + account.name,
             'type': 'ir.actions.act_window',

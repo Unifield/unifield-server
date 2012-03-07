@@ -112,6 +112,9 @@ class mass_reallocation_wizard(osv.osv_memory):
         # Default behaviour
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
         # Populate line_ids field
+        if context.get('analytic_account_from'):
+            res['state'] = 'blocked'
+            res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
         return res
