@@ -34,6 +34,7 @@ from sale_override import SALE_ORDER_STATE_SELECTION
 
 _SELECTION_PO_CFT = [
                      ('po', 'Purchase Order'),
+                     ('dpo', 'Direct Purchase Order'),
                      ('cft', 'Tender'),
                      ]
 
@@ -391,7 +392,7 @@ class sourcing_line(osv.osv):
         for sl in self.browse(cr, uid, ids, context):
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
-            if sl.type == 'make_to_order' and sl.po_cft == 'po' and not sl.supplier:
+            if sl.type == 'make_to_order' and sl.po_cft in ('po', 'dpo') and not sl.supplier:
                 raise osv.except_osv(_('Warning'), _("The supplier must be chosen before confirming the line"))
             
             # set the corresponding sale order line to 'confirmed'
@@ -524,6 +525,8 @@ class sale_order(osv.osv):
         
         # new field representing selected partner from sourcing tool
         result['supplier'] = line.supplier and line.supplier.id or False
+        if line.po_cft:
+            result.update({'po_cft': line.po_cft})
         # uf-583 - the location defined for the procurementis input instead of stock
         order = kwargs['order']
         result['location_id'] = order.shop_id.warehouse_id.lot_input_id.id,
@@ -789,6 +792,7 @@ class procurement_order(osv.osv):
     _description = "Procurement"
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
+        'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
     }
     
     def action_check_finished(self, cr, uid, ids):
@@ -818,7 +822,12 @@ class procurement_order(osv.osv):
                            ('state', '=', 'draft'),
                            ('delivery_requested_date', '=', values.get('delivery_requested_date'))]
         
-        if partner.po_by_project == 'project':
+        if procurement.po_cft == 'dpo':
+            purchase_domain.append(('order_type', '=', 'direct'))
+        else:
+            purchase_domain.append(('order_type', '!=', 'direct'))
+        
+        if partner.po_by_project == 'project' or procurement.po_cft == 'dpo':
             sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
             customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
             values.update({'customer_id': customer_id})
@@ -836,6 +845,8 @@ class procurement_order(osv.osv):
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
+            if procurement.po_cft == 'dpo':
+                values.update({'order_type': 'direct'})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
