@@ -548,6 +548,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
     elif method in ('unlink'):
         res_ids = args[2]
+        if isinstance(res_ids, (int, long)):
+            res_ids = [res_ids]
         model_name = model.name
         model_id = model.id
         old_values = {}
