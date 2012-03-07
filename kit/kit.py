@@ -62,6 +62,9 @@ class composition_kit(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
             if not obj.active:
                 raise osv.except_osv(_('Warning !'), _('Cannot complete inactive kit.'))
+            for item in obj.composition_item_ids:
+                if item.item_qty <= 0:
+                    raise osv.except_osv(_('Warning !'), _('Kit Items must have a quantity greater than 0.0.'))
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
     
@@ -341,11 +344,18 @@ class composition_kit(osv.osv):
         if context is None:
             context = {}
         # the search view depends on the type we want to display
-        if view_type == 'search' and not context.get('composition_type', False):
-            # view search not from a menu -> picking process wizard, we are looking for composition list - by default the theoretical search view is displayed
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_filter')
-            if view:
-                view_id = view[1]
+        if view_type == 'search':
+            if not context.get('composition_type', False) and not context.get('wizard_composition_type', False):
+                # view search not from a menu -> picking process wizard, we are looking for composition list - by default the theoretical search view is displayed
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_filter')
+                if view:
+                    view_id = view[1]
+            # second level flag for wizards
+            elif context.get('wizard_composition_type', False) == 'theoretical':
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'view_composition_kit_theoretical_filter')
+                if view:
+                    view_id = view[1]
+                 
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # fields to be modified
@@ -358,10 +368,11 @@ class composition_kit(osv.osv):
         
         list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>', '<field name="composition_reference"/>', '<field name="composition_combined_ref_lot"/>']
         # columns from kit composition tree - if we display from theoretical menu or diplay the search view of version_id from real_filter
-        if view_type == 'tree' and (context.get('composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'real' and context.get('from_filter', False))):
-            replace_text = result['arch']
-            replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
-            result['arch'] = replace_text
+        if view_type == 'tree':
+            if context.get('wizard_composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'theoretical' and not context.get('wizard_composition_type', False)):
+                replace_text = result['arch']
+                replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
+                result['arch'] = replace_text
         
         return result
     
@@ -1137,7 +1148,8 @@ class purchase_order_line(osv.osv):
         # open the selected wizard
         data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
         product_id = data['product_id'][0]
-        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, product_id=product_id))
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
+                                                                                                product_id=product_id))
         return res
 
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):

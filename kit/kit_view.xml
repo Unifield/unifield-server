@@ -154,7 +154,7 @@
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
-                    <field name="composition_version_id" select="1" context="{'from_filter': True}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
+                    <field name="composition_version_id" select="1" context="{'wizard_composition_type': 'theoretical'}" domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="composition_combined_ref_lot" select="1" />
                     <field name="composition_exp" select="1" />
                     <newline />
@@ -364,7 +364,8 @@
 				<data>
 					<field name="price_subtotal" position="after">
 						<field name="kit_pol_check" invisible="True" />
-						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible':[('kit_pol_check', '=', False)]}" />
+						<field name="po_state_stored" invisible="True" />
+						<button name="de_kitting" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}" />
 					</field>
 				</data>
 			</field>
