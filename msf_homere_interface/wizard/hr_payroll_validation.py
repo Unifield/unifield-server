@@ -120,6 +120,8 @@ class hr_payroll_validation(osv.osv):
                 'date': line.date,
                 'ref': line.ref,
                 'partner_id': line.partner_id and line.partner_id.id or False,
+                'employee_id': line.employee_id and line.employee_id.id or False,
+                'transfer_journal_id': line.journal_id and line.journal_id.id or False,
                 'account_id': line.account_id and line.account_id.id or False,
                 'debit': debit,
                 'credit': credit,
