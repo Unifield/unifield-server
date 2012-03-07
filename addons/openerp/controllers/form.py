@@ -997,7 +997,7 @@ class Form(SecuredController):
         if type is None:
             action_type = rpc.RPCProxy('ir.actions.actions').read(act_id, ['type'], context)['type']
             action = rpc.session.execute('object', 'execute', action_type, 'read', act_id, False, context)
-
+        print "---------------------", domain, kw
         if domain:
             if isinstance(domain, basestring):
                 domain = eval(domain)
