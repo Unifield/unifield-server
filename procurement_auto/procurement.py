@@ -87,6 +87,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'created_ok': fields.boolean(string='Created'),
     }
     
     _defaults = {
@@ -99,16 +100,19 @@ class stock_warehouse_automatic_supply(osv.osv):
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
-    def fill_lines(self, cr, uid, ids, context={}):
+    def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
-        self.write(cr, uid, ids, {'created_ok': True})    
+        if context is None:
+            context = {}
+        self.write(cr, uid, ids, {'created_ok': True})
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
 
             nom = False
+            field = False
             # Get all products for the defined nomenclature
             if report.nomen_manda_3:
                 nom = report.nomen_manda_3.id
@@ -141,11 +145,10 @@ class stock_warehouse_automatic_supply(osv.osv):
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
                     self.pool.get('stock.warehouse.automatic.supply.line').create(cr, uid, {'product_id': product.id,
-                                                                                    'product_uom_id': product.uom_id.id,
-                                                                                    'product_qty': 1.00,})
+                                                                                            'product_uom_id': product.uom_id.id,
+                                                                                            'product_qty': 1.00,
+                                                                                            'supply_id': report.id})
         
         self.write(cr, uid, ids, {'created_ok': False})    
         return {'type': 'ir.actions.act_window',
@@ -280,7 +283,7 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
         'product_qty': fields.float(digit=(16,2), string='Quantity to order', required=True),
-        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade')
+        'supply_id': fields.many2one('stock.warehouse.automatic.supply', string='Supply', ondelete='cascade', required=True)
     }
     
     _defaults = {
