@@ -62,7 +62,6 @@ class account_analytic_line(osv.osv):
                 left join financing_contract_contract contract on contract.format_id = fpline.contract_id
                 where contract.state in ('soft_closed', 'hard_closed') ''')
         ids = [x[0] for x in cr.fetchall()]
-        print ids
         return [('account_id', 'not in', ids)]
 
     _columns = {
