@@ -94,6 +94,11 @@ class stock_warehouse_order_cycle(osv.osv):
         'next_date': fields.related('frequence_id', 'next_date', string='Next scheduled date', readonly=True, type='date',
                                     store={'stock.warehouse.order.cycle': (lambda self, cr, uid, ids, context={}: ids, ['frequence_id'], 20),
                                            'stock.frequence': (_get_frequence_change, None, 20)}),
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
     }
     
     _defaults = {
@@ -105,6 +110,73 @@ class stock_warehouse_order_cycle(osv.osv):
         'order_coverage': lambda *a: 3,
     }
     
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context={}):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        self.write(cr, uid, ids, {'created_ok': True})    
+        for report in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+            products = []
+
+            nom = False
+            # Get all products for the defined nomenclature
+            if report.nomen_manda_3:
+                nom = report.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif report.nomen_manda_2:
+                nom = report.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif report.nomen_manda_1:
+                nom = report.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif report.nomen_manda_0:
+                nom = report.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if report.sublist_id:
+                for line in report.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+
+            # Check if products in already existing lines are in domain
+            products = []
+            for line in report.line_ids:
+                if line.product_id.id in product_ids:
+                    products.append(line.product_id.id)
+                else:
+                    self.pool.get('stock.warehouse.automatic.supply.line').unlink(cr, uid, line.id, context=context)
+
+            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already on the report
+                if product.id not in products:
+                    batch_mandatory = product.batch_management or product.perishable
+                    date_mandatory = not product.batch_management and product.perishable
+                    self.pool.get('product.product').create(cr, uid, {'product_id': product.id,
+                                                                                    'uom_id': product.uom_id.id,
+                                                                                    'consumed_qty': 0.00,
+                                                                                    'batch_mandatory': batch_mandatory,
+                                                                                    'date_mandatory': date_mandatory,
+                                                                                    'rac_id': report.id})
+        
+        self.write(cr, uid, ids, {'created_ok': False})    
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'product.product',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'target': 'dummy',
+                'context': context}
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
+
     def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, product_id, field='past'):
         '''
         Uncheck a box when the other is checked

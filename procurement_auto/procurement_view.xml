@@ -12,8 +12,8 @@
                         <separator string="General Information" />
                         <field name="name" />
                         <field name="sequence" />
-                        <field name="category_id" attrs="{'required': [('product_id', '=', False)]}"/>
-                        <field name="product_id" on_change="onchange_product_id(product_id)" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/>
+                        <!-- <field name="product_id" on_change="onchange_product_id(product_id)" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/> -->
+                        <field name="product_id" on_change="onchange_product_id(product_id)" />
                         <field name="product_uom_id" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
                         <field name="product_qty" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
                     </group>
@@ -36,6 +36,35 @@
                         <field name="active" />
                         <field name="procurement_id" />
                     </group>
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}" required="True"/>
+
+                    <group colspan="2" col="4">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <group colspan="4" col="4" attrs="{'invisible': [('product_id', '!=', False)]}">
                         <separator colspan="4" string="Order quantity by product" />
                         <field name="line_ids" nolabel="1" colspan="4">
@@ -58,7 +87,9 @@
                 <tree string="Automatic Supply">
                     <field name="sequence" select="1"/>
                     <field name="name" />
+                    <!-- 
                     <field name="category_id" />
+                     -->
                     <field name="product_id" />
                     <field name="warehouse_id" />
                     <field name="location_id" />
