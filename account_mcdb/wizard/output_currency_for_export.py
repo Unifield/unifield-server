@@ -33,10 +33,14 @@ class output_currency_for_export(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=False),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
         'export_format': fields.selection([('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
+        'domain': fields.text('Domain'),
+        'export_all': fields.boolean('Export only the selected items'),
     }
 
     _defaults = {
         'export_format': lambda *a: 'csv',
+        'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
+        'export_all': lambda *a: True,
     }
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
