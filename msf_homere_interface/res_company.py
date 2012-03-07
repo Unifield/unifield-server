@@ -21,9 +21,17 @@
 #
 ##############################################################################
 
-import res_company
-import hr
-import hr_payroll
-import wizard
+from osv import osv
+from osv import fields
 
+class res_company(osv.osv):
+    _name = 'res.company'
+    _inherit = 'res.company'
+
+    _columns = {
+        'salaries_default_account': fields.many2one('account.account', string="Salaries default account for Payroll entries", 
+            help="Default account for Payroll entries. This permits reconciliation of entries."),
+    }
+
+res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
