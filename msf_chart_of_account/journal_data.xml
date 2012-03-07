@@ -137,5 +137,18 @@
             <field name="type">cur_adj</field>
             <field name="default_debit_account_id" ref="msf_chart_of_account.6308" />
         </record>
+        
+        <record id="msf_accrual.accrual_journal" model="account.journal">
+            <field name="name">Accruals</field>
+            <field name="code">AC</field>
+            <field name="type">accrual</field>
+            <field name="instance_id" search="[]" use="name" model="res.company" />
+        </record>
+        
+        <record id="msf_accrual.analytic_accrual_journal" model="account.analytic.journal">
+            <field name="name">Accruals</field>
+            <field name="code">AC</field>
+            <field name="type">general</field>
+        </record>
     </data>
 </openerp>
