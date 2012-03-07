@@ -41,11 +41,19 @@
             <field name="code">HQ</field>
             <field name="type">hq</field>
         </record>
-        <record id="hr_journal" model="account.journal">
+
+        <record id="hr_analytic_journal" model="account.analytic.journal">
             <field name="name">HR</field>
             <field name="code">HR</field>
             <field name="type">hr</field>
         </record>
+        <record id="hr_journal" model="account.journal">
+            <field name="name">HR</field>
+            <field name="code">HR</field>
+            <field name="type">hr</field>
+            <field name="analytic_journal_id" ref="hr_analytic_journal"/>
+        </record>
+
         <record id="stock.stock_journal" model="account.journal">
             <field name="name">Stock</field>
             <field name="code">STO</field>
