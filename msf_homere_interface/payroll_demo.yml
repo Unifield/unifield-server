@@ -60,7 +60,7 @@
         # Entry 3
         vals = {
             'period_id': period_id,
-            'account_id': ref("msf_chart_of_account.4209"),
+            'account_id': ref("msf_chart_of_account.48200"),
             'employee_id_number': 'Salaries',
             'name': 'Salaries' + ' ' + self.pool.get('account.period').browse(cr, uid, period_id).name,
             'ref': 'staff position',
@@ -97,7 +97,7 @@
         # Valid Entry 3
         vals = {
             'period_id': period_id,
-            'account_id': ref("msf_chart_of_account.4209"),
+            'account_id': ref("msf_chart_of_account.48200"),
             'employee_id_number': 'Salaries',
             'name': 'Salaries' + ' ' + self.pool.get('account.period').browse(cr, uid, period_id).name,
             'ref': 'staff position',
