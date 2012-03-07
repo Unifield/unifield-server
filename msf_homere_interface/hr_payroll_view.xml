@@ -116,12 +116,22 @@
             <field name="view_id" ref="editable_view_employee_tree"/>
         </record>
 
+        <record id="action_employee_import_wizard" model="ir.actions.act_window">
+            <field name="name">Employee Update</field>
+            <field name="res_model">hr.payroll.employee.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="payroll_employee_import"/>
+            <field name="target">new</field>
+        </record>
+
     <!--
         Menu
     -->
         <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="13"/>
-        <menuitem string="Employee Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="3"/>
+        <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="2"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
+        <menuitem string="Employee Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
 
     </data>
 </openerp>
