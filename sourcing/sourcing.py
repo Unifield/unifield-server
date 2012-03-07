@@ -162,7 +162,7 @@ class sourcing_line(osv.osv):
         result = ids
         return result
     
-    def _get_fake(self, cr, uid, ids, context=None):
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = {}
@@ -199,6 +199,7 @@ class sourcing_line(osv.osv):
         'name': fields.char('Name', size=128),
         'sale_order_id': fields.many2one('sale.order', 'Sale Order', on_delete='cascade', readonly=True),
         'sale_order_line_id': fields.many2one('sale.order.line', 'Sale Order Line', on_delete='cascade', readonly=True),
+        'customer': fields.many2one('res.partner', 'Customer', readonly=True),
         'reference': fields.related('sale_order_id', 'name', type='char', size=128, string='Reference', readonly=True),
 #        'state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, string="State", store=False),
         'state': fields.function(_get_sourcing_vals, method=True, type='selection', selection=_SELECTION_SALE_ORDER_LINE_STATE, string='State', multi='get_vals_sourcing',
@@ -467,6 +468,8 @@ class sale_order(osv.osv):
                 # update the sourcing line
                 for sl in sol.sourcing_line_ids:
                     self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
+                    if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
+                        self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
         
         return super(sale_order, self).write(cr, uid, ids, vals, context)
         
@@ -579,7 +582,8 @@ class sale_order_line(osv.osv):
         'tax_id': [(6, 0, [])], 
         'type': 'make_to_stock', 
         'price_unit': 450.0, 
-        'address_allotment_id': False
+        'address_allotment_id': False,
+        'customer': partner_id,
         }
         '''
         if not context:
@@ -632,10 +636,12 @@ class sale_order_line(osv.osv):
         orderState = order.state
         orderPriority = order.priority
         orderCategory = order.categ
+        customer_id = order.partner_id.id
         
         values = {
                   'sale_order_id': vals['order_id'],
                   'sale_order_line_id': result,
+                  'customer_id': customer_id,
                   'supplier': sellerId,
                   'po_cft': pocft,
                   'estimated_delivery_date': estDeliveryDate,
@@ -807,15 +813,26 @@ class procurement_order(osv.osv):
         values = kwargs['values']
 
         partner = self.pool.get('res.partner').browse(cr, uid, values['partner_id'], context=context)
-
-        purchase_ids = po_obj.search(cr, uid, [('partner_id', '=', values.get('partner_id')), ('state', '=', 'draft'),
-                                               ('delivery_requested_date', '=', values.get('delivery_requested_date'))], context=context)
+        
+        purchase_domain = [('partner_id', '=', partner.id),
+                           ('state', '=', 'draft'),
+                           ('delivery_requested_date', '=', values.get('delivery_requested_date'))]
+        
+        if partner.po_by_project == 'project':
+            sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+            customer_id = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context).order_id.partner_id.id
+            values.update({'customer_id': customer_id})
+            purchase_domain.append(('customer_id', '=', customer_id))
+            
+        purchase_ids = po_obj.search(cr, uid, purchase_domain, context=context)
+            
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0]})
             purchase = po_obj.browse(cr, uid, purchase_ids[0], context=context)
             if not purchase.origin_tender_id or not purchase.origin_tender_id.sale_order_id or purchase.origin_tender_id.sale_order_id.name != procurement.origin:
-                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': '%s/%s' % (purchase.origin, procurement.origin)}, context=context)
+                origin = procurement.origin in purchase.origin and purchase.origin or '%s/%s' % (purchase.origin, procurement.origin)
+                po_obj.write(cr, uid, [purchase_ids[0]], {'origin': origin}, context=context)
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
@@ -940,6 +957,10 @@ class purchase_order(osv.osv):
     '''
     _inherit = "purchase.order"
     _description = "Purchase Order"
+    
+    _columns = {
+        'customer_id': fields.many2one('res.partner', string='Customer', domain=[('customer', '=', True)]),
+    }
     
     def create(self, cr, uid, vals, context=None):
         '''
