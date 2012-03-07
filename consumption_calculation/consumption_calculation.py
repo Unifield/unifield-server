@@ -273,6 +273,7 @@ class real_average_consumption(osv.osv):
     def fill_lines(self, cr, uid, ids, context={}):
         '''
         Fill all lines according to defined nomenclature level and sublist
+        forgot this
         '''
         self.write(cr, uid, ids, {'created_ok': True})    
         for report in self.browse(cr, uid, ids, context=context):
