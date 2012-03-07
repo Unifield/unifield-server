@@ -139,23 +139,23 @@ class threshold_value(osv.osv):
             * Back orders : product quantities ordered but not yet delivered (expressed in standard unit of distribution)
         '''
         v = {}
-        m = {}
         
         if location_id:
             context.update({'location_id': location_id})
         
-        if product_id:            
+        if product_id:
+            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             if consumption_method == 'amc':
                 if not consumption_period:
                     consumption_period = frequency
-                consumption_to = (now()).strftime('%Y-%m-%d')
-                consumption_from = (now() - RelativeDate(months=consumption_period)).strftime('%Y-%m-%d')
-                context.update({'from_date': consumption_from, 'to_date': consumption_to})
+                consumption_to = (now() + RelativeDate(months=1, days=-1)).strftime('%Y-%m-%d')
+                consumption_from = (now() - RelativeDate(months=consumption_period-1, day=1)).strftime('%Y-%m-%d')
+                c = context.copy()
+                c.update({'from_date': consumption_from, 'to_date': consumption_to})
                 v.update({'consumption_from': consumption_from, 'consumption_to': consumption_to})
             
-                amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=context)
+                amc = self.pool.get('product.product').compute_amc(cr, uid, product_id, context=c)
             else:
-                product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
                 amc = product.reviewed_consumption
             
             # The supplier lead time is priority if the checkbox was checked
@@ -167,14 +167,14 @@ class threshold_value(osv.osv):
                 threshold_value = amc * (lead_time + safety_month)
                 threshold_value = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, threshold_value, product.uom_id.id)
             
-                v.update({'threshold_value': threshold_value})
+                v.update({'threshold_value': threshold_value > 0.00 and threshold_value or 0.00})
             
             # If the user hasn't fill manually the qty to order value, compute them
             if not qty_order_manual_ok:
                 qty_order = amc * (lead_time + safety_month + frequency) - product.qty_available + product.incoming_qty - product.outgoing_qty
                 qty_order = self.pool.get('product.uom')._compute_qty(cr, uid, product.uom_id.id, qty_order, product.uom_id.id)
                 
-                v.update({'qty_to_order': qty_order})
+                v.update({'qty_to_order': qty_order > 0.00 and qty_order or 0.00})
         
         # Reset all values if no product
         if not product_id:

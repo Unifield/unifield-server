@@ -1161,7 +1161,7 @@ class product_product(osv.osv):
                     # to have a percentage of the number of month
                     res += round((to_date.day-from_date.day+1)/nb_days_in_month, 2)
                     break
-                elif to_date.month - from_date.month > 1:
+                elif to_date.month - from_date.month > 1 or to_date.year - from_date.year > 0:
                     res += 1
                     from_date += RelativeDate(months=1)
                 else:

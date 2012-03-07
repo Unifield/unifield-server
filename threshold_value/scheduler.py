@@ -57,8 +57,8 @@ class procurement_order(osv.osv):
         for threshold in threshold_obj.browse(cr, uid, threshold_ids, context=context):
             if threshold.consumption_method == 'amc':
                 consumption_period = threshold.consumption_period or threshold.frequency
-                consumption_to = (now()).strftime('%Y-%m-%d')
-                consumption_from = (now() - RelativeDate(months=consumption_period)).strftime('%Y-%m-%d')
+                consumption_to = (now() + RelativeDate(months=1, days=-1)).strftime('%Y-%m-%d')
+                consumption_from = (now() - RelativeDate(months=consumption_period-1, day=1)).strftime('%Y-%m-%d')
                 context.update({'from_date': consumption_from, 'to_date': consumption_to})
 
             # Set location_id in context for tre AMC calculation
