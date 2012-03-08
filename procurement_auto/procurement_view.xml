@@ -12,10 +12,6 @@
                         <separator string="General Information" />
                         <field name="name" />
                         <field name="sequence" />
-                        <!-- <field name="product_id" on_change="onchange_product_id(product_id)" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/>
-                        <field name="product_uom_id" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
-                        <field name="product_qty" attrs="{'invisible': [('product_id', '=', False)], 'required': [('product_id', '!=', False)]}" />
-                         -->
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Locations" />
@@ -37,8 +33,9 @@
                         <field name="procurement_id" />
                     </group>
                     <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" />
-
+                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" 
+                    />
+                    
                     <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
@@ -65,11 +62,11 @@
                         />
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
-                    <group colspan="4" col="4" attrs="{'invisible': [('product_id', '!=', False)]}">
+                    <group colspan="4" col="4">
                         <separator colspan="4" string="Order quantity by product" />
                         <field name="line_ids" nolabel="1" colspan="4">
                             <tree string="Products" editable="top">
-                                <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('categ_id', '=', parent.category_id)]"/>
+                                <field name="product_id" on_change="onchange_product_id(product_id)" domain="[('nomen_ids', '=', parent.nomen_id), ('list_ids', '=', parent.sublist_id)]"/>
                                 <field name="product_uom_id" />
                                 <field name="product_qty" />
                             </tree>

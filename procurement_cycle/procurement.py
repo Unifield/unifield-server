@@ -114,16 +114,18 @@ class stock_warehouse_order_cycle(osv.osv):
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
 
-    def fill_lines(self, cr, uid, ids, context={}):
+    def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
-        self.write(cr, uid, ids, {'created_ok': True})    
+        if context is None:
+            context = {}
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
 
             nom = False
+            field = False
             # Get all products for the defined nomenclature
             if report.nomen_manda_3:
                 nom = report.nomen_manda_3.id
@@ -147,25 +149,16 @@ class stock_warehouse_order_cycle(osv.osv):
 
             # Check if products in already existing lines are in domain
             products = []
-            for line in report.line_ids:
+            for line in report.product_ids:
                 if line.product_id.id in product_ids:
                     products.append(line.product_id.id)
                 else:
-                    self.pool.get('stock.warehouse.automatic.supply.line').unlink(cr, uid, line.id, context=context)
+                    self.unlink(cr, uid, line.id, context=context)
 
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+            for product in self.browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
-                    self.pool.get('product.product').create(cr, uid, {'product_id': product.id,
-                                                                                    'uom_id': product.uom_id.id,
-                                                                                    'consumed_qty': 0.00,
-                                                                                    'batch_mandatory': batch_mandatory,
-                                                                                    'date_mandatory': date_mandatory,
-                                                                                    'rac_id': report.id})
-        
-        self.write(cr, uid, ids, {'created_ok': False})    
+                    self.write(cr, uid, id, {'product_ids': [(6,0,[product_ids])]}, context=context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.product',
                 'view_type': 'form',
