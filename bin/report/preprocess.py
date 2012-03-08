@@ -28,8 +28,8 @@ odt_parents = ['{urn:oasis:names:tc:opendocument:xmlns:office:1.0}body','{urn:oa
 
 class report(object):
     def preprocess_rml(self, root_node,type='pdf'):
-        _regex1 = re.compile("\[\[(.*?)(repeatIn\(.*?\s*,\s*[\'\"].*?[\'\"]\s*(?:,\s*(.*?)\s*)?\s*\))(.*?)\]\]")
-        _regex11= re.compile("\[\[(.*?)(repeatIn\(.*?\s*\(.*?\s*[\'\"].*?[\'\"]\s*\),[\'\"].*?[\'\"](?:,\s*(.*?)\s*)?\s*\))(.*?)\]\]")
+        _regex1 = re.compile("\[\[(.*?)(repeatIn\(.*?\s*,\s*[\'\"].*?[\'\"]\s*(?:,\s*[\'\"](.*?)[\'\"]\s*)?\s*\))(.*?)\]\]")
+        _regex11= re.compile("\[\[(.*?)(repeatIn\(.*?\s*\(.*?\s*[\'\"].*?[\'\"]\s*\),[\'\"].*?[\'\"](?:,\s*[\'\"](.*?)[\'\"]\s*)?\s*\))(.*?)\]\]")
         _regex2 = re.compile("\[\[(.*?)(removeParentNode\(\s*(?:['\"](.*?)['\"])\s*\))(.*?)\]\]")
         _regex3 = re.compile("\[\[\s*(.*?setTag\(\s*['\"](.*?)['\"]\s*,\s*['\"].*?['\"]\s*(?:,.*?)?\).*?)\s*\]\]")
         for node in root_node:
