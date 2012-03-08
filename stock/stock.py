@@ -767,7 +767,11 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state == 'confirmed']
+            move_ids = []
+            for x in pick.move_lines:
+                if x.state in ('waiting', 'confirmed'):
+                    move_ids.append(x.id)
+            #move_ids = [x.id for x in pick.move_lines if x.state in ('waitinq', 'confirmed')]
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
@@ -1968,6 +1972,12 @@ class stock_move(osv.osv):
 
         self.create_chained_picking(cr, uid, moves, context)
         return []
+    
+    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
+        '''
+        Always return True
+        '''
+        return True
 
     def action_assign(self, cr, uid, ids, *args):
         """ Changes state to confirmed or waiting.
@@ -1975,6 +1985,7 @@ class stock_move(osv.osv):
         """
         todo = []
         for move in self.browse(cr, uid, ids):
+            self._hook_confirmed_move(cr, uid, move=move)
             if move.state in ('confirmed', 'waiting'):
                 todo.append(move.id)
         res = self.check_assign(cr, uid, todo)
