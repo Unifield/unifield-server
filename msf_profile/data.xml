@@ -25,6 +25,12 @@
         <field name="name">INPUT</field>
         <field name="location_id" ref="stock.stock_location_company"/>
         <field name="location_category">transition</field>
+	<field name="chained_location_type">fixed</field>
+        <field name="chained_location_id" ref="stock.stock_location_stock" />
+        <field name="chained_auto_packing">manual</field>
+       <field name="chained_picking_type">internal</field>
+       <field name="posz">1</field>
+
     </record>
 
     <record id="stock.stock_location_stock" model="stock.location">
@@ -96,6 +102,11 @@
         <field name="location_category">stock</field>
         <field name="quarantine_location" eval="True" />
         <field name="location_category">transition</field>
+	<field name="chained_location_type">fixed</field>
+        <field name="chained_location_id" ref="stock.stock_location_stock" />
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="quarantine_location">True</field>
         <field name="location_id" ref="stock.stock_location_quarantine_view"/>
     </record>
     
