@@ -171,6 +171,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             reader.next()
+            # Unactivate all local employees
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
+            self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
             for employee_data in reader:
                 self.update_employee_infos(cr, uid, employee_data)
             fileobj.close()
