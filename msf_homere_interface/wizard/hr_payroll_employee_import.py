@@ -36,6 +36,25 @@ class hr_payroll_employee_import(osv.osv_memory):
         'file': fields.binary(string="File", filters='*.zip', required=True),
     }
 
+    def update_employee_infos(self, cr, uid, employee_data=''):
+        """
+        Get employee infos and 
+        """
+        # Some verifications
+        if not employee_data:
+            return False
+        # Extract information
+        adresse, adressecontact, anciennete, anglais, annee_diplome, annee_diplome2, asuivre, autrecausedeces, autreidentite, autrelangue, bqbic, \
+            bqcommentaire, bqiban, bqmodereglement, bqnom, bqnumerocompte, bqsortnumber, canddetachement, carteemploye, causedeces, civilite, \
+            code_staff, codeterrain, commentaire, date_maj, datedebanciennete, datedeces, dateemission, dateentree, dateexpiration, datenaissance, \
+            decede, delegue, diplome, diplome2, email, enfants, espagnol, fax, fichierstaff, francais, id_staff, id_unique, lieuemission, \
+            lieunaissance, nation, nom, num_soc, numidentite, OPE1EMPLOYER, OPE1OCCUPATION, OPE1YEAR, OPE2EMPLOYER, OPE2OCCUPATION, OPE2YEAR, \
+            OPE3EMPLOYER, OPE3OCCUPATION, OPE3YEAR, pays, PIN1, PIN2, PIN3, PIN4, PIN5, poolurgence, portable, prenom, qui, relocatedstaff, sexe, \
+            statutfamilial, tel_bureau, tel_prive, typeidentite = zip(employee_data)
+        print civilite, code_staff, codeterrain, commentaire, datedeces, dateexpiration, datenaissance, decede, email, id_staff, id_unique, lieuemission, nation, nom, num_soc, pays, portable, prenom, sexe, statutfamilial, tel_bureau, tel_prive
+        # CODE UNIQUE = codeterrain, id_staff, id_unique
+        return True
+
     def button_validate(self, cr, uid, ids, context={}):
         """
         Open ZIP file and search staff.csv
@@ -52,10 +71,11 @@ class hr_payroll_employee_import(osv.osv_memory):
             zipobj = zf(fileobj.name)
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 namelist =  zipobj.namelist()
-                reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',')
+                # Doublequote and escapechar avoid some problems
+                reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             reader.next()
-            for line in reader:
-                print line
+            for employee_data in reader:
+                self.update_employee_infos(cr, uid, employee_data)
             fileobj.close()
         return { 'type': 'ir.actions.act_window_close', 'context': context}
 
