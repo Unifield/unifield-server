@@ -366,7 +366,27 @@ class stock_move(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
+        'already_confirmed': fields.boolean(string='Already confirmed'),
     }
+    
+    def action_confirmed(self, cr, uid, ids, context={}):
+        '''
+        Set the bool already confirmed to True
+        '''
+        res = super(stock_move, self).action_confirm(cr, uid, ids, context=context)
+        
+        self.write(cr, uid, ids, {'already_confirmed': True}, context=context)
+        
+        return res
+    
+    def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
+        '''
+        Always return True
+        '''
+        move = kwargs['move']
+        if not move.already_confirmed:
+            self.action_confirm(cr, uid, [move.id])
+        return True
     
     def _hook_move_cancel_state(self, cr, uid, *args, **kwargs):
         '''
