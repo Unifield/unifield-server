@@ -220,14 +220,14 @@
 		-->
 		
 		<!-- Menu in Purchases / Configuration -->
-		<menuitem id="menu_supplier_catalogue"
+		<!-- <menuitem id="menu_supplier_catalogue"
 				  action="action_supplier_catalogue_list"
-				  parent="purchase.menu_purchase_config_purchase" />
+				  parent="purchase.menu_purchase_config_purchase" /> -->
 		
 		<!-- Menu in Purchases / Configuration -->		  
-		<menuitem id="menu_supplier_catalogue_line"
+		<!-- <menuitem id="menu_supplier_catalogue_line"
 				  action="action_supplier_catalogue_line_list"
-				  parent="menu_supplier_catalogue" />
+				  parent="menu_supplier_catalogue" /> -->
 				  
 		<!-- 
 			SUPPLIER HISTORICAL CATALOGUES 
