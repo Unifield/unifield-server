@@ -85,6 +85,7 @@
                 <field name="funding_pool_id"/>
                 <field name="free1_id"/>
                 <field name="free2_id"/>
+                <field name="active" invisible="1"/>
             </tree>
         </field>
     </record>

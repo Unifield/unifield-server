@@ -114,6 +114,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="editable_view_employee_tree"/>
+            <field name="context">{'search_default_active': 1}</field>
         </record>
 
         <record id="action_employee_import_wizard" model="ir.actions.act_window">
