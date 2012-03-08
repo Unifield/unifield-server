@@ -300,7 +300,7 @@ class supplier_catalogue_line(osv.osv):
     _inherits = {'product.product': 'product_id'}
     _order = 'product_id, line_uom_id, min_qty'
     
-    def create(self, cr, uid, vals, context={}):
+    def _create_supplier_info(self, cr, uid, vals, context={}):
         '''
         Create a pricelist line on product supplier information tab
         '''
@@ -340,22 +340,53 @@ class supplier_catalogue_line(osv.osv):
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
         
+        return vals
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Create a pricelist line on product supplier information tab
+        '''
+        vals = self._create_supplier_info(cr, uid, vals, context=context)
+        
         return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
     
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Update the pricelist line on product supplier information tab
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
+        for line in self.browse(cr, uid, ids, context=context):            
+            # If product is changed
+            if 'product_id' in vals and vals['product_id'] != line.product_id.id:
+                c = context.copy()
+                c.update({'product_change': True})
+                # Remove the old pricelist.partnerinfo and create a new one
+                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+        
+                # Check if the removed line wasn't the last line of the supplierinfo
+                if len(line.supplier_info_id.pricelist_ids) == 0:
+                    # Remove the supplier info
+                    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
+                    
+                # Create new partnerinfo line
+                vals.update({'catalogue_id': vals.get('catalogue_id', line.catalogue_id.id),
+                             'product_id': vals.get('product_id', line.product_id.id),
+                             'min_qty': vals.get('min_qty', line.min_qty),
+                             'line_uom_id': vals.get('line_uom_id', line.line_uom_id.id),
+                             'unit_price': vals.get('unit_price', line.unit_price),
+                             'rounding': vals.get('rounding', line.rounding),
+                             'min_order_qty': vals.get('min_order_qty', line.min_order_qty),
+                             'comment': vals.get('comment', line.comment),
+                             })
+                vals = self._create_supplier_info(cr, uid, vals, context=context)
+            else:
+                pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
                           'price': vals.get('unit_price', line.unit_price),
                           'uom_id': vals.get('line_uom_id', line.line_uom_id.id),
                           'rounding': vals.get('rounding', line.rounding),
                           'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
                           }
-            
-            # Update the pricelist line on product supplier information tab
-            self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
+                # Update the pricelist line on product supplier information tab
+                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
                                                          pinfo_data, context=context) 
         
         return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})

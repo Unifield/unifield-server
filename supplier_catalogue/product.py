@@ -39,7 +39,7 @@ class product_supplierinfo(osv.osv):
             info_ids = [info_ids]
             
         for info in self.browse(cr, uid, info_ids, context=context):
-            if info.catalogue_id:
+            if info.catalogue_id and not context.get('product_change', False):
                 raise osv.except_osv(_('Error'), _('You cannot remove a supplier information which is linked ' \
                                                    'to a supplier catalogue line ! Please remove the corresponding ' \
                                                    'supplier catalogue line to remove this supplier information.'))
@@ -87,7 +87,7 @@ class pricelist_partnerinfo(osv.osv):
         if it's linked to a catalogue line
         '''
         info = self.browse(cr, uid, info_id, context=context)
-        if info.catalogue_id:
+        if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
             raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked' \
                                                'to a supplier catalogue line ! Please remove the corresponding' \
                                                'supplier catalogue line to remove this supplier information.'))
