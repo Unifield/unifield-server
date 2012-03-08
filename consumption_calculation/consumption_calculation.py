@@ -335,7 +335,15 @@ class real_average_consumption(osv.osv):
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
-
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('sublist_id',False):
+            vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if vals.get('nomen_manda_0',False):
+            vals.update({'sublist_id':False})
+        ret = super(real_average_consumption, self).write(cr, uid, ids, vals, context=context)
+        return ret
+    
 real_average_consumption()
 
 

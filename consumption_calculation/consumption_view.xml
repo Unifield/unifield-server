@@ -22,9 +22,9 @@
                     <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
+                    <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}"/>
 
-                    <group colspan="2" col="4">
+                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
                             widget="selection"
