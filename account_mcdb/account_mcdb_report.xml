@@ -13,6 +13,18 @@
             auto="False"
             menu="False"
          />
+        
+        <report
+            id="report_account_move_line_csv"
+            string="Journal Items"
+            model="account.move.line"
+            name="account.move.line_csv"
+            rml="account_mcdb/report/report_account_move_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
 
     <!-- Account Analytic Line Report -->
         <report
@@ -20,6 +32,16 @@
             string="Analytic Journal Items"
             model="account.analytic.line"
             name="account.analytic.line"
+            rml="account_mcdb/report/report_account_analytic_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_analytic_line_csv"
+            string="Analytic Journal Items"
+            model="account.analytic.line"
+            name="account.analytic.line_csv"
             rml="account_mcdb/report/report_account_analytic_line.rml"
             header="False"
             auto="False"

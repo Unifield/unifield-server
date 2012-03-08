@@ -34,13 +34,13 @@ class output_currency_for_export(osv.osv_memory):
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
         'export_format': fields.selection([('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'domain': fields.text('Domain'),
-        'export_all': fields.boolean('Export only the selected items'),
+        'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),
     }
 
     _defaults = {
         'export_format': lambda *a: 'csv',
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
-        'export_all': lambda *a: True,
+        'export_selected': lambda *a: True,
     }
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context={}):
@@ -66,9 +66,6 @@ class output_currency_for_export(osv.osv_memory):
             ids = [ids]
         # Prepare some values
         model = context.get('active_model')
-        line_ids = context.get('active_ids')
-        if isinstance(line_ids, (int, long)):
-            line_ids = [line_ids]
         wiz = self.browse(cr, uid, ids, context=context)[0]
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
@@ -77,22 +74,29 @@ class output_currency_for_export(osv.osv_memory):
         if not choice:
             raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         # Return CSV export is choosed.
-        if choice == 'csv':
+        #if choice == 'csv':
             # Return good view
-            return self.pool.get('account.line.csv.export').export_to_csv(cr, uid, line_ids, currency_id, model, context=context) or False
+        #    return self.pool.get('account.line.csv.export').export_to_csv(cr, uid, line_ids, currency_id, model, context=context) or False
         # Else return PDF export
-        datas = {'ids': context.get('active_ids', [])}
+        if wiz.export_selected:
+            datas = {'ids': context.get('active_ids', [])}
+        else:
+            context['from_domain'] = True
+            datas = {'context': context}
         context.update({'output_currency_id': currency_id})
         # Update report name if come from analytic
         report_name = 'account.move.line'
         if model == 'account.analytic.line':
             report_name = 'account.analytic.line'
+
+        if choice == 'csv':
+            report_name += '_csv'
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
             'datas': datas,
-            'context': context,
-                }
+        }
 
 output_currency_for_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
