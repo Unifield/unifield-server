@@ -46,6 +46,51 @@ class composition_kit(osv.osv):
     '''
     _name = 'composition.kit'
     
+    def _compute_expiry_date(self, cr, uid, ids, context=None):
+        '''
+        compute the expiry date of real composition.kit based on items
+        '''
+        # date tools object
+        date_obj = self.pool.get('date.tools')
+        db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
+        date_format = date_obj.get_date_format(cr, uid, context=context)
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # if no expiry date from items (no perishable products or no expiry date entered), the default value is '9999-01-01'
+            expiry_date = '9999-01-01'
+            # computation of expiry date makes sense only for real type
+            if obj.composition_type != 'real':
+                raise osv.except_osv(_('Warning !'), _('Computation of expiry date is only available for Composition List.'))
+            for item in obj.composition_item_ids:
+                if item.item_exp:
+                    if not expiry_date or datetime.strptime(item.item_exp, db_date_format) < datetime.strptime(expiry_date, db_date_format):
+                        expiry_date = item.item_exp
+            if not expiry_date:
+                expiry_date = '9999-01-01'
+        
+        return expiry_date
+    
+    def modify_expiry_date(self, cr, uid, ids, context=None):
+        '''
+        open modify expiry date wizard
+        '''
+        # basic check
+        if context is None:
+            context = {}
+        # data
+        name = _("Modify Expiry Date")
+        model = 'modify.expiry.date'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # get the date
+        data = self.read(cr, uid, ids, ['composition_exp'], context=context)[0]
+        date = data['composition_exp']
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
+                                                                                                kit_id=ids[0],
+                                                                                                date=date))
+        return res
+    
     def mark_as_completed(self, cr, uid, ids, context=None):
         '''
         button function
@@ -459,7 +504,7 @@ class composition_kit(osv.osv):
                 'composition_creation_date': fields.date(string='Creation Date', required=True),
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
-                'composition_exp': fields.date(string='Expiry Date'),
+                'composition_exp': fields.date(string='Expiry Date', readonly=True),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
@@ -582,7 +627,7 @@ class composition_kit(osv.osv):
     
     _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
                     ]
-    _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_reference)", 'Kit Composition List Reference must be unique.'),
+    _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_product_id,composition_reference)", 'Kit Composition List Reference must be unique for a given product.'),
                         ('unique_composition_kit_real_lot', "unique(composition_lot_id)", 'Batch Number can only be used by one Kit Composition List.'),
                         ]
 
@@ -823,8 +868,36 @@ class composition_item(osv.osv):
                 }
     
     _defaults = {'hidden_batch_management_mandatory': False,
-                 'hidden_perishable_mandatory': False,
-                 }
+                 'hidden_perishable_mandatory': False}
+    
+    def _composition_item_constraint(self, cr, uid, ids, context=None):
+        '''
+        constraint on item composition 
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not obj.hidden_perishable_mandatory:
+                # no lot or date management product
+                if obj.item_lot:
+                    # not perishable nor batch management - no item_lot nor item_exp
+                    raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory Product can specify Batch Number.'))
+                if obj.item_exp:
+                    # not perishable nor batch management - no item_lot nor item_exp
+                    raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
+            elif not obj.hidden_batch_management_mandatory:
+                # perishable only -> no lot
+                if obj.item_lot:
+                    # not perishable nor batch management - no item_lot nor item_exp
+                    raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory Product can specify Batch Number.'))
+                
+        return True
+    
+    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),]
     
     
 composition_item()
@@ -1145,6 +1218,10 @@ class purchase_order_line(osv.osv):
         model = 'kit.selection'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
+        # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.po_state_stored != 'confirmed':
+                raise osv.except_osv(_('Warning !'), _('Purchase order line kit replacement with components function is only available for Validated state.'))
         # open the selected wizard
         data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
         product_id = data['product_id'][0]

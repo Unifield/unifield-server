@@ -36,6 +36,7 @@
         'wizard/stock_partial_move_view.xml',
         'wizard/confirm_view.xml',
         'wizard/kit_selection_view.xml',
+        'wizard/modify_expiry_date_view.xml',
     ],
     "demo_xml": [],
     'test': ['test/kit_data.yml',

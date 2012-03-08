@@ -38,6 +38,14 @@
     composition_version_txt: 'OCG'
     composition_creation_date: '2010-01-20'
 -
+  I add a product item to the composition list kit_compo_03
+-
+  !record {model: composition.item, id: item_03_01}:
+    item_kit_id: kit_compo_03
+    item_product_id: kit_product_C
+    item_qty: 10
+    item_uom_id: product.product_uom_unit
+-
   I then create Items for the compo 01 - prodC
 -
   !record {model: composition.item, id: item_01_01}:
@@ -201,7 +209,7 @@
     self.create_composition_list(cr, uid, ids, context=context)
 -
   I create empty composition composition list 04, productA, kit_lot_As, 2010-01-20
-- 
+-
   !record {model: composition.kit, id: kit_compo_04}:
     composition_type: 'real'
     composition_product_id: kit_product_A
@@ -281,6 +289,189 @@
 -
   !python {model: substitute}: |
     self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I create empty composition composition list 04, productA, kit_lot_As, 2010-01-20
+- 
+  !record {model: composition.kit, id: kit_compo_05}:
+    composition_type: 'real'
+    composition_product_id: kit_product_B
+    composition_reference: ref-compo-05
+    composition_creation_date: '2010-01-20'
+    composition_version_id: kit_compo_03
+-
+  I add a product item to the composition list kit_compo_05
+-
+  !record {model: composition.item, id: item_05_01}:
+    item_kit_id: kit_compo_05
+    item_product_id: kit_product_C
+    item_qty: 20
+    item_uom_id: product.product_uom_unit
+- 
+  I create sale order kit_so_B
+- 
+  !record {model: sale.order, id: kit_so_B}:
+    name: so b
+    amount_tax: 0.0
+    amount_total: 1.0
+    amount_untaxed: 1.0
+    company_id: base.main_company
+    date_order: '2011-04-13'
+    invoice_quantity: order
+    order_policy: manual
+    partner_id: kit_partner_A
+    partner_invoice_id: kit_address_A
+    partner_order_id: kit_address_A
+    partner_shipping_id: kit_address_A
+    picking_policy: direct
+    pricelist_id: product.list0
+    shop_id: sale.shop
+    priority: normal
+    categ: medical
+- 
+  I create a corresponding sale order line, with a NON batch management kit in it - prodB
+- 
+  !record {model: sale.order.line, id: kit_sol_B1}:
+    name: sol b1
+    company_id: base.main_company
+    delay: 7.0
+    order_id: kit_so_B
+    price_unit: 1.0
+    product_id: kit_product_B
+    product_uom: product.product_uom_unit
+    product_uom_qty: 10
+    salesman_id: base.user_admin
+    state: draft
+    th_weight: 0.0
+    type: make_to_order
+-
+  I validate kit_so_B
+-
+  !python {model: sale.order}: |
+    import netsvc
+    wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'sale.order', ref("kit_so_B"), 'order_validated', cr)
+    wf_service.trg_validate(uid, 'sale.order', ref("kit_so_B"), 'order_confirm', cr)
+-
+  I check the out creation
+-
+  !python {model: stock.picking}: |
+    out_ids = self.search(cr, uid, [('origin', '=', 'so b')], context=context)
+    assert len(out_ids) == 1, 'number of out ids for so b is wrong - 1 - %s'%len(out_ids) 
+    context.update(out_ids=out_ids)
+-
+  I open the create picking wizard
+-
+  !python {model: stock.picking}: |
+    ids = context['out_ids']
+    res = self.create_picking(cr, uid, ids, context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I fill the composition_list_id field with kit_compo_05
+-
+  !python {model: create.picking}: |
+    # create picking wizard -> product_moves_picking ('stock.move.memory.picking')
+    ids = context['wizard']['ids']
+    c = context['wizard']['c']
+    for obj in self.browse(cr, uid, ids, context=c):
+      for mem in obj.product_moves_picking:
+        mem.write({'composition_list_id': ref("kit_compo_05")}, context=c)
+    # validate the creation
+    self.do_create_picking(cr, uid, ids, context=c)
+    # there should be one picking ticket created
+    picking_ids = self.pool.get('stock.picking').search(cr, uid, [('backorder_id', 'in', context['out_ids'])], context=c)
+    # add the picking ticket id to the context structure
+    context.update({'pick_ids': picking_ids})
+    assert len(picking_ids) == 1, 'picking ticket should have been created - 1 - %s'%(len(picking_ids))
+-
+  I check that the composition_list_id has been filled in the corresponding stock picking
+-
+  !python {model: stock.picking}: |
+    for obj in self.browse(cr, uid, context['pick_ids'], context=context):
+      for move in obj.move_lines:
+        assert move.composition_list_id.id == ref("kit_compo_05"), 'the created picking ticket object does not have composition_list_id filled in - %s - %s'%(ref("kit_compo_05"),move.composition_list_id.id)
+-
+  I check the qty in the composition list
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_05")], context=context):
+      for item in obj.composition_item_ids:
+        assert item.item_qty == 20, 'the quantity of the composition item is wrong - 20 - %s'%item.item_qty
+-
+  I open the confirmation wizard
+-
+  !python {model: composition.kit}: |
+    res = self.reset_to_version(cr, uid, [ref("kit_compo_05")], context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I confirm the action
+-
+  !python {model: confirm}: |
+    self.do_action(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the qty in the composition list which is reset to theoretical value - 10
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_05")], context=context):
+      for item in obj.composition_item_ids:
+        assert item.item_qty == 10, 'the quantity of the composition item is wrong - 10 - %s'%item.item_qty
+-
+  I run the scheduler
+-
+  !python {model: procurement.order}: |
+    self.run_scheduler(cr, uid, context=context)
+-
+  I check the corresponding purchase order has been created and store the corresponding id in the context
+-
+  !python {model: purchase.order}: |
+    ids = self.search(cr, uid, [('origin', '=', 'so b')], context=context)
+    assert len(ids) == 1, 'the number of created purchase order is wrong - 1 - %s'%len(ids)
+    context.setdefault('yml_kit', {}).update(po=ids[0])
+-
+  I validate the purchase order (1 step only because the replacement function is only available for Validated State (='confirmed'))
+-
+  !python {model: purchase.order}: |
+    import netsvc
+    po_id = context['yml_kit']['po']
+    wf_service = netsvc.LocalService("workflow")
+    wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+-
+  I open the replacement wizard
+-
+  !python {model: purchase.order}: |
+    po_id = context['yml_kit']['po']
+    pol_obj = self.pool.get('purchase.order.line')
+    for obj in self.browse(cr, uid, [po_id], context=context):
+      assert len(obj.order_line) == 1, 'the number of purchase order line is wrong - 1 - %s'%len(obj.order_line)
+      for line in obj.order_line:
+        assert line.product_id.id == ref("kit_product_B"), 'the product from the purchase order line is wrong - %s - %s'%(ref("kit_product_B"),line.product_id.id)
+        res = pol_obj.de_kitting(cr, uid, [line.id], context=context)
+        model = res['res_model']
+        id = res['res_id']
+        c = res['context']
+        context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I select the theoretical kit - kit_compo_03 and validate the decomposition
+-
+  !python {model: kit.selection}: |
+    self.write(cr, uid, context['wizard']['ids'], {'kit_id': ref("kit_compo_03")}, context=context)
+    self.do_de_kitting(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the purchase order line after replacement - 100 kit_product_C at arrival
+-
+  !python {model: purchase.order}: |
+    po_id = context['yml_kit']['po']
+    pol_obj = self.pool.get('purchase.order.line')
+    for obj in self.browse(cr, uid, [po_id], context=context):
+      assert len(obj.order_line) == 1, 'the number of purchase order line is wrong - 1 - %s'%len(obj.order_line)
+      for line in obj.order_line:
+        assert line.product_id.id == ref("kit_product_C"), 'the product from the purchase order line is wrong - %s - %s'%(ref("kit_product_C"),line.product_id.id)
+        assert line.product_qty == 10*10, 'the number of product is wrong - 100 - %s'%line.product_qty
 -
   END OF FILE
 -
