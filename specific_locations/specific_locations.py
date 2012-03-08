@@ -109,8 +109,12 @@ class stock_location(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.quarantine_location:
                 if obj.chained_location_type != 'none':
-                    return False
+                    if obj.chained_location_type == 'fixed' and obj.chained_location_id.usage == 'internal':
+                        return True
+                    else:
+                        return False
         return True
+
     
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Loction'),
