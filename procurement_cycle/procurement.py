@@ -38,10 +38,18 @@ class stock_warehouse_order_cycle(osv.osv):
         
         return super(stock_warehouse_order_cycle, self).create(cr, uid, data, context=context)
         
-    def write(self, cr, uid, ids, data, context={}):
+    def write(self, cr, uid, ids, data, context=None):
         '''
         Checks if a frequence was choosen for the cycle
         '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if data.get('sublist_id',False):
+            data.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
+        if data.get('nomen_manda_0',False):
+            data.update({'sublist_id':False})
         if not 'button' in context and (not 'frequence_id' in data or not data.get('frequence_id', False)):
             for proc in self.browse(cr, uid, ids):
                 if not proc.frequence_id:
@@ -122,7 +130,6 @@ class stock_warehouse_order_cycle(osv.osv):
             context = {}
         for report in self.browse(cr, uid, ids, context=context):
             product_ids = []
-            products = []
 
             nom = False
             field = False
@@ -147,25 +154,11 @@ class stock_warehouse_order_cycle(osv.osv):
                 for line in report.sublist_id.product_ids:
                     product_ids.append(line.name.id)
 
-            # Check if products in already existing lines are in domain
-            products = []
-            for line in report.product_ids:
-                if line.product_id.id in product_ids:
-                    products.append(line.product_id.id)
-                else:
-                    self.unlink(cr, uid, line.id, context=context)
-
-            for product in self.browse(cr, uid, product_ids, context=context):
-                # Check if the product is not already on the report
-                if product.id not in products:
-                    self.write(cr, uid, id, {'product_ids': [(6,0,[product_ids])]}, context=context)
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.product',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': ids[0],
-                'target': 'dummy',
-                'context': context}
+            # Check if the product is not already on the report
+            l = [(6,0,x) for x in product_ids]
+            self.write(cr, uid, [report.id], {'product_ids': [(6,0,product_ids)]}, context=context)
+        
+        return True
 
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})

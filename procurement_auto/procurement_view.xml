@@ -33,9 +33,7 @@
                         <field name="procurement_id" />
                     </group>
                     <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" 
-                    />
-                    
+                    <field name="sublist_id" attrs="{'readonly': [('nomen_manda_0', '!=', False)]}" />
                     <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
                         <field name="nomen_manda_0"
                             domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
