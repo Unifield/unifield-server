@@ -12,11 +12,7 @@
                         <separator string="General Information" />
                         <field name="name" />
                         <field name="sequence" />
-                        <!-- We subsitute category_id by sublist_id
-                        <field name="category_id" attrs="{'required': [('product_id', '=', False)]}"/>
-                        <field name="product_id" attrs="{'required': [('category_id', '=', False)]}" domain="[('fnct_categ_id', '=', category_id)]"/>
-                         -->
-                        <field name="product_id"/>
+                        <field name="product_id" invisible='1'/>
                     </group>
                     <group colspan="2" col="2">
                         <separator string="Locations" />
@@ -48,10 +44,10 @@
                         <label string="(warning, UoM has to be coherent)" colspan="4" align="0.0"/>
                         <label />
                         <newline />
-                        <group colspan="6" col="6">
-	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'past')" />
-	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'review')" />
-	                        <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, product_id, 'manual')" attrs="{'invisible': [('product_id', '=', False)]}"/>
+                        <group name="consumption calculation" colspan="6" col="6">
+	                        <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'past')" />
+	                        <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'review')" />
+	                        <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, 'manual')" />
                         </group>
                     </group>
                     <separator colspan="4" string="Product filters" />
@@ -83,7 +79,7 @@
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
 
-                    <group colspan="4" col="4" attrs="{'invisible': [('product_id', '!=', False)]}">
+                    <group colspan="4" col="4" >
                         <separator colspan="4" string="Exception products (not to be included in current policy)" />
                         <!-- <field name="product_ids" nolabel="1" colspan="4" domain="[('fnct_categ_id', '=', category_id)]"/>
                          -->
@@ -116,7 +112,7 @@
                 <tree string="Order Cycle">
                     <field name="sequence" select="1"/>
                     <field name="name" />
-                    <field name="product_id" />
+                    <field name="product_id" invisible='1'/>
                     <field name="warehouse_id" />
                     <field name="location_id" />
                     <field name="frequence_id" />
