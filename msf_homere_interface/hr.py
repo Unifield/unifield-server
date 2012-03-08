@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from lxml import etree
+from tools.translate import _
 
 class hr_employee(osv.osv):
     _name = 'hr.employee'
@@ -51,6 +52,30 @@ class hr_employee(osv.osv):
         'homere_id_unique': lambda *a: '',
         'gender': lambda *a: 'unknown',
     }
+
+    def create(self, cr, uid, vals, context={}):
+        """
+        Block creation for local staff if no 'from' in context
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'employee_type' in vals and vals.get('employee_type') == 'local':
+            if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
+                raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+        return super(hr_employee, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context={}):
+        """
+        Block write for local staff if no 'from' in context
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'employee_type' in vals and vals.get('employee_type') == 'local':
+            if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
+                raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+        return super(hr_employee, self).write(cr, uid, ids, vals, context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
