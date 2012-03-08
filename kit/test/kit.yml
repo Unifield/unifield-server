@@ -1,6 +1,6 @@
-- 
+-
   I create empty theoretical composition list 01, productA, ITC, 2010-01-20
-- 
+-
   !record {model: composition.kit, id: kit_compo_01}:
     composition_type: 'theoretical'
     composition_product_id: kit_product_A
@@ -21,17 +21,17 @@
     assert kit.composition_version, 'kit_compo_01: composition_version should be %s - %s'%(kit.composition_version_txt,kit.composition_version)
     # composition_combined_ref_lot: False
     assert not kit.composition_combined_ref_lot, 'kit_compo_01: composition_combined_ref_lot should be false - %s'%kit.composition_combined_ref_lot
-- 
+-
   I create empty theoretical composition list 02, productA, OCG, 2010-01-20
-- 
+-
   !record {model: composition.kit, id: kit_compo_02}:
     composition_type: 'theoretical'
     composition_product_id: kit_product_A
     composition_version_txt: 'OCG'
     composition_creation_date: '2010-01-20'
-- 
+-
   I create empty theoretical composition list 03, productB, OCG, 2010-01-20
-- 
+-
   !record {model: composition.kit, id: kit_compo_03}:
     composition_type: 'theoretical'
     composition_product_id: kit_product_B
@@ -230,6 +230,29 @@
   !python {model: composition.kit}: |
     self.mark_as_completed(cr, uid, [ref("kit_compo_04")], context=context)
 -
+  I open the modify expiry date wizard
+-
+  !python {model: composition.kit}: |
+    res = self.modify_expiry_date(cr, uid, [ref("kit_compo_04")], context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I compute the date from the items, check it, confirm it
+-
+  !python {model: modify.expiry.date}: |
+    self.compute_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+      assert obj.new_date == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.new_date
+    self.do_modify_expiry_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the expiry date of the composition kit has been updated
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_04")], context=context):
+      assert obj.composition_exp == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.composition_exp
+-
   I open the substitute wizard
 -
   !python {model: composition.kit}: |
@@ -271,10 +294,28 @@
               }
     self.create(cr, uid, values, context=context)
 -
-  I process the subtitute function
+  I process the subtitute function which opens the change expiry date wizard
 -
   !python {model: substitute}: |
-    self.do_substitute(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    res = self.do_substitute(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I compute the date from the items, check it, confirm it - the date must now come from the substitute product from stock - 2012-12-24
+-
+  !python {model: modify.expiry.date}: |
+    self.compute_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+      assert obj.new_date == '2012-12-24', 'the computed date is wrong - 2012-12-24 - %s'%obj.new_date
+    self.do_modify_expiry_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the expiry date of the composition kit has been updated
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_04")], context=context):
+      assert obj.composition_exp == '2012-12-24', 'the computed date is wrong - 2012-12-24 - %s'%obj.composition_exp
 -
   I open the de-kitting wizard
 -
@@ -476,4 +517,5 @@
   END OF FILE
 -
   !python {model: stock.picking}: |
-    print 'EOF'
+    #print 'EOF'
+    pass

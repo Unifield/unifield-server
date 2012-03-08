@@ -270,11 +270,10 @@ class composition_kit(osv.osv):
     
     def do_substitute(self, cr, uid, ids, context=None):
         '''
-        actual function called from wizard
-        
-        // possible refactoring to move logic here, but not necessary for now
+        call the modify expiry date window for possible modification of expiry date
         '''
-        wizard_ids = context['wizard_ids']
+        res = self.modify_expiry_date(cr, uid, ids, context=context)
+        return res
         
     def de_kitting(self, cr, uid, ids, context=None):
         '''
@@ -889,11 +888,6 @@ class composition_item(osv.osv):
                 if obj.item_exp:
                     # not perishable nor batch management - no item_lot nor item_exp
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
-            elif not obj.hidden_batch_management_mandatory:
-                # perishable only -> no lot
-                if obj.item_lot:
-                    # not perishable nor batch management - no item_lot nor item_exp
-                    raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory Product can specify Batch Number.'))
                 
         return True
     

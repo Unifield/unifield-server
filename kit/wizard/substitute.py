@@ -130,10 +130,11 @@ class substitute(osv.osv_memory):
                         if lot_type != 'standard':
                             errors.update(wrong_lot_type_need_standard=True)
                             item.write({'integrity_status': 'wrong_lot_type_need_standard'}, context=context)
-                elif perishable and not item.exp_substitute_item:
-                    # expiry date is needed
-                    errors.update(missing_date=True)
-                    item.write({'integrity_status': 'missing_date'}, context=context)
+                elif perishable:
+                    if not item.exp_substitute_item:
+                        # expiry date is needed
+                        errors.update(missing_date=True)
+                        item.write({'integrity_status': 'missing_date'}, context=context)
                 else:
                     # no lot needed
                     if item.lot_id_substitute_item:
@@ -349,6 +350,7 @@ class substitute(osv.osv_memory):
         '''
         # objects
         move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.kit')
         item_obj = self.pool.get('composition.item')
         # load default data
         self._load_common_data(cr, uid, ids, context=context)
@@ -432,7 +434,9 @@ class substitute(osv.osv_memory):
             # confirm - force availability and validate the internal picking
             self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        # take care to pass KIT ids not wizard ones !
+        res = kit_obj.do_substitute(cr, uid, kit_ids, context=context)
+        return res
     
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
