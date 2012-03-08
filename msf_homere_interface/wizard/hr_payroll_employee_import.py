@@ -27,6 +27,9 @@ from osv import fields
 from tempfile import NamedTemporaryFile
 import csv
 from base64 import decodestring
+from time import strftime
+from tools.misc import ustr
+from tools.translate import _
 
 class hr_payroll_employee_import(osv.osv_memory):
     _name = 'hr.payroll.employee.import'
@@ -36,6 +39,27 @@ class hr_payroll_employee_import(osv.osv_memory):
         'file': fields.binary(string="File", filters='*.zip', required=True),
     }
 
+    def update_employee_check(self, cr, uid, staffcode=False, missioncode=False, staff_id=False, uniq_id=False):
+        """
+        Check that:
+        - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
+        - only one employee have this staffcode
+        """
+        # Some verifications
+        if not staffcode or not missioncode or not staff_id or not uniq_id:
+            return False
+        # Check employees
+        search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
+        if search_ids and len(search_ids) > 1:
+            raise osv.except_osv(_('Error'), _('Database have more than one employee with this unique code!'))
+        # Check staffcode
+        staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
+        if staffcode_ids:
+            for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
+                if employee.homere_codeterrain != missioncode or str(employee.homere_id_staff) != staff_id or employee.homere_id_unique != uniq_id:
+                    raise osv.except_osv(_('Error'), _('More than 1 employee have the same unique identification number: %s' % employee.name))
+        return True
+
     def update_employee_infos(self, cr, uid, employee_data=''):
         """
         Get employee infos and 
@@ -43,6 +67,9 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Some verifications
         if not employee_data:
             return False
+        # Prepare some values
+        vals = {}
+        current_date = strftime('%Y-%m-%d')
         # Extract information
         adresse, adressecontact, anciennete, anglais, annee_diplome, annee_diplome2, asuivre, autrecausedeces, autreidentite, autrelangue, bqbic, \
             bqcommentaire, bqiban, bqmodereglement, bqnom, bqnumerocompte, bqsortnumber, canddetachement, carteemploye, causedeces, civilite, \
@@ -51,8 +78,78 @@ class hr_payroll_employee_import(osv.osv_memory):
             lieunaissance, nation, nom, num_soc, numidentite, OPE1EMPLOYER, OPE1OCCUPATION, OPE1YEAR, OPE2EMPLOYER, OPE2OCCUPATION, OPE2YEAR, \
             OPE3EMPLOYER, OPE3OCCUPATION, OPE3YEAR, pays, PIN1, PIN2, PIN3, PIN4, PIN5, poolurgence, portable, prenom, qui, relocatedstaff, sexe, \
             statutfamilial, tel_bureau, tel_prive, typeidentite = zip(employee_data)
-        print civilite, code_staff, codeterrain, commentaire, datedeces, dateexpiration, datenaissance, decede, email, id_staff, id_unique, lieuemission, nation, nom, num_soc, pays, portable, prenom, sexe, statutfamilial, tel_bureau, tel_prive
-        # CODE UNIQUE = codeterrain, id_staff, id_unique
+        # Process data
+        if codeterrain and codeterrain[0] and id_staff and id_staff[0] and id_unique and id_unique[0] and code_staff and code_staff[0]:
+            # Do some check
+            self.update_employee_check(cr, uid, ustr(code_staff[0]), ustr(codeterrain[0]), id_staff[0], ustr(id_unique[0]))
+            # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', id_unique[0])])
+            # Prepare vals
+            vals = {
+                'active': True,
+                'date_from': current_date,
+                'employee_type': 'local',
+                'homere_codeterrain': codeterrain[0],
+                'homere_id_staff': id_staff[0],
+                'homere_id_unique': id_unique[0],
+                'photo': False,
+                'identification_id': code_staff and code_staff[0] or False,
+                'notes': commentaire and ustr(commentaire[0]) or '',
+                'birthday': datenaissance and datenaissance[0] or False,
+                'work_email': email and email[0] or False,
+                # Do "NOM, Prenom"
+                'name': (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False,
+                'ssnid': num_soc and num_soc[0] or False,
+                'mobile_phone': portable and portable[0] or False,
+                'work_phone': tel_bureau and tel_bureau[0] or False,
+                'private_phone': tel_prive and tel_prive[0] or False,
+            }
+            # Update Nationality
+            if nation and nation[0]:
+                n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation[0]))])
+                res_nation = False
+                # Only get nationality if one result
+                if n_ids:
+                    if len(n_ids) == 1:
+                        res_nation = n_ids[0]
+                    else:
+                        raise osv.except_osv(_('Error'), _('An error occured on nationality. Please verify all nationalities.'))
+                vals.update({'country_id': res_nation})
+            # Update gender
+            if sexe and sexe[0]:
+                gender = 'unknown'
+                if sexe[0] == 'M':
+                    gender = 'male'
+                elif sexe[0] == 'F':
+                    gender = 'female'
+                vals.update({'gender': gender})
+            # Update Marital Status
+            if statutfamilial and statutfamilial[0]:
+                statusname = False
+                status = False
+                if statutfamilial[0] == 'MA':
+                    statusname = 'Married'
+                elif statutfamilial[0] == 'VE':
+                    statusname = 'Widower'
+                elif statutfamilial == 'CE':
+                    statusname = 'Single'
+                if statusname:
+                    s_ids = self.pool.get('hr.employee.marital.status').search(cr, uid, [('name', '=', statusname)])
+                    if s_ids and len(s_ids) == 1:
+                        status = s_ids[0]
+                vals.update({'marital': status})
+            # In case of death, desactivate employee
+            if decede and decede[0] and decede[0] == 'Y':
+                vals.update({'active': False})
+            # If employee have a expired date, so desactivate it
+            if dateexpiration and dateexpiration[0] and dateexpiration <= current_date:
+                vals.update({'active': False})
+            if not e_ids:
+                self.pool.get('hr.employee').create(cr, uid, vals)
+            else:
+                self.pool.get('hr.employee').write(cr, uid, e_ids, vals)
+        else:
+            return False
         return True
 
     def button_validate(self, cr, uid, ids, context={}):

@@ -36,11 +36,20 @@ class hr_employee(osv.osv):
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
+        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
+        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
+        'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
+        'private_phone': fields.char(string='Private Phone', size=32),
     }
 
     _defaults = {
         'cost_center_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False,
         'employee_type': lambda *a: 'ex',
+        'homere_codeterrain': lambda *a: '',
+        'homere_id_staff': lambda *a: 0.0,
+        'homere_id_unique': lambda *a: '',
+        'gender': lambda *a: 'unknown',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
