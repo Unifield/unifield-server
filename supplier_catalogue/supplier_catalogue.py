@@ -268,6 +268,20 @@ class supplier_catalogue(osv.osv):
                 'domain': [('catalogue_id', '=', ids[0])],
                 'context': context}
         
+    def edit_catalogue(self, cr, uid, ids, context={}):
+        '''
+        Open an edit view of the selected catalogue
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'supplier.catalogue',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'context': context}
+        
     def catalogue_import_lines(self, cr, uid, ids, context={}):
         '''
         Open the wizard to import lines
