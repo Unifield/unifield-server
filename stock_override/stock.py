@@ -369,7 +369,7 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
     }
     
-    def action_confirmed(self, cr, uid, ids, context={}):
+    def action_confirm(self, cr, uid, ids, context={}):
         '''
         Set the bool already confirmed to True
         '''
