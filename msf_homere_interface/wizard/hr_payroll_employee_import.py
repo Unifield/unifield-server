@@ -191,7 +191,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             fileobj.seek(0)
             zipobj = zf(fileobj.name)
             if zipobj.namelist() and staff_file in zipobj.namelist():
-                namelist =  zipobj.namelist()
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             reader.next()
