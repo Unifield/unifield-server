@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="cross_docking" model="workflow">
+            <field name="name">Cross docking Workflow</field>
+            <field name="osv">stock.picking</field>
+            <field name="on_create">True</field>
+        </record>
+        <!-- ACTIVITIES -->
+        <record id="act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="cross_docking"/>
+            <field name="flow_start">True</field>
+            <field name="name">draft</field>
+        </record>
+    </data>
+</openerp>

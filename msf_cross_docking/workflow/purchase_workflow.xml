@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    <!-- Activities -->
+        <record id="act_cross_docking" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="name">cross_docking</field>
+            <field name="kind">subflow</field>
+            <field name="subflow_id" search="[('osv','=','stock.picking')]" type="int"/>
+            <!-- TO REVIEW FUNCTION -->
+            <field name="action">_hook_action_picking_create_stock_picking()</field>
+        </record>
+    <!-- Transitions -->
+        <record id="trans_router_cross_docking" model="workflow.transition">
+            <field name="act_from" ref="purchase.act_router"/>
+            <field name="act_to" ref="act_cross_docking"/>
+            <!-- IS A BOOL SUFFICIENT FOR RETURNING TRUE OR FALSE? -->
+            <!-- ELSE: test_cross_docking_ok -->
+            <field name="condition">cross_docking_ok</field>
+        </record>
+        
+        <record id="purchase.act_picking" model="workflow.activity">
+            <field name="wkf_id" ref="purchase.purchase_order"/>
+            <field name="condition">cross_docking_ok == False</field>
+        </record>
+    </data>
+</openerp>
