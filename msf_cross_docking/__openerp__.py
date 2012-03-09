@@ -31,8 +31,8 @@
     'init_xml': [],
     'update_xml': [
         'cross_docking_view.xml',
-        'workflow/purchase_workflow.xml',
-        'workflow/cross_docking_workflow.xml',
+#        'workflow/purchase_workflow.xml',
+#        'workflow/cross_docking_workflow.xml',
     ],
     'test': [
     ],

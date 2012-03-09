@@ -10,10 +10,11 @@
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
-                    <field name="details" position="after" >
-                        <field name="cross_docking_ok" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )]}" on_change="onchange_cross_docking_ok(cross_docking_ok)"/>
-                        <field name="stock_location_id" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )]}" />
-                    </field>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
+                        <field name="cross_docking_ok" attrs="{'readonly':[('state','in', ['confirmed','approved','done'] )]}" 
+                        on_change="onchange_cross_docking_ok(cross_docking_ok)"
+                        />
+                    </xpath>
                 </data>
             </field>
         </record>

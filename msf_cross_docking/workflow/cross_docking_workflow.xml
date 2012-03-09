@@ -13,5 +13,17 @@
             <field name="flow_start">True</field>
             <field name="name">draft</field>
         </record>
+        <record id="act_move_to_cross_docking" model="workflow.activity">
+            <field name="wkf_id" ref="cross_docking"/>
+            <field name="kind">function</field>
+            <field name="action"></field>
+            <field name="name">Move to cross docking</field>
+        </record>
+        <record id="act_move_to_input" model="workflow.activity">
+            <field name="wkf_id" ref="cross_docking"/>
+            <field name="kind">function</field>
+            <field name="action"></field>
+            <field name="name">Move to input</field>
+        </record>
     </data>
 </openerp>

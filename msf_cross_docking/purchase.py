@@ -29,7 +29,6 @@ class purchase_order(osv.osv):
 
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking?'),
-        'stock_location_id': fields.many2one('stock.location','Location'),
     }
     
     def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, context=None):
@@ -37,13 +36,12 @@ class purchase_order(osv.osv):
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
         """
+        obj_data = self.pool.get('ir.model.data')
         if cross_docking_ok:
-            w = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Cross docking')], context=context)
-            v = {'stock_location_id': w}
+            l = obj_data.get_object_reference(cr, uid, 'stock', 'stock_location_cross_docking')[1]
         elif cross_docking_ok == False:
-            v = {'stock_location_id': False}
-        return {'value': v}
-        return {}
+            l = obj_data.get_object_reference(cr, uid, 'msf_profile', 'stock_location_input')[1]
+        return {'value': {'location_id': l}}
     
     def test_cross_docking_ok(self, cr, uid, ids):
         """ Tests whether cross docking is True or False.
@@ -51,32 +49,48 @@ class purchase_order(osv.osv):
         """
         for order in self.browse(cr, uid, ids):
             return order.cross_docking_ok
-
-#    def _hook_action_picking_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
-#        '''
-#        modify data for stock move creation
-#        - location_dest_id is set to Cross docking
-#        '''
-#        if context is None:
-#            context = {}
-#        move_values = super(purchase_order, self)._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, *args, **kwargs)
-#        w = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Cross docking')], context=context)
-#        move_values.update({'location_dest_id': w,})
-#        return move_values
-
-
-#    def action_picking_create(self, cr, uid, ids, context=None):
-#        '''
-#        Checks if the the option Cross Docking has been chosen
-#        '''
-#        if context is None:
-#            context = {}
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#        
-#        for order in self.browse(cr, uid, ids, context=context):
-#            if order.cross_docking_ok:
-#                self.
-#            
-#        return super(purchase_order, self).action_picking_create(cr, uid, ids, context=context)
 purchase_order()
+
+#class procurement_order(osv.osv):
+#    '''
+#    date modifications
+#    '''
+#    _inherit = 'procurement.order'
+#    
+#    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+#        '''
+#        Please copy this to your module's method also.
+#        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+#        
+#        - allow to modify the data for purchase order line creation
+#        '''
+#        if context is None:
+#            context = {}
+#        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+#        procurement = kwargs['procurement']
+#        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
+#        # confirmed_delivery_date (confirmed date) = False
+#        line.update({'date_planned': procurement.date_planned, 'confirmed_delivery_date': False,})
+#        return line
+#    
+#    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+#        '''
+#        Please copy this to your module's method also.
+#        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
+#        
+#        - allow to modify the data for purchase order creation
+#        '''
+#        if context is None:
+#            context = {}
+#        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+#        line = kwargs['line']
+#        procurement = kwargs['procurement']
+#        # update from yml flag
+#        values['from_yml_test'] = procurement.from_yml_test
+#        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
+#        # confirmed_delivery_date (confirmed date) = False
+#        # both values are taken from line 
+#        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'],})
+#        return values  
+#
+#procurement_order()
