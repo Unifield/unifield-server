@@ -94,6 +94,7 @@
             <field name="res_model">stock.warehouse.automatic.supply</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
         </record>
         
         <menuitem action="action_automatic_supply_tree"
