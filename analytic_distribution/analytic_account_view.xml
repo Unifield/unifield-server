@@ -44,11 +44,11 @@
             <field name="arch" type="xml">
                 <filter string="Pending" position="before">
                     <filter name="active" icon="terp-check" string="Active"
-                            domain="[('date_start', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                     ('|'),
-                                     ('date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                     ('date', '=', False)]"/>
+                            context="{'filter_inactive_accounts': 1}"/>
                 </filter>
+                <field name="user_id" position="after">
+                    <field name="category"/>
+                </field>
                 <group string="Group By..." position="replace">
                     <group expand="0" string="Group By...">
                         <filter string="Parent" icon="terp-folder-orange" domain="[]" context="{'group_by':'parent_id'}"/>
@@ -107,7 +107,7 @@
             <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
             <field name="search_view_id" ref="view_analytic_account_search"/>
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
-            <field name="context">{'search_default_active': 1}</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
         </record>
 
         <menuitem action="action_account_analytic_account_form"
