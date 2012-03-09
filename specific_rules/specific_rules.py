@@ -496,6 +496,8 @@ class stock_move(osv.osv):
         '''
         function for KC/SSL/DG/NP products
         '''
+        # objects
+        kit_obj = self.pool.get('composition.kit')
         result = {}
         for id in ids:
             result[id] = {}
@@ -521,9 +523,18 @@ class stock_move(osv.osv):
             # expiry date management
             if obj.product_id.perishable:
                 result[obj.id]['exp_check'] = True
-            # contains a kit
+            # contains a kit and allow the creation of a new composition LIst
+            # will be false if the kit is batch management and a composition list already uses this batch number
+            # only one composition list can  use a given batch number for a given product
             if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
-                result[obj.id]['kit_check'] = True
+                if obj.prodlot_id:
+                    # search if composition list already use this batch number
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', obj.prodlot_id.id)], context=context)
+                    if not kit_ids:
+                        result[obj.id]['kit_check'] = True
+                else:
+                    # not batch management, we can create as many composition list as we want
+                    result[obj.id]['kit_check'] = True
             
         return result
     

@@ -546,6 +546,12 @@ class substitute(osv.osv_memory):
             replace_text = result['arch']
             replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
             result['arch'] = replace_text
+            # remove the hide_new_button - only products from kit must be impacted
+            list = ['hide_new_button="True" hide_delete_button="True" ']
+            replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
+            replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
+            result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
+            
         if view_type == 'form' and context.get('step', False) == 'de_kitting':
             # fields to be modified
             list = ['<field name="replacement_item_ids"', '<button name="check_availability"', '<button name="do_substitute"']

@@ -245,6 +245,7 @@
             <field name="name">composition.kit.theoretical.item.filter</field>
             <field name="model">composition.item</field>
             <field name="type">search</field>
+            <field name="priority">2</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition Item">
                     <field name="item_kit_id" domain="[('composition_type', '=', 'theoretical')]" select="1" />
@@ -265,6 +266,7 @@
             <field name="name">composition.kit.real.item.filter</field>
             <field name="model">composition.item</field>
             <field name="type">search</field>
+            <field name="priority">1</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Real Kit Composition Item">
                     <field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" />
@@ -325,7 +327,26 @@
 			<field name="context">{'item_kit_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_item_filter" />
 		</record>
-
+		
+		<record id="kit_composition_real_action2" model="ir.actions.act_window">
+			<field name="name">Kit Composition List</field>
+			<field name="res_model">composition.kit</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('composition_type', '=', 'real'),('composition_product_id', '=', active_id)]</field>
+			<field name="context">{'composition_type':'real'}</field>
+			<field name="search_view_id" ref="view_composition_kit_real_filter" />
+		</record>
+		
+		<record id="ir_open_composition_list_view" model="ir.values">
+		    <field name="key2">client_action_relate</field>
+		    <field name="model">product.product</field>
+		    <field name="name">Composition Lists</field>
+		    <field eval="'ir.actions.act_window,%d'%ref('kit_composition_real_action2')" name="value"/>
+		    <field name="key">action</field>
+		    <field eval="True" name="object"/>
+		</record>
+		
 		<menuitem id="kit_management" name="Kit Management" parent="product_attributes.menu_main_product" sequence="10" />
 		<menuitem id="kit_theoretical" name="Theoretical Kit" parent="kit_management" sequence="1" />
 		<menuitem action="kit_composition_theoretical_action" id="kit_composition_theoretical_menu" parent="kit_theoretical" sequence="1" />
