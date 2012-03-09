@@ -112,6 +112,7 @@
             <field name="res_model">stock.warehouse.order.cycle</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
         </record>
         
         <menuitem action="action_order_cycle_tree"
