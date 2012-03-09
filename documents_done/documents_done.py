@@ -26,6 +26,13 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+REAL_MODEL_LIST = [('sale.order', 'Sale Order'),
+                   ('purchase.order', 'Purchase Order'),
+                   ('internal.request', 'Internal Request'),
+                   ('rfq', 'Request for Quotation'),
+                   ('tender', 'Tender')]
+
+
 class documents_done_wizard(osv.osv):
     _name = 'documents.done.wizard'
     _description = 'Documents not \'Done\''
@@ -188,11 +195,11 @@ class documents_done_wizard(osv.osv):
         for doc in self.browse(cr, uid, ids, context=context):
             order = self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context)
             if doc.real_model == 'sale.order':
-                res[doc.id] = self._get_problem_sale_order(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_sale_order(cr, uid, order, context=c) and True or False
             elif doc.real_model == 'purchase.order':
-                res[doc.id] = self._get_problem_purchase_order(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_purchase_order(cr, uid, order, context=c) and True or False
             elif doc.real_model == 'tender':
-                res[doc.id] = self._get_problem_tender(cr, uid, order, context=c)
+                res[doc.id] = self._get_problem_tender(cr, uid, order, context=c) and True or False
             else:
                 res[doc.id] = False
 
@@ -202,11 +209,7 @@ class documents_done_wizard(osv.osv):
         'name': fields.char(size=256, string='Name', readonly=True),
         'res_id': fields.integer(string='Res. Id'),
         'real_model': fields.char(size=64, string='Real model'),
-        'model': fields.selection([('sale.order', 'Sale Order'),
-                                   ('purchase.order', 'Purchase Order'),
-                                   ('internal.request', 'Internal Request'),
-                                   ('rfq', 'Request for Quotation'),
-                                   ('tender', 'Tender')], string='Doc. Type', readonly=True),
+        'model': fields.selection(REAL_MODEL_LIST, string='Doc. Type', readonly=True),
         'creation_date': fields.date(string='Creation date', readonly=True),
         'expected_date': fields.date(string='Expected date', readonly=True),
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
@@ -215,7 +218,18 @@ class documents_done_wizard(osv.osv):
         'state': fields.char(size=64, string='State', readonly=True),
         'display_state': fields.function(_get_state, fnct_search=_search_state, type='selection', selection=_get_selection,
                                          method=True, store=False, readonly=True, string='State'),
+        'requestor': fields.many2one('res.users', string='Creator', readonly=True),
     }
+    
+    def _get_model_name(self, model):
+        '''
+        Returns the readable model name
+        '''
+        for model_name in REAL_MODEL_LIST:
+            if model_name[0] == model:
+                return model_name[1]
+            
+        return 'Undefined'
 
     def _add_stock_move_pb(self, cr, uid, problem_id, moves, context={}):
         '''
@@ -270,6 +284,11 @@ class documents_done_wizard(osv.osv):
         proc_obj = self.pool.get('procurement.order')
 
         for wiz in self.browse(cr, uid, ids, context=context):
+
+            if not wiz.problem:
+                context.update({'direct_cancel': True})
+                return self.cancel_line(cr, uid, [wiz.id], all_doc=True, context=context)
+
             pick_ids = []
             order = False
             move_ids = []
@@ -316,7 +335,7 @@ class documents_done_wizard(osv.osv):
             # Process all invoices
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
-                                             'doc_name': inv.name,
+                                             'doc_name': inv.number or inv.name,
                                              'doc_state': inv.state,
                                              'doc_model': 'account.invoice',
                                              'doc_id': inv.id,
@@ -326,24 +345,28 @@ class documents_done_wizard(osv.osv):
                 'res_model': 'documents.done.problem',
                 'view_mode': 'form',
                 'view_type': 'form',
+                'context': context,
                 'res_id': pb_id,
-                'target': 'new'}
+                'target': 'popup'}
                         
 
-    def cancel_line(self, cr, uid, ids, context={}):
+    def cancel_line(self, cr, uid, ids, all_doc=True, context={}):
         '''
         Set the document to done state
         '''
-        wf_service = netsvc.LocalService("workflow")
+        if not context:
+            context = {}
+        
         for doc in self.browse(cr, uid, ids, context=context):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
-                self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'documents.done.wizard',
-                'view_type': 'form',
-                'view_mode': 'tree',
-                'target': 'crush'}
+                self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
+                if all_doc:
+                    self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.'% (self._get_model_name(doc.real_model), doc.name)), context=context)
+                
+        if not context.get('direct_cancel', False):
+            return {'type': 'ir.actions.act_window_close'}
+        else:
+            return True
     
     def init(self, cr):
         '''
@@ -360,7 +383,8 @@ class documents_done_wizard(osv.osv):
                     dnd.state,
                     dnd.creation_date,
                     dnd.expected_date,
-                    dnd.partner_id
+                    dnd.partner_id,
+                    dnd.requestor
                 FROM
                     ((SELECT
                         so.name AS name,
@@ -370,11 +394,12 @@ class documents_done_wizard(osv.osv):
                         so.state AS state,
                         so.date_order AS creation_date,
                         so.delivery_requested_date AS expected_date,
-                        so.partner_id 
+                        so.partner_id,
+                        so.create_uid AS requestor
                     FROM
                         sale_order so
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         procurement_request = False)
                 UNION
@@ -386,11 +411,12 @@ class documents_done_wizard(osv.osv):
                         ir.state AS state,
                         ir.date_order AS creation_date,
                         ir.delivery_requested_date AS expected_date,
-                        NULL AS partner_id
+                        NULL AS partner_id,
+                        ir.create_uid AS requestor
                     FROM
                         sale_order ir
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         procurement_request = True)
                 UNION
@@ -402,11 +428,12 @@ class documents_done_wizard(osv.osv):
                         po.state AS state,
                         po.date_order AS creation_date,
                         po.delivery_requested_date AS expected_date,
-                        po.partner_id AS partner_id
+                        po.partner_id AS partner_id,
+                        po.create_uid AS requestor
                     FROM
                         purchase_order po
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         rfq_ok = False)
                 UNION
@@ -418,11 +445,12 @@ class documents_done_wizard(osv.osv):
                         rfq.state AS state,
                         rfq.date_order AS creation_date,
                         rfq.delivery_requested_date AS expected_date,
-                        rfq.partner_id AS partner_id
+                        rfq.partner_id AS partner_id,
+                        rfq.create_uid AS requestor
                     FROM
                         purchase_order rfq
                     WHERE
-                        state NOT IN ('done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel')
                       AND
                         rfq_ok = True)
                 UNION
@@ -434,11 +462,12 @@ class documents_done_wizard(osv.osv):
                         t.state AS state,
                         t.creation_date AS creation_date,
                         t.requested_date AS expected_date,
-                        NULL AS partner_id
+                        NULL AS partner_id,
+                        t.create_uid AS requestor
                     FROM
                         tender t
                     WHERE
-                        state NOT IN ('done', 'cancel'))) AS dnd
+                        state NOT IN ('draft', 'done', 'cancel'))) AS dnd
         );""")
     
 documents_done_wizard()
@@ -466,7 +495,7 @@ class documents_done_problem(osv.osv_memory):
         'pb_lines': fields.one2many('documents.done.problem.line', 'problem_id', string='Lines'),
     }
 
-    def done_all_documents(self, cr, uid, ids, context={}):
+    def done_all_documents(self, cr, uid, ids, all_doc=True, context={}):
         '''
         For all documents, check the state of the doc and send the signal
         of 'manually_done' if needed
@@ -478,12 +507,12 @@ class documents_done_problem(osv.osv_memory):
                     invoice_state = self.pool.get('account.invoice').browse(cr, uid, line.doc_id, context=context).state
                     if invoice_state == 'draft':
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
-                    elif invoice_state not in ('cancel', 'paid'):
-                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
+#                    elif invoice_state not in ('cancel', 'paid'):
+#                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
                 elif line.doc_model == 'tender':
                     wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
-                    self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, context=context)
+                    self.pool.get(line.doc_model).set_manually_done(cr, uid, line.doc_id, all_doc=all_doc, context=context)
 
             return self.pool.get('documents.done.wizard').go_to_problems(cr, uid, [wiz.wizard_id.id], context=context)
 
@@ -498,7 +527,7 @@ class documents_done_problem(osv.osv_memory):
         Cancel the document
         '''
         for wiz in self.browse(cr, uid, ids, context=context):
-            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], context=context)
+            return self.pool.get('documents.done.wizard').cancel_line(cr, uid, [wiz.wizard_id.id], all_doc=True, context=context)
 
         return True
 
@@ -524,7 +553,7 @@ class documents_done_problem_line(osv.osv_memory):
             res_state = dict(sel['state']['selection']).get(line.doc_state, line.doc_state)
             name = '%s,state' % line.doc_model
             tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res_state)])
-            if tr_ids:
+            if tr_ids and self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']:
                 res[line.id] = self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
             else:
                 res[line.id] = res_state
