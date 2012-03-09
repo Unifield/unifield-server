@@ -1175,7 +1175,7 @@ class sale_order_line(osv.osv):
     _name= 'sale.order.line'
     _inherit = 'sale.order.line'
     
-    def _get_planned_date(self, cr, uid, context=None, *a):
+    def _get_planned_date(self, cr, uid, context=None):
         '''
             Returns planned_date
         '''
@@ -1184,17 +1184,13 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            if so.partner_id.customer_lt:
-                res = (datetime.now() + relativedelta(days=so.partner_id.customer_lt)).strftime('%Y-%m-%d')
-            
-            else:
-                res = so.delivery_requested_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_requested_date
         
         return res
 
-    def _get_confirmed_date(self, cr, uid, context=None, *a):
+    def _get_confirmed_date(self, cr, uid, context=None):
         '''
             Returns confirmed date
         '''
@@ -1203,12 +1199,9 @@ class sale_order_line(osv.osv):
         order_obj= self.pool.get('sale.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
         
-        if 'delivery_confirmed_date' in context:
-            res = context['delivery_confirmed_date']
-            return res
-        so = order_obj.browse(cr, uid, context.get('sale_id', []))
-        if so:
-            res = so.delivery_confirmed_date
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.delivery_confirmed_date    
         
         return res
     
