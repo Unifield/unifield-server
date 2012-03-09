@@ -231,6 +231,20 @@ MochiKit.Base.update(ListView.prototype, {
         }
     },
 
+
+    expand_all_group: function(pid) {
+        if (!pid) {
+            elem = jQuery('#'+this.name+'_grid')
+        } else {
+            elem = jQuery('tr[parent="' + pid + '"]');
+        }
+        this.expand_all = 1;
+        elem.find('td.group-expand').each(function() {
+            jQuery(this).click();
+        });
+        this.expand_all = 0;
+        $('#expand_all').hide();
+    },
     group_by: function(id, record, no_leaf, group) {
         var $group_record = jQuery('[records="' + record + '"]');
         var group_by_context = $group_record.attr('grp_context');
@@ -247,6 +261,8 @@ MochiKit.Base.update(ListView.prototype, {
                 sort_key = check_order[i];
             }
         }
+        var expand_all = this.expand_all;
+        var self = this;
         if (group_by_context == '[]') {
             jQuery('#' + record + '[parent_grp_id="' + id + '"]').toggle();
         } else {
@@ -267,6 +283,9 @@ MochiKit.Base.update(ListView.prototype, {
                     dataType: 'html',
                     success: function(xmlHttp) {
                         $group_record.after(xmlHttp);
+                        if (expand_all) {
+                            self.expand_all_group(record);
+                        }
                     }
                 });
             } else {
@@ -876,6 +895,11 @@ MochiKit.Base.update(ListView.prototype, {
             ids = this.getRecords();
         }
 
+        listeleme = []
+        columns = this.getColumns()
+        for(var i in columns) {
+            listeleme.push([getNodeAttribute(columns[i],'id').split('/').pop(), $(columns[i]).text()]);
+        }
         ids = '[' + ids.join(',') + ']';
         jQuery.frame_dialog({src:openobject.http.getURL('/openerp/impex/exp', {
             _terp_model: this.model,
@@ -884,6 +908,7 @@ MochiKit.Base.update(ListView.prototype, {
             _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
             _terp_ids: ids,
             _terp_view_ids : this.view_ids,
+            _terp_listheaders: listeleme,
             _terp_view_mode : this.view_mode})
         }, null, {
             height: '98%',

@@ -18,8 +18,14 @@ import itertools
 					% if editable and not hide_new_button:
 						<td class="pager-cell-button">
 							<button id="${name}_new" title="${_('Create new record.')}" onclick="editRecord(null); return false;">${_('New')}</button>
-						</td>
+                        </td>
 					% endif
+                    % if len(group_by_ctx) > 1 or not group_by_no_leaf:
+                        <td class="pager-cell-button">
+                            <button title="${_('Expand all.')}" id="expand_all" onclick="new ListView('_terp_list').expand_all_group(); return false;">${_('Expand All')}</button>
+                        </td>
+                    % endif
+						</td>
         			<td class="pager-cell" style="width: 90%">
     					${pager.display()}
     				</td>
