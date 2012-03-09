@@ -17,7 +17,7 @@
     <function name="install_lang" model="res.lang"/>
     
     <record model="res.users" id="base.user_root">
-    	<field name="context_lang">mf_EN</field>
+    	<field name="context_lang">en_MF</field>
     </record>
 
     <record id="stock.stock_location_locations" model="stock.location">
