@@ -898,7 +898,10 @@ MochiKit.Base.update(ListView.prototype, {
         listeleme = []
         columns = this.getColumns()
         for(var i in columns) {
-            listeleme.push([getNodeAttribute(columns[i],'id').split('/').pop(), $(columns[i]).text()]);
+            // IE bug ? getColumns returns null on IE
+            if (getNodeAttribute(columns[i],'id')) {
+                listeleme.push([getNodeAttribute(columns[i],'id').split('/').pop(), $(columns[i]).text()]);
+            }
         }
         ids = '[' + ids.join(',') + ']';
         jQuery.frame_dialog({src:openobject.http.getURL('/openerp/impex/exp', {

@@ -103,8 +103,9 @@
         function reload(name_list) {
             var $fields_list = jQuery('#fields');
             $fields_list.empty();
+            var options = openobject.dom.get('fields').options;
             jQuery.each(name_list, function (_, f) {
-                $fields_list.append(new Option(f[1], f[0]));
+                options.add(new Option(f[1], f[0]));
             });
         }
 
