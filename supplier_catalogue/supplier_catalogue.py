@@ -32,6 +32,7 @@ import time
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
+    _order = 'period_from, period_to'
     
     def copy(self, cr, uid, catalogue_id, default={}, context={}):
         '''
@@ -61,6 +62,12 @@ class supplier_catalogue(osv.osv):
             
         # Search other catalogues for the same partner/currency
         # which are overrided by the new catalogue
+        equal_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '=', period_from), 
+                                                                                        ('currency_id', '=', currency_id),
+                                                                                        ('partner_id', '=', partner_id)],
+                                                                                        order='period_from asc',
+                                                                                        limit=1,
+                                                                                        context=context) 
         if period_to:
             to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from), 
                                                                                          ('period_from', '<', period_to),
@@ -78,6 +85,14 @@ class supplier_catalogue(osv.osv):
                                                                                          context=context)
         
         # If overrided catalogues exist, display an error message
+        if equal_ids:
+            over_cat = self.browse(cr, uid, equal_ids[0], context=context)
+            over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
+            over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
+            raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
+                                               'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
+        
+        # If overrided catalogues exist, display an error message
         if to_ids:
             over_cat = self.browse(cr, uid, to_ids[0], context=context)
             over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
@@ -90,8 +105,9 @@ class supplier_catalogue(osv.osv):
         # after the beginning of the new catalogue
         from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
                                                                                               ('partner_id', '=', partner_id),
+                                                                                              ('period_from', '<=', period_from),
                                                                                               '|', 
-                                                                                              ('period_to', '>', period_from), 
+                                                                                              ('period_to', '>=', period_from), 
                                                                                               ('period_to', '=', False),], context=context)
         
         # Update these catalogues with an end date which is the start date - 1 day of
