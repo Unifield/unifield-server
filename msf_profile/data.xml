@@ -5,6 +5,20 @@
         <field name="date_format">%d/%b/%Y</field>
         <field name="time_format">%H:%M</field>
     </record>
+    
+    <record id="lang_msf_en" model="res.lang">
+        <field name="code">mf_EN</field>
+        <field name="name">MSF English</field>
+        <field name="translatable">True</field>
+        <field name="date_format">%d/%b/%Y</field>
+        <field name="time_format">%H:%M</field>
+    </record>
+
+    <function name="install_lang" model="res.lang"/>
+    
+    <record model="res.users" id="base.user_root">
+    	<field name="context_lang">mf_EN</field>
+    </record>
 
     <record id="stock.stock_location_locations" model="stock.location">
         <field name="name">Instance Full View</field>
