@@ -145,9 +145,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             if dateexpiration and dateexpiration[0] and dateexpiration <= current_date:
                 vals.update({'active': False})
             if not e_ids:
-                self.pool.get('hr.employee').create(cr, uid, vals)
+                self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
             else:
-                self.pool.get('hr.employee').write(cr, uid, e_ids, vals)
+                self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
         else:
             return False
         return True
