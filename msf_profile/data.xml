@@ -7,7 +7,7 @@
     </record>
     
     <record id="lang_msf_en" model="res.lang">
-        <field name="code">mf_EN</field>
+        <field name="code">en_MF</field>
         <field name="name">MSF English</field>
         <field name="translatable">True</field>
         <field name="date_format">%d/%b/%Y</field>
