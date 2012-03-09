@@ -369,6 +369,14 @@ class stock_move(osv.osv):
         'already_confirmed': fields.boolean(string='Already confirmed'),
     }
     
+    def copy(self, cr, uid, id, defaults={}, context={}):
+        '''
+        Remove the already confirmed flag
+        '''
+        defaults.update({'already_confirmed':False})
+        
+        return super(stock_move, self).copy(cr, uid, id, defaults, context=context)
+    
     def action_confirm(self, cr, uid, ids, context={}):
         '''
         Set the bool already confirmed to True
