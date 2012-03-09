@@ -18,7 +18,9 @@
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
 	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', False)], 'invisible': ['|', ('composition_expiry_check', '=', True), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
-	                        <field name="composition_lot_id" colspan="2" domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_lot_id" colspan="2"
+	                        	on_change="on_change_lot_id(composition_lot_id)"
+	                        	domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
 	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
 	                        <button colspan="6" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" />

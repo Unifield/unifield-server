@@ -57,7 +57,7 @@ class composition_kit(osv.osv):
         
         for obj in self.browse(cr, uid, ids, context=context):
             # if no expiry date from items (no perishable products or no expiry date entered), the default value is '9999-01-01'
-            expiry_date = '9999-01-01'
+            expiry_date = False
             # computation of expiry date makes sense only for real type
             if obj.composition_type != 'real':
                 raise osv.except_osv(_('Warning !'), _('Computation of expiry date is only available for Composition List.'))
@@ -315,19 +315,23 @@ class composition_kit(osv.osv):
         
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
             # composition version
             if obj.composition_type == 'theoretical':
                 result[obj.id].update({'composition_version': obj.composition_version_txt})
             elif obj.composition_type == 'real':
                 result[obj.id].update({'composition_version': obj.composition_version_id and obj.composition_version_id.composition_version_txt or ''})
+                # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
+                if obj.composition_expiry_check:
+                    result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name,
+                                           'composition_exp': obj.composition_lot_id.life_date})
+                else:
+                    result[obj.id].update({'composition_combined_ref_lot': obj.composition_reference,
+                                           'composition_exp': obj.composition_ref_exp})
             # name - ex: ITC - 01/01/2012
             date = datetime.strptime(obj.composition_creation_date, db_date_format)
             result[obj.id].update({'name': result[obj.id]['composition_version'] + ' - ' + date.strftime(date_format)})
-            # composition_combined_ref_lot: mix between both fields reference and batch number which are exclusive fields
-            if obj.composition_expiry_check:
-                result[obj.id].update({'composition_combined_ref_lot': obj.composition_lot_id.name})
-            else:
-                result[obj.id].update({'composition_combined_ref_lot': obj.composition_reference})
             # mandatory nomenclature levels
             result[obj.id].update({'nomen_manda_0': obj.composition_product_id.nomen_manda_0.id})
             result[obj.id].update({'nomen_manda_1': obj.composition_product_id.nomen_manda_1.id})
@@ -456,7 +460,11 @@ class composition_kit(osv.osv):
         res = {'value': {'composition_batch_check': False,
                          'composition_expiry_check': False,
                          'composition_lot_id': False,
-                         'composition_reference': False}}
+                         'composition_exp': False,
+                         'composition_reference': False,
+                         'composition_ref_exp': False,
+                         'composition_version_id': False,
+                         'composition_version_txt': False}}
         if not product_id:
             return res
         
@@ -465,7 +473,22 @@ class composition_kit(osv.osv):
         res['value']['composition_expiry_check'] = data['perishable']
         return res
     
-    def _get_composition_kit_ids(self, cr, uid, ids, context=None):
+    def on_change_lot_id(self, cr, uid, ids, lot_id, context=None):
+        '''
+        when the lot is changed, expiry date is updated, so the field is modified before the save happens
+        '''
+        # product object
+        lot_obj = self.pool.get('stock.production.lot')
+        res = {'value': {'composition_exp': False,
+                         'composition_ref_exp': False}}
+        if not lot_id:
+            return res
+            
+        data = lot_obj.read(cr, uid, [lot_id], ['life_date'], context=context)[0]
+        res['value']['composition_exp'] = data['life_date']
+        return res
+    
+    def _get_composition_kit_from_product_ids(self, cr, uid, ids, context=None):
         '''
         ids represents the ids of product.product objects for which values have changed
         
@@ -483,9 +506,27 @@ class composition_kit(osv.osv):
         result = kit_obj.search(cr, uid, [('composition_product_id', 'in', ids)], context=context)
         return result
     
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+    def _get_composition_kit_from_lot_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of stock.production.lot objects for which values have changed
+        
+        return the list of ids of composition.kit objects which need to get their fields updated
+        
+        self is stock.production.lot object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        kit_obj = self.pool.get('composition.kit')
+        result = kit_obj.search(cr, uid, [('composition_lot_id', 'in', ids)], context=context)
+        return result
+    
+    def onChangeSearchNomenclature(self, cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         prod_obj = self.pool.get('product.product')
-        return prod_obj.onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
+        return prod_obj.onChangeSearchNomenclature(cr, uid, ids, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
     
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
         prod_obj = self.pool.get('product.template')
@@ -494,6 +535,37 @@ class composition_kit(osv.osv):
     def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
         prod_obj = self.pool.get('product.template')
         return prod_obj._search_nomen_s(cr, uid, obj, name, args, context=context)
+    
+    def _set_expiry_date(self, cr, uid, ids, field, value, arg, context=None):
+        """
+        if the kit is linked to a batch management product, we update the expiry date for the correponding batch number
+        else we udpate the composition_ref_exp field
+        """
+        if not value or field != 'composition_exp':
+            return False
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        lot_obj = self.pool.get('stock.production.lot')
+        # date tools object
+        date_obj = self.pool.get('date.tools')
+        db_date_format = date_obj.get_db_date_format(cr, uid, context=context)
+        date_format = date_obj.get_date_format(cr, uid, context=context)
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.composition_expiry_check:
+                # a lot is linked, we update its expiry date
+                lot_obj.write(cr, uid, [obj.composition_lot_id.id], {'life_date': value}, context=context)
+                lot_name = obj.composition_lot_id.name
+                prod_name = obj.composition_product_id.name
+                exp_obj = datetime.strptime(value, db_date_format)
+                lot_obj.log(cr, uid, obj.composition_lot_id.id, _('Expiry Date of Batch Number %s for product %s has been updated to %s.'%(lot_name,prod_name,exp_obj.strftime(date_format))))
+            else:
+                # not lot because the product is not batch managment, we have a reference instead, we write in composition_ref_exp
+                self.write(cr, uid, ids, {'composition_ref_exp': value}, context=context)
+        return True
 
     _columns = {'composition_type': fields.selection(KIT_COMPOSITION_TYPE, string='Composition Type', readonly=True, required=True),
                 'composition_description': fields.text(string='Composition Description'),
@@ -503,7 +575,7 @@ class composition_kit(osv.osv):
                 'composition_creation_date': fields.date(string='Creation Date', required=True),
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),
-                'composition_exp': fields.date(string='Expiry Date', readonly=True),
+                'composition_ref_exp': fields.date(string='Expiry Date for Kit with reference', readonly=True),
                 'composition_item_ids': fields.one2many('composition.item', 'item_kit_id', string='Items'),
                 'active': fields.boolean('Active', readonly=True),
                 'state': fields.selection(KIT_STATE, string='State', readonly=True, required=True),
@@ -516,43 +588,46 @@ class composition_kit(osv.osv):
                                         store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),}),
                 'composition_version': fields.function(_vals_get, method=True, type='char', size=1024, string='Version', multi='get_vals',
                                                        store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_version_txt', 'composition_version_id'], 10),}),
+                'composition_exp': fields.function(_vals_get, fnct_inv=_set_expiry_date, method=True, type='date', size=1024, string='Expiry Date', multi='get_vals', readonly=True,
+                                                   store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_ref_exp', 'composition_lot_id'], 10),
+                                                           'stock.production.lot': (_get_composition_kit_from_lot_ids, ['life_date'], 10)}),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Nb', multi='get_vals',
                                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
                 # nomenclature
                 'nomen_manda_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Main Type', multi='get_vals', readonly=True, select=True,
                                                  store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                                                         'product.template': (_get_composition_kit_from_product_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
                 'nomen_manda_1': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Group', multi='get_vals', readonly=True, select=True,
                                                  store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                                                         'product.template': (_get_composition_kit_from_product_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
                 'nomen_manda_2': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Family', multi='get_vals', readonly=True, select=True,
                                                  store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                                                         'product.template': (_get_composition_kit_from_product_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
                 'nomen_manda_3': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Root', multi='get_vals', readonly=True, select=True,
                                                  store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                         'product.template': (_get_composition_kit_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
+                                                         'product.template': (_get_composition_kit_from_product_ids, ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3'], 10),}),
                 'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_1': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_2': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_3': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_4': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_5': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', multi='get_vals', readonly=True, select=True,
                                                store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
-                                                       'product.template': (_get_composition_kit_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
+                                                       'product.template': (_get_composition_kit_from_product_ids, ['nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5'], 10),}),
                 'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
                 'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
@@ -596,7 +671,7 @@ class composition_kit(osv.osv):
                     #print self.read(cr, uid, ids, ['composition_product_id', 'composition_version_txt', 'composition_creation_date'], context=context)
                     raise osv.except_osv(_('Warning !'), _('The dataset (Product - Version - Creation Date) must be unique.'))
                 # constraint on lot_id/reference/expiry date - forbidden for theoretical
-                if obj.composition_reference or obj.composition_lot_id or obj.composition_exp:
+                if obj.composition_reference or obj.composition_lot_id or obj.composition_exp or obj.composition_ref_exp:
                     raise osv.except_osv(_('Warning !'), _('Composition Reference / Batch Number / Expiry date is not available for Theoretical Kit.'))
                 # constraint on version_id - forbidden for theoretical
                 if obj.composition_version_id:
@@ -610,6 +685,8 @@ class composition_kit(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product does not allow Reference.'))
                     if not obj.composition_lot_id:
                         raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product needs Batch Number.'))
+                    if obj.composition_ref_exp:
+                        raise osv.except_osv(_('Warning !'), _('Composition List with Batch Management Product does not allow Reference based Expiry Date.'))
                 else:
                     if not obj.composition_reference:
                         raise osv.except_osv(_('Warning !'), _('Composition List without Batch Management Product needs Reference.'))
@@ -711,7 +788,7 @@ class composition_item(osv.osv):
                 vals.update(item_lot=False, item_exp=False)
         return super(composition_item, self).write(cr, uid, ids, vals, context=context)
     
-    def on_product_change(self, cr, uid, id, product_id, context=None):
+    def on_product_change(self, cr, uid, ids, product_id, context=None):
         '''
         product is changed, we update the UoM
         '''
@@ -732,7 +809,7 @@ class composition_item(osv.osv):
             
         return result
     
-    def on_lot_change(self, cr, uid, id, product_id, prodlot_id, context=None):
+    def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
         if lot exists in the system the date is filled in
         
@@ -1007,7 +1084,7 @@ class stock_move(osv.osv):
                                 composition_type=composition_type,
                                 composition_product_id=composition_product_id,
                                 composition_lot_id=composition_lot_id,
-                                composition_exp=composition_exp,
+                                composition_exp=composition_exp, # set so we do not need to wait the save to see the expiry date
                                 composition_batch_check=composition_batch_check,
                                 composition_expiry_check=composition_expiry_check,
                                 )

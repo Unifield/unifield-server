@@ -32,7 +32,7 @@ class modify_expiry_date(osv.osv_memory):
     _name = "modify.expiry.date"
     _columns = {'kit_id': fields.many2one('composition.kit', string='Composition List', readonly=True),
                 'date': fields.date(string='Date', readonly=True),
-                'new_date': fields.date(string='New Date'),
+                'new_date': fields.date(string='New Date', help="When using automatic computation, if no date are found in the kit components, the default value is 01/Jan/9999."),
                 }
     
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
@@ -66,7 +66,14 @@ class modify_expiry_date(osv.osv_memory):
             if not obj.new_date:
                 raise osv.except_osv(_('Warning !'), _('You need to specify a new date.'))
             kit_obj.write(cr, uid, kit_ids, {'composition_exp': obj.new_date}, context=context)
-                
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'composition.kit',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_id': kit_ids[0],
+                'target': 'crunch',
+                'context': context}
         return {'type': 'ir.actions.act_window_close'}
     
 modify_expiry_date()

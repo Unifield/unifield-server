@@ -22,6 +22,12 @@
     # composition_combined_ref_lot: False
     assert not kit.composition_combined_ref_lot, 'kit_compo_01: composition_combined_ref_lot should be false - %s'%kit.composition_combined_ref_lot
 -
+  I check the on_change function for composition.kit
+-
+  !python {model: composition.kit}: |
+    self.on_change_product_id(cr, uid, [ref("kit_compo_01")], ref("kit_product_C"), context=context)
+    self.on_change_lot_id(cr, uid, [ref("kit_compo_01")], ref("kit_lot_Cs"), context=context)
+-
   I create empty theoretical composition list 02, productA, OCG, 2010-01-20
 -
   !record {model: composition.kit, id: kit_compo_02}:
@@ -53,6 +59,12 @@
     item_product_id: kit_product_C
     item_qty: 10
     item_uom_id: product.product_uom_unit
+-
+  I check the on_change function for composition.item
+-
+  !python {model: composition.item}: |
+    self.on_product_change(cr, uid, [ref("item_01_01")], ref("kit_product_C"), context=context)
+    self.on_lot_change(cr, uid, [ref("item_01_01")], ref("kit_product_C"), ref("kit_lot_Cs"), context=context)
 -
   I check the function fields of composition item
 -
@@ -244,6 +256,7 @@
   !python {model: modify.expiry.date}: |
     self.compute_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
     for obj in self.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+      assert obj.date == '2012-06-24', 'the present date from kit is wrong - 2012-06-24 - %s'%obj.date
       assert obj.new_date == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.new_date
     self.do_modify_expiry_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
 -
@@ -252,6 +265,12 @@
   !python {model: composition.kit}: |
     for obj in self.browse(cr, uid, [ref("kit_compo_04")], context=context):
       assert obj.composition_exp == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.composition_exp
+-
+  I check the expiry date of the lot has been updated
+-
+  !python {model: stock.production.lot}: |
+    for obj in self.browse(cr, uid, [ref("kit_lot_As")], context=context):
+      assert obj.life_date == '9999-01-01', 'the expiry date of production lot has not been updated - 999-01-01 - %s'%obj.life_date
 -
   I open the substitute wizard
 -
@@ -270,7 +289,7 @@
     self.write(cr, uid, item_ids, {'lot_mirror': 'C standard', 'exp_substitute_item': '2012-06-20'}, context=context)
     context['wizard']['item_ids'] = item_ids
 -
-  I test the on_change functions
+  I test the on_change functions for substitute.item.mirror
 -
   !python {model: substitute.item.mirror}: |
     self.change_lot(cr, uid, context['wizard']['item_ids'], ref("stock.stock_location_stock"), ref("kit_product_C"), 'C standard', ref("product.product_uom_unit"), context=context)
@@ -286,13 +305,23 @@
   !python {model: substitute.item}: |
     values = {'wizard_id': context['wizard']['id'],
               'location_id_substitute_item': ref("stock.stock_location_stock"),
-              'module_substitute_item': 'module substitute',
+              'module_substitute_item': 'module substitute kit yaml test',
               'product_id_substitute_item': ref("kit_product_C"),
               'qty_substitute_item': 60,
               'uom_id_substitute_item': ref("product.product_uom_unit"),
               'lot_id_substitute_item': ref("kit_lot_Cs"),
               }
     self.create(cr, uid, values, context=context)
+-
+  I test the on_change functions for substitute.item - type check is 'out' for standard substitute.item (products come from the stock)
+-
+  !python {model: substitute.item}: |
+    ids = self.search(cr, uid, [('module_substitute_item', '=', 'module substitute kit yaml test')], context=context)
+    type_check = 'out'
+    self.change_lot(cr, uid, ids, ref("stock.stock_location_stock"), ref("kit_product_C"), ref("kit_lot_Cs"), ref("product.product_uom_unit"), context=context)
+    self.change_expiry(cr, uid, ids, '2012-01-05', ref("kit_product_C"), type_check, ref("stock.stock_location_stock"), ref("kit_lot_Cs"), ref("product.product_uom_unit"), context=context)
+    self.on_change_location_id(cr, uid, ids, ref("stock.stock_location_stock"), ref("kit_product_C"), ref("kit_lot_Cs"), ref("product.product_uom_unit"), context=context)
+    self.on_change_product_id(cr, uid, ids, ref("stock.stock_location_stock"), ref("kit_product_C"), ref("kit_lot_Cs"), ref("product.product_uom_unit"), context=context)
 -
   I process the subtitute function which opens the change expiry date wizard
 -
@@ -347,6 +376,29 @@
     item_product_id: kit_product_C
     item_qty: 20
     item_uom_id: product.product_uom_unit
+-
+  I open the modify expiry date wizard
+-
+  !python {model: composition.kit}: |
+    res = self.modify_expiry_date(cr, uid, [ref("kit_compo_05")], context=context)
+    model = res['res_model']
+    id = res['res_id']
+    c = res['context']
+    context['wizard'] = {'id': id, 'ids': [id], 'model': model, 'c': c}
+-
+  I compute the date from the items, check it, confirm it
+-
+  !python {model: modify.expiry.date}: |
+    self.compute_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+    for obj in self.browse(cr, uid, context['wizard']['ids'], context=context['wizard']['c']):
+      assert obj.new_date == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.new_date
+    self.do_modify_expiry_date(cr, uid, context['wizard']['ids'], context=context['wizard']['c'])
+-
+  I check the expiry date of the composition kit has been updated
+-
+  !python {model: composition.kit}: |
+    for obj in self.browse(cr, uid, [ref("kit_compo_05")], context=context):
+      assert obj.composition_exp == '9999-01-01', 'the computed date is wrong - 9999-01-01 - %s'%obj.composition_exp
 - 
   I create sale order kit_so_B
 - 

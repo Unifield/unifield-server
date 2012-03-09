@@ -57,7 +57,7 @@
     name: A standard
     product_id: kit_product_A
     type: standard
-    life_date: !eval datetime.today().strftime('%Y-%m-%d')
+    life_date: 2012-06-24
 -
   Production Lot Cs (s stands for standard)
 -
