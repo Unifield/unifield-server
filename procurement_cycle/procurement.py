@@ -163,7 +163,7 @@ class stock_warehouse_order_cycle(osv.osv):
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
-    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, product_id, field='past'):
+    def consumption_method_change(self, cr, uid, ids, past_consumption, reviewed_consumption, manual_consumption, field='past'):
         '''
         Uncheck a box when the other is checked
         '''
@@ -176,9 +176,9 @@ class stock_warehouse_order_cycle(osv.osv):
             v.update({'past_consumption': 0, 'manual_consumption': 0.00})
         elif field == 'review' and not reviewed_consumption:
             v.update({'past_consumption': 1, 'manual_consumption': 0.00})
-        elif field == 'manual' and manual_consumption != 0.00 and product_id:
+        elif field == 'manual' and manual_consumption != 0.00 :
             v.update({'reviewed_consumption': 0, 'past_consumption': 0})
-        elif field == 'manual' and (manual_consumption == 0.00 or not product_id):
+        elif field == 'manual' and (manual_consumption == 0.00 ):
             v.update({'past_consumption': 1})
             
         return {'value': v}
