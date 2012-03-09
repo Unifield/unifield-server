@@ -31,7 +31,7 @@ class search_values(osv.osv_memory):
                 forced = True
                 if value and value2 and value > value2:
                     field_name = self.pool.get('ir.model.fields').read(cr, uid, int(field_info), ['field_description'])
-                    raise osv.except_osv(_('Error'), _('Field %s : the first value must be less than or equal to the second.' %(field_name['field_description'], )))
+                    raise osv.except_osv(_('Error'), _('Field %s : the first value must be less than or equal to the second.') %(field_name['field_description'],))
             else:
                 field_info = v
                 value = data[v]

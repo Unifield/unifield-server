@@ -151,7 +151,7 @@ class tender(osv.osv):
                 # create a purchase order for each supplier
                 address_id = partner_obj.address_get(cr, uid, [supplier.id], ['delivery'])['delivery']
                 if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!'%supplier.name))
+                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
                           'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,

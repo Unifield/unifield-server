@@ -196,7 +196,7 @@ class sale_order(osv.osv):
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The sale order \'%s\' has been confirmed.' % kwargs['order'].name)
+        return _('The sale order \'%s\' has been confirmed.') % (kwargs['order'].name,)
     
     def action_wait(self, cr, uid, ids, *args):
         '''

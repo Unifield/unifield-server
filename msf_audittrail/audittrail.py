@@ -503,7 +503,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=[], rule_id=F
 
     model_ids = model_pool.search(cr, uid, [('model', '=', model)])
     model_id = model_ids and model_ids[0] or False
-    assert model_id, _("'%s' Model does not exist..." %(model))
+    assert model_id, _("'%s' Model does not exist...") %(model,)
     model = model_pool.browse(cr, uid, model_id)
 
     if method in ('create'):

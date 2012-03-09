@@ -165,10 +165,10 @@ class product_nomenclature(osv.osv):
             type = vals['type']
             # level test
             if level > _LEVELS:
-                raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level,_LEVELS)))
+                raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s')%(level,_LEVELS))
             # type test
             if (level == _LEVELS) and (type != 'optional'):
-                raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves'%(type)))
+                raise osv.except_osv(_('Error'), _('The type (%s) must be equal to "optional" to inherit from leaves')%(type,))
     
     def write(self, cr, user, ids, vals, context=None):
         '''
@@ -213,7 +213,7 @@ class product_nomenclature(osv.osv):
         if not args:
             return []
         if args[0][1] != "=":
-            raise osv.except_osv(_('Error !'), 'Filter not implemented on %s'%(name,))
+            raise osv.except_osv(_('Error !'), _('Filter not implemented on %s')%(name,))
 
         parent_ids = None
         for path in args[0][2].split('/'):
@@ -557,7 +557,7 @@ class product_product(osv.osv):
         
         # level not of interest
         if level not in levels:
-            raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s'%(level, levels)))
+            raise osv.except_osv(_('Error'), _('Level (%s) must be smaller or equal to %s')%(level, levels))
         
         
         for x in levels[level+1:]:
@@ -618,7 +618,7 @@ class product_product(osv.osv):
             # newType check
             if nomenclatureType != newType:
                 result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's type is '%s'. Must be '%s' (field's type)."%(newType,nomenclatureType)),
+                                          'message': _("The selected nomenclature's type is '%s'. Must be '%s' (field's type).")%(newType,nomenclatureType)
                                           })
                 newId = False
                 newType = nomenclatureType
@@ -628,7 +628,7 @@ class product_product(osv.osv):
             if  newType == 'mandatory':
                 if fieldNumber != newLevel:
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newLevel,fieldNumber)),
+                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).")%(newLevel,fieldNumber)
                                           })
                     newId = False
                     
@@ -636,7 +636,7 @@ class product_product(osv.osv):
                 if fieldNumber != newSubLevel:
                     ### NOTE adapt level to user level for warning message (+1)
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level)."%(newSubLevel+1,fieldNumber+1)),
+                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).")%(newSubLevel+1,fieldNumber+1)
                                           })
                     newId = False
                     

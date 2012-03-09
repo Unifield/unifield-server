@@ -337,7 +337,7 @@ def common_requested_date_change(self, cr, uid, ids, part=False, date_order=Fals
         # if < supplier_lt, display warning
         if delta.days < partner.supplier_lt:
             res.setdefault('warning', {}).update({'title': _('Warning'),
-                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).'%(delta.days,partner.supplier_lt))})
+                                                  'message': _('The number of days between Creation Date and Delivery Expected Date (%s) is less than the supplier lead-time (%s).')%(delta.days,partner.supplier_lt,)})
             
     return res
 
@@ -1363,7 +1363,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(picking.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
 
         return res
 
@@ -1395,7 +1395,7 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s."%(obj.picking_id.sale_id.name, today)))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
 
         return res
     

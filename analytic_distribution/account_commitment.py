@@ -129,11 +129,11 @@ class account_commitment(osv.osv):
                         elif cl.commit_id and cl.commit_id.analytic_distribution_id:
                             distrib = cl.commit_id.analytic_distribution_id
                         else:
-                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s' % (cl.account_id.code, cl.initial_amount)))
+                            raise osv.except_osv(_('Warning'), _('No analytic distribution found for %s %s') % (cl.account_id.code, cl.initial_amount))
                         for distrib_lines in [distrib.cost_center_lines, distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                             for distrib_line in distrib_lines:
                                 if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
-                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.' % distrib_line.analytic_id.name))
+                                    raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') % (distrib_line.analytic_id.name,))
                         self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date}, context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
@@ -278,8 +278,8 @@ class account_commitment(osv.osv):
                     continue
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".' % 
-                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name)))
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') % 
+                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
                 # Take analytic distribution either from line or from commitment voucher
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:

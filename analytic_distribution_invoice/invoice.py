@@ -141,7 +141,7 @@ class account_invoice(osv.osv):
                 if inv.from_yml_test or invl.from_yml_test:
                     continue
                 if invl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"' % invl.name))
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
         # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
         # FIXME: what about analytic accountancy?
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
