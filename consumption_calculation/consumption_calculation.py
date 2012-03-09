@@ -1087,8 +1087,9 @@ class product_product(osv.osv):
             for line in self.pool.get('real.average.consumption.line').browse(cr, uid, rcr_line_ids, context=context):
                 report_move_ids.append(line.move_id.id)
                 res += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
-                
-            domain.append(('id', 'not in', report_move_ids))
+            
+            if report_move_ids:
+                domain.append(('id', 'not in', report_move_ids))
         
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
@@ -1166,7 +1167,7 @@ class product_product(osv.osv):
                     # to have a percentage of the number of month
                     res += round((to_date.day-from_date.day+1)/nb_days_in_month, 2)
                     break
-                elif to_date.month - from_date.month > 1:
+                elif to_date.month - from_date.month > 1 or to_date.year - from_date.year > 0:
                     res += 1
                     from_date += RelativeDate(months=1)
                 else:
@@ -1185,14 +1186,14 @@ class product_product(osv.osv):
 
     def _compute_product_amc(self, cr, uid, ids, field_name, args, context={}):
         res = {}
-        from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
-        to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+        from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+        to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
         if context.get('from_date', False):
-            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+            from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
                                                
         if context.get('to_date', False):
-            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+            to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
         context.update({'from_date': from_date})
         context.update({'to_date': to_date})
