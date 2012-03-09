@@ -994,8 +994,7 @@ class product_product(osv.osv):
                 if not context.get('to_date') and (not to_date or line.rac_id.period_to > to_date):
                     to_date = line.rac_id.period_to
 
-            # We want the average for the entire period
-            if to_date and from_date and context.get('average', True):
+                # We want the average for the entire period
                 if to_date < from_date:
                     raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
                 # Calculate the # of months in the period
@@ -1003,14 +1002,13 @@ class product_product(osv.osv):
                     to_date_str = strptime(to_date, '%Y-%m-%d')
                 except ValueError:
                     to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
-                                
+                
                 try:
                     from_date_str = strptime(from_date, '%Y-%m-%d')
                 except ValueError:
                     from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
-                
-                date_diff = Age(to_date_str, from_date_str)
-                nb_months = round(date_diff.years*12.0 + date_diff.months + (date_diff.days/30.0), 2)
+        
+                nb_months = self._get_date_diff(from_date_str, to_date_str)
                 
                 if not nb_months: nb_months = 1
                 
