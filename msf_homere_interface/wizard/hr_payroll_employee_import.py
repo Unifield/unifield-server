@@ -32,16 +32,16 @@ from tools.misc import ustr
 from tools.translate import _
 from lxml import etree
 
-class hr_payroll_employee_import_confirmation(osv.osv_memory):
-    _name = 'hr.payroll.employee.import.confirmation'
-    _description = 'Employee Import Confirmation'
+class hr_payroll_import_confirmation(osv.osv_memory):
+    _name = 'hr.payroll.import.confirmation'
+    _description = 'Import Confirmation'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         """
         if not context:
             context = {}
-        view = super(hr_payroll_employee_import_confirmation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        view = super(hr_payroll_import_confirmation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type=='form' and context.get('message', False):
             message = context.get('message')
             tree = etree.fromstring(view['arch'])
@@ -51,7 +51,7 @@ class hr_payroll_employee_import_confirmation(osv.osv_memory):
             view['arch'] = etree.tostring(tree)
         return view
 
-hr_payroll_employee_import_confirmation()
+hr_payroll_import_confirmation()
 
 class hr_payroll_employee_import(osv.osv_memory):
     _name = 'hr.payroll.employee.import'
@@ -207,12 +207,13 @@ class hr_payroll_employee_import(osv.osv_memory):
             message = "Employee import successful."
         context.update({'message': message})
         
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_employee_import_confirmation')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
         
         return {
+            'name': 'Employee Import Confirmation',
             'type': 'ir.actions.act_window',
-            'res_model': 'hr.payroll.employee.import.confirmation',
+            'res_model': 'hr.payroll.import.confirmation',
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': [view_id],
