@@ -2705,7 +2705,8 @@ class stock_inventory(osv.osv):
                             'location_dest_id': location_id,
                         })
                     move_ids.append(self._inventory_line_hook(cr, uid, line, value))
-            message = _('Inventory') + " '" + inv.name + "' "+ _("is done.")
+            # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value         
+            message = _('Inventory') + " '" + inv.name + "' "+ _("is confirmed.")
             self.log(cr, uid, inv.id, message)
             self.write(cr, uid, [inv.id], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
         return True
