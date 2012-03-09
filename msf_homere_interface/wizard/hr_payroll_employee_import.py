@@ -30,6 +30,28 @@ from base64 import decodestring
 from time import strftime
 from tools.misc import ustr
 from tools.translate import _
+from lxml import etree
+
+class hr_payroll_employee_import_confirmation(osv.osv_memory):
+    _name = 'hr.payroll.employee.import.confirmation'
+    _description = 'Employee Import Confirmation'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        """
+        if not context:
+            context = {}
+        view = super(hr_payroll_employee_import_confirmation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='form' and context.get('message', False):
+            message = context.get('message')
+            tree = etree.fromstring(view['arch'])
+            labels = tree.xpath('/form/label[@string="Nothing"]')
+            for label in labels:
+                label.set('string', "%s" % message)
+            view['arch'] = etree.tostring(tree)
+        return view
+
+hr_payroll_employee_import_confirmation()
 
 class hr_payroll_employee_import(osv.osv_memory):
     _name = 'hr.payroll.employee.import'
@@ -160,6 +182,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             context = {}
         # Prepare some values
         staff_file = 'staff.csv'
+        res = False
+        message = "Employee import failed."
         for wiz in self.browse(cr, uid, ids):
             fileobj = NamedTemporaryFile('w+')
             fileobj.write(decodestring(wiz.file))
@@ -174,10 +198,28 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Unactivate all local employees
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('active', '=', True)])
             self.pool.get('hr.employee').write(cr, uid, e_ids, {'active': False})
+            res = True
             for employee_data in reader:
-                self.update_employee_infos(cr, uid, employee_data)
+                update = self.update_employee_infos(cr, uid, employee_data)
+                if not update:
+                    res = False
             fileobj.close()
-        return { 'type': 'ir.actions.act_window_close', 'context': context}
+        if res:
+            message = "Employee import successful."
+        context.update({'message': message})
+        
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_employee_import_confirmation')
+        view_id = view_id and view_id[1] or False
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.employee.import.confirmation',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'view_id': [view_id],
+            'target': 'new',
+            'context': context,
+        }
 
 hr_payroll_employee_import()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

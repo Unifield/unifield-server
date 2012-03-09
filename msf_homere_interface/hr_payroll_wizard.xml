@@ -57,6 +57,21 @@
             </field>
         </record>
 
+        <record id="payroll_employee_import_confirmation" model="ir.ui.view">
+            <field name="name">payroll.employee.import.confirmation</field>
+            <field name="model">hr.payroll.employee.import.confirmation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Employee Import Confirmation">
+                    <label string="Nothing" colspan="4"/>
+                    <group colspan="4" col="2">
+                        <label string="" colspan="1"/>
+                        <button string="Validate" special="cancel" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     <!--
         Actions
     -->
