@@ -75,7 +75,7 @@
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add" 
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
-                        <button name="done" string="Done" type="object" icon="gtk-go-forward" 
+                        <button name="done" string="Closed" type="object" icon="gtk-go-forward" 
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
                     </group>
                 </form>
@@ -109,7 +109,7 @@
                             domain="[('state', '=', 'draft')]" />
                     <filter name="comparison" icon="gtk-sort-descending" string="Comparison"
                             domain="[('state', '=', 'comparison')]" />
-                    <filter name="done" icon="gtk-apply" string="Done"
+                    <filter name="done" icon="gtk-apply" string="Closed"
                             domain="[('state', '=', 'done')]" />
                     <filter name="cancel" icon="gtk-cancel" string="Cancelled"
                             domain="[('state', '=', 'cancel')]" />
@@ -197,9 +197,6 @@
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="readonly">True</attribute>
-                    </xpath>
                     <xpath expr="/form//field[@name='invoiced']" position="attributes">
                         <attribute name="readonly">True</attribute>
                     </xpath>
@@ -245,7 +242,7 @@
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Done" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
+                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
                 </data>
@@ -469,7 +466,7 @@
                     <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
                     <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
                     <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
-                    <filter icon="gtk-yes" name="done" string="Done" domain="[('state','=','done')]" separator="1" />
+                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('state','=','done')]" separator="1" />
                     <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
                     <field name="partner_id" select="1" string="Supplier" />
                     <field name="product_id" select="1" />

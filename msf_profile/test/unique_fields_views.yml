@@ -36,7 +36,7 @@
             pparse(root, view.model, view.type, view['id'], [])
         except:
             print res['arch']
-            continue
+            assert False, "Wrong view"
         for fname, f in res['fields'].iteritems():
             if f.get('views'):
                 for type in ('tree', 'form', 'calendar', 'gantt'):

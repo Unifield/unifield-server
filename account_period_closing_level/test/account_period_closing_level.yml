@@ -49,9 +49,9 @@
         order='date_start, name', limit=1)
     period = per_obj.browse(cr, uid, per_ids[0])
     # find all periods in this FY and open it
-    other_per_ids = per_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('date_start', '<', period.date_start)])
-    if other_per_ids:
-        per_obj.action_set_state(cr, uid, other_per_ids, context={'state': 'draft'})
+    other_per_ids = per_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('date_start', '<', period.date_start)], order="date_state")
+    for other_per_id in other_per_ids:
+        per_obj.action_set_state(cr, uid, [other_per_id], context={'state': 'draft'})
     period.action_set_state(context={'state': 'draft'})
     period = per_obj.browse(cr, uid, per_ids[0])
     assert period.state == 'draft', "Period not in draft state!"
