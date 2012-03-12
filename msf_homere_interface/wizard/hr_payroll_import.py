@@ -131,6 +131,16 @@ class hr_payroll_import(osv.osv_memory):
             'currency_id': currency_id,
             'state': 'draft',
         }
+        # Retrieve analytic distribution from employee
+        if employee_id:
+            employee_data = self.pool.get('hr.employee').read(cr, uid, employee_id, ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            vals.update({
+                'cost_center_id': employee_data and employee_data.get('cost_center_id', False) and employee_data.get('cost_center_id')[0] or False,
+                'funding_pool_id': employee_data and employee_data.get('funding_pool_id', False) and employee_data.get('funding_pool_id')[0] or False,
+                'free1_id': employee_data and employee_data.get('free1_id', False) and employee_data.get('free1_id')[0] or False,
+                'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
+            })
+        # Write payroll entry
         self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
         return True, amount
 
