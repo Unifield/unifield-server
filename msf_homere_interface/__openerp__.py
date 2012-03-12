@@ -35,7 +35,7 @@
         'hr_payroll_wizard.xml',
         'hr_view.xml',
         'hr_payroll_view.xml',
-        'payroll_demo.yml', # Demo Data for some tests
+#        'payroll_demo.yml', # Demo Data for some tests
     ],
     "demo_xml" : [],
     "test": [],
