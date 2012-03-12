@@ -21,10 +21,26 @@
 #
 ##############################################################################
 
-import hr_payroll_analytic_reallocation
-import hr_payroll_validation
-import hr_payroll_employee_import
-import hr_payroll_import
-import hr_payroll_deletion
+from osv import osv
+from tools.translate import _
 
+class hr_payroll_deletion(osv.osv):
+    _name = 'hr.payroll.deletion'
+    _description = 'Payroll entries deletion wizard'
+
+    def button_validate(self, cr, uid, ids, context={}):
+        """
+        Validate ALL draft payroll entries
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Retrieve some values
+        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
+        if not line_ids:
+            raise osv.except_osv(_('Warning'), _('No draft line found!'))
+        self.pool.get('hr.payroll.msf').unlink(cr, uid, line_ids)
+        return { 'type': 'ir.actions.act_window_close', 'context': context}
+
+hr_payroll_deletion()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

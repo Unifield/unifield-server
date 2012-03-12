@@ -31,10 +31,25 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Payroll Validation">
-                    <label string="This will be validate all Payroll entries and create accounting entries." colspan="4"/>
+                    <label string="This will validate all Payroll entries and create accounting entries." colspan="4"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="payroll_deletion_wizard" model="ir.ui.view">
+            <field name="name">payroll.deletion.wizard</field>
+            <field name="model">hr.payroll.deletion</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payroll Deletion">
+                    <label string="Please pay ATTENTION. This will delete all Payroll entries!" colspan="4"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test" confirm="This will delete all payroll entries. Are you sure?"/>
                     </group>
                 </form>
             </field>
@@ -114,6 +129,17 @@
             view_type="form"
             target="new"
             view_id="payroll_validation_wizard"/>
+
+    <!-- Payroll entries deletion wizard -->
+        <act_window id="action_payroll_deletion"
+            name="Delete draft entries"
+            res_model="hr.payroll.deletion"
+            src_model="hr.payroll.msf"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="payroll_deletion_wizard"/>
 
     </data>
 </openerp>
