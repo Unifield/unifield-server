@@ -106,7 +106,7 @@
 
     <!-- Payroll entries validation wizard -->
         <act_window id="action_payroll_validation"
-            name="Validate"
+            name="Validate draft entries"
             res_model="hr.payroll.validation"
             src_model="hr.payroll.msf"
             key2="client_action_multi"
