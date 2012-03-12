@@ -31,6 +31,7 @@
     "depends" : ["stock", "sale", "purchase", "product_nomenclature"],
     'update_xml': [
         'kit_view.xml',
+        'kit_creation_view.xml',
         'kit_sequence.xml',
         'wizard/substitute_view.xml',
         'wizard/stock_partial_move_view.xml',

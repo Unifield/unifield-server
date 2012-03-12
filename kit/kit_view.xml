@@ -23,7 +23,7 @@
 	                        	domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
 	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
-	                        <button colspan="6" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" />
+	                        <button colspan="6" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -304,7 +304,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('item_kit_type', '=', 'theoretical')]</field>
-			<field name="context">{'item_kit_type':'theoretical'}</field>
+			<field name="context">{'composition_type':'theoretical'}</field>
 			<field name="search_view_id" ref="view_composition_kit_theoretical_item_filter" />
 		</record>
 		
@@ -324,7 +324,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('item_kit_type', '=', 'real')]</field>
-			<field name="context">{'item_kit_type':'real'}</field>
+			<field name="context">{'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_item_filter" />
 		</record>
 		
@@ -351,7 +351,7 @@
 		<menuitem id="kit_theoretical" name="Theoretical Kit" parent="kit_management" sequence="1" />
 		<menuitem action="kit_composition_theoretical_action" id="kit_composition_theoretical_menu" parent="kit_theoretical" sequence="1" />
 		<menuitem action="kit_composition_theoretical_item_action" id="kit_composition_theoretical_item_menu" parent="kit_theoretical" sequence="10" />
-		<menuitem id="kit_real" name="Composition List" parent="kit_management" sequence="2" />
+		<menuitem id="kit_real" name="Composition List" parent="kit_management" sequence="10" />
 		<menuitem action="kit_composition_real_action" id="kit_composition_real_menu" parent="kit_real" sequence="1" />
 		<menuitem action="kit_composition_real_item_action" id="kit_composition_real_item_menu" parent="kit_real" sequence="10" />
 		

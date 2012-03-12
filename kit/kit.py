@@ -406,20 +406,20 @@ class composition_kit(osv.osv):
                  
         # call super
         result = super(composition_kit, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        # fields to be modified
-        list = ['<field name="item_lot"/>', '<field name="item_exp"/>']
         # columns depending on type - fields from one2many field
         if view_type == 'form' and context.get('composition_type', False) == 'theoretical':
+            # fields to be modified
+            list = ['<field name="item_lot"', '<field name="item_exp"']
             replace_text = result['fields']['composition_item_ids']['views']['tree']['arch']
-            replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
+            replace_text = reduce(lambda x, y: x.replace(y, y + ' invisible="True" '), [replace_text] + list)
             result['fields']['composition_item_ids']['views']['tree']['arch'] = replace_text
         
-        list = ['<field name="composition_lot_id"/>', '<field name="composition_exp"/>', '<field name="composition_reference"/>', '<field name="composition_combined_ref_lot"/>']
+        list = ['<field name="composition_exp"', '<field name="composition_combined_ref_lot"']
         # columns from kit composition tree - if we display from theoretical menu or diplay the search view of version_id from real_filter
         if view_type == 'tree':
             if context.get('wizard_composition_type', False) == 'theoretical' or (context.get('composition_type', False) == 'theoretical' and not context.get('wizard_composition_type', False)):
                 replace_text = result['arch']
-                replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
+                replace_text = reduce(lambda x, y: x.replace(y, y + ' invisible="True" '), [replace_text] + list)
                 result['arch'] = replace_text
         
         return result
@@ -841,14 +841,14 @@ class composition_item(osv.osv):
         """
         if context is None:
             context = {}
-        # fields to be modified
-        list = ['<field name="item_lot"/>', '<field name="item_exp"/>']
         # call super
         result = super(composition_item, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         # columns depending on type
-        if view_type == 'tree' and context.get('item_kit_type', False) == 'theoretical':
+        if view_type == 'tree' and context.get('composition_type', False) == 'theoretical':
+            # fields to be modified
+            list = ['<field name="item_lot"', '<field name="item_exp"']
             replace_text = result['arch']
-            replace_text = reduce(lambda x, y: x.replace(y, ''), [replace_text] + list)
+            replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
             result['arch'] = replace_text
         
         return result
