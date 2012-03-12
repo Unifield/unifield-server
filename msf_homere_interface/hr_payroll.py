@@ -156,11 +156,26 @@ class hr_payroll(osv.osv):
     def create(self, cr, uid, vals, context={}):
         """
         Raise an error if creation don't become from an import or a YAML.
+        Add default analytic distribution for those that doesn't have anyone.
         """
         if not context:
             context = {}
         if not context.get('from', False) and not context.get('from') in ['yaml', 'csv_import']:
             raise osv.except_osv(_('Error'), _('You are not able to create payroll entries.'))
+        if not vals.get('cost_center_id', False):
+            try:
+                dummy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
+            except:
+                dummy_id = 0
+            if dummy_id:
+                vals.update({'cost_center_id': dummy_id,})
+        if not vals.get('funding_pool_id', False):
+            try:
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except:
+                fp_id = 0
+            if fp_id:
+                vals.update({'funding_pool_id': fp_id,})
         return super(osv.osv, self).create(cr, uid, vals, context)
 
 hr_payroll()
