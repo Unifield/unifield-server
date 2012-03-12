@@ -155,15 +155,12 @@ class hr_payroll(osv.osv):
 
     def create(self, cr, uid, vals, context={}):
         """
-        Add 'salary' + period name for payroll entry description
+        Raise an error if creation don't become from an import or a YAML.
         """
         if not context:
             context = {}
         if not context.get('from', False) and not context.get('from') in ['yaml', 'csv_import']:
             raise osv.except_osv(_('Error'), _('You are not able to create payroll entries.'))
-        if vals.get('period_id', False) and vals.get('account_id', False):
-            if self.pool.get('account.account').browse(cr, uid, vals.get('account_id')).user_type.code == 'expense':
-                vals.update({'name': 'Salary' + ' ' + self.pool.get('account.period').browse(cr, uid, vals.get('period_id')).name})
         return super(osv.osv, self).create(cr, uid, vals, context)
 
 hr_payroll()
