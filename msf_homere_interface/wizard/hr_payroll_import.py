@@ -80,8 +80,12 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % ustr(accounting_code[0]))
         if len(account_ids) > 1:
             raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % ustr(accounting_code[0]))
-        # Verify account type. If expense type, fetch employee ID
+        # Verify account type
+        # if view type, raise an error
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
+        if account.type == 'view':
+            raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % ustr(accounting_code[0]))
+        # If expense type, fetch employee ID
         if account.user_type.code == 'expense':
             # Check second description (if not equal to 'Payroll rounding')
             if second_description and second_description[0] and ustr(second_description[0]) != 'Payroll rounding':
