@@ -625,7 +625,7 @@ class sale_order_line(osv.osv):
         if deliveryDate:
             daysToAdd = deliveryDate
             estDeliveryDate = date.today()
-            estDeliveryDate = estDeliveryDate + relativedelta(days=daysToAdd)
+            estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
             estDeliveryDate = estDeliveryDate.strftime('%Y-%m-%d')
         
         # order state

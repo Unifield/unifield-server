@@ -760,7 +760,7 @@ class purchase_order_line(osv.osv):
             if price_unit != 0.00:
                 warning = {
                 'title': 'Other lines updated !',
-                'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be updated too ! \
+                'message': 'Be careful ! If you validate the change of the unit price by clicking on \'Save\' button, other lines with the same product and the same UoM will be also updated ! \
 Please check the \'Update price manually\' box to confirm the modification of the price.',}
             res.update({'warning': warning, 'value': {'other_line_pb': True, 'change_price_manually': False}})
 
