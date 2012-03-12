@@ -206,7 +206,9 @@ class procurement_request(osv.osv):
 
         for request in self.browse(cr, uid, ids, context=context):
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
-            self.log(cr, uid, request.id, message)
+            proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
+            context.update({'view_id': proc_view and proc_view[1] or False})
+            self.log(cr, uid, request.id, message, context=context)
         
         self.action_ship_create(cr, uid, ids, context=context)
         
