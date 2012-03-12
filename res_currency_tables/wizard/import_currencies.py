@@ -74,17 +74,17 @@ class import_currencies(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('The currency %s is not defined!' % line[0]))
                         break
                     else:
-                        # first, check if the currency for previous month was added
-                        # retrieve last rate
-                        cr.execute("SELECT name FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency_ids[0], wizard.rate_date))
-                        if cr.rowcount:
-                            last_rate_date = cr.fetchall()[0][0]
-                        else:
-                            last_rate_date = False
-                            
-                        if abs(datetime.datetime.strptime(wizard.rate_date, '%Y-%m-%d').month - datetime.datetime.strptime(last_rate_date, '%Y-%m-%d').month) > 1:
-                            # add currency in warning list
-                            undefined_currencies += "%s\n" % line[0]
+                        # check for date. 2 checks done:
+                        # - if the rate date is the 1st of the month, no check.
+                        # - all other dates: check if the 1st day of the month has a rate;
+                        #   otherwise, raise a warning
+                        rate_datetime = datetime.datetime.strptime(wizard.rate_date, '%Y-%m-%d')
+                        if rate_datetime.day != 1:
+                            rate_date_start = '%s-%s-01' % (rate_datetime.year, rate_datetime.month)
+                            cr.execute("SELECT name FROM res_currency_rate WHERE currency_id = %s AND name = %s" ,(currency_ids[0], rate_date_start))
+                            if not cr.rowcount:
+                                # add currency in warning list
+                                undefined_currencies += "%s\n" % line[0]
                         # Now, creating/updating the rate
                         currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', wizard.rate_date)], context=context)
                         if len(currency_rates) > 0:
