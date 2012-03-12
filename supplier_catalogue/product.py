@@ -34,12 +34,15 @@ class product_supplierinfo(osv.osv):
         '''
         Disallow the possibility to remove a supplier info if 
         it's linked to a catalogue
+        If 'product_change' is set to True in context, allows the deletion
+        because it says that the unlink method is called by the write method
+        of supplier.catalogue.line and that the product of the line has changed.
         '''
         if isinstance(info_ids, (int, long)):
             info_ids = [info_ids]
             
         for info in self.browse(cr, uid, info_ids, context=context):
-            if info.catalogue_id:
+            if info.catalogue_id and not context.get('product_change', False):
                 raise osv.except_osv(_('Error'), _('You cannot remove a supplier information which is linked ' \
                                                    'to a supplier catalogue line ! Please remove the corresponding ' \
                                                    'supplier catalogue line to remove this supplier information.'))
@@ -84,10 +87,13 @@ class pricelist_partnerinfo(osv.osv):
     def unlink(self, cr, uid, info_id, context={}):
         '''
         Disallow the possibility to remove a supplier pricelist 
-        if it's linked to a catalogue line
+        if it's linked to a catalogue line.
+        If 'product_change' is set to True in context, allows the deletion
+        because the product on catalogue line has changed and the current line
+        should be removed.
         '''
         info = self.browse(cr, uid, info_id, context=context)
-        if info.catalogue_id:
+        if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
             raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked' \
                                                'to a supplier catalogue line ! Please remove the corresponding' \
                                                'supplier catalogue line to remove this supplier information.'))
@@ -128,12 +134,12 @@ class product_product(osv.osv):
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
             # Search the good line for the price
             info_price = partner_price.search(cr, uid, [('suppinfo_id.name', '=', partner_id),
-                                                        ('suppinfo_id.catalogue_id.period_from', '<', order_date),
+                                                        ('suppinfo_id.catalogue_id.period_from', '<=', order_date),
                                                         ('suppinfo_id.product_id', '=', product.product_tmpl_id.id),
                                                         ('min_quantity', '<=', product_qty),
                                                         ('uom_id', '=', product_uom_id),
                                                         ('currency_id', '=', currency_id),
-                                                        '|', ('valid_till', '>', order_date),
+                                                        '|', ('valid_till', '>=', order_date),
                                                         ('valid_till', '=', False)],
                                                    order='valid_till asc, min_quantity desc', limit=1, context=context)
             

@@ -32,6 +32,7 @@ import time
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
+    _order = 'period_from, period_to'
     
     def copy(self, cr, uid, catalogue_id, default={}, context={}):
         '''
@@ -61,6 +62,12 @@ class supplier_catalogue(osv.osv):
             
         # Search other catalogues for the same partner/currency
         # which are overrided by the new catalogue
+        equal_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '=', period_from), 
+                                                                                        ('currency_id', '=', currency_id),
+                                                                                        ('partner_id', '=', partner_id)],
+                                                                                        order='period_from asc',
+                                                                                        limit=1,
+                                                                                        context=context) 
         if period_to:
             to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from), 
                                                                                          ('period_from', '<', period_to),
@@ -78,6 +85,14 @@ class supplier_catalogue(osv.osv):
                                                                                          context=context)
         
         # If overrided catalogues exist, display an error message
+        if equal_ids:
+            over_cat = self.browse(cr, uid, equal_ids[0], context=context)
+            over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
+            over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
+            raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
+                                               'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
+        
+        # If overrided catalogues exist, display an error message
         if to_ids:
             over_cat = self.browse(cr, uid, to_ids[0], context=context)
             over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
@@ -90,8 +105,9 @@ class supplier_catalogue(osv.osv):
         # after the beginning of the new catalogue
         from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
                                                                                               ('partner_id', '=', partner_id),
+                                                                                              ('period_from', '<=', period_from),
                                                                                               '|', 
-                                                                                              ('period_to', '>', period_from), 
+                                                                                              ('period_to', '>=', period_from), 
                                                                                               ('period_to', '=', False),], context=context)
         
         # Update these catalogues with an end date which is the start date - 1 day of
@@ -268,6 +284,20 @@ class supplier_catalogue(osv.osv):
                 'domain': [('catalogue_id', '=', ids[0])],
                 'context': context}
         
+    def edit_catalogue(self, cr, uid, ids, context={}):
+        '''
+        Open an edit view of the selected catalogue
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'supplier.catalogue',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': ids[0],
+                'context': context}
+        
     def catalogue_import_lines(self, cr, uid, ids, context={}):
         '''
         Open the wizard to import lines
@@ -300,7 +330,7 @@ class supplier_catalogue_line(osv.osv):
     _inherits = {'product.product': 'product_id'}
     _order = 'product_id, line_uom_id, min_qty'
     
-    def create(self, cr, uid, vals, context={}):
+    def _create_supplier_info(self, cr, uid, vals, context={}):
         '''
         Create a pricelist line on product supplier information tab
         '''
@@ -340,22 +370,53 @@ class supplier_catalogue_line(osv.osv):
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
         
+        return vals
+    
+    def create(self, cr, uid, vals, context={}):
+        '''
+        Create a pricelist line on product supplier information tab
+        '''
+        vals = self._create_supplier_info(cr, uid, vals, context=context)
+        
         return super(supplier_catalogue_line, self).create(cr, uid, vals, context={})
     
     def write(self, cr, uid, ids, vals, context={}):
         '''
         Update the pricelist line on product supplier information tab
         '''
-        for line in self.browse(cr, uid, ids, context=context):
-            pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
+        for line in self.browse(cr, uid, ids, context=context):            
+            # If product is changed
+            if 'product_id' in vals and vals['product_id'] != line.product_id.id:
+                c = context.copy()
+                c.update({'product_change': True})
+                # Remove the old pricelist.partnerinfo and create a new one
+                self.pool.get('pricelist.partnerinfo').unlink(cr, uid, line.partner_info_id.id, context=c)
+        
+                # Check if the removed line wasn't the last line of the supplierinfo
+                if len(line.supplier_info_id.pricelist_ids) == 0:
+                    # Remove the supplier info
+                    self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
+                    
+                # Create new partnerinfo line
+                vals.update({'catalogue_id': vals.get('catalogue_id', line.catalogue_id.id),
+                             'product_id': vals.get('product_id', line.product_id.id),
+                             'min_qty': vals.get('min_qty', line.min_qty),
+                             'line_uom_id': vals.get('line_uom_id', line.line_uom_id.id),
+                             'unit_price': vals.get('unit_price', line.unit_price),
+                             'rounding': vals.get('rounding', line.rounding),
+                             'min_order_qty': vals.get('min_order_qty', line.min_order_qty),
+                             'comment': vals.get('comment', line.comment),
+                             })
+                vals = self._create_supplier_info(cr, uid, vals, context=context)
+            else:
+                pinfo_data = {'min_quantity': vals.get('min_qty', line.min_qty),
                           'price': vals.get('unit_price', line.unit_price),
                           'uom_id': vals.get('line_uom_id', line.line_uom_id.id),
                           'rounding': vals.get('rounding', line.rounding),
                           'min_order_qty': vals.get('min_order_qty', line.min_order_qty)
                           }
-            
-            # Update the pricelist line on product supplier information tab
-            self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
+                # Update the pricelist line on product supplier information tab
+                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], 
                                                          pinfo_data, context=context) 
         
         return super(supplier_catalogue_line, self).write(cr, uid, ids, vals, context={})
