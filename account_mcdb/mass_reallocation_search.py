@@ -55,23 +55,25 @@ class mass_reallocation_search(osv.osv_memory):
             search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
-        search_ids = self.pool.get('account.analytic.line').search(cr, uid, search, context=context)
-        non_valid_ids = []
-        # Browse all analytic line to verify contract state
-        for aline in self.pool.get('account.analytic.line').browse(cr, uid, search_ids, context=context):
-            contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
-            valid = True
-            for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
-                if contract.state in ['soft_closed', 'hard_closed']:
-                    valid = False
-            if not valid:
-                non_valid_ids.append(aline.id)
-        # Delete ids that doesn't correspond to a valid line
-        valid_ids = [x for x in search_ids if x not in non_valid_ids]
-        operator = 'in'
-        if len(valid_ids) == 1:
-            operator = '='
-        domain = [('id', 'in', valid_ids)]
+        search.append(('contract_open','=', True))
+        #search_ids = self.pool.get('account.analytic.line').search(cr, uid, search, context=context)
+        #non_valid_ids = []
+        ## Browse all analytic line to verify contract state
+        #for aline in self.pool.get('account.analytic.line').browse(cr, uid, search_ids, context=context):
+        #    contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('funding_pool_ids', '=', aline.account_id.id)], context=context)
+        #    valid = True
+        #    for contract in self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids, context=context):
+        #        if contract.state in ['soft_closed', 'hard_closed']:
+        #            valid = False
+        #    if not valid:
+        #        non_valid_ids.append(aline.id)
+        ## Delete ids that doesn't correspond to a valid line
+        #valid_ids = [x for x in search_ids if x not in non_valid_ids]
+        #operator = 'in'
+        #if len(valid_ids) == 1:
+        #    operator = '='
+        #domain = [('id', 'in', valid_ids)]
+        context['analytic_account_from'] = ids[0]
         return {
             'name': 'Mass reallocation search for' + ' ' + account.name,
             'type': 'ir.actions.act_window',
@@ -79,7 +81,7 @@ class mass_reallocation_search(osv.osv_memory):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'context': context,
-            'domain': domain,
+            'domain': search,
             'target': 'current',
         }
 

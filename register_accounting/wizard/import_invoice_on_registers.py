@@ -62,7 +62,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         if 'amount' in vals:
             for l in self.read(cr, uid, ids, ['amount_to_pay']):
                 if vals['amount'] > l['amount_to_pay']:
-                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s"%(vals['amount'], l['amount_to_pay'])))
+                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s")%(vals['amount'], l['amount_to_pay']))
 
         return super(wizard_import_invoice_lines, self).write(cr, uid, ids, vals, context)
 
@@ -120,7 +120,7 @@ class wizard_import_invoice(osv.osv_memory):
         ordered_lines = {}
         for line in wizard.line_ids:
             if line.id in already:
-                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.'%(line.name, line.amount_currency)))
+                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
                 key = "%s-%s-%s"%(line.amount_currency < 0 and "-" or "+", line.partner_id.id, line.account_id.id)
             else:
