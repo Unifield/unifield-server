@@ -200,7 +200,8 @@ class sourcing_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = False
             if line.supplier:
-                res[line.id] = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
+                delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
+                res[line.id] = line.cf_estimated_delivery_date and line.cf_estimated_delivery_date or delay
         
         return res
 
@@ -230,7 +231,7 @@ class sourcing_line(osv.osv):
         'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
-        #'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
         'estimated_delivery_date': fields.function(_get_dd, type='date', method=True, store=False, string='Estimated DD', readonly=True),
         'company_id': fields.many2one('res.company','Company',select=1),
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
@@ -419,6 +420,8 @@ class sourcing_line(osv.osv):
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
                 else:
                     wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+            
+            self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
                 
         return result
     
