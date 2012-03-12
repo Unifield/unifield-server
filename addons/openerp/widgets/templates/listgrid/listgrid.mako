@@ -156,9 +156,11 @@
                                 % if editable:
                                     <td class="pager-cell-button">
                                         % if m2m:
+                                            % if not hide_new_button:
                                             <button title="${_('Add records...')}" id="${name}_add_records">
                                                     ${_('Add')}
                                             </button>
+                                            % endif
                                         % elif o2m:
                                            % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
