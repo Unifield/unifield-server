@@ -571,7 +571,7 @@ class composition_kit(osv.osv):
                 'composition_description': fields.text(string='Composition Description'),
                 'composition_product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
                 'composition_version_txt': fields.char(string='Version', size=1024),
-                'composition_version_id': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]),
+                'composition_version_id': fields.many2one('composition.kit', string='Version'),
                 'composition_creation_date': fields.date(string='Creation Date', required=True),
                 'composition_reference': fields.char(string='Reference', size=1024),
                 'composition_lot_id': fields.many2one('stock.production.lot', string='Batch Nb', size=1024),

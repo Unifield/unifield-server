@@ -2,18 +2,17 @@
 <openerp>
     <data>
     
-    	<record id="view_composition_kit_form" model="ir.ui.view">
-            <field name="name">composition.kit.form</field>
-            <field name="model">composition.kit</field>
+    	<record id="view_kit_creation_form" model="ir.ui.view">
+            <field name="name">kit.creation.form</field>
+            <field name="model">kit.creation</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-            	<form string="Kit Composition">
+            	<form string="Kit Creation">
             		<group col="6" colspan="4">
-                        <field name="composition_type" invisible="True" />
-                        <field name="composition_product_id" colspan="4" on_change="on_change_product_id(composition_product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <group col="6" colspan="2">
                         	<field name="composition_version_txt" attrs="{'required': [('composition_type', '=', 'theoretical')], 'invisible': [('composition_type', '!=', 'theoretical')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="composition_version_id" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" domain="[('composition_product_id', '=', composition_product_id), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" colspan="2" />
+                        	<field name="composition_version_id" attrs="{'invisible': [('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" colspan="2" />
 	                        <field name="composition_creation_date" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_batch_check" invisible="True" colspan="2" />
 	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
