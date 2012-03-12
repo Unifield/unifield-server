@@ -194,14 +194,20 @@ class sourcing_line(osv.osv):
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
     
-    def _get_dd(self, cr, uid, ids, field_name, args, context={}):
+    def _get_date(self, cr, uid, ids, field_name, args, context={}):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
+            res[line.id] = {'estimated_delivery_date': False,
+                            'rts': False}
             if line.supplier:
                 delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
-                res[line.id] = line.cf_estimated_delivery_date and line.cf_estimated_delivery_date or delay
+                res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.cf_estimated_delivery_date or delay
+            
+            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
+            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
+            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
+            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
         
         return res
 
@@ -223,7 +229,8 @@ class sourcing_line(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
         'qty': fields.related('sale_order_line_id', 'product_uom_qty', type='float', string='Quantity', readonly=True),
         'uom_id': fields.related('sale_order_line_id', 'product_uom', relation='product.uom', type='many2one', string='UoM', readonly=True),
-        'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
+        #'rts': fields.related('sale_order_id', 'ready_to_ship_date', type='date', string='RTS', readonly=True),
+        'rts': fields.function(_get_date, type='date', method=True, string='RTS', readonly=True, store=False, multi='dates'),
         'sale_order_line_state': fields.related('sale_order_line_id', 'state', type="selection", selection=_SELECTION_SALE_ORDER_LINE_STATE, readonly=True, store=False),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
@@ -232,7 +239,7 @@ class sourcing_line(osv.osv):
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
-        'estimated_delivery_date': fields.function(_get_dd, type='date', method=True, store=False, string='Estimated DD', readonly=True),
+        'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
         'company_id': fields.many2one('res.company','Company',select=1),
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
