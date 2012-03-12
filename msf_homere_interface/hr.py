@@ -67,14 +67,19 @@ class hr_employee(osv.osv):
 
     def write(self, cr, uid, ids, vals, context={}):
         """
-        Block write for local staff if no 'from' in context
+        Block write for local staff if no 'from' in context.
+        Allow only analytic distribution changes (cost center, funding pool, free 1 and free 2)
         """
         # Some verifications
         if not context:
             context = {}
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
-                raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+                new_vals = {}
+                for el in vals:
+                    if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
+                        new_vals.update({el: vals[el],})
+                vals = new_vals
         return super(hr_employee, self).write(cr, uid, ids, vals, context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
