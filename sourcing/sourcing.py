@@ -193,6 +193,16 @@ class sourcing_line(osv.osv):
             else:
                 newargs.append(('sale_order_state', arg[1], arg[2]))
         return newargs
+    
+    def _get_dd(self, cr, uid, ids, field_name, args, context={}):
+        res = {}
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.supplier:
+                res[line.id] = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
+        
+        return res
 
     _columns = {
         # sequence number
@@ -220,7 +230,8 @@ class sourcing_line(osv.osv):
         'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
-        'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        #'estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
+        'estimated_delivery_date': fields.function(_get_dd, type='date', method=True, store=False, string='Estimated DD', readonly=True),
         'company_id': fields.many2one('res.company','Company',select=1),
         'procurement_request': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Procurement Request', multi='get_vals_sourcing',
                                                store={'sale.order': (_get_sale_order_ids, ['procurement_request'], 10),
