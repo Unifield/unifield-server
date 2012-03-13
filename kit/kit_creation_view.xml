@@ -28,7 +28,8 @@
                     <notebook colspan="4">
                     	<page string="Components">
                     		<field name="default_location_src_id_kit_creation" />
-                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" />
+                    		<field name="consider_child_locations_kit_creation" /> 
+                    		<field name="to_consume_ids_kit_creation" colspan="4" nolabel="True" context="{'location_src_id_consume_common': default_location_src_id_kit_creation}" />
                     		<group colspan="2" />
                     		<button name="reset_to_version" type="object" string="Check Availability" icon="gtk-clear" />
                     		<button name="reset_to_version" type="object" string="Process All Lines" icon="gtk-clear" />
@@ -80,14 +81,17 @@
             <field name="model">kit.creation.to.consume</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-            	<tree string="Components to Consume" editable="top">
-            		<field name="product_id_consume_common" />
-            		<field name="qty_consume_common" string="Qty per Kit" />
+            	<tree string="Components to Consume" editable="top" colors="red:qty_available_to_consume &lt;= 0.0">
+            		<field name="product_id_consume_common" on_change="on_change_product_id(product_id_consume_common, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, context)" />
+            		<field name="qty_consume_common" string="Qty per Kit" on_change="on_change_qty(qty_consume_common, parent.qty_kit_creation, context)" />
             		<field name="total_qty_to_consume" />
             		<field name="uom_id_consume_common" />
             		<field name="location_src_id_consume_common" />
-            		<field name="availability_to_consume" />
+            		<field name="qty_available_to_consume" />
+            		<field name="availability_to_consume" invisible="True" />
             		<field name="state" invisible="True" />
+            		<field name="batch_check_kit_creation_consume_common" />
+            		<field name="expiry_check_kit_creation_consume_common" />
             	</tree>
             </field>
 		</record>
@@ -106,6 +110,8 @@
             		<field name="location_src_id_consume_common" />
             		<field name="kit_id_consumed" />
             		<field name="state" invisible="True" />
+            		<field name="batch_check_kit_creation_consume_common" />
+            		<field name="expiry_check_kit_creation_consume_common" />
             	</tree>
             </field>
 		</record>

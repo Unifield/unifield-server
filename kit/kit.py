@@ -940,7 +940,7 @@ class composition_item(osv.osv):
                                 store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_kit_id'], 10),
                                         'composition.kit': (_get_composition_item_ids, ['state'], 10)}),
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
-                'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Lot', multi='get_vals', store=False, readonly=True),
+                'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 }
     
     _defaults = {'hidden_batch_management_mandatory': False,
